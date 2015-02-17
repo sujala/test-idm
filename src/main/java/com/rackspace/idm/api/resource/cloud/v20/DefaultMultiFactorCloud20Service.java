@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice;
 import com.rackspace.identity.multifactor.domain.BasicPin;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason;
@@ -10,6 +11,7 @@ import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutEx
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.OTPDeviceConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
@@ -116,6 +118,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     private MobilePhoneConverterCloudV20 mobilePhoneConverterCloudV20;
 
     @Autowired
+    private OTPDeviceConverterCloudV20 otpDeviceConverterCloudV20;
+
+    @Autowired
     private JAXBObjectFactories objFactories;
 
     @Autowired
@@ -142,11 +147,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Autowired
     private IdentityUserService identityUserService;
 
-    private boolean isSelfCall(User caller, User user) {
+    private boolean isSelfCall(BaseUser caller, BaseUser user) {
         return caller.getId().equals(user.getId());
     }
 
-    private void verifyAccessToOtherUser(ScopeAccess token, User requester, User user) {
+    private void verifyAccessToOtherUser(ScopeAccess token, BaseUser requester, BaseUser user) {
         if (!isSelfCall(requester, user)) {
             precedenceValidator.verifyCallerPrecedenceOverUser(requester, user);
             if (authorizationService.authorizeCloudUserAdmin(token) || authorizationService.authorizeUserManageRole(token)) {
@@ -397,7 +402,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Override
     public Response.ResponseBuilder listDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
-
         try {
             ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
@@ -487,6 +491,48 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             return Response.noContent();
         } catch (Exception ex) {
             LOG.error(String.format("Error changing multi-factor settings on domain '%s'", domainId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder addOTPDeviceToUser(UriInfo uriInfo, String authToken, String userId, OTPDevice otpDevice) {
+        try {
+            final ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            final BaseUser requester = userService.getUserByScopeAccess(token);
+
+            final User user = requestContextHolder.checkAndGetTargetUser(userId);
+            verifyAccessToOtherUser(token, requester, user);
+
+            final com.rackspace.idm.domain.entity.OTPDevice entity = multiFactorService.addOTPDeviceToUser(userId, otpDevice.getName());
+
+            final UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            final String id = entity.getId();
+            final URI build = requestUriBuilder.path(id).build();
+            final Response.ResponseBuilder response = Response.created(build);
+
+            response.entity(otpDeviceConverterCloudV20.toOTPDeviceForCreate(entity));
+            return response;
+        } catch (Exception ex) {
+            LOG.error(String.format("Error adding an OTP device to user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder getOTPDeviceFromUser(UriInfo uriInfo, String authToken, String userId, String deviceId) {
+        try {
+            final ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            final BaseUser requester = userService.getUserByScopeAccess(token);
+            User user = requestContextHolder.checkAndGetTargetUser(userId);
+            verifyAccessToOtherUser(token, requester, user);
+
+            final com.rackspace.idm.domain.entity.OTPDevice entity = multiFactorService.getOTPDeviceFromUserById(userId, deviceId);
+            return Response.ok().entity(otpDeviceConverterCloudV20.toOTPDeviceForWeb(entity));
+        } catch (IllegalStateException ex) {
+            return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
+        } catch (Exception ex) {
+            LOG.error(String.format("Error retrieving device on user '%s'", userId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }

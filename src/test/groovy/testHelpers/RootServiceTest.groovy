@@ -7,6 +7,7 @@ import com.rackspace.idm.api.converter.cloudv20.CapabilityConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20
+import com.rackspace.idm.api.converter.cloudv20.OTPDeviceConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RegionConverterCloudV20
@@ -153,7 +154,8 @@ class RootServiceTest extends Specification {
     @Shared QuestionConverterCloudV20 questionConverter
     @Shared SecretQAConverterCloudV20 secretQAConverter
     @Shared ObjectConverter objectConverter
-    @Shared MobilePhoneConverterCloudV20 mobilePhoneConverterCloudV20;
+    @Shared MobilePhoneConverterCloudV20 mobilePhoneConverterCloudV20
+    @Shared OTPDeviceConverterCloudV20 otpDeviceConverterCloudV20
 
     //services
     @Shared ApplicationService applicationService
@@ -486,6 +488,11 @@ class RootServiceTest extends Specification {
     def mockPhoneCoverterCloudV20(service) {
         mobilePhoneConverterCloudV20 = Mock()
         service.mobilePhoneConverterCloudV20 = mobilePhoneConverterCloudV20
+    }
+
+    def mockOTPDeviceConverterCloudV20(service) {
+        otpDeviceConverterCloudV20 = Mock()
+        service.otpDeviceConverterCloudV20 = otpDeviceConverterCloudV20
     }
 
     def mockAuthenticationService(service) {

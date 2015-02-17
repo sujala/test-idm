@@ -170,6 +170,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="mobilePhones"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='OTPDevice']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="otpDevice"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='VerificationCode']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="verificationCode"/>

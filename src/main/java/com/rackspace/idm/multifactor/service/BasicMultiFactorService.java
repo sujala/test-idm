@@ -3,8 +3,8 @@ package com.rackspace.idm.multifactor.service;
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
 import com.rackspace.identity.multifactor.exceptions.MultiFactorException;
@@ -17,12 +17,12 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.domain.dao.MobilePhoneDao;
+import com.rackspace.idm.domain.dao.OTPDeviceDao;
 import com.rackspace.idm.domain.dozer.converters.UserMultiFactorEnforcementLevelConverter;
-import com.rackspace.idm.domain.entity.MobilePhone;
-import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.util.OTPHelper;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
@@ -114,6 +114,12 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Autowired
     private TokenRevocationService tokenRevocationService;
+
+    @Autowired
+    private OTPDeviceDao otpDeviceDao;
+
+    @Autowired
+    private OTPHelper otpHelper;
 
     /**
      * Name of property in standard IDM property file that specifies for how many minutes a verification "pin" code is
@@ -635,6 +641,29 @@ public class BasicMultiFactorService implements MultiFactorService {
         } else {
             return true;
         }
+    }
+
+    @Override
+    public OTPDevice addOTPDeviceToUser(String userId, String name) {
+        Assert.notNull(name);
+        Assert.notNull(userId);
+
+        final User user = userService.checkAndGetUserById(userId);
+
+        final OTPDevice device = otpHelper.createOTPDevice(name);
+        otpDeviceDao.addOTPDevice(user, device);
+        return device;
+    }
+
+    @Override
+    public OTPDevice getOTPDeviceFromUserById(String userId, String deviceId) {
+        Assert.notNull(userId);
+        Assert.notNull(deviceId);
+
+        final User user = userService.checkAndGetUserById(userId);
+
+        final OTPDevice device = otpDeviceDao.getOTPDeviceByParentAndId(user, deviceId);
+        return device;
     }
 
     private boolean isMultiFactorBetaEnabled() {

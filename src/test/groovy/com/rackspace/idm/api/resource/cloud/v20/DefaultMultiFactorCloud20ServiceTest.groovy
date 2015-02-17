@@ -2,23 +2,29 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.SecurityContext
+import com.rackspace.idm.domain.entity.BaseUser
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotAuthenticatedException
+import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.Response
-
+import javax.ws.rs.core.UriBuilder
+import javax.ws.rs.core.UriInfo
 
 class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
     @Shared DefaultMultiFactorCloud20Service service
@@ -36,6 +42,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         mockMultiFactorService(service)
         mockExceptionHandler(service)
         mockPhoneCoverterCloudV20(service)
+        mockOTPDeviceConverterCloudV20(service)
         mockScopeAccessService(service)
         mockPrecedenceValidator(service)
         mockRequestContextHolder(service)
@@ -354,6 +361,112 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         IdentityUserTypeEnum.USER_ADMIN     | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL  | false     | true
         IdentityUserTypeEnum.USER_MANAGER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL  | false     | true
         IdentityUserTypeEnum.DEFAULT_USER   | GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL  | false    | false
+    }
+
+    def "test create OTP device for non provisioned user is not allowed"() {
+        given:
+        BaseUser caller = entityFactory.createFederatedUser().with { it.id = "caller"; return it }
+        ScopeAccess callerToken = entityFactory.createFederatedToken()
+        defaultCloud20Service.getScopeAccessForValidToken(_) >> callerToken
+        userService.getUserByScopeAccess(callerToken) >> caller
+        requestContextHolder.checkAndGetTargetUser(caller.id) >> { throw new NotFoundException() }
+        exceptionHandler.exceptionResponse(_ as NotFoundException) >> Response.status(HttpServletResponse.SC_NOT_FOUND)
+
+        when:
+        Response.ResponseBuilder responseBuilder = service.addOTPDeviceToUser(null, callerToken.accessTokenString, caller.id, null)
+
+        then:
+        responseBuilder.build().status == HttpServletResponse.SC_NOT_FOUND
+    }
+
+    @Unroll
+    def "test create OTP device for user access control (#allowed)"() {
+        User caller = entityFactory.createUser().with { it.id = "caller"; return it }
+        UserScopeAccess callerToken = entityFactory.createUserToken()
+
+        def User user
+        if (callerUserIdentityRoleType == "self") {
+            user = caller
+        } else {
+            user = entityFactory.createUser().with { it.id = "user"; return it }
+        }
+
+        // Sample device
+        OTPDevice device = new OTPDevice()
+        device.setName("test")
+
+        // Sample entity
+        com.rackspace.idm.domain.entity.OTPDevice entity = new com.rackspace.idm.domain.entity.OTPDevice()
+        entity.setId("1")
+
+        // Mock UriInfo
+        UriInfo uriInfo = Mock()
+        UriBuilder uriBuilder = Mock()
+        URI uri = new URI("http://a.com")
+        uriInfo.getRequestUriBuilder() >> uriBuilder
+        uriBuilder.path(_) >> uriBuilder
+        uriBuilder.build() >> uri
+
+        defaultCloud20Service.getScopeAccessForValidToken(_) >> callerToken
+        userService.getUserByScopeAccess(callerToken) >> caller
+        requestContextHolder.checkAndGetTargetUser(caller.id) >> caller
+        requestContextHolder.checkAndGetTargetUser(user.id) >> user
+
+        multiFactorService.addOTPDeviceToUser(user.id, device.getName()) >> entity
+
+        if (allowed) {
+            authorizationService.authorizeCloudUserAdmin(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_ADMIN)
+            authorizationService.authorizeUserManageRole(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_MANAGER)
+        } else {
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user) >> {throw new ForbiddenException()}
+        }
+
+        def capturedException
+        exceptionHandler.exceptionResponse(_) >> {args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_FORBIDDEN)}
+
+        when:
+        Response.ResponseBuilder responseBuilder = service.addOTPDeviceToUser(uriInfo, callerToken.accessTokenString, user.id, device)
+
+        then:
+        if (allowed) {
+            assert responseBuilder.build().status == HttpServletResponse.SC_CREATED
+        } else {
+            assert capturedException instanceof ForbiddenException
+        }
+
+        where:
+        allowed | callerUserIdentityRoleType          | userIdentityRoleType
+        true    | "self"                              | _
+
+        false   | IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.SERVICE_ADMIN
+        true    | IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.IDENTITY_ADMIN
+        true    | IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.USER_ADMIN
+        true    | IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.USER_MANAGER
+        true    | IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.DEFAULT_USER
+
+        false   | IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.SERVICE_ADMIN
+        false   | IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.IDENTITY_ADMIN
+        true    | IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.USER_ADMIN
+        true    | IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.USER_MANAGER
+        true    | IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.DEFAULT_USER
+
+        false   | IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.SERVICE_ADMIN
+        false   | IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.IDENTITY_ADMIN
+        false   | IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.USER_ADMIN
+        true    | IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.USER_MANAGER
+        true    | IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.DEFAULT_USER
+
+        false   | IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.SERVICE_ADMIN
+        false   | IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.IDENTITY_ADMIN
+        false   | IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.USER_ADMIN
+        false   | IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.USER_MANAGER
+        true    | IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.DEFAULT_USER
+
+        false   | IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.SERVICE_ADMIN
+        false   | IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.IDENTITY_ADMIN
+        false   | IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.USER_ADMIN
+        false   | IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.USER_MANAGER
+        false   | IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.DEFAULT_USER
     }
 
 }
