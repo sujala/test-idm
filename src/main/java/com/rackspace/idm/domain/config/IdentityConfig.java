@@ -6,6 +6,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -55,6 +56,9 @@ public class IdentityConfig {
     private static final String FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME = "feature.aetoken.cleanup.uuid.on.revokes";
     private static final boolean FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_DEFAULT_VALUE = true;
 
+    public static final String PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME = "reloadable.properties.ttl.seconds";
+    public static final int PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE = 30;
+
     /**
      * The property controlling the token format to use for IDPs that do not have an explicit format specified via the
      * override property {@link #IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG}
@@ -97,8 +101,25 @@ public class IdentityConfig {
     public static final String FEATURE_BASE_URL_RESPECT_ENABLED_FLAG = "feature.base.url.respect.enabled.flag";
     public static final boolean FEATURE_BASE_URL_RESPECT_ENABLED_FLAG_DEFAULT = false;
 
+    @Qualifier("staticConfiguration")
     @Autowired
-    private Configuration config;
+    private Configuration staticConfiguration;
+
+    @Qualifier("reloadableConfiguration")
+    @Autowired
+    private Configuration reloadableConfiguration;
+
+    private StaticConfig staticConfig = new StaticConfig();
+
+    private RealoadableConfig realoadableConfig = new RealoadableConfig();
+
+    public IdentityConfig() {
+    }
+
+    public IdentityConfig(Configuration staticConfiguration, Configuration reloadableConfiguration) {
+        this.staticConfiguration = staticConfiguration;
+        this.reloadableConfiguration = reloadableConfiguration;
+    }
 
     @PostConstruct
     private void verifyConfigs() {
@@ -126,7 +147,7 @@ public class IdentityConfig {
     }
 
     private void verifyAndLogProperty(String property, boolean required) {
-        String readProperty = config.getString(property);
+        String readProperty = staticConfiguration.getString(property);
         if (required && StringUtils.isBlank(readProperty)) {
             logger.error(String.format(PROPERTY_ERROR_MESSAGE, property));
         } else {
@@ -135,138 +156,306 @@ public class IdentityConfig {
     }
 
     private void logFederatedTokenFormatOverrides() {
-        Iterator<String> fedOverrideUris = config.getKeys(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX);
+        Iterator<String> fedOverrideUris = staticConfiguration.getKeys(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX);
         while (fedOverrideUris.hasNext()) {
             String fedOverrideProperty = fedOverrideUris.next();
             String fedUri = fedOverrideProperty.substring(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX.length()+1); //add 1 to skip '.'
-            TokenFormat tf = getIdentityFederatedUserTokenFormatForIdp(fedUri);
+            TokenFormat tf = getStaticConfig().getIdentityFederatedUserTokenFormatForIdp(fedUri);
             logger.warn(String.format("Federated Provider Token Format Override: Identity provider '%s' will receive '%s' formatted tokens",fedUri, tf.name()));
         }
     }
 
+    public StaticConfig getStaticConfig() {
+        return staticConfig;
+    }
+
+    public RealoadableConfig getReloadableConfig() {
+        return realoadableConfig;
+    }
+
+    /**
+     * Wrapper around the static configuration properties. Users of these properties may cache the value between requests
+     * as the value of these properties will remain constant throughout the lifetime of the running application.
+     */
+    private class StaticConfig {
+        public String getGaUsername() {
+            return staticConfiguration.getString(GA_USERNAME);
+        }
+
+        public String getEmailFromAddress() {
+            return staticConfiguration.getString(EMAIL_FROM_EMAIL_ADDRESS);
+        }
+
+        public String getEmailLockedOutSubject() {
+            return staticConfiguration.getString(EMAIL_LOCKED_OUT_SUBJECT);
+        }
+
+        public String getEmailMFAEnabledSubject() {
+            return staticConfiguration.getString(EMAIL_MFA_ENABLED_SUBJECT);
+        }
+
+        public String getEmailMFADisabledSubject() {
+            return staticConfiguration.getString(EMAIL_MFA_DISABLED_SUBJECT);
+        }
+
+        public String getEmailHost() {
+            return staticConfiguration.getString(EMAIL_HOST, LOCALHOST);
+        }
+
+        public boolean isSendToOnlyRackspaceAddressesEnabled() {
+            return staticConfiguration.getBoolean(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, true);
+        }
+
+        public int getScopedTokenExpirationSeconds() {
+            return staticConfiguration.getInt(SCOPED_TOKEN_EXPIRATION_SECONDS);
+        }
+
+        public String getCloudAuthClientId() {
+            return staticConfiguration.getString(CLOUD_AUTH_CLIENT_ID);
+        }
+
+        public String getIdentityUserAdminRoleName() {
+            return staticConfiguration.getString(IDENTITY_USER_ADMIN_ROLE_NAME_PROP);
+        }
+
+        public String getIdentityIdentityAdminRoleName() {
+            return staticConfiguration.getString(IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP);
+        }
+
+        public String getIdentityServiceAdminRoleName() {
+            return staticConfiguration.getString(IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP);
+        }
+
+        public String getIdentityDefaultUserRoleName() {
+            return staticConfiguration.getString(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP);
+        }
+
+        public String getIdentityUserManagerRoleName() {
+            return staticConfiguration.getString(IDENTITY_USER_MANAGE_ROLE_NAME_PROP);
+        }
+
+        public TokenFormat getIdentityProvisionedTokenFormat() {
+            return convertToTokenFormat(staticConfiguration.getString(IDENTITY_PROVISIONED_TOKEN_FORMAT, IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT));
+        }
+
+        public TokenFormat getIdentityRackerTokenFormat() {
+            return convertToTokenFormat(staticConfiguration.getString(IDENTITY_RACKER_TOKEN_FORMAT, IDENTITY_RACKER_TOKEN_FORMAT_DEFAULT));
+        }
+
+        public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
+            return convertToTokenFormat(staticConfiguration.getString(IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_VALUE));
+        }
+
+        public TokenFormat getIdentityFederatedUserTokenFormatForIdp(String idpLabeledUri) {
+            return convertToTokenFormat(staticConfiguration.getString(String.format(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, idpLabeledUri), "${" + IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP + "}"));
+        }
+
+        public String getIdentityRackerAETokenRole() {
+            return staticConfiguration.getString(IDENTITY_RACKER_AE_TOKEN_ROLE, IDENTITY_RACKER_AE_TOKEN_ROLE_DEFAULT);
+        }
+
+        public boolean getFeatureAeTokenCleanupUuidOnRevokes() {
+            return staticConfiguration.getBoolean(FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_DEFAULT_VALUE);
+        }
+
+        public String getKeyCzarDN() {
+            return staticConfiguration.getString(KEYCZAR_DN_CONFIG, KEYCZAR_DN_DEFAULT);
+        }
+
+        public boolean getFeatureAETokensEncrypt() {
+            return staticConfiguration.getBoolean(FEATURE_AE_TOKENS_ENCRYPT, true);
+        }
+
+        public boolean getFeatureAETokensDecrypt() {
+            return getFeatureAETokensEncrypt() || staticConfiguration.getBoolean(FEATURE_AE_TOKENS_DECRYPT, true);
+        }
+
+        public boolean allowFederatedImpersonation() {
+            return staticConfiguration.getBoolean(FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, FEATURE_ALLOW_FEDERATED_IMPERSONATION_DEFAULT);
+        }
+
+        public int getReloadablePropertiesTTL() {
+            return staticConfiguration.getInt(PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME, PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE);
+        }
+
+        public boolean useReloadableDocs() {
+            return staticConfiguration.getBoolean(FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME, FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_DEFAULT_VALUE);
+        }
+
+        public int reloadableDocsTimeOutInSeconds() {
+            return staticConfiguration.getInt(RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME, RELOADABLE_DOCS_CACHE_TIMEOUT_DEFAULT_VALUE);
+        }
+
+        public boolean getV11AddBaseUrlExposed() {
+            return staticConfiguration.getBoolean(EXPOSE_V11_ADD_BASE_URL_PROP, EXPOSE_V11_ADD_BASE_URL_DEFAULT);
+        }
+
+        public boolean getBaseUlrRespectEnabledFlag() {
+            return staticConfiguration.getBoolean(FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, FEATURE_BASE_URL_RESPECT_ENABLED_FLAG_DEFAULT);
+        }
+
+
+        private TokenFormat convertToTokenFormat(String strFormat) {
+            for (TokenFormat tokenFormat : TokenFormat.values()) {
+                if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
+                    return tokenFormat;
+                }
+            }
+            return TokenFormat.UUID;
+        }
+    }
+
+    /**
+     * Wrapper around the reloadable configuration properties. Users of these properties must ensure that they always
+     * lookup up the property each time before use and must NOT store the value of the property.
+     */
+    private class RealoadableConfig {
+        public String getTestPing() {
+            return reloadableConfiguration.getString("reload.test");
+        }
+    }
+
+    @Deprecated
     public String getGaUsername() {
-        return config.getString(GA_USERNAME);
+        return getStaticConfig().getGaUsername();
     }
 
+    @Deprecated
     public String getEmailFromAddress() {
-        return config.getString(EMAIL_FROM_EMAIL_ADDRESS);
+        return getStaticConfig().getEmailFromAddress();
     }
 
+    @Deprecated
     public String getEmailLockedOutSubject() {
-        return config.getString(EMAIL_LOCKED_OUT_SUBJECT);
+        return getStaticConfig().getEmailLockedOutSubject();
     }
 
+    @Deprecated
     public String getEmailMFAEnabledSubject() {
-        return config.getString(EMAIL_MFA_ENABLED_SUBJECT);
+        return getStaticConfig().getEmailMFAEnabledSubject();
     }
 
+    @Deprecated
     public String getEmailMFADisabledSubject() {
-        return config.getString(EMAIL_MFA_DISABLED_SUBJECT);
+        return getStaticConfig().getEmailMFADisabledSubject();
     }
 
+    @Deprecated
     public String getEmailHost() {
-        return config.getString(EMAIL_HOST, LOCALHOST);
+        return getStaticConfig().getEmailHost();
     }
 
+    @Deprecated
     public boolean isSendToOnlyRackspaceAddressesEnabled() {
-        return config.getBoolean(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, true);
+        return getStaticConfig().isSendToOnlyRackspaceAddressesEnabled();
     }
 
+    @Deprecated
     public int getScopedTokenExpirationSeconds() {
-        return config.getInt(SCOPED_TOKEN_EXPIRATION_SECONDS);
+        return getStaticConfig().getScopedTokenExpirationSeconds();
     }
 
+    @Deprecated
     public String getCloudAuthClientId() {
-      return config.getString(CLOUD_AUTH_CLIENT_ID);
+        return getStaticConfig().getCloudAuthClientId();
     }
 
+    @Deprecated
     public String getIdentityUserAdminRoleName() {
-        return config.getString(IDENTITY_USER_ADMIN_ROLE_NAME_PROP);
+        return getStaticConfig().getIdentityUserAdminRoleName();
     }
 
+    @Deprecated
     public String getIdentityIdentityAdminRoleName() {
-        return config.getString(IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP);
+        return getStaticConfig().getIdentityIdentityAdminRoleName();
     }
 
+    @Deprecated
     public String getIdentityServiceAdminRoleName() {
-        return config.getString(IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP);
+        return getStaticConfig().getIdentityServiceAdminRoleName();
     }
 
+    @Deprecated
     public String getIdentityDefaultUserRoleName() {
-        return config.getString(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP);
+        return getStaticConfig().getIdentityDefaultUserRoleName();
     }
 
+    @Deprecated
     public String getIdentityUserManagerRoleName() {
-        return config.getString(IDENTITY_USER_MANAGE_ROLE_NAME_PROP);
+        return getStaticConfig().getIdentityUserManagerRoleName();
     }
 
+    @Deprecated
     public TokenFormat getIdentityProvisionedTokenFormat() {
-        return convertToTokenFormat(config.getString(IDENTITY_PROVISIONED_TOKEN_FORMAT, IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT));
+        return getStaticConfig().getIdentityProvisionedTokenFormat();
     }
 
+    @Deprecated
     public TokenFormat getIdentityRackerTokenFormat() {
-        return convertToTokenFormat(config.getString(IDENTITY_RACKER_TOKEN_FORMAT, IDENTITY_RACKER_TOKEN_FORMAT_DEFAULT));
+        return getStaticConfig().getIdentityRackerTokenFormat();
     }
 
+    @Deprecated
     public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
-        return convertToTokenFormat(config.getString(IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_VALUE));
+        return getStaticConfig().getIdentityFederatedUserDefaultTokenFormat();
     }
 
+    @Deprecated
     public TokenFormat getIdentityFederatedUserTokenFormatForIdp(String idpLabeledUri) {
-        return convertToTokenFormat(config.getString(String.format(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, idpLabeledUri), "${" + IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP + "}"));
+        return getStaticConfig().getIdentityFederatedUserTokenFormatForIdp(idpLabeledUri);
     }
 
+    @Deprecated
     public String getIdentityRackerAETokenRole() {
-        return config.getString(IDENTITY_RACKER_AE_TOKEN_ROLE, IDENTITY_RACKER_AE_TOKEN_ROLE_DEFAULT);
+        return getStaticConfig().getIdentityRackerAETokenRole();
     }
 
+    @Deprecated
     public boolean getFeatureAeTokenCleanupUuidOnRevokes() {
-        return config.getBoolean(FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_DEFAULT_VALUE);
+        return getStaticConfig().getFeatureAeTokenCleanupUuidOnRevokes();
     }
 
+    @Deprecated
     public String getKeyCzarDN() {
-        return config.getString(KEYCZAR_DN_CONFIG, KEYCZAR_DN_DEFAULT);
+        return getStaticConfig().getKeyCzarDN();
     }
 
+    @Deprecated
     public boolean getFeatureAETokensEncrypt() {
-        return config.getBoolean(FEATURE_AE_TOKENS_ENCRYPT, true);
+        return getStaticConfig().getFeatureAETokensEncrypt();
     }
 
+    @Deprecated
     public boolean getFeatureAETokensDecrypt() {
-        return getFeatureAETokensEncrypt() || config.getBoolean(FEATURE_AE_TOKENS_DECRYPT, true);
+        return getStaticConfig().getFeatureAETokensDecrypt();
     }
 
+    @Deprecated
     public boolean allowFederatedImpersonation() {
-        return config.getBoolean(FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, FEATURE_ALLOW_FEDERATED_IMPERSONATION_DEFAULT);
+        return getStaticConfig().allowFederatedImpersonation();
     }
 
+    @Deprecated
     public boolean useReloadableDocs() {
-        return config.getBoolean(FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME, FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_DEFAULT_VALUE);
+        return getStaticConfig().useReloadableDocs();
     }
 
+    @Deprecated
     public int reloadableDocsTimeOutInSeconds() {
-        return config.getInt(RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME, RELOADABLE_DOCS_CACHE_TIMEOUT_DEFAULT_VALUE);
+        return getStaticConfig().reloadableDocsTimeOutInSeconds();
+    }
+
+    @Deprecated
+    public boolean getV11AddBaseUrlExposed() {
+        return getStaticConfig().getV11AddBaseUrlExposed();
+    }
+
+    @Deprecated
+    public boolean getBaseUlrRespectEnabledFlag() {
+        return getStaticConfig().getBaseUlrRespectEnabledFlag();
     }
 
     public String getConfigRoot() {
         return System.getProperty(CONFIG_FOLDER_SYS_PROP_NAME);
     }
-
-    private TokenFormat convertToTokenFormat(String strFormat) {
-        for (TokenFormat tokenFormat : TokenFormat.values()) {
-            if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
-                return tokenFormat;
-            }
-        }
-        return TokenFormat.UUID;
-    }
-
-    public boolean getV11AddBaseUrlExposed() {
-        return config.getBoolean(EXPOSE_V11_ADD_BASE_URL_PROP, EXPOSE_V11_ADD_BASE_URL_DEFAULT);
-    }
-
-    public boolean getBaseUlrRespectEnabledFlag() {
-        return config.getBoolean(FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, FEATURE_BASE_URL_RESPECT_ENABLED_FLAG_DEFAULT);
-    }
-
 }
