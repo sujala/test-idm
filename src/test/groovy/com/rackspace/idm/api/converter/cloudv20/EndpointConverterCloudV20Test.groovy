@@ -2,6 +2,7 @@ package com.rackspace.idm.api.converter.cloudv20
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import org.dozer.DozerBeanMapper
@@ -31,8 +32,10 @@ class EndpointConverterCloudV20Test extends Specification {
             it.objFactories = new JAXBObjectFactories()
             it.mapper = new DozerBeanMapper()
             it.sf = new OpenStackServiceCatalogFactory()
+            it.identityConfig = Mock(IdentityConfig)
             return it
         }
+        converterCloudV20.identityConfig.getReloadableConfig() >> Mock(IdentityConfig.RealoadableConfig)
     }
 
     def cleanupSpec() {

@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import org.apache.commons.lang.ArrayUtils;
 import org.dozer.Mapper;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
@@ -23,6 +25,9 @@ public class EndpointConverterCloudV20 {
 
     @Autowired
     private JAXBObjectFactories objFactories;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     private OpenStackServiceCatalogFactory sf = new OpenStackServiceCatalogFactory();
 
@@ -130,8 +135,6 @@ public class EndpointConverterCloudV20 {
     
     public CloudBaseUrl toCloudBaseUrl(EndpointTemplate template) {
         CloudBaseUrl baseUrl = mapper.map(template, CloudBaseUrl.class);
-        baseUrl.setEnabled(template.isEnabled());
-        baseUrl.setGlobal(template.isGlobal());
         baseUrl.setServiceName(template.getName());
 
         if (template.getVersion() != null) {
@@ -139,16 +142,43 @@ public class EndpointConverterCloudV20 {
             baseUrl.setVersionInfo(template.getVersion().getInfo());
             baseUrl.setVersionList(template.getVersion().getList());
         }
+
+        //do not let the user set these values, they must be set through the update endpoint template call
+        baseUrl.setEnabled(false);
+        baseUrl.setGlobal(false);
+        baseUrl.setDef(false);
+
         String type = template.getType();
 
-        if (type != null) {
-            if(type.equalsIgnoreCase("object-store")){
+        if (identityConfig.getReloadableConfig().getBaseUrlUseTypeMappingFlag()) {
+            if(ignoreCaseContains(identityConfig.getReloadableConfig().getBaseUrlNastTypeMapping(), type)) {
                 baseUrl.setBaseUrlType("NAST");
-            }else{
+            } else if(ignoreCaseContains(identityConfig.getReloadableConfig().getBaseUrlMossoTypeMapping(), type)) {
                 baseUrl.setBaseUrlType("MOSSO");
+            } else {
+                baseUrl.setBaseUrlType(template.getType());
+            }
+
+        } else {
+            if (type != null) {
+                if(type.equalsIgnoreCase("object-store")){
+                    baseUrl.setBaseUrlType("NAST");
+                }else{
+                    baseUrl.setBaseUrlType("MOSSO");
+                }
             }
         }
 
         return baseUrl;
     }
+
+    private boolean ignoreCaseContains(String[] types, String type) {
+        for(String curType : types) {
+            if(curType.equalsIgnoreCase(type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
