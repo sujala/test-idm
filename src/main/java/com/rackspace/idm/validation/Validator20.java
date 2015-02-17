@@ -201,6 +201,12 @@ public class Validator20 {
         }
     }
 
+    public void validateEndpointTemplateForUpdate(EndpointTemplate endpoint) {
+        if(endpoint.isDefault() != null && endpoint.isDefault() && endpoint.isGlobal() != null && endpoint.isGlobal()) {
+            throw new BadRequestException("An endpoint template cannot be both global and default.");
+        }
+    }
+
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
     }

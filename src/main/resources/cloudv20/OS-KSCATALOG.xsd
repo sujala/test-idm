@@ -63,7 +63,7 @@
             <element vc:minVersion="1.1" ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
             <any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
         </sequence>
-        <attribute name="id" type="xsd:int" use="required">
+        <attribute name="id" type="xsd:int" use="optional">
             <annotation>
                 <xsd:documentation
                         xml:lang="EN"
@@ -74,7 +74,7 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="type" type="identity:ExtensibleServiceType" use="required">
+        <attribute name="type" type="identity:ExtensibleServiceType" use="optional">
             <annotation>
                 <xsd:documentation
                     xml:lang="EN"
@@ -107,7 +107,7 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="publicURL" type="xsd:anyURI" use="required">
+        <attribute name="publicURL" type="xsd:anyURI" use="optional">
             <annotation>
                 <xsd:documentation
                         xml:lang="EN"
@@ -140,7 +140,7 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="global" type="xsd:boolean" default="false" use="optional">
+        <attribute name="global" type="xsd:boolean" use="optional">
             <annotation>
                 <xsd:documentation
                         xml:lang="EN"
@@ -151,7 +151,7 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="enabled" type="xsd:boolean" default="true" use="optional">
+        <attribute name="enabled" type="xsd:boolean" use="optional">
             <annotation>
                 <xsd:documentation
                     xml:lang="EN"
@@ -159,6 +159,17 @@
                     <p>
                         True if the Endpoint Template is enabled (active). 
                         A Endpoint Template cannot be added if it's disabled or inactive (false). 
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="default" type="xsd:boolean" use="optional">
+            <annotation>
+                <xsd:documentation
+                        xml:lang="EN"
+                        xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        True if the Endpoint Template is a default endpoint.
                     </p>
                 </xsd:documentation>
             </annotation>

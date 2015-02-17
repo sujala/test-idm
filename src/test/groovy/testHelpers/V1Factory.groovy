@@ -187,6 +187,15 @@ class V1Factory {
         }
     }
 
+    def createEndpointTemplateForUpdate(boolean enabled, boolean global, boolean _default) {
+        new EndpointTemplate().with {
+            it.enabled = enabled
+            it.global = global
+            it.setDefault(_default)
+            return it
+        }
+    }
+
     def createEndpointTemplateList() {
         return createEndpointTemplateList(null)
     }

@@ -84,6 +84,7 @@ public class EndpointConverterCloudV20 {
         EndpointTemplate template = mapper.map(baseUrl, EndpointTemplate.class);
         template.setEnabled(baseUrl.getEnabled());
         template.setGlobal(baseUrl.getGlobal());
+        template.setDefault(baseUrl.getDef());
         template.setName(baseUrl.getServiceName());
 
         if (!StringUtils.isBlank(baseUrl.getVersionId())) {
