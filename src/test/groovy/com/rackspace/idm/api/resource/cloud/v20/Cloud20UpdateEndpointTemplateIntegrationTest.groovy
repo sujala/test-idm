@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.EndpointService
 import groovy.json.JsonSlurper
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
@@ -184,7 +185,122 @@ class Cloud20UpdateEndpointTemplateIntegrationTest extends RootIntegrationTest {
         APPLICATION_XML_TYPE | APPLICATION_JSON_TYPE
         APPLICATION_JSON_TYPE | APPLICATION_XML_TYPE
         APPLICATION_JSON_TYPE | APPLICATION_JSON_TYPE
+    }
 
+    def "cannot set 'default', 'enabled', and 'global' when creating endpoint template"() {
+        given:
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def publicUrl = testUtils.getRandomUUID("http://public/")
+        def endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD");
+        endpointForCreate.enabled = true
+        endpointForCreate.global = global
+        endpointForCreate._default = _default
+
+        when: "update the endpoint template with new values"
+        def response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), endpointForCreate)
+
+        then: "verify that the request was a success"
+        response.status == 201
+        def endpointResponse = response.getEntity(EndpointTemplate).value
+        endpointResponse.enabled == false
+        endpointResponse.global == false
+        endpointResponse._default == false
+
+        cleanup:
+        endpointService.deleteBaseUrl(endpointTemplateId)
+
+        where:
+        global | _default
+        true   | true
+        true   | false
+        false  | true
+        false  | false
+    }
+
+    def "must specify 'id', 'publicURL', 'type', and 'name' when creating endpoint template"() {
+        given:
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def publicUrl = testUtils.getRandomUUID("http://public/")
+        def endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD");
+
+        when:
+        endpointForCreate.id = null
+        def response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), endpointForCreate)
+
+        then:
+        response.status == 400
+
+        when:
+        endpointForCreate.publicURL = null
+        response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), endpointForCreate)
+
+        then:
+        response.status == 400
+
+        when:
+        endpointForCreate.type = null
+        response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), endpointForCreate)
+
+        then:
+        response.status == 400
+
+        when:
+        endpointForCreate.name = null
+        response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), endpointForCreate)
+
+        then:
+        response.status == 400
+    }
+
+    def "test endpoint template type mappings"() {
+        given:
+        def mossoType = testUtils.getRandomUUID("mosso")
+        def nastType = testUtils.getRandomUUID("nast")
+        def mossoTypeMapping = testUtils.getRandomUUID() + "," + mossoType + "," + testUtils.getRandomUUID()
+        def nastTypeMapping = testUtils.getRandomUUID() + "," + nastType + "," + testUtils.getRandomUUID()
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP, mossoTypeMapping)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP, nastTypeMapping)
+        def endpointTemplateMossoId = testUtils.getRandomInteger().toString()
+        def endpointTemplateNastId = testUtils.getRandomInteger().toString()
+        def endpointTemplateFallbackId = testUtils.getRandomInteger().toString()
+        def publicUrl = testUtils.getRandomUUID("http://public/")
+
+        when: "test MOSSO type mappings"
+        def endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateMossoId, mossoType, publicUrl, "name", false, "ORD");
+        def response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), endpointForCreate)
+        def endpointEntity = endpointService.getBaseUrlById(endpointTemplateMossoId)
+
+        then:
+        response.status == 201
+        endpointEntity.openstackType == mossoType
+        endpointEntity.baseUrlType == "MOSSO"
+
+        when: "test NAST type mappings"
+        endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateNastId, nastType, publicUrl, "name", false, "ORD");
+        response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), endpointForCreate)
+        endpointEntity = endpointService.getBaseUrlById(endpointTemplateNastId)
+
+        then:
+        response.status == 201
+        endpointEntity.openstackType == nastType
+        endpointEntity.baseUrlType == "NAST"
+
+        when: "test the fallback type mapping"
+        endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateFallbackId, testUtils.getRandomUUID(), publicUrl, "name", false, "ORD");
+        response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), endpointForCreate)
+        endpointEntity = endpointService.getBaseUrlById(endpointTemplateFallbackId)
+
+        then:
+        response.status == 201
+        endpointEntity.openstackType == endpointForCreate.type
+        endpointEntity.baseUrlType == endpointForCreate.type
+
+        cleanup:
+        endpointService.deleteBaseUrl(endpointTemplateMossoId)
+        endpointService.deleteBaseUrl(endpointTemplateNastId)
+        endpointService.deleteBaseUrl(endpointTemplateFallbackId)
+        staticIdmConfiguration.reset()
     }
 
 }

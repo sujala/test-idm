@@ -101,6 +101,11 @@ public class IdentityConfig {
     public static final String FEATURE_BASE_URL_RESPECT_ENABLED_FLAG = "feature.base.url.respect.enabled.flag";
     public static final boolean FEATURE_BASE_URL_RESPECT_ENABLED_FLAG_DEFAULT = false;
 
+    public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP = "feature.endpoint.template.type.use.config.mapping";
+    public static final boolean FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_DEFAULT = false;
+    public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP = "feature.endpoint.template.type.mosso.mapping";
+    public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP = "feature.endpoint.template.type.nast.mapping";
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -177,7 +182,7 @@ public class IdentityConfig {
      * Wrapper around the static configuration properties. Users of these properties may cache the value between requests
      * as the value of these properties will remain constant throughout the lifetime of the running application.
      */
-    private class StaticConfig {
+    public class StaticConfig {
         public String getGaUsername() {
             return staticConfiguration.getString(GA_USERNAME);
         }
@@ -309,10 +314,23 @@ public class IdentityConfig {
      * Wrapper around the reloadable configuration properties. Users of these properties must ensure that they always
      * lookup up the property each time before use and must NOT store the value of the property.
      */
-    private class RealoadableConfig {
+    public class RealoadableConfig {
         public String getTestPing() {
             return reloadableConfiguration.getString("reload.test");
         }
+
+        public boolean getBaseUrlUseTypeMappingFlag() {
+            return reloadableConfiguration.getBoolean(FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP, FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_DEFAULT);
+        }
+
+        public String[] getBaseUrlMossoTypeMapping() {
+            return reloadableConfiguration.getStringArray(FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP);
+        }
+
+        public String[] getBaseUrlNastTypeMapping() {
+            return reloadableConfiguration.getStringArray(FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP);
+        }
+
     }
 
     @Deprecated

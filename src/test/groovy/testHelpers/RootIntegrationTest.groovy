@@ -50,11 +50,13 @@ class RootIntegrationTest extends Specification {
     @Shared DevOpsMethods devops = new DevOpsMethods()
 
     @Shared SingletonConfiguration staticIdmConfiguration = SingletonConfiguration.getInstance();
+    @Shared SingletonReloadableConfiguration reloadableConfiguration = SingletonReloadableConfiguration.getInstance();
 
     def mediaTypeContext
 
     public setupSpec(){
         staticIdmConfiguration.reset()
+        reloadableConfiguration.reset()
         doSetupSpec()
         cloud20.init()
     }
@@ -64,6 +66,7 @@ class RootIntegrationTest extends Specification {
         //configuration that applies to all tests in the class
         doCleanupSpec()
         staticIdmConfiguration.reset()
+        reloadableConfiguration.reset()
     }
 
     /**

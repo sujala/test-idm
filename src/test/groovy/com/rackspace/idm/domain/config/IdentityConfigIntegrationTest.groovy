@@ -11,6 +11,7 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.SingletonConfiguration
+import testHelpers.SingletonReloadableConfiguration
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class IdentityConfigIntegrationTest  extends Specification {
@@ -34,8 +35,9 @@ class IdentityConfigIntegrationTest  extends Specification {
     def "reloadable properties exist"() {
         expect:
         config.getReloadableConfig() != null
-        ((PropertiesConfiguration) config.reloadableConfiguration).strategy instanceof FileChangedReloadingStrategy
-        ((FileChangedReloadingStrategy)((PropertiesConfiguration) config.reloadableConfiguration).strategy).refreshDelay == config.staticConfig.getReloadablePropertiesTTL() * 1000
+        config.reloadableConfiguration  instanceof SingletonReloadableConfiguration
+        config.reloadableConfiguration.idmPropertiesConfig.strategy instanceof FileChangedReloadingStrategy
+        config.reloadableConfiguration.idmPropertiesConfig.strategy.refreshDelay == config.staticConfig.getReloadablePropertiesTTL() * 1000
     }
 
     def "reloadable properties works"() {
