@@ -5,8 +5,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.MobilePhone;
+import com.rackspace.idm.domain.entity.OTPDevice;
 import com.rackspace.idm.domain.entity.User;
 
 import java.math.BigInteger;
@@ -178,4 +180,14 @@ public interface MultiFactorService {
      * multi-factor beta role, and false otherwise.
      */
     boolean isMultiFactorEnabledForUser(BaseUser user);
+
+    /**
+     * Adds an OTP device to the user.
+     */
+    OTPDevice addOTPDeviceToUser(String userId, String name);
+
+    /**
+     * Gets an OTP device from the user by id.
+     */
+    OTPDevice getOTPDeviceFromUserById(String userId, String deviceId);
 }

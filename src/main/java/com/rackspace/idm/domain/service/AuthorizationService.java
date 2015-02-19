@@ -55,7 +55,7 @@ public interface AuthorizationService {
     void verifyUserLevelAccess(ScopeAccess authScopeAccess);
     void verifySelf(User requester, User requestedUser);
     void verifyTokenHasTenantAccess(String tenantId, ScopeAccess authScopeAccess);
-    void verifyDomain(EndUser retrievedUser, EndUser caller);
+    void verifyDomain(BaseUser retrievedUser, BaseUser caller);
 
     void setConfig(Configuration config);
 
