@@ -577,6 +577,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         if (racker == null) {
             racker = new Racker();
             racker.setRackerId(username);
+            racker.setUsername(username); //set username on class
             this.userService.addRacker(racker);
             TenantRole rackerTenantRole = new TenantRole();
             rackerTenantRole.setRoleRsId(getRackerRoleRsId());

@@ -33,6 +33,17 @@ class Cloud20TokenIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
+    def "Authenticate racker"() {
+        when:
+        AuthenticateResponse auth = utils.authenticateRacker(RACKER, RACKER_PASSWORD)
+
+        then:
+        auth != null
+        auth.user != null
+        auth.user.id == RACKER
+        auth.user.name == RACKER
+    }
+
     def "Authenticate racker with no groups"() {
         when:
         def auth = utils.authenticateRacker(RACKER_NOGROUP, RACKER_NOGROUP_PASSWORD)
