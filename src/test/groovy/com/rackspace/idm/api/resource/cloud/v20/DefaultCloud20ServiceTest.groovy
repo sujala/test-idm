@@ -96,6 +96,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         tenantService.checkAndGetTenant(tenantId) >> mockedTenant
         endpointService.checkAndGetEndpointTemplate(_) >> mockedCloudBaseUrl
         scopeAccessService.getScopeAccessByAccessToken(authToken) >> mockedScopeAccess
+        endpointTemplate.getId() >> Integer.valueOf(123)
 
         when:
         def response = service.addEndpoint(null, authToken, tenantId, endpointTemplate)

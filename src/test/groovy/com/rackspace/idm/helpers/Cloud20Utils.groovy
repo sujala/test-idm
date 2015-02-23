@@ -432,7 +432,13 @@ class Cloud20Utils {
             it.enabled = enabled
             it
         }
-        createEndpointTemplate(endpointTemplate)
+        def endpointTemplateResp = createEndpointTemplate(endpointTemplate)
+
+        if(global || enabled) {
+            endpointTemplateResp = methods.updateEndpointTemplate(getServiceAdminToken(), id, endpointTemplate).getEntity(EndpointTemplate).value
+        }
+
+        return endpointTemplateResp
     }
 
     def deleteEndpointTemplate(endpointTemplate) {

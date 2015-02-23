@@ -58,7 +58,8 @@ public class OTPHelper {
     public String fromKeyToURI(byte[] key, String name) {
         try {
             final String keyUri = Base32.encode(key);
-            final URI uri = new URI("otpauth", "//totp/" + config.getOTPIssuer() + ":" + name + "?secret=" + keyUri + "&issuer=" + config.getOTPIssuer(), null);
+            final String issuer = config.getStaticConfig().getOTPIssuer();
+            final URI uri = new URI("otpauth", "//totp/" + issuer + ":" + name + "?secret=" + keyUri + "&issuer=" + issuer, null);
             return uri.toASCIIString();
         } catch (Exception e) {
             throw new ErrorCodeIdmException("OTP-002", "Error encoding URI", e);

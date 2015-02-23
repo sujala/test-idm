@@ -45,7 +45,7 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
 
 
         identityConfig = new IdentityConfig()
-        identityConfig.config = config
+        identityConfig.staticConfiguration = config
 
         identityUserService = Mock()
         userService = Mock()

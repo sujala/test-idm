@@ -296,6 +296,40 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    @Override
+    public ResponseBuilder updateEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String endpointTemplateId, EndpointTemplate endpoint) {
+        try {
+            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
+            if(endpoint.getId() != null &&  !endpointTemplateId.equals(endpoint.getId().toString())) {
+                throw new BadRequestException("Endpoint template ID in request must mach ID in the path");
+            }
+
+            validator20.validateEndpointTemplateForUpdate(endpoint);
+
+            CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
+
+            if(endpoint.isGlobal() != null) {
+                cloudBaseUrl.setGlobal(endpoint.isGlobal());
+            }
+
+            if(endpoint.isDefault() != null) {
+                cloudBaseUrl.setDef(endpoint.isDefault());
+            }
+
+            if(endpoint.isEnabled() != null) {
+                cloudBaseUrl.setEnabled(endpoint.isEnabled());
+            }
+
+            endpointService.updateBaseUrl(cloudBaseUrl);
+
+            EndpointTemplate value = this.endpointConverterCloudV20.toEndpointTemplate(cloudBaseUrl);
+            return Response.ok(objFactories.getOpenStackIdentityExtKscatalogV1Factory().createEndpointTemplate(value).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
     private void addEndpointTemplateKeystoneV3Data(CloudBaseUrl baseUrl, EndpointTemplate endpoint) {
         try {
             baseUrl.setInternalUrlId(UUID.randomUUID().toString().replaceAll("-", ""));

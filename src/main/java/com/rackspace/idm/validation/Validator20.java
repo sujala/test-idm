@@ -42,6 +42,9 @@ public class Validator20 {
     public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int MAX_GROUP_NAME = 200;
     public static final int MAX_GROUP_DESC = 1000;
+
+    private static final String ENDPOINT_TEMPLATE_REQUIRED_ATTR_MESSAGE = "'%s' is a required attribute";
+
     @Autowired
     private TenantService tenantService;
 
@@ -194,10 +197,30 @@ public class Validator20 {
     }
 
     public void validateEndpointTemplate(EndpointTemplate endpoint) {
+        //need to verify that these values are supplied due to them being optional in the schema and the use of json
+        if (endpoint.getId() == null) {
+            throwBadRequestForMissingAttr("id");
+        }
+        if (StringUtils.isBlank(endpoint.getType())) {
+            throwBadRequestForMissingAttr("type");
+        }
+        if (StringUtils.isBlank(endpoint.getPublicURL())) {
+            throwBadRequestForMissingAttr("publicURL");
+        }
         if (StringUtils.isBlank(endpoint.getName())) {
-            String errMsg = "'name' is a required attribute";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
+            throwBadRequestForMissingAttr("name");
+        }
+    }
+
+    private void throwBadRequestForMissingAttr(String attrName) {
+        String errMsg = String.format(ENDPOINT_TEMPLATE_REQUIRED_ATTR_MESSAGE, attrName);
+        logger.warn(errMsg);
+        throw new BadRequestException(errMsg);
+    }
+
+    public void validateEndpointTemplateForUpdate(EndpointTemplate endpoint) {
+        if(endpoint.isDefault() != null && endpoint.isDefault() && endpoint.isGlobal() != null && endpoint.isGlobal()) {
+            throw new BadRequestException("An endpoint template cannot be both global and default.");
         }
     }
 

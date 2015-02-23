@@ -6,13 +6,18 @@ import com.rackspace.idm.util.SystemEnvPropertyConfigurationFactory;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy;
+import org.apache.commons.configuration.reloading.InvariantReloadingStrategy;
+import org.apache.commons.configuration.reloading.ReloadingStrategy;
 import org.apache.commons.lang.StringUtils;
 import org.jasypt.encryption.StringEncryptor;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.StringPBEConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Scope;
 
 import java.io.File;
@@ -24,6 +29,10 @@ import java.io.File;
 @org.springframework.context.annotation.Configuration
 public class PropertyFileConfiguration {
     private static final String CONFIG_FILE_NAME = "idm.properties";
+
+    private static final String RELOADABLE_CONFIG_FILE_NAME = "idm.reloadable.properties";
+
+    private static final int NUM_MILLISECONDS_IN_SECOND = 1000;
 
     /**
      * The name of the system property that will be checked to determine whether or not property encryption/decryption is
@@ -38,7 +47,8 @@ public class PropertyFileConfiguration {
      * @return Configuration instance that is loaded from system defined location it exists.
      *         If the file isn't there, loads from the classpath. 
      */
-    @Bean
+    @Primary
+    @Bean(name = "staticConfiguration")
     @Scope(value = "singleton")
     public Configuration getConfig() {
     	final String externalConfigFile = System.getProperty("idm.properties.location") + "/" + CONFIG_FILE_NAME;
@@ -52,10 +62,32 @@ public class PropertyFileConfiguration {
         return readConfigFile(CONFIG_FILE_NAME);
     }
 
+    /**
+     * @return Configuration instance that is loaded from system defined location it exists.
+     *         If the file isn't there, loads from the classpath.
+     */
+    @Bean(name = "reloadableConfiguration")
+    @Scope(value = "singleton")
+    public Configuration getReloadableConfig(@Qualifier("staticConfiguration") Configuration staticConfiguration) {
+        final String externalConfigFile = System.getProperty("idm.properties.location") + "/" + RELOADABLE_CONFIG_FILE_NAME;
+        File configFile = new File(externalConfigFile);
+        String filePath = configFile.exists() ? externalConfigFile : RELOADABLE_CONFIG_FILE_NAME;
+        logger.debug(String.format("No config file found at %s. Loading from the classpath", externalConfigFile));
+
+        FileChangedReloadingStrategy strategy = new FileChangedReloadingStrategy();
+        strategy.setRefreshDelay(NUM_MILLISECONDS_IN_SECOND * staticConfiguration.getInt(IdentityConfig.PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME, IdentityConfig.PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE));
+        return readConfigFile(filePath, strategy);
+    }
+
     Configuration readConfigFile(String filePath) {
+        return readConfigFile(filePath, new InvariantReloadingStrategy());
+    }
+
+    Configuration readConfigFile(String filePath, ReloadingStrategy reloadingStrategy) {
         try {
             logger.debug(String.format("Attempting to open file %s", filePath));
             PropertiesConfiguration config = new PropertiesConfiguration();
+            config.setReloadingStrategy(reloadingStrategy);
             if (isPropertyEncryptionEnabled()) {
                 //use custom IOFactory if encryption enabled. Otherwise use default.
                 logger.debug("Config file property encryption is enabled");

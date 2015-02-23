@@ -11,7 +11,9 @@ class OTPHelperTest  extends Specification {
 
     def setupSpec() {
         otpHelper.config = Mock(IdentityConfig)
-        otpHelper.config.getOTPIssuer() >> "Rackspace"
+        def staticConfig = Mock(IdentityConfig.StaticConfig)
+        otpHelper.config.getStaticConfig() >> staticConfig
+        staticConfig.getOTPIssuer() >> "Rackspace"
     }
 
     def "test create OTP device"() {
