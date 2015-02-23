@@ -78,10 +78,13 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         when:
         def response = utils.authenticateRacker(RACKER, RACKER_PASSWORD)
         def token = response.token.id
-        utils.validateToken(token)
+        AuthenticateResponse valResponse = utils.validateToken(token)
 
         then:
         token != null
+        valResponse.user != null
+        valResponse.user.name == RACKER
+        valResponse.user.id == RACKER
     }
 
     def "Validate Impersonated user's token" () {
