@@ -7,7 +7,9 @@ import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId
+import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.RequestContextHolder
+import com.rackspace.idm.api.security.SecurityContext
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -46,6 +48,8 @@ class DefaultMultifactorCloud20Test extends Specification {
     def authorizationService
     def exceptionHandler
     def requestContextHolder
+    def requestContext
+    SecurityContext securityContext
 
     @Shared def v2Factory = new V2Factory()
 
@@ -80,6 +84,10 @@ class DefaultMultifactorCloud20Test extends Specification {
         service.authorizationService = authorizationService
         requestContextHolder = Mock(RequestContextHolder)
         service.requestContextHolder = requestContextHolder
+        requestContext = Mock(RequestContext)
+        requestContextHolder.getRequestContext() >> requestContext
+        securityContext = Mock(SecurityContext)
+        requestContext.getSecurityContext() >> securityContext
     }
 
     def "authenticateSecondFactor calls multifactor service to determine whether user has access to MFA"() {
@@ -132,7 +140,7 @@ class DefaultMultifactorCloud20Test extends Specification {
         def response = service.updateMultiFactorSettings(uriInfo, authToken, targetUser.id, settings)
 
         then:
-        1 * defaultCloud20Service.getScopeAccessForValidToken(authToken) >> token
+        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken) >> token
         1 * userService.getUserByScopeAccess(token) >> caller
         1 * requestContextHolder.checkAndGetTargetUser(_) >> targetUser
         1 * precedenceValidator.verifyCallerPrecedenceOverUser(_,_)

@@ -24,6 +24,7 @@ class OTPDeviceConverterCloudV20Test extends Specification {
         then:
         data.verified == entity.multiFactorDeviceVerified
         data.name == entity.name
+        data.id != null
         data.keyUri == null
         data.qrcode == null
     }
@@ -38,6 +39,7 @@ class OTPDeviceConverterCloudV20Test extends Specification {
         then:
         data.verified == entity.multiFactorDeviceVerified
         data.name == entity.name
+        data.id != null
         data.keyUri != null
         data.qrcode != null
     }

@@ -187,7 +187,12 @@ public interface MultiFactorService {
     OTPDevice addOTPDeviceToUser(String userId, String name);
 
     /**
-     * Gets an OTP device from the user by id.
+     * Gets checks an OTP device from the user by id.
      */
-    OTPDevice getOTPDeviceFromUserById(String userId, String deviceId);
+    OTPDevice checkAndGetOTPDeviceFromUserById(String userId, String deviceId);
+
+    /**
+     * Verifies an OTP device for the user giving the device id and the verification code.
+     */
+    void verifyOTPDeviceForUserById(String userId, String deviceId, String verificationCode);
 }

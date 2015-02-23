@@ -22,6 +22,7 @@ public class OTPDeviceConverterCloudV20 {
     public OTPDevice toOTPDeviceForWeb(com.rackspace.idm.domain.entity.OTPDevice entity) {
         final OTPDevice device = new OTPDevice();
         device.setName(entity.getName());
+        device.setId(entity.getId());
         device.setVerified(entity.getMultiFactorDeviceVerified() == null ? false : entity.getMultiFactorDeviceVerified());
         return device;
     }

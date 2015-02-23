@@ -80,6 +80,9 @@ public class IdentityConfig {
     public static final String EXPOSE_V11_ADD_BASE_URL_PROP = "feature.v11.add.base.url.exposed";
     public static final boolean EXPOSE_V11_ADD_BASE_URL_DEFAULT = true;
 
+    public static final String OTP_ISSUER = "feature.otp.issuer";
+    public static final String OTP_ISSUER_DEFAULT = "Rackspace";
+
     @Autowired
     private Configuration config;
 
@@ -234,6 +237,10 @@ public class IdentityConfig {
 
     public boolean getV11AddBaseUrlExposed() {
         return config.getBoolean(EXPOSE_V11_ADD_BASE_URL_PROP, EXPOSE_V11_ADD_BASE_URL_DEFAULT);
+    }
+
+    public String getOTPIssuer() {
+        return config.getString(OTP_ISSUER, OTP_ISSUER_DEFAULT);
     }
 
 }

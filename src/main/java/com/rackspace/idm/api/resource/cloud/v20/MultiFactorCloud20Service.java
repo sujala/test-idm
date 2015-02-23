@@ -213,4 +213,15 @@ public interface MultiFactorCloud20Service {
      */
     Response.ResponseBuilder getOTPDeviceFromUser(UriInfo uriInfo, String authToken, String userId, String deviceId);
 
+    /**
+     * Verify the code against that sent to the device via the {@link #sendVerificationCode(javax.ws.rs.core.UriInfo, String, String, String)} request
+     *
+     * @param authToken
+     * @param userId
+     * @param deviceId
+     * @param verificationCode
+     * @return
+     */
+    Response.ResponseBuilder verifyOTPCode(String authToken, String userId, String deviceId, VerificationCode verificationCode);
+
 }

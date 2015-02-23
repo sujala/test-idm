@@ -403,7 +403,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
 
         when:
         OTPDevice otpDevice = multiFactorService.addOTPDeviceToUser(finalUserAdmin.id, name)
-        OTPDevice retrieved = multiFactorService.getOTPDeviceFromUserById(finalUserAdmin.id, otpDevice.id)
+        OTPDevice retrieved = multiFactorService.checkAndGetOTPDeviceFromUserById(finalUserAdmin.id, otpDevice.id)
 
         then:
         //verify passed in object is updated with id, and name still as expected

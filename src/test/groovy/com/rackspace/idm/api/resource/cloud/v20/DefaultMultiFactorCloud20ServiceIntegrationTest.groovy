@@ -1,9 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.helpers.Cloud20Utils
+import com.rackspace.idm.util.OTPHelper
+import com.unboundid.util.Base32
+import org.apache.http.client.utils.URLEncodedUtils
 import org.junit.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -24,6 +29,9 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
 
     @Autowired
     LdapUserRepository userRepository
+
+    @Autowired
+    OTPHelper otpHelper
 
     @Unroll
     def "Get devices for user returns devices accept: #accept contentType: #contentType"() {
@@ -125,4 +133,57 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         [ accept, contentType ] << contentTypePermutations()
     }
 
+    def "Creates and OTP device and verifies it"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        when:
+        def name = "test"
+        OTPDevice request = new OTPDevice()
+        request.setName(name)
+        def device = utils.addOTPDevice(userAdminToken, userAdmin.id, request)
+
+        then:
+        device.id != null
+        device.name == name
+        device.verified == false
+        device.getKeyUri() != null
+        device.getQrcode() != null
+
+        when:
+        def secret = Base32.decode(URLEncodedUtils.parse(new URI(device.getKeyUri()), "UTF-8").find { it.name == 'secret' }.value)
+
+        then:
+        secret.length == 20
+
+        when:
+        def deviceId = device.id
+        device = utils.getOTPDevice(userAdminToken, userAdmin.id, deviceId)
+
+        then:
+        device.id == deviceId
+        device.name == name
+        device.verified == false
+        device.getKeyUri() == null
+        device.getQrcode() == null
+
+        when:
+        if ((((int) (System.currentTimeMillis() / 1000)) % 30) < 3) {
+            Thread.sleep(4000) // avoid race test on the time shift
+        }
+        def code = new VerificationCode()
+        code.setCode(otpHelper.TOTP(secret))
+        utils.verifyOTPDevice(userAdminToken, userAdmin.id, deviceId, code)
+        device = utils.getOTPDevice(userAdminToken, userAdmin.id, deviceId)
+
+        then:
+        device.verified == true
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
 }

@@ -134,4 +134,14 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.getOTPDeviceFromUser(uriInfo, authToken, userId, deviceId).build();
     }
 
+    @POST
+    @Path("otp-devices/{deviceId}/verify")
+    public Response verifyOTPCode(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            @PathParam("deviceId") String deviceId,
+            VerificationCode verificationCode) {
+        return multiFactorCloud20Service.verifyOTPCode(authToken, userId, deviceId, verificationCode).build();
+    }
+
 }
