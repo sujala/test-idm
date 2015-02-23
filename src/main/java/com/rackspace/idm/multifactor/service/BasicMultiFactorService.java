@@ -70,6 +70,9 @@ public class BasicMultiFactorService implements MultiFactorService {
     public static final String MULTI_FACTOR_STATE_ACTIVE = "ACTIVE";
     public static final String MULTI_FACTOR_STATE_LOCKED = "LOCKED";
 
+    private static final String PIN_DOES_NOT_MATCH = "Pin does not match";
+    private static final String DEVICE_ALREADY_VERIFIED = "Device already verified";
+
     private final UserMultiFactorEnforcementLevelConverter userMultiFactorEnforcementLevelConverter = new UserMultiFactorEnforcementLevelConverter();
 
     @Autowired
@@ -656,14 +659,32 @@ public class BasicMultiFactorService implements MultiFactorService {
     }
 
     @Override
-    public OTPDevice getOTPDeviceFromUserById(String userId, String deviceId) {
+    public OTPDevice checkAndGetOTPDeviceFromUserById(String userId, String deviceId) {
         Assert.notNull(userId);
         Assert.notNull(deviceId);
 
         final User user = userService.checkAndGetUserById(userId);
 
         final OTPDevice device = otpDeviceDao.getOTPDeviceByParentAndId(user, deviceId);
+        if (device == null) {
+            throw new NotFoundException("OTP device not found");
+        }
         return device;
+    }
+
+    @Override
+    public void verifyOTPDeviceForUserById(String userId, String deviceId, String verificationCode) {
+        Assert.notNull(verificationCode);
+
+        final OTPDevice device = checkAndGetOTPDeviceFromUserById(userId, deviceId);
+        if (Boolean.TRUE.equals(device.getMultiFactorDeviceVerified())) {
+            throw new MultiFactorDeviceAlreadyVerifiedException(DEVICE_ALREADY_VERIFIED);
+        } else if (otpHelper.TOTP(device.getKey()).equalsIgnoreCase(verificationCode)) {
+            device.setMultiFactorDeviceVerified(true);
+            otpDeviceDao.updateObject(device);
+        } else {
+            throw new MultiFactorDevicePinValidationException(PIN_DOES_NOT_MATCH);
+        }
     }
 
     private boolean isMultiFactorBetaEnabled() {

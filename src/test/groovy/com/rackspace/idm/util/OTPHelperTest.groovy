@@ -1,11 +1,18 @@
 package com.rackspace.idm.util
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class OTPHelperTest  extends Specification {
 
     @Shared OTPHelper otpHelper = new OTPHelper()
+
+    def setupSpec() {
+        otpHelper.config = Mock(IdentityConfig)
+        otpHelper.config.getOTPIssuer() >> "Rackspace"
+    }
 
     def "test create OTP device"() {
         when:
@@ -23,8 +30,8 @@ class OTPHelperTest  extends Specification {
         "keys are created and different from each other"
         dev1.key != null
         dev2.key != null
-        dev1.key.length == 32
-        dev2.key.length == 32
+        dev1.key.length == 20
+        dev2.key.length == 20
         Arrays.equals(dev1.key, dev2.key) == false
 
         "verified is set to false"
@@ -34,11 +41,11 @@ class OTPHelperTest  extends Specification {
 
     def "test URI generation"() {
         when:
-        def uri = otpHelper.fromKeyToURI(new byte[32], "Test 1")
+        def uri = otpHelper.fromKeyToURI(new byte[20], "Test 1")
 
         then:
         uri != null
-        uri == "otpauth://totp/Rackspace:Test%201?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&issuer=Rackspace"
+        uri == "otpauth://totp/Rackspace:Test%201?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&issuer=Rackspace"
     }
 
     def "test QR code generation"() {
@@ -47,7 +54,64 @@ class OTPHelperTest  extends Specification {
 
         then:
         qrcode != null
-        qrcode == "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAKAAQAAAAAktvSOAAAD00lEQVR42u3dO27rMBBAUQYuUmYJWoqXZi/NS/ESXLoQMk8fkjNDyUoC5BWcXDWBIPkoFUHOh0zyy1cCBAQEBAQEBAQEBAQEBAQE/H/gM+k137zJo96cP6e/l+Xld7ktT05yX374aX52BgQEDAnm+/nNRf+QqwPHNMh6Mz2ZwUmX+aYBAAEBo4HLyHGq4DLA3PNIMv1sAWU1lk8VsH4XEBDwD4B5wjE9T/NNWYPkaxp6UnI6ICDgXwBFbsnOPmTS16GnrFN+ONoAAgL2DLp1yvZn5VPz0OOmIt9b+AACAvYKuginhiq+uvlmyBQQELBTsL0285LpGvKzkhj5UbIVEBCwT/C5hiqu+U015gmH+NlHeZLyCmZ8MXwBAgLGADXJYeMWPhfynj91Wn910+nLblUVICBg92COTohNh24zoGsu5FFjn+trp70gBiAgYBjQlUfk2UeZcMj8JNUqyzY3OgACAsYFZRO69LnR0WVATUnFNZl/AhAQMBiY31ymFWt5hEY0SrizadZYwxuP42YNQEDA/kHNc+rPnL7OS6peEqUm8AEICBgOzEnPS16nLGDbrKFLk3KjlZn7hROAgIDdg03J5Vn8AuSRCyfsAFPbOMYcCAUEBAwIauhysIlSt0HE3U9SfCeXAAICBgXX1YjbFmYT0ajrlDwO3dJRPgUQEDAAqBvGlCrLx84GEQW8jL6kAhAQMDB4/vSzj48m/ZFe5kZP+80agICAEcByjWaOIU3hxDIO3Wxx9kFuFBAQMAZoO7k0WlmfPGqSw9Vjn/WfeAICAoYEXZ6zdHZuesDNADNs8qkCCAgYE3yrVddSd5drdV3BDDX2KeP+3AYQEDAMKNqymTeUcz3gJhdyqg3huiOdAAICBgS1kKq97KaUPjeqe9UNL3e5BAQE7BzUEmypb/pC6+1BGI0OCAgYFEymIqIsQIa9HnDz3aPcKCAgYASwadlMRz3guk7R3OhBVRUgIGDPoPiHaa8HPFXDncR52AMOCAjYP6h5jWSbt2w9tv/uXj4VEBAwGFhqp6TGMT+aHnDt8dLvuusMCAgYEBRfZdl2brjcqPmuLb4SQEDAgKA7X08HmO2+c644uxy2J18cvgkICNgxWPo3782GMWnv/By7t/X1qBIDEBCwf1DP23yaU3La9Iee1G3Gp+FFbhQQEDAWKHuFE03Z9t2ep/Uq2QoICBgN1DHF9ICXOKbqPlEKCAgYE7TrlGRbtEwPeDLnZchP9roHBATsFjQRTtui5XrA6zrFVma+2jwfEBAwAvh7FyAgICAgICAgICAgICAgIGAX4D+H7ZE8pWd2twAAAABJRU5ErkJggg=="
+        qrcode == "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAKAAQAAAAAktvSOAAAD3ElEQVR42u3dO5LiMBCA4d4iIOQIPgpHg6P5KByB0AFFL1ivliybpWo2cM9PsFUe8OeNVGr1w6I//BFAQEBAQEBAQEBAQEBAQEDA/wdOUj6vi/NTTqqPfCFymX98fP97Fznobb7xaW47AwICugTj9fuXL/3P+zax4EMGDd+oXt/gW5+fWwOAgIDewHnlOERQwi9vcSVJS48G4zr/8WguAAEBfwd4jhuO1/cSFpjwYwnr0GWhAwIC/gZQdZyNuPuY9Us0xwx+sdoAAgLuGbRxSjCq2+yjqq3IPwU+gICAuwWXJ5zXtC/ZuvjmyBQQEHB/4MonLDDxjkHDbSZO+TrZCggIuDMw5TXEnE7McUpIh1a7j57eW74AAQF9gGJjjiYXMhdO3Ap4iCcaZfvSraoCBAR0AJZDjPfK0c+Ahm9MFYWEoOXDqQggIOB+QQ21lJeyL7nbDUfKhcQqyzY3OgACAvoFTV6jlEeU3KjYCOZqSyoCuDwVAQQE9AHWK0epiFATmqTH5aAlP6qX/gAEBHQAxp1EKo/QUnJ5zOtQOO7MbV2m4WtYDXwAAQH3D9pmzrGsKbFZo1p6UpwSfvaw4QwgIKA7MGdAzVZkyMcbUjYpxZBYti2SUqiAgIDOwHnliLnRsNosB0TMocncrJFyo1qFM4CAgA7BFHNobslo45RD3pfEqqr0n+inPwABAb2ApqoqNXM2AyLaKsvjVm4UEBDQB6i5ZfMmiz3Gsy2srHOjh5XuD0BAQAdgs9poKaSaTFVVffb5ITcKCAjoAyy1U+3kh1I71am30q1kKyAgoANQcp4z118eTA/4xcYpYhMj6R4FBAR0CZbcaHWOWY+3t1nTdPapj62SS0BAQBdg6tca8zjrah3K0yLirPtRzEQ6BQQEdAg2nVxmoJwdSllvRSabKP3Q5gkICLhTcOp3end7wE+L5wICAnoGcxdGrq1e9oBXg++n7dwoICCgD9DkNUotpZlQWeqxzfv1mkcBAgK6A5uqqjBtsukBFzEll8OHHnBAQEA3oKbyiHpIba8eO9VfjouzT0BAQGfgZMdATIuBcvf85r3Sn1ElUdfqsQEBAXcOVp+yx6h6wNO+pPR4nVV1NTcKCAjoAZzqlWOjBzyfdeSR+CvD8wEBAX2A8dq8VXMZp1RZElOmOQACAjoGm7dm9XrAy1GFqrajZBQQENA7qOblm/XLtVb2Jf1mDUBAQH/gKG0PuOnXSlVVVZvnBAgI6BW0cYo0PeCnulK7kxsVQEBAp6A54axevnns5EbTJmVzeD4gIKAH8Oc+gICAgICAgICAgICAgICAgLsA/wLuavZ9wLhrIAAAAABJRU5ErkJggg=="
+    }
+
+    def "test HOTP keys"() {
+        given:
+        def key = "12345678901234567890".getBytes();
+        def hotp_result_vector = ["755224", "287082", "359152", "969429", "338314",
+                                  "254676", "287922", "162583", "399871", "520489"];
+
+        def key2 = new byte[32]
+        def hotp_8_result_vector = ["35328482", "30812658", "41073348", "81887919", "72320986",
+                                    "76435986", "12964213", "15267638", "12985814", "60003773"];
+
+        when: "test 6 digits"
+        def errors = []
+        for (int i=0; i<hotp_result_vector.size(); i++) {
+            def expect = hotp_result_vector[i];
+            def result = otpHelper.HOTP(key, i);
+            if (expect != result) errors.add(expect  + " != " + result)
+        }
+
+        then:
+        errors == []
+
+        when: "test 8 digits"
+        def errors2 = []
+        for (int i=0; i<hotp_8_result_vector.size(); i++) {
+            def expect = hotp_8_result_vector[i];
+            def result = otpHelper.HOTP(key2, i, 8);
+            if (expect != result) errors2.add(expect  + " != " + result)
+        }
+
+        then:
+        errors2 == []
+    }
+
+    @Unroll
+    def "test TOTP keys (digits: #digits)"() {
+        given:
+        def key = "12345678901234567890".getBytes();
+
+        when:
+        if ((((int) (System.currentTimeMillis() / 1000)) % 30) < 3) {
+            Thread.sleep(4000) // avoid race test on the time shift
+        }
+
+        def key1 = otpHelper.TOTP(key, digits)
+        def ts = (int) ((System.currentTimeMillis() / 1000) / 30) - 1
+        def key2 = otpHelper.HOTP(key, ts, digits)
+
+        then:
+        key1 == key2
+
+        where:
+        digits | _
+        6      | _
+        7      | _
+        8      | _
     }
 
 }
