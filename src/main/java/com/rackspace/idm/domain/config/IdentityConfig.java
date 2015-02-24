@@ -106,6 +106,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP = "feature.endpoint.template.type.mosso.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP = "feature.endpoint.template.type.nast.mapping";
 
+    public static final String OTP_ISSUER = "feature.otp.issuer";
+    public static final String OTP_ISSUER_DEFAULT = "Rackspace";
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -299,7 +302,6 @@ public class IdentityConfig {
             return staticConfiguration.getBoolean(FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, FEATURE_BASE_URL_RESPECT_ENABLED_FLAG_DEFAULT);
         }
 
-
         private TokenFormat convertToTokenFormat(String strFormat) {
             for (TokenFormat tokenFormat : TokenFormat.values()) {
                 if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
@@ -307,6 +309,10 @@ public class IdentityConfig {
                 }
             }
             return TokenFormat.UUID;
+        }
+
+        public String getOTPIssuer() {
+            return staticConfiguration.getString(OTP_ISSUER, OTP_ISSUER_DEFAULT);
         }
     }
 

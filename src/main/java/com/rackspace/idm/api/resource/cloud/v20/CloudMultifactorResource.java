@@ -1,9 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -115,6 +112,36 @@ public class CloudMultifactorResource {
             @PathParam("userId") String userId,
             BypassCodes bypassCodes) {
         return multiFactorCloud20Service.generateBypassCodes(uriInfo, authToken, userId, bypassCodes).build();
+    }
+
+    @POST
+    @Path("otp-devices")
+    public Response addOTPDeviceToUser(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            OTPDevice otpDevice) {
+        return multiFactorCloud20Service.addOTPDeviceToUser(uriInfo, authToken, userId, otpDevice).build();
+    }
+
+    @GET
+    @Path("otp-devices/{deviceId}")
+    public Response getOTPDeviceFromUser(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            @PathParam("deviceId") String deviceId) {
+        return multiFactorCloud20Service.getOTPDeviceFromUser(uriInfo, authToken, userId, deviceId).build();
+    }
+
+    @POST
+    @Path("otp-devices/{deviceId}/verify")
+    public Response verifyOTPCode(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            @PathParam("deviceId") String deviceId,
+            VerificationCode verificationCode) {
+        return multiFactorCloud20Service.verifyOTPCode(authToken, userId, deviceId, verificationCode).build();
     }
 
 }

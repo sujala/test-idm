@@ -192,4 +192,36 @@ public interface MultiFactorCloud20Service {
      */
     Response.ResponseBuilder updateMultiFactorDomainSettings(UriInfo uriInfo, String authToken, String domainId, MultiFactorDomain multiFactorDomain);
 
+    /**
+     * Associates the specified OTP device to the user specified by userId.
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param otpDevice
+     * @throws com.rackspace.idm.exception.ForbiddenException if the caller attempting to link to an account other than his/her own.
+     * @return
+     */
+    Response.ResponseBuilder addOTPDeviceToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice otpDevice);
+
+    /**
+     * Retrieves the OTP device associated with the user specified by userId.
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @return
+     */
+    Response.ResponseBuilder getOTPDeviceFromUser(UriInfo uriInfo, String authToken, String userId, String deviceId);
+
+    /**
+     * Verify the code against that sent to the device via the {@link #sendVerificationCode(javax.ws.rs.core.UriInfo, String, String, String)} request
+     *
+     * @param authToken
+     * @param userId
+     * @param deviceId
+     * @param verificationCode
+     * @return
+     */
+    Response.ResponseBuilder verifyOTPCode(String authToken, String userId, String deviceId, VerificationCode verificationCode);
+
 }

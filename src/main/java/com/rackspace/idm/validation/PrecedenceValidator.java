@@ -1,9 +1,6 @@
 package com.rackspace.idm.validation;
 
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -55,9 +52,12 @@ public class PrecedenceValidator {
         compareWeights(userIdentityRole.getRsWeight(), clientRole.getRsWeight());
     }
 
-    public void verifyCallerPrecedenceOverUser(User caller, EndUser user) {
-        ClientRole callerIdentityRole = applicationService.getUserIdentityRole(caller);
-        ClientRole userIdentityRole = applicationService.getUserIdentityRole(user);
+    public void verifyCallerPrecedenceOverUser(BaseUser caller, BaseUser user) {
+        if (!(caller instanceof EndUser && user instanceof EndUser)) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+        ClientRole callerIdentityRole = applicationService.getUserIdentityRole((EndUser) caller);
+        ClientRole userIdentityRole = applicationService.getUserIdentityRole((EndUser) user);
         if (callerIdentityRole != null) {
             if (userIdentityRole != null) {
                 compareWeights(callerIdentityRole.getRsWeight(), userIdentityRole.getRsWeight());

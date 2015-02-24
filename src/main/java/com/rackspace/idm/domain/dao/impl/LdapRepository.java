@@ -55,6 +55,10 @@ public abstract class LdapRepository {
 
     public static final String OBJECTCLASS_NEXT_ID = "rsNextId";
 
+    public static final String OBJECTCLASS_OTP_DEVICE = "rsOTPDevice";
+    public static final String ATTR_OTP_NAME = "rsOTPName";
+    public static final String ATTR_OTP_KEY = "rsOTPKey";
+
     public static final String OBJECTCLASS_KEY_DESCRIPTOR = "rsKeyDescriptor";
     public static final String OBJECTCLASS_KEY_METADATA = "rsKeyMetadata";
     public static final String ATTR_KEY_DATA = "rsKeyData";
@@ -62,7 +66,6 @@ public abstract class LdapRepository {
     public static final String ATTR_KEY_CREATED = "rsKeyCreated";
 
     public static final String ATTR_ID = "rsId";
-
 
     // Definitions for LDAP Attributes
     public static final String ATTR_ACCESS_TOKEN = "accessToken";
@@ -213,6 +216,7 @@ public abstract class LdapRepository {
     protected static final String CONTAINER_TOKENS = "TOKENS";
     protected static final String CONTAINER_USERS = "USERS";
     protected static final String CONTAINER_APPLICATION_ROLES = "CLIENT ROLES";
+    protected static final String CONTAINER_OTP_DEVICES = "OTPDEVICES";
 
     // Search Attributes
     protected static final String[] ATTR_DEFAULT_SEARCH_ATTRIBUTES = {"*"};

@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.sun.jersey.api.client.ClientResponse
@@ -64,6 +65,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_VERIFY = "verify"
     static def SERVICE_PATH_VERIFICATION_CODE = "verificationcode"
     static def SERVICE_PATH_BYPASS_CODES = "bypass-codes"
+    static def SERVICE_PATH_OTP_DEVICES = "otp-devices"
 
     static def ENDPOINTS = "endpoints"
 
@@ -400,6 +402,30 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId)
                 .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MOBILE_PHONES)
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(requestMobilePhone).post(ClientResponse)
+    }
+
+    def addOTPDeviceToUser(String token, String userId, OTPDevice requestOTPDevice, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_OTP_DEVICES)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString())
+                .entity(requestOTPDevice).post(ClientResponse)
+    }
+
+    def getOTPDeviceFromUser(String token, String userId, String deviceId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_OTP_DEVICES).path(deviceId)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString())
+                .get(ClientResponse)
+    }
+
+    def verifyOTPDevice(String token, String userId, String deviceId, VerificationCode verificationCode, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_OTP_DEVICES).path(deviceId).path(SERVICE_PATH_VERIFY)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString())
+                .entity(verificationCode).post(ClientResponse)
     }
 
     def listDevices(String token, String userId, MediaType accept = MediaType.APPLICATION_XML_TYPE, MediaType contentType = MediaType.APPLICATION_XML_TYPE) {

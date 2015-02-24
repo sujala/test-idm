@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
@@ -579,6 +580,23 @@ class Cloud20Utils {
         def response = methods.addPhoneToUser(token, userId, mobilePhone)
         assert(response.status == SC_CREATED)
         response.getEntity(com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone)
+    }
+
+    def addOTPDevice(token, userId, OTPDevice otpDevice) {
+        def response = methods.addOTPDeviceToUser(token, userId, otpDevice)
+        assert(response.status == SC_CREATED)
+        response.getEntity(com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice)
+    }
+
+    def getOTPDevice(token, userId, deviceId) {
+        def response = methods.getOTPDeviceFromUser(token, userId, deviceId)
+        assert(response.status == SC_OK)
+        response.getEntity(com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice)
+    }
+
+    def verifyOTPDevice(token, userId, deviceId, com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode verificationCode) {
+        def response = methods.verifyOTPDevice(token, userId, deviceId, verificationCode)
+        assert (response.status == HttpStatus.SC_NO_CONTENT)
     }
 
     def sendVerificationCodeToPhone(token, userId, mobilePhoneId) {

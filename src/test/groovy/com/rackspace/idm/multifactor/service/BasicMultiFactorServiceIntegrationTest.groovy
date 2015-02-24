@@ -4,6 +4,7 @@ import com.google.i18n.phonenumbers.Phonenumber
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
+import com.rackspace.idm.domain.entity.OTPDevice
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
@@ -387,6 +388,32 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
 
         cleanup:
         deleteUserQuietly(userAdmin)
+    }
+
+    /**
+     * This tests linking an OTP device to a user
+     *
+     * @return
+     */
+    def "Add an OTP device to a user-admin"() {
+        setup:
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+        User finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+        String name = getNormalizedRandomString()
+
+        when:
+        OTPDevice otpDevice = multiFactorService.addOTPDeviceToUser(finalUserAdmin.id, name)
+        OTPDevice retrieved = multiFactorService.checkAndGetOTPDeviceFromUserById(finalUserAdmin.id, otpDevice.id)
+
+        then:
+        //verify passed in object is updated with id, and name still as expected
+        otpDevice.getId() != null
+        otpDevice.getName() == name
+        otpDevice.getId() == retrieved.getId()
+        retrieved.getName() == name
+
+        cleanup:
+        userRepository.deleteObject(finalUserAdmin)
     }
 
 }

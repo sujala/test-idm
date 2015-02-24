@@ -96,6 +96,27 @@
     <element name="passcodeCredentials" type="RAX-AUTH:PasscodeCredentials" substitutionGroup="identity:credential" />
     <element name="bypassCodes" type="RAX-AUTH:BypassCodes"/>
     <element name="multiFactorDomain" type="RAX-AUTH:MultiFactorDomain"/>
+    <element name="otpDevice" type="RAX-AUTH:OTPDevice" >
+        <annotation>
+            <xsd:documentation>
+                <p>A OTP device capable of being used for multifactor.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
+    <element name="otpDevices" type="RAX-AUTH:OTPDevices" >
+        <annotation>
+            <xsd:documentation>
+                <p>A list of OTP devices capable of being used for multifactor.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
+    <element name="multiFactorDevices" type="RAX-AUTH:MultiFactorDevices" >
+        <annotation>
+            <xsd:documentation>
+                <p>A list of multi factor devices.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
 
     <!-- Complex Types -->
     <complexType name="AuthenticatedBy">
@@ -224,6 +245,15 @@
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
                         An enumeration indicating if user has required multifactor.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="factorType" type="RAX-AUTH:FactorTypeEnum" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Type of the second type of factor that will be required to authenticate when multi-factor is enabled.
                     </p>
                 </xsd:documentation>
             </annotation>
@@ -708,6 +738,13 @@
         </restriction>
     </simpleType>
 
+    <simpleType name="FactorTypeEnum">
+        <restriction base="xsd:string">
+            <enumeration value="SMS"/>
+            <enumeration value="PASSCODE"/>
+        </restriction>
+    </simpleType>
+
     <complexType name="BypassCodes">
         <attribute name="codes" type="RAX-AUTH:StringList" use="optional">
             <annotation>
@@ -784,6 +821,65 @@
         <attribute name="created" type="xsd:dateTime" use="optional" />
         <attribute name="version" type="xsd:int" use="required" />
         <attribute name="status" type="RAX-AUTH:KeyVersionStatusEnum" use="required" />
+    </complexType>
+
+    <complexType name="OTPDevice">
+        <complexContent>
+            <extension base="RAX-AUTH:MultiFactorDevice">
+                <attribute name="verified" type="xsd:boolean">
+                    <annotation>
+                        <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                            <p>
+                                Whether the device has been verified for the associated user.
+                            </p>
+                        </xsd:documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="name" type="xsd:string" use="optional">
+                    <annotation>
+                        <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                            <p>
+                                Name for the OTP device.
+                            </p>
+                        </xsd:documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="keyUri" type="xsd:anyURI" use="optional">
+                    <annotation>
+                        <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                            <p>
+                                Key URI for the OTP device (compatible with Google Authenticator KeyUriFormat
+                                - https://code.google.com/p/google-authenticator/wiki/KeyUriFormat).
+                            </p>
+                        </xsd:documentation>
+                    </annotation>
+                </attribute>
+                <attribute name="qrcode" type="xsd:anyURI" use="optional">
+                    <annotation>
+                        <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                            <p>
+                                QR Code for key URI for the OTP device.
+                            </p>
+                        </xsd:documentation>
+                    </annotation>
+                </attribute>
+            </extension>
+        </complexContent>
+    </complexType>
+
+    <complexType name="OTPDevices">
+        <sequence>
+            <element ref="RAX-AUTH:otpDevice" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+
+    <complexType name="MultiFactorDevices">
+        <sequence>
+            <element ref="RAX-AUTH:mobilePhone" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="RAX-AUTH:otpDevice" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+        <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
 
 </schema>

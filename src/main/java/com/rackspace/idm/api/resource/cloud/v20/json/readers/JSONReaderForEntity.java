@@ -21,7 +21,7 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.HashMap;
+import java.util.Map;
 
 public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
 
@@ -40,7 +40,7 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
         return read(entityStream, rootValue, null);
     }
 
-    protected T read(InputStream entityStream, String rootValue, HashMap prefixValues) {
+    protected T read(InputStream entityStream, String rootValue, Map prefixValues) {
         try {
 
             String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);

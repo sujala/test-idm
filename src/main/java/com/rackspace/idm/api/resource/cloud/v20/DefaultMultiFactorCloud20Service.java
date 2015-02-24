@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice;
 import com.rackspace.identity.multifactor.domain.BasicPin;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason;
@@ -10,6 +11,7 @@ import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutEx
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.OTPDeviceConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
@@ -18,9 +20,9 @@ import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
-import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
@@ -85,6 +87,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     public static final String BYPASS_MAXIMUM_DURATION = "multifactor.bypass.maximum.duration.seconds";
     public static final String BYPASS_DEFAULT_DURATION = "multifactor.bypass.default.duration.seconds";
 
+    private static final String ERROR_VERIFYING_CODE_FOR_DEVICE = "Error verifying code for device '%s'";
+
     /*
     Used for convenience only. TODO:// Refactor cloud20 service to extract common code.
      */
@@ -116,6 +120,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     private MobilePhoneConverterCloudV20 mobilePhoneConverterCloudV20;
 
     @Autowired
+    private OTPDeviceConverterCloudV20 otpDeviceConverterCloudV20;
+
+    @Autowired
     private JAXBObjectFactories objFactories;
 
     @Autowired
@@ -142,11 +149,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Autowired
     private IdentityUserService identityUserService;
 
-    private boolean isSelfCall(User caller, User user) {
+    private boolean isSelfCall(BaseUser caller, BaseUser user) {
         return caller.getId().equals(user.getId());
     }
 
-    private void verifyAccessToOtherUser(ScopeAccess token, User requester, User user) {
+    private void verifyAccessToOtherUser(ScopeAccess token, BaseUser requester, BaseUser user) {
         if (!isSelfCall(requester, user)) {
             precedenceValidator.verifyCallerPrecedenceOverUser(requester, user);
             if (authorizationService.authorizeCloudUserAdmin(token) || authorizationService.authorizeUserManageRole(token)) {
@@ -158,7 +165,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder addPhoneToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone) {
         try {
-            ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
 
             User user = requestContextHolder.checkAndGetTargetUser(userId);
@@ -184,7 +191,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder sendVerificationCode(UriInfo uriInfo, String authToken, String userId, String deviceId) {
         try {
-            ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
             User user = requestContextHolder.checkAndGetTargetUser(userId);
 
@@ -210,7 +217,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder verifyVerificationCode(UriInfo uriInfo, String authToken, String userId, String deviceId, VerificationCode verificationCode) {
         try {
-            ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
             User user = requestContextHolder.checkAndGetTargetUser(userId);
             verifyAccessToOtherUser(token, requester, user);
@@ -233,7 +240,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder updateMultiFactorSettings(UriInfo uriInfo, String authToken, String userId, MultiFactor multiFactor) {
         try {
-            ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken); //will throw NotAuthorizedException if not found or expired
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken); //will throw NotAuthorizedException if not found or expired
             User requester = (User) userService.getUserByScopeAccess(token); //will throw NotFoundException if not found
             User user = requestContextHolder.checkAndGetTargetUser(userId); //will throw NotFoundException if not found
 
@@ -251,7 +258,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder deleteMultiFactor(UriInfo uriInfo, String authToken, String userId) {
         try {
-            ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
 
             User user = requestContextHolder.checkAndGetTargetUser(userId);
@@ -397,9 +404,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Override
     public Response.ResponseBuilder listDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
-
         try {
-            ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
             User user = requestContextHolder.checkAndGetTargetUser(userId);
             verifyAccessToOtherUser(token, requester, user);
@@ -419,7 +425,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     public Response.ResponseBuilder generateBypassCodes(UriInfo uriInfo, String authToken, String userId, BypassCodes bypassCodes) {
         try {
             final User user = (User)requestContextHolder.getTargetEndUser(userId);
-            final ScopeAccess token = cloud20Service.getScopeAccessForValidToken(authToken);
+            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             final User requester = (User) userService.getUserByScopeAccess(token);
 
             validateGenerateBypassCodesRequest(authToken, user, token, requester);
@@ -487,6 +493,72 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             return Response.noContent();
         } catch (Exception ex) {
             LOG.error(String.format("Error changing multi-factor settings on domain '%s'", domainId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder addOTPDeviceToUser(UriInfo uriInfo, String authToken, String userId, OTPDevice otpDevice) {
+        try {
+            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            final BaseUser requester = userService.getUserByScopeAccess(token);
+
+            final User user = requestContextHolder.checkAndGetTargetUser(userId);
+            verifyAccessToOtherUser(token, requester, user);
+
+            final com.rackspace.idm.domain.entity.OTPDevice entity = multiFactorService.addOTPDeviceToUser(userId, otpDevice.getName());
+
+            final UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            final String id = entity.getId();
+            final URI build = requestUriBuilder.path(id).build();
+            final Response.ResponseBuilder response = Response.created(build);
+
+            response.entity(otpDeviceConverterCloudV20.toOTPDeviceForCreate(entity));
+            return response;
+        } catch (Exception ex) {
+            LOG.error(String.format("Error adding an OTP device to user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder getOTPDeviceFromUser(UriInfo uriInfo, String authToken, String userId, String deviceId) {
+        try {
+            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            final BaseUser requester = userService.getUserByScopeAccess(token);
+            User user = requestContextHolder.checkAndGetTargetUser(userId);
+            verifyAccessToOtherUser(token, requester, user);
+
+            final com.rackspace.idm.domain.entity.OTPDevice entity = multiFactorService.checkAndGetOTPDeviceFromUserById(userId, deviceId);
+            return Response.ok().entity(otpDeviceConverterCloudV20.toOTPDeviceForWeb(entity));
+        } catch (IllegalStateException ex) {
+            return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
+        } catch (Exception ex) {
+            LOG.error(String.format("Error retrieving device on user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder verifyOTPCode(String authToken, String userId, String deviceId, VerificationCode verificationCode) {
+        try {
+            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            final User requester = (User) userService.getUserByScopeAccess(token);
+            final User user = requestContextHolder.checkAndGetTargetUser(userId);
+            verifyAccessToOtherUser(token, requester, user);
+
+            validateVerifyRequest(deviceId, verificationCode);
+            multiFactorService.verifyOTPDeviceForUserById(userId, deviceId, verificationCode.getCode());
+
+            return Response.status(Response.Status.NO_CONTENT);
+        } catch (MultiFactorDeviceAlreadyVerifiedException ex) {
+            return exceptionHandler.badRequestExceptionResponse(BAD_REQUEST_MSG_ALREADY_VERIFIED);
+        } catch (MultiFactorDevicePinValidationException ex) {
+            return exceptionHandler.badRequestExceptionResponse(BAD_REQUEST_MSG_INVALID_PIN_OR_EXPIRED);
+        } catch (NotFoundException ex) {
+            return exceptionHandler.notFoundExceptionResponse(ex.getMessage());
+        } catch (Exception ex) {
+            LOG.error(String.format(ERROR_VERIFYING_CODE_FOR_DEVICE, deviceId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }
@@ -608,7 +680,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
-    private void validateVerifyVerificationCodeRequest(User requester, User targetUser, String userId, String deviceId, VerificationCode verificationCode) {
+    private void validateVerifyRequest(String deviceId, VerificationCode verificationCode) {
         if (StringUtils.isBlank(deviceId)) {
             LOG.debug(BAD_REQUEST_MSG_INVALID_DEVICE); //logged as debug because this is a bad request, not an error in app
             throw new BadRequestException(BAD_REQUEST_MSG_INVALID_DEVICE);
@@ -617,7 +689,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             LOG.debug(BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE); //logged as debug because this is a bad request, not an error in app
             throw new BadRequestException(BAD_REQUEST_MSG_MISSING_VERIFICATION_CODE);
         }
-        else if (targetUser.getMultiFactorMobilePhoneRsId() == null || !targetUser.getMultiFactorMobilePhoneRsId().equals(deviceId)) {
+    }
+
+    private void validateVerifyVerificationCodeRequest(User requester, User targetUser, String userId, String deviceId, VerificationCode verificationCode) {
+        validateVerifyRequest(deviceId, verificationCode);
+        if (targetUser.getMultiFactorMobilePhoneRsId() == null || !targetUser.getMultiFactorMobilePhoneRsId().equals(deviceId)) {
             LOG.debug(BAD_REQUEST_MSG_INVALID_DEVICE); //logged as debug because this is a bad request, not an error in app
             throw new NotFoundException(BAD_REQUEST_MSG_INVALID_DEVICE);
         }
