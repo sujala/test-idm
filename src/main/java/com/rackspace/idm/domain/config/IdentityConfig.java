@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.config;
 
 import com.rackspace.idm.domain.security.TokenFormat;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,6 +91,7 @@ public class IdentityConfig {
     private static final boolean OPTIONAL = false;
     private static final String PROPERTY_SET_MESSAGE = "Configuration Property '%s' set with value '%s'";
     private static final String PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is NOT set but is required";
+    private static final String INVALID_PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is invalid";
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityConfig.class);
 
@@ -111,6 +113,9 @@ public class IdentityConfig {
 
     public static final String OTP_ENTROPY = "feature.otp.entropy";
     public static final int OTP_ENTROPY_DEFAULT = 25;
+
+    public static final String FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP = "feature.user.disabled.by.tenants.enabled";
+    public static final boolean FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT = false;
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -347,6 +352,16 @@ public class IdentityConfig {
                 return OTP_ENTROPY_DEFAULT;
             }
         }
+
+        public boolean getFeatureUserDisabledByTenantsEnabled() {
+            try {
+                return reloadableConfiguration.getBoolean(FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT);
+            } catch (ConversionException e) {
+                logger.error(String.format(PROPERTY_ERROR_MESSAGE, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP));
+                return FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT;
+            }
+        }
+
     }
 
     @Deprecated

@@ -5,10 +5,7 @@ import com.rackspace.idm.api.resource.cloud.CloudClient;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspacecloud.docs.auth.api.v1.Endpoint;
@@ -50,6 +47,7 @@ public class Cloud10VersionResourceTest {
     TenantService tenantService;
     MultiFactorCloud20Service multiFactorCloud20Service;
     AuthWithApiKeyCredentials authWithApiKeyCredentials;
+    AuthorizationService authorizationService;
 
     @Before
     public void setUp() throws Exception {
@@ -62,7 +60,8 @@ public class Cloud10VersionResourceTest {
         userService = mock(UserService.class);
         multiFactorCloud20Service = mock(MultiFactorCloud20Service.class);
         authWithApiKeyCredentials = mock(AuthWithApiKeyCredentials.class);
-        cloud10VersionResource = new Cloud10VersionResource(config, scopeAccessService, endpointConverterCloudV11, userService, multiFactorCloud20Service, authWithApiKeyCredentials);
+        authorizationService = mock(AuthorizationService.class);
+        cloud10VersionResource = new Cloud10VersionResource(config, scopeAccessService, endpointConverterCloudV11, userService, multiFactorCloud20Service, authWithApiKeyCredentials, tenantService, authorizationService);
     }
 
     @Test

@@ -1119,7 +1119,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, EndUser user, AuthenticationRequest authenticationRequest) {
         AuthenticateResponse auth;
-        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess);
+
+        //create empty service catalog if all the tenats for the user are disabled
+        List<OpenstackEndpoint> endpoints;
+        if (userService.userDisabledByTenants(user)) {
+            endpoints = new ArrayList<OpenstackEndpoint>();
+        } else {
+            endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess);
+        }
+
         // Remove Admin URLs if non admin token
         if (!this.authorizationService.authorizeCloudServiceAdmin(userScopeAccess)) {
             stripEndpoints(endpoints);

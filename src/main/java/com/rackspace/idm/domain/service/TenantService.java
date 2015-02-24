@@ -73,6 +73,17 @@ public interface TenantService {
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
     List<Tenant> getTenantsForUserByTenantRoles(BaseUser user);
 
+    /**
+     * Returns TRUE if the user matches the following criteria:
+     * - The user does not have any tenants
+     * - The user has AT LEAST ONE enabled tenant
+     * Returns FALSE in all other cases (all tenants on the user are disable)
+     *
+     * @param user the user to check tenants for
+     *
+     */
+    boolean allTenantsDisabledForUser(BaseUser user);
+
     boolean hasTenantAccess(EndUser user, String tenantId);
     PaginatorContext<User> getUsersForTenant(String tenantId, int offset, int limit);
     PaginatorContext<User> getUsersWithTenantRole(Tenant tenant, ClientRole role, int offset, int limit);

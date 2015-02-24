@@ -173,4 +173,16 @@ public interface UserService {
     void validateUserIsEnabled(User user);
 
     void checkUserDisabled(BaseUser user);
+
+    /**
+     * Checks that a user should be considered disabled based on the enabled state of the user's assigned tenants.
+     * Returns TRUE if the user should be considered disabled by meeting the following criteria:
+     * - The user has AT LEAST ONE tenant
+     * - ALL tenants on the user are disabled
+     * - The user is a user admin or below level of access
+     *
+     * @param user
+     * @return TRUE if a user should be considered disabled based on the state of their tenants
+     */
+    boolean userDisabledByTenants(EndUser user);
 }

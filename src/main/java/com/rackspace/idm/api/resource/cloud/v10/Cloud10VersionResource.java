@@ -1,14 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v10;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.User;
-import com.rackspace.idm.domain.entity.UserAuthenticationResult;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
@@ -72,6 +69,8 @@ public class Cloud10VersionResource {
     private final UserService userService;
     private final MultiFactorCloud20Service multiFactorCloud20Service;
     private final AuthWithApiKeyCredentials authWithApiKeyCredentials;
+    private final TenantService tenantService;
+    private final AuthorizationService authorizationService;
 
     @Autowired
     public Cloud10VersionResource(Configuration config,
@@ -79,13 +78,17 @@ public class Cloud10VersionResource {
         EndpointConverterCloudV11 endpointConverterCloudV11,
         UserService userService,
         MultiFactorCloud20Service multiFactorCloud20Service,
-        AuthWithApiKeyCredentials authWithApiKeyCredentials) {
+        AuthWithApiKeyCredentials authWithApiKeyCredentials,
+        TenantService tenantService,
+        AuthorizationService authorizationService) {
         this.config = config;
         this.scopeAccessService = scopeAccessService;
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
         this.userService = userService;
         this.multiFactorCloud20Service = multiFactorCloud20Service;
         this.authWithApiKeyCredentials = authWithApiKeyCredentials;
+        this.tenantService = tenantService;
+        this.authorizationService = authorizationService;
     }
 
     @GET
@@ -114,6 +117,9 @@ public class Cloud10VersionResource {
 
         try {
             UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
+            if(userService.userDisabledByTenants(user)) {
+                throw new ForbiddenException(GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE);
+            }
             List<OpenstackEndpoint> endpointlist = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
             ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(endpointlist);

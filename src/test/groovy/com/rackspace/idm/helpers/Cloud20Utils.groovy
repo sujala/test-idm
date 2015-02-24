@@ -424,6 +424,17 @@ class Cloud20Utils {
         response.getEntity(EndpointTemplate).value
     }
 
+    def updateEndpointTemplate(EndpointTemplate endpointTemplate, String endpointId) {
+        def response = methods.updateEndpointTemplate(getServiceAdminToken(), endpointId, endpointTemplate)
+        assert (response.status == SC_OK)
+        response.getEntity(EndpointTemplate).value
+    }
+
+    def createAndUpdateEndpointTemplate(EndpointTemplate endpointTemplate, String endpointId) {
+        createEndpointTemplate(endpointTemplate)
+        updateEndpointTemplate(endpointTemplate, endpointId)
+    }
+
     def createEndpointTemplate(global=false, tenantAlias=null, enabled=true, type="compute", region="ORD", id=testUtils.getRandomIntegerString(), publicUrl=testUtils.getRandomUUID("http://"), name=testUtils.getRandomUUID("name")) {
         def endpointTemplate =v1Factory.createEndpointTemplate(id, type, publicUrl, name).with {
             it.global = global
@@ -657,6 +668,14 @@ class Cloud20Utils {
 
     def getTenant(String tenantId) {
         def response = methods.getTenant(getServiceAdminToken(), tenantId)
+        assert (response.status == SC_OK)
+        response.getEntity(Tenant).value
+    }
+
+    def updateTenant(String tenantId, boolean enabled) {
+        def tenant = getTenant(tenantId)
+        tenant.enabled = enabled
+        def response = methods.updateTenant(getServiceAdminToken(), tenantId, tenant)
         assert (response.status == SC_OK)
         response.getEntity(Tenant).value
     }
