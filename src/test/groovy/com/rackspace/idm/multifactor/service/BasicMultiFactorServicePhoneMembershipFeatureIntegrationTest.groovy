@@ -8,23 +8,15 @@ import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
-import com.rackspace.identity.multifactor.domain.BasicPin
-import com.rackspace.identity.multifactor.domain.Pin
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
-import org.apache.commons.configuration.Configuration
-import org.apache.commons.lang.StringUtils
-import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
-import spock.lang.Shared
 
 /**
  * Tests the multi-factor service with the exception of the MobilePhoneVerification dependency. The production class will sends texts through Duo Security, which
  * costs money per text. This is NOT desirable for a regression test that will continually run. Instead a simulated service is injected that will return a constant
  * PIN. Actually testing SMS texts should be performed via some other mechanism - in a manual fashion.
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootConcurrentIntegrationTest {
+
     @Autowired
     private BasicMultiFactorService multiFactorService;
 
@@ -34,22 +26,6 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
     @Autowired
     private LdapUserRepository userRepository;
 
-    @Autowired
-    private Configuration globalConfig;
-
-    @Autowired
-    private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification
-
-    @Shared private boolean initialFeatureState = false;
-
-    public setup() {
-       initialFeatureState = multiFactorService.isPhoneUserMembershipEnabled()
-    }
-
-    public cleanup() {
-        globalConfig.setProperty(BasicMultiFactorService.CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, initialFeatureState);
-    }
-
     /**
      * This tests when feature is disabled
      *
@@ -57,7 +33,7 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
      */
     def "Add a phone to a user-admin without phone membership"() {
         setup:
-        globalConfig.setProperty(BasicMultiFactorService.CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, false);
+        staticIdmConfiguration.setProperty(BasicMultiFactorService.CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, false);
         assert !multiFactorService.isPhoneUserMembershipEnabled()
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
 
@@ -88,7 +64,7 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
      */
     def "Add a phone to a user-admin with phone membership"() {
         setup:
-        globalConfig.setProperty(BasicMultiFactorService.CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, true);
+        staticIdmConfiguration.setProperty(BasicMultiFactorService.CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, true);
         assert multiFactorService.isPhoneUserMembershipEnabled()
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
 
@@ -120,7 +96,7 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
      */
     def "Remove multifactor from a user-admin with phone membership enabled"() {
         setup:
-        globalConfig.setProperty(BasicMultiFactorService.CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, true);
+        staticIdmConfiguration.setProperty(BasicMultiFactorService.CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, true);
         assert multiFactorService.isPhoneUserMembershipEnabled()
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
 
@@ -147,7 +123,7 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
      */
     def "Remove multifactor from phone with multiple users with phone membership enabled"() {
         setup:
-        globalConfig.setProperty(BasicMultiFactorService.CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, true);
+        staticIdmConfiguration.setProperty(BasicMultiFactorService.CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, true);
         assert multiFactorService.isPhoneUserMembershipEnabled()
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
         org.openstack.docs.identity.api.v2.User userAdmin2OpenStack = createUserAdmin()

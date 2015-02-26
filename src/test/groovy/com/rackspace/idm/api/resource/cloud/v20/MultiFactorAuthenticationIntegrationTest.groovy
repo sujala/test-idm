@@ -3,18 +3,12 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.Constants
-import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter
-import com.rackspace.idm.domain.dao.UserDao
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
-import com.rackspace.idm.multifactor.providers.simulator.SimulatedMultiFactorAuthenticationService
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.util.OTPHelper
 import com.unboundid.util.Base32
-import org.apache.commons.configuration.Configuration
 import org.apache.http.client.utils.URLEncodedUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
@@ -33,36 +27,17 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
  * in the classpath.
  */
 @ContextConfiguration(locations = ["classpath:app-config.xml"
-, "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"
-, "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"
-, "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatedMultiFactorAuthenticationService-context.xml"])
+, "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegrationTest {
-    @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository
 
     @Autowired
     private LdapUserRepository userRepository
 
     @Autowired
-    private Configuration globalConfig;
-
-    @Autowired
-    private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification
-
-    @Autowired
-    private SimulatedMultiFactorAuthenticationService simulatedMultiFactorAuthenticationService
-
-    @Autowired
     private BasicMultiFactorService multiFactorService
 
     @Autowired
-    private EncryptedSessionIdReaderWriter encryptedSessionIdReaderWriter;
-
-    @Autowired
     private DefaultMultiFactorCloud20Service defaultMultiFactorCloud20Service;
-
-    @Autowired
-    private UserDao userDao
 
     @Autowired
     private OTPHelper otpHelper
@@ -70,8 +45,11 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
     org.openstack.docs.identity.api.v2.User userAdmin
     String userAdminToken
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone
-    VerificationCode constantVerificationCode
     OTPDevice responseOTP
+    def constantVerificationCode = new VerificationCode().with {
+        it.code = Constants.MFA_DEFAULT_PIN
+        it
+    }
 
     /**
      * Override the grizzly start because we want to add additional context file.
@@ -82,8 +60,6 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
         resource.exists()
         this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatedMultiFactorAuthenticationService-context.xml " +
                 "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
     }
 
@@ -100,7 +76,6 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
     def setup() {
         userAdmin = createUserAdmin()
         userAdminToken = authenticate(userAdmin.username)
-        simulatedMultiFactorAuthenticationService.clearSmsPasscodeLog()
     }
 
     def cleanup() {
@@ -211,7 +186,7 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         if (phone) {
             setUpMultiFactorWithUnverifiedPhone()
             utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
-            constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+            constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN);
             utils.verifyPhone(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
         } else {
             setUpOTPDevice()

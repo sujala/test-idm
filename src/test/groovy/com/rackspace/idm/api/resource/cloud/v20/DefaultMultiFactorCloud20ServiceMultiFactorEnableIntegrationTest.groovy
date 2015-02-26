@@ -3,7 +3,10 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
@@ -11,13 +14,13 @@ import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
+import org.mockito.Mockito
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,23 +34,14 @@ import javax.ws.rs.core.MediaType
 import javax.xml.datatype.DatatypeFactory
 
 import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
-@ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired
     private LdapMobilePhoneRepository mobilePhoneRepository;
 
     @Autowired
     private LdapUserRepository userRepository;
-
-    @Autowired
-    private Configuration globalConfig;
-
-    @Autowired
-    private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
 
     @Autowired
     private BasicMultiFactorService multiFactorService;
@@ -78,20 +72,6 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
     org.openstack.docs.identity.api.v2.User defaultUser;
     String defaultUserToken;
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone defaultUserResponsePhone;
-
-    /**
-     * Override the grizzly start because we want to add another context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec() {
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml")
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly();
-    }
 
     /**
      * Sets up a new user
@@ -440,13 +420,13 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
     def void addPhone() {
         responsePhone = utils.addPhone(userAdminToken, userAdmin.id)
         utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
-        constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+        constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN);
     }
 
     def void addDefaultUserPhone() {
         defaultUserResponsePhone = utils.addPhone(defaultUserToken, defaultUser.id)
         utils.sendVerificationCodeToPhone(defaultUserToken, defaultUser.id, defaultUserResponsePhone.id)
-        constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin)
+        constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN)
     }
 
     def void verifyPhone() {
@@ -508,12 +488,16 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         codes.size() == 1
 
         when: "use bypass code"
+        def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
+        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify1 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "it allow auth"
         verify1.decision == MfaAuthenticationDecision.ALLOW
 
         when: "use bypass code twice"
+        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, "Incorrect passcode. Please try again.", null)
+        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify2 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "get denied"
@@ -565,12 +549,16 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         codes.size() == 2
 
         when: "use bypass code (1)"
+        def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
+        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify1 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "it allow auth"
         verify1.decision == MfaAuthenticationDecision.ALLOW
 
         when: "use bypass code (1) twice"
+        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, "Incorrect passcode. Please try again.", null)
+        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify2 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "get denied"
@@ -578,12 +566,16 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         verify2.message == "Incorrect passcode. Please try again."
 
         when: "use bypass code (2)"
+        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, "Incorrect passcode. Please try again.", null)
+        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify3 = multiFactorService.verifyPasscode(defaultUser.id, codes[1])
 
         then: "it allow auth"
         verify3.decision == MfaAuthenticationDecision.ALLOW
 
         when: "use bypass code (2) twice"
+        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, "Incorrect passcode. Please try again.", null)
+        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify4 = multiFactorService.verifyPasscode(defaultUser.id, codes[1])
 
         then: "get denied"
@@ -613,12 +605,17 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         codes.size() == 1
 
         when: "use bypass code"
+        def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
+        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify1 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "it allow auth"
         verify1.decision == MfaAuthenticationDecision.ALLOW
 
         when: "use bypass code twice"
+        mockMultiFactorAuthenticationService.reset()
+        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, "Incorrect passcode. Please try again.", null)
+        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify2 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "get denied"

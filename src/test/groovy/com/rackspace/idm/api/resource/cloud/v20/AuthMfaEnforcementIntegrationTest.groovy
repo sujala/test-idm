@@ -12,12 +12,9 @@ import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
 
 import static com.rackspace.idm.Constants.*
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static org.apache.http.HttpStatus.SC_FORBIDDEN
 import static org.apache.http.HttpStatus.SC_OK
 
-@ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class AuthMfaEnforcementIntegrationTest extends RootIntegrationTest {
 
     def static OFF_SETTINGS_FILE = "classpath:com/rackspace/idm/multifactor/config/MultifactorFeatureFlagOff.xml"
@@ -30,20 +27,6 @@ class AuthMfaEnforcementIntegrationTest extends RootIntegrationTest {
 
     @Autowired LdapUserRepository userRepository
     @Autowired LdapDomainRepository domainRepository
-
-    /**
-     * Override the grizzly start because we want to add another context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec(){
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml")
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly();
-    }
 
     def "If Mulit-Factor is not enabled for a user then normal auth is allowed"() {
         given:

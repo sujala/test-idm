@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
+import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapDomainRepository
@@ -9,17 +10,13 @@ import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.RoleService
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
 
 import static com.rackspace.idm.Constants.*
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static org.apache.http.HttpStatus.SC_ACCEPTED
 import static org.apache.http.HttpStatus.SC_CREATED
 import static org.apache.http.HttpStatus.SC_FORBIDDEN
@@ -27,7 +24,6 @@ import static org.apache.http.HttpStatus.SC_NOT_FOUND
 import static org.apache.http.HttpStatus.SC_NO_CONTENT
 import static org.apache.http.HttpStatus.SC_OK
 
-@ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
 
     def static OFF_SETTINGS_FILE = "classpath:com/rackspace/idm/multifactor/config/MultifactorFeatureFlagOff.xml"
@@ -39,24 +35,9 @@ class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
     ScopeAccessDao scopeAccessRepository
 
     @Autowired LdapUserRepository userRepository
-    @Autowired SimulatorMobilePhoneVerification simulatorMobilePhoneVerification
     @Autowired LdapDomainRepository domainRepository
     @Autowired RoleService roleService
     @Autowired Configuration config
-
-    /**
-     * Override the grizzly start because we want to add another context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec(){
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml")
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly();
-    }
 
     def "Auth by password with scope creates ScopeAccess with scope separate from regular scopeAccess"() {
         given:
@@ -269,7 +250,7 @@ class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
         def entity = response.getEntity(AuthenticateResponse).value
         assert (entity != null)
         com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone requestMobilePhone = v2Factory.createMobilePhone();
-        def constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin)
+        def constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN)
 
         when:
         def AddPhoneResponse = cloud20.addPhoneToUser(entity.token.id, userAdmin.id, requestMobilePhone)

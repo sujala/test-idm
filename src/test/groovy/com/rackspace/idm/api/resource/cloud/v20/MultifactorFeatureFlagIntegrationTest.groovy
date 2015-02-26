@@ -1,11 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,9 +16,6 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 
 import javax.ws.rs.core.MediaType
-
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
 /**
  * Tests the multifactor feature and beta flags. In order to accomplish this, the grizzly container must
@@ -34,8 +33,6 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
  * These settings are configured using a Spring BeanPostProcessor that overrides these settings from their
  * default values.
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml",
-    "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTest {
 
     def static OFF_SETTINGS_FILE = "classpath:com/rackspace/idm/multifactor/config/MultifactorFeatureFlagOff.xml"
@@ -48,8 +45,6 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
 
     @Autowired Configuration config
 
-    @Autowired SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
-
     @Autowired ScopeAccessService scopeAccessService
 
     @Autowired
@@ -58,13 +53,9 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
 
     @Autowired RoleService roleService
 
-    def void doSetupSpec() {
-        startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml ")
-    }
-
-    def void doCleanupSpec() {
-        stopGrizzly()
+    def constantVerificationCode = new VerificationCode().with {
+        it.code = Constants.MFA_DEFAULT_PIN
+        it
     }
 
     def setFlagSettings(String flagSettingsFile) {
@@ -328,8 +319,7 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         }
 
         when:
-        def verificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
-        def response = cloud20.verifyVerificationCode(token, user.id, responsePhoneId, verificationCode, requestContentMediaType, acceptMediaType)
+        def response = cloud20.verifyVerificationCode(token, user.id, responsePhoneId, constantVerificationCode, requestContentMediaType, acceptMediaType)
 
         then:
         response.status == status
@@ -443,7 +433,6 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         def responsePhone = utils.addPhone(token, user.id)
         utils.sendVerificationCodeToPhone(token, user.id, responsePhone.id)
         if(verify) {
-            def constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
             utils.verifyPhone(token, user.id, responsePhone.id, constantVerificationCode)
         }
         responsePhone

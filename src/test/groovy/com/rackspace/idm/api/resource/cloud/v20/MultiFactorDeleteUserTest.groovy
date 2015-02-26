@@ -3,26 +3,22 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.commons.configuration.Configuration
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.test.context.ContextConfiguration
-
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 
 /**
  * Tests to verify that when a user is deleted through the API,
  * the deleted user's MFA data is also deleted in Duo.
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml",
-    "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
 
     @Autowired BasicMultiFactorService multiFactorService;
@@ -30,8 +26,6 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
     @Autowired LdapMobilePhoneRepository mobilePhoneRepository;
 
     @Autowired Configuration config
-
-    @Autowired SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
 
     @Autowired ScopeAccessService scopeAccessService
 
@@ -42,12 +36,6 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
     @Autowired UserService userService
 
     @Autowired UserManagement<DuoUser, DuoPhone> userManagement;
-
-    @Override
-    public void doSetupSpec() {
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml")
-    }
 
     def "delete MFA user through v2.0 user delete call deletes user's Duo account"() {
         given:
@@ -64,7 +52,10 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
 
         then:
         response.status == 204
-        userManagement.getUserById(userEntity.getExternalMultiFactorUserId()) == null
+        Mockito.verify(userManagement.mock).deleteUserById(Constants.MFA_DEFAULT_USER_PROVIDER_ID)
+
+        cleanup:
+        mockMobilePhoneVerification.reset()
     }
 
     def "delete non-MFA user does not return an error through v2.0 delete user call"() {
@@ -93,7 +84,10 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
 
         then:
         response.status == 204
-        userManagement.getUserById(userEntity.getExternalMultiFactorUserId()) == null
+        Mockito.verify(userManagement.mock, Mockito.atLeastOnce()).deleteUserById(Constants.MFA_DEFAULT_USER_PROVIDER_ID)
+
+        cleanup:
+        mockMobilePhoneVerification.reset()
     }
 
     def "delete non-MFA user does not return an error through v1.1 delete user call"() {
@@ -111,7 +105,7 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
         def responsePhone = utils.addPhone(token, user.id)
         utils.sendVerificationCodeToPhone(token, user.id, responsePhone.id)
         if(verify) {
-            def constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+            def constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN);
             utils.verifyPhone(token, user.id, responsePhone.id, constantVerificationCode)
         }
         responsePhone

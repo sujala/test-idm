@@ -1,13 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
+import com.rackspace.idm.Constants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
@@ -21,12 +21,9 @@ import spock.lang.Shared
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
-import static com.rackspace.idm.Constants.getDEFAULT_PASSWORD
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
-@ContextConfiguration(locations = ["classpath:app-config.xml",
-    "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired BasicMultiFactorService multiFactorService;
@@ -34,8 +31,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired LdapMobilePhoneRepository mobilePhoneRepository;
 
     @Autowired Configuration config
-
-    @Autowired SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
 
     @Autowired ScopeAccessService scopeAccessService
 
@@ -49,8 +44,7 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
     @Shared def domainId
 
     def void doSetupSpec() {
-        startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml ")
+        startOrRestartGrizzly("classpath:app-config.xml ")
     }
 
     def void doCleanupSpec() {
@@ -457,7 +451,7 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         def responsePhone = utils.addPhone(token, user.id)
         utils.sendVerificationCodeToPhone(token, user.id, responsePhone.id)
         if(verify) {
-            def constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+            def constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN);
             utils.verifyPhone(token, user.id, responsePhone.id, constantVerificationCode)
         }
         responsePhone

@@ -1,21 +1,17 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import static com.rackspace.idm.Constants.*
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
-@ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
 
     @Autowired
@@ -23,9 +19,6 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     private LdapUserRepository userRepository;
-
-    @Autowired
-    private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
 
     @Autowired
     @Qualifier("scopeAccessDao")
@@ -36,15 +29,6 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
     def serviceAdmin1Token, serviceAdmin2Token
 
     enum TokenType { SERVICE_ADMIN, IDENTITY_ADMIN, USER_ADMIN, USER_MANAGE, DEFAULT_USER}
-
-    /**
-     * Override the grizzly start because we want to add another context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec() {
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml")
-    }
 
     def setup() {
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
@@ -58,11 +42,6 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
         serviceAdmin2 = utils.getUserByName(SERVICE_ADMIN_2_USERNAME, utils.getServiceAdminToken())
         serviceAdmin1Token = utils.getToken(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PASSWORD)
         serviceAdmin2Token = utils.getToken(SERVICE_ADMIN_2_USERNAME, SERVICE_ADMIN_2_PASSWORD)
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly();
     }
 
     void cleanup() {
@@ -277,7 +256,7 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
             token = token == null ? utils.getToken(user.username) : token
             def responsePhone = utils.addPhone(token, user.id)
             utils.sendVerificationCodeToPhone(token, user.id, responsePhone.id)
-            def constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+            def constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN);
             utils.verifyPhone(token, user.id, responsePhone.id, constantVerificationCode)
         }
     }

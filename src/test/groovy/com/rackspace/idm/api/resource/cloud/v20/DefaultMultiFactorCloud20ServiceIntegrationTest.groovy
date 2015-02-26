@@ -19,7 +19,6 @@ import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.domain.service.IdentityUserTypeEnum.*
 
-@ContextConfiguration(locations = ["classpath:app-config.xml"])
 class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
