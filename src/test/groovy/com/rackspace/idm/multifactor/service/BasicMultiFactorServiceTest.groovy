@@ -9,6 +9,7 @@ import com.rackspace.identity.multifactor.providers.ProviderUser
 import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.dao.OTPDeviceDao
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.MobilePhone
@@ -33,8 +34,12 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
     @Shared MultiFactorAuthenticationService multiFactorAuthenticationService;
     @Shared MobilePhoneVerification multiFactorMobilePhoneVerification;
 
+    @Shared OTPDeviceDao mockOTPDeviceDao
+
     def setupSpec() {
         service = new BasicMultiFactorService()
+        mockOTPDeviceDao = Mock(OTPDeviceDao)
+        service.otpDeviceDao = mockOTPDeviceDao
     }
 
     def setup() {

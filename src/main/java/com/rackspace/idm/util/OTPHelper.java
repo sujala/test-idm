@@ -18,6 +18,8 @@ import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -154,8 +156,28 @@ public class OTPHelper {
     }
 
     public static String TOTP(final byte[] key, final int digits, final int window) {
-        final int counter = (int) ((System.currentTimeMillis() / TIME_MILLIS) / window) - 1;
-        return HOTP(key, counter, digits);
+        return TOTP(key, digits, window, 0).iterator().next();
+    }
+
+    public static Set<String> TOTP(final byte[] key, final int digits, final int window, final int entropy) {
+        final Set<Integer> counters = new HashSet<Integer>();
+        final long seconds = (System.currentTimeMillis() / TIME_MILLIS);
+        for (long sec=(seconds-entropy); sec<=(seconds+entropy); sec+=window) {
+            counters.add((int) (sec / window) - 1);
+        }
+        final Set<String> codes = new HashSet<String>();
+        for (int counter : counters) {
+            codes.add(HOTP(key, counter, digits));
+        }
+        return codes;
+    }
+
+    public boolean checkTOTP(final byte[] key, final int digits, final int window, final int entropy, final String passcode) {
+        return TOTP(key, digits, window, entropy).contains(passcode);
+    }
+
+    public boolean checkTOTP(final byte[] key, String passcode) {
+        return checkTOTP(key, MIN_DIGITS, DEFAULT_WINDOW, config.getReloadableConfig().getOTPEntropy(), passcode);
     }
 
 }

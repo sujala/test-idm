@@ -72,7 +72,6 @@ public class Audit {
 	public static Audit authRacker(String o) {
 		return new Audit(o).addEvent(ACTION.RACKERAUTH);
 	}
-	
 
 	public static Audit authClient(Auditable o) {
         return new Audit(o.getAuditContext()).addEvent(ACTION.CLIENTAUTH);
@@ -85,7 +84,10 @@ public class Audit {
     public static Audit authRacker(Auditable o) {
         return new Audit(o.getAuditContext()).addEvent(ACTION.RACKERAUTH);
     }	
-	
+
+    public static Audit deleteOTP(String container) {
+        return new Audit(container).addEvent(ACTION.DELETE);
+    }
 
 	public Audit add() {
 		return this.addEvent(ACTION.ADD);

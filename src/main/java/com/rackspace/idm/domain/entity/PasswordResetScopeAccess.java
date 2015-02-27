@@ -3,9 +3,11 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.joda.time.DateTime;
 
 @Data
+@EqualsAndHashCode(callSuper=false)
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_PASSWORDRESETSCOPEACCESS ,requestAllAttributes=true)
 public class PasswordResetScopeAccess extends ScopeAccess implements BaseUserToken {
 

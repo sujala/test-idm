@@ -109,6 +109,9 @@ public class IdentityConfig {
     public static final String OTP_ISSUER = "feature.otp.issuer";
     public static final String OTP_ISSUER_DEFAULT = "Rackspace";
 
+    public static final String OTP_ENTROPY = "feature.otp.entropy";
+    public static final int OTP_ENTROPY_DEFAULT = 25;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -119,7 +122,7 @@ public class IdentityConfig {
 
     private StaticConfig staticConfig = new StaticConfig();
 
-    private RealoadableConfig realoadableConfig = new RealoadableConfig();
+    private ReloadableConfig reloadableConfig = new ReloadableConfig();
 
     public IdentityConfig() {
     }
@@ -177,8 +180,8 @@ public class IdentityConfig {
         return staticConfig;
     }
 
-    public RealoadableConfig getReloadableConfig() {
-        return realoadableConfig;
+    public ReloadableConfig getReloadableConfig() {
+        return reloadableConfig;
     }
 
     /**
@@ -320,7 +323,7 @@ public class IdentityConfig {
      * Wrapper around the reloadable configuration properties. Users of these properties must ensure that they always
      * lookup up the property each time before use and must NOT store the value of the property.
      */
-    public class RealoadableConfig {
+    public class ReloadableConfig {
         public String getTestPing() {
             return reloadableConfiguration.getString("reload.test");
         }
@@ -337,6 +340,13 @@ public class IdentityConfig {
             return reloadableConfiguration.getStringArray(FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP);
         }
 
+        public int getOTPEntropy() {
+            try {
+                return reloadableConfiguration.getInt(OTP_ENTROPY, OTP_ENTROPY_DEFAULT);
+            } catch (NumberFormatException e) {
+                return OTP_ENTROPY_DEFAULT;
+            }
+        }
     }
 
     @Deprecated

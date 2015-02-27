@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.DeleteNullValues;
-import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.dozer.converters.TokenFormatConverter;
 import com.rackspace.idm.validation.MessageTexts;
@@ -255,11 +254,14 @@ public class User implements EndUser {
     @LDAPField(attribute = LdapRepository.ATTR_MULTI_FACTOR_STATE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     private String multiFactorState;
 
-    @LDAPField(attribute = LdapRepository.OBJECTCLASS_MULTIFACTOR_USER_ENFORCEMENT_LEVEL, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_USER_ENFORCEMENT_LEVEL, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String userMultiFactorEnforcementLevel;
 
-    @LDAPField(attribute = LdapRepository.OBJECTCLASS_TOKEN_FORMAT, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    @LDAPField(attribute = LdapRepository.ATTR_TOKEN_FORMAT, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String tokenFormat;
+
+    @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_TYPE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String multiFactorType;
 
     private List<TenantRole> roles;
 

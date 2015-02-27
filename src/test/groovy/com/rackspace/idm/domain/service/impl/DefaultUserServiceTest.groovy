@@ -45,8 +45,6 @@ class DefaultUserServiceTest extends RootServiceTest {
     @Shared computeDefaultRole
     @Shared objectStoreRole
 
-    @Shared IdentityConfig identityConfig
-
     def setupSpec(){
         service = new DefaultUserService()
         sharedRandom = ("$sharedRandomness").replace('-',"")
