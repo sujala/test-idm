@@ -162,14 +162,14 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         v11tenants.tenant.find({t -> t.id.equals(randomPrefix+(v11MossoId as String)) && v11UserEntity.getNastId() == t.id}) != null
 
         cleanup:
-        cloud20.deleteUser(identityAdminToken, userEntity.id)
-        cloud20.deleteUser(identityAdminToken, v11UserEntity.id)
-        cloud20.deleteTenant(identityAdminToken, tenants.tenant[0].id)
-        cloud20.deleteTenant(identityAdminToken, tenants.tenant[1].id)
-        cloud20.deleteTenant(identityAdminToken, v11tenants.tenant[0].id)
-        cloud20.deleteTenant(identityAdminToken, v11tenants.tenant[1].id)
-        cloud20.deleteDomain(identityAdminToken, domainId)
-        cloud20.deleteDomain(identityAdminToken, v11MossoId as String)
+        try { cloud20.deleteUser(identityAdminToken, userEntity.id) } catch (Exception e) {}
+        try { cloud20.deleteUser(identityAdminToken, v11UserEntity.id) } catch (Exception e) {}
+        try { cloud20.deleteTenant(identityAdminToken, tenants.tenant[0].id) } catch (Exception e) {}
+        try { cloud20.deleteTenant(identityAdminToken, tenants.tenant[1].id) } catch (Exception e) {}
+        try { cloud20.deleteTenant(identityAdminToken, v11tenants.tenant[0].id) } catch (Exception e) {}
+        try { cloud20.deleteTenant(identityAdminToken, v11tenants.tenant[1].id) } catch (Exception e) {}
+        try { cloud20.deleteDomain(identityAdminToken, domainId) } catch (Exception e) {}
+        try { cloud20.deleteDomain(identityAdminToken, v11MossoId as String) } catch (Exception e) {}
     }
 
     def "disabled default tenants are not assigned to a user when making the create user in one call"() {

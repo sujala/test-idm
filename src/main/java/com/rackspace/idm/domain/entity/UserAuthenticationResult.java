@@ -1,11 +1,13 @@
 package com.rackspace.idm.domain.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.Collections;
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper=false)
 public class UserAuthenticationResult extends AuthenticationResult {
 
     private final BaseUser user;

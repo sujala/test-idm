@@ -1,6 +1,8 @@
 package com.rackspace.idm.util
 
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.unboundid.util.Base32
+import com.warrenstrange.googleauth.GoogleAuthenticator
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -14,6 +16,9 @@ class OTPHelperTest  extends Specification {
         def staticConfig = Mock(IdentityConfig.StaticConfig)
         otpHelper.config.getStaticConfig() >> staticConfig
         staticConfig.getOTPIssuer() >> "Rackspace"
+        def reloadConfig = Mock(IdentityConfig.ReloadableConfig)
+        otpHelper.config.getReloadableConfig() >> reloadConfig
+        reloadConfig.getOTPEntropy() >> 25
     }
 
     def "test create OTP device"() {
@@ -95,13 +100,10 @@ class OTPHelperTest  extends Specification {
     @Unroll
     def "test TOTP keys (digits: #digits)"() {
         given:
-        def key = "12345678901234567890".getBytes();
+        def key = "12345678901234567890".getBytes()
+        delay()
 
         when:
-        if ((((int) (System.currentTimeMillis() / 1000)) % 30) < 3) {
-            Thread.sleep(4000) // avoid race test on the time shift
-        }
-
         def key1 = otpHelper.TOTP(key, digits)
         def ts = (int) ((System.currentTimeMillis() / 1000) / 30) - 1
         def key2 = otpHelper.HOTP(key, ts, digits)
@@ -114,6 +116,37 @@ class OTPHelperTest  extends Specification {
         6      | _
         7      | _
         8      | _
+    }
+
+    def "test checkTOTP test"() {
+        given:
+        def key = "12345678901234567890".getBytes()
+
+        when:
+        def code = otpHelper.TOTP(key)
+
+        then:
+        otpHelper.checkTOTP(key, code)
+    }
+
+    def "test TOTP algorithm using the lib https://github.com/wstrange/GoogleAuth"() {
+        given:
+        def gAuth = new GoogleAuthenticator()
+        def gKey = gAuth.createCredentials()
+        def key = Base32.decode(gKey.getKey())
+        delay()
+
+        when:
+        def code = otpHelper.TOTP(key)
+
+        then:
+        gAuth.authorize(gKey.getKey(), Integer.valueOf(code))
+    }
+
+    private delay() {
+        if ((((int) (System.currentTimeMillis() / 1000)) % 30) < 3) {
+            Thread.sleep(4000) // avoid race test on the time shift
+        }
     }
 
 }

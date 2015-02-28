@@ -9,7 +9,6 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.dozer.Mapping;
 
 import java.util.Arrays;
@@ -46,7 +45,7 @@ public class Domain implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_TENANT_RS_ID, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String[] tenantIds;
 
-    @LDAPField(attribute = LdapRepository.OBJECTCLASS_MULTIFACTOR_DOMAIN_ENFORCEMENT_LEVEL, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_DOMAIN_ENFORCEMENT_LEVEL, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String domainMultiFactorEnforcementLevel;
 
     public void setTenantIds(String[] tenantIDs) {

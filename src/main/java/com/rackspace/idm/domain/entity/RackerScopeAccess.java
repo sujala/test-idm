@@ -3,12 +3,14 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.Date;
 
 @Data
+@EqualsAndHashCode(callSuper=false)
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_RACKERSCOPEACCESS,requestAllAttributes=true)
 public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken, BaseUserToken {
 

@@ -674,7 +674,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             LOG.debug(BAD_REQUEST_MSG_MISSING_PHONE_NUMBER); //logged as debug because this is a bad request, not an error in app
             throw new BadRequestException(BAD_REQUEST_MSG_MISSING_PHONE_NUMBER);
         }
-        else if (user.getMultiFactorMobilePhoneRsId() != null && user.isMultiFactorEnabled()) {
+        else if (multiFactorService.userHasMultiFactorDevices(user) && user.isMultiFactorEnabled() && multiFactorService.isMultiFactorTypePhone(user)) {
             LOG.debug(BAD_REQUEST_MSG_MFA_ENABLED); //logged as debug because this is a bad request, not an error in app
             throw new BadRequestException(BAD_REQUEST_MSG_MFA_ENABLED);
         }

@@ -5,7 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
-import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.OTPDevice;
@@ -182,6 +181,20 @@ public interface MultiFactorService {
     boolean isMultiFactorEnabledForUser(BaseUser user);
 
     /**
+     * Whether or not multi-factor devices exist for a given user.
+     * @param user
+     * @return
+     */
+    boolean userHasMultiFactorDevices(BaseUser user);
+
+    /**
+     * Whether or not multi-factor verified devices exist for a given user.
+     * @param user
+     * @return
+     */
+    boolean userHasVerifiedMultiFactorDevices(BaseUser user);
+
+    /**
      * Adds an OTP device to the user.
      */
     OTPDevice addOTPDeviceToUser(String userId, String name);
@@ -195,4 +208,19 @@ public interface MultiFactorService {
      * Verifies an OTP device for the user giving the device id and the verification code.
      */
     void verifyOTPDeviceForUserById(String userId, String deviceId, String verificationCode);
+
+    /**
+     * Gets the type of the multifactor device used by this user.
+     */
+    String getMultiFactorType(BaseUser user);
+
+    /**
+     * Checks if the multifactor device used by this user is a phone.
+     */
+    boolean isMultiFactorTypePhone(BaseUser user);
+
+    /**
+     * Checks if the multifactor device user by this user is an OTP device.
+     */
+    boolean isMultiFactorTypeOTP(BaseUser user);
 }

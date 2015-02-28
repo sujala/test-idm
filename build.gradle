@@ -31,7 +31,6 @@ sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
 def srcJava = 'src/main/java'
-def srcTestLombok = 'src/test/lombok'
 def srcDelomboked = 'build/src-delomboked'
 def srcTestDelomboked = 'build/test/src-delomboked'
 def generatedSrc = 'build/generated-src/jaxb/'
@@ -42,7 +41,6 @@ configurations {
     aspects
     ajInpath
     delombokJava
-    delombokTestJava
     jaxb
     wadl.extendsFrom compile
 }
@@ -175,6 +173,7 @@ dependencies {
     compile 'com.rackspace.identity:multifactor-sdk:1.0.0-1407178553210-SNAPSHOT'
 
     compile group: 'com.google.zxing', name: 'javase', version: '3.1.0'
+    testCompile 'com.warrenstrange:googleauth:0.4.3'
 }
 
 task copyConfig(type: Copy) {
@@ -386,15 +385,6 @@ task delombokJava {
     }
 }
 
-task delombokTestJava {
-    inputs.files file(srcTestLombok)
-    outputs.dir file(srcTestDelomboked)
-
-    doLast {
-        delombok(srcTestLombok, srcTestDelomboked)
-    }
-}
-
 def aspectjWeave(srcDirs, destDir) {
     ant.taskdef(
             resource: 'org/aspectj/tools/ant/taskdefs/aspectjTaskdefs.properties',
@@ -443,7 +433,6 @@ jettyRun.dependsOn copyBaseConfig
 
 delombokJava.dependsOn jaxb
 compileJava.dependsOn delombokJava
-compileTestGroovy.dependsOn delombokTestJava
 
 task copyToLib(type: Copy) {
     into "$buildDir/output/lib"

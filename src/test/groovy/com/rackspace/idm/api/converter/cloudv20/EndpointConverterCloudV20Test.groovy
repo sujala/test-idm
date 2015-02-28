@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.converter.cloudv20
 
-import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.CloudBaseUrl
@@ -35,7 +34,7 @@ class EndpointConverterCloudV20Test extends Specification {
             it.identityConfig = Mock(IdentityConfig)
             return it
         }
-        converterCloudV20.identityConfig.getReloadableConfig() >> Mock(IdentityConfig.RealoadableConfig)
+        converterCloudV20.identityConfig.getReloadableConfig() >> Mock(IdentityConfig.ReloadableConfig)
     }
 
     def cleanupSpec() {

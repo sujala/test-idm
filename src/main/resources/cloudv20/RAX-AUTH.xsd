@@ -741,7 +741,7 @@
     <simpleType name="FactorTypeEnum">
         <restriction base="xsd:string">
             <enumeration value="SMS"/>
-            <enumeration value="PASSCODE"/>
+            <enumeration value="OTP"/>
         </restriction>
     </simpleType>
 
