@@ -113,6 +113,8 @@ public class IdentityConfig {
 
     public static final String OTP_ENTROPY = "feature.otp.entropy";
     public static final int OTP_ENTROPY_DEFAULT = 25;
+    public static final String OTP_CREATE_ENABLED = "feature.otp.create.enabled.flag";
+    public static final boolean OTP_CREATE_ENABLED_DEFAULT = false;
 
     public static final String FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP = "feature.user.disabled.by.tenants.enabled";
     public static final boolean FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT = false;
@@ -321,6 +323,10 @@ public class IdentityConfig {
 
         public String getOTPIssuer() {
             return staticConfiguration.getString(OTP_ISSUER, OTP_ISSUER_DEFAULT);
+        }
+
+        public boolean getOTPCreateEnabled() {
+            return staticConfiguration.getBoolean(OTP_CREATE_ENABLED, OTP_CREATE_ENABLED_DEFAULT);
         }
     }
 
