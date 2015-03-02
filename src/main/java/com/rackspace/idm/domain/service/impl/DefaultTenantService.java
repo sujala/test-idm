@@ -11,6 +11,9 @@ import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.PrecedenceValidator;
+import org.apache.commons.collections.functors.TruePredicate;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -181,10 +184,21 @@ public class DefaultTenantService implements TenantService {
         logger.info("Getting Tenants for Parent");
 
         Iterable<TenantRole> tenantRoles = this.tenantRoleDao.getTenantRolesForUser(user);
-        List<Tenant> tenants = getTenants(tenantRoles);
+        List<Tenant> tenants = getTenants(tenantRoles, new TenantEnabledPredicate());
 
         logger.info("Got {} tenants", tenants.size());
         return tenants;
+    }
+
+    @Override
+    public boolean allTenantsDisabledForUser(BaseUser user) {
+        if (user == null) {
+            throw new IllegalStateException();
+        }
+
+        List<Tenant> tenants = getTenants(this.tenantRoleDao.getTenantRolesForUser(user), new TenantNoOpPredicate());
+
+        return !tenants.isEmpty() && CollectionUtils.find(tenants, new TenantEnabledPredicate()) == null;
     }
 
     @Override
@@ -196,13 +210,22 @@ public class DefaultTenantService implements TenantService {
         logger.info("Getting Tenants for Parent");
 
         Iterable<TenantRole> tenantRoles = this.tenantRoleDao.getTenantRolesForScopeAccess(sa);
-        List<Tenant> tenants = getTenants(tenantRoles);
+        List<Tenant> tenants = getTenants(tenantRoles, new TenantEnabledPredicate());
 
         logger.info("Got {} tenants", tenants.size());
         return tenants;
     }
 
-    private List<Tenant> getTenants(Iterable<TenantRole> tenantRoles) {
+    /**
+     * Loads all tenants for the given list of tenant roles. Also filters tenants
+     * based on the given tenantPredicate. The tenant is included in the response if
+     * tenantPredicate.evaluate() returns true
+     *
+     * @param tenantRoles
+     * @param tenantPredicate
+     * @return
+     */
+    private List<Tenant> getTenants(Iterable<TenantRole> tenantRoles, Predicate<Tenant> tenantPredicate) {
         List<Tenant> tenants = new ArrayList<Tenant>();
         List<String> tenantIds = new ArrayList<String>();
         for (TenantRole role : tenantRoles) {
@@ -210,7 +233,7 @@ public class DefaultTenantService implements TenantService {
                 for (String tenantId : role.getTenantIds()) {
                     if (!tenantIds.contains(tenantId)) {
                         Tenant tenant = this.getTenant(tenantId);
-                        if (tenant != null && tenant.getEnabled()) {
+                        if (tenant != null && tenantPredicate.evaluate(tenant)) {
                             tenants.add(tenant);
                             tenantIds.add(tenantId);
                         }
@@ -870,5 +893,25 @@ public class DefaultTenantService implements TenantService {
             }
         }
         return null;
+    }
+
+    /**
+     * A predicate that will return true if the given tenant is enabled
+     */
+    private static class TenantEnabledPredicate implements Predicate<Tenant> {
+        @Override
+        public boolean evaluate(Tenant tenant) {
+                return tenant != null && tenant.getEnabled();
+        }
+    }
+
+    /**
+     * A No-Op predicate that will always return true
+     */
+    private static class TenantNoOpPredicate implements Predicate<Tenant> {
+        @Override
+        public boolean evaluate(Tenant tenant) {
+            return true;
+        }
     }
 }

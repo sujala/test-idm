@@ -597,6 +597,11 @@ class Cloud20Methods {
         resource.path(path20).path(TENANTS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
     }
 
+    def updateTenant(String token, String tenantId, Tenant tenant) {
+        initOnUse()
+        resource.path(path20).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
+    }
+
     def getSecretQAs(String token, String userId){
         initOnUse()
         resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(SECRETQAS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)

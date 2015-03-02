@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
@@ -1063,11 +1064,22 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             user = this.userService.getUserByTenantId(tenantId);
+
+            if(userService.userDisabledByTenants(user)) {
+                throw new ForbiddenException(GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE);
+            }
+
             usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
         } else {
             PasswordCredentials passCreds = (PasswordCredentials) cred.getValue();
             String username = passCreds.getUsername();
             String password = passCreds.getPassword();
+
+            user = userService.getUserByUsernameForAuthentication(username);
+            if(userService.userDisabledByTenants(user)) {
+                throw new ForbiddenException(GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE);
+            }
+
             usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
         }
 
@@ -1128,6 +1140,10 @@ public class DefaultCloud11Service implements Cloud11Service {
                 username = userCreds.getUsername();
                 String apiKey = userCreds.getKey();
                 user = userService.getUser(username);
+
+                if(user != null && userService.userDisabledByTenants(user)) {
+                    throw new ForbiddenException(GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE);
+                }
 
                 usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, cloudAuthClientId);
             }

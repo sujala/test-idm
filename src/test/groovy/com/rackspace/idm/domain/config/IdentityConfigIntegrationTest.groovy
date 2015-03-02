@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.security.TokenFormat
 import org.apache.commons.configuration.ConfigurationException
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy
+import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.annotation.DirtiesContext
@@ -76,6 +77,33 @@ class IdentityConfigIntegrationTest  extends Specification {
 
         then: "when check again it is changed"
         localConfig.getString(newProp) == newPropOrigValue2
+    }
+
+    def "test fallback for invalid property set for FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP"() {
+        given:
+        def tempFile = File.createTempFile("temp",".tmp").with {
+            deleteOnExit()
+            return it
+        }
+        def reloadablePropertiesFile = config.reloadableConfiguration.idmPropertiesConfig.file
+        FileUtils.copyFile(reloadablePropertiesFile, tempFile)
+
+        when:
+        writeProp(reloadablePropertiesFile, IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, propertyValue)
+        System.sleep(1000) //need to delay a second so lastmodifieddate of file will change
+        boolean returnedProp = config.reloadableConfig.getFeatureUserDisabledByTenantsEnabled()
+
+        then:
+        returnedProp == returnValue
+
+        cleanup:
+        FileUtils.copyFile(tempFile, reloadablePropertiesFile)
+
+        where:
+        propertyValue | returnValue
+        true          | true
+        false         | false
+        "not_valid"   | IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT
     }
 
     def writeProp(file, name, val) {

@@ -3,11 +3,14 @@ package com.rackspace.idm.api.converter.cloudv20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.UserService;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -25,6 +28,9 @@ public class AuthConverterCloudV20 {
     @Autowired
     private EndpointConverterCloudV20 endpointConverterCloudV20;
 
+    @Autowired
+    private UserService userService;
+
     /**
      * converts authData object to authenticate response
      * @param authData
@@ -35,7 +41,11 @@ public class AuthConverterCloudV20 {
 
         auth.setToken(this.tokenConverterCloudV20.toToken(authData.getToken()));
         auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(authData.getUser()));
-        auth.setServiceCatalog(this.endpointConverterCloudV20.toServiceCatalog(authData.getEndpoints()));
+        if (userService.userDisabledByTenants(authData.getUser())) {
+            auth.setServiceCatalog(this.endpointConverterCloudV20.toServiceCatalog(new ArrayList<OpenstackEndpoint>()));
+        } else {
+            auth.setServiceCatalog(this.endpointConverterCloudV20.toServiceCatalog(authData.getEndpoints()));
+        }
 
         return getAuthResponseWithoutServiceId(auth);
     }
