@@ -205,9 +205,40 @@ public interface MultiFactorService {
     OTPDevice checkAndGetOTPDeviceFromUserById(String userId, String deviceId);
 
     /**
+     * Returns the OTPDevice specified by the deviceId that is associated with the specified user. Returns null if
+     * <ul>
+     * <li>The deviceId exists, but is not associated with the specified user</li>
+     * <li>The deviceId does not exist</li>
+     * <li>The user does not exist</li>
+     * </ul>
+     *
+     * @param userId
+     * @param deviceId
+     * @return
+     */
+    OTPDevice getOTPDeviceFromUserById(String userId, String deviceId);
+
+    /**
      * Verifies an OTP device for the user giving the device id and the verification code.
      */
     void verifyOTPDeviceForUserById(String userId, String deviceId, String verificationCode);
+
+    /**
+     * Deletes the OTP device associated with the user specified by userId. The device can only be deleted in the following
+     * circumstances:
+     *
+     * <ul>
+     *     <li>The user has another mobile passcode (OTP) device associated to their profile</li>
+     *     <li>The user has multi-factor type set to [SMS text passcode] for their profile</li>
+     *     <li>The user has multi-factor authentication [Disabled] for their profile</li>
+     *     <li>The device has not been verified</li>
+     * </ul>
+     *
+     * @param userId
+     * @param deviceId
+     * @return
+     */
+    void deleteOTPDeviceForUser(String userId, String deviceId);
 
     /**
      * Gets the type of the multifactor device used by this user.

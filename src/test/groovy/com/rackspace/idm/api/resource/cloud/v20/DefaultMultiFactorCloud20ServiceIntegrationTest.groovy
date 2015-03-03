@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.helpers.Cloud20Utils
 import com.rackspace.idm.util.OTPHelper
 import com.unboundid.util.Base32
+import org.apache.http.HttpStatus
 import org.apache.http.client.utils.URLEncodedUtils
 import org.junit.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -133,20 +134,20 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         [ accept, contentType ] << contentTypePermutations()
     }
 
-    def "Creates and OTP device and verifies it"() {
+    def "Create, verify, and delete OTP device"() {
         given:
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
         def userAdminToken = utils.getToken(userAdmin.username)
 
-        when:
+        when: "add OTP device"
         def name = "test"
         OTPDevice request = new OTPDevice()
         request.setName(name)
         def device = utils.addOTPDevice(userAdminToken, userAdmin.id, request)
 
-        then:
+        then: "gets added"
         device.id != null
         device.name == name
         device.verified == false
@@ -159,18 +160,18 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         then:
         secret.length == 20
 
-        when:
+        when: "get device"
         def deviceId = device.id
         device = utils.getOTPDevice(userAdminToken, userAdmin.id, deviceId)
 
-        then:
+        then: "device is found and values are populated correctly"
         device.id == deviceId
         device.name == name
         device.verified == false
         device.getKeyUri() == null
         device.getQrcode() == null
 
-        when:
+        when: "verify the device"
         if ((((int) (System.currentTimeMillis() / 1000)) % 30) < 3) {
             Thread.sleep(4000) // avoid race test on the time shift
         }
@@ -179,8 +180,17 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         utils.verifyOTPDevice(userAdminToken, userAdmin.id, deviceId, code)
         device = utils.getOTPDevice(userAdminToken, userAdmin.id, deviceId)
 
-        then:
+        then: "device is marked as verified"
         device.verified == true
+
+        when: "delete the device"
+        def delResponse = cloud20.deleteOTPDeviceFromUser(userAdminToken, userAdmin.id, deviceId)
+
+        then: "device is deleted"
+        delResponse.status == HttpStatus.SC_NO_CONTENT
+
+        and:
+        cloud20.getOTPDeviceFromUser(userAdminToken, userAdmin.id, deviceId).status == HttpStatus.SC_NOT_FOUND
 
         cleanup:
         utils.deleteUsers(users)

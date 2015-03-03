@@ -605,6 +605,11 @@ class Cloud20Utils {
         response.getEntity(com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice)
     }
 
+    def deleteOTPDeviceFromUser(token, userId, deviceId) {
+        def response = methods.deleteOTPDeviceFromUser(token, userId, deviceId)
+        assert(response.status == SC_NO_CONTENT)
+    }
+
     def verifyOTPDevice(token, userId, deviceId, com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode verificationCode) {
         def response = methods.verifyOTPDevice(token, userId, deviceId, verificationCode)
         assert (response.status == HttpStatus.SC_NO_CONTENT)

@@ -416,4 +416,21 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         userRepository.deleteObject(finalUserAdmin)
     }
 
+    def "Delete an unverified OTP device from a user-admin"() {
+        setup:
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+        User finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+        String name = getNormalizedRandomString()
+        OTPDevice otpDevice = multiFactorService.addOTPDeviceToUser(finalUserAdmin.id, name)
+
+        when: "device not verified"
+        multiFactorService.deleteOTPDeviceForUser(finalUserAdmin.id, otpDevice.id)
+
+        then:
+        multiFactorService.getOTPDeviceFromUserById(finalUserAdmin.id, otpDevice.id) == null
+
+        cleanup:
+        userRepository.deleteObject(finalUserAdmin)
+    }
+
 }

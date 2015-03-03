@@ -9,6 +9,7 @@ import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutException;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.OTPDeviceConverterCloudV20;
@@ -535,6 +536,26 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
         } catch (Exception ex) {
             LOG.error(String.format("Error retrieving device on user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder deleteOTPDeviceFromUser(UriInfo uriInfo, String authToken, String userId, String deviceId) {
+        try {
+            final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            final BaseUser requester = userService.getUserByScopeAccess(token);
+            User user = requestContextHolder.checkAndGetTargetUser(userId);
+            verifyAccessToOtherUser(token, requester, user);
+            multiFactorService.deleteOTPDeviceForUser(userId, deviceId);
+            return Response.status(Response.Status.NO_CONTENT);
+        } catch (Exception ex) {
+            LOG.error(String.format("Error deleting device '%s' on user '%s'", deviceId, userId), ex);
+            if (ex instanceof ErrorCodeIdmException
+                    && (ErrorCodes.ERROR_CODE_DELETE_OTP_DEVICE_FORBIDDEN_STATE.equals(((ErrorCodeIdmException) ex).getErrorCode()))) {
+                //if can't delete due to user's MFA state, it's a bad request.
+                return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
+            }
             return exceptionHandler.exceptionResponse(ex);
         }
     }

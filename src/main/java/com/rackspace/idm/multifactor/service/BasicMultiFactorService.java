@@ -9,6 +9,7 @@ import com.rackspace.identity.multifactor.providers.*;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
@@ -58,6 +59,7 @@ public class BasicMultiFactorService implements MultiFactorService {
     public static final String ERROR_MSG_NO_VERIFIED_DEVICE = "Device not verified";
 
     private static final String EXTERNAL_PROVIDER_ERROR_FORMAT = "operation={},userId={},username={},externalId={},externalResponse={}";
+    public static final String DELETE_OTP_DEVICE_REQUEST_INVALID_MSG = "You can not delete the last verified OTP device when your account is configured to use OTP multifactor.";
 
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     private final Logger multiFactorConsistencyLogger = LoggerFactory.getLogger(GlobalConstants.MULTIFACTOR_CONSISTENCY_LOG_NAME);
@@ -706,13 +708,28 @@ public class BasicMultiFactorService implements MultiFactorService {
     public OTPDevice checkAndGetOTPDeviceFromUserById(String userId, String deviceId) {
         Assert.notNull(userId);
         Assert.notNull(deviceId);
-
         final User user = userService.checkAndGetUserById(userId);
-
-        final OTPDevice device = otpDeviceDao.getOTPDeviceByParentAndId(user, deviceId);
+        final OTPDevice device =  getOTPDeviceFromUserById(user, deviceId);
         if (device == null) {
             throw new NotFoundException("OTP device not found");
         }
+        return device;
+    }
+
+    @Override
+    public OTPDevice getOTPDeviceFromUserById(String userId, String deviceId) {
+        Assert.notNull(userId);
+        Assert.notNull(deviceId);
+        final User user = userService.getUserById(userId);
+        final OTPDevice device = getOTPDeviceFromUserById(user, deviceId);
+        return device;
+    }
+
+    public OTPDevice getOTPDeviceFromUserById(User user, String deviceId) {
+        if (user == null) {
+            return null;
+        }
+        final OTPDevice device = otpDeviceDao.getOTPDeviceByParentAndId(user, deviceId);
         return device;
     }
 
@@ -728,6 +745,27 @@ public class BasicMultiFactorService implements MultiFactorService {
             otpDeviceDao.updateObject(device);
         } else {
             throw new MultiFactorDevicePinValidationException(PIN_DOES_NOT_MATCH);
+        }
+    }
+
+    public void deleteOTPDeviceForUser(String userId, String deviceId) {
+        final User user = userService.checkAndGetUserById(userId);
+        final OTPDevice device = getOTPDeviceFromUserById(user, deviceId);
+
+        if (device != null) {
+            FactorTypeEnum userMfaType = user.getMultiFactorTypeAsEnum();
+
+            //check the conditions that would allow the device to be deleted, in order of likelihood and expense to check
+            if (!device.getMultiFactorDeviceVerified() || !user.isMultiFactorEnabled()
+                    || userMfaType == null || userMfaType == FactorTypeEnum.SMS
+                    || otpDeviceDao.countVerifiedOTPDevicesByParent(user) > 1) {
+                //allowed to be deleted
+                otpDeviceDao.deleteObject(device);
+            } else {
+                throw new ErrorCodeIdmException(ErrorCodes.ERROR_CODE_DELETE_OTP_DEVICE_FORBIDDEN_STATE, DELETE_OTP_DEVICE_REQUEST_INVALID_MSG);
+            }
+        } else {
+            throw new NotFoundException("The device was not found on the specified user");
         }
     }
 

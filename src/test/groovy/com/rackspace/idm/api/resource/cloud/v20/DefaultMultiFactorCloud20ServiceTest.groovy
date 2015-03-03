@@ -373,6 +373,96 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
     }
 
     @Unroll
+    def "test delete OTP device for user access control (#allowed)"() {
+        User caller = entityFactory.createUser().with { it.id = "caller"; return it }
+        UserScopeAccess callerToken = entityFactory.createUserToken()
+
+        def User user
+        if (callerUserIdentityRoleType == "self") {
+            user = caller
+        } else {
+            user = entityFactory.createUser().with { it.id = "user"; return it }
+        }
+
+        // Sample device
+        OTPDevice device = new OTPDevice()
+        device.setName("test")
+        device.setId("1")
+
+        // Sample entity
+        com.rackspace.idm.domain.entity.OTPDevice entity = new com.rackspace.idm.domain.entity.OTPDevice()
+        entity.setId("1")
+
+        // Mock UriInfo
+        UriInfo uriInfo = Mock()
+        UriBuilder uriBuilder = Mock()
+        URI uri = new URI("http://a.com")
+        uriInfo.getRequestUriBuilder() >> uriBuilder
+        uriBuilder.path(_) >> uriBuilder
+        uriBuilder.build() >> uri
+
+        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
+        userService.getUserByScopeAccess(callerToken) >> caller
+        requestContextHolder.checkAndGetTargetUser(caller.id) >> caller
+        requestContextHolder.checkAndGetTargetUser(user.id) >> user
+
+        if (allowed) {
+            authorizationService.authorizeCloudUserAdmin(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_ADMIN)
+            authorizationService.authorizeUserManageRole(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_MANAGER)
+        } else {
+            precedenceValidator.verifyCallerPrecedenceOverUser(caller, user) >> {throw new ForbiddenException()}
+        }
+
+        def capturedException
+        exceptionHandler.exceptionResponse(_) >> {args -> capturedException = args[0]; return Response.status(HttpServletResponse.SC_FORBIDDEN)}
+
+        when:
+        Response.ResponseBuilder responseBuilder = service.deleteOTPDeviceFromUser(uriInfo, callerToken.accessTokenString, user.id, device.id)
+
+        then:
+        if (allowed) {
+            assert responseBuilder.build().status == HttpServletResponse.SC_NO_CONTENT
+        } else {
+            assert capturedException instanceof ForbiddenException
+        }
+
+        where:
+        allowed | callerUserIdentityRoleType          | userIdentityRoleType
+        true    | "self"                              | _
+
+        false   | IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.SERVICE_ADMIN
+        true    | IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.IDENTITY_ADMIN
+        true    | IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.USER_ADMIN
+        true    | IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.USER_MANAGER
+        true    | IdentityUserTypeEnum.SERVICE_ADMIN  | IdentityUserTypeEnum.DEFAULT_USER
+
+        false   | IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.SERVICE_ADMIN
+        false   | IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.IDENTITY_ADMIN
+        true    | IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.USER_ADMIN
+        true    | IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.USER_MANAGER
+        true    | IdentityUserTypeEnum.IDENTITY_ADMIN | IdentityUserTypeEnum.DEFAULT_USER
+
+        false   | IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.SERVICE_ADMIN
+        false   | IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.IDENTITY_ADMIN
+        false   | IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.USER_ADMIN
+        true    | IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.USER_MANAGER
+        true    | IdentityUserTypeEnum.USER_ADMIN     | IdentityUserTypeEnum.DEFAULT_USER
+
+        false   | IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.SERVICE_ADMIN
+        false   | IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.IDENTITY_ADMIN
+        false   | IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.USER_ADMIN
+        false   | IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.USER_MANAGER
+        true    | IdentityUserTypeEnum.USER_MANAGER   | IdentityUserTypeEnum.DEFAULT_USER
+
+        false   | IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.SERVICE_ADMIN
+        false   | IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.IDENTITY_ADMIN
+        false   | IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.USER_ADMIN
+        false   | IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.USER_MANAGER
+        false   | IdentityUserTypeEnum.DEFAULT_USER   | IdentityUserTypeEnum.DEFAULT_USER
+    }
+
+
+    @Unroll
     def "test create OTP device for user access control (#allowed)"() {
         User caller = entityFactory.createUser().with { it.id = "caller"; return it }
         UserScopeAccess callerToken = entityFactory.createUserToken()

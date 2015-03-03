@@ -214,6 +214,25 @@ public interface MultiFactorCloud20Service {
     Response.ResponseBuilder getOTPDeviceFromUser(UriInfo uriInfo, String authToken, String userId, String deviceId);
 
     /**
+     * Deletes the OTP device associated with the user specified by userId. The device can only be deleted in the following
+     * circumstances:
+     *
+     * <ul>
+     *     <li>The user has another mobile passcode (OTP) device associated to their profile</li>
+     *     <li>The user has multi-factor type set to [SMS text passcode] for their profile</li>
+     *     <li>The user has multi-factor authentication [Disabled] for their profile</li>
+     *     <li>The device has not been verified</li>
+     * </ul>
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @param deviceId
+     * @return
+     */
+    Response.ResponseBuilder deleteOTPDeviceFromUser(UriInfo uriInfo, String authToken, String userId, String deviceId);
+
+    /**
      * Verify the code against that sent to the device via the {@link #sendVerificationCode(javax.ws.rs.core.UriInfo, String, String, String)} request
      *
      * @param authToken

@@ -1,6 +1,7 @@
 package com.rackspace.idm.multifactor.service
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.identity.multifactor.providers.MultiFactorAuthenticationService
@@ -8,19 +9,25 @@ import com.rackspace.identity.multifactor.providers.ProviderPhone
 import com.rackspace.identity.multifactor.providers.ProviderUser
 import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.OTPDeviceDao
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.MobilePhone
+import com.rackspace.idm.domain.entity.OTPDevice
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.TokenRevocationService
+import com.rackspace.idm.exception.ErrorCodeIdmException
 import org.apache.commons.collections.CollectionUtils
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
+
+import javax.servlet.http.HttpServletResponse
+import javax.ws.rs.core.Response
 
 
 class BasicMultiFactorServiceTest extends RootServiceTest {
@@ -38,8 +45,6 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
 
     def setupSpec() {
         service = new BasicMultiFactorService()
-        mockOTPDeviceDao = Mock(OTPDeviceDao)
-        service.otpDeviceDao = mockOTPDeviceDao
     }
 
     def setup() {
@@ -57,6 +62,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         multiFactorUserManagement = Mock()
         multiFactorAuthenticationService = Mock()
         multiFactorMobilePhoneVerification = Mock()
+        mockOTPDeviceDao = Mock()
 
         mockMobilePhoneRepository(service)
         mockUserService(service)
@@ -72,6 +78,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         service.multiFactorAuthenticationService = multiFactorAuthenticationService
         service.userManagement = multiFactorUserManagement
         service.mobilePhoneVerification = multiFactorMobilePhoneVerification
+        service.otpDeviceDao = mockOTPDeviceDao
     }
 
     def "listing mobile phones returns empty list if not defined"() {
@@ -308,4 +315,86 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         response == true
     }
 
+    /**
+     * This tests deleting an OTP device from a user
+     *
+     * @return
+     */
+    @Unroll
+    def "Delete an OTP device allowed when (deviceVerified: #deviceVerified | mfaEnabled: #mfaEnabled | factorType: #factorType | verifiedOTPCount: #verifiedOTPCount | verifiedPhone: #verifiedPhone)"() {
+        setup:
+        User user = entityFactory.createUser().with {
+            it.multifactorEnabled = mfaEnabled
+            if (factorType != null) {
+                it.multiFactorType = factorType.value()
+            }
+            return it
+        }
+        OTPDevice otpDevice = new OTPDevice().with {
+            it.id = "1"
+            it.multiFactorDeviceVerified = deviceVerified
+            return it
+        }
+
+        userService.checkAndGetUserById(user.id) >> user
+
+        when: "try to delete device"
+        service.deleteOTPDeviceForUser(user.id, otpDevice.id)
+
+        then:
+        mockOTPDeviceDao.getOTPDeviceByParentAndId(user, otpDevice.id) >> otpDevice
+        mockOTPDeviceDao.countVerifiedOTPDevicesByParent(user) >> verifiedOTPCount
+        1 * mockOTPDeviceDao.deleteObject(otpDevice)
+        notThrown(ErrorCodeIdmException)
+
+        where:
+        deviceVerified  |  mfaEnabled   |  factorType           | verifiedOTPCount | verifiedPhone
+        false           |  true         |  FactorTypeEnum.OTP   | 1                | true
+        false           |  true         |  FactorTypeEnum.OTP   | 2                | true
+        false           |  true         |  FactorTypeEnum.SMS   | 0                | true
+        false           |  true         |  FactorTypeEnum.SMS   | 1                | true
+        false           |  false        |  null                 | 0                | false
+        true            |  false        |  null                 | 0                | false
+        true            |  true         |  FactorTypeEnum.OTP   | 2                | false
+        true            |  true         |  FactorTypeEnum.SMS   | 1                | true
+    }
+
+    /**
+     * can't delete last OTP device when MFA enabled and set to OTP
+     *
+     * @return
+     */
+    @Unroll
+    def "Delete an OTP device not allowed when (deviceVerified: #deviceVerified | mfaEnabled: #mfaEnabled | factorType: #factorType | verifiedOTPCount: #verifiedOTPCount | verifiedPhone: #verifiedPhone)"() {
+        setup:
+        User user = entityFactory.createUser().with {
+            it.multifactorEnabled = mfaEnabled
+            if (factorType != null) {
+                it.multiFactorType = factorType.value()
+            }
+            return it
+        }
+        OTPDevice otpDevice = new OTPDevice().with {
+            it.id = "1"
+            it.multiFactorDeviceVerified = deviceVerified
+            return it
+        }
+
+        userService.checkAndGetUserById(user.id) >> user
+        mockOTPDeviceDao.getOTPDeviceByParentAndId(user, otpDevice.id) >> otpDevice
+        mockOTPDeviceDao.countVerifiedOTPDevicesByParent(user) >> verifiedOTPCount
+
+        when: "try to delete device"
+        service.deleteOTPDeviceForUser(user.id, otpDevice.id)
+
+        then:
+        ErrorCodeIdmException ex = thrown()
+        ex.errorCode == ErrorCodes.ERROR_CODE_DELETE_OTP_DEVICE_FORBIDDEN_STATE
+        0 * mockOTPDeviceDao.deleteObject(otpDevice)
+
+        where:
+        deviceVerified  |  mfaEnabled   |  factorType           | verifiedOTPCount | verifiedPhone
+        true            |  true         |  FactorTypeEnum.OTP   | 1                | false
+        true            |  true         |  FactorTypeEnum.OTP   | 1                | true
+    }
 }
