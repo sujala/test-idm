@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,9 @@ public class CloudMultifactorResource {
 
     @Autowired
     private MultiFactorCloud20Service multiFactorCloud20Service;
+
+    @Autowired
+    private IdentityConfig config;
 
     /**
      * The multifactor service to list devices for a given user.
@@ -121,7 +125,11 @@ public class CloudMultifactorResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
             OTPDevice otpDevice) {
-        return multiFactorCloud20Service.addOTPDeviceToUser(uriInfo, authToken, userId, otpDevice).build();
+        if (config.getStaticConfig().getOTPCreateEnabled()) {
+            return multiFactorCloud20Service.addOTPDeviceToUser(uriInfo, authToken, userId, otpDevice).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
     }
 
     @GET
