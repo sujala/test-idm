@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter
@@ -11,7 +12,10 @@ import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.providers.simulator.SimulatedMultiFactorAuthenticationService
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
+import com.rackspace.idm.util.OTPHelper
+import com.unboundid.util.Base32
 import org.apache.commons.configuration.Configuration
+import org.apache.http.client.utils.URLEncodedUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
 import org.springframework.test.context.ContextConfiguration
@@ -60,10 +64,14 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
     @Autowired
     private UserDao userDao
 
+    @Autowired
+    private OTPHelper otpHelper
+
     org.openstack.docs.identity.api.v2.User userAdmin
     String userAdminToken
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone
     VerificationCode constantVerificationCode
+    OTPDevice responseOTP
 
     /**
      * Override the grizzly start because we want to add additional context file.
@@ -110,7 +118,7 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
     @Unroll
     def "When successfully enable multifactor appropriate v1.0/v1.1/v2.0 api key auth behavior: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
-        setUpAndEnableMultiFactor()
+        setUpAndEnableMultiFactor(phone)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
 
         when: "try to auth via 1.0 with correct API key"
@@ -146,11 +154,15 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         auth20ResponseWrongApi.status == com.rackspace.identity.multifactor.util.HttpStatus.SC_UNAUTHORIZED
 
         where:
-        requestContentMediaType | acceptMediaType
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        requestContentMediaType         | acceptMediaType                 | phone
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | false
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | false
     }
 
     /**
@@ -161,7 +173,7 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
     @Unroll
     def "When successfully enable multifactor appropriate v2.0 pwd auth behavior: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
-        setUpAndEnableMultiFactor()
+        setUpAndEnableMultiFactor(phone)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
 
         when: "try to auth via 2.0 with correct pwd"
@@ -179,27 +191,53 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         auth20ResponseWrongPwd.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE) == null
 
         where:
-        requestContentMediaType | acceptMediaType
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        requestContentMediaType         | acceptMediaType                 | phone
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | false
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | false
     }
 
-
-    def void setUpAndEnableMultiFactor() {
-        setUpMultiFactorWithoutEnable()
+    def void setUpAndEnableMultiFactor(def phone = true) {
+        setUpMultiFactorWithoutEnable(phone)
         utils.updateMultiFactor(userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))
     }
 
-    def void setUpMultiFactorWithoutEnable() {
-        setUpMultiFactorWithUnverifiedPhone()
-        utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
-        constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
-        utils.verifyPhone(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
+    def void setUpMultiFactorWithoutEnable(def phone = true) {
+        if (phone) {
+            setUpMultiFactorWithUnverifiedPhone()
+            utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
+            constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+            utils.verifyPhone(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
+        } else {
+            setUpOTPDevice()
+            utils.verifyOTPDevice(userAdminToken, userAdmin.id, responseOTP.id, getOTPVerificationCode())
+        }
     }
 
     def void setUpMultiFactorWithUnverifiedPhone() {
         responsePhone = utils.addPhone(userAdminToken, userAdmin.id)
     }
+
+    def void setUpOTPDevice() {
+        OTPDevice device = new OTPDevice()
+        device.setName("test-" + UUID.randomUUID().toString().replaceAll("-", ""))
+        responseOTP = utils.addOTPDevice(userAdminToken, userAdmin.id, device)
+    }
+
+    def VerificationCode getOTPVerificationCode() {
+        final VerificationCode verificationCode = new VerificationCode()
+        verificationCode.code = getOTPCode()
+        return verificationCode
+    }
+
+    def getOTPCode() {
+        def secret = Base32.decode(URLEncodedUtils.parse(new URI(responseOTP.getKeyUri()), "UTF-8").find { it.name == 'secret' }.value)
+        return otpHelper.TOTP(secret)
+    }
+
 }

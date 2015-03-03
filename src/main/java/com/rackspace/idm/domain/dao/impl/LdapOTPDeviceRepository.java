@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+
 @Component
 public class LdapOTPDeviceRepository extends LdapGenericRepository<OTPDevice> implements OTPDeviceDao {
 
@@ -56,13 +58,26 @@ public class LdapOTPDeviceRepository extends LdapGenericRepository<OTPDevice> im
     @Override
     public int countVerifiedOTPDevicesByParent(UniqueId parent) {
         try {
-            final Filter filter = new LdapSearchBuilder()
-                    .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_OTP_DEVICE)
-                    .addEqualAttribute(ATTR_MULTIFACTOR_DEVICE_VERIFIED, "TRUE").build();
-            return countObjects(filter, getContainerDN(parent));
-        } catch (IllegalStateException e) {
+            return countObjects(searchVerifiedOTPDevicesByParent(parent), getContainerDN(parent));
+        } catch (Exception e) {
             return 0;
         }
+    }
+
+    @Override
+    public Iterable<OTPDevice> getVerifiedOTPDevicesByParent(UniqueId parent) {
+        try {
+            return getObjects(searchVerifiedOTPDevicesByParent(parent), getContainerDN(parent));
+        } catch (Exception e) {
+            return Collections.EMPTY_LIST;
+        }
+    }
+
+    private Filter searchVerifiedOTPDevicesByParent(UniqueId parent) {
+        final Filter filter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_OTP_DEVICE)
+                .addEqualAttribute(ATTR_MULTIFACTOR_DEVICE_VERIFIED, "TRUE").build();
+        return filter;
     }
 
     @Override

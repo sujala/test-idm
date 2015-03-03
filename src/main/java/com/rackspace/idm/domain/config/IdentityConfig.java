@@ -324,10 +324,6 @@ public class IdentityConfig {
         public String getOTPIssuer() {
             return staticConfiguration.getString(OTP_ISSUER, OTP_ISSUER_DEFAULT);
         }
-
-        public boolean getOTPCreateEnabled() {
-            return staticConfiguration.getBoolean(OTP_CREATE_ENABLED, OTP_CREATE_ENABLED_DEFAULT);
-        }
     }
 
     /**
@@ -355,7 +351,17 @@ public class IdentityConfig {
             try {
                 return reloadableConfiguration.getInt(OTP_ENTROPY, OTP_ENTROPY_DEFAULT);
             } catch (NumberFormatException e) {
+                logger.error(String.format(PROPERTY_ERROR_MESSAGE, OTP_ENTROPY));
                 return OTP_ENTROPY_DEFAULT;
+            }
+        }
+
+        public boolean getOTPCreateEnabled() {
+            try {
+                return reloadableConfiguration.getBoolean(OTP_CREATE_ENABLED, OTP_CREATE_ENABLED_DEFAULT);
+            } catch (Exception e) {
+                logger.error(String.format(PROPERTY_ERROR_MESSAGE, OTP_CREATE_ENABLED));
+                return OTP_CREATE_ENABLED_DEFAULT;
             }
         }
 
@@ -367,7 +373,6 @@ public class IdentityConfig {
                 return FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT;
             }
         }
-
     }
 
     @Deprecated

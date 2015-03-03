@@ -294,13 +294,15 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         String encodedSessionId = sessionIdReaderWriter.writeEncoded(sessionId);
 
         //now send the passcode
-        try {
-            multiFactorService.sendSmsPasscode(user.getId());
-        } catch (DuoLockedOutException lockedOutException) {
-            emailClient.asyncSendMultiFactorLockedOutMessage(user);
-            user.setMultiFactorState(BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED);
-            userService.updateUserForMultiFactor(user);
-            throw new ForbiddenException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
+        if (multiFactorService.isMultiFactorTypePhone(user)) {
+            try {
+                multiFactorService.sendSmsPasscode(user.getId());
+            } catch (DuoLockedOutException lockedOutException) {
+                emailClient.asyncSendMultiFactorLockedOutMessage(user);
+                user.setMultiFactorState(BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED);
+                userService.updateUserForMultiFactor(user);
+                throw new ForbiddenException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
+            }
         }
 
         /*
