@@ -412,11 +412,11 @@ class Cloud20Methods {
                 .entity(requestOTPDevice).post(ClientResponse)
     }
 
-    def getOTPDeviceFromUser(String token, String userId, String deviceId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def getOTPDeviceFromUser(String token, String userId, String deviceId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).path(userId)
                 .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_OTP_DEVICES).path(deviceId)
-                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString())
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString())
                 .get(ClientResponse)
     }
 

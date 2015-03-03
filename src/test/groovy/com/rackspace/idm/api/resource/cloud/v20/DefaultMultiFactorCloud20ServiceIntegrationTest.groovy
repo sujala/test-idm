@@ -5,25 +5,22 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
-import com.rackspace.idm.helpers.Cloud20Utils
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.util.OTPHelper
 import com.unboundid.util.Base32
 import org.apache.http.HttpStatus
+import groovy.json.JsonSlurper
 import org.apache.http.client.utils.URLEncodedUtils
-import org.junit.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+import javax.ws.rs.core.MediaType
 
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON
-import static javax.ws.rs.core.MediaType.APPLICATION_XML
+import static com.rackspace.idm.domain.service.IdentityUserTypeEnum.*
 
 @ContextConfiguration(locations = ["classpath:app-config.xml"])
 class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTest {
-
-    @Autowired
-    Cloud20Utils utils
 
     @Autowired
     LdapMobilePhoneRepository mobilePhoneRepository
@@ -218,6 +215,160 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+        staticIdmConfiguration.reset()
+    }
+
+    @Unroll
+    def "test get OTP device for user, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def otpRequest = new OTPDevice().with {
+            it.name = "myOtp"
+            it
+        }
+        def device = utils.addOTPDevice(utils.getToken(userAdmin.username), userAdmin.id, otpRequest)
+
+        when:
+        def response = cloud20.getOTPDeviceFromUser(utils.getToken(userAdmin.username), userAdmin.id, device.id, accept)
+
+        then:
+        response.status == 200
+        def otpResponse
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            otpResponse = response.getEntity(OTPDevice)
+            assert otpResponse.qrcode == null
+            assert otpResponse.keyUri == null
+        } else {
+            otpResponse = new JsonSlurper().parseText(response.getEntity(String))['RAX-AUTH:otpDevice']
+            assert !otpResponse.hasProperty('qrcode')
+            assert !otpResponse.hasProperty('keyUri')
+        }
+        otpResponse.verified == false
+        otpResponse.name == otpRequest.name
+        otpResponse.id == device.id
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        accept | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def "get OTP device with invalid user ID returns 404"() {
+        when:
+        def response = cloud20.getOTPDeviceFromUser(utils.getIdentityAdminToken(), "invalidId", "invalidId")
+
+        then:
+        response.status == 404
+    }
+
+    def "get OTP device with invalid device ID returns 404"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def otpRequest = new OTPDevice().with {
+            it.name = "myOtp"
+            it
+        }
+        utils.addOTPDevice(utils.getToken(userAdmin.username), userAdmin.id, otpRequest)
+
+        when:
+        def response = cloud20.getOTPDeviceFromUser(utils.getIdentityAdminToken(), userAdmin.id, "invalidId")
+
+        then:
+        response.status == 404
+    }
+
+    @Unroll
+    def "test security for get device for user, caller = #caller, targetUser = #targetUser, differentDomain = #differentDomain"() {
+        given:
+        def domainId1 = utils.createDomain()
+        def domainId2 = utils.createDomain()
+        def identityAdmin1, userAdmin1, userManage1, defaultUser1
+        def identityAdmin2, userAdmin2, userManage2, defaultUser2
+        (identityAdmin1, userAdmin1, userManage1, defaultUser1) = utils.createUsers(domainId1)
+        (identityAdmin2, userAdmin2, userManage2, defaultUser2) = utils.createUsers(domainId2)
+        def otpRequest = new OTPDevice().with {
+            it.name = "myOtp"
+            it
+        }
+        def defaultUserDevice = utils.addOTPDevice(utils.getToken(defaultUser1.username), defaultUser1.id, otpRequest)
+        def userAdminDevice = utils.addOTPDevice(utils.getToken(userAdmin1.username), userAdmin1.id, otpRequest)
+        def token, targetUserId, deviceId
+        switch (caller) {
+            case SERVICE_ADMIN:
+                token = utils.getServiceAdminToken()
+                break;
+            case IDENTITY_ADMIN:
+                token = utils.getIdentityAdminToken()
+                break;
+            case USER_ADMIN:
+                if(differentDomain) {
+                    token = utils.getToken(userAdmin2.username)
+                } else {
+                    token = utils.getToken(userAdmin1.username)
+                }
+                break;
+            case USER_MANAGER:
+                if(differentDomain) {
+                    token = utils.getToken(userManage2.username)
+                } else {
+                    token = utils.getToken(userManage1.username)
+                }
+                break;
+            case DEFAULT_USER:
+                if(differentDomain) {
+                    token = utils.getToken(defaultUser2.username)
+                } else {
+                    token = utils.getToken(defaultUser1.username)
+                }
+                break;
+        }
+        switch (targetUser) {
+            case USER_ADMIN:
+                targetUserId = userAdmin1.id
+                deviceId = userAdminDevice.id
+                break;
+            case DEFAULT_USER:
+                targetUserId = defaultUser1.id
+                deviceId = defaultUserDevice.id
+                break;
+        }
+
+        when:
+        def response = cloud20.getOTPDeviceFromUser(token, targetUserId, deviceId)
+
+        then:
+        response.status == expectedResponse
+
+        cleanup:
+        utils.deleteUsers(defaultUser1, userManage1, userAdmin1, identityAdmin1)
+        utils.deleteUsers(defaultUser2, userManage2, userAdmin2, identityAdmin2)
+        utils.deleteDomain(domainId1)
+        utils.deleteDomain(domainId2)
+
+        where:
+        caller         | targetUser   | differentDomain | expectedResponse
+        SERVICE_ADMIN  | DEFAULT_USER | false           | 200
+        IDENTITY_ADMIN | DEFAULT_USER | false           | 200
+        USER_ADMIN     | DEFAULT_USER | false           | 200
+        USER_MANAGER   | DEFAULT_USER | false           | 200
+        DEFAULT_USER   | DEFAULT_USER | false           | 200
+        USER_ADMIN     | DEFAULT_USER | true            | 403
+        USER_MANAGER   | DEFAULT_USER | true            | 403
+        DEFAULT_USER   | DEFAULT_USER | true            | 403
+        USER_ADMIN     | USER_ADMIN   | false           | 200
+        USER_MANAGER   | USER_ADMIN   | false           | 403
+        DEFAULT_USER   | USER_ADMIN   | false           | 403
+        USER_ADMIN     | USER_ADMIN   | true            | 403
+        USER_MANAGER   | USER_ADMIN   | true            | 403
+        DEFAULT_USER   | USER_ADMIN   | true            | 403
     }
 
 }
