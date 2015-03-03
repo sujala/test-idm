@@ -4,6 +4,7 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.OTPDevice;
 import com.rackspace.idm.exception.ErrorCodeIdmException;
@@ -53,7 +54,7 @@ public class OTPHelper {
             final URI uri = new URI("data", "image/png;base64," + Base64.encodeBase64String(bytes.toByteArray()), null);
             return uri.toASCIIString();
         } catch (Exception e) {
-            throw new ErrorCodeIdmException("OTP-001", "Error creating QR code", e);
+            throw new ErrorCodeIdmException(ErrorCodes.ERROR_CODE_ERROR_CREATING_QR_CODE, "Error creating QR code", e);
         }
     }
 
@@ -64,7 +65,7 @@ public class OTPHelper {
             final URI uri = new URI("otpauth", "//totp/" + issuer + ":" + name + "?secret=" + keyUri + "&issuer=" + issuer, null);
             return uri.toASCIIString();
         } catch (Exception e) {
-            throw new ErrorCodeIdmException("OTP-002", "Error encoding URI", e);
+            throw new ErrorCodeIdmException(ErrorCodes.ERROR_CODE_ERROR_ENCODING_TOTP_URI, "Error encoding URI", e);
         }
     }
 
@@ -75,7 +76,7 @@ public class OTPHelper {
             random.nextBytes(key);
             return key;
         } catch (NoSuchAlgorithmException e) {
-            throw new ErrorCodeIdmException("OTP-003", "Missing secure random algorithm", e);
+            throw new ErrorCodeIdmException(ErrorCodes.ERROR_CODE_OTP_MISSING_SECURE_RANDOM_ALGORITHM, "Missing secure random algorithm", e);
         }
     }
 
@@ -116,7 +117,7 @@ public class OTPHelper {
     private static String OTP(final byte[] hmac_result, final int digits) {
         final int idx = digits - MIN_DIGITS;
         if (idx < 0 || idx > POSSIBLE_DIGITS.length) {
-            throw new ErrorCodeIdmException("OTP-004", "Invalid number of digits: " + digits);
+            throw new ErrorCodeIdmException(ErrorCodes.ERROR_CODE_INVALID_NUM_OTP_DIGITS, "Invalid number of digits: " + digits);
         }
         return String.format("%0" + digits + "d", truncate(hmac_result) % POSSIBLE_DIGITS[idx]);
     }
@@ -143,7 +144,7 @@ public class OTPHelper {
 
             return OTP(mac.doFinal(fromCounterToByte(counter)), digits);
         } catch (Exception e) {
-            throw new ErrorCodeIdmException("OTP-005", "Encryption error", e);
+            throw new ErrorCodeIdmException(ErrorCodes.ERROR_CODE_HOTP_ENCRYPTION_ERROR, "Encryption error", e);
         }
     }
 
