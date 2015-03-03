@@ -134,6 +134,16 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.getOTPDeviceFromUser(uriInfo, authToken, userId, deviceId).build();
     }
 
+    @DELETE
+    @Path("otp-devices/{deviceId}")
+    public Response deleteOTPDeviceFromUser(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            @PathParam("deviceId") String deviceId) {
+        return multiFactorCloud20Service.deleteOTPDeviceFromUser(uriInfo, authToken, userId, deviceId).build();
+    }
+
     @POST
     @Path("otp-devices/{deviceId}/verify")
     public Response verifyOTPCode(

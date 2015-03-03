@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.DeleteNullValues;
@@ -295,6 +296,18 @@ public class User implements EndUser {
 
     public TokenFormatEnum getTokenFormatAsEnum() {
         return tfEnumConverter.convertTo(tokenFormat, null);
+    }
+
+    public FactorTypeEnum getMultiFactorTypeAsEnum() {
+        if (multiFactorType == null) {
+            return null;
+        }
+
+        try {
+            return FactorTypeEnum.fromValue(multiFactorType);
+        } catch (Exception e) {
+            throw new IllegalStateException(String.format("Invalid value for token format: '%s' on user '%s'", multiFactorType, id));
+        }
     }
 
     @Override
