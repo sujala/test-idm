@@ -2,8 +2,7 @@ package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
-import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
-import com.rackspace.identity.multifactor.domain.Pin;
+import com.rackspace.identity.multifactor.domain.*;
 import com.rackspace.identity.multifactor.exceptions.MultiFactorException;
 import com.rackspace.identity.multifactor.providers.*;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone;
@@ -36,10 +35,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Simple multi-factor implementation that stores mobile phones in the ldap directory, and integrates with a single
@@ -448,17 +444,45 @@ public class BasicMultiFactorService implements MultiFactorService {
         User user = userService.checkAndGetUserById(userId);
         verifyMultiFactorStateOnUser(user);
 
-        MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
-        verifyMultiFactorStateOnPhone(user, phone);
+        MfaAuthenticationResponse response = null;
 
-        MfaAuthenticationResponse response = multiFactorAuthenticationService.verifyPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId(), passcode);
+        // Checks against OTP devices
+        if (isMultiFactorTypeOTP(user)) {
+            final Iterable<OTPDevice> otpDevices = otpDeviceDao.getVerifiedOTPDevicesByParent(user);
+            for (Iterator<OTPDevice> it = otpDevices.iterator(); it.hasNext() && response == null;) {
+                final OTPDevice otpDevice = it.next();
+                if (otpHelper.checkTOTP(otpDevice.getKey(), passcode)) {
+                    response = new GenericMfaAuthenticationResponse(
+                            MfaAuthenticationDecision.ALLOW,
+                            MfaAuthenticationDecisionReason.ALLOW,
+                            "Authenticated by OTP device(" + otpDevice.getName() + ")",
+                            null);
+                }
+            }
+        }
+
+        // Checks against mobile phones
+        if (response == null && isMultiFactorTypePhone(user)) {
+            MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
+            verifyMultiFactorStateOnPhone(user, phone);
+
+            response = multiFactorAuthenticationService.verifyPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId(), passcode);
+        }
+
+        // If none worked
+        if (response == null) {
+            response = new GenericMfaAuthenticationResponse(
+                    MfaAuthenticationDecision.DENY,
+                    MfaAuthenticationDecisionReason.DENY,
+                    "Invalid passcode",
+                    null);
+        }
 
         return response;
     }
 
     private void verifyMultiFactorStateOnUser(User user) {
-        if (!user.isMultiFactorEnabled() || !StringUtils.hasText(user.getExternalMultiFactorUserId())
-                ||  !StringUtils.hasText(user.getMultiFactorMobilePhoneRsId())) {
+        if (!user.isMultiFactorEnabled() || !userHasEnabledMultiFactorDevices(user)) {
             throw new MultiFactorNotEnabledException(String.format("Multi factor is either not enabled or incorrectly set up on account '%s'", user.getId()));
         }
     }
@@ -812,6 +836,16 @@ public class BasicMultiFactorService implements MultiFactorService {
         boolean hasOTPDevice = verifiedOTPDevicesCount > 0;
         boolean hasVerifiedPhone = userHasVerifiedMobilePhone(user);
         return hasOTPDevice || hasVerifiedPhone;
+    }
+
+    private boolean userHasEnabledMultiFactorDevices(User user) {
+        return userHasEnabledMultiFactorDevices(user, otpDeviceDao.countVerifiedOTPDevicesByParent(user));
+    }
+
+    private boolean userHasEnabledMultiFactorDevices(User user, int verifiedOTPDevicesCount) {
+        boolean hasOTPDevice = verifiedOTPDevicesCount > 0;
+        boolean hasEnabledPhone = userHasVerifiedMobilePhone(user) && StringUtils.hasText(user.getExternalMultiFactorUserId());
+        return user.isMultiFactorEnabled() && (hasOTPDevice || hasEnabledPhone);
     }
 
     private boolean userHasVerifiedMobilePhone(User user) {

@@ -177,6 +177,7 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         Response.ResponseBuilder result = multiFactorCloud20Service.performMultiFactorChallenge(userAdminUser, ["PASSWORD"].asList())
 
         then:
+        1 * mockedBasicMultiFactorService.isMultiFactorTypePhone(_) >> true
         1 * mockUserService.updateUserForMultiFactor(_) >> { User userArg ->
             assert (userArg.multiFactorState == BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED)
         }

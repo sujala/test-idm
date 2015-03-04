@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCloudAuthenticationResponseToken
@@ -14,12 +15,14 @@ import com.rackspace.idm.multifactor.providers.simulator.SimulatedMultiFactorAut
 import com.rackspace.idm.multifactor.providers.simulator.SimulatedMultiFactorAuthenticationService.SimulatedPasscode
 import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
+import com.rackspace.idm.util.OTPHelper
+import com.unboundid.util.Base32
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
+import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 import org.joda.time.Minutes
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.Token
@@ -77,10 +80,14 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     @Autowired
     private UserDao userDao
 
+    @Autowired
+    private OTPHelper otpHelper
+
     org.openstack.docs.identity.api.v2.User userAdmin
     String userAdminToken
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone
     VerificationCode constantVerificationCode
+    OTPDevice responseOTP
 
     /**
      * Override the grizzly start because we want to add additional context file.
@@ -150,13 +157,14 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     @Unroll("Successful passcode authentication: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
     def "Successful passcode authentication"() {
         setup:
-        setUpAndEnableMultiFactor()
+        setUpAndEnableMultiFactor(phone)
         def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
         String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
         String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+        def passcode = phone ? simulatedPasscode.passcode : getOTPCode()
 
         when:
-        def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, simulatedPasscode.passcode, requestContentMediaType, acceptMediaType)
+        def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, passcode, requestContentMediaType, acceptMediaType)
         Token token
         if (acceptMediaType == MediaType.APPLICATION_XML_TYPE) {
             token = mfaAuthResponse.getEntity(AuthenticateResponse).value.token
@@ -172,19 +180,23 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         token.getAuthenticatedBy().credential.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
 
         where:
-        requestContentMediaType | acceptMediaType | simulatedPasscode
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.ALLOW_ALLOW
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_ALLOW
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_ALLOW
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.ALLOW_ALLOW
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.ALLOW_BYPASS
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_BYPASS
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_BYPASS
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.ALLOW_BYPASS
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.ALLOW_UNKNOWN
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_UNKNOWN
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_UNKNOWN
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE | SimulatedPasscode.ALLOW_UNKNOWN
+        requestContentMediaType         | acceptMediaType                 | simulatedPasscode               | phone
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | SimulatedPasscode.ALLOW_ALLOW   | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_ALLOW   | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_ALLOW   | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | SimulatedPasscode.ALLOW_ALLOW   | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | SimulatedPasscode.ALLOW_BYPASS  | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_BYPASS  | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_BYPASS  | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | SimulatedPasscode.ALLOW_BYPASS  | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | SimulatedPasscode.ALLOW_UNKNOWN | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_UNKNOWN | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | SimulatedPasscode.ALLOW_UNKNOWN | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | SimulatedPasscode.ALLOW_UNKNOWN | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | _                               | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | _                               | false
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | _                               | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | _                               | false
     }
 
     @Unroll("Fail with 401 when wrong passcode: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
@@ -356,19 +368,41 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         mfaToken.id != regularToken.id
     }
 
-    def void setUpAndEnableMultiFactor() {
-        setUpMultiFactorWithoutEnable()
+    def void setUpAndEnableMultiFactor(def phone = true) {
+        setUpMultiFactorWithoutEnable(phone)
         utils.updateMultiFactor(userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))
     }
 
-    def void setUpMultiFactorWithoutEnable() {
-        setUpMultiFactorWithUnverifiedPhone()
-        utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
-        constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
-        utils.verifyPhone(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
+    def void setUpMultiFactorWithoutEnable(def phone = true) {
+        if (phone) {
+            setUpMultiFactorWithUnverifiedPhone()
+            utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
+            constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+            utils.verifyPhone(userAdminToken, userAdmin.id, responsePhone.id, constantVerificationCode)
+        } else {
+            setUpOTPDevice()
+            utils.verifyOTPDevice(userAdminToken, userAdmin.id, responseOTP.id, getOTPVerificationCode())
+        }
     }
 
     def void setUpMultiFactorWithUnverifiedPhone() {
         responsePhone = utils.addPhone(userAdminToken, userAdmin.id)
+    }
+
+    def void setUpOTPDevice() {
+        OTPDevice device = new OTPDevice()
+        device.setName("test-" + UUID.randomUUID().toString().replaceAll("-", ""))
+        responseOTP = utils.addOTPDevice(userAdminToken, userAdmin.id, device)
+    }
+
+    def VerificationCode getOTPVerificationCode() {
+        final VerificationCode verificationCode = new VerificationCode()
+        verificationCode.code = getOTPCode()
+        return verificationCode
+    }
+
+    def getOTPCode() {
+        def secret = Base32.decode(URLEncodedUtils.parse(new URI(responseOTP.getKeyUri()), "UTF-8").find { it.name == 'secret' }.value)
+        return otpHelper.TOTP(secret)
     }
 }
