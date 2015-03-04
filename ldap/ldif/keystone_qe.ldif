@@ -1,0 +1,522 @@
+dn: rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsPerson
+rsId: 6ffe3875d15b44d5b8b2d285790c89ec
+enabled: TRUE
+encryptionSalt: a1 90 22 b4 67 49 62 1e ef 49 62 48 f3 d3 3a
+encryptionVersionId: 0
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141002165900.717Z
+preferredLanguage: en_US
+rsApiKey:: kPO7i3QqskNkFNFhMPBLeDl84XZXkhD4vkSVAcUOxPeW7DWYRgx1Iy4qqH57/KFh
+rsDomainId: 78543987
+rsMossoId: 78543987
+rsNastId: MossoCloudFS_78543987
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_service_admin
+userPassword:: e1NTSEE1MTJ9ZTN0RmVnK0lCTVNTeUgydGw4WUtmNExvcXFhTmRWRDBZQzVlWlNiZmEvb1dBYXB1a0JHSngrU09MdGNTOTFvTVkzSzJRUWNwMU03eDdYVFU0RWd0UzNEUEk1VT0=
+
+dn: cn=TOKENS,rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 4
+userRsId: 6ffe3875d15b44d5b8b2d285790c89ec
+
+dn: roleRsId=5,cn=ROLES,rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: MossoCloudFS_78543987
+userRsId: 6ffe3875d15b44d5b8b2d285790c89ec
+
+dn: roleRsId=6,cn=ROLES,rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: 78543987
+userRsId: 6ffe3875d15b44d5b8b2d285790c89ec
+
+dn: rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsPerson
+rsId: fa9ddbf7cc904a75b8bd40c26bc738cd
+enabled: TRUE
+encryptionSalt: 30 b4 4c 3b 26 62 9a c3 09 9b 71 33 32 4b 93 d4
+encryptionVersionId: 0
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141006191216.550Z
+preferredLanguage: en_US
+rsApiKey:: YApdWaAiVN4NUS5tcSxS1Zn3jG9QI2yWA+RHI4XeR4ld0acdWFvaiTby2f9hTlZV
+rsDomainId: 78543985
+rsMossoId: 78543985
+rsNastId: MossoCloudFS_78543985
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_identity_admin
+userPassword:: e1NTSEE1MTJ9b3JGRDRLaWlCMnc2WCtpQy9pRWtTL0RXZXRRTDF3R3RjUURkK3RqclYxc3FOUnZxQ25PWWF0YnpqK0ZKeUVWUy9uVGZvSWFlc1JweGZBWFd1RmFjZTNha3o5az0=
+
+dn: cn=TOKENS,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=1,cn=ROLES,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 1
+userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
+
+dn: roleRsId=5,cn=ROLES,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: MossoCloudFS_78543985
+userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
+
+dn: roleRsId=6,cn=ROLES,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: 78543985
+userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
+
+dn: rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsPerson
+rsId: 4e997592aad24e2183e51bd013f223c5
+enabled: TRUE
+encryptionSalt: 10 4a 89 d2 7d 47 b7 bc 42 82 79 5b 22 3d 14 7a
+encryptionVersionId: 0
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141006191119.345Z
+preferredLanguage: en_US
+rsApiKey:: iG9M5xFRpttxIeTvbx1aiwI95c5/IYJ8I4ZKShvIwXqPN+D7dhoNzdkm2KTbZ6VH
+rsDomainId: 78543988
+rsMossoId: 78543988
+rsNastId: MossoCloudFS_78543988
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_user_admin
+userPassword:: e1NTSEE1MTJ9MGQybGRsaEw2d3VFckZaWXFhenZabkFieU44N2dlZVpPOCtEQlRCei9NaXZabks1eFV0MEVaMXM0Wi85RnBQazk1eWluUjlLQll6SnpIOHVMamtVY0hMNVIzMD0=
+
+dn: cn=TOKENS,rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=5,cn=ROLES,rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: MossoCloudFS_78543988
+userRsId: 4e997592aad24e2183e51bd013f223c5
+
+dn: roleRsId=6,cn=ROLES,rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: 78543988
+userRsId: 4e997592aad24e2183e51bd013f223c5
+
+dn: roleRsId=3,cn=ROLES,rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 3
+userRsId: 4e997592aad24e2183e51bd013f223c5
+
+dn: rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsPerson
+rsId: d2d1adee553144ada948e03d1f5503f1
+enabled: TRUE
+encryptionSalt: 85 46 6c 08 a9 9b a6 3a 73 3c 47 c6 ef 17 2c
+encryptionVersionId: 0
+mail: shanthi.vedula@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141006203050.917Z
+preferredLanguage: en_US
+rsApiKey:: lRVNgcgFGskESwVCF0RiFgCcZXQZytOq2GANbl/qEoyrD5jVZmTu/6xeW4i+E8qf
+rsDisplayName:: HItxR/uGYss2gV4KqM5NvESduI1Bz/4EpSANOLu68Cc=
+rsDomainId: 78543988
+rsMossoId: 78543988
+rsNastId: MossoCloudFS_78543988
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_user_manage
+userPassword:: e1NTSEE1MTJ9eVZsZzZpdEFNUEgySXVUK0lMaWdpaENWUEpwQUR0OVk1emJhbkd3VjBIaTh1ZUZMS0d5aDFnSm9acXNVcWttd2VtRzhHdDZNcHhFS0NNM2NrOExTU25PVzhZND0=
+
+dn: cn=TOKENS,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=7,cn=ROLES,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 7
+
+dn: roleRsId=6,cn=ROLES,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: 78543988
+userRsId: d2d1adee553144ada948e03d1f5503f1
+
+dn: roleRsId=5,cn=ROLES,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: MossoCloudFS_78543988
+userRsId: d2d1adee553144ada948e03d1f5503f1
+
+dn: roleRsId=2,cn=ROLES,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 2
+userRsId: d2d1adee553144ada948e03d1f5503f1
+
+dn: rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsPerson
+rsId: 868dea5a32934749a3fb9a47e80f12a4
+enabled: TRUE
+encryptionSalt: 85 90 24 30 b6 ce 1d e6 22 de 3d d3 88 1a 9a
+encryptionVersionId: 0
+mail: shanthi.vedula@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141006203142.479Z
+preferredLanguage: en_US
+rsApiKey:: WZQcH4Ja3+pEIosicAivbmOPVDMgp/P0CtXUKPZOL0VZzkiKRvtUmJ1hdB/0j0mb
+rsDisplayName:: 7W0S88I70MmHUFYaVGf6cjfZxDx4Lp6/STUSCjBaLWk=
+rsDomainId: 78543988
+rsMossoId: 78543988
+rsNastId: MossoCloudFS_78543988
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_default_user
+userPassword:: e1NTSEE1MTJ9TGo3aG01OXYybzI4cEdtZ1hOanFoUUhHem4wRkwvU1lpNU9meXJ6c2d1MFZndzRUaUh1TXpJeUVkZDBXMmU5OHRvMEFBVW1hRDUwYlVzVE11Nm1BejQ5ZlF4az0=
+
+dn: cn=TOKENS,rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=6,cn=ROLES,rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: 78543988
+userRsId: 868dea5a32934749a3fb9a47e80f12a4
+
+dn: roleRsId=5,cn=ROLES,rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: MossoCloudFS_78543988
+userRsId: 868dea5a32934749a3fb9a47e80f12a4
+
+dn: roleRsId=2,cn=ROLES,rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 2
+userRsId: 868dea5a32934749a3fb9a47e80f12a4
+
+dn: rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsPerson
+rsId: 1c5a89a8d99b4e34998f7143d76d99e2
+enabled: TRUE
+encryptionSalt: 17 bc e2 ff 90 b1 1f 8c 88 13 b8 90 44 4d 92 9e
+encryptionVersionId: 0
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141020193554.387Z
+preferredLanguage: en_US
+rsApiKey:: 322AoChiP+yo//bTIBmi+tdj9VhLdbjnEJRLBngf33AqB4z4DkFozRNcNZ6rvYwt
+rsDomainId: 78543990
+rsExternalMultiFactorUserId: DUKT752N0LU37VBIZUBV
+rsMossoId: 78543990
+rsMultiFactorDeviceVerified: TRUE
+rsMultiFactorEnabled: TRUE
+rsMultiFactorMobilePhoneRsId: 791d2b1521224f329f98b7910c63508c
+rsMultiFactorState: ACTIVE
+rsNastId: MossoCloudFS_78543990
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_mfa_enabled_user_admin
+userPassword:: e1NTSEE1MTJ9eHpzY2pBV3RSeDhXdlhwdWVCb2RDQVF5TDNoRWxpMVhuVVpXaTNVaEYwMm4yeDVwKzJPTEQrdHVmL2VZSTJGU3daQlFTdkNUVGF3dEdqRUFTZUd3SFpaSjVmND0=
+
+dn: cn=TOKENS,rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: TOKENS
+
+dn: cn=ROLES,rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=5,cn=ROLES,rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: MossoCloudFS_78543990
+userRsId: 1c5a89a8d99b4e34998f7143d76d99e2
+
+dn: roleRsId=6,cn=ROLES,rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: 78543990
+userRsId: 1c5a89a8d99b4e34998f7143d76d99e2
+
+dn: roleRsId=3,cn=ROLES,rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 3
+userRsId: 1c5a89a8d99b4e34998f7143d76d99e2
+
+dn: rsId=78543987,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsDomain
+cn: 78543987
+enabled: TRUE
+rsId: 78543987
+description: Default Domain
+tenantRsId: 78543987
+tenantRsId: MossoCloudFS_78543987
+
+dn: rsId=78543985,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsDomain
+cn: 78543985
+enabled: TRUE
+rsId: 78543985
+description: Default Domain
+tenantRsId: 78543985
+tenantRsId: MossoCloudFS_78543985
+
+dn: rsId=78543988,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsDomain
+cn: 78543988
+enabled: TRUE
+rsId: 78543988
+description: Default Domain
+tenantRsId: 78543988
+tenantRsId: MossoCloudFS_78543988
+
+dn: rsId=78543990,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: rsDomain
+cn: 78543990
+enabled: TRUE
+rsId: 78543990
+description: Default Domain
+tenantRsId: 78543990
+tenantRsId: MossoCloudFS_78543990
+
+dn: rsId=78543987,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenant
+cn: 78543987
+enabled: TRUE
+rsId: 78543987
+baseUrlId: 135
+baseUrlId: 1041
+baseUrlId: 122
+baseUrlId: 109
+baseUrlId: 1042
+baseUrlId: 56
+baseUrlId: 47
+baseUrlId: 17
+baseUrlId: 83
+baseUrlId: 15
+baseUrlId: 120
+rsDomainId: 78543987
+tenantDisplayName: 78543987
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=MossoCloudFS_78543987,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenant
+cn: MossoCloudFS_78543987
+enabled: TRUE
+rsId: MossoCloudFS_78543987
+baseUrlId: 3
+baseUrlId: 10
+baseUrlId: 111
+baseUrlId: 103
+baseUrlId: 1013
+baseUrlId: 11
+rsDomainId: 78543987
+tenantDisplayName: MossoCloudFS_78543987
+vOneDefault: 111
+vOneDefault: 103
+
+dn: rsId=78543985,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenant
+cn: 78543985
+enabled: TRUE
+rsId: 78543985
+baseUrlId: 135
+baseUrlId: 1041
+baseUrlId: 122
+baseUrlId: 109
+baseUrlId: 1042
+baseUrlId: 56
+baseUrlId: 47
+baseUrlId: 17
+baseUrlId: 83
+baseUrlId: 15
+baseUrlId: 120
+rsDomainId: 78543985
+tenantDisplayName: 78543985
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=MossoCloudFS_78543985,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenant
+cn: MossoCloudFS_78543985
+enabled: TRUE
+rsId: MossoCloudFS_78543985
+baseUrlId: 3
+baseUrlId: 10
+baseUrlId: 111
+baseUrlId: 103
+baseUrlId: 1013
+baseUrlId: 11
+rsDomainId: 78543985
+tenantDisplayName: MossoCloudFS_78543985
+vOneDefault: 111
+vOneDefault: 103
+
+dn: rsId=78543988,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenant
+cn: 78543988
+enabled: TRUE
+rsId: 78543988
+baseUrlId: 135
+baseUrlId: 1041
+baseUrlId: 122
+baseUrlId: 109
+baseUrlId: 1042
+baseUrlId: 56
+baseUrlId: 47
+baseUrlId: 17
+baseUrlId: 83
+baseUrlId: 15
+baseUrlId: 120
+rsDomainId: 78543988
+tenantDisplayName: 78543988
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=MossoCloudFS_78543988,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenant
+cn: MossoCloudFS_78543988
+enabled: TRUE
+rsId: MossoCloudFS_78543988
+baseUrlId: 3
+baseUrlId: 10
+baseUrlId: 111
+baseUrlId: 103
+baseUrlId: 1013
+baseUrlId: 11
+rsDomainId: 78543988
+tenantDisplayName: MossoCloudFS_78543988
+vOneDefault: 111
+vOneDefault: 103
+
+dn: rsId=78543990,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenant
+cn: 78543990
+enabled: TRUE
+rsId: 78543990
+baseUrlId: 135
+baseUrlId: 1041
+baseUrlId: 122
+baseUrlId: 109
+baseUrlId: 1042
+baseUrlId: 56
+baseUrlId: 47
+baseUrlId: 17
+baseUrlId: 83
+baseUrlId: 15
+baseUrlId: 120
+rsDomainId: 78543990
+tenantDisplayName: 78543990
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=MossoCloudFS_78543990,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+changetype: add
+objectClass: tenant
+cn: MossoCloudFS_78543990
+enabled: TRUE
+rsId: MossoCloudFS_78543990
+baseUrlId: 3
+baseUrlId: 10
+baseUrlId: 111
+baseUrlId: 103
+baseUrlId: 1013
+baseUrlId: 11
+rsDomainId: 78543990
+tenantDisplayName: MossoCloudFS_78543990
+vOneDefault: 111
+vOneDefault: 103
