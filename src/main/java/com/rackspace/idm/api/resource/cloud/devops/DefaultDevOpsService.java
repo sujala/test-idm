@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
 import com.rackspace.idm.api.filter.LdapLoggingFilter;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -37,6 +38,9 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Autowired
     private Configuration globalConfig;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Autowired(required = false)
     private CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator;
@@ -91,6 +95,14 @@ public class DefaultDevOpsService implements DevOpsService {
             final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
             return Response.ok().entity(factory.createMetadata(cacheableKeyCzarCrypterLocator.getCacheInfo()));
         }
+    }
+
+    @Override
+    public Response.ResponseBuilder getIdmProps(String authToken) {
+        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
+        String idmProps = identityConfig.toJSONString();
+        Response.ResponseBuilder response = Response.ok().entity(idmProps);
+        return response;
     }
 
     private File getLogParentDir() {

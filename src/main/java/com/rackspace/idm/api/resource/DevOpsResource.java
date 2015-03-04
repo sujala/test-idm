@@ -66,4 +66,15 @@ public class DevOpsResource {
         return devOpsService.resetKeyMetadata(authToken).build();
     }
 
+    /**
+     * Retrieves the IDM properties.
+     *
+     * @return IDM properties as JSON; JSON only since it is just for internal use.
+     */
+    @GET
+    @Path("/props")
+    public Response getIdmProps(@HeaderParam(X_AUTH_TOKEN) String authToken) {
+        return devOpsService.getIdmProps(authToken).build();
+    }
+
 }

@@ -1120,7 +1120,6 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "when getting racker from scope access, return racker if enabled flag is missing"() {
         given:
-        service.identityConfig = new IdentityConfig(Mock(Configuration), Mock(Configuration))
         def racker = entityFactory.createRacker().with {
             it.enabled = null
             return it

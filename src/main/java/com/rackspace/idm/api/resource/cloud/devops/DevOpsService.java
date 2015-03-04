@@ -42,4 +42,14 @@ public interface DevOpsService {
      * @return metadata map.
      */
     Response.ResponseBuilder resetKeyMetadata(String authToken);
+
+    /**
+     * Retrieves IDM properties.
+     *
+     * @param authToken
+     *
+     * @return properties map.
+     */
+    Response.ResponseBuilder getIdmProps(String authToken);
+
 }

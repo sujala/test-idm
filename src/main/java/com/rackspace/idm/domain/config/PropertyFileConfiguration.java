@@ -28,9 +28,9 @@ import java.io.File;
  */
 @org.springframework.context.annotation.Configuration
 public class PropertyFileConfiguration {
-    private static final String CONFIG_FILE_NAME = "idm.properties";
+    public static final String CONFIG_FILE_NAME = "idm.properties";
 
-    private static final String RELOADABLE_CONFIG_FILE_NAME = "idm.reloadable.properties";
+    public static final String RELOADABLE_CONFIG_FILE_NAME = "idm.reloadable.properties";
 
     private static final int NUM_MILLISECONDS_IN_SECOND = 1000;
 

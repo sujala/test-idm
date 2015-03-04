@@ -1,16 +1,12 @@
 package com.rackspace.idm.domain.config;
 
-import com.google.common.base.Functions;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.IdentityRole;
-import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.security.TokenFormat;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.lang.StringUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +14,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.math.BigInteger;
 import java.util.Iterator;
@@ -26,25 +23,16 @@ import java.util.Iterator;
 public class IdentityConfig {
 
     private static final String LOCALHOST = "localhost";
-
     public static final String CONFIG_FOLDER_SYS_PROP_NAME = "idm.properties.location";
-
     public static final String FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME = "feature.use.reloadable.docs";
-    public static final boolean FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_DEFAULT_VALUE = true;
 
     /**
      * Should be provided in seconds
      */
     public static final String RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME = "reloadable.docs.cache.timeout";
 
-    /**
-     * In seconds
-     */
-    public static final int RELOADABLE_DOCS_CACHE_TIMEOUT_DEFAULT_VALUE = 60;
-
     //REQUIRED PROPERTIES
     private static final String GA_USERNAME = "ga.username";
-
     private static final String EMAIL_FROM_EMAIL_ADDRESS = "email.return.email.address";
     private static final String EMAIL_MFA_ENABLED_SUBJECT = "email.mfa.enabled.subject";
     private static final String EMAIL_MFA_DISABLED_SUBJECT = "email.mfa.disabled.subject";
@@ -53,21 +41,17 @@ public class IdentityConfig {
     private static final String EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES = "email.send.to.only.rackspace.addresses.enabled";
     private static final String SCOPED_TOKEN_EXPIRATION_SECONDS = "token.scoped.expirationSeconds";
     private static final String CLOUD_AUTH_CLIENT_ID = "cloudAuth.clientId";
-
     public static final String IDENTITY_ACCESS_ROLE_NAMES_PROP = "cloudAuth.accessRoleNames";
     public static final String IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP = "cloudAuth.adminRole";
     public static final String IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP = "cloudAuth.serviceAdminRole";
     public static final String IDENTITY_USER_ADMIN_ROLE_NAME_PROP = "cloudAuth.userAdminRole";
     public static final String IDENTITY_USER_MANAGE_ROLE_NAME_PROP = "cloudAuth.userManagedRole";
     public static final String IDENTITY_DEFAULT_USER_ROLE_NAME_PROP = "cloudAuth.userRole";
-
     public static final String IDENTITY_PROVISIONED_TOKEN_FORMAT = "feature.provisioned.defaultTokenFormat";
-    private static final String IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT = "UUID";
-
     private static final String FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME = "feature.aetoken.cleanup.uuid.on.revokes";
-    private static final boolean FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_DEFAULT_VALUE = true;
-
     public static final String PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME = "reloadable.properties.ttl.seconds";
+
+    // left as static var to support external reference
     public static final int PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE = 30;
 
     /**
@@ -75,7 +59,6 @@ public class IdentityConfig {
      * override property {@link #IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG}
      */
     public static final String IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP = "feature.federated.provider.defaultTokenFormat";
-    public static final String IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_VALUE = "UUID";
 
     /**
      * The format of the property name to set the token format for a specific IDP. The '%s' is replaced by the IDP's labeledUri. This
@@ -84,15 +67,9 @@ public class IdentityConfig {
      */
     public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX = "federated.provider.tokenFormat";
     public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG = IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX + ".%s";
-
     private static final String IDENTITY_RACKER_TOKEN_FORMAT =  "feature.racker.defaultTokenFormat";
-    private static final String IDENTITY_RACKER_TOKEN_FORMAT_DEFAULT =  "UUID";
     private static final String IDENTITY_RACKER_AE_TOKEN_ROLE = "racker.ae.tokens.role";
-    private static final String IDENTITY_RACKER_AE_TOKEN_ROLE_DEFAULT = "cloud-identity-tokens-ae";
-
     private static final String KEYCZAR_DN_CONFIG = "feature.KeyCzarCrypterLocator.ldap.dn";
-    private static final String KEYCZAR_DN_DEFAULT = "ou=keystore,o=configuration,dc=rackspace,dc=com";
-
     public static final String FEATURE_AE_TOKENS_ENCRYPT = "feature.ae.tokens.encrypt";
     public static final String FEATURE_AE_TOKENS_DECRYPT = "feature.ae.tokens.decrypt";
 
@@ -102,76 +79,40 @@ public class IdentityConfig {
     private static final String PROPERTY_SET_MESSAGE = "Configuration Property '%s' set with value '%s'";
     private static final String PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is NOT set but is required";
     private static final String INVALID_PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is invalid";
-
-    private static final Logger logger = LoggerFactory.getLogger(IdentityConfig.class);
-
     public static final String FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP = "feature.allow.federated.impersonation";
-    public static final boolean FEATURE_ALLOW_FEDERATED_IMPERSONATION_DEFAULT = false;
-
     public static final String EXPOSE_V11_ADD_BASE_URL_PROP = "feature.v11.add.base.url.exposed";
-    public static final boolean EXPOSE_V11_ADD_BASE_URL_DEFAULT = true;
     public static final String FEATURE_BASE_URL_RESPECT_ENABLED_FLAG = "feature.base.url.respect.enabled.flag";
-    public static final boolean FEATURE_BASE_URL_RESPECT_ENABLED_FLAG_DEFAULT = false;
-
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP = "feature.endpoint.template.type.use.config.mapping";
-    public static final boolean FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_DEFAULT = false;
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP = "feature.endpoint.template.type.mosso.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP = "feature.endpoint.template.type.nast.mapping";
-
     public static final String OTP_ISSUER = "feature.otp.issuer";
-    public static final String OTP_ISSUER_DEFAULT = "Rackspace";
-
     public static final String OTP_ENTROPY = "feature.otp.entropy";
-    public static final int OTP_ENTROPY_DEFAULT = 25;
     public static final String OTP_CREATE_ENABLED = "feature.otp.create.enabled.flag";
-    public static final boolean OTP_CREATE_ENABLED_DEFAULT = false;
-
     public static final String FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP = "feature.user.disabled.by.tenants.enabled";
     public static final boolean FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT = false;
-
     public static final String FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP = "feature.identity.admin.create.subuser.enabled";
-    public static final boolean FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_DEFUALT = false;
-
     public static final String FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP = "domain.restricted.to.one.user.admin.enabled";
-    public static final boolean FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_DEFAULT = false;
 
     /**
      * Name of the property that specifies the name of the identity role users are assigned to gain access to MFA during
      * the beta period.
      */
     public static final String MULTIFACTOR_BETA_ROLE_NAME_PROP = "cloudAuth.multiFactorBetaRoleName";
+    public static final String MULTIFACTOR_BETA_ENABLED_PROP = "multifactor.beta.enabled";
 
     public static final String MULTIFACTOR_SERVICES_ENABLED_PROP = "multifactor.services.enabled";
-    public static final boolean MULTIFACTOR_SERVICES_ENABLED_PROP_DEFAULT = false;
-    public static final String MULTIFACTOR_BETA_ENABLED_PROP = "multifactor.beta.enabled";
-    public static final boolean MULTIFACTOR_BETA_ENABLED_PROP_DEFAULT = false;
+    public static final String BYPASS_DEFAULT_NUMBER = "multifactor.bypass.default.number";
+    public static final String BYPASS_MAXIMUM_NUMBER = "multifactor.bypass.maximum.number";
 
     public static final String FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP="feature.enable.validate.token.global.role";
-    public static final boolean FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_DEFAULT=false;
-
     public static final String FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP="feature.enable.get.token.endpoints.global.role";
-    public static final boolean FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_DEFAULT=false;
-
     public static final String FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP="feature.enable.get.user.roles.global.role";
-    public static final boolean FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_DEFAULT=false;
-
     public static final String FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP="feature.enable.get.user.groups.global.role";
-    public static final boolean FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_DEFAULT=false;
-
     public static final String FEATURE_ENABLE_IMPLICIT_ROLE_PROP="feature.enable.implicit.roles";
-    public static final boolean FEATURE_ENABLE_IMPLICIT_ROLE_DEFAULT=false;
-
     public static final String IMPLICIT_ROLE_PROP_PREFIX = "implicit.roles";
     public static final String IMPLICIT_ROLE_OVERRIDE_PROP_REG = IMPLICIT_ROLE_PROP_PREFIX + ".%s";
-
     public static final String FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP = "feature.racker.username.auth.enabled";
-    public static final boolean FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_DEFAULT = false;
 
-
-    public static final String BYPASS_DEFAULT_NUMBER = "multifactor.bypass.default.number";
-    public static final BigInteger BYPASS_DEFAULT_NUMBER_DEFAULT = BigInteger.ONE;
-    public static final String BYPASS_MAXIMUM_NUMBER = "multifactor.bypass.maximum.number";
-    public static final BigInteger BYPASS_MAXIMUM_NUMBER_DEFAULT = BigInteger.TEN;
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -181,16 +122,60 @@ public class IdentityConfig {
     @Autowired
     private Configuration reloadableConfiguration;
 
-    private StaticConfig staticConfig = new StaticConfig();
-
-    private ReloadableConfig reloadableConfig = new ReloadableConfig();
+    private static final Logger logger = LoggerFactory.getLogger(IdentityConfig.class);
+    private final Map<String,Object> propertyDefaults;
+    private final StaticConfig staticConfig = new StaticConfig();
+    private final ReloadableConfig reloadableConfig = new ReloadableConfig();
 
     public IdentityConfig() {
+        propertyDefaults = setDefaults();
     }
 
     public IdentityConfig(Configuration staticConfiguration, Configuration reloadableConfiguration) {
+        propertyDefaults = setDefaults();
         this.staticConfiguration = staticConfiguration;
         this.reloadableConfiguration = reloadableConfiguration;
+    }
+
+    private static final Map<String,Object> setDefaults() {
+        Map<String,Object> defaults = new HashMap<String, Object>();
+        defaults.put(EMAIL_HOST, LOCALHOST);
+        defaults.put(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, true);
+        defaults.put(IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID");
+        defaults.put(FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, true);
+        defaults.put(PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME, PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE);
+        defaults.put(IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, "UUID");
+        defaults.put(IDENTITY_RACKER_TOKEN_FORMAT, "UUID");
+        defaults.put(IDENTITY_RACKER_AE_TOKEN_ROLE, "cloud-identity-tokens-ae");
+        defaults.put(KEYCZAR_DN_CONFIG, "ou=keystore,o=configuration,dc=rackspace,dc=com");
+        defaults.put(FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, false);
+        defaults.put(EXPOSE_V11_ADD_BASE_URL_PROP, true);
+        defaults.put(FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, false);
+        defaults.put(FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP, false);
+        defaults.put(OTP_ISSUER, "Rackspace");
+        defaults.put(OTP_ENTROPY, 25);
+        defaults.put(FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT);
+        defaults.put(FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP, false);
+        defaults.put(FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, false);
+        defaults.put(FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP, false);
+        defaults.put(FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP, false);
+        defaults.put(FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP, false);
+        defaults.put(FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP, false);
+        defaults.put(FEATURE_ENABLE_IMPLICIT_ROLE_PROP, false);
+        defaults.put(FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP, false);
+        defaults.put(FEATURE_AE_TOKENS_ENCRYPT, true);
+        defaults.put(FEATURE_AE_TOKENS_DECRYPT, true);
+        defaults.put(FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME, true);
+        defaults.put(RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME, 60);
+        defaults.put(MULTIFACTOR_BETA_ENABLED_PROP, false);
+        defaults.put(MULTIFACTOR_SERVICES_ENABLED_PROP, false);
+        defaults.put(BYPASS_DEFAULT_NUMBER, BigInteger.ONE);
+        defaults.put(BYPASS_MAXIMUM_NUMBER, BigInteger.TEN);
+        return defaults;
+    }
+
+    public Object getPropertyDefault(String key) {
+        return propertyDefaults.get(key);
     }
 
     @PostConstruct
@@ -247,144 +232,292 @@ public class IdentityConfig {
     }
 
     /**
+     * To maintain existing application logic, the safe getters continue to return null
+     * when a default doesn't exist.
+     */
+
+    private Integer getIntSafely(Configuration config, String prop) {
+        Object defaultValue = propertyDefaults.get(prop);
+        try {
+            if (defaultValue == null) {
+                return config.getInt(prop);
+            } else {
+                return config.getInt(prop, (Integer) defaultValue);
+            }
+        } catch (NumberFormatException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+            return (Integer) defaultValue;
+        }
+    }
+
+    private BigInteger getBigIntegerSafely(Configuration config, String prop) {
+        Object defaultValue = propertyDefaults.get(prop);
+        try {
+            if (defaultValue == null) {
+                return config.getBigInteger(prop);
+            } else {
+                return config.getBigInteger(prop, (BigInteger) defaultValue);
+            }
+        } catch (NumberFormatException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+            return (BigInteger) defaultValue;
+        }
+    }
+
+    private String getStringSafely(Configuration config, String prop) {
+        Object defaultValue = propertyDefaults.get(prop);
+        try {
+            if (defaultValue == null) {
+                return config.getString(prop);
+            } else {
+                return config.getString(prop, (String) defaultValue);
+            }
+        } catch (ConversionException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+            return (String) defaultValue;
+        }
+    }
+
+    private Boolean getBooleanSafely(Configuration config, String prop) {
+        Object defaultValue = propertyDefaults.get(prop);
+        try {
+            if (defaultValue == null) {
+                return config.getBoolean(prop);
+            } else {
+                return config.getBoolean(prop, (Boolean) defaultValue);
+            }
+        } catch (ConversionException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+            return (Boolean) defaultValue;
+        }
+    }
+
+    /**
+     * Return JSON representation of properties and their values, as annotated by {@link com.rackspace.idm.domain.config.IdmProp}.
+     *
+     * Uses reflection to discover getters that have been annotated with {@link com.rackspace.idm.domain.config.IdmProp}
+     * @return JSONObject properties
+     */
+    private JSONObject toJSONObject(Object config) {
+        final String description = "description";
+        final String versionAdded= "versionAdded";
+        final String propValue = "value";
+        final String defaultValue = "defaultValue";
+        JSONObject props = new JSONObject();
+        for (Method m : config.getClass().getDeclaredMethods()) {
+            if (m.isAnnotationPresent(IdmProp.class)) {
+                final IdmProp a = m.getAnnotation(IdmProp.class);
+                final String msg = String.format("error getting the value of '%s'", a.key());
+                JSONObject prop = new JSONObject();
+                try {
+                    Object value = m.invoke(config);
+                    prop.put(description, a.description());
+                    prop.put(versionAdded, a.versionAdded());
+                    prop.put(defaultValue, propertyDefaults.get(a.key()));
+                    if (value instanceof String || value instanceof Number || value instanceof Boolean) {
+                        prop.put(propValue, value);
+                    } else if (value instanceof String[] ) {
+                        JSONArray valueArray = new JSONArray();
+                        for (String val : (String[])value) {
+                            valueArray.add(val);
+                        }
+                        prop.put(propValue, valueArray);
+                    } else {
+                        prop.put(propValue, value.toString());
+                    }
+                    props.put(a.key(), prop);
+                } catch (Exception e) {
+                    logger.error(msg, e);
+                }
+            }
+        }
+        return props;
+    }
+
+    /**
+     * Return serialized JSON representation of IdentityConfig for use by API calls.
+     * @return String JSON representation of IdentityConfig
+     */
+    public String toJSONString() {
+        JSONObject props = new JSONObject();
+        props.put("configPath", getConfigRoot());
+        props.put(PropertyFileConfiguration.CONFIG_FILE_NAME, toJSONObject(staticConfig));
+        props.put(PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME, toJSONObject(reloadableConfig));
+        return props.toJSONString();
+    }
+
+    /**
      * Wrapper around the static configuration properties. Users of these properties may cache the value between requests
      * as the value of these properties will remain constant throughout the lifetime of the running application.
      */
     public class StaticConfig {
+
+        @IdmProp(key = GA_USERNAME, description = "Cloud Identity Admin user", versionAdded = "1.0.14.8")
         public String getGaUsername() {
-            return staticConfiguration.getString(GA_USERNAME);
+            return getStringSafely(staticConfiguration, GA_USERNAME);
         }
 
+        @IdmProp(key = EMAIL_FROM_EMAIL_ADDRESS, description = "Return email address to use when sending emails to customers.", versionAdded = "2.5.0")
         public String getEmailFromAddress() {
-            return staticConfiguration.getString(EMAIL_FROM_EMAIL_ADDRESS);
+            return getStringSafely(staticConfiguration, EMAIL_FROM_EMAIL_ADDRESS);
         }
 
+        @IdmProp(key = EMAIL_LOCKED_OUT_SUBJECT, description = "Subject to use when sending MFA locked out email to customer.", versionAdded = "2.5.0")
         public String getEmailLockedOutSubject() {
-            return staticConfiguration.getString(EMAIL_LOCKED_OUT_SUBJECT);
+            return getStringSafely(staticConfiguration, EMAIL_LOCKED_OUT_SUBJECT);
         }
 
+        @IdmProp(key=EMAIL_MFA_ENABLED_SUBJECT, description = "Subject to use when sending MFA enabled email to customer.", versionAdded = "2.5.0")
         public String getEmailMFAEnabledSubject() {
-            return staticConfiguration.getString(EMAIL_MFA_ENABLED_SUBJECT);
+            return getStringSafely(staticConfiguration, EMAIL_MFA_ENABLED_SUBJECT);
         }
 
+        @IdmProp(key=EMAIL_MFA_DISABLED_SUBJECT, description = "Subject to use when sending MFA disabled email to customer.", versionAdded = "2.5.0")
         public String getEmailMFADisabledSubject() {
-            return staticConfiguration.getString(EMAIL_MFA_DISABLED_SUBJECT);
+            return getStringSafely(staticConfiguration, EMAIL_MFA_DISABLED_SUBJECT);
         }
 
+        @IdmProp(key=EMAIL_HOST, description = "Email host to use when sending emails.", versionAdded = "2.5.0")
         public String getEmailHost() {
-            return staticConfiguration.getString(EMAIL_HOST, LOCALHOST);
+            return getStringSafely(staticConfiguration, EMAIL_HOST);
         }
 
+        @IdmProp(key=EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, description = "Flag that restricts outgoing emails to only rackspace.com emails. This will prevent any emails from being sent from staging.", versionAdded = "2.5.0")
         public boolean isSendToOnlyRackspaceAddressesEnabled() {
-            return staticConfiguration.getBoolean(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, true);
+            return getBooleanSafely(staticConfiguration, EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES);
         }
 
+        @IdmProp(key = SCOPED_TOKEN_EXPIRATION_SECONDS, description = "Expiration time for scoped tokens.", versionAdded = "2.9.0")
         public int getScopedTokenExpirationSeconds() {
-            return staticConfiguration.getInt(SCOPED_TOKEN_EXPIRATION_SECONDS);
+            return getIntSafely(staticConfiguration, SCOPED_TOKEN_EXPIRATION_SECONDS);
         }
 
+        @IdmProp(key = CLOUD_AUTH_CLIENT_ID, description = "Cloud Identity Application ID.", versionAdded = "1.0.14.8")
         public String getCloudAuthClientId() {
-            return staticConfiguration.getString(CLOUD_AUTH_CLIENT_ID);
+            return getStringSafely(staticConfiguration, CLOUD_AUTH_CLIENT_ID);
         }
 
+        @IdmProp(key = IDENTITY_USER_ADMIN_ROLE_NAME_PROP, description = "User admin role name.", versionAdded = "1.0.14.8")
         public String getIdentityUserAdminRoleName() {
-            return staticConfiguration.getString(IDENTITY_USER_ADMIN_ROLE_NAME_PROP);
+            return getStringSafely(staticConfiguration, IDENTITY_USER_ADMIN_ROLE_NAME_PROP);
         }
 
         public String[] getIdentityAccessRoleNames() {
             return staticConfiguration.getStringArray(IDENTITY_ACCESS_ROLE_NAMES_PROP);
         }
 
+        @IdmProp(key = IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP, description = "Identity admin role name.", versionAdded = "1.0.14.8")
         public String getIdentityIdentityAdminRoleName() {
-            return staticConfiguration.getString(IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP);
+            return getStringSafely(staticConfiguration, IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP);
         }
 
+        @IdmProp(key = IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP, description = "Service admin role name (super user).", versionAdded = "1.0.14.8")
         public String getIdentityServiceAdminRoleName() {
-            return staticConfiguration.getString(IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP);
+            return getStringSafely(staticConfiguration, IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP);
         }
 
+        @IdmProp(key = IDENTITY_DEFAULT_USER_ROLE_NAME_PROP, description = "Default user role name.", versionAdded = "1.0.14.8")
         public String getIdentityDefaultUserRoleName() {
-            return staticConfiguration.getString(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP);
+            return getStringSafely(staticConfiguration, IDENTITY_DEFAULT_USER_ROLE_NAME_PROP);
         }
 
+        @IdmProp(key = IDENTITY_USER_MANAGE_ROLE_NAME_PROP, description = "User manager role name.", versionAdded = "1.0.14.8")
         public String getIdentityUserManagerRoleName() {
-            return staticConfiguration.getString(IDENTITY_USER_MANAGE_ROLE_NAME_PROP);
+            return getStringSafely(staticConfiguration, IDENTITY_USER_MANAGE_ROLE_NAME_PROP);
         }
 
+        @IdmProp(key = MULTIFACTOR_BETA_ROLE_NAME_PROP)
         public String getMultiFactorBetaRoleName() {
-            return staticConfiguration.getString(MULTIFACTOR_BETA_ROLE_NAME_PROP);
+            return getStringSafely(staticConfiguration, MULTIFACTOR_BETA_ROLE_NAME_PROP);
         }
 
+        @IdmProp(key = MULTIFACTOR_SERVICES_ENABLED_PROP)
         public boolean getMultiFactorServicesEnabled() {
-            return staticConfiguration.getBoolean(MULTIFACTOR_SERVICES_ENABLED_PROP, MULTIFACTOR_SERVICES_ENABLED_PROP_DEFAULT);
+            return getBooleanSafely(staticConfiguration, MULTIFACTOR_SERVICES_ENABLED_PROP);
         }
 
+        @IdmProp(key = MULTIFACTOR_BETA_ENABLED_PROP)
         public boolean getMultiFactorBetaEnabled() {
-            return staticConfiguration.getBoolean(MULTIFACTOR_BETA_ENABLED_PROP, MULTIFACTOR_BETA_ENABLED_PROP_DEFAULT);
+            return getBooleanSafely(staticConfiguration, MULTIFACTOR_BETA_ENABLED_PROP);
         }
 
+        @IdmProp(key = IDENTITY_PROVISIONED_TOKEN_FORMAT, description = "Defines the default token format for provisioned users tokens.", versionAdded = "2.12.0")
         public TokenFormat getIdentityProvisionedTokenFormat() {
-            return convertToTokenFormat(staticConfiguration.getString(IDENTITY_PROVISIONED_TOKEN_FORMAT, IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT));
+            return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_PROVISIONED_TOKEN_FORMAT));
         }
 
+        @IdmProp(key = IDENTITY_RACKER_TOKEN_FORMAT, description = "Defines the default token format for eDir Racker tokens.", versionAdded = "2.12.0")
         public TokenFormat getIdentityRackerTokenFormat() {
-            return convertToTokenFormat(staticConfiguration.getString(IDENTITY_RACKER_TOKEN_FORMAT, IDENTITY_RACKER_TOKEN_FORMAT_DEFAULT));
+            return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_RACKER_TOKEN_FORMAT));
         }
 
+        @IdmProp(key = IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP)
         public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
-            return convertToTokenFormat(staticConfiguration.getString(IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_VALUE));
+            return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP));
         }
 
         public TokenFormat getIdentityFederatedUserTokenFormatForIdp(String idpLabeledUri) {
             return convertToTokenFormat(staticConfiguration.getString(String.format(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, idpLabeledUri), "${" + IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP + "}"));
         }
 
+        @IdmProp(key = IDENTITY_RACKER_AE_TOKEN_ROLE)
         public String getIdentityRackerAETokenRole() {
-            return staticConfiguration.getString(IDENTITY_RACKER_AE_TOKEN_ROLE, IDENTITY_RACKER_AE_TOKEN_ROLE_DEFAULT);
+            return getStringSafely(staticConfiguration, IDENTITY_RACKER_AE_TOKEN_ROLE);
         }
 
+        @IdmProp(key = FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME)
         public boolean getFeatureAeTokenCleanupUuidOnRevokes() {
-            return staticConfiguration.getBoolean(FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_DEFAULT_VALUE);
+            return getBooleanSafely(staticConfiguration, FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME);
         }
 
+        @IdmProp(key = KEYCZAR_DN_CONFIG)
         public String getKeyCzarDN() {
-            return staticConfiguration.getString(KEYCZAR_DN_CONFIG, KEYCZAR_DN_DEFAULT);
+            return getStringSafely(staticConfiguration, KEYCZAR_DN_CONFIG);
         }
 
+        @IdmProp(key = FEATURE_AE_TOKENS_ENCRYPT)
         public boolean getFeatureAETokensEncrypt() {
-            return staticConfiguration.getBoolean(FEATURE_AE_TOKENS_ENCRYPT, true);
+            return getBooleanSafely(staticConfiguration, FEATURE_AE_TOKENS_ENCRYPT);
         }
 
+        @IdmProp(key = FEATURE_AE_TOKENS_DECRYPT)
         public boolean getFeatureAETokensDecrypt() {
-            return getFeatureAETokensEncrypt() || staticConfiguration.getBoolean(FEATURE_AE_TOKENS_DECRYPT, true);
+            return getFeatureAETokensEncrypt() || staticConfiguration.getBoolean(FEATURE_AE_TOKENS_DECRYPT);
         }
 
+        @IdmProp(key = FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP)
         public boolean allowFederatedImpersonation() {
-            return staticConfiguration.getBoolean(FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, FEATURE_ALLOW_FEDERATED_IMPERSONATION_DEFAULT);
+            return getBooleanSafely(staticConfiguration, FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP);
         }
 
+        @IdmProp(key = PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME)
         public int getReloadablePropertiesTTL() {
-            return staticConfiguration.getInt(PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME, PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE);
+            return getIntSafely(staticConfiguration, PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME);
         }
 
+        @IdmProp(key = FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME)
         public boolean useReloadableDocs() {
-            return staticConfiguration.getBoolean(FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME, FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_DEFAULT_VALUE);
+            return getBooleanSafely(staticConfiguration, FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME);
         }
 
+        @IdmProp(key = RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME)
         public int reloadableDocsTimeOutInSeconds() {
-            return staticConfiguration.getInt(RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME, RELOADABLE_DOCS_CACHE_TIMEOUT_DEFAULT_VALUE);
+            return getIntSafely(staticConfiguration, RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME);
         }
 
+        @IdmProp(key = EXPOSE_V11_ADD_BASE_URL_PROP)
         public boolean getV11AddBaseUrlExposed() {
-            return staticConfiguration.getBoolean(EXPOSE_V11_ADD_BASE_URL_PROP, EXPOSE_V11_ADD_BASE_URL_DEFAULT);
+            return getBooleanSafely(staticConfiguration, EXPOSE_V11_ADD_BASE_URL_PROP);
         }
 
+        @IdmProp(key = FEATURE_BASE_URL_RESPECT_ENABLED_FLAG)
         public boolean getBaseUlrRespectEnabledFlag() {
-            return staticConfiguration.getBoolean(FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, FEATURE_BASE_URL_RESPECT_ENABLED_FLAG_DEFAULT);
+            return getBooleanSafely(staticConfiguration, FEATURE_BASE_URL_RESPECT_ENABLED_FLAG);
         }
 
+        @IdmProp(key = FEATURE_ENABLE_IMPLICIT_ROLE_PROP)
         public boolean isImplicitRoleSupportEnabled() {
-            return getBooleanSafely(FEATURE_ENABLE_IMPLICIT_ROLE_PROP, FEATURE_ENABLE_IMPLICIT_ROLE_DEFAULT);
+            return getBooleanSafely(staticConfiguration, FEATURE_ENABLE_IMPLICIT_ROLE_PROP);
         }
 
         public Set<IdentityRole> getImplicitRolesForRole(String roleName) {
@@ -419,29 +552,29 @@ public class IdentityConfig {
             return TokenFormat.UUID;
         }
 
+        @IdmProp(key = OTP_ISSUER)
         public String getOTPIssuer() {
-            return staticConfiguration.getString(OTP_ISSUER, OTP_ISSUER_DEFAULT);
+            return getStringSafely(staticConfiguration, OTP_ISSUER);
         }
 
+        @IdmProp(key = FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP)
         public boolean getDomainRestrictedToOneUserAdmin() {
-            return staticConfiguration.getBoolean(FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_DEFAULT);
+            return getBooleanSafely(staticConfiguration, FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP);
         }
 
+        @IdmProp(key = BYPASS_DEFAULT_NUMBER)
         public BigInteger getBypassDefaultNumber() {
-            return staticConfiguration.getBigInteger(BYPASS_DEFAULT_NUMBER, BYPASS_DEFAULT_NUMBER_DEFAULT);
+            return getBigIntegerSafely(staticConfiguration, BYPASS_DEFAULT_NUMBER);
         }
 
+        @IdmProp(key = BYPASS_MAXIMUM_NUMBER)
         public BigInteger getBypassMaximumNumber() {
-            return staticConfiguration.getBigInteger(BYPASS_MAXIMUM_NUMBER, BYPASS_MAXIMUM_NUMBER_DEFAULT);
+            return getBigIntegerSafely(staticConfiguration, BYPASS_MAXIMUM_NUMBER);
         }
 
-        private boolean getBooleanSafely(String prop, boolean defaultValue) {
-            try {
-                return staticConfiguration.getBoolean(prop, defaultValue);
-            } catch (ConversionException e) {
-                logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
-                return defaultValue;
-            }
+        @IdmProp(key = OTP_CREATE_ENABLED)
+        public boolean getOTPCreateEnabled() {
+            return getBooleanSafely(staticConfiguration, OTP_CREATE_ENABLED);
         }
     }
 
@@ -450,70 +583,69 @@ public class IdentityConfig {
      * lookup up the property each time before use and must NOT store the value of the property.
      */
     public class ReloadableConfig {
+
         public String getTestPing() {
             return reloadableConfiguration.getString("reload.test");
         }
 
+        @IdmProp(key = FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP)
         public boolean getBaseUrlUseTypeMappingFlag() {
-            return reloadableConfiguration.getBoolean(FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP, FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_DEFAULT);
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP);
         }
 
+        @IdmProp(key = FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP)
         public String[] getBaseUrlMossoTypeMapping() {
             return reloadableConfiguration.getStringArray(FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP);
         }
 
+        @IdmProp(key = FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP)
         public String[] getBaseUrlNastTypeMapping() {
             return reloadableConfiguration.getStringArray(FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP);
         }
 
+        @IdmProp(key = OTP_ENTROPY)
         public int getOTPEntropy() {
-            try {
-                return reloadableConfiguration.getInt(OTP_ENTROPY, OTP_ENTROPY_DEFAULT);
-            } catch (NumberFormatException e) {
-                logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, OTP_ENTROPY));
-                return OTP_ENTROPY_DEFAULT;
-            }
+            return getIntSafely(reloadableConfiguration, OTP_ENTROPY);
         }
 
+        @IdmProp(key = OTP_CREATE_ENABLED)
         public boolean getOTPCreateEnabled() {
-            return getBooleanSafely(OTP_CREATE_ENABLED, OTP_CREATE_ENABLED_DEFAULT);
+            return getBooleanSafely(reloadableConfiguration, OTP_CREATE_ENABLED);
         }
 
+        @IdmProp(key = FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP)
         public boolean getFeatureUserDisabledByTenantsEnabled() {
-            return getBooleanSafely(FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT);
+            return getBooleanSafely(reloadableConfiguration, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP);
         }
 
+        @IdmProp(key = FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP)
         public boolean getIdentityAdminCreateSubuserEnabled() {
-            return getBooleanSafely(FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP, FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_DEFUALT);
+            return getBooleanSafely(reloadableConfiguration, FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP);
         }
 
+        @IdmProp(key = FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP)
         public boolean isValidateTokenGlobalRoleEnabled() {
-            return getBooleanSafely(FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP, FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_DEFAULT);
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP);
         }
 
+        @IdmProp(key = FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP)
         public boolean isGetTokenEndpointsGlobalRoleEnabled() {
-            return getBooleanSafely(FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP, FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_DEFAULT);
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP);
         }
 
+        @IdmProp(key = FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP)
         public boolean isGetUserRolesGlobalRoleEnabled() {
-            return getBooleanSafely(FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP, FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_DEFAULT);
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP);
         }
 
+        @IdmProp(key = FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP)
         public boolean isGetUserGroupsGlobalRoleEnabled() {
-            return getBooleanSafely(FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP, FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_DEFAULT);
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP);
         }
 
+        @IdmProp(key = FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP)
         public boolean getFeatureRackerUsernameOnAuthEnabled() {
-            return getBooleanSafely(FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP, FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_DEFAULT);
-        }
-
-        private boolean getBooleanSafely(String prop, boolean defaultValue) {
-            try {
-                return reloadableConfiguration.getBoolean(prop, defaultValue);
-            } catch (ConversionException e) {
-                logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
-                return defaultValue;
-            }
+            return getBooleanSafely(reloadableConfiguration, FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP);
         }
     }
 
