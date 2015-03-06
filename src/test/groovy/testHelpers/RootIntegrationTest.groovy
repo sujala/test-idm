@@ -1,5 +1,8 @@
 package testHelpers
 
+import com.rackspace.identity.multifactor.domain.BasicPin
+import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
+import com.rackspace.idm.Constants
 import com.rackspace.idm.helpers.Cloud10Utils
 import com.rackspace.idm.helpers.Cloud11Utils
 import com.rackspace.idm.helpers.Cloud20Utils
@@ -8,6 +11,7 @@ import com.rackspace.idm.helpers.FoundationApiUtils
 import com.sun.jersey.api.client.WebResource
 import org.apache.commons.lang.math.RandomUtils
 import org.joda.time.DateTime
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -52,11 +56,19 @@ class RootIntegrationTest extends Specification {
     @Shared SingletonConfiguration staticIdmConfiguration = SingletonConfiguration.getInstance();
     @Shared SingletonReloadableConfiguration reloadableConfiguration = SingletonReloadableConfiguration.getInstance();
 
+    //MFA mocks
+    @Shared SingletonMockMobilePhoneVerification mockMobilePhoneVerification = SingletonMockMobilePhoneVerification.getInstance()
+    @Shared SingletonMockMultiFactorAuthenticationService mockMultiFactorAuthenticationService = SingletonMockMultiFactorAuthenticationService.getInstance()
+    @Shared SingletonMockUserManagement mockUserManagement = SingletonMockUserManagement.getInstance()
+
     def mediaTypeContext
 
     public setupSpec(){
         staticIdmConfiguration.reset()
         reloadableConfiguration.reset()
+        mockMobilePhoneVerification.reset()
+        mockMultiFactorAuthenticationService.reset()
+        mockUserManagement.reset()
         doSetupSpec()
         cloud20.init()
     }
@@ -67,6 +79,9 @@ class RootIntegrationTest extends Specification {
         doCleanupSpec()
         staticIdmConfiguration.reset()
         reloadableConfiguration.reset()
+        mockMobilePhoneVerification.reset()
+        mockMultiFactorAuthenticationService.reset()
+        mockUserManagement.reset()
     }
 
     /**

@@ -58,4 +58,11 @@ class Constants {
     static def IDP_2_PUBLIC_KEY = "saml-qe-idp.crt"
     static def IDP_2_PRIVATE_KEY = "saml-qe-idp.pkcs8"
     static def DEFAULT_FED_EMAIL = "federated@rackspace.com"
+
+    public static String MFA_DEFAULT_PIN = "1234"
+    public static String MFA_DEFAULT_USER_PROVIDER_ID = "USER123"
+    public static String MFA_DEFAULT_PHONE_PROVIDER_ID = "PHONE123"
+    public static String MFA_DEFAULT_BYPASS_CODE_1 = "BYPASS1"
+    public static String MFA_DEFAULT_BYPASS_CODE_2 = "BYPASS2"
+    public static String MFA_DEFAULT_BYPASS_CODE_3 = "BYPASS3"
 }

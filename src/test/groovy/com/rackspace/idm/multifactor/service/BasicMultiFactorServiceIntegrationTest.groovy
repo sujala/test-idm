@@ -1,6 +1,8 @@
 package com.rackspace.idm.multifactor.service
 
 import com.google.i18n.phonenumbers.Phonenumber
+import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
@@ -11,12 +13,14 @@ import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.identity.multifactor.domain.BasicPin
 import com.rackspace.identity.multifactor.domain.Pin
 import com.rackspace.identity.multifactor.providers.UserManagement
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+
+import static org.mockito.Mockito.*
 
 /**
  * Tests the multi-factor service with the exception of the MobilePhoneVerification dependency. The production class will sends texts through Duo Security, which
@@ -27,7 +31,6 @@ import org.springframework.test.context.ContextConfiguration
  * contains its own spring context. The grizzly container does NOT have the simulated service. This means these tests can NOT use REST API calls to
  * perform services that send SMS messages. Creating users and authenticating and such is fine.
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired
     private BasicMultiFactorService multiFactorService;
@@ -37,12 +40,6 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
 
     @Autowired
     private LdapUserRepository userRepository;
-
-    @Autowired
-    private Configuration globalConfig;
-
-    @Autowired
-    private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification
 
     @Autowired
     private UserManagement duoUserManagement
@@ -101,7 +98,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
 
         then:
-        userAdmin.getMultiFactorDevicePin() == simulatorMobilePhoneVerification.getConstantPin().getPin()
+        userAdmin.getMultiFactorDevicePin() == Constants.MFA_DEFAULT_PIN
         userAdmin.getMultiFactorDevicePinExpiration().after(testExpirationDate)
         !userAdmin.getMultiFactorDeviceVerified()
         !userAdmin.getMultifactorEnabled()
@@ -118,7 +115,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
      */
     def "Sending second pin overwrites initial"() {
         setup:
-        Pin initialPin = simulatorMobilePhoneVerification.constantPin
+        Pin initialPin = new BasicPin(Constants.MFA_DEFAULT_PIN)
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
         User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
 
@@ -135,7 +132,8 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         assert userAdmin.getMultiFactorDevicePin() == initialPin.getPin()
 
         Pin updatedPin = new BasicPin("9999")
-        simulatorMobilePhoneVerification.setConstantPin(updatedPin)
+        reset(mockMobilePhoneVerification.mock)
+        when(mockMobilePhoneVerification.mock.sendPin(Mockito.anyObject())).thenReturn(updatedPin)
 
         when: "send a second pin code"
         multiFactorService.sendVerificationPin(userAdmin.getId(), retrievedPhone.getId())
@@ -148,7 +146,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         !userAdmin.getMultifactorEnabled()
 
         cleanup:
-        simulatorMobilePhoneVerification.setConstantPin(initialPin)
+        mockMobilePhoneVerification.reset()
         userRepository.deleteObject(userAdmin)
         mobilePhoneRepository.deleteObject(phone)
     }
@@ -198,7 +196,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
      */
     def "Successfully enable multi-factor"() {
         setup:
-        Pin verificationCode = simulatorMobilePhoneVerification.constantPin;
+        Pin verificationCode = new BasicPin(Constants.MFA_DEFAULT_PIN)
 
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
         User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
@@ -236,7 +234,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
      */
     def "Successfully disable multi-factor"() {
         setup:
-        Pin verificationCode = simulatorMobilePhoneVerification.constantPin;
+        Pin verificationCode = new BasicPin(Constants.MFA_DEFAULT_PIN)
 
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
         User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
@@ -274,7 +272,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
      */
     def "Successfully re-enable multi-factor after disabling"() {
         setup:
-        Pin verificationCode = simulatorMobilePhoneVerification.constantPin;
+        Pin verificationCode = new BasicPin(Constants.MFA_DEFAULT_PIN)
 
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
         User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
@@ -314,7 +312,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
      */
     def "Successfully remove multi-factor"() {
         setup:
-        Pin verificationCode = simulatorMobilePhoneVerification.constantPin;
+        Pin verificationCode = new BasicPin(Constants.MFA_DEFAULT_PIN)
 
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
         User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())
@@ -349,7 +347,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
      */
     def "Successfully remove multi-factor when duo user does not exist"() {
         setup:
-        Pin verificationCode = simulatorMobilePhoneVerification.constantPin;
+        Pin verificationCode = new BasicPin(Constants.MFA_DEFAULT_PIN)
 
         org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
         User userAdmin = userRepository.getUserById(userAdminOpenStack.getId())

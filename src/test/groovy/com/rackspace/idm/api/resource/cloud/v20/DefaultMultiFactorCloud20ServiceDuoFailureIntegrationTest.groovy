@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.identity.multifactor.providers.duo.domain.FailureResult
 import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutException
+import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
 import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
@@ -13,7 +14,6 @@ import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.idm.exception.ForbiddenException
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
@@ -21,9 +21,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 
 import javax.ws.rs.core.Response
-
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
 /**
  * This tests where an unexpected exception is encountered in the multifactor provider class. This class uses grizzly
@@ -38,19 +35,12 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
  * the correct status code (500) for internal server errors.
  * </p>
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired
     private LdapMobilePhoneRepository mobilePhoneRepository;
 
     @Autowired
     private LdapUserRepository userRepository;
-
-    @Autowired
-    private Configuration globalConfig;
-
-    @Autowired
-    private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
 
     @Autowired
     private BasicMultiFactorService multiFactorService;
@@ -78,20 +68,6 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
     String userAdminToken;
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone;
     VerificationCode constantVerificationCode;
-
-    /**
-     * Override the grizzly start because we want to add another context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec() {
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml")
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly();
-    }
 
     /**
      * Sets up a new user
@@ -196,7 +172,7 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
 
     def void sendVerificationCode() {
         utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
-        constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+        constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN);
     }
 
     def void verifyPhone() {

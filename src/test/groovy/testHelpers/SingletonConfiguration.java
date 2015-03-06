@@ -24,7 +24,6 @@ public final class SingletonConfiguration implements Configuration {
     private PropertyFileConfiguration pfConfig = new PropertyFileConfiguration();
 
     private SingletonConfiguration(){
-        pfConfig = new PropertyFileConfiguration();
         reset();
     }
 

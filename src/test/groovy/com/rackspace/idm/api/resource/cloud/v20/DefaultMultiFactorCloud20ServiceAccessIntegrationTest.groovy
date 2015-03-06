@@ -1,11 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.helpers.Cloud20Utils
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.http.HttpStatus
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,11 +19,7 @@ import static com.rackspace.idm.Constants.SERVICE_ADMIN_2_PASSWORD
 import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
 import static com.rackspace.idm.Constants.SERVICE_ADMIN_USERNAME
 import static com.rackspace.idm.Constants.SERVICE_ADMIN_2_USERNAME
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
-
-@ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrationTest  {
 
     @Autowired
@@ -40,9 +37,6 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
     @Autowired
     @Qualifier("scopeAccessDao")
     ScopeAccessDao scopeAccessRepository
-
-    @Autowired
-    private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
 
     @Shared def serviceAdmin
     @Shared def serviceAdmin2
@@ -70,20 +64,6 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
 
     @Shared def mobilePhone
     @Shared def constantVerificationCode
-
-    /**
-     * Override the grizzly start because we want to add another context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec(){
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml")
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly();
-    }
 
     def setup() {
         serviceAdminToken = utils.getServiceAdminToken()
@@ -124,7 +104,10 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
 
         mobilePhone = v2Factory.createMobilePhone()
 
-        constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin)
+        constantVerificationCode = new VerificationCode().with {
+            it.code = Constants.MFA_DEFAULT_PIN
+            it
+        }
     }
 
     def cleanup() {

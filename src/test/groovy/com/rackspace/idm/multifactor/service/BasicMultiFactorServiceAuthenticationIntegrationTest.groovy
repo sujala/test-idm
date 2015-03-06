@@ -2,10 +2,12 @@ package com.rackspace.idm.multifactor.service
 
 import com.google.i18n.phonenumbers.Phonenumber
 import com.rackspace.identity.multifactor.domain.BasicPin
+import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse
 import com.rackspace.identity.multifactor.providers.UserManagement
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
@@ -13,12 +15,9 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.exception.MultiFactorNotEnabledException
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
-import com.rackspace.idm.multifactor.providers.simulator.SimulatedMultiFactorAuthenticationService
-import com.rackspace.idm.multifactor.providers.simulator.SimulatedMultiFactorAuthenticationService.SimulatedPasscode
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import org.apache.commons.configuration.Configuration
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 
 /**
@@ -31,9 +30,6 @@ import spock.lang.Unroll
  * contains its own spring context. The grizzly container does NOT have the simulated service. This means these tests can NOT use REST API calls to
  * perform services that send SMS messages. Creating users and authenticating and such is fine.
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml"
-, "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"
-, "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatedMultiFactorAuthenticationService-context.xml"])
 class BasicMultiFactorServiceAuthenticationIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired
     private BasicMultiFactorService multiFactorService;
@@ -44,20 +40,7 @@ class BasicMultiFactorServiceAuthenticationIntegrationTest extends RootConcurren
     @Autowired
     private LdapUserRepository userRepository;
 
-    @Autowired
-    private Configuration globalConfig;
-
-    @Autowired
-    private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification
-
-    @Autowired
-    private SimulatedMultiFactorAuthenticationService simulatedMultiFactorAuthenticationService
-
-    @Autowired
-    private UserManagement duoUserManagement
-
-    @Autowired
-    BasicPin simulatorConstantPin
+    BasicPin simulatorConstantPin = new BasicPin(Constants.MFA_DEFAULT_PIN)
 
     User userAdmin
     MobilePhone phone
@@ -69,7 +52,6 @@ class BasicMultiFactorServiceAuthenticationIntegrationTest extends RootConcurren
         phone = multiFactorService.addPhoneToUser(userAdmin.getId(), telephoneNumber)
         multiFactorService.sendVerificationPin(userAdmin.getId(), phone.getId())
         multiFactorService.verifyPhoneForUser(userAdmin.getId(), phone.getId(), simulatorConstantPin)
-        simulatedMultiFactorAuthenticationService.clearSmsPasscodeLog()
     }
 
     def cleanup() {
@@ -93,7 +75,7 @@ class BasicMultiFactorServiceAuthenticationIntegrationTest extends RootConcurren
         multiFactorService.sendSmsPasscode(userAdmin.getId())
 
         then:
-        simulatedMultiFactorAuthenticationService.wasSmsPasscodeSentTo(userAdmin.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId())
+        Mockito.verify(mockMultiFactorAuthenticationService.mock).sendSmsPasscodeChallenge(userAdmin.externalMultiFactorUserId, phone.externalMultiFactorPhoneId)
     }
 
     /**
@@ -114,21 +96,23 @@ class BasicMultiFactorServiceAuthenticationIntegrationTest extends RootConcurren
         multiFactorService.updateMultiFactorSettings(userAdmin.getId(), v2Factory.createMultiFactorSettings(true))
 
         when:
-        MfaAuthenticationResponse response = multiFactorService.verifyPasscode(userAdmin.getId(), passcode.passcode)
+        def mfaServiceResponse = new GenericMfaAuthenticationResponse(expectedDecision, expectedDecisionReason, null, null)
+        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
+        MfaAuthenticationResponse response = multiFactorService.verifyPasscode(userAdmin.getId(), "1234")
 
         then:
         response.decision == expectedDecision
         response.decisionReason == expectedDecisionReason
 
         where:
-        passcode   | expectedDecision   | expectedDecisionReason
-        SimulatedPasscode.ALLOW_ALLOW | MfaAuthenticationDecision.ALLOW | MfaAuthenticationDecisionReason.ALLOW
-        SimulatedPasscode.ALLOW_BYPASS | MfaAuthenticationDecision.ALLOW | MfaAuthenticationDecisionReason.BYPASS
-        SimulatedPasscode.ALLOW_UNKNOWN | MfaAuthenticationDecision.ALLOW | MfaAuthenticationDecisionReason.UNKNOWN
-        SimulatedPasscode.DENY_DENY | MfaAuthenticationDecision.DENY | MfaAuthenticationDecisionReason.DENY
-        SimulatedPasscode.DENY_LOCKEDOUT | MfaAuthenticationDecision.DENY | MfaAuthenticationDecisionReason.LOCKEDOUT
-        SimulatedPasscode.DENY_PROVIDER_FAILURE | MfaAuthenticationDecision.DENY | MfaAuthenticationDecisionReason.PROVIDER_FAILURE
-        SimulatedPasscode.DENY_PROVIDER_UNAVAILABLE | MfaAuthenticationDecision.DENY | MfaAuthenticationDecisionReason.PROVIDER_UNAVAILABLE
-        SimulatedPasscode.DENY_UNKNOWN | MfaAuthenticationDecision.DENY | MfaAuthenticationDecisionReason.UNKNOWN
+        expectedDecision                | expectedDecisionReason
+        MfaAuthenticationDecision.ALLOW | MfaAuthenticationDecisionReason.ALLOW
+        MfaAuthenticationDecision.ALLOW | MfaAuthenticationDecisionReason.BYPASS
+        MfaAuthenticationDecision.ALLOW | MfaAuthenticationDecisionReason.UNKNOWN
+        MfaAuthenticationDecision.DENY  | MfaAuthenticationDecisionReason.DENY
+        MfaAuthenticationDecision.DENY  | MfaAuthenticationDecisionReason.LOCKEDOUT
+        MfaAuthenticationDecision.DENY  | MfaAuthenticationDecisionReason.PROVIDER_FAILURE
+        MfaAuthenticationDecision.DENY  | MfaAuthenticationDecisionReason.PROVIDER_UNAVAILABLE
+        MfaAuthenticationDecision.DENY  | MfaAuthenticationDecisionReason.UNKNOWN
     }
 }

@@ -1,26 +1,19 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
 
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
-@ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"])
 class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     private LdapMobilePhoneRepository mobilePhoneRepository;
-
-    @Autowired
-    private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
 
     @Autowired
     @Qualifier("scopeAccessDao")
@@ -28,16 +21,6 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     private IdentityUserService userService
-
-    @Override
-    public void doSetupSpec() {
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml")
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly();
-    }
 
     def "user can only replace their device when mfa is disabled"() {
         setup:
@@ -141,7 +124,7 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
     def setUpMultiFactorWithoutEnable(token, user, phoneNumber) {
         def phone = setUpMultiFactorWithUnverifiedPhone(token, user, phoneNumber)
         utils.sendVerificationCodeToPhone(token, user.id, phone.id)
-        def constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin);
+        def constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN);
         utils.verifyPhone(token, user.id, phone.id, constantVerificationCode)
         return phone
     }

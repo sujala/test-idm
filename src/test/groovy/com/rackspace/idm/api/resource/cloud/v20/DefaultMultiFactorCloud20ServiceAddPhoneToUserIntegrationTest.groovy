@@ -20,7 +20,6 @@ import static testHelpers.IdmAssert.*
 /**
  * Tests the multifactor REST services
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml"])
 class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired
     private LdapMobilePhoneRepository mobilePhoneRepository;

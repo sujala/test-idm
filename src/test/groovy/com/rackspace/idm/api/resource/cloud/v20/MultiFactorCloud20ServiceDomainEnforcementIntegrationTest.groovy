@@ -7,22 +7,18 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.idm.Constants
 import com.rackspace.idm.JSONConstants
-import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCloudAuthenticationResponseToken
-import com.rackspace.idm.api.resource.cloud.v20.json.writers.JSONWriterForRaxAuthMultiFactor
 import com.rackspace.idm.api.resource.cloud.v20.json.writers.JSONWriterForRaxAuthMultiFactorDomain
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
-import com.rackspace.idm.multifactor.providers.simulator.SimulatedMultiFactorAuthenticationService
-import com.rackspace.idm.multifactor.providers.simulator.SimulatorMobilePhoneVerification
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
-import org.apache.commons.configuration.Configuration
+import org.mockito.Mockito
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Token
 import org.openstack.docs.identity.api.v2.User
@@ -41,21 +37,11 @@ import static org.apache.http.HttpStatus.*
  * Tests the multifactor domain enforcement level
  */
 @ContextConfiguration(locations = ["classpath:app-config.xml"
-, "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml"
-, "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"
-, "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatedMultiFactorAuthenticationService-context.xml"])
+, "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class MultiFactorCloud20ServiceDomainEnforcementIntegrationTest extends RootConcurrentIntegrationTest {
-    @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
 
     @Autowired
     private LdapUserRepository userRepository;
-
-    @Autowired
-    private Configuration globalConfig;
-
-    @Autowired
-    private SimulatorMobilePhoneVerification simulatorMobilePhoneVerification;
 
     /**
      * Override the grizzly start because we want to add additional context file.
@@ -66,8 +52,6 @@ class MultiFactorCloud20ServiceDomainEnforcementIntegrationTest extends RootConc
         ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
         resource.exists()
         this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatorMobilePhoneVerification-context.xml " +
-                "classpath:com/rackspace/idm/multifactor/providers/simulator/SimulatedMultiFactorAuthenticationService-context.xml " +
                 "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
     }
 
@@ -265,7 +249,9 @@ class MultiFactorCloud20ServiceDomainEnforcementIntegrationTest extends RootConc
         String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
         String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
 
-        def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, SimulatedMultiFactorAuthenticationService.SimulatedPasscode.ALLOW_ALLOW.passcode)
+        def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
+        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
+        def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "1234")
         Token token = mfaAuthResponse.getEntity(AuthenticateResponse).value.token
         return token.id
     }
@@ -304,7 +290,7 @@ class MultiFactorCloud20ServiceDomainEnforcementIntegrationTest extends RootConc
     def void enableMfaOnUser(String authToken, User user) {
         MobilePhone responsePhone = utils.addPhone(authToken, user.id)
         utils.sendVerificationCodeToPhone(authToken, user.id, responsePhone.id)
-        VerificationCode constantVerificationCode = v2Factory.createVerificationCode(simulatorMobilePhoneVerification.constantPin.pin)
+        VerificationCode constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN)
         utils.verifyPhone(authToken, user.id, responsePhone.id, constantVerificationCode)
 
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
