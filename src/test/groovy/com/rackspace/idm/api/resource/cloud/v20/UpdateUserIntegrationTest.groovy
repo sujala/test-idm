@@ -1,12 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
 class UpdateUserIntegrationTest extends RootIntegrationTest {
 
-    def "update user v1.1 without enabled attribute does not enable user"() {
+    @Unroll
+    def "update user v1.1 without enabled attribute does not enable user, accept = #acceptContentType, request = #requestContentType"() {
         given:
         def domainId = utils.createDomain()
         def userAdmin, users
@@ -34,7 +36,8 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
-    def "update user v2 without enabled attribute does not enable user"() {
+    @Unroll
+    def "update user v2 without enabled attribute does not enable user, accept = #acceptContentType, request = #requestContentType"() {
         given:
         def domainId = utils.createDomain()
         def userAdmin, users

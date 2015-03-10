@@ -13,9 +13,24 @@ import java.util.List;
 
 public interface UserService {
 
-    void setUserDefaultsBasedOnCaller(User user, User caller);
+    /**
+     * sets default parameters on the user e.g domain id, roles, etc based on
+     * characteristics of the given user.
+     *
+     * @param user
+     * @param userForDefaults
+     */
+    void setUserDefaultsBasedOnUser(User user, User userForDefaults);
 
-    void setUserDefaultsBasedOnCaller(User user, User caller, boolean isCreateUserInOneCall);
+    /**
+     * sets default parameters on the user e.g domain id, roles, etc based on
+     * characteristics of the given user.
+     *
+     * @param user
+     * @param userForDefaults
+     * @param isCreateUserInOneCall
+     */
+    void setUserDefaultsBasedOnUser(User user, User userForDefaults, boolean isCreateUserInOneCall);
 
     void addUser(User user);
 

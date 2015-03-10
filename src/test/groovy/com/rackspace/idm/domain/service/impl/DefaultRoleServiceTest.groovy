@@ -1,4 +1,6 @@
 package com.rackspace.idm.domain.service.impl
+
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
@@ -21,7 +23,9 @@ class DefaultRoleServiceTest extends Specification {
     @Shared ApplicationRoleDao mockApplicationRoleDao
     @Shared ClientRole mockClientRole
     @Shared Application mockApplication
-    @Shared Configuration mockConfig;
+    @Shared Configuration mockConfig
+    @Shared def staticConfig
+    @Shared def identityConfig
 
     def setupSpec() {
         service = new DefaultRoleService()
@@ -33,6 +37,10 @@ class DefaultRoleServiceTest extends Specification {
         mockConfig()
         mockClientRole = Mock()
         mockApplication = Mock()
+        identityConfig = Mock(IdentityConfig)
+        staticConfig = Mock(IdentityConfig.StaticConfig)
+        identityConfig.getStaticConfig() >> staticConfig
+        service.identityConfig = identityConfig
     }
 
     def "Get role by name" () {
@@ -50,7 +58,7 @@ class DefaultRoleServiceTest extends Specification {
 
     def "Get super user admin role" () {
         given:
-        mockConfig.getString("cloudAuth.serviceAdminRole") >> "identity:service-admin"
+        staticConfig.getIdentityServiceAdminRoleName() >> "identity:service-admin"
         mockApplicationRoleDao.getRoleByName("identity:service-admin") >> mockClientRole
 
         when:
@@ -62,7 +70,7 @@ class DefaultRoleServiceTest extends Specification {
 
     def "Get identity admin role" () {
         given:
-        mockConfig.getString("cloudAuth.adminRole") >> "identity:admin"
+        staticConfig.getIdentityIdentityAdminRoleName() >> "identity:admin"
         mockApplicationRoleDao.getRoleByName("identity:admin") >> mockClientRole
 
         when:
@@ -74,7 +82,7 @@ class DefaultRoleServiceTest extends Specification {
 
     def "Get user admin role" () {
         given:
-        mockConfig.getString("cloudAuth.userAdminRole") >> "identity:user-admin"
+        staticConfig.getIdentityUserAdminRoleName() >> "identity:user-admin"
         mockApplicationRoleDao.getRoleByName("identity:user-admin") >> mockClientRole
 
         when:
@@ -86,7 +94,7 @@ class DefaultRoleServiceTest extends Specification {
 
     def "Get user manage role" () {
         given:
-        mockConfig.getString("cloudAuth.userManagedRole") >> "identity:user-manage"
+        staticConfig.getIdentityUserManagerRoleName() >> "identity:user-manage"
         mockApplicationRoleDao.getRoleByName("identity:user-manage") >> mockClientRole
 
         when:
@@ -98,7 +106,7 @@ class DefaultRoleServiceTest extends Specification {
 
     def "Get default role" () {
         given:
-        mockConfig.getString("cloudAuth.userRole") >> "identity:default"
+        staticConfig.getIdentityDefaultUserRoleName() >> "identity:default"
         mockApplicationRoleDao.getRoleByName("identity:default") >> mockClientRole
 
         when:

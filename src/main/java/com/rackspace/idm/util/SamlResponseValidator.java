@@ -2,6 +2,7 @@ package com.rackspace.idm.util;
 
 import com.rackspace.idm.SAMLConstants;
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
@@ -56,6 +57,9 @@ public class SamlResponseValidator {
 
     @Autowired
     IdentityUserService identityUserService;
+
+    @Autowired
+    IdentityConfig identityConfig;
 
     /**
      * Validate the samlResponse contains the required data. In addition it verifies the specified issuer exists, the
@@ -206,7 +210,7 @@ public class SamlResponseValidator {
             throw new IllegalStateException("no user admin exists for domain " + domain.getDomainId());
         }
 
-        if(userAdmins.size() > 1 && getDomainRestrictedToOneUserAdmin()) {
+        if(userAdmins.size() > 1 && identityConfig.getStaticConfig().getDomainRestrictedToOneUserAdmin()) {
             log.error("Unable to get roles for saml assertion due to more than one user admin for domain {}", domain.getDomainId());
             throw new IllegalStateException("more than one user admin exists for domain " + domain.getDomainId());
         }
@@ -272,10 +276,6 @@ public class SamlResponseValidator {
             }
             request.getFederatedUser().getRoles().addAll(roles.values());
         }
-    }
-
-    private boolean getDomainRestrictedToOneUserAdmin() {
-        return config.getBoolean("domain.restricted.to.one.user.admin.enabled", false);
     }
 
     private int getMaxNumberUsersPerDomainAndIdp() {

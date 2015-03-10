@@ -30,6 +30,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.util.predicate.UserEnabledPredicate;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
@@ -84,6 +85,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final boolean FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED_DEFAULT_VALUE = false;
     public static final String FEATURE_USER_TOKEN_SELF_VALIDATION = "feature.user.token.selfValidation";
     public static final boolean FEATURE_USER_TOKEN_SELF_VALIDATION_DEFAULT_VALUE = false;
+
+    public static final String INVALID_DOMAIN_ERROR = "Invalid domain";
 
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
@@ -584,7 +587,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User caller = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
             boolean isCreateUserInOneCall = false;
-
+            User userForDefaults = null;
             if (config.getBoolean("createUser.fullPayload.enabled") == false) {
                 if (usr.getSecretQA() != null ||
                         usr.getGroups() != null ||
@@ -607,18 +610,34 @@ public class DefaultCloud20Service implements Cloud20Service {
                         throw new BadRequestException("DomainId must be an integer");
                     }
 
+                    // If secretQA, groups or roles are populated then it's a createUserInOneCall call
+                    isCreateUserInOneCall = true;
+
                     if (usr.getRoles() != null) {
                         for (Role role : usr.getRoles().getRole()) {
                             if (StringUtils.isBlank(role.getName())) {
                                 throw new BadRequestException("Role name cannot be blank");
                             }
                             if (roleService.isIdentityAccessRole(role.getName())) {
-                                throw new ForbiddenException(NOT_AUTHORIZED);
+                                //identity admins can create sub-users and the user defaults are set based on the user admin for the domain
+                                if(identityConfig.getReloadableConfig().getIdentityAdminCreateSubuserEnabled() &&
+                                        identityConfig.getStaticConfig().getIdentityDefaultUserRoleName().equalsIgnoreCase(role.getName())) {
+                                    Domain domain = domainService.getDomain(usr.getDomainId());
+                                    if(domain == null || !domain.getEnabled()) {
+                                        throw new BadRequestException(INVALID_DOMAIN_ERROR);
+                                    }
+                                    List<User> domainAdmins = domainService.getEnabledDomainAdmins(usr.getDomainId());
+                                    userForDefaults = CollectionUtils.isEmpty(domainAdmins) ? null : domainAdmins.get(0);
+                                    isCreateUserInOneCall = false;
+                                    if(userForDefaults == null) {
+                                        throw new BadRequestException(INVALID_DOMAIN_ERROR);
+                                    }
+                                } else {
+                                    throw new ForbiddenException(NOT_AUTHORIZED);
+                                }
                             }
                         }
                     }
-                    // If secretQA, groups or roles are populated then it's a createUserInOneCall call
-                    isCreateUserInOneCall = true;
                 }
                 if (usr.getSecretQA() != null) {
                     if (StringUtils.isBlank(usr.getSecretQA().getQuestion())) {
@@ -630,10 +649,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
+            userForDefaults = userForDefaults == null ? caller : userForDefaults;
             boolean passwordProvided = !StringUtils.isBlank(usr.getPassword());
             User user = this.userConverterCloudV20.fromUser(usr);
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, getRoleNames(user.getRoles()));
-            userService.setUserDefaultsBasedOnCaller(user, caller, isCreateUserInOneCall);
+            userService.setUserDefaultsBasedOnUser(user, userForDefaults, isCreateUserInOneCall);
             userService.addUserV20(user, isCreateUserInOneCall);
 
             org.openstack.docs.identity.api.v2.User userTO = this.userConverterCloudV20.toUser(user, true);

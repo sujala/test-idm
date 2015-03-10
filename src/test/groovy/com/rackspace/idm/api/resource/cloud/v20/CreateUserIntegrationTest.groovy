@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
+import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
@@ -16,7 +17,7 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
-import java.security.Identity
+import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 
@@ -540,6 +541,204 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUser(user)
         utils.deleteDomain(domainId)
+    }
+
+    @Unroll
+    def "identity admin can create default user, accept = #accept, request = #request"() {
+        given:
+        def domainId = utils.createDomain()
+        def username1 = testUtils.getRandomUUID("defaultUser")
+        def username2 = testUtils.getRandomUUID("defaultUser")
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        users = users.reverse()
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+
+        when:
+        def userForCreate = v2Factory.createUserForCreate(username1, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.roles = defaultUserRoles
+            it
+        }
+        def identityAdminResponse = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate, request, accept)
+
+        then:
+        identityAdminResponse.status == 201
+        def userResponse1
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            userResponse1 = identityAdminResponse.getEntity(User).value
+            assert userResponse1.domainId == domainId
+        } else {
+            userResponse1 = new JsonSlurper().parseText(identityAdminResponse.getEntity(String)).user
+            assert userResponse1['RAX-AUTH:domainId'] == domainId
+        }
+
+        when:
+        userForCreate.username = username2
+        userForCreate.roles = null
+        def userAdminResponse = cloud20.createUser(utils.getToken(userAdmin.username), userForCreate, request, accept)
+
+        then:
+        userAdminResponse.status == 201
+        def userResponse2
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            userResponse2 = userAdminResponse.getEntity(User).value
+            assert userResponse2.domainId == domainId
+        } else {
+            userResponse2 = new JsonSlurper().parseText(userAdminResponse.getEntity(String)).user
+            assert userResponse2['RAX-AUTH:domainId'] == domainId
+        }
+
+        when:
+        def auth1 = utils.authenticateUser(userResponse1.username)
+        def auth2 = utils.authenticateUser(userResponse2.username)
+
+        then:
+        def serviceCatalog1 = auth1.serviceCatalog.service.endpoint.flatten().publicURL
+        def serviceCatalog2 = auth2.serviceCatalog.service.endpoint.flatten().publicURL
+        serviceCatalog1 == serviceCatalog2
+        auth1.user.defaultRegion == auth2.user.defaultRegion
+
+        cleanup:
+        cloud20.deleteUser(utils.getServiceAdminToken(), userResponse1.id)
+        cloud20.deleteUser(utils.getServiceAdminToken(), userResponse2.id)
+        utils.deleteUsers(users)
+
+        where:
+        accept                          | request
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    def "a domain must exist for a sub-user to be created in it by identity admin"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("defaultUser")
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def userForCreate = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.roles = defaultUserRoles
+            it
+        }
+
+        when:
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
+
+        then:
+        response.status == 400
+    }
+
+    def "a default user cannot be added by identity admin under disabled domain"() {
+        given:
+        def domainId = utils.createDomain()
+        def username1 = testUtils.getRandomUUID("defaultUser")
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        users = users.reverse()
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def userForCreate = v2Factory.createUserForCreate(username1, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.roles = defaultUserRoles
+            it
+        }
+        utils.disableDomain(domainId)
+
+        when:
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
+
+        then:
+        response.status == 400
+
+        cleanup:
+        utils.deleteUsers(users)
+    }
+
+    def "a default user cannot be added by identity admin in domain with disabled user-admin"() {
+        given:
+        def domainId = utils.createDomain()
+        def username1 = testUtils.getRandomUUID("defaultUser")
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        users = users.reverse()
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def userForCreate = v2Factory.createUserForCreate(username1, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.roles = defaultUserRoles
+            it
+        }
+        utils.disableUser(userAdmin)
+
+        when:
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
+
+        then:
+        response.status == 400
+
+        cleanup:
+        utils.deleteUsers(users)
+    }
+
+    def "a default user CAN be added by identity admin in domain with a disabled user-admin IF there is also an enabled user-admin"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, false)
+        def domainId = utils.createDomain()
+        def username1 = testUtils.getRandomUUID("defaultUser")
+        def userAdmin1, users1
+        (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
+        def userAdmin2, users2
+        (userAdmin2, users2) = utils.createUserAdmin(domainId)
+        users1 = users1.reverse()
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def userForCreate = v2Factory.createUserForCreate(username1, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.roles = defaultUserRoles
+            it
+        }
+        utils.disableUser(userAdmin1)
+
+        when:
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
+
+        then:
+        response.status == 201
+
+        cleanup:
+        utils.deleteUser(response.getEntity(User).value)
+        utils.deleteUser(userAdmin2)
+        utils.deleteUsers(users1)
+        utils.deleteUsers(users2[0])
+        staticIdmConfiguration.reset()
+    }
+
+    def "test feature flag for identity admin creating sub-users"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("defaultUser")
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        users = users.reverse()
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def userForCreate = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.roles = defaultUserRoles
+            it
+        }
+
+        when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP, false)
+        def userResponse = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
+
+        then:
+        userResponse.status == 403
+
+        when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP, true)
+        userResponse = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
+
+        then:
+        userResponse.status == 201
+
+        cleanup:
+        reloadableConfiguration.reset()
+        def userId = userResponse.getEntity(User).value.id
+        cloud20.deleteUser(utils.getServiceAdminToken(), userId)
+        utils.deleteUsers(users)
     }
 
 }

@@ -45,6 +45,7 @@ public class IdentityConfig {
     private static final String SCOPED_TOKEN_EXPIRATION_SECONDS = "token.scoped.expirationSeconds";
     private static final String CLOUD_AUTH_CLIENT_ID = "cloudAuth.clientId";
 
+    public static final String IDENTITY_ACCESS_ROLE_NAMES_PROP = "cloudAuth.accessRoleNames";
     public static final String IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP = "cloudAuth.adminRole";
     public static final String IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP = "cloudAuth.serviceAdminRole";
     public static final String IDENTITY_USER_ADMIN_ROLE_NAME_PROP = "cloudAuth.userAdminRole";
@@ -119,6 +120,12 @@ public class IdentityConfig {
     public static final String FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP = "feature.user.disabled.by.tenants.enabled";
     public static final boolean FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT = false;
 
+    public static final String FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP = "feature.identity.admin.create.subuser.enabled";
+    public static final boolean FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_DEFUALT = false;
+
+    public static final String FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP = "domain.restricted.to.one.user.admin.enabled";
+    public static final boolean FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_DEFAULT = false;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -153,6 +160,7 @@ public class IdentityConfig {
         verifyAndLogProperty(SCOPED_TOKEN_EXPIRATION_SECONDS, REQUIRED);
         verifyAndLogProperty(CLOUD_AUTH_CLIENT_ID, REQUIRED);
 
+        verifyAndLogProperty(IDENTITY_ACCESS_ROLE_NAMES_PROP, REQUIRED);
         verifyAndLogProperty(IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP, REQUIRED);
         verifyAndLogProperty(IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP, REQUIRED);
         verifyAndLogProperty(IDENTITY_USER_ADMIN_ROLE_NAME_PROP, REQUIRED);
@@ -234,6 +242,10 @@ public class IdentityConfig {
 
         public String getIdentityUserAdminRoleName() {
             return staticConfiguration.getString(IDENTITY_USER_ADMIN_ROLE_NAME_PROP);
+        }
+
+        public String[] getIdentityAccessRoleNames() {
+            return staticConfiguration.getStringArray(IDENTITY_ACCESS_ROLE_NAMES_PROP);
         }
 
         public String getIdentityIdentityAdminRoleName() {
@@ -324,6 +336,11 @@ public class IdentityConfig {
         public String getOTPIssuer() {
             return staticConfiguration.getString(OTP_ISSUER, OTP_ISSUER_DEFAULT);
         }
+
+        public boolean getDomainRestrictedToOneUserAdmin() {
+            return staticConfiguration.getBoolean(FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_DEFAULT);
+        }
+
     }
 
     /**
@@ -351,28 +368,32 @@ public class IdentityConfig {
             try {
                 return reloadableConfiguration.getInt(OTP_ENTROPY, OTP_ENTROPY_DEFAULT);
             } catch (NumberFormatException e) {
-                logger.error(String.format(PROPERTY_ERROR_MESSAGE, OTP_ENTROPY));
+                logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, OTP_ENTROPY));
                 return OTP_ENTROPY_DEFAULT;
             }
         }
 
         public boolean getOTPCreateEnabled() {
-            try {
-                return reloadableConfiguration.getBoolean(OTP_CREATE_ENABLED, OTP_CREATE_ENABLED_DEFAULT);
-            } catch (Exception e) {
-                logger.error(String.format(PROPERTY_ERROR_MESSAGE, OTP_CREATE_ENABLED));
-                return OTP_CREATE_ENABLED_DEFAULT;
-            }
+            return getBooleanSafely(OTP_CREATE_ENABLED, OTP_CREATE_ENABLED_DEFAULT);
         }
 
         public boolean getFeatureUserDisabledByTenantsEnabled() {
+            return getBooleanSafely(FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT);
+        }
+
+        public boolean getIdentityAdminCreateSubuserEnabled() {
+            return getBooleanSafely(FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP, FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_DEFUALT);
+        }
+
+        private boolean getBooleanSafely(String prop, boolean defaultValue) {
             try {
-                return reloadableConfiguration.getBoolean(FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT);
+                return reloadableConfiguration.getBoolean(prop, defaultValue);
             } catch (ConversionException e) {
-                logger.error(String.format(PROPERTY_ERROR_MESSAGE, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP));
-                return FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT;
+                logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+                return defaultValue;
             }
         }
+
     }
 
     @Deprecated
