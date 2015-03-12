@@ -7,6 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.Token;
 
+import java.util.List;
+
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -47,7 +49,7 @@ public class AuthConverterCloudV20TestOld {
     public void toImpersonationResponse_setsToken() throws Exception {
         Token token = new Token();
         token.setId("tokenId");
-        when(tokenConverterCloudV20.toToken(any(ScopeAccess.class))).thenReturn(token);
+        when(tokenConverterCloudV20.toToken(any(ScopeAccess.class), any(List.class))).thenReturn(token);
         ImpersonationResponse impersonationResponse = authConverter.toImpersonationResponse(new ScopeAccess());
         assertThat("token id", impersonationResponse.getToken().getId(), equalTo("tokenId"));
     }

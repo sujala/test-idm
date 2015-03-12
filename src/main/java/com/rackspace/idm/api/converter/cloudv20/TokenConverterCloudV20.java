@@ -24,10 +24,6 @@ public class TokenConverterCloudV20 {
     private JAXBObjectFactories objFactories;
     private Logger logger = LoggerFactory.getLogger(TokenConverterCloudV20.class);
 
-    public Token toToken(ScopeAccess scopeAccess) {
-        return toToken(scopeAccess, null);
-    }
-
     public Token toToken(ScopeAccess scopeAccess, List<TenantRole> roles) {
         Token token = objFactories.getOpenStackIdentityV2Factory().createToken();
 

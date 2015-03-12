@@ -2252,7 +2252,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.buildAuthResponse(null, impersonatedScopeAccess, user, authRequest)
 
         then:
-        1 * tokenConverter.toToken(impersonatedScopeAccess)
+        1 * tokenConverter.toToken(impersonatedScopeAccess, _)
     }
 
     def "validateToken when caller token is racker token gets tenantRoles and rackerRoles by user"() {
