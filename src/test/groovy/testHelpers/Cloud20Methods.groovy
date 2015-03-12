@@ -298,9 +298,9 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
 
-    def samlAuthenticate(request) {
+    def samlAuthenticate(request, accept = APPLICATION_XML) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(SAML_TOKENS).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(SAML_TOKENS).accept(accept).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
 
     def createRegion(String token, region) {

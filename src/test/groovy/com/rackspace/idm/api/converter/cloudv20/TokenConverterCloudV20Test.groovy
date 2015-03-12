@@ -24,7 +24,7 @@ class TokenConverterCloudV20Test extends RootServiceTest {
             it.authenticatedBy = authenticatedBy
             it
         }
-        Token result = converter.toToken(scopeAccess)
+        Token result = converter.toToken(scopeAccess, null)
 
         then:
         AuthenticatedBy authenticatedByEntity = result.authenticatedBy

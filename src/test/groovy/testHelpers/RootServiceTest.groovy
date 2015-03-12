@@ -308,7 +308,6 @@ class RootServiceTest extends Specification {
 
     def mockTokenConverter(service) {
         tokenConverter = Mock()
-        tokenConverter.toToken(_) >> v2Factory.createToken()
         tokenConverter.toToken(_, _) >> v2Factory.createToken()
         service.tokenConverterCloudV20 = tokenConverter
     }

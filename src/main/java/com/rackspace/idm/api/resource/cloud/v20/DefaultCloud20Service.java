@@ -1159,9 +1159,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         org.openstack.docs.identity.api.v2.Token convertedToken = null;
         if (impersonatedScopeAccess != null) {
-            convertedToken = tokenConverterCloudV20.toToken(impersonatedScopeAccess);
+            convertedToken = tokenConverterCloudV20.toToken(impersonatedScopeAccess, null);
         } else {
-            convertedToken = tokenConverterCloudV20.toToken(userScopeAccess);
+            convertedToken = tokenConverterCloudV20.toToken(userScopeAccess, null);
         }
 
         //tenant was specified
@@ -3522,7 +3522,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             AuthenticateResponse access = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
-            access.setToken(this.tokenConverterCloudV20.toToken(sa));
+            access.setToken(this.tokenConverterCloudV20.toToken(sa, null));
 
             if (sa.isAccessTokenExpired(new DateTime())) {
                 throw new NotFoundException("Token not found");
