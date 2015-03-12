@@ -39,7 +39,7 @@ public class AuthConverterCloudV20 {
     public AuthenticateResponse toAuthenticationResponse(AuthData authData) {
         AuthenticateResponse auth = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
-        auth.setToken(this.tokenConverterCloudV20.toToken(authData.getToken()));
+        auth.setToken(this.tokenConverterCloudV20.toToken(authData.getToken(), authData.getUser().getRoles()));
         auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(authData.getUser()));
         if (userService.userDisabledByTenants(authData.getUser())) {
             auth.setServiceCatalog(this.endpointConverterCloudV20.toServiceCatalog(new ArrayList<OpenstackEndpoint>()));
@@ -67,7 +67,7 @@ public class AuthConverterCloudV20 {
 
     public ImpersonationResponse toImpersonationResponse(ScopeAccess scopeAccess) {
         ImpersonationResponse auth = jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createImpersonationResponse();
-        auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess));
+        auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess, null));
         return auth;
     }
 

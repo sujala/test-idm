@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.converter.cloudv20
 
+import com.rackspace.idm.domain.entity.AuthData
+import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.User
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -15,6 +17,7 @@ class AuthConverterCloudV20Test extends RootServiceTest{
         mockTokenConverter(converter)
         mockUserConverter(converter)
         mockEndpointConverter(converter)
+        mockUserService(converter)
     }
 
     def "toAuthenticationResponse using a racker verifies that toUserForAuthenticateResponse uses a Racker as a parameter" () {
@@ -45,7 +48,6 @@ class AuthConverterCloudV20Test extends RootServiceTest{
         def endpoint = entityFactory.createOpenstackEndpoint()
         def endpoints = [endpoint].asList()
 
-
         when:
         AuthenticateResponse response = converter.toAuthenticationResponse(user, sa, roles, endpoints)
 
@@ -53,6 +55,26 @@ class AuthConverterCloudV20Test extends RootServiceTest{
         1 * jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse() >> new AuthenticateResponse()
         1 * userConverter.toUserForAuthenticateResponse(user, roles)
         0 * userConverter.toRackerForAuthenticateResponse(entityFactory.createRacker(), roles)
+        response != null
+    }
+
+    def "toAuthenticationResponse using a authData"() {
+        given:
+        AuthData authData = new AuthData();
+        FederatedUser federatedUser = entityFactory.createFederatedUser()
+        federatedUser.setRoles([entityFactory.createTenantRole()].asList())
+        authData.setUser(federatedUser)
+        authData.setEndpoints([entityFactory.createOpenstackEndpoint()].asList())
+        authData.setToken(entityFactory.createFederatedToken())
+
+        when:
+        AuthenticateResponse response = converter.toAuthenticationResponse(authData)
+
+        then:
+        1 * jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse() >> new AuthenticateResponse()
+        1 * tokenConverter.toToken(authData.getToken(), authData.getUser().getRoles())
+        1 * userConverter.toUserForAuthenticateResponse(authData.getUser())
+        1 * endpointConverter.toServiceCatalog(authData.getEndpoints())
         response != null
     }
 
