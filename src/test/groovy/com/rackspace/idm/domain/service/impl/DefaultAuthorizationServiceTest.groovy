@@ -1,14 +1,21 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
+import com.rackspace.idm.domain.entity.ClientRole
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
 class DefaultAuthorizationServiceTest extends RootServiceTest {
     @Shared DefaultAuthorizationService service
 
+    static ClientRole TEST_ROLE;
+
     def setupSpec() {
         service = new DefaultAuthorizationService()
+        TEST_ROLE = entityFactory.createClientRole().with {
+            it.name = "identity:test"
+            it.id = "102341"
+            it
+        }
     }
 
     def setup() {
@@ -18,7 +25,8 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         mockApplicationService(service)
         mockUserService(service)
         mockDomainService(service)
-        retrieveAccessControlRoles()
+        mockRoleService(service)
+        retrieveIdentityRoles()
     }
 
     def "authorizeRacker verifies the scopeAccess"() {
@@ -465,8 +473,15 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         false           | null      | null
     }
 
-    def retrieveAccessControlRoles() {
+    def "can retrieve identity role by name and id"() {
+        expect:
+        service.getCachedIdentityRoleById(TEST_ROLE.id).name == TEST_ROLE.name
+        service.getCachedIdentityRoleByName(TEST_ROLE.name).id == TEST_ROLE.id
+    }
+
+    def retrieveIdentityRoles() {
         applicationService.getClientRoleByClientIdAndRoleName(_, _) >> entityFactory.createClientRole()
+        roleService.getAllIdentityRoles() >> [TEST_ROLE]
         service.retrieveAccessControlRoles()
     }
 }

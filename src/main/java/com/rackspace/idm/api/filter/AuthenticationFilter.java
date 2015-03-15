@@ -29,6 +29,8 @@ import javax.ws.rs.core.Context;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.*;
+import java.util.regex.Pattern;
 
 /**
  * @author john.eo Apply token-based authentication to all calls except the
@@ -42,6 +44,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     public static final String MULTI_FACTOR_PATH_PART = "multi-factor";
     public static final String USERS_PATH_PART = "users";
     public static final String DOMAINS_PATH_PART = "domains";
+
+    /**
+     * Pattern to recognize validate call against AE or UUID tokens
+     */
+    private static Pattern tokenValidationPathPattern = Pattern.compile("^cloud/v2.0/tokens/[\\w-_]+$");
 
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
@@ -112,8 +119,12 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         //Cloud v1.0/v1.1/v2.0 checks
         if (path.startsWith("cloud")) {
             // Return if call is authentication or validation
-            //TODO: Should populate security context for a validation call as an auth token must be provided to it
-            if(path.startsWith("cloud/v2.0/tokens") && !path.contains("endpoints")) {
+            if (tokenValidationPathPattern.matcher(path).matches() && !path.contains("endpoints")) {
+                //validate call
+                populateSecurityContextForValidateCall(request, securityContext);
+                return request;
+            } else if (path.startsWith("cloud/v2.0/tokens") && !path.contains("endpoints")) {
+                //auth call
                 return request;
             }
 
@@ -212,6 +223,38 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         logger.warn("Authentication Failed for {} ", authHeader);
         throw new NotAuthenticatedException("Authentication Failed.");
 
+    }
+
+    /**
+     * Populate the security context for a validate call. This must NOT replace the x-auth-token header if the caller
+     * is an impersonator.
+     *
+     * @param request
+     * @param securityContext
+     */
+    private void populateSecurityContextForValidateCall(ContainerRequest request, SecurityContext securityContext) {
+        final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
+            /*
+             We only do checks here when authToken is provided. Underlying service implementations are expected to throw
+             exception if no auth token is provided and it's required.
+             //TODO: Move the no token error check up to this filter after verifying that all services except authenticate require an auth token to be provided
+             */
+        if (authToken != null) {
+            ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken); //throws NotFoundException if not found
+
+            /*
+            TODO: Verify whether we need to put in this code. Currently we don't do this for validate calls so don't want
+             to change the logic as part of this PR, but it is probably necessary. Assuming is, need to uncomment this
+             and test appropriately.
+             */
+//            if (scopeAccessService.isSetupMfaScopedToken(callerToken)) {
+//                throwForbiddenErrorForMfaScopedToken();
+//            }
+
+            //set the tokens in the security context
+            securityContext.setCallerToken(callerToken);
+            securityContext.setEffectiveCallerToken(callerToken);
+        }
     }
 
     /**

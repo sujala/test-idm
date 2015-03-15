@@ -1,10 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
@@ -13,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -37,6 +35,7 @@ public class DefaultAuthorizationServiceTestOld {
     Configuration config = mock(Configuration.class);
     TenantService tenantSerivce = mock(TenantService.class);
     UserService userService = mock(UserService.class);
+    RoleService roleService = mock(RoleService.class);
 
     @Before
     public void setUp() throws Exception {
@@ -46,7 +45,9 @@ public class DefaultAuthorizationServiceTestOld {
         defaultAuthorizationService.setScopeAccessService(scopeAccessService);
         defaultAuthorizationService.setApplicationService(applicationService);
         defaultAuthorizationService.setUserService(userService);
+        defaultAuthorizationService.setRoleService(roleService);
 
+        when(roleService.getAllIdentityRoles()).thenReturn(Collections.EMPTY_LIST);
         when(applicationService.getClientRoleByClientIdAndRoleName(anyString(), anyString())).thenReturn(new ClientRole());
         defaultAuthorizationService.retrieveAccessControlRoles();
     }

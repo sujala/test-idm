@@ -36,4 +36,12 @@ public interface ApplicationRoleDao {
     Iterable<ClientRole> getIdentityRoles(Application application, List<String> roleNames);
 
     Iterable<ClientRole> getClientRoles(List<String> roleIds);
+
+    /**
+     * Get a list of all the Identity roles (prefixed with "identity:") that the identity application uses to make
+     * authorization decisions.
+     *
+     * @return
+     */
+    Iterable<ClientRole> getAllIdentityRoles();
 }

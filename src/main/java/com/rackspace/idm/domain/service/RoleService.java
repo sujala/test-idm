@@ -17,4 +17,12 @@ public interface RoleService {
     boolean isIdentityAccessRole(ClientRole role);
     boolean isIdentityAccessRole(String rolename);
     List<ClientRole> getIdentityAccessRoles();
+
+    /**
+     * Get a list of all the Identity roles (prefixed with "identity:") that the identity application uses to make
+     * authorization decisions.
+     *
+     * @return
+     */
+    List<ClientRole> getAllIdentityRoles();
 }

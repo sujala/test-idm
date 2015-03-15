@@ -1,8 +1,12 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ClientSecret
+import com.rackspace.idm.multifactor.service.BasicMultiFactorService
+import org.apache.commons.collections4.IteratorUtils
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -16,6 +20,9 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
     @Shared randomness = UUID.randomUUID()
     @Shared sharedRandom
     @Autowired Configuration config
+
+    @Autowired
+    private IdentityConfig identityConfig
 
     @Autowired
     LdapApplicationRepository applicationDao
@@ -232,5 +239,29 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
         then:
         clientRoles != null
         clientRoles.size() == 0
+    }
+
+    def "can retrieve all identity roles"() {
+        given:
+        List<String> minRoleNamesExpected = Arrays.asList(identityConfig.getStaticConfig().getIdentityServiceAdminRoleName()
+                , identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()
+                , identityConfig.getStaticConfig().getIdentityUserAdminRoleName()
+                , identityConfig.getStaticConfig().getIdentityUserManagerRoleName()
+                , identityConfig.getStaticConfig().getIdentityDefaultUserRoleName()
+                , identityConfig.getStaticConfig().getIdentityDefaultUserRoleName()
+                , identityConfig.getStaticConfig().getMultiFactorBetaRoleName()
+        )
+
+        when:
+        List<ClientRole> identityRoles = IteratorUtils.toList(applicationRoleDao.getAllIdentityRoles().iterator())
+
+        then:
+        identityRoles.size() > 0
+        for (String expectedRoleName : minRoleNamesExpected) {
+            identityRoles.find {it.name == expectedRoleName} != null
+        }
+
+        //only returns "identity:" roles
+        identityRoles.find {!(it.name.startsWith(GlobalConstants.IDENTITY_ROLE_PREFIX))} == null
     }
 }

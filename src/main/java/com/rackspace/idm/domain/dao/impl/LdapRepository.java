@@ -555,6 +555,13 @@ public abstract class LdapRepository {
             return this;
         }
 
+        public LdapSearchBuilder addSubStringAttribute(String attribute,
+                                                       String subInitial, String[] subAny, String subFinal) {
+            Filter filter = Filter.createSubstringFilter(attribute, subInitial, subAny, subFinal);
+            filters.add(filter);
+            return this;
+        }
+
         public Filter build() {
             if (filters.isEmpty()) {
                 return Filter.createEqualityFilter(ATTR_OBJECT_CLASS, "*");

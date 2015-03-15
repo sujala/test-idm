@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
@@ -27,6 +29,9 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Override
     public String getNextRoleId() {
@@ -109,8 +114,21 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
         return getObjects(orFilter(roleIds, ATTR_ID));
     }
 
+    @Override
+    public Iterable<ClientRole> getAllIdentityRoles() {
+        return getObjects(searchFilterIdentityRole(), getBaseDn());
+    }
+
     private ClientRole getRoleById(String roleId) {
         return getObject(searchFilter_byRoleId(roleId), getBaseDn(), SearchScope.SUB);
+    }
+
+    private Filter searchFilterIdentityRole() {
+        LdapSearchBuilder builder = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
+                .addEqualAttribute(ATTR_CLIENT_ID, identityConfig.getStaticConfig().getCloudAuthClientId())
+                .addSubStringAttribute(ATTR_NAME, GlobalConstants.IDENTITY_ROLE_PREFIX, null, null);
+        return builder.build();
     }
 
     private Filter searchFilterApplicationIdAndRoleName(String applicationId, String roleName) {

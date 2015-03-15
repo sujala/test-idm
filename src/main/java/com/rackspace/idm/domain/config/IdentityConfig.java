@@ -126,6 +126,8 @@ public class IdentityConfig {
     public static final String FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP = "domain.restricted.to.one.user.admin.enabled";
     public static final boolean FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_DEFAULT = false;
 
+    public static final String MULTIFACTOR_BETA_ROLE_NAME_PROP = "cloudAuth.multiFactorBetaRoleName";
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -262,6 +264,10 @@ public class IdentityConfig {
 
         public String getIdentityUserManagerRoleName() {
             return staticConfiguration.getString(IDENTITY_USER_MANAGE_ROLE_NAME_PROP);
+        }
+
+        public String getMultiFactorBetaRoleName() {
+            return staticConfiguration.getString(MULTIFACTOR_BETA_ROLE_NAME_PROP);
         }
 
         public TokenFormat getIdentityProvisionedTokenFormat() {

@@ -364,6 +364,12 @@ class Cloud20Utils {
         response.getEntity(RoleList).value
     }
 
+    def listUserGlobalRoles(token, userId) {
+        def response = methods.listUserGlobalRoles(token, userId)
+        assert (response.status == SC_OK)
+        response.getEntity(RoleList).value
+    }
+
     def listEndpointsForTenant(token, tenantId) {
         def response = methods.listEndpointsForTenant(token, tenantId)
         assert (response.status == SC_OK)
