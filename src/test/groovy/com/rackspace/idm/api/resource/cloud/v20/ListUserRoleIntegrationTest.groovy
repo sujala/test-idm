@@ -1,7 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ApplicationService
+import com.rackspace.idm.domain.service.AuthorizationService
+import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -60,6 +65,12 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
     @Autowired
     Configuration config;
 
+    @Autowired
+    ScopeAccessService scopeAccessService
+
+    @Autowired
+    AuthorizationService authorizationService
+
     /**
      * Random string that is unique for each feature method
      */
@@ -96,7 +107,6 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(specificationIdentityAdmin)
     }
 
-    @Ignore("Demonstrates D-15466: User managers should be able to list roles for defaul users within domain")
     def "acl test: user managers can list all roles for default users within domain"() {
         //create a user admin and 2 sub-users
         def userAdmin = createUserAdmin()
@@ -143,8 +153,7 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(userAdmin)
     }
 
-    @Ignore("Demonstrates D-15466: User managers should be able to list roles for other user-managers within domain")
-    def "acl test: user managers can list all roles for other user-managers within domain"() {
+    def "acl test: user managers can not list roles for other user-managers within domain"() {
         //create a user admin and 2 sub-users
         def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
@@ -175,14 +184,7 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         def response = cloud20.listUserGlobalRoles(userManagerToken, userManager2.getId())
 
         then:
-        response.status == HttpStatus.OK.value
-        RoleList roleList = response.getEntity(RoleList).value
-
-        //should contain the two added roles + default user role
-        roleList.role.id.contains(getUserDefaultRole().id)
-        roleList.role.id.contains(cloudIdentityUserManageRole.id)
-        roleList.role.id.contains(role1.id)
-        roleList.role.id.contains(role2.id)
+        response.status == HttpStatus.FORBIDDEN.value
 
         cleanup:
         deleteUserQuietly(userManager2)
@@ -214,6 +216,56 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         cleanup:
         deleteUserQuietly(userManager)
         deleteUserQuietly(userAdmin)
+    }
+
+    def "identity:get-user-roles-global can be used to retrieve roles for users"() {
+        //start with role enabled
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP, true)
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin()
+        AuthenticateResponse auth = utils.authenticate(userAdmin)
+
+        UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(auth.token.id)
+        String uaToken = token.accessTokenString
+        String iaToken = utils.getToken(users[0].username)
+
+        def userRole = authorizationService.getCachedIdentityRoleByName(GlobalConstants.ROLE_NAME_GET_USER_ROLES_GLOBAL)
+
+        when: "user admin tries to load identity admin roles"
+        def uaResponse = cloud20.listUserGlobalRoles(uaToken, users[0].id)
+
+        then:
+        uaResponse.status == org.apache.http.HttpStatus.SC_FORBIDDEN
+
+        when: "give user global roles role"
+        utils.addRoleToUser(userAdmin, userRole.id)
+        uaResponse = cloud20.listUserGlobalRoles(uaToken, users[0].id)
+
+        then: "user admin can now access roles"
+        uaResponse != null
+        uaResponse.status == org.apache.http.HttpStatus.SC_OK
+
+        when: "identity admin tries to load roles of user admin"
+        def iaResponse = cloud20.listUserGlobalRoles(iaToken, userAdmin.id)
+
+        then: "allowed"
+        iaResponse.status == org.apache.http.HttpStatus.SC_OK
+
+        when: "disable endpoint global role feature"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP, false)
+        uaResponse = cloud20.listUserGlobalRoles(uaToken, users[0].id)
+        iaResponse = cloud20.listUserGlobalRoles(iaToken, userAdmin.id)
+
+        then: "user admin can no longer access token endpoints"
+        uaResponse.status == org.apache.http.HttpStatus.SC_FORBIDDEN
+        iaResponse.status == org.apache.http.HttpStatus.SC_OK
+
+        cleanup:
+        reloadableConfiguration.reset()
+        try {
+            utils.deleteUsers(users)
+        } catch (Exception ex) {/*ignore*/
+        }
     }
 
     private ClientRole getUserManageRole() {
@@ -279,7 +331,6 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         def role = v2Factory.createRole(propagate).with {
             it.name = roleName
             it.propagate = propagate
-            it.weight = weight
             it.otherAttributes = null
             return it
         }
