@@ -106,8 +106,11 @@ public class DefaultRoleService implements RoleService {
     @Override
     public List<ClientRole> getIdentityAccessRoles() {
         Application application = applicationService.getById(identityConfig.getStaticConfig().getCloudAuthClientId());
-        return IteratorUtils.toList(applicationRoleDao.getIdentityRoles(application,
-                Arrays.asList(identityConfig.getStaticConfig().getIdentityAccessRoleNames())).iterator());
+        return IteratorUtils.toList(applicationRoleDao.getIdentityRoles(application, Arrays.asList(identityConfig.getStaticConfig().getIdentityAccessRoleNames())).iterator());
     }
 
+    @Override
+    public List<ClientRole> getAllIdentityRoles() {
+        return IteratorUtils.toList(applicationRoleDao.getAllIdentityRoles().iterator());
+    }
 }

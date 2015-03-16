@@ -70,4 +70,8 @@ public final class GlobalConstants {
     public static final String DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED = "REQUIRED";
 
     public static final String ALL_TENANTS_DISABLED_ERROR_MESSAGE = "Forbidden: not allowed for suspended account";
+
+    public static final String IDENTITY_ROLE_PREFIX = "identity:";
+
+    public static final String ROLE_NAME_RACKER = "Racker";
 }

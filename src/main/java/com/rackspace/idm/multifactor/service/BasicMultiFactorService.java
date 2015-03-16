@@ -13,6 +13,7 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.MobilePhoneDao;
 import com.rackspace.idm.domain.dao.OTPDeviceDao;
 import com.rackspace.idm.domain.dozer.converters.UserMultiFactorEnforcementLevelConverter;
@@ -46,7 +47,14 @@ import java.util.*;
 public class BasicMultiFactorService implements MultiFactorService {
     private static final Logger LOG = LoggerFactory.getLogger(BasicMultiFactorService.class);
 
-    public static final String MULTIFACTOR_BETA_ROLE_NAME = "cloudAuth.multiFactorBetaRoleName";
+    /**
+     * Name of the property that specifies the name of the identity role users are assigned to gain access to MFA during
+     * the beta period
+     *
+     * @deprecated Use {@link com.rackspace.idm.domain.config.IdentityConfig#MULTIFACTOR_BETA_ROLE_NAME_PROP}
+     */
+    @Deprecated
+    public static final String MULTIFACTOR_BETA_ROLE_NAME = IdentityConfig.MULTIFACTOR_BETA_ROLE_NAME_PROP;
 
     public static final String ERROR_MSG_SAVE_OR_UPDATE_USER = "Error updating user %s";
     public static final String ERROR_MSG_PHONE_NOT_ASSOCIATED_WITH_USER = "Specified phone is not associated with user";

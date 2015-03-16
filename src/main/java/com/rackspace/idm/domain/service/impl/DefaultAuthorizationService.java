@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -36,6 +38,10 @@ public class DefaultAuthorizationService implements AuthorizationService {
     @Autowired
     private DomainService domainService;
 
+    @Autowired
+    private RoleService roleService;
+
+    //TODO: Remove these constants and lookup via map cache rather than these individual variables serving as a cache
     private ClientRole idmSuperAdminRole = null;
     private ClientRole cloudServiceAdminRole = null;
     private ClientRole cloudIdentityAdminRole = null;
@@ -44,15 +50,78 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private ClientRole cloudUserManagedRole = null ;
     private ClientRole rackerRole = null ;
 
+    /**
+     * A map of the identity role names to an immutable client role. Use immutable to prevent inadvertent changes that
+     * would corrupt the cache.
+     */
+    private Map<String, ImmutableClientRole> identityRoleNameToRoleMap = new HashMap<String, ImmutableClientRole>();
+
+    /**
+     * A map of the identity role ids to an immutable client role. Use immutable versions of the roles to prevent
+     * inadvertent changes that would corrupt the cache.
+     */
+    private Map<String, ImmutableClientRole> identityRoleIdToRoleMap = new HashMap<String, ImmutableClientRole>();
+
     @PostConstruct
     public void retrieveAccessControlRoles() {
-        idmSuperAdminRole = applicationService.getClientRoleByClientIdAndRoleName(getIdmClientId(), getIdmSuperAdminRoleName());
-        cloudServiceAdminRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
-        cloudIdentityAdminRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
-        cloudUserAdminRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
-        cloudUserRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
-        cloudUserManagedRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserManagedRole());
-        rackerRole = applicationService.getClientRoleByClientIdAndRoleName(getIdmClientId(), "Racker");
+        //On startup, cache all the identity client roles into easily accessible maps.
+        List<ClientRole> identityRoles = roleService.getAllIdentityRoles();
+        if (identityRoles != null) {
+            for (ClientRole identityRole : identityRoles) {
+                populateMapsWithRole(identityRole);
+            }
+        }
+
+        //TODO: Remove dependence on these variables and lookup from maps. Loading backup method just to be on safe side
+        //to do what legacy code did. Eventually should remove this
+        cloudServiceAdminRole = loadClientRole(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
+        idmSuperAdminRole = loadClientRole(getIdmClientId(), getIdmSuperAdminRoleName());
+        cloudServiceAdminRole = loadClientRole(getCloudAuthClientId(), getCloudAuthServiceAdminRole());
+        cloudIdentityAdminRole = loadClientRole(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
+        cloudUserAdminRole = loadClientRole(getCloudAuthClientId(), getCloudAuthUserAdminRole());
+        cloudUserRole = loadClientRole(getCloudAuthClientId(), getCloudAuthUserRole());
+        cloudUserManagedRole = loadClientRole(getCloudAuthClientId(), getCloudAuthUserManagedRole());
+        rackerRole = loadClientRole(getIdmClientId(), GlobalConstants.ROLE_NAME_RACKER);
+
+        //add in racker role as we may make auth decisions on it
+        if (rackerRole != null) {
+            populateMapsWithRole(rackerRole);
+        }
+    }
+
+    @Override
+    public ImmutableClientRole getCachedIdentityRoleById(String id) {
+        return identityRoleIdToRoleMap.get(id);
+    }
+
+    @Override
+    public ImmutableClientRole getCachedIdentityRoleByName(String name) {
+        return identityRoleNameToRoleMap.get(name);
+    }
+
+    private ClientRole loadClientRole(String clientId, String roleName) {
+        ImmutableClientRole role = identityRoleNameToRoleMap.get(roleName);
+
+        ClientRole result;
+        if (role == null) {
+            result = applicationService.getClientRoleByClientIdAndRoleName(clientId, roleName);
+        } else {
+            result = role.asClientRole();
+        }
+        return result;
+    }
+
+    private void populateMapsWithRole(ClientRole role) {
+        String roleName = role.getName();
+
+        //name should be globally unique, but perform some verification
+        if (identityRoleNameToRoleMap.containsKey(roleName)) {
+            String errorMsg = String.format("Multiple identity authorization roles exists with name '%s'. Ignoring role with id '%s'", roleName, role.getId());
+            logger.error(errorMsg);
+        } else {
+            identityRoleNameToRoleMap.put(role.getName(), new ImmutableClientRole(role));
+            identityRoleIdToRoleMap.put(role.getId(), new ImmutableClientRole(role)); //assume id is globally unique
+        }
     }
 
     @Override
@@ -607,5 +676,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setRoleService(RoleService roleService) {
+        this.roleService = roleService;
     }
 }

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.entity.*;
 import org.apache.commons.configuration.Configuration;
 
@@ -77,4 +78,21 @@ public interface AuthorizationService {
      * @return
      */
     IdentityUserTypeEnum getIdentityTypeRoleAsEnum(BaseUser baseUser);
+
+    /**
+     * Look up an identity role by id within the cache that is populated at node startup
+     *
+     * @param id
+     * @return
+     */
+    ImmutableClientRole getCachedIdentityRoleById(String id);
+
+    /**
+     * Look up the identity role by name within the cache that is populated at node startup
+     *
+     * @param name
+     * @return
+     */
+    ImmutableClientRole getCachedIdentityRoleByName(String name);
+
 }

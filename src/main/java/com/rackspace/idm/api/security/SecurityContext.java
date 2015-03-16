@@ -24,10 +24,8 @@ public class SecurityContext {
     private static final String TOKEN_CONTEXT_ERROR = "Security context error. The token stored in the security context does" +
             "not match the expected token.";
 
-    private boolean impersonatedRequest = false;
-
     /**
-     * The token as provided in the REST request (X-Auth-Token header)
+     * The token as provided in the initial REST request (X-Auth-Token header) by the consumer
      */
     private ScopeAccess callerToken;
 
@@ -50,13 +48,17 @@ public class SecurityContext {
     private Domain effectiveCallerDomain;
 
     /**
+     * The authorization context of the effective caller
+     */
+    private AuthorizationContext effectiveCallerAuthorizationContext;
+
+    /**
      * A request is impersonated if the caller token is not the same as the effective token
      * @return
      */
     public boolean isImpersonatedRequest() {
         return callerToken != effectiveCallerToken;
     }
-
 
     /**
      * This is meant to be analogous (and a direct replacement) for {@link com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service#getScopeAccessForValidToken(String)}
@@ -82,5 +84,4 @@ public class SecurityContext {
         }
         return effectiveCallerToken;
     }
-
 }
