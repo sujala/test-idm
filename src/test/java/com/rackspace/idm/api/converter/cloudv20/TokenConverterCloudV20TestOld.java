@@ -41,7 +41,7 @@ public class TokenConverterCloudV20TestOld {
         String tokenString = UUID.randomUUID().toString().replace("-", "");
         scopeAccess.setAccessTokenExp(new Date());
         scopeAccess.setAccessTokenString(tokenString);
-        Token token = tokenConverterCloudV20.toToken(scopeAccess);
+        Token token = tokenConverterCloudV20.toToken(scopeAccess, null);
         assertThat("id", token.getId(), equalTo(tokenString));
     }
 

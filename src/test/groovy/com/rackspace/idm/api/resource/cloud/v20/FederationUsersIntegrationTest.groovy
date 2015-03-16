@@ -29,6 +29,8 @@ import testHelpers.saml.SamlAssertionFactory
 import javax.servlet.http.HttpServletResponse
 
 import static com.rackspace.idm.Constants.*
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
+import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class FederationUsersIntegrationTest extends RootIntegrationTest {
@@ -421,6 +423,45 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.reset()
     }
 
+    @Unroll
+    def "federated token contains tenant: #mediaType"() {
+        given:
+        staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("samlUser")
+        def expDays = 5
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def userAdmin1, users1
+        (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
+
+        when: "authenticate with saml"
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def samlAuthToken = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.token : samlAuthResponse.token
+        def samlAuthTokenId = samlAuthToken.id
+
+        then: "the tenant is populated"
+        samlResponse.status == 200
+        samlAuthToken.tenant != null
+        samlAuthToken.tenant.id != null
+        samlAuthToken.tenant.id == domainId
+
+        when: "validate the token"
+        def validateSamlTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), samlAuthTokenId)
+
+        then: "the token is still valid"
+        validateSamlTokenResponse.status == 200
+
+        cleanup:
+        utils.deleteUsers(users1)
+        staticIdmConfiguration.reset()
+
+        where:
+        mediaType             | _
+        APPLICATION_XML_TYPE  | _
+        APPLICATION_JSON_TYPE | _
+    }
+
     def "federated and provisioned user tokens are revoked when the last user admin for the domain is disabled"() {
         given:
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
@@ -543,6 +584,7 @@ class FederationUsersIntegrationTest extends RootIntegrationTest {
         //check the token
         assert authResponse.token.id != null
         assert authResponse.token.authenticatedBy.credential.contains(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
+        assert authResponse.token.tenant.id == userAdminEntity.domainId
 
         //check the roles (assigned identity default role as well as compute:default,object-store:default (propagating roles) by default
         //should query the useradmin to figure out the roles, but
