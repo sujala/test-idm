@@ -3,16 +3,19 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.service.EndpointService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
+import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.BooleanUtils
 import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse
+import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -148,6 +151,128 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         } catch (Exception e) {
             //eat but log
             LOG.warn(String.format("Error cleaning up federatedUser with username '%s'", samlUser.id), e)
+        }
+    }
+
+
+    @Unroll
+    def "test get user shows contact ID only for Identity Admins, userType = #userType, request = #request, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def contactId = testUtils.getRandomUUID("contactId")
+        def email = testUtils.getRandomUUID() + "@example.com"
+        def username = testUtils.getRandomUUID("defaultUser")
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+        def userForCreate = v2Factory.createUserForCreate(username, "display", email, true, null, domainId, DEFAULT_PASSWORD).with {
+            it.contactId = contactId
+            it
+        }
+        def user = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate).getEntity(User).value
+
+        when: "get user by ID"
+        def token
+        switch(userType) {
+            case IdentityUserTypeEnum.SERVICE_ADMIN:
+                token = utils.getServiceAdminToken()
+                break
+            case IdentityUserTypeEnum.IDENTITY_ADMIN:
+                token = utils.getIdentityAdminToken()
+                break
+            case IdentityUserTypeEnum.USER_ADMIN:
+                token = utils.getToken(userAdmin.username)
+                break
+            case IdentityUserTypeEnum.USER_MANAGER:
+                token = utils.getToken(userManage.username)
+                break
+        }
+        def getUserByIdResponse = cloud20.getUserById(token, user.id, accept)
+
+        then:
+        getUserByIdResponse.status == 200
+        def returnedContactId = getContactIdFromResponse(getUserByIdResponse, accept)
+        if(attrVisible) {
+            assert returnedContactId == contactId
+        } else {
+            assert returnedContactId == null
+        }
+
+        when: "get user by name"
+        def getByNameResponse = cloud20.getUserByName(token, username, accept)
+        returnedContactId = getContactIdFromResponse(getByNameResponse, accept)
+
+        then:
+        getByNameResponse.status == 200
+        if(attrVisible) {
+            assert returnedContactId == contactId
+        } else {
+            assert returnedContactId == null
+        }
+
+        when: "get users by email"
+        def getUsersByEmail = cloud20.getUsersByEmail(token, email, accept)
+        returnedContactId = getContactIdFromResponse(getUsersByEmail, user.id, accept)
+
+        then:
+        getUsersByEmail.status == 200
+        if(attrVisible) {
+            assert returnedContactId == contactId
+        } else {
+            assert returnedContactId == null
+        }
+
+        cleanup:
+        cloud20.deleteUser(utils.getServiceAdminToken(), user.id)
+        utils.deleteUsers(users)
+
+        where:
+        userType                            | attrVisible  | accept                          | request
+        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+
+        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+
+        IdentityUserTypeEnum.USER_ADMIN     | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.USER_ADMIN     | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.USER_ADMIN     | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.USER_ADMIN     | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+
+        IdentityUserTypeEnum.USER_MANAGER   | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.USER_MANAGER   | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.USER_MANAGER   | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.USER_MANAGER   | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    def getContactIdFromResponse(userResponse, accept) {
+        if(MediaType.APPLICATION_XML_TYPE == accept) {
+            def user = userResponse.getEntity(User).value
+            return user.contactId
+        } else {
+            def user = new JsonSlurper().parseText(userResponse.getEntity(String)).user
+            if(user.hasProperty('RAX-AUTH:contactId')) {
+                assert user['RAX-AUTH:contactId'] != null
+            }
+            return user['RAX-AUTH:contactId']
+        }
+    }
+
+    def getContactIdFromResponse(userResponse, userId, accept) {
+        if(MediaType.APPLICATION_XML_TYPE == accept) {
+            UserList userList = userResponse.getEntity(UserList).value
+            return userList.getUser().find{ user -> user.id == userId }.contactId
+        } else {
+            def userList = new JsonSlurper().parseText(userResponse.getEntity(String)).users
+            def userWithContactId = userList.find{ user -> user.id == userId }
+            if(userWithContactId.hasProperty('RAX-AUTH:contactId') != null) {
+                assert userWithContactId['RAX-AUTH:contactId'] != null
+            }
+            return userWithContactId['RAX-AUTH:contactId']
         }
     }
 

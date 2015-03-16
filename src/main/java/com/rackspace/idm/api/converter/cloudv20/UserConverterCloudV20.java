@@ -1,10 +1,14 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
+import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -23,6 +27,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -45,6 +50,15 @@ public class UserConverterCloudV20 {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    AuthorizationService authorizationService;
+
+    @Autowired
+    IdentityConfig identityConfig;
+
+    @Autowired
+    RequestContextHolder requestContextHolder;
 
     public void setMapper(Mapper mapper) {
         this.mapper = mapper;
@@ -78,6 +92,9 @@ public class UserConverterCloudV20 {
 
         jaxbUser.setId(user.getId());
         jaxbUser.setName(user.getUsername());
+        if(user instanceof com.rackspace.idm.domain.entity.User) {
+            jaxbUser.setContactId(((com.rackspace.idm.domain.entity.User) user).getContactId());
+        }
         String region = user.getRegion();
         if(org.apache.commons.lang.StringUtils.isBlank(region) ){
             region = "";
@@ -205,6 +222,11 @@ public class UserConverterCloudV20 {
                     jaxbUser.setGroups(this.groupConverterCloudV20.toGroupListJaxb(user.getRsGroupId()));
                 }
 
+            }
+
+            if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
+                //only identity admins can see the core contact ID on a user
+                jaxbUser.setContactId(null);
             }
 
         } catch (DatatypeConfigurationException e) {

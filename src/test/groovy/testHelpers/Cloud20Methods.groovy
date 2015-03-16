@@ -640,9 +640,9 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSADM).path(ROLES).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def validateToken(String token, String validateToken){
+    def validateToken(String token, String validateToken, accept = APPLICATION_XML_TYPE){
         initOnUse()
-        resource.path(path20).path(TOKENS).path(validateToken).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(TOKENS).path(validateToken).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
     }
 
     def addDomain(String token, Domain domain) {

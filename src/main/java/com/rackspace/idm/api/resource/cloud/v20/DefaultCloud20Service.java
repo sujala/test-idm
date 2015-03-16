@@ -584,8 +584,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addUser(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, org.openstack.docs.identity.api.v2.User usr) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
             User caller = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
+
+            //ignore the core contact id for users that are not identity admins
+            if(!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
+                usr.setContactId(null);
+            }
 
             boolean isCreateUserInOneCall = false;
             User userForDefaults = null;
@@ -600,9 +605,9 @@ public class DefaultCloud20Service implements Cloud20Service {
                         usr.getGroups() != null ||
                         usr.getRoles() != null) {
                     // Only identity:admin should be able to create a user including roles, groups and secret QA.
-                    if (!authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
+                    if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
                         throw new ForbiddenException(NOT_AUTHORIZED);
-                    };
+                    }
                     // Since the domainId is used as the mossoId in the Create User In One Call call
                     // we need to make sure it is an integer so it can be used as a mossoId
                     try {
@@ -1193,6 +1198,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         } else {
             auth = authConverterCloudV20.toAuthenticationResponse(user, userScopeAccess, roles, endpoints);
         }
+
+        //do not expose the core contact ID through auth
+        auth.getUser().setContactId(null);
 
         // If this is a scoped token we clear out the service catalog
         if (authenticationRequest.getScope() != null) {
@@ -2567,19 +2575,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.noContent();
     }
 
-    private boolean isServiceAdminOrIdentityAdmin(User userDO) {
-        List<TenantRole> roles = tenantService.getGlobalRolesForUser(userDO);
-        for (TenantRole role : roles) {
-            if (role.getName().contains(config.getString("cloudAuth.adminRole"))) {
-                return true;
-            }
-            if (role.getName().contains(config.getString("cloudAuth.serviceAdminRole"))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public ResponseBuilder getEndpointsByDomainId(String authToken, String domainId) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
@@ -3591,6 +3586,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                     roles = tenantService.getTenantRolesForUser(user);
                     validator20.validateTenantIdInRoles(tenantId, roles);
                     access.setToken(tokenConverterCloudV20.toToken(sa, roles));
+
+                    if (user instanceof User &&
+                            !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
+                        //only identity admins can see the core contact ID on a user
+                        ((User) user).setContactId(null);
+                    }
+
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
                 } else {
                     ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
@@ -3613,6 +3615,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                     validator20.validateTenantIdInRoles(tenantId, roles);
                     access.setToken(tokenConverterCloudV20.toToken(isa, roles));
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
+
+                    if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
+                        //only identity admins can see the core contact ID on a user
+                        access.getUser().setContactId(null);
+                    }
+
                     List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator);
                     UserForAuthenticateResponse userForAuthenticateResponse = null;
                     if (impersonator instanceof User) {

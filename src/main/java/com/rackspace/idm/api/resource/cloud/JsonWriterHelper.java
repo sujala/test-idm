@@ -174,6 +174,10 @@ public final class JsonWriterHelper {
             outer.put(JSONConstants.RAX_AUTH_TOKEN_FORMAT, user.getTokenFormat().value());
         }
 
+        if (user.getContactId() != null) {
+            outer.put(JSONConstants.RAX_AUTH_CONTACT_ID, user.getContactId());
+        }
+
         if (user.getOtherAttributes().size() != 0) {
             String password = user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"));
             if (!StringUtils.isEmpty(password)) {
@@ -257,6 +261,9 @@ public final class JsonWriterHelper {
     public static JSONObject getTokenUser(UserForAuthenticateResponse user) {
         JSONObject userInner = new JSONObject();
         userInner.put(JSONConstants.ID, user.getId());
+        if(user.getContactId() != null) {
+            userInner.put(JSONConstants.RAX_AUTH_CONTACT_ID, user.getContactId());
+        }
         if (user.getName() != null) {
             userInner.put(JSONConstants.NAME, user.getName());
         }

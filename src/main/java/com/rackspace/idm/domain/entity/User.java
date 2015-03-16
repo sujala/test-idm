@@ -264,6 +264,9 @@ public class User implements EndUser {
     @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_TYPE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String multiFactorType;
 
+    @LDAPField(attribute = LdapRepository.ATTR_CONTACT_ID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String contactId;
+
     private List<TenantRole> roles;
 
     TokenFormatConverter tfEnumConverter = new TokenFormatConverter();

@@ -39,6 +39,7 @@ public class JSONWriterForUser extends JSONWriterForEntity<User> implements Mess
         prefixValues.put(USER_MULTI_FACTOR_STATE_PATH, RAX_AUTH_MULTI_FACTOR_STATE);
         prefixValues.put(USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_PATH, RAX_AUTH_USER_MULTI_FACTOR_ENFORCEMENT_LEVEL);
         prefixValues.put(USER_TOKEN_FORMAT_PATH, RAX_AUTH_TOKEN_FORMAT);
+        prefixValues.put(USER_CONTACT_ID_PATH, RAX_AUTH_CONTACT_ID);
         write(user, entityStream, prefixValues);
     }
 }
