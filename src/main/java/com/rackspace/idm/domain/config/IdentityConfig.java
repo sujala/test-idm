@@ -131,6 +131,9 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP="feature.enable.validate.token.global.role";
     public static final boolean FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_DEFAULT=false;
 
+    public static final String FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP="feature.enable.get.token.endpoints.global.role";
+    public static final boolean FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_DEFAULT=false;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -396,6 +399,10 @@ public class IdentityConfig {
 
         public boolean isValidateTokenGlobalRoleEnabled() {
             return getBooleanSafely(FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP, FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_DEFAULT);
+        }
+
+        public boolean isGetTokenEndpointsGlobalRoleEnabled() {
+            return getBooleanSafely(FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP, FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_DEFAULT);
         }
 
         private boolean getBooleanSafely(String prop, boolean defaultValue) {

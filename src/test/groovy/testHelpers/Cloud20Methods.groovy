@@ -355,6 +355,11 @@ class Cloud20Methods {
         resource.path(path20).path(TENANTS).path(tenantId).path(OS_KSCATALOG).path(ENDPOINTS).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).get(ClientResponse)
     }
 
+    def listEndpointsForToken(String authToken, token, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(TOKENS).path(token).path(ENDPOINTS).header(X_AUTH_TOKEN, authToken).accept(acceptMediaType.toString()).get(ClientResponse)
+    }
+
     def createRole(String token, Role role) {
         initOnUse()
         resource.path(path20).path(OS_KSADM).path(ROLES).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(role).post(ClientResponse)

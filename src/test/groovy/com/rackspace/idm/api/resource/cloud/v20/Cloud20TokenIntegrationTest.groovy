@@ -1,8 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import org.apache.commons.configuration.Configuration
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -17,6 +21,9 @@ class Cloud20TokenIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     ScopeAccessService scopeAccessService
+
+    @Autowired
+    AuthorizationService authorizationService
 
     @Shared def userAdmin, users
 
@@ -67,4 +74,53 @@ class Cloud20TokenIntegrationTest extends RootIntegrationTest {
         token != null
         token.userRsId != null
     }
+
+    def "identity:get-token-endpoint-global can be used to retrieve endpoints for tokens"() {
+        //start with role enabled
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP, true)
+        (userAdmin, users) = utils.createUserAdmin()
+        AuthenticateResponse auth = utils.authenticate(userAdmin)
+        UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(auth.token.id)
+        String uaToken = token.accessTokenString
+        String iaToken = utils.getToken(users[0].username)
+
+        def endpointRole = authorizationService.getCachedIdentityRoleByName(GlobalConstants.ROLE_NAME_GET_TOKEN_ENDPOINTS_GLOBAL)
+
+        when: "user admin tries to load own endpoints"
+        def uaResponse = cloud20.listEndpointsForToken(uaToken, iaToken)
+
+        then:
+        uaResponse.status == HttpStatus.SC_FORBIDDEN
+
+        when: "give user global endpoint role"
+        utils.addRoleToUser(userAdmin, endpointRole.id)
+        uaResponse = cloud20.listEndpointsForToken(uaToken, iaToken)
+
+        then: "user admin can now access token endpoints"
+        uaResponse != null
+        uaResponse.status == HttpStatus.SC_OK
+
+        when: "identity admin tries to load token endpoints"
+        def iaResponse = cloud20.listEndpointsForToken(iaToken, uaToken)
+
+        then: "allowed"
+        iaResponse.status == HttpStatus.SC_OK
+
+        when: "disable endpoint global role feature"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP, false)
+        uaResponse = cloud20.listEndpointsForToken(uaToken, iaToken)
+        iaResponse = cloud20.listEndpointsForToken(iaToken, uaToken)
+
+        then: "user admin can no longer access token endpoints"
+        uaResponse.status == HttpStatus.SC_FORBIDDEN
+        iaResponse.status == HttpStatus.SC_OK
+
+        cleanup:
+        reloadableConfiguration.reset()
+        try {
+            utils.deleteUsers(users)
+        } catch (Exception ex) {/*ignore*/
+        }
+    }
+
 }
