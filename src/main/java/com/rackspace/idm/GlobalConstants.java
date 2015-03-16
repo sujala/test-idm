@@ -74,4 +74,6 @@ public final class GlobalConstants {
     public static final String IDENTITY_ROLE_PREFIX = "identity:";
 
     public static final String ROLE_NAME_RACKER = "Racker";
+
+    public static final String ROLE_NAME_VALIDATE_TOKEN_GLOBAL="identity:validate-token-global";
 }

@@ -1,10 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.ScopeAccessService
+import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
@@ -36,14 +39,24 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     @Autowired
     LdapScopeAccessRepository scopeAccessDao
 
+    @Autowired
+    AuthorizationService authorizationService
+
     def "Validate user token" () {
-        when:
         def expirationTimeInSeconds = 86400
         def marginOfErrorInSeconds = 1000
         def response = utils.authenticateUser(IDENTITY_ADMIN_USERNAME, IDENTITY_ADMIN_PASSWORD)
         utils.revokeToken(response.token.id)
         response = utils.authenticateUser(IDENTITY_ADMIN_USERNAME, IDENTITY_ADMIN_PASSWORD)
-        def validateResponse = utils.validateToken(response.token.id)
+
+        when: "do not provide token"
+        def validateResponse = cloud20.validateToken("", response.token.id)
+
+        then: "get 401"
+        validateResponse.status == HttpStatus.SC_UNAUTHORIZED
+
+        when:
+        validateResponse = utils.validateToken(response.token.id)
 
         then:
         validateResponse != null
@@ -53,6 +66,35 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         def deltaInSeconds = (validateResponse.token.expires.toGregorianCalendar().timeInMillis - System.currentTimeMillis()) / 1000
         deltaInSeconds < expirationTimeInSeconds + marginOfErrorInSeconds
         deltaInSeconds > expirationTimeInSeconds - marginOfErrorInSeconds
+    }
+
+    def "User with validate-token-global role can validate user tokens" () {
+        utils.createUserAdmin()
+        def users
+        def userAdmin
+        (userAdmin, users) = utils.createUserAdmin()
+
+        def uaToken = utils.getToken(userAdmin.username)
+        def iaToken = utils.getToken(users[0].username)
+
+        def validateRole = authorizationService.getCachedIdentityRoleByName(GlobalConstants.ROLE_NAME_VALIDATE_TOKEN_GLOBAL)
+
+        when: "when useradmin does not have validate role, and validate identity admin token"
+        def validateResponse = cloud20.validateToken(uaToken, iaToken)
+
+        then: "get 403"
+        validateResponse.status == HttpStatus.SC_FORBIDDEN
+
+        when: "give user role"
+        utils.addRoleToUser(userAdmin, validateRole.id)
+        validateResponse = utils.validateToken(uaToken, iaToken)
+
+        then: "a user-admin can validate an identity admin token"
+        validateResponse != null
+        validateResponse.token.authenticatedBy.credential.contains("PASSWORD")
+
+        cleanup:
+        try {utils.deleteUsers(users)} catch (Exception ex) {/*ignore*/}
     }
 
     def "AuthenticatedBy should be displayed for racker token" () {

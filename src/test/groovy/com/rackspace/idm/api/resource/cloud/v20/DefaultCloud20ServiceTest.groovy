@@ -12,6 +12,7 @@ import com.rackspace.idm.api.converter.cloudv20.GroupConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.exception.*
 import com.rackspace.idm.validation.Validator20
@@ -54,6 +55,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     @Shared def userId = "userId"
 
     @Shared def identityAdmin, userAdmin, userManage, defaultUser
+
+    @Shared IdentityConfig.StaticConfig staticConfig
+    @Shared IdentityConfig.ReloadableConfig reloadableConfig
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -2866,7 +2870,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * atomHopperClient.asyncPost(_,_)
     }
 
-    def "Update token format as a identity admin doesn't reset the data"() {
+    def "Update token format as a identity admin when ae tokens enabled doesn't reset the data"() {
         given:
         allowUserAccess()
         authorizationService.authorizeCloudIdentityAdmin(_) >> true
@@ -2888,6 +2892,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         0 * userInput.setTokenFormat(_)
+        staticConfig.getFeatureAETokensDecrypt() >> true
     }
 
     def "Update token format as a service admin doesn't reset the data"() {
@@ -2912,6 +2917,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         0 * userInput.setTokenFormat(_)
+        staticConfig.getFeatureAETokensDecrypt() >> true
     }
 
     def "Update token format as a non service/identity admin reset the data"() {
@@ -4335,6 +4341,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockMultiFactorCloud20Service(service);
         mockRoleService(service);
         mockIdentityUserService(service)
+        mockIdentityConfig(service)
+
+        staticConfig = Mock(IdentityConfig.StaticConfig)
+        reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
+
+        identityConfig.getStaticConfig() >> staticConfig
+        identityConfig.getReloadableConfig() >> reloadableConfig
     }
 
     def mockMisc() {

@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.ImmutableClientRole;
+import com.rackspace.idm.api.security.RequestContext;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -14,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
@@ -40,6 +43,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private RequestContextHolder requestContextHolder;
 
     //TODO: Remove these constants and lookup via map cache rather than these individual variables serving as a cache
     private ClientRole idmSuperAdminRole = null;
@@ -556,6 +562,94 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private boolean authorizeUserAccess(BaseUser user) {
         return user == null || !user.isDisabled();
 
+    }
+
+    @Override
+    public boolean authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum identityType, String roleName) {
+        List<String> rolesToSearch = new ArrayList<String>();
+        if (StringUtils.isNotBlank(roleName)) {
+            rolesToSearch.add(roleName);
+        }
+        rolesToSearch.addAll(getIdentityRolesForLevel(identityType));
+        return authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(rolesToSearch);
+    }
+
+    /**
+     * Identity "user type" roles have a hierarchy. Service Admins < Identity Admins < User Admins < User Managers < Default Users
+     *
+     * When a service requires a certain access level, any user with that level or higher can access that service. When given
+     * a "access level" (user type), this method returns all the access levels (user types) that can access that level.
+     *
+     * @param identityType
+     * @return
+     */
+    private Set<String> getIdentityRolesForLevel(IdentityUserTypeEnum identityType) {
+        Set<String> rolesAtOrHigherThanLevel = new HashSet<String>();
+
+        if (IdentityUserTypeEnum.SERVICE_ADMIN.hasLevelAccessOf(identityType)) {
+            rolesAtOrHigherThanLevel.add(identityConfig.getStaticConfig().getIdentityServiceAdminRoleName());
+        }
+
+        if (IdentityUserTypeEnum.IDENTITY_ADMIN.hasLevelAccessOf(identityType)) {
+            rolesAtOrHigherThanLevel.add(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName());
+        }
+
+        if (IdentityUserTypeEnum.USER_ADMIN.hasLevelAccessOf(identityType)) {
+            rolesAtOrHigherThanLevel.add(identityConfig.getStaticConfig().getIdentityUserAdminRoleName());
+        }
+
+        if (IdentityUserTypeEnum.USER_MANAGER.hasLevelAccessOf(identityType)) {
+            rolesAtOrHigherThanLevel.add(identityConfig.getStaticConfig().getIdentityUserManagerRoleName());
+        }
+
+        if (IdentityUserTypeEnum.DEFAULT_USER.hasLevelAccessOf(identityType)) {
+            rolesAtOrHigherThanLevel.add(identityConfig.getStaticConfig().getIdentityDefaultUserRoleName());
+        }
+
+        return rolesAtOrHigherThanLevel;
+    }
+
+    @Override
+    public void verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum identityType, String roleName) {
+        List<String> rolesToSearch = new ArrayList<String>();
+        if (StringUtils.isNotBlank(roleName)) {
+            rolesToSearch.add(roleName);
+        }
+        rolesToSearch.addAll(getIdentityRolesForLevel(identityType));
+        verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(rolesToSearch);
+    }
+
+    @Override
+    public void verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(List<String> roleNames) {
+        Assert.notNull(roleNames);
+
+        //user must not be disabled... legacy check
+        RequestContext requestContext = requestContextHolder.getRequestContext();
+        verifyUserAccess(requestContext.getEffectiveCaller());
+
+        boolean found = authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(roleNames);
+
+        if (!found) {
+            String errMsg = NOT_AUTHORIZED_MSG;
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg);
+        }
+    }
+
+    @Override
+    public boolean authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(List<String> roleNames) {
+        Assert.notNull(roleNames);
+
+        RequestContext requestContext = requestContextHolder.getRequestContext();
+
+        boolean found = false;
+        for (int i=0; i<roleNames.size() && !found; i++) {
+            if (requestContext.getEffectiveCallerAuthorizationContext().hasRoleWithName(roleNames.get(i))) {
+                found = true;
+            }
+        }
+
+        return found;
     }
 
     private String getRoleString(List<ClientRole> clientRoles) {

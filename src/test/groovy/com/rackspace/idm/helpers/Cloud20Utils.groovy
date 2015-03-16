@@ -353,6 +353,12 @@ class Cloud20Utils {
         response.getEntity(AuthenticateResponse).value
     }
 
+    def validateToken(token, tokenToValidate) {
+        def response = methods.validateToken(token, tokenToValidate)
+        assert (response.status == SC_OK)
+        response.getEntity(AuthenticateResponse).value
+    }
+
     def revokeToken(token) {
         def response = methods.revokeUserToken(getServiceAdminToken(), token)
         assert (response.status == SC_NO_CONTENT)
