@@ -44,6 +44,7 @@ class DefaultUserServiceTest extends RootServiceTest {
     @Shared defaultRole
     @Shared computeDefaultRole
     @Shared objectStoreRole
+    @Shared def staticConfig
 
     def setupSpec(){
         service = new DefaultUserService()
@@ -127,6 +128,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockFederatedUserDao(service)
         mockIdentityUserService(service)
         mockIdentityConfig(service)
+        staticConfig = Mock(IdentityConfig.StaticConfig)
+        identityConfig.getStaticConfig() >> staticConfig
     }
 
     def "Add BaseUrl to user"() {
@@ -413,7 +416,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         authorizationService.hasServiceAdminRole(caller) >> false
 
         when:
-        service.setUserDefaultsBasedOnCaller(user, caller, false)
+        service.setUserDefaultsBasedOnUser(user, caller, false)
 
         then:
         1 * user.setTokenFormat(null)
@@ -428,9 +431,10 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         mockRoleService.getIdentityAdminRole() >> new ClientRole()
         user.getRoles() >> new ArrayList<TenantRole>()
+        staticConfig.getFeatureAETokensDecrypt() >> true
 
         when:
-        service.setUserDefaultsBasedOnCaller(user, caller, false)
+        service.setUserDefaultsBasedOnUser(user, caller, false)
 
         then:
         0 * user.setTokenFormat(null)
@@ -446,9 +450,10 @@ class DefaultUserServiceTest extends RootServiceTest {
         user.getDomainId() >> "123"
         mockRoleService.getUserAdminRole() >> new ClientRole()
         user.getRoles() >> new ArrayList<TenantRole>()
+        staticConfig.getFeatureAETokensDecrypt() >> true
 
         when:
-        service.setUserDefaultsBasedOnCaller(user, caller, false)
+        service.setUserDefaultsBasedOnUser(user, caller, false)
 
         then:
         0 * user.setTokenFormat(null)
@@ -463,7 +468,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         authorizationService.hasServiceAdminRole(_) >> true
 
         when:
-        service.setUserDefaultsBasedOnCaller(user, caller)
+        service.setUserDefaultsBasedOnUser(user, caller)
 
         then:
         assert(user.roles.size() == 1)
@@ -482,7 +487,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         domainService.getDomainAdmins(domainId) >> [].asList()
 
         when:
-        service.setUserDefaultsBasedOnCaller(user, caller, false)
+        service.setUserDefaultsBasedOnUser(user, caller, false)
 
         then:
         def userAdminRoleFound = false
@@ -519,7 +524,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         domainService.getDomainAdmins(domainId) >> [].asList()
 
         when:
-        service.setUserDefaultsBasedOnCaller(user, caller)
+        service.setUserDefaultsBasedOnUser(user, caller)
 
         then:
         def userAdminRoleFound = false
@@ -555,7 +560,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         authorizationService.hasIdentityAdminRole(_) >> true
 
         when:
-        service.setUserDefaultsBasedOnCaller(user, caller)
+        service.setUserDefaultsBasedOnUser(user, caller)
 
         then:
         thrown(BadRequestException)
@@ -572,7 +577,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         domainService.getDomainAdmins(domainId) >> [user].asList()
 
         when:
-        service.setUserDefaultsBasedOnCaller(user, caller)
+        service.setUserDefaultsBasedOnUser(user, caller)
 
         then:
         thrown(BadRequestException)
@@ -598,7 +603,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockRoleService.getRoleByName("observer") >> entityFactory.createClientRole("observer")
 
         when:
-        service.setUserDefaultsBasedOnCaller(user, caller)
+        service.setUserDefaultsBasedOnUser(user, caller)
 
         then:
         def defaultRoleFound = false
@@ -647,7 +652,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         authorizationService.hasUserManageRole(_) >> userManageRole
 
         when:
-        service.setUserDefaultsBasedOnCaller(user, caller)
+        service.setUserDefaultsBasedOnUser(user, caller)
 
         then:
         thrown(BadRequestException)

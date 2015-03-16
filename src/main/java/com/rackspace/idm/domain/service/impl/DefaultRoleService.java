@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -29,6 +31,9 @@ public class DefaultRoleService implements RoleService {
     @Autowired
     Configuration config;
 
+    @Autowired
+    IdentityConfig identityConfig;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
@@ -38,31 +43,31 @@ public class DefaultRoleService implements RoleService {
 
     @Override
     public ClientRole getSuperUserAdminRole() {
-        String roleName = config.getString("cloudAuth.serviceAdminRole");
+        String roleName = identityConfig.getStaticConfig().getIdentityServiceAdminRoleName();
         return applicationRoleDao.getRoleByName(roleName);
     }
 
     @Override
     public ClientRole getUserAdminRole() {
-        String roleName = config.getString("cloudAuth.userAdminRole");
+        String roleName = identityConfig.getStaticConfig().getIdentityUserAdminRoleName();
         return applicationRoleDao.getRoleByName(roleName);
     }
 
     @Override
     public ClientRole getUserManageRole() {
-        String roleName = config.getString("cloudAuth.userManagedRole");
+        String roleName = identityConfig.getStaticConfig().getIdentityUserManagerRoleName();
         return applicationRoleDao.getRoleByName(roleName);
     }
 
     @Override
     public ClientRole getIdentityAdminRole() {
-        String roleName = config.getString("cloudAuth.adminRole");
+        String roleName = identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName();
         return applicationRoleDao.getRoleByName(roleName);
     }
 
     @Override
     public ClientRole getDefaultRole() {
-        String roleName = config.getString("cloudAuth.userRole");
+        String roleName = identityConfig.getStaticConfig().getIdentityDefaultUserRoleName();
         return applicationRoleDao.getRoleByName(roleName);
     }
 
@@ -89,7 +94,7 @@ public class DefaultRoleService implements RoleService {
 
     @Override
     public boolean isIdentityAccessRole(String rolename) {
-        List<String> identityRoleNames = getIdentityAccessRoleNames();
+        String[] identityRoleNames = identityConfig.getStaticConfig().getIdentityAccessRoleNames();
         for(String idmAccessRoleName : identityRoleNames) {
             if(StringUtils.equalsIgnoreCase(idmAccessRoleName, rolename)) {
                 return true;
@@ -100,21 +105,9 @@ public class DefaultRoleService implements RoleService {
 
     @Override
     public List<ClientRole> getIdentityAccessRoles() {
-        Application application = applicationService.getById(getCloudAuthClientId());
-        return IteratorUtils.toList(applicationRoleDao.getIdentityRoles(application, getIdentityAccessRoleNames()).iterator());
-    }
-
-    private List<String> getIdentityAccessRoleNames() {
-        List<String> roleNames = new ArrayList<String>();
-        List<Object> roleNameObjs = config.getList("cloudAuth.accessRoleNames");
-        for (Object roleName : roleNameObjs) {
-            roleNames.add((String) roleName);
-        }
-        return roleNames;
-    }
-
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
+        Application application = applicationService.getById(identityConfig.getStaticConfig().getCloudAuthClientId());
+        return IteratorUtils.toList(applicationRoleDao.getIdentityRoles(application,
+                Arrays.asList(identityConfig.getStaticConfig().getIdentityAccessRoleNames())).iterator());
     }
 
 }

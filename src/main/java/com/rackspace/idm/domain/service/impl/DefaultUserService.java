@@ -255,14 +255,14 @@ public class DefaultUserService implements UserService {
 
     /**
      * sets default parameters on the user e.g domain id, roles, etc based on
-     * characteristics of the calling user.
+     * characteristics of the given user.
      *
      * @param user
-     * @param caller
+     * @param userForDefaults
      * @param isCreateUserInOneCall
      */
     @Override
-    public void setUserDefaultsBasedOnCaller(User user, User caller, boolean isCreateUserInOneCall) {
+    public void setUserDefaultsBasedOnUser(User user, User userForDefaults, boolean isCreateUserInOneCall) {
         //
         // Based on the caller making the call, apply the following rules to the user being created.
         // We will revisit these rules later on, so they are more simplified. Don't want to change for now.
@@ -271,7 +271,7 @@ public class DefaultUserService implements UserService {
         // This doesn't happen today because there is business logic to ensure these cases don't happen.
         // We want to eventually remove that. A user should be able to be assigned any role.
         //
-        final boolean hasServiceAdminRole = authorizationService.hasServiceAdminRole(caller);
+        final boolean hasServiceAdminRole = authorizationService.hasServiceAdminRole(userForDefaults);
         if (hasServiceAdminRole) {
             if (StringUtils.isBlank(user.getDomainId())) {
                 user.setDomainId(getDomainUUID());
@@ -279,7 +279,7 @@ public class DefaultUserService implements UserService {
             attachRoleToUser(roleService.getIdentityAdminRole(), user);
         }
 
-        boolean hasIdentityAdminRole = authorizationService.hasIdentityAdminRole(caller);
+        boolean hasIdentityAdminRole = authorizationService.hasIdentityAdminRole(userForDefaults);
         if (hasIdentityAdminRole) {
             if (StringUtils.isBlank(user.getDomainId())) {
                 throw new BadRequestException("User-admin cannot be created without a domain");
@@ -303,22 +303,22 @@ public class DefaultUserService implements UserService {
         }
 
         //only identity admins and service admins can set the user's token format, but only if ae tokens are enabled (decryptable)
-        if (!(hasIdentityAdminRole || hasServiceAdminRole) || !identityConfig.getFeatureAETokensDecrypt()) {
+        if (!(hasIdentityAdminRole || hasServiceAdminRole) || !identityConfig.getStaticConfig().getFeatureAETokensDecrypt()) {
             user.setTokenFormat(null);
         }
 
-        if (authorizationService.hasUserAdminRole(caller) || authorizationService.hasUserManageRole(caller)) {
-            if (StringUtils.isBlank(caller.getDomainId())) {
+        if (authorizationService.hasUserAdminRole(userForDefaults) || authorizationService.hasUserManageRole(userForDefaults)) {
+            if (StringUtils.isBlank(userForDefaults.getDomainId())) {
                 throw new BadRequestException("Default user cannot be created if caller does not have a domain");
             }
 
-            String callerDefaultRegion = getRegionBasedOnCaller(caller);
-            List<TenantRole> callerRoles = getAssignableCallerRoles(caller);
-            Iterable<Group> callerGroups = getGroupsForUser(caller.getId());
+            String callerDefaultRegion = getRegionBasedOnCaller(userForDefaults);
+            List<TenantRole> callerRoles = getAssignableCallerRoles(userForDefaults);
+            Iterable<Group> callerGroups = getGroupsForUser(userForDefaults.getId());
 
-            user.setMossoId(caller.getMossoId());
-            user.setNastId(caller.getNastId());
-            user.setDomainId(caller.getDomainId());
+            user.setMossoId(userForDefaults.getMossoId());
+            user.setNastId(userForDefaults.getNastId());
+            user.setDomainId(userForDefaults.getDomainId());
             user.setRegion(callerDefaultRegion);
 
             attachRoleToUser(roleService.getDefaultRole(), user);
@@ -333,14 +333,14 @@ public class DefaultUserService implements UserService {
 
     /**
      * sets default parameters on the user e.g domain id, roles, etc based on
-     * characteristics of the calling user.
+     * characteristics of the given user.
      *
      * @param user
-     * @param caller
+     * @param userForDefaults
      */
     @Override
-    public void setUserDefaultsBasedOnCaller(User user, User caller) {
-        setUserDefaultsBasedOnCaller(user, caller, true);
+    public void setUserDefaultsBasedOnUser(User user, User userForDefaults) {
+        setUserDefaultsBasedOnUser(user, userForDefaults, true);
     }
 
     //TODO: consider removing this method. Just here so code doesn't break

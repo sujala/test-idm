@@ -93,7 +93,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * validator.validate11User(user)
         1 * userConverterCloudV11.fromUser(user) >> userEntity
-        1 * userService.setUserDefaultsBasedOnCaller(userEntity, caller);
+        1 * userService.setUserDefaultsBasedOnUser(userEntity, caller);
         1 * userService.addUser(userEntity)
         1 * scopeAccessService.getOpenstackEndpointsForUser(userEntity) >> []
         1 * userConverterCloudV11.toCloudV11User(userEntity, []) >> user

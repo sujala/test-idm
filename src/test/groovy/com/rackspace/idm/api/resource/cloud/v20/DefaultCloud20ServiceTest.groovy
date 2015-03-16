@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 
@@ -3829,7 +3828,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserManagedLevelAccess(_)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * userService.setUserDefaultsBasedOnCaller(_, caller, false);
+        1 * userService.setUserDefaultsBasedOnUser(_, caller, false);
         1 * userService.addUserV20(_, false)
         notThrown(BadRequestException)
     }
@@ -3852,7 +3851,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyUserManagedLevelAccess(_)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * userService.setUserDefaultsBasedOnCaller(_, caller, false);
+        1 * userService.setUserDefaultsBasedOnUser(_, caller, false);
         1 * userService.addUserV20(_, false)
         notThrown(BadRequestException)
     }
@@ -3879,7 +3878,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.authorizeCloudIdentityAdmin(_) >> true
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * userService.setUserDefaultsBasedOnCaller(_, caller, true);
+        1 * userService.setUserDefaultsBasedOnUser(_, caller, true);
         1 * userService.addUserV20(_, true)
         notThrown(BadRequestException)
     }

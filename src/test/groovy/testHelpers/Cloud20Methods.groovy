@@ -123,9 +123,9 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).queryParam("name", name).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def createUser(String token, user) {
+    def createUser(String token, user, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(USERS).accept(APPLICATION_XML).type(APPLICATION_XML).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
+        resource.path(path20).path(USERS).accept(accept).type(request).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
 
     def addApiKeyToUser(String token, String userId, credential) {

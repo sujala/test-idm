@@ -668,7 +668,7 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
         where:
         identityRole               |   expectedStatus
-        "identity:default"         |   HttpStatus.SC_FORBIDDEN
+        "identity:default"         |   HttpStatus.SC_BAD_REQUEST
         "identity:user-manage"     |   HttpStatus.SC_FORBIDDEN
         "identity:user-admin"      |   HttpStatus.SC_FORBIDDEN
         "identity:admin"           |   HttpStatus.SC_FORBIDDEN

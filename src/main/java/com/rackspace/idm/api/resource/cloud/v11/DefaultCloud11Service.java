@@ -381,7 +381,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             validator.validate11User(userTO);
 
             User user = this.userConverterCloudV11.fromUser(userTO);
-            userService.setUserDefaultsBasedOnCaller(user, caller);
+            userService.setUserDefaultsBasedOnUser(user, caller);
             userService.addUser(user);
 
             List<OpenstackEndpoint> endpointsForUser = scopeAccessService.getOpenstackEndpointsForUser(user);

@@ -172,6 +172,15 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
     }
 
+    def disableDomain(domainId) {
+        def domainToUpdate = v1Factory.createDomain().with {
+            it.id = domainId
+            it.enabled = false
+            it
+        }
+        updateDomain(domainId, domainToUpdate)
+    }
+
     def deleteDomain(domainId) {
         if (domainId == null) {
             return
@@ -457,7 +466,7 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
-    def authenticateUser(String username, String password) {
+    def authenticateUser(String username, String password = DEFAULT_PASSWORD) {
         def response = methods.authenticatePassword(username, password)
         assert (response.status == SC_OK)
         response.getEntity(AuthenticateResponse).value
