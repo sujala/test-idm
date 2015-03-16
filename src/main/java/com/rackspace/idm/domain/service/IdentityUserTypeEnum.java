@@ -4,16 +4,19 @@ package com.rackspace.idm.domain.service;
  * The defined 'user types' within identity. Every end user within identity is classified as one of these user types.
  */
 public enum IdentityUserTypeEnum {
-    SERVICE_ADMIN, IDENTITY_ADMIN, USER_ADMIN, USER_MANAGER, DEFAULT_USER;
+    SERVICE_ADMIN(0), IDENTITY_ADMIN(100), USER_ADMIN(750), USER_MANAGER(900), DEFAULT_USER(2000);
+
+    private int level;
+
+    private IdentityUserTypeEnum(int level) {
+        this.level = level;
+    }
 
     /**
      * Whether the role has at least user manager level access to the system.
      */
     public boolean hasAtLeastUserManagedAccessLevel() {
-        if (this == SERVICE_ADMIN || this == IDENTITY_ADMIN || this == USER_ADMIN || this == USER_MANAGER) {
-            return true;
-        }
-        return false;
+        return hasLevelAccessOf(USER_MANAGER);
     }
 
     public boolean isDomainBasedAccessLevel() {
@@ -27,12 +30,12 @@ public enum IdentityUserTypeEnum {
      * Whether the role has at least identity admin level access to the system.
      */
     public boolean hasAtLeastIdentityAdminAccessLevel() {
-        if (this == SERVICE_ADMIN || this == IDENTITY_ADMIN) {
-            return true;
-        }
-        return false;
+        return hasLevelAccessOf(IDENTITY_ADMIN);
     }
 
+    public boolean hasLevelAccessOf(IdentityUserTypeEnum that) {
+        return this.level <= that.level;
+    }
 
 
 }

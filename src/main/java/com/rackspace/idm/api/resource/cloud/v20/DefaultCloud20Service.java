@@ -754,7 +754,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean callerIsSubUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
 
             // Just identity admins and service admins can update 'tokenFormat', but only when ae tokens are enabled
-            if (!(callerIsIdentityAdmin || callerIsServiceAdmin) || !identityConfig.getFeatureAETokensDecrypt()) {
+            if (!(callerIsIdentityAdmin || callerIsServiceAdmin) || !identityConfig.getStaticConfig().getFeatureAETokensDecrypt()) {
                 user.setTokenFormat(null);
             }
 
@@ -3512,7 +3512,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             // User can validate his own token (B-80571:TK-165775).
             if (!(selfValidate && sameToken)) {
                 //TODO: This token can be a Racker, Service or User of Proper Level
-                authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+                if (identityConfig.getReloadableConfig().isValidateTokenGlobalRoleEnabled()) {
+                    requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken); //verify token exists and valid
+                    authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, GlobalConstants.ROLE_NAME_VALIDATE_TOKEN_GLOBAL);
+                } else {
+                    authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+                }
             }
 
             final ScopeAccess sa = checkAndGetToken(tokenId);

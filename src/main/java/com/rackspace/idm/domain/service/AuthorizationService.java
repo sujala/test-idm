@@ -4,6 +4,8 @@ import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.entity.*;
 import org.apache.commons.configuration.Configuration;
 
+import java.util.List;
+
 public interface AuthorizationService {
 
     boolean authorizeRacker(ScopeAccess scopeAccess);
@@ -95,4 +97,43 @@ public interface AuthorizationService {
      */
     ImmutableClientRole getCachedIdentityRoleByName(String name);
 
+    /**
+     * Whether the effective caller has the specified identity type (or higher) and/or identity role with the
+     * specified name. This can only be used to check identity RBAC roles.
+     *
+     * @param identityType
+     * @param roleName
+     */
+    boolean authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum identityType, String roleName);
+
+    /**
+     * Whether the effective caller has at least one role with the specified role name. This can only be used to check
+     * identity RBAC roles.
+     *
+     * @param roleNames
+     */
+    boolean authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(List<String> roleNames);
+
+    /**
+     * Verifies that the effective caller has the specified identity type (or higher) and/or a role with the
+     * specified name. If so, the method returns. Otherwise, throws a ForbiddenException.
+     *
+     * This can only be used to check identity RBAC roles.
+     *
+     * @param identityType
+     * @param roleName
+     * @throws com.rackspace.idm.exception.ForbiddenException
+     */
+    void verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum identityType, String roleName);
+
+    /**
+     * Verifies that the effective caller has the specified identity type (or higher) and/or a role with the
+     * specified name. If so, the method returns. Otherwise, throws a ForbiddenException.
+     *
+     * This can only be used to check identity RBAC roles.
+     *
+     * @param roleNames
+     * @throws com.rackspace.idm.exception.ForbiddenException
+     */
+    void verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(List<String> roleNames);
 }

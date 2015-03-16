@@ -232,14 +232,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
-    public void validateToken_withoutAuthToken_returns401() throws Exception {
-        WebResource resource = resource().path("cloud/v2.0/tokens/" + identityToken);
-        ClientResponse clientResponse = resource.get(ClientResponse.class);
-
-        assertThat("response code", clientResponse.getStatus(), equalTo(401));
-    }
-
-    @Test
     public void validateToken_asDefaultUser_returns403() throws Exception {
         String token = authenticate("kurtDefaultUser", "Password1", MediaType.APPLICATION_XML);
         WebResource resource = resource().path("cloud/v2.0/tokens/" + identityToken);
@@ -270,14 +262,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         ClientResponse clientResponse = resource.header(X_AUTH_TOKEN, identityToken).get(ClientResponse.class);
 
         assertThat("response code", clientResponse.getStatus(), equalTo(200));
-    }
-
-    @Test
-    public void checkToken_withoutAuthToken_returns401() throws Exception {
-        WebResource resource = resource().path("cloud/v2.0/tokens/" + identityToken);
-        ClientResponse clientResponse = resource.get(ClientResponse.class);
-
-        assertThat("response code", clientResponse.getStatus(), equalTo(401));
     }
 
     @Test
