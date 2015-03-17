@@ -1,5 +1,12 @@
 package com.rackspace.idm.domain.config;
 
+import com.google.common.base.Functions;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.security.IdentityRole;
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.security.TokenFormat;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
@@ -11,7 +18,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Iterator;
+import java.util.*;
 
 @Component
 public class IdentityConfig {
@@ -139,6 +146,12 @@ public class IdentityConfig {
 
     public static final String FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP="feature.enable.get.user.groups.global.role";
     public static final boolean FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_DEFAULT=false;
+
+    public static final String FEATURE_ENABLE_IMPLICIT_ROLE_PROP="feature.enable.implicit.roles";
+    public static final boolean FEATURE_ENABLE_IMPLICIT_ROLE_DEFAULT=false;
+
+    public static final String IMPLICIT_ROLE_PROP_PREFIX = "implicit.roles";
+    public static final String IMPLICIT_ROLE_OVERRIDE_PROP_REG = IMPLICIT_ROLE_PROP_PREFIX + ".%s";
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -342,6 +355,33 @@ public class IdentityConfig {
             return staticConfiguration.getBoolean(FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, FEATURE_BASE_URL_RESPECT_ENABLED_FLAG_DEFAULT);
         }
 
+        public boolean isImplicitRoleSupportEnabled() {
+            return getBooleanSafely(FEATURE_ENABLE_IMPLICIT_ROLE_PROP, FEATURE_ENABLE_IMPLICIT_ROLE_DEFAULT);
+        }
+
+        public Set<IdentityRole> getImplicitRolesForRole(String roleName) {
+            Set<IdentityRole> result = Collections.EMPTY_SET;
+
+            String[] implicitRolesNames = null;
+            if (isImplicitRoleSupportEnabled()) {
+                implicitRolesNames = staticConfiguration.getStringArray(String.format(IMPLICIT_ROLE_OVERRIDE_PROP_REG, roleName));
+            }
+
+            if (implicitRolesNames != null && implicitRolesNames.length > 0) {
+                result = new HashSet<IdentityRole>();
+                for (String implicitRoleName : implicitRolesNames) {
+                    IdentityRole implicitRole = IdentityRole.fromRoleName(implicitRoleName);
+                    if (implicitRole == null) {
+                        logger.warn(String.format("Role '%s' has invalid implicit role '%s' configured. Role not found. Ignoring implicit role.", roleName, implicitRoleName));
+                    } else {
+                        result.add(implicitRole);
+                    }
+                }
+            }
+
+            return result;
+        }
+
         private TokenFormat convertToTokenFormat(String strFormat) {
             for (TokenFormat tokenFormat : TokenFormat.values()) {
                 if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
@@ -359,6 +399,14 @@ public class IdentityConfig {
             return staticConfiguration.getBoolean(FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_DEFAULT);
         }
 
+        private boolean getBooleanSafely(String prop, boolean defaultValue) {
+            try {
+                return staticConfiguration.getBoolean(prop, defaultValue);
+            } catch (ConversionException e) {
+                logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+                return defaultValue;
+            }
+        }
     }
 
     /**

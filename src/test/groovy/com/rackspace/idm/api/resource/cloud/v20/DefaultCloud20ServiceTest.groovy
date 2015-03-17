@@ -56,9 +56,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     @Shared def identityAdmin, userAdmin, userManage, defaultUser
 
-    @Shared IdentityConfig.StaticConfig staticConfig
-    @Shared IdentityConfig.ReloadableConfig reloadableConfig
-
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
 
@@ -4342,12 +4339,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockRoleService(service);
         mockIdentityUserService(service)
         mockIdentityConfig(service)
-
-        staticConfig = Mock(IdentityConfig.StaticConfig)
-        reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
-
-        identityConfig.getStaticConfig() >> staticConfig
-        identityConfig.getReloadableConfig() >> reloadableConfig
     }
 
     def mockMisc() {

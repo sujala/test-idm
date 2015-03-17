@@ -44,7 +44,6 @@ class DefaultUserServiceTest extends RootServiceTest {
     @Shared defaultRole
     @Shared computeDefaultRole
     @Shared objectStoreRole
-    @Shared def staticConfig
 
     def setupSpec(){
         service = new DefaultUserService()
@@ -128,8 +127,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockFederatedUserDao(service)
         mockIdentityUserService(service)
         mockIdentityConfig(service)
-        staticConfig = Mock(IdentityConfig.StaticConfig)
-        identityConfig.getStaticConfig() >> staticConfig
     }
 
     def "Add BaseUrl to user"() {

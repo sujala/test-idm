@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
@@ -77,7 +78,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         def uaToken = utils.getToken(userAdmin.username)
         def iaToken = utils.getToken(users[0].username)
 
-        def validateRole = authorizationService.getCachedIdentityRoleByName(GlobalConstants.ROLE_NAME_VALIDATE_TOKEN_GLOBAL)
+        def validateRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.VALIDATE_TOKEN_GLOBAL.getRoleName())
 
         when: "when useradmin does not have validate role, and validate identity admin token"
         def validateResponse = cloud20.validateToken(uaToken, iaToken)

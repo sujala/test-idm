@@ -102,6 +102,7 @@ public class RequestContext {
 
         if (authorizationContext == null) {
             List<ImmutableTenantRole> explicitIdentityRoles = new ArrayList<ImmutableTenantRole>();
+            List<ImmutableClientRole> implicitIdentityRoles = new ArrayList<ImmutableClientRole>();
 
             BaseUser effectiveCaller = getEffectiveCaller();
 
@@ -115,10 +116,16 @@ public class RequestContext {
                     userTenantRole.setDescription(identityRole.getDescription());
                     userTenantRole.setPropagate(identityRole.getPropagate());
                     explicitIdentityRoles.add(new ImmutableTenantRole(userTenantRole));
+
+                    //get the "implicit" roles associated with the client role, if any. Implicit roles are such that if user has Role X, they implicitly
+                    //have Role A, B, C even though the user is not explicitly assigned those roles (and these roles wouldn't show up in list
+                    //of roles the user has.
+                    List<ImmutableClientRole> implicitRoles = authorizationService.getImplicitRolesForRole(identityRole.getName());
+                    implicitIdentityRoles.addAll(implicitRoles);
                 }
             }
 
-            authorizationContext = new AuthorizationContext(explicitIdentityRoles);
+            authorizationContext = new AuthorizationContext(explicitIdentityRoles, implicitIdentityRoles);
             getSecurityContext().setEffectiveCallerAuthorizationContext(authorizationContext);
         }
 

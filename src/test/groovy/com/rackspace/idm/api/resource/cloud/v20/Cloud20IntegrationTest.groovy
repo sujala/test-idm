@@ -137,7 +137,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         USER_FOR_AUTH_PWD = "Password1"
 
         endpointTemplateId = "100001"
-        cloud20.addEndpointTemplate(serviceAdminToken, v1Factory.createEndpointTemplate(endpointTemplateId, null, null, "name"))
+        cloud20.addEndpointTemplate(serviceAdminToken, v1Factory.createEndpointTemplate(endpointTemplateId, "compute", "http://public.url", "name"))
         def addPolicyResponse = cloud20.addPolicy(serviceAdminToken, v1Factory.createPolicy("name", null, null))
         def getPolicyResponse = cloud20.getPolicy(serviceAdminToken, addPolicyResponse.location)
         policyId = getPolicyResponse.getEntity(Policy).id as String

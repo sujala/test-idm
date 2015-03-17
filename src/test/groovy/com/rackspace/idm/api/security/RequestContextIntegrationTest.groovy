@@ -4,6 +4,8 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.BaseUser
 import com.rackspace.idm.domain.entity.Domain
+import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import org.openstack.docs.identity.api.v2.Role
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,6 +25,9 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     IdentityConfig identityConfig
+
+    @Autowired
+    AuthorizationService authorizationService
 
     def "can load effective caller from request context when token set on security context"() {
         given:
@@ -161,5 +166,45 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
+    def "can load repose-standard roles as implicit roles"() {
+        given:
+        utils.createUserAdmin()
+        def users
+        def userAdmin
+        (userAdmin, users) = utils.createUserAdmin()
+
+        def uaToken = utils.getToken(userAdmin.username)
+        def sa = scopeAccessService.getScopeAccessByAccessToken(uaToken)
+        requestContext.setSecurityContext(createSecurityContext(sa, sa))
+
+        when:
+        AuthorizationContext authCtx = requestContext.getEffectiveCallerAuthorizationContext()
+
+        then: "implicit tokens are null"
+        authCtx.implicitRoles.size() == 0
+
+        when: "add repose-standard role and reset"
+        requestContext.setSecurityContext(createSecurityContext(sa, sa))
+        def reposeRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.REPOSE_STANDARD.getRoleName())
+        utils.addRoleToUser(userAdmin, reposeRole.id)
+        authCtx = requestContext.getEffectiveCallerAuthorizationContext()
+
+        then: "implicit tokens are populated"
+        authCtx.implicitRoles.size() == 4
+        authCtx.implicitRoles.find {it.name == IdentityRole.VALIDATE_TOKEN_GLOBAL.roleName} != null
+        authCtx.implicitRoles.find {it.name == IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.roleName} != null
+        authCtx.implicitRoles.find {it.name == IdentityRole.GET_USER_GROUPS_GLOBAL.roleName} != null
+        authCtx.implicitRoles.find {it.name == IdentityRole.GET_USER_ROLES_GLOBAL.roleName} != null
+
+        cleanup:
+        utils.deleteUsers(users)
+    }
+
+    def createSecurityContext(ScopeAccess callerToken, ScopeAccess effectiveCallerToken) {
+        SecurityContext ctx = new SecurityContext()
+        ctx.setCallerToken(callerToken)
+        ctx.setEffectiveCallerToken(effectiveCallerToken)
+        return ctx
+    }
 
 }
