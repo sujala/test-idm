@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.google.common.collect.Sets
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.entity.ClientRole
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -10,7 +12,6 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
     static ClientRole TEST_ROLE;
 
     def setupSpec() {
-        service = new DefaultAuthorizationService()
         TEST_ROLE = entityFactory.createClientRole().with {
             it.name = "identity:test"
             it.id = "102341"
@@ -19,6 +20,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
     }
 
     def setup() {
+        service = new DefaultAuthorizationService()
         mockConfiguration(service)
         mockScopeAccessService(service)
         mockTenantService(service)
@@ -26,6 +28,7 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         mockUserService(service)
         mockDomainService(service)
         mockRoleService(service)
+        mockIdentityConfig(service)
         retrieveIdentityRoles()
     }
 
@@ -479,9 +482,18 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         service.getCachedIdentityRoleByName(TEST_ROLE.name).id == TEST_ROLE.id
     }
 
+    def "test role has implicit role"() {
+        expect:
+        service.getImplicitRolesForRole(TEST_ROLE.name).size() == 1
+    }
+
     def retrieveIdentityRoles() {
         applicationService.getClientRoleByClientIdAndRoleName(_, _) >> entityFactory.createClientRole()
-        roleService.getAllIdentityRoles() >> [TEST_ROLE]
+        roleService.getAllIdentityRoles() >> [TEST_ROLE, entityFactory.createClientRole(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName())]
+
+        staticConfig.implicitRoleSupportEnabled() >> true
+        staticConfig.getImplicitRolesForRole(TEST_ROLE.name) >> Sets.newHashSet(IdentityRole.GET_USER_ROLES_GLOBAL);
+
         service.retrieveAccessControlRoles()
     }
 }

@@ -25,6 +25,8 @@ import com.rackspace.idm.api.security.DefaultRequestContextHolder
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.SecurityContext
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.IdentityConfig.ReloadableConfig
+import com.rackspace.idm.domain.config.IdentityConfig.StaticConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.RackerDao
 import com.rackspace.idm.domain.security.TokenFormatSelector
@@ -126,6 +128,8 @@ class RootServiceTest extends Specification {
 
     @Shared Configuration config
     @Shared IdentityConfig identityConfig
+    @Shared StaticConfig staticConfig
+    @Shared ReloadableConfig reloadableConfig
     @Shared AtomHopperClient atomHopperClient
     @Shared EmailClient emailClient
     @Shared RSAClient rsaClient
@@ -478,6 +482,11 @@ class RootServiceTest extends Specification {
 
     def mockIdentityConfig(service) {
         identityConfig = Mock()
+        staticConfig = Mock(StaticConfig)
+        reloadableConfig = Mock(ReloadableConfig)
+        identityConfig.getReloadableConfig() >> reloadableConfig
+        identityConfig.getStaticConfig() >> staticConfig
+
         service.identityConfig = identityConfig
     }
     def mockMultiFactorService(service) {

@@ -18,6 +18,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
 import com.rackspace.idm.api.resource.pagination.Paginator;
+import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
@@ -1959,7 +1960,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             if (identityConfig.getReloadableConfig().isGetTokenEndpointsGlobalRoleEnabled()) {
                 requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken); //verify token exists and valid
-                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, GlobalConstants.ROLE_NAME_GET_TOKEN_ENDPOINTS_GLOBAL);
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.getRoleName());
             } else {
                 authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             }
@@ -2163,7 +2164,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean mustVerifyDomainAndPrecedence = true;
             if (identityConfig.getReloadableConfig().isGetUserRolesGlobalRoleEnabled()) {
                 if (authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN
-                        , GlobalConstants.ROLE_NAME_GET_USER_ROLES_GLOBAL) || user.getId().equals(caller.getId())) {
+                        , IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName()) || user.getId().equals(caller.getId())) {
                     mustVerifyDomainAndPrecedence = false;
                 }
             } else {
@@ -3026,7 +3027,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             if (identityConfig.getReloadableConfig().isGetUserGroupsGlobalRoleEnabled()) {
                 requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken); //verify token exists and valid
-                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, GlobalConstants.ROLE_NAME_GET_USER_GROUPS_GLOBAL);
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.GET_USER_GROUPS_GLOBAL.getRoleName());
             } else {
                 authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             }
@@ -3545,7 +3546,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 //TODO: This token can be a Racker, Service or User of Proper Level
                 if (identityConfig.getReloadableConfig().isValidateTokenGlobalRoleEnabled()) {
                     requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken); //verify token exists and valid
-                    authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, GlobalConstants.ROLE_NAME_VALIDATE_TOKEN_GLOBAL);
+                    authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.VALIDATE_TOKEN_GLOBAL.getRoleName());
                 } else {
                     authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
                 }

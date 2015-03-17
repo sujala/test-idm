@@ -136,4 +136,12 @@ public interface AuthorizationService {
      * @throws com.rackspace.idm.exception.ForbiddenException
      */
     void verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(List<String> roleNames);
+
+    /**
+     * Return the list of implicit roles associated with the role with the given name.
+     *
+     * @param roleName
+     * @return
+     */
+    List<ImmutableClientRole> getImplicitRolesForRole(String roleName);
 }

@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForArrayEntity
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -44,7 +45,7 @@ class ListUserGroupsIntegrationTest extends RootIntegrationTest {
         String uaToken = token.accessTokenString
         String iaToken = utils.getToken(users[0].username)
 
-        def userRole = authorizationService.getCachedIdentityRoleByName(GlobalConstants.ROLE_NAME_GET_USER_GROUPS_GLOBAL)
+        def userRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.GET_USER_GROUPS_GLOBAL.getRoleName())
 
         when: "user admin tries to load identity admin groups"
         def uaResponse = cloud20.listGroupsForUser(uaToken, users[0].id)
