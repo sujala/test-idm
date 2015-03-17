@@ -3024,7 +3024,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUserGroups(HttpHeaders httpHeaders, String authToken, String userId) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            if (identityConfig.getReloadableConfig().isGetUserGroupsGlobalRoleEnabled()) {
+                requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken); //verify token exists and valid
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, GlobalConstants.ROLE_NAME_GET_USER_GROUPS_GLOBAL);
+            } else {
+                authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            }
 
             com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups cloudGroups = new com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups();
 
