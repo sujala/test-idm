@@ -2151,11 +2151,31 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User caller = getUser(callersScopeAccess);
-            if (!(authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)
-                    || authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)
-                    //user is requesting self
-                    || user.getId().equals(caller.getId()))) {
 
+            /*
+            1. service-admins, identity-admins, and users with global role can perform this against anyone.
+
+            2. user-admins, user-manager can get roles for any user within same domain (but not at same level (e.g. -
+            user manager getting roles on another user-manager)
+
+            3. default users can get only their own roles
+            */
+            boolean mustVerifyDomainAndPrecedence = true;
+            if (identityConfig.getReloadableConfig().isGetUserRolesGlobalRoleEnabled()) {
+                if (authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN
+                        , GlobalConstants.ROLE_NAME_GET_USER_ROLES_GLOBAL) || user.getId().equals(caller.getId())) {
+                    mustVerifyDomainAndPrecedence = false;
+                }
+            } else {
+                if (authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)
+                        || authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)
+                        || user.getId().equals(caller.getId())) {
+                    ////caller is a service admin, identity admin, or the user is requesting own roles
+                    mustVerifyDomainAndPrecedence = false;
+                }
+            }
+
+            if (mustVerifyDomainAndPrecedence) {
                 if(caller.getDomainId() == null) {
                     //caller is a user admin, user manage, or default user but with a null domain ID
                     //this is bad data, but protecting against it anyways

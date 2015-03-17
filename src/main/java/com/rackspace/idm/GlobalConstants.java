@@ -77,5 +77,5 @@ public final class GlobalConstants {
 
     public static final String ROLE_NAME_VALIDATE_TOKEN_GLOBAL="identity:validate-token-global";
     public static final String ROLE_NAME_GET_TOKEN_ENDPOINTS_GLOBAL="identity:get-token-endpoint-global";
-
+    public static final String ROLE_NAME_GET_USER_ROLES_GLOBAL="identity:get-user-roles-global";
 }
