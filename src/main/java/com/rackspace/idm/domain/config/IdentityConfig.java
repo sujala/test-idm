@@ -153,6 +153,9 @@ public class IdentityConfig {
     public static final String IMPLICIT_ROLE_PROP_PREFIX = "implicit.roles";
     public static final String IMPLICIT_ROLE_OVERRIDE_PROP_REG = IMPLICIT_ROLE_PROP_PREFIX + ".%s";
 
+    public static final String FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP = "feature.racker.username.auth.enabled";
+    public static final boolean FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_DEFAULT = false;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -465,6 +468,10 @@ public class IdentityConfig {
 
         public boolean isGetUserGroupsGlobalRoleEnabled() {
             return getBooleanSafely(FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP, FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_DEFAULT);
+        }
+
+        public boolean getFeatureRackerUsernameOnAuthEnabled() {
+            return getBooleanSafely(FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP, FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_DEFAULT);
         }
 
         private boolean getBooleanSafely(String prop, boolean defaultValue) {
