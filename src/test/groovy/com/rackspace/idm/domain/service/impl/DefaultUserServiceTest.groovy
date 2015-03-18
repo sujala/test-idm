@@ -9,6 +9,7 @@ import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.UserDisabledException
 import com.rackspace.idm.validation.Validator
+import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
 import spock.lang.Shared
 import testHelpers.RootServiceTest
@@ -47,6 +48,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def setupSpec(){
         service = new DefaultUserService()
+        identityConfig = new IdentityConfig(Mock(Configuration), Mock(Configuration))
         sharedRandom = ("$sharedRandomness").replace('-',"")
         userList = new ArrayList<User>()
         userIdList = new ArrayList<String>()
@@ -1116,6 +1118,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "when getting racker from scope access, return racker if enabled flag is missing"() {
         given:
+        service.identityConfig = new IdentityConfig(Mock(Configuration), Mock(Configuration))
         def racker = entityFactory.createRacker().with {
             it.enabled = null
             return it
