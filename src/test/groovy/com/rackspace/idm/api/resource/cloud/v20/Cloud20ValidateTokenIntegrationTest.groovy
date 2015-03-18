@@ -117,8 +117,10 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         deltaInSeconds > expirationTimeInSeconds - marginOfErrorInSeconds
     }
 
-    def "Validate racker token" () {
+    @Unroll
+    def "Validate racker token, exposeUsername = #exposeUsername" () {
         when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP, exposeUsername)
         def response = utils.authenticateRacker(RACKER, RACKER_PASSWORD)
         def token = response.token.id
         AuthenticateResponse valResponse = utils.validateToken(token)
@@ -126,8 +128,20 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         then:
         token != null
         valResponse.user != null
-        valResponse.user.name == RACKER
         valResponse.user.id == RACKER
+        if(exposeUsername) {
+            valResponse.user.name == RACKER
+        } else {
+            valResponse.user.name == null
+        }
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        exposeUsername | _
+        true           | _
+        false          | _
     }
 
     def "Validate Impersonated user's token" () {

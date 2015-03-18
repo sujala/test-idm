@@ -468,7 +468,8 @@ public class DefaultUserService implements UserService {
         Racker racker = rackerDao.getRackerByRackerId(rackerId);
 
         //set username to same as rackerId
-        if (racker != null && org.apache.commons.lang.StringUtils.isBlank(racker.getUsername())) {
+        if (identityConfig.getReloadableConfig().getFeatureRackerUsernameOnAuthEnabled() &&
+                racker != null && org.apache.commons.lang.StringUtils.isBlank(racker.getUsername())) {
             racker.setUsername(racker.getRackerId());
         }
 

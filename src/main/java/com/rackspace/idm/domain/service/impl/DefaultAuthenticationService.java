@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.error.ApiError;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -47,6 +48,8 @@ public class DefaultAuthenticationService implements AuthenticationService {
     private RSAClient rsaClient;
     @Autowired
     private IdentityUserService identityUserService;
+    @Autowired
+    private IdentityConfig identityConfig;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -577,7 +580,9 @@ public class DefaultAuthenticationService implements AuthenticationService {
         if (racker == null) {
             racker = new Racker();
             racker.setRackerId(username);
-            racker.setUsername(username); //set username on class
+            if(identityConfig.getReloadableConfig().getFeatureRackerUsernameOnAuthEnabled()) {
+                racker.setUsername(username); //set username on class
+            }
             this.userService.addRacker(racker);
             TenantRole rackerTenantRole = new TenantRole();
             rackerTenantRole.setRoleRsId(getRackerRoleRsId());
