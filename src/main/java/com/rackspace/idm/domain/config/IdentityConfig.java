@@ -119,6 +119,9 @@ public class IdentityConfig {
     public static final String FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP = "feature.user.disabled.by.tenants.enabled";
     public static final boolean FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT = false;
 
+    public static final String FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP = "feature.racker.username.auth.enabled";
+    public static final boolean FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_DEFAULT = false;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -371,6 +374,15 @@ public class IdentityConfig {
             } catch (ConversionException e) {
                 logger.error(String.format(PROPERTY_ERROR_MESSAGE, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP));
                 return FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT;
+            }
+        }
+
+        public boolean getFeatureRackerUsernameOnAuthEnabled() {
+            try {
+                return reloadableConfiguration.getBoolean(FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP, FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_DEFAULT);
+            } catch (ConversionException e) {
+                logger.error(String.format(PROPERTY_ERROR_MESSAGE, FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP));
+                return FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_DEFAULT;
             }
         }
     }
