@@ -2,6 +2,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.EndpointService
+import com.rackspace.idm.domain.service.IdentityUserService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
@@ -739,6 +741,96 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def userId = userResponse.getEntity(User).value.id
         cloud20.deleteUser(utils.getServiceAdminToken(), userId)
         utils.deleteUsers(users)
+    }
+
+    @Unroll
+    def "#userType setting contact ID on user on create, #userType, accept = #accept, request = #request"() {
+        given:
+        def domainId = utils.createDomain()
+        def contactId = testUtils.getRandomUUID("contactId")
+        def username = testUtils.getRandomUUID("defaultUser")
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+        def userForCreate = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.contactId = contactId
+            it
+        }
+
+        when: "create the user"
+        def token
+        switch(userType) {
+            case IdentityUserTypeEnum.SERVICE_ADMIN:
+                token = utils.getServiceAdminToken()
+                break
+            case IdentityUserTypeEnum.IDENTITY_ADMIN:
+                token = utils.getIdentityAdminToken()
+                break
+            case IdentityUserTypeEnum.USER_ADMIN:
+                token = utils.getToken(userAdmin.username)
+                break
+            case IdentityUserTypeEnum.USER_MANAGER:
+                token = utils.getToken(userManage.username)
+                break
+            case IdentityUserTypeEnum.DEFAULT_USER:
+                token = utils.getToken(defaultUser.username)
+                break
+        }
+        def userResponse = cloud20.createUser(token, userForCreate, request, accept)
+
+        then: "verify the response from creating the user"
+        userResponse.status == result
+        def user
+        if(MediaType.APPLICATION_XML_TYPE == accept) {
+            user = userResponse.getEntity(User).value
+            if(attributeSet) {
+                assert user.contactId == contactId
+            } else {
+                assert user.contactId == null
+            }
+        } else {
+            user = new JsonSlurper().parseText(userResponse.getEntity(String)).user
+            if(attributeSet) {
+                assert user['RAX-AUTH:contactId'] == contactId
+            } else {
+                assert !user.hasProperty('RAX-AUTH:contactId')
+            }
+        }
+
+        and: "verify that the value was not set in the directory"
+        def userEntity = userService.getUserById(user.id)
+        if(attributeSet) {
+            assert userEntity.contactId == contactId
+        } else {
+            assert userEntity.contactId == null
+        }
+
+        cleanup:
+        cloud20.deleteUser(utils.getServiceAdminToken(), user.id)
+        utils.deleteUsers(users)
+
+        where:
+        userType                            | result | attributeSet | accept                          | request
+        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+
+        IdentityUserTypeEnum.IDENTITY_ADMIN | 201    | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN | 201    | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN | 201    | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN | 201    | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+
+        IdentityUserTypeEnum.USER_ADMIN     | 201    | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.USER_ADMIN     | 201    | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.USER_ADMIN     | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.USER_ADMIN     | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+
+        IdentityUserTypeEnum.USER_MANAGER   | 201    | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.USER_MANAGER   | 201    | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.USER_MANAGER   | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.USER_MANAGER   | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        //not testing default users, default users are not allowed to make this call
     }
 
 }

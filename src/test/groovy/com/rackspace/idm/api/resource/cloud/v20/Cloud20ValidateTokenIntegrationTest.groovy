@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.AuthorizationService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import com.sun.jersey.api.client.ClientResponse
@@ -14,6 +15,7 @@ import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -432,6 +434,114 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         type | _
         MediaType.APPLICATION_XML_TYPE | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "validate token only returns contact ID for Identity Admin, userType = #userType, accept = #accept, request = #request"() {
+        given:
+        def domainId = utils.createDomain()
+        def contactId = testUtils.getRandomUUID("contactId")
+        def username = testUtils.getRandomUUID("defaultUser")
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+        def userForCreate = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.contactId = contactId
+            it
+        }
+        def user = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate).getEntity(User).value
+
+        when: "validate the token"
+        def token
+        switch(userType) {
+            case IdentityUserTypeEnum.SERVICE_ADMIN:
+                token = utils.getServiceAdminToken()
+                break
+            case IdentityUserTypeEnum.IDENTITY_ADMIN:
+                token = utils.getIdentityAdminToken()
+                break
+        }
+        def validateTokenResponse = cloud20.validateToken(token, utils.getToken(user.username), accept)
+
+        then:
+        validateTokenResponse.status == 200
+        def returnedContactId = getContactIdFromValidateResponse(validateTokenResponse, accept)
+        if(attributeSet) {
+            assert returnedContactId == contactId
+        } else {
+            assert returnedContactId == null
+        }
+
+        when: "impersonate the user and validate token"
+        def impersonateToken = utils.impersonateWithToken(utils.getIdentityAdminToken(), user).token.id
+        def impersonateResponse = cloud20.validateToken(token, impersonateToken, accept)
+
+        then:
+        impersonateResponse.status == 200
+        def impersonateContactId = getContactIdFromValidateResponse(impersonateResponse, accept)
+        if(attributeSet) {
+            assert impersonateContactId == contactId
+        } else {
+            assert impersonateContactId == null
+        }
+
+        cleanup:
+        cloud20.deleteUser(utils.getServiceAdminToken(), user.id)
+        utils.deleteUsers(users)
+
+        where:
+        userType                            | attributeSet | accept                          | request
+        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+
+        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "contact ID is removed from auth response, accept = #accept, request = #request"() {
+        given:
+        def domainId = utils.createDomain()
+        def contactId = testUtils.getRandomUUID("contactId")
+        def username = testUtils.getRandomUUID("defaultUser")
+        def userForCreate = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.contactId = contactId
+            it
+        }
+        def user = cloud20.createUser(utils.getServiceAdminToken(), userForCreate).getEntity(User).value
+
+        when:
+        def response = cloud20.authenticate(user.username, DEFAULT_PASSWORD, request, accept)
+
+        then:
+        response.status == 200
+        getContactIdFromValidateResponse(response, accept) == null
+
+        cleanup:
+        cloud20.deleteUser(utils.getServiceAdminToken(), user.id)
+
+        where:
+        accept                          | request
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+
+    }
+
+    def getContactIdFromValidateResponse(validateResponse, accept) {
+        if(MediaType.APPLICATION_XML_TYPE == accept) {
+            def user = validateResponse.getEntity(AuthenticateResponse).value.user
+            return user.contactId
+        } else {
+            def user = new JsonSlurper().parseText(validateResponse.getEntity(String)).access.user
+            if(user.keySet().contains('RAX-AUTH:contactId')) assert user['RAX-AUTH:contactId'] != null
+            return user['RAX-AUTH:contactId']
+        }
     }
 
     def getResponseEntity(Class type, MediaType responseFormat, ClientResponse response) {

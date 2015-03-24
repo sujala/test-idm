@@ -4,9 +4,11 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.domain.config.ExternalBeansConfiguration
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspacecloud.docs.auth.api.v1.GroupsList
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.Role
@@ -28,6 +30,7 @@ class UserConverterCloudV20Test extends Specification {
     @Shared RoleConverterCloudV20 mockRoleConverterCloudV20
     @Shared SecretQAConverterCloudV20 mockSecretQAConverterCloudV20
     @Shared GroupConverterCloudV20 mockGroupConverterCloudV20
+    @Shared AuthorizationService authorizationService
 
     @Shared Configuration mockConfig;
 
@@ -37,6 +40,8 @@ class UserConverterCloudV20Test extends Specification {
 
         converterCloudV20 = new UserConverterCloudV20().with {
             it.mapper = mapper
+            it.authorizationService = Mock(AuthorizationService)
+            it.identityConfig = new IdentityConfig(Mock(Configuration), Mock(Configuration))
             return it
         }
     }

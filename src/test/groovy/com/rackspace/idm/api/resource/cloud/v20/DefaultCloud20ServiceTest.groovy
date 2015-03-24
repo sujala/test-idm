@@ -14,8 +14,11 @@ import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.service.AuthorizationService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.*
 import com.rackspace.idm.validation.Validator20
+import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
 
@@ -2299,6 +2302,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         def impersonator = entityFactory.createUser()
         def user = entityFactory.createUser()
+        userConverter.toUserForAuthenticateResponse(_, _) >> v2Factory.createUserForAuthenticateResponse()
 
         when:
         service.validateToken(headers, scopeAccess.accessTokenString, scopeAccess.accessTokenString, "tenantId")
@@ -2807,6 +2811,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         converter.mapper = new DozerBeanMapper()
         converter.roleConverterCloudV20 = Mock(RoleConverterCloudV20)
         converter.groupConverterCloudV20 =  Mock(GroupConverterCloudV20)
+        converter.authorizationService = Mock(AuthorizationService)
+        converter.identityConfig = new IdentityConfig(Mock(Configuration), Mock(Configuration))
         service.userConverterCloudV20 = converter
 
         def email = "email@gmail.com"
@@ -3818,6 +3824,14 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
 
+        def converter = new UserConverterCloudV20()
+        converter.mapper = new DozerBeanMapper()
+        converter.roleConverterCloudV20 = Mock(RoleConverterCloudV20)
+        converter.groupConverterCloudV20 =  Mock(GroupConverterCloudV20)
+        converter.authorizationService = Mock(AuthorizationService)
+        converter.identityConfig = new IdentityConfig(Mock(Configuration), Mock(Configuration))
+        service.userConverterCloudV20 = converter
+
         def user = v1Factory.createUserForCreate()
         def caller = entityFactory.createUser().with {
             it.username = "caller"
@@ -3828,7 +3842,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addUser(headers, uriInfo(), authToken, user)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * userService.setUserDefaultsBasedOnUser(_, caller, false);
@@ -3839,6 +3853,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "add new user with createUser.fullPayload.enabled allows blank secretQA" () {
         given:
         allowUserAccess()
+        def converter = new UserConverterCloudV20()
+        converter.mapper = new DozerBeanMapper()
+        converter.roleConverterCloudV20 = Mock(RoleConverterCloudV20)
+        converter.groupConverterCloudV20 =  Mock(GroupConverterCloudV20)
+        converter.authorizationService = Mock(AuthorizationService)
+        converter.identityConfig = new IdentityConfig(Mock(Configuration), Mock(Configuration))
+        service.userConverterCloudV20 = converter
         config.getBoolean("createUser.fullPayload.enabled") >> true
 
         def user = v2Factory.createUser()
@@ -3851,7 +3872,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addUser(headers, uriInfo(), authToken, user)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * userService.setUserDefaultsBasedOnUser(_, caller, false);
@@ -3877,8 +3898,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addUser(headers, uriInfo(), authToken, user)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
-        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> true
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
+        2 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_) >> true
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * userService.setUserDefaultsBasedOnUser(_, caller, true);
@@ -3903,8 +3924,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.addUser(headers, uriInfo(), authToken, user)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
-        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> true
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
+        2 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_) >> true
         1 * userService.getUserByScopeAccess(_) >> caller
         result.status == HttpStatus.SC_BAD_REQUEST
     }
@@ -3926,8 +3947,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.addUser(headers, uriInfo(), authToken, user)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
-        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> true
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
+        2 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_) >> true
         1 * userService.getUserByScopeAccess(_) >> caller
         result.status == HttpStatus.SC_BAD_REQUEST
     }
@@ -3950,9 +3971,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.addUser(headers, uriInfo(), authToken, user)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * authorizationService.authorizeCloudIdentityAdmin(_) >> false
         result.status == HttpStatus.SC_FORBIDDEN
     }
 
@@ -3966,7 +3986,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.addUser(headers, uriInfo(), authToken, user)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_) >> { throw new ForbiddenException("You can't haz access")}
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null) >> { throw new ForbiddenException()}
         result.status == 403
     }
 
@@ -3986,7 +4006,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def result = service.addUser(headers, uriInfo(), authToken, user)
 
         then:
-        1 * authorizationService.verifyUserManagedLevelAccess(_)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null)
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _) >> { throw new ForbiddenException("naughty naughty")}
         result.status == 403
     }
