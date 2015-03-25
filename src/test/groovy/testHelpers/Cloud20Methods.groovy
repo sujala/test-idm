@@ -510,9 +510,9 @@ class Cloud20Methods {
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType).get(ClientResponse)
     }
 
-    def addEndpoint(String token, String tenantId, endpointTemplate) {
+    def addEndpoint(String token, String tenantId, endpointTemplate, accept = APPLICATION_XML_TYPE, request = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(TENANTS).path(tenantId).path(OS_KSCATALOG).path(ENDPOINTS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(endpointTemplate).post(ClientResponse)
+        resource.path(path20).path(TENANTS).path(tenantId).path(OS_KSCATALOG).path(ENDPOINTS).header(X_AUTH_TOKEN, token).accept(accept).type(request).entity(endpointTemplate).post(ClientResponse)
     }
 
     def removeRoleFromUser(String token, String roleId, String userId) {

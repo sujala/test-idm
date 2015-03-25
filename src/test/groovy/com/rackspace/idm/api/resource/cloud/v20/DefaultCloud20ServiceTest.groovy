@@ -87,27 +87,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         jaxbMock = Mock(JAXBElement)
     }
 
-    def "addEndpoint validates endpoint to prevent adding global endpoint to tenant"() {
-        given:
-        def authToken = "authToken"
-        def tenantId = "tenantId"
-        def endpointTemplate = Mock(EndpointTemplate)
-        def mockedTenant = Mock(Tenant)
-        def mockedCloudBaseUrl = new CloudBaseUrl()
-        mockedCloudBaseUrl.setGlobal(true)
-        def mockedScopeAccess = Mock(ScopeAccess)
-        tenantService.checkAndGetTenant(tenantId) >> mockedTenant
-        endpointService.checkAndGetEndpointTemplate(_) >> mockedCloudBaseUrl
-        scopeAccessService.getScopeAccessByAccessToken(authToken) >> mockedScopeAccess
-        endpointTemplate.getId() >> Integer.valueOf(123)
-
-        when:
-        def response = service.addEndpoint(null, authToken, tenantId, endpointTemplate)
-
-        then:
-        response.build().getStatus() == 400
-    }
-
     def "addEndpointTemplate handles DuplicateException"() {
         given:
         allowUserAccess()
