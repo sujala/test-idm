@@ -733,6 +733,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             //update user call can not be used to update the domainId. Use addUserToDomain calls
             user.setDomainId(null);
 
+            if(!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
+                user.setContactId(null);
+            }
+
             if (user.getPassword() != null) {
                 validator.validatePasswordForCreateOrUpdate(user.getPassword());
             }
