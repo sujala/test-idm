@@ -437,7 +437,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     }
 
     @Unroll
-    def "validate token only returns contact ID for Identity Admin, userType = #userType, accept = #accept, request = #request"() {
+    def "validate token only returns contact ID for service and Identity Admins, userType = #userType, accept = #accept, request = #request"() {
         given:
         def domainId = utils.createDomain()
         def contactId = testUtils.getRandomUUID("contactId")
@@ -491,10 +491,10 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
         where:
         userType                            | attributeSet | accept                          | request
-        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
-        IdentityUserTypeEnum.SERVICE_ADMIN  | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
 
         IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         IdentityUserTypeEnum.IDENTITY_ADMIN | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
