@@ -14,15 +14,18 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.dao.BypassDeviceDao;
 import com.rackspace.idm.domain.dao.MobilePhoneDao;
 import com.rackspace.idm.domain.dao.OTPDeviceDao;
 import com.rackspace.idm.domain.dozer.converters.UserMultiFactorEnforcementLevelConverter;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.BypassDevice;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.OTPDevice;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.util.BypassHelper;
 import com.rackspace.idm.util.OTPHelper;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
@@ -47,16 +50,6 @@ import java.util.*;
 public class BasicMultiFactorService implements MultiFactorService {
     private static final Logger LOG = LoggerFactory.getLogger(BasicMultiFactorService.class);
 
-    /**
-     * Name of the property that specifies the name of the identity role users are assigned to gain access to MFA during
-     * the beta period
-     *
-     * @deprecated Use {@link com.rackspace.idm.domain.config.IdentityConfig#MULTIFACTOR_BETA_ROLE_NAME_PROP}
-     */
-    @Deprecated
-    public static final String MULTIFACTOR_BETA_ROLE_NAME = IdentityConfig.MULTIFACTOR_BETA_ROLE_NAME_PROP;
-
-    public static final String ERROR_MSG_SAVE_OR_UPDATE_USER = "Error updating user %s";
     public static final String ERROR_MSG_PHONE_NOT_ASSOCIATED_WITH_USER = "Specified phone is not associated with user";
 
     public static final String ERROR_MSG_NO_DEVICE = "User not associated with a multifactor device";
@@ -65,13 +58,9 @@ public class BasicMultiFactorService implements MultiFactorService {
     private static final String EXTERNAL_PROVIDER_ERROR_FORMAT = "operation={},userId={},username={},externalId={},externalResponse={}";
     public static final String DELETE_OTP_DEVICE_REQUEST_INVALID_MSG = "You can not delete the last verified OTP device when your account is configured to use OTP multifactor.";
 
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     private final Logger multiFactorConsistencyLogger = LoggerFactory.getLogger(GlobalConstants.MULTIFACTOR_CONSISTENCY_LOG_NAME);
 
     public static final String CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED = "feature.multifactor.phone.membership.enabled";
-
-    public static final String BYPASS_DEFAULT_NUMBER = "multifactor.bypass.default.number";
-    public static final String BYPASS_MAXIMUM_NUMBER = "multifactor.bypass.maximum.number";
 
     public static final String MULTI_FACTOR_STATE_ACTIVE = "ACTIVE";
     public static final String MULTI_FACTOR_STATE_LOCKED = "LOCKED";
@@ -99,6 +88,9 @@ public class BasicMultiFactorService implements MultiFactorService {
     @Autowired
     private Configuration globalConfig;
 
+    @Autowired
+    private IdentityConfig identityConfig;
+
     @Lazy
     @Autowired
     private AtomHopperClient atomHopperClient;
@@ -116,9 +108,6 @@ public class BasicMultiFactorService implements MultiFactorService {
     private IdentityUserService identityUserService;
 
     @Autowired
-    private Configuration config;
-
-    @Autowired
     private TenantService tenantService;
 
     @Autowired
@@ -129,6 +118,12 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Autowired
     private OTPHelper otpHelper;
+
+    @Autowired
+    private BypassHelper bypassHelper;
+
+    @Autowired
+    private BypassDeviceDao bypassDeviceDao;
 
     /**
      * Name of property in standard IDM property file that specifies for how many minutes a verification "pin" code is
@@ -471,18 +466,29 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         // Checks against mobile phones
         if (response == null && isMultiFactorTypePhone(user)) {
-            MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
+            final MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
             verifyMultiFactorStateOnPhone(user, phone);
-
             response = multiFactorAuthenticationService.verifyPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId(), passcode);
         }
 
-        // If none worked
+        // Check against bypass codes
+        if (response == null || MfaAuthenticationDecision.DENY.equals(response.getDecision())) {
+            final boolean check = bypassDeviceDao.useBypassCode(user, passcode);
+            if (check) {
+                response = new GenericMfaAuthenticationResponse(
+                        MfaAuthenticationDecision.ALLOW,
+                        MfaAuthenticationDecisionReason.ALLOW,
+                        "Authenticated by bypass code",
+                        null);
+            }
+        }
+
+        // If none worked and the response was not pre-populated by Duo
         if (response == null) {
             response = new GenericMfaAuthenticationResponse(
                     MfaAuthenticationDecision.DENY,
                     MfaAuthenticationDecisionReason.DENY,
-                    "Invalid passcode",
+                    "Incorrect passcode. Please try again.",
                     null);
         }
 
@@ -533,14 +539,21 @@ public class BasicMultiFactorService implements MultiFactorService {
     private List<String> getBypassCodes(User user, Integer validSecs, BigInteger numberOfCodes, boolean isSelfService) {
         final int normalizedNumberOfCodes = getNumberOfCodes(numberOfCodes, isSelfService);
         final int normalizedValidSecs = isSelfService && validSecs == null ? 0 : validSecs;
-        return Arrays.asList(userManagement.getBypassCodes(user.getExternalMultiFactorUserId(), normalizedNumberOfCodes, normalizedValidSecs));
+        return createBypassCodes(user, normalizedNumberOfCodes, normalizedValidSecs);
+    }
+
+    private List<String> createBypassCodes(User user, int normalizedNumberOfCodes, int normalizedValidSecs) {
+        bypassDeviceDao.deleteAllBypassDevices(user);
+        final BypassDevice bypassDevice = bypassHelper.createBypassDevice(normalizedNumberOfCodes, normalizedValidSecs);
+        bypassDeviceDao.addBypassDevice(user, bypassDevice);
+        return bypassHelper.calculateBypassCodes(bypassDevice);
     }
 
     private int getNumberOfCodes(BigInteger requested, boolean isSelfService) {
         if (!isSelfService) {
-            return config.getBigInteger(BYPASS_DEFAULT_NUMBER, BigInteger.ONE).max(BigInteger.ONE).intValue();
+            return identityConfig.getStaticConfig().getBypassDefaultNumber().max(BigInteger.ONE).intValue();
         }
-        final BigInteger max = config.getBigInteger(BYPASS_MAXIMUM_NUMBER, BigInteger.valueOf(10));
+        final BigInteger max = identityConfig.getStaticConfig().getBypassMaximumNumber();
         if (requested == null) {
             return max.intValue();
         } else {
@@ -710,7 +723,7 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     @Override
     public boolean isMultiFactorEnabled() {
-        return config.getBoolean("multifactor.services.enabled", false);
+        return identityConfig.getStaticConfig().getMultiFactorServicesEnabled();
     }
 
     @Override
@@ -861,7 +874,7 @@ public class BasicMultiFactorService implements MultiFactorService {
     }
 
     private boolean isMultiFactorBetaEnabled() {
-        return config.getBoolean("multifactor.beta.enabled", false);
+        return identityConfig.getStaticConfig().getMultiFactorBetaEnabled();
     }
 
     private boolean userHasMultiFactorBetaRole(BaseUser user) {
@@ -869,12 +882,12 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         if(userGlobalRoles != null && !userGlobalRoles.isEmpty()) {
             for(TenantRole role : userGlobalRoles) {
-                if(role.getName().equals(config.getString(MULTIFACTOR_BETA_ROLE_NAME))) {
+                if(role.getName().equals(identityConfig.getStaticConfig().getMultiFactorBetaRoleName())) {
                     return true;
                 }
             }
         }
-
         return false;
     }
+
 }

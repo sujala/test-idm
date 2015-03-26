@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
+import java.math.BigInteger;
+import java.util.Iterator;
 
 @Component
 public class IdentityConfig {
@@ -133,7 +135,16 @@ public class IdentityConfig {
     public static final String FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP = "domain.restricted.to.one.user.admin.enabled";
     public static final boolean FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_DEFAULT = false;
 
+    /**
+     * Name of the property that specifies the name of the identity role users are assigned to gain access to MFA during
+     * the beta period.
+     */
     public static final String MULTIFACTOR_BETA_ROLE_NAME_PROP = "cloudAuth.multiFactorBetaRoleName";
+
+    public static final String MULTIFACTOR_SERVICES_ENABLED_PROP = "multifactor.services.enabled";
+    public static final boolean MULTIFACTOR_SERVICES_ENABLED_PROP_DEFAULT = false;
+    public static final String MULTIFACTOR_BETA_ENABLED_PROP = "multifactor.beta.enabled";
+    public static final boolean MULTIFACTOR_BETA_ENABLED_PROP_DEFAULT = false;
 
     public static final String FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP="feature.enable.validate.token.global.role";
     public static final boolean FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_DEFAULT=false;
@@ -155,6 +166,12 @@ public class IdentityConfig {
 
     public static final String FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP = "feature.racker.username.auth.enabled";
     public static final boolean FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_DEFAULT = false;
+
+
+    public static final String BYPASS_DEFAULT_NUMBER = "multifactor.bypass.default.number";
+    public static final BigInteger BYPASS_DEFAULT_NUMBER_DEFAULT = BigInteger.ONE;
+    public static final String BYPASS_MAXIMUM_NUMBER = "multifactor.bypass.maximum.number";
+    public static final BigInteger BYPASS_MAXIMUM_NUMBER_DEFAULT = BigInteger.TEN;
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -298,6 +315,14 @@ public class IdentityConfig {
             return staticConfiguration.getString(MULTIFACTOR_BETA_ROLE_NAME_PROP);
         }
 
+        public boolean getMultiFactorServicesEnabled() {
+            return staticConfiguration.getBoolean(MULTIFACTOR_SERVICES_ENABLED_PROP, MULTIFACTOR_SERVICES_ENABLED_PROP_DEFAULT);
+        }
+
+        public boolean getMultiFactorBetaEnabled() {
+            return staticConfiguration.getBoolean(MULTIFACTOR_BETA_ENABLED_PROP, MULTIFACTOR_BETA_ENABLED_PROP_DEFAULT);
+        }
+
         public TokenFormat getIdentityProvisionedTokenFormat() {
             return convertToTokenFormat(staticConfiguration.getString(IDENTITY_PROVISIONED_TOKEN_FORMAT, IDENTITY_PROVISIONED_TOKEN_FORMAT_DEFAULT));
         }
@@ -400,6 +425,14 @@ public class IdentityConfig {
 
         public boolean getDomainRestrictedToOneUserAdmin() {
             return staticConfiguration.getBoolean(FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_DEFAULT);
+        }
+
+        public BigInteger getBypassDefaultNumber() {
+            return staticConfiguration.getBigInteger(BYPASS_DEFAULT_NUMBER, BYPASS_DEFAULT_NUMBER_DEFAULT);
+        }
+
+        public BigInteger getBypassMaximumNumber() {
+            return staticConfiguration.getBigInteger(BYPASS_MAXIMUM_NUMBER, BYPASS_MAXIMUM_NUMBER_DEFAULT);
         }
 
         private boolean getBooleanSafely(String prop, boolean defaultValue) {

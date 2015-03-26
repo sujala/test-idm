@@ -488,16 +488,12 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         codes.size() == 1
 
         when: "use bypass code"
-        def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
-        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify1 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "it allow auth"
         verify1.decision == MfaAuthenticationDecision.ALLOW
 
         when: "use bypass code twice"
-        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, "Incorrect passcode. Please try again.", null)
-        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify2 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "get denied"
@@ -538,7 +534,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         verifyDefaultUserPhone()
         enableMultiFactor(defaultUserToken, defaultUser, defaultUserScopeAccess)
 
-        def request = createBypassRequest(10, mediaType, 2)
+        def request = createBypassRequest(120, mediaType, 2)
 
         when: "user request for himself"
         def response = cloud20.getBypassCodes(defaultUserToken, defaultUser.id, request, mediaType, mediaType)
@@ -549,16 +545,12 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         codes.size() == 2
 
         when: "use bypass code (1)"
-        def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
-        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify1 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "it allow auth"
         verify1.decision == MfaAuthenticationDecision.ALLOW
 
         when: "use bypass code (1) twice"
-        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, "Incorrect passcode. Please try again.", null)
-        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify2 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "get denied"
@@ -566,16 +558,12 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         verify2.message == "Incorrect passcode. Please try again."
 
         when: "use bypass code (2)"
-        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, "Incorrect passcode. Please try again.", null)
-        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify3 = multiFactorService.verifyPasscode(defaultUser.id, codes[1])
 
         then: "it allow auth"
         verify3.decision == MfaAuthenticationDecision.ALLOW
 
         when: "use bypass code (2) twice"
-        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, "Incorrect passcode. Please try again.", null)
-        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify4 = multiFactorService.verifyPasscode(defaultUser.id, codes[1])
 
         then: "get denied"
@@ -594,7 +582,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         enableMultiFactor(defaultUserToken, defaultUser, defaultUserScopeAccess)
         def token = utils.impersonate(utils.getIdentityAdminToken(), defaultUser, 20).token.id
 
-        def request = createBypassRequest(10, MediaType.APPLICATION_XML_TYPE, 2)
+        def request = createBypassRequest(120, MediaType.APPLICATION_XML_TYPE, 2)
 
         when: "request two bypass codes"
         def response = cloud20.getBypassCodes(token, defaultUser.id, request)
@@ -605,17 +593,12 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         codes.size() == 1
 
         when: "use bypass code"
-        def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
-        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify1 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "it allow auth"
         verify1.decision == MfaAuthenticationDecision.ALLOW
 
         when: "use bypass code twice"
-        mockMultiFactorAuthenticationService.reset()
-        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, "Incorrect passcode. Please try again.", null)
-        Mockito.when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(mfaServiceResponse)
         def verify2 = multiFactorService.verifyPasscode(defaultUser.id, codes[0])
 
         then: "get denied"
@@ -631,7 +614,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         enableMultiFactor(defaultUserToken, defaultUser, defaultUserScopeAccess)
         def adminToken = utils.getIdentityAdminToken()
         def impersonatedToken = utils.impersonate(adminToken, defaultUser, 1000).token.id
-        def request = createBypassRequest(10, MediaType.APPLICATION_XML_TYPE, 2)
+        def request = createBypassRequest(120, MediaType.APPLICATION_XML_TYPE, 2)
 
         when: "create all thread calls"
         def threadCount = 10;
@@ -645,8 +628,9 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
             }
         }
 
-        while (results.size() < threadCount) {
-            sleep(100); // wait to fill the results
+        long time = System.currentTimeMillis()
+        while (results.size() < threadCount && (System.currentTimeMillis() - time) < 30000) {
+            sleep(100); // wait to fill the results (waits for a maximum of 15sec)
         }
 
         then: "test all results"

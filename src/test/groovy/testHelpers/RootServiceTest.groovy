@@ -481,11 +481,10 @@ class RootServiceTest extends Specification {
 
     def mockIdentityConfig(service) {
         identityConfig = Mock()
-        staticConfig = Mock(StaticConfig)
-        reloadableConfig = Mock(ReloadableConfig)
-        identityConfig.getReloadableConfig() >> reloadableConfig
+        staticConfig = Mock()
+        reloadableConfig = Mock()
         identityConfig.getStaticConfig() >> staticConfig
-
+        identityConfig.getReloadableConfig() >> reloadableConfig
         service.identityConfig = identityConfig
     }
     def mockMultiFactorService(service) {
