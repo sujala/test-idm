@@ -41,8 +41,13 @@ public class EndpointConverterCloudV11 {
         baseUrl.setRegion(url.getRegion());
         baseUrl.setServiceName(url.getServiceName());
         if (url.getBaseUrlType() != null) {
-            baseUrl.setUserType(Enum.valueOf(UserType.class, url
-                    .getBaseUrlType().toUpperCase().trim()));
+            UserType userType;
+            try {
+                userType = UserType.valueOf(url.getBaseUrlType().toUpperCase().trim());
+            } catch (IllegalArgumentException e) {
+                userType = UserType.UNKNOWN;
+            }
+            baseUrl.setUserType(userType);
         }
 
         return baseUrl;

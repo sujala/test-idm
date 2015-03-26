@@ -123,6 +123,15 @@ class Cloud11Methods {
         resource.path(path11).path(USERS).path(username).path(BASE_URL_REFS).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def getBaseURLs(String serviceName, accept = APPLICATION_XML_TYPE) {
+        initOnUse()
+        def builder = resource.path(path11).path(BASE_URLS)
+        if(serviceName != null) {
+            builder.queryParam("serviceName", serviceName)
+        }
+        builder.header("Authorization", getBasicAuth()).accept(accept).type(APPLICATION_XML).get(ClientResponse)
+    }
+
     def getGroups(String username, String mediaType = APPLICATION_XML) {
         initOnUse()
         resource.path(path11).path(USERS).path(username).path(GROUPS).header("Authorization", getBasicAuth()).accept(mediaType).get(ClientResponse)
