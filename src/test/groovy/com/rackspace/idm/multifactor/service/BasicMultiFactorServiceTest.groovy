@@ -8,26 +8,23 @@ import com.rackspace.identity.multifactor.providers.MultiFactorAuthenticationSer
 import com.rackspace.identity.multifactor.providers.ProviderPhone
 import com.rackspace.identity.multifactor.providers.ProviderUser
 import com.rackspace.identity.multifactor.providers.UserManagement
-import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.dao.BypassDeviceDao
 import com.rackspace.idm.domain.dao.OTPDeviceDao
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
+import com.rackspace.idm.domain.entity.BypassDevice
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.OTPDevice
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.exception.ErrorCodeIdmException
-import org.apache.commons.collections.CollectionUtils
+import com.rackspace.idm.util.BypassHelper
+import com.rackspace.idm.util.OTPHelper
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
-
-import javax.servlet.http.HttpServletResponse
-import javax.ws.rs.core.Response
 
 
 class BasicMultiFactorServiceTest extends RootServiceTest {
@@ -42,6 +39,9 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
     @Shared MobilePhoneVerification multiFactorMobilePhoneVerification;
 
     @Shared OTPDeviceDao mockOTPDeviceDao
+    @Shared BypassDeviceDao mockBypassDeviceDao
+    @Shared OTPHelper mockOTPHelper
+    @Shared BypassHelper mockBypassHelper
 
     def setupSpec() {
         service = new BasicMultiFactorService()
@@ -63,6 +63,9 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         multiFactorAuthenticationService = Mock()
         multiFactorMobilePhoneVerification = Mock()
         mockOTPDeviceDao = Mock()
+        mockBypassDeviceDao = Mock()
+        mockOTPHelper = Mock()
+        mockBypassHelper = Mock()
 
         mockMobilePhoneRepository(service)
         mockUserService(service)
@@ -71,14 +74,17 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         mockEmailClient(service)
         mockDomainService(service)
         mockIdentityUserService(service)
-        mockConfiguration(service)
         mockTenantService(service)
         mockTokenRevocationService(service)
+        mockIdentityConfig(service)
 
         service.multiFactorAuthenticationService = multiFactorAuthenticationService
         service.userManagement = multiFactorUserManagement
         service.mobilePhoneVerification = multiFactorMobilePhoneVerification
         service.otpDeviceDao = mockOTPDeviceDao
+        service.bypassDeviceDao = mockBypassDeviceDao
+        service.otpHelper = mockOTPHelper
+        service.bypassHelper = mockBypassHelper
     }
 
     def "listing mobile phones returns empty list if not defined"() {
@@ -232,7 +238,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         User userMfaRequired = entityFactory.createUser().with {it.userMultiFactorEnforcementLevel = GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED; return it}
         User userWithMfaEnabled = entityFactory.createUser().with {it.multifactorEnabled = true; return it}
 
-        config.getBoolean("multifactor.services.enabled", _) >> true
+        staticConfig.getMultiFactorServicesEnabled() >> true
 
         when: "update domain to required"
         service.updateMultiFactorDomainSettings(optionalDomainId, settings)
@@ -275,7 +281,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         service.isMultiFactorEnabled()
 
         then:
-        1 * config.getBoolean("multifactor.services.enabled", false)
+        1 * staticConfig.getMultiFactorServicesEnabled()
     }
 
     def "isMultiFactorEnabledForUser returns false if multifactor services are disabled"() {
@@ -283,7 +289,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         def response = service.isMultiFactorEnabled()
 
         then:
-        1 * config.getBoolean("multifactor.services.enabled", false) >> false
+        1 * staticConfig.getMultiFactorServicesEnabled() >> false
         response == false
     }
 
@@ -294,9 +300,9 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         def response = service.isMultiFactorEnabledForUser(user)
 
         then:
-        1 * config.getBoolean("multifactor.services.enabled", false) >> true
-        1 * config.getBoolean("multifactor.beta.enabled", false) >> true
-        1 * config.getString("cloudAuth.multiFactorBetaRoleName") >> betaRoleName
+        1 * staticConfig.getMultiFactorServicesEnabled() >> true
+        1 * staticConfig.getMultiFactorBetaEnabled() >> true
+        1 * staticConfig.getMultiFactorBetaRoleName() >> betaRoleName
         1 * tenantService.getGlobalRolesForUser(user) >> rolesWithoutMfaBetaRole
         response == false
     }
@@ -308,9 +314,9 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         def response = service.isMultiFactorEnabledForUser(user)
 
         then:
-        1 * config.getBoolean("multifactor.services.enabled", false) >> true
-        1 * config.getBoolean("multifactor.beta.enabled", false) >> true
-        1 * config.getString("cloudAuth.multiFactorBetaRoleName") >> betaRoleName
+        1 * staticConfig.getMultiFactorServicesEnabled() >> true
+        1 * staticConfig.getMultiFactorBetaEnabled() >> true
+        1 * staticConfig.getMultiFactorBetaRoleName() >> betaRoleName
         1 * tenantService.getGlobalRolesForUser(user) >> rolesWithMfaBetaRole
         response == true
     }
@@ -397,4 +403,41 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         true            |  true         |  FactorTypeEnum.OTP   | 1                | false
         true            |  true         |  FactorTypeEnum.OTP   | 1                | true
     }
+
+    def "test bypass code logic"() {
+        setup:
+        staticConfig.getBypassDefaultNumber() >> BigInteger.ONE
+        staticConfig.getBypassMaximumNumber() >> BigInteger.TEN
+        User user = entityFactory.createUser().with {
+            it.multifactorEnabled = true
+            it.multiFactorType = FactorTypeEnum.OTP.value()
+            return it
+        }
+        OTPDevice otpDevice = new OTPDevice().with {
+            it.id = "1"
+            it.multiFactorDeviceVerified = true
+            return it
+        }
+        BypassDevice bypassDevice = new BypassDevice()
+        List<BypassDevice> bypassDevices = [bypassDevice].asList()
+        List<String> fakeCodes = ["1", "2"].asList()
+
+        userService.checkAndGetUserById(user.id) >> user
+        mockOTPDeviceDao.getOTPDeviceByParentAndId(user, otpDevice.id) >> otpDevice
+        mockOTPDeviceDao.countVerifiedOTPDevicesByParent(user) >> 1
+
+        when: "try to add bypass codes"
+        def codes = service.getSelfServiceBypassCodes(user, 120, 2)
+
+        then:
+        1 * mockBypassHelper.createBypassDevice(2, 120) >> bypassDevice
+        1 * mockBypassDeviceDao.deleteAllBypassDevices(user)
+        1 * mockBypassDeviceDao.addBypassDevice(user, bypassDevice)
+        1 * mockBypassHelper.calculateBypassCodes(bypassDevice) >> fakeCodes
+
+        then:
+        codes.size() == 2
+        codes == fakeCodes
+    }
+
 }

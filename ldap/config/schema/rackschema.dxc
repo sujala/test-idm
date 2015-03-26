@@ -881,14 +881,6 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.117) = {
 	description = "The factor type of the the multi-factor device"
 };
 
-schema set attribute (1.3.6.1.4.1.20988.2.1.118) = {
-    name = rsContactId
-    ldap-names = rsContactId
-    equality = caseIgnoreMatch
-    syntax = directoryString
-    description = "The Core Contact ID of the user"
-};
-
 schema set attribute (1.3.6.1.4.1.20988.3.1.2) = {
     name = rsKeyData
     ldap-names = rsKeyData
@@ -912,19 +904,35 @@ schema set attribute (1.3.6.1.4.1.20988.3.1.4) = {
     description = "The key and metadata created timestamp"
 };
 
-schema set attribute (1.3.6.1.4.1.20988.4.1.1) = {
+schema set attribute (1.3.6.1.4.1.20988.2.1.118) = {
     name = rsOTPKey
     ldap-names = rsOTPKey
     syntax = octetString
     description = "The OTP device key"
 };
 
-schema set attribute (1.3.6.1.4.1.20988.4.1.2) = {
+schema set attribute (1.3.6.1.4.1.20988.2.1.119) = {
     name = rsOTPName
     ldap-names = rsOTPName
     equality = caseExactMatch
     syntax = directoryString
     description = "The OTP device alias"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.120) = {
+    name = rsContactId
+    ldap-names = rsContactId
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The Core Contact ID of the user"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.121) = {
+    name = rsBypassCode
+    ldap-names = rsBypassCode
+    equality = caseExactMatch
+    syntax = directoryString
+    description = "The bypass code"
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
@@ -1514,7 +1522,7 @@ schema set object-class (1.3.6.1.4.1.20988.3.2.2) = {
                 description
 };
 
-schema set object-class (1.3.6.1.4.1.20988.4.2.1) = {
+schema set object-class (1.3.6.1.4.1.20988.2.2.39) = {
         name = rsOTPDevice
         ldap-names = rsOTPDevice
         subclass-of top
@@ -1525,4 +1533,16 @@ schema set object-class (1.3.6.1.4.1.20988.4.2.1) = {
                 rsOTPKey,
                 rsOTPName,
                 rsMultiFactorDeviceVerified
+};
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.40) = {
+        name = rsBypassDevice
+        ldap-names = rsBypassDevice
+        subclass-of top
+        kind = structural
+        must-contain
+                rsId
+        may-contain
+                rsBypassCode,
+                rsMultiFactorDevicePinExpiration
 };

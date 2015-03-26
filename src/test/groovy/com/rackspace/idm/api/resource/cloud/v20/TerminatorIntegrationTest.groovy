@@ -219,12 +219,12 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         v20Response.getEntity(AuthenticateResponse).value.serviceCatalog.service.endpoint.flatten().size() != 0
 
         cleanup:
-        utils.deleteUsers(identityAdmin, defaultUser, userManage, userAdmin)
-        deleteRoleOnServiceAdmin(role.id, Constants.SERVICE_ADMIN_2_USERNAME)
-        utils.deleteDomain(domain)
-        utils.deleteTenant(tenant1)
-        utils.deleteTenant(tenant2)
-        utils.deleteEndpointTemplate(endpointTemplate)
+        try { utils.deleteUsers(identityAdmin, defaultUser, userManage, userAdmin) } catch (Exception e) {}
+        try { deleteRoleOnServiceAdmin(role.id, Constants.SERVICE_ADMIN_2_USERNAME) } catch (Exception e) {}
+        try { utils.deleteDomain(domain) } catch (Exception e) {}
+        try { utils.deleteTenant(tenant1) } catch (Exception e) {}
+        try { utils.deleteTenant(tenant2) } catch (Exception e) {}
+        try { utils.deleteEndpointTemplate(endpointTemplate) } catch (Exception e) {}
 
         where:
         tokenType | restricted
