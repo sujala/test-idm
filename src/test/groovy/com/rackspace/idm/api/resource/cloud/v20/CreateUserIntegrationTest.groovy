@@ -797,7 +797,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
             }
         }
 
-        and: "verify that the value was not set in the directory"
+        and: "verify the contact ID value in the directory"
         def userEntity = userService.getUserById(user.id)
         if(attributeSet) {
             assert userEntity.contactId == contactId
@@ -811,10 +811,10 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         where:
         userType                            | result | attributeSet | accept                          | request
-        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
-        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN  | 201    | true         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
 
         IdentityUserTypeEnum.IDENTITY_ADMIN | 201    | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         IdentityUserTypeEnum.IDENTITY_ADMIN | 201    | true         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE

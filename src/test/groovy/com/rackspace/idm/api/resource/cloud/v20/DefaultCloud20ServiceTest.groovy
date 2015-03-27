@@ -3899,7 +3899,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
-        2 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_) >> true
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null);
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_) >> true
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * userService.setUserDefaultsBasedOnUser(_, caller, true);
@@ -3925,7 +3926,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
-        2 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_) >> true
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null);
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_) >> true
         1 * userService.getUserByScopeAccess(_) >> caller
         result.status == HttpStatus.SC_BAD_REQUEST
     }
@@ -3948,7 +3950,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
-        2 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_) >> true
+        1 * authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null);
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(_) >> true
         1 * userService.getUserByScopeAccess(_) >> caller
         result.status == HttpStatus.SC_BAD_REQUEST
     }

@@ -587,8 +587,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
             User caller = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
-            //ignore the core contact id for users that are not identity admins
-            if(!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
+            //ignore the core contact id for users that are not service or identity admins
+            if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
                 usr.setContactId(null);
             }
 
@@ -733,7 +733,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             //update user call can not be used to update the domainId. Use addUserToDomain calls
             user.setDomainId(null);
 
-            if(!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
+            if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
                 user.setContactId(null);
             }
 
@@ -3592,8 +3592,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                     access.setToken(tokenConverterCloudV20.toToken(sa, roles));
 
                     if (user instanceof User &&
-                            !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
-                        //only identity admins can see the core contact ID on a user
+                            !authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
+                        //only service or identity admins can see the core contact ID on a user
                         ((User) user).setContactId(null);
                     }
 
@@ -3620,8 +3620,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                     access.setToken(tokenConverterCloudV20.toToken(isa, roles));
                     access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
 
-                    if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
-                        //only identity admins can see the core contact ID on a user
+                    if(!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
+                        //only service or identity admins can see the core contact ID on a user
                         access.getUser().setContactId(null);
                     }
 
