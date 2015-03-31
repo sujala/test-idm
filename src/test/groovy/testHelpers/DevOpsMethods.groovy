@@ -30,4 +30,9 @@ class DevOpsMethods {
         initOnUse()
         resource.path("devops/keystore/meta").accept(APPLICATION_JSON).type(APPLICATION_JSON).header("X-Auth-Token", token).put(ClientResponse)
     }
+
+    def getIdmProps(token) {
+        initOnUse()
+        resource.path("devops/props").accept(APPLICATION_JSON).type(APPLICATION_JSON).header("X-Auth-Token", token).get(ClientResponse)
+    }
 }
