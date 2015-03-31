@@ -3,11 +3,16 @@ package com.rackspace.idm.api.resource.cloud.v11
 import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspacecloud.docs.auth.api.v1.BaseURL
+import com.rackspacecloud.docs.auth.api.v1.BaseURLList
+import com.rackspacecloud.docs.auth.api.v1.UserType
+import groovy.json.JsonSlurper
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import javax.servlet.http.HttpServletRequest
 import javax.ws.rs.core.HttpHeaders
+import javax.ws.rs.core.MediaType
 
 import static org.mockito.Mockito.*;
 
@@ -69,6 +74,36 @@ class Cloud11BaseURLIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         try { endpointDao.deleteBaseUrl(String.valueOf(baseUrlId)) } catch (Exception e) {}
+    }
+
+    @Unroll
+    def "test setting unmapped base URL types and viewing them in v1.1, accept = #accept"() {
+        given:
+        def baseUrlType = "notValidBaseUrlType"
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, baseUrlType, testUtils.getRandomUUID("http://public/"), "name", true, "ORD")
+        utils.createAndUpdateEndpointTemplate(endpointTemplate, endpointTemplateId)
+
+        when:
+        def response = cloud11.getBaseURLs(null, accept)
+
+        then:
+        response.status == 200
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            def baseUrls = response.getEntity(BaseURLList)
+            assert baseUrls.baseURL.find({t -> t.id == Integer.valueOf(endpointTemplateId)}).userType == UserType.UNKNOWN
+        } else {
+            def baseUrls = new JsonSlurper().parseText(response.getEntity(String))
+            assert baseUrls.baseURLs.find({t -> t.id == Integer.valueOf(endpointTemplateId)}).userType == UserType.UNKNOWN.toString()
+        }
+
+        cleanup:
+        utils.deleteEndpointTemplate(endpointTemplate)
+
+        where:
+        accept                          | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
     }
 
 }

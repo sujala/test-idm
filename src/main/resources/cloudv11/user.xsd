@@ -309,6 +309,7 @@
                     </xsd:documentation>
                 </annotation>
             </enumeration>
+            <enumeration value="UNKNOWN" />
         </restriction>
     </simpleType>
 </schema>
