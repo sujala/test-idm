@@ -3825,7 +3825,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * userService.setUserDefaultsBasedOnUser(_, caller, false);
-        1 * userService.addUserV20(_, false)
+        1 * userService.addUserV20(_, false, false)
         notThrown(BadRequestException)
     }
 
@@ -3855,7 +3855,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * userService.setUserDefaultsBasedOnUser(_, caller, false);
-        1 * userService.addUserV20(_, false)
+        1 * userService.addUserV20(_, false, false)
         notThrown(BadRequestException)
     }
 
@@ -3883,7 +3883,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, _)
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * userService.setUserDefaultsBasedOnUser(_, caller, true);
-        1 * userService.addUserV20(_, true)
+        1 * userService.addUserV20(_, true, true)
         notThrown(BadRequestException)
     }
 

@@ -148,20 +148,32 @@ public class DefaultUserService implements UserService {
 
     @Override
     public void addUserV20(User user) {
-        addUserV20(user, false);
+        addUserV20(user, false, false);
     }
 
     @Override
-    public void addUserV20(User user, boolean isCreateUserInOneCall) {
+    public void addUserV20(User user, boolean isCreateUserInOneCall, boolean provisionMossoAndNast) {
         logger.info("Adding User: {}", user);
 
         validator.validateUser(user);
 
+        provisionMossoAndNast = provisionMossoAndNast && isNumeric(user.getDomainId());
+
         createDomainIfItDoesNotExist(user.getDomainId());
         if (isCreateUserInOneCall) {
             verifyUserRolesExist(user);
-            verifyUserTenantsDoNotExist(user);
-            createDefaultDomainTenantsIfNecessary(user.getDomainId());
+            if(userContainsRole(user, identityConfig.getStaticConfig().getIdentityUserAdminRoleName())) {
+                verifyUserTenantsDoNotExist(user);
+            } else if(userContainsRole(user, identityConfig.getStaticConfig().getIdentityDefaultUserRoleName())) {
+                verifyUserTenantsExist(user);
+            } else {
+                //if we get here, then the user being created is a service or identity admin
+                //this should not happen but checking anyways
+                throw new BadRequestException();
+            }
+            if(provisionMossoAndNast) {
+                createDefaultDomainTenantsIfNecessary(user.getDomainId());
+            }
             createTenantsIfNecessary(user);
         }
         checkMaxNumberOfUsersInDomain(user.getDomainId());
@@ -170,7 +182,7 @@ public class DefaultUserService implements UserService {
         setApiKeyIfNotProvided(user);
         setRegionIfNotProvided(user);
 
-        if (isCreateUserInOneCall) {
+        if (provisionMossoAndNast) {
             //hack alert!! code requires the user object to have the nastid attribute set. this attribute
             //should no longer be required as users have roles on a tenant instead. once this happens, remove
             user.setNastId(getNastTenantId(user.getDomainId()));
@@ -186,6 +198,15 @@ public class DefaultUserService implements UserService {
         assignUserRoles(user);
 
         addExpiredScopeAccessesForUser(user);
+    }
+
+    private boolean userContainsRole(User user, String roleName) {
+        for (TenantRole role : user.getRoles()) {
+            if(roleName.equalsIgnoreCase(role.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void verifyUserRolesExist(User user) {
@@ -208,9 +229,19 @@ public class DefaultUserService implements UserService {
         }
     }
 
+    private void verifyUserTenantsExist(User user) {
+        for (TenantRole role : user.getRoles()) {
+            for (String tenantId : role.getTenantIds()) {
+                if (tenantService.getTenant(tenantId) == null) {
+                    throw new BadRequestException(String.format("Tenant with Id '%s' already exists", tenantId));
+                }
+            }
+        }
+    }
+
     private void createTenantsIfNecessary(User user) {
         Domain domain = domainService.getDomain(user.getDomainId());
-        List<String> domainTenants = new ArrayList(Arrays.asList(domain.getTenantIds()));
+        List<String> domainTenants = domain.getTenantIds() != null ? new ArrayList<String>(Arrays.asList(domain.getTenantIds())) : new ArrayList<String>();
 
         for (TenantRole role : user.getRoles()) {
             for (String tenantId : role.getTenantIds()) {
@@ -292,13 +323,19 @@ public class DefaultUserService implements UserService {
             attachRoleToUser(roleService.getUserAdminRole(), user);
 
             if (isCreateUserInOneCall) {
-                //original code had this. this is in place to help ensure the user has access to their
-                //default tenants. currently the user-admin role is not tenant specific. don't want to
-                //change existing behavior. Need to have business discussion to determine if a user
-                //has a non tenant specific role, whether they have access to all tenants in domain.
-                //if this turns out to be the case, then we need to change validateToken logic.
-                attachRoleToUser(roleService.getComputeDefaultRole(), user, user.getDomainId());
-                attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
+                //HACK ALERT!!! The create user in one call logic allows for creating a user with an existing
+                //domain that has a domain ID that is non-numeric. This implies that the domain cannot have a
+                //mosso tenant (mosso tenant domain IDs must be numeric). Thus, we need to check to see if this
+                //condition is met and not assume that we can create mosso and nast tenants.
+                if(isNumeric(user.getDomainId())) {
+                    //original code had this. this is in place to help ensure the user has access to their
+                    //default tenants. currently the user-admin role is not tenant specific. don't want to
+                    //change existing behavior. Need to have business discussion to determine if a user
+                    //has a non tenant specific role, whether they have access to all tenants in domain.
+                    //if this turns out to be the case, then we need to change validateToken logic.
+                    attachRoleToUser(roleService.getComputeDefaultRole(), user, user.getDomainId());
+                    attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
+                }
             }
         }
 
@@ -325,6 +362,15 @@ public class DefaultUserService implements UserService {
             attachRolesToUser(callerRoles, user);
             attachGroupsToUser(callerGroups, user);
         }
+    }
+
+    private boolean isNumeric(String domainId) {
+        try {
+            Integer.parseInt(domainId);
+        } catch(NumberFormatException e) {
+            return false;
+        }
+        return true;
     }
 
     private String getDomainUUID() {

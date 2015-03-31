@@ -212,6 +212,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "Add User"() {
         given:
+        def domainId = "1234"
         def expectedNastTenantId = service.getNastTenantId(domainId)
         def user = this.createUser(null, true, domainId)
         user.setRoles([entityFactory.createTenantRole("roleName")].asList())
@@ -515,6 +516,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
     def "Set user defaults based on caller if caller is identity:admin and is create user in one call"() {
         given:
+        def domainId = "1234"
         def caller = this.createUser(null, true, null)
         def user = this.createUser(null, true, domainId)
         mockRoles()

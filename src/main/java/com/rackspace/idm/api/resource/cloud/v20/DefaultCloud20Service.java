@@ -88,6 +88,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final boolean FEATURE_USER_TOKEN_SELF_VALIDATION_DEFAULT_VALUE = false;
 
     public static final String INVALID_DOMAIN_ERROR = "Invalid domain";
+    public static final String CANNOT_SPECIFY_GROUPS_ERROR = "Cannot specify groups for sub-users";
 
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
@@ -590,6 +591,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             boolean isCreateUserInOneCall = false;
+            boolean provisionMossoAndNast = false;
             User userForDefaults = null;
             if (config.getBoolean("createUser.fullPayload.enabled") == false) {
                 if (usr.getSecretQA() != null ||
@@ -605,16 +607,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                     if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
                         throw new ForbiddenException(NOT_AUTHORIZED);
                     }
-                    // Since the domainId is used as the mossoId in the Create User In One Call call
-                    // we need to make sure it is an integer so it can be used as a mossoId
-                    try {
-                        Integer.parseInt(usr.getDomainId());
-                    } catch (Exception ex) {
-                        throw new BadRequestException("DomainId must be an integer");
-                    }
 
                     // If secretQA, groups or roles are populated then it's a createUserInOneCall call
                     isCreateUserInOneCall = true;
+                    provisionMossoAndNast = true;
 
                     if (usr.getRoles() != null) {
                         for (Role role : usr.getRoles().getRole()) {
@@ -624,14 +620,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                             if (roleService.isIdentityAccessRole(role.getName())) {
                                 //identity admins can create sub-users and the user defaults are set based on the user admin for the domain
                                 if(identityConfig.getReloadableConfig().getIdentityAdminCreateSubuserEnabled() &&
-                                        identityConfig.getStaticConfig().getIdentityDefaultUserRoleName().equalsIgnoreCase(role.getName())) {
+                                        (identityConfig.getStaticConfig().getIdentityDefaultUserRoleName().equalsIgnoreCase(role.getName()) ||
+                                        identityConfig.getStaticConfig().getIdentityUserManagerRoleName().equalsIgnoreCase(role.getName()))) {
                                     Domain domain = domainService.getDomain(usr.getDomainId());
                                     if(domain == null || !domain.getEnabled()) {
                                         throw new BadRequestException(INVALID_DOMAIN_ERROR);
                                     }
                                     List<User> domainAdmins = domainService.getEnabledDomainAdmins(usr.getDomainId());
                                     userForDefaults = CollectionUtils.isEmpty(domainAdmins) ? null : domainAdmins.get(0);
-                                    isCreateUserInOneCall = false;
+                                    provisionMossoAndNast = false;
+                                    if(usr.getGroups() != null) {
+                                        throw new BadRequestException(CANNOT_SPECIFY_GROUPS_ERROR);
+                                    }
                                     if(userForDefaults == null) {
                                         throw new BadRequestException(INVALID_DOMAIN_ERROR);
                                     }
@@ -657,7 +657,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User user = this.userConverterCloudV20.fromUser(usr);
             precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, getRoleNames(user.getRoles()));
             userService.setUserDefaultsBasedOnUser(user, userForDefaults, isCreateUserInOneCall);
-            userService.addUserV20(user, isCreateUserInOneCall);
+            userService.addUserV20(user, isCreateUserInOneCall, provisionMossoAndNast);
 
             org.openstack.docs.identity.api.v2.User userTO = this.userConverterCloudV20.toUser(user, true);
 
