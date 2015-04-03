@@ -1,8 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.EndpointService
-import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
@@ -256,24 +256,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud20.deleteUser(identityAdminToken, userEntity.id)
-        cloud20.deleteDomain(identityAdminToken, domainId)
-    }
-
-    def "BadRequestException is thrown when secretQA is populated and caller is identity:admin and domainId is NOT an integer"() {
-        given:
-        def username = "v20Username" + testUtils.getRandomUUID()
-        def domainId = utils.createDomain() + "letters"
-        def user = v2Factory.createUser(username, "displayName", "testemail@rackspace.com", true, "ORD", domainId, "Password1")
-        def secretQA = v2Factory.createSecretQA("question", "answer")
-        user.secretQA = secretQA
-
-        when:
-        def response = cloud20.createUser(identityAdminToken, user)
-
-        then:
-        response.status == 400
-
-        cleanup:
         cloud20.deleteDomain(identityAdminToken, domainId)
     }
 
@@ -831,6 +813,211 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         IdentityUserTypeEnum.USER_MANAGER   | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         IdentityUserTypeEnum.USER_MANAGER   | 201    | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
         //not testing default users, default users are not allowed to make this call
+    }
+
+    @Unroll
+    def "create a user admin and sub-users using a non-numeric domain, accept = #accept, request = #request"() {
+        given:
+        def domainId = testUtils.getRandomUUID("domain")
+        def userAdminUsername = testUtils.getRandomUUID("userAdmin")
+        def defaultUserUsername = testUtils.getRandomUUID("defaultUser")
+        def userManagerUsername = testUtils.getRandomUUID("userManager")
+        def propRole = utils.createPropagatingRole()
+        def nonPropRole = utils.createRole();
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP)), nonPropRole].asList())
+        def userManageUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP)), v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_MANAGE_ROLE_NAME_PROP)), nonPropRole].asList())
+        def userAdminForCreate = v2Factory.createUserForCreate(userAdminUsername, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.secretQA = v1Factory.createRaxKsQaSecretQA()
+            it.roles = v2Factory.createRoleList([].asList() << propRole)
+            it
+        }
+        def defaultUserForCreate = v2Factory.createUserForCreate(defaultUserUsername, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.secretQA = v1Factory.createRaxKsQaSecretQA()
+            it.roles = defaultUserRoles
+            it
+        }
+        def userManageForCreate = v2Factory.createUserForCreate(userManagerUsername, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.secretQA = v1Factory.createRaxKsQaSecretQA()
+            it.roles = userManageUserRoles
+            it
+        }
+
+        when: "create the user admin"
+        def userAdminResponse = cloud20.createUser(utils.getIdentityAdminToken(), userAdminForCreate, request, accept)
+
+        then:
+        userAdminResponse.status == 201
+        def userAdmin
+        if(MediaType.APPLICATION_XML_TYPE == accept) {
+            userAdmin = userAdminResponse.getEntity(User).value
+            assert userAdmin.roles.role.name.contains(propRole.name)
+            assert userAdmin.domainId == domainId
+        } else {
+            userAdmin = new JsonSlurper().parseText(userAdminResponse.getEntity(String)).user
+            assert userAdmin['RAX-AUTH:domainId'] == domainId
+            assert userAdmin.roles.name.contains(propRole.name)
+            assert userAdmin.roles.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_ADMIN_ROLE_NAME_PROP))
+        }
+
+        when: "create the default user"
+        def subUserResponse = cloud20.createUser(utils.getIdentityAdminToken(), defaultUserForCreate, request, accept)
+
+        then:
+        subUserResponse.status == 201
+        def subUser
+        if(MediaType.APPLICATION_XML_TYPE == accept) {
+            subUser = subUserResponse.getEntity(User).value
+            assert subUser.roles.role.name.contains(propRole.name)
+            assert subUser.roles.role.name.contains(nonPropRole.name)
+            assert subUser.roles.role.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))
+            assert subUser.domainId == domainId
+        } else {
+            subUser = new JsonSlurper().parseText(subUserResponse.getEntity(String)).user
+            assert subUser['RAX-AUTH:domainId'] == domainId
+            assert subUser.roles.name.contains(propRole.name)
+            assert subUser.roles.name.contains(nonPropRole.name)
+            assert subUser.roles.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))
+        }
+
+        when: "create the user manager"
+        def userManagerResponse = cloud20.createUser(utils.getIdentityAdminToken(), userManageForCreate, request, accept)
+
+        then:
+        userManagerResponse.status == 201
+        def userManager
+        if(MediaType.APPLICATION_XML_TYPE == accept) {
+            userManager = userManagerResponse.getEntity(User).value
+            assert userManager.roles.role.name.contains(propRole.name)
+            assert userManager.roles.role.name.contains(nonPropRole.name)
+            assert userManager.roles.role.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))
+            assert userManager.roles.role.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_MANAGE_ROLE_NAME_PROP))
+            assert userManager.domainId == domainId
+        } else {
+            userManager = new JsonSlurper().parseText(userManagerResponse.getEntity(String)).user
+            assert userManager.roles.name.contains(propRole.name)
+            assert userManager.roles.name.contains(nonPropRole.name)
+            assert userManager.roles.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))
+            assert userManager.roles.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_MANAGE_ROLE_NAME_PROP))
+            assert userManager['RAX-AUTH:domainId'] == domainId
+        }
+
+        cleanup:
+        cloud20.deleteUser(utils.getServiceAdminToken(), subUser.id)
+        cloud20.deleteUser(utils.getServiceAdminToken(), userManager.id)
+        cloud20.deleteUser(utils.getServiceAdminToken(), userAdmin.id)
+        utils.deleteRole(propRole)
+        utils.deleteRole(nonPropRole)
+
+        where:
+        accept                          | request
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    def "error returned when identity admin creating sub-user when specifying group"() {
+        given:
+        def domainId = testUtils.getRandomUUID("domain")
+        def group = utils.createGroup()
+        def userAdminUsername = testUtils.getRandomUUID("userAdmin")
+        def defaultUserUsername = testUtils.getRandomUUID("defaultUser")
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        def userAdminForCreate = v2Factory.createUserForCreate(userAdminUsername, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.secretQA = v1Factory.createRaxKsQaSecretQA()
+            it.groups = new Groups().with {
+                it.group = [group].asList()
+                it
+            }
+            it
+        }
+        def defaultUserForCreate = v2Factory.createUserForCreate(defaultUserUsername, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.secretQA = v1Factory.createRaxKsQaSecretQA()
+            it.roles = defaultUserRoles
+            it.groups = new Groups().with {
+                it.group = [group].asList()
+                it
+            }
+            it
+        }
+
+        when: "create the user admin"
+        def userAdminResponse = cloud20.createUser(utils.getIdentityAdminToken(), userAdminForCreate, request, accept)
+
+        then:
+        userAdminResponse.status == 201
+        def userAdmin
+        if(MediaType.APPLICATION_XML_TYPE == accept) {
+            userAdmin = userAdminResponse.getEntity(User).value
+            assert userAdmin.domainId == domainId
+            assert userAdmin.groups.group.name.contains(group.name)
+            assert userAdmin.roles.role.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_ADMIN_ROLE_NAME_PROP))
+        } else {
+            userAdmin = new JsonSlurper().parseText(userAdminResponse.getEntity(String)).user
+            assert userAdmin['RAX-AUTH:domainId'] == domainId
+            assert userAdmin.groups.name.contains(group.name)
+            assert userAdmin.roles.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_ADMIN_ROLE_NAME_PROP))
+        }
+
+        when: "create the default user"
+        def subUserResponse = cloud20.createUser(utils.getIdentityAdminToken(), defaultUserForCreate, request, accept)
+
+        then:
+        subUserResponse.status == 400
+
+        cleanup:
+        cloud20.deleteUser(utils.getServiceAdminToken(), userAdmin.id)
+        utils.deleteGroup(group)
+
+        where:
+        accept                          | request
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "tenants MUST exist for roles when creating sub-users"() {
+        given:
+        def domainId = testUtils.getRandomUUID("domain")
+        def tenantId = testUtils.getRandomUUID("tenantIdForSubUser")
+        def role = utils.createRole();
+        def defaultUserUsername = testUtils.getRandomUUID("defaultUser")
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
+        defaultUserRoles.role << v2Factory.createRole(role.name).with {
+            it.tenantId = tenantId
+            it
+        }
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        users = users.reverse()
+        def defaultUserForCreate = v2Factory.createUserForCreate(defaultUserUsername, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.roles = defaultUserRoles
+            it
+        }
+
+        when: "try to create the default user w/o creating the tenant first"
+        def createResponse1 = cloud20.createUser(utils.getIdentityAdminToken(), defaultUserForCreate)
+
+        then: "error"
+        createResponse1.status == 400
+
+        when: "create the tenant and try again"
+        def tenant = utils.createTenant()
+        defaultUserRoles.role[1].tenantId = tenant.id
+        def createResponse2 = cloud20.createUser(utils.getIdentityAdminToken(), defaultUserForCreate)
+
+        then: "success"
+        createResponse2.status == 201
+        def defaultUser = createResponse2.getEntity(User).value
+        defaultUser.roles.role.tenantId.contains(tenant.id)
+
+        cleanup:
+        cloud20.deleteUser(utils.getServiceAdminToken(), defaultUser.id)
+        utils.deleteUsers(users)
+        utils.deleteRole(role)
+        utils.deleteTenant(tenant)
     }
 
 }

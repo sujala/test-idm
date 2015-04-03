@@ -396,12 +396,26 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
+    def createPropagatingRole(service=null) {
+        def role = factory.createRole().with {
+            it.name = testUtils.getRandomUUID("role")
+            it.propagate = true
+            it.serviceId = service == null ? null : service.id
+            it
+        }
+        createRole(role)
+    }
+
     def createRole(service=null) {
         def roleName = testUtils.getRandomUUID("role")
         def role = factory.createRole(roleName)
         if(service != null){
             role.serviceId = service.id
         }
+        createRole(role)
+    }
+
+    def createRole(Role role) {
         def response = methods.createRole(getServiceAdminToken(), role)
         assert (response.status == SC_CREATED)
         response.getEntity(Role).value
