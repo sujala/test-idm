@@ -36,7 +36,10 @@ public class DefaultUserService implements UserService {
     static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
     private static final String DELETE_USER_LOG_NAME = "userDelete";
     private static final String DELETE_USER_FORMAT = "DELETED username={},domainId={},roles={}";
+
     private static final String ERROR_MSG_SAVE_OR_UPDATE_USER = "Error updating user %s";
+    private static final String ERROR_MSG_TENANT_ALREADY_EXISTS = "Tenant with Id '%s' already exists";
+    private static final String ERROR_MSG_TENANT_DOES_NOT_EXIST = "Tenant with Id '%s' does not exist";
 
     public static final String NAST_TENANT_PREFIX_PROP_NAME = "nast.tenant.prefix";
     public static final String NAST_TENANT_PREFIX_DEFAULT = "MossoCloudFS_";
@@ -223,7 +226,7 @@ public class DefaultUserService implements UserService {
         for (TenantRole role : user.getRoles()) {
             for (String tenantId : role.getTenantIds()) {
                 if (tenantService.getTenant(tenantId) != null) {
-                    throw new BadRequestException(String.format("Tenant with Id '%s' already exists", tenantId));
+                    throw new BadRequestException(String.format(ERROR_MSG_TENANT_ALREADY_EXISTS, tenantId));
                 }
             }
         }
@@ -233,7 +236,7 @@ public class DefaultUserService implements UserService {
         for (TenantRole role : user.getRoles()) {
             for (String tenantId : role.getTenantIds()) {
                 if (tenantService.getTenant(tenantId) == null) {
-                    throw new BadRequestException(String.format("Tenant with Id '%s' already exists", tenantId));
+                    throw new BadRequestException(String.format(ERROR_MSG_TENANT_DOES_NOT_EXIST, tenantId));
                 }
             }
         }
