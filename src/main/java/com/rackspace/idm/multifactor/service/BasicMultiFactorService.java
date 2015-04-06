@@ -539,7 +539,13 @@ public class BasicMultiFactorService implements MultiFactorService {
     private List<String> getBypassCodes(User user, Integer validSecs, BigInteger numberOfCodes, boolean isSelfService) {
         final int normalizedNumberOfCodes = getNumberOfCodes(numberOfCodes, isSelfService);
         final int normalizedValidSecs = isSelfService && validSecs == null ? 0 : validSecs;
-        return createBypassCodes(user, normalizedNumberOfCodes, normalizedValidSecs);
+        if (identityConfig.getReloadableConfig().getFeatureLocalMultifactorBypassEnabled()) {
+            return createBypassCodes(user, normalizedNumberOfCodes, normalizedValidSecs);
+        } else if (isMultiFactorTypeOTP(user)) {
+            throw new BadRequestException("Bypass codes not currently supported for OTP devices");
+        } else {
+            return Arrays.asList(userManagement.getBypassCodes(user.getExternalMultiFactorUserId(), normalizedNumberOfCodes, normalizedValidSecs));
+        }
     }
 
     private List<String> createBypassCodes(User user, int normalizedNumberOfCodes, int normalizedValidSecs) {

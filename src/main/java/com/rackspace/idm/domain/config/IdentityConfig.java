@@ -103,6 +103,8 @@ public class IdentityConfig {
     public static final String MULTIFACTOR_SERVICES_ENABLED_PROP = "multifactor.services.enabled";
     public static final String BYPASS_DEFAULT_NUMBER = "multifactor.bypass.default.number";
     public static final String BYPASS_MAXIMUM_NUMBER = "multifactor.bypass.maximum.number";
+    public static final String FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS = "feature.enable.local.multifactor.bypass";
+    public static final boolean FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS_DEFAULT = false;
 
     public static final String FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP="feature.enable.validate.token.global.role";
     public static final String FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP="feature.enable.get.token.endpoints.global.role";
@@ -171,6 +173,7 @@ public class IdentityConfig {
         defaults.put(MULTIFACTOR_SERVICES_ENABLED_PROP, false);
         defaults.put(BYPASS_DEFAULT_NUMBER, BigInteger.ONE);
         defaults.put(BYPASS_MAXIMUM_NUMBER, BigInteger.TEN);
+        defaults.put(FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS, FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS_DEFAULT);
         return defaults;
     }
 
@@ -646,6 +649,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP)
         public boolean getFeatureRackerUsernameOnAuthEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS, versionAdded = "2.14.0", description = "enable local multifactor bypass codes")
+        public boolean getFeatureLocalMultifactorBypassEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS);
         }
     }
 
