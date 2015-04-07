@@ -12,6 +12,7 @@ import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
@@ -1002,6 +1003,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         then: "error"
         createResponse1.status == 400
+        createResponse1.getEntity(BadRequestFault).value.message == String.format(DefaultUserService.ERROR_MSG_TENANT_DOES_NOT_EXIST, tenantId)
 
         when: "create the tenant and try again"
         def tenant = utils.createTenant()
