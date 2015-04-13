@@ -2,7 +2,9 @@ package com.rackspace.idm.multifactor.service
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.identity.multifactor.providers.MultiFactorAuthenticationService
 import com.rackspace.identity.multifactor.providers.ProviderPhone
@@ -150,7 +152,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
             it
         }
         //set enable to whatever it is on user so a state change is not triggered.
-        def mfaSettings = v2Factory.createMultiFactorSettings(userMfaEnabledState, mfaSettingsUnlock)
+        def mfaSettings = v2Factory.createMultiFactorSettings(null, mfaSettingsUnlock)
 
         when:
         service.updateMultiFactorSettings(user.id, mfaSettings)
@@ -194,7 +196,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
 
         def expirationExceptions
 
-        def mfaSettings = v2Factory.createMultiFactorSettings(true, false)
+        def mfaSettings = v2Factory.createMultiFactorSettings(true)
 
         when: "enable mfa"
         service.updateMultiFactorSettings(user.id, mfaSettings)
@@ -460,8 +462,230 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         where:
         local | type
         true  | FactorTypeEnum.OTP.value()
+        true  | FactorTypeEnum.SMS.value()
         false | FactorTypeEnum.OTP.value()
         false | FactorTypeEnum.SMS.value()
+    }
+
+    def "test multi-factor setting validation for 'disable multi-factor'"() {
+        given:
+        def userId = "123"
+        User user = entityFactory.createUser().with {
+            it.id = userId
+            it.multifactorEnabled = true
+            return it
+        }
+        userService.checkAndGetUserById(userId) >> user
+
+        MultiFactor settings = new MultiFactor();
+        settings.setEnabled(false);
+
+        when: // cannot unlock user
+        settings.setUnlock(true)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+        settings.setUnlock(null)
+
+        when: // cannot set user enforcement level
+        settings.setUserMultiFactorEnforcementLevel(UserMultiFactorEnforcementLevelEnum.DEFAULT)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+        settings.setUserMultiFactorEnforcementLevel(null)
+
+        when: // cannot set the factor type
+        settings.setFactorType(FactorTypeEnum.SMS)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "test multi-factor setting validation for 'unlock multi-factor'"() {
+        given:
+        def userId = "123"
+        User user = entityFactory.createUser().with {
+            it.id = userId
+            it.multifactorEnabled = true
+            return it
+        }
+        userService.checkAndGetUserById(userId) >> user
+
+        MultiFactor settings = new MultiFactor();
+        settings.setUnlock(true);
+
+        when: // cannot enable multi-factor
+        settings.setEnabled(true)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+        settings.setEnabled(null)
+
+        when: // cannot set user enforcement level
+        settings.setUserMultiFactorEnforcementLevel(UserMultiFactorEnforcementLevelEnum.DEFAULT)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+        settings.setUserMultiFactorEnforcementLevel(null)
+
+        when: // cannot set factor type
+        settings.setFactorType(FactorTypeEnum.SMS)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "test multi-factor setting validation for 'user enforcement level'"() {
+        given:
+        def userId = "123"
+        User user = entityFactory.createUser().with {
+            it.id = userId
+            it.multifactorEnabled = true
+            return it
+        }
+        userService.checkAndGetUserById(userId) >> user
+
+        MultiFactor settings = new MultiFactor();
+        settings.setUserMultiFactorEnforcementLevel(UserMultiFactorEnforcementLevelEnum.REQUIRED);
+
+        when: // cannot enable multi-factor
+        settings.setEnabled(true)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+        settings.setEnabled(null)
+
+        when: // cannot unlock multi-factor
+        settings.setUnlock(true)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+        settings.setUnlock(null)
+
+        when: // cannot set factor type
+        settings.setFactorType(FactorTypeEnum.SMS)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "test multi-factor setting validation for 'enable multi-factor'"() {
+        given:
+        def userId = "123"
+        User user = entityFactory.createUser().with {
+            it.id = userId
+            it.multifactorEnabled = false
+            return it
+        }
+        userService.checkAndGetUserById(userId) >> user
+
+        MultiFactor settings = new MultiFactor();
+        settings.setEnabled(true);
+
+        when: // cannot unlock multi-factor
+        settings.setUnlock(true)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+        settings.setUnlock(null)
+
+        when: // cannot set user enforcement level
+        settings.setUserMultiFactorEnforcementLevel(UserMultiFactorEnforcementLevelEnum.DEFAULT)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+        settings.setUserMultiFactorEnforcementLevel(null)
+
+        when:
+        OTPDevice otpDevice = new OTPDevice().with {
+            it.id = "1"
+            it.multiFactorDeviceVerified = true
+            return it
+        }
+        mockOTPDeviceDao.getOTPDeviceByParentAndId(user, otpDevice.id) >> otpDevice
+        mockOTPDeviceDao.countVerifiedOTPDevicesByParent(user) >> 1
+        user.setMultiFactorDeviceVerified(true)
+        user.setMultiFactorMobilePhoneRsId('1234')
+        service.updateMultiFactorSettings(userId, settings)
+
+        then: // factor type is required
+        thrown(BadRequestException)
+    }
+
+    def "test multi-factor setting validation for 'set factor type'"() {
+        given:
+        def userId = "123"
+        User user = entityFactory.createUser().with {
+            it.id = userId
+            it.multifactorEnabled = true
+            return it
+        }
+        userService.checkAndGetUserById(userId) >> user
+
+        MultiFactor settings = new MultiFactor();
+        settings.setFactorType(FactorTypeEnum.OTP);
+
+        when: // cannot unlock multi-factor
+        settings.setUnlock(true)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+        settings.setUnlock(null)
+
+        when: // cannot set user enforcement level
+        settings.setUserMultiFactorEnforcementLevel(UserMultiFactorEnforcementLevelEnum.DEFAULT)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then:
+        thrown(BadRequestException)
+        settings.setUserMultiFactorEnforcementLevel(null)
+
+        when:
+        OTPDevice otpDevice = new OTPDevice().with {
+            it.id = "1"
+            it.multiFactorDeviceVerified = true
+            return it
+        }
+        mockOTPDeviceDao.getOTPDeviceByParentAndId(user, otpDevice.id) >> otpDevice
+        mockOTPDeviceDao.countVerifiedOTPDevicesByParent(user) >> 1
+        settings.setFactorType(FactorTypeEnum.SMS);
+        service.updateMultiFactorSettings(userId, settings)
+
+        then: // cannot set SMS to an OTP user
+        thrown(BadRequestException)
+
+        when:
+        mockOTPDeviceDao = Mock()
+        service.otpDeviceDao = mockOTPDeviceDao
+        mockOTPDeviceDao.countVerifiedOTPDevicesByParent(user) >> 0
+        user.setMultiFactorDeviceVerified(true)
+        user.setMultiFactorMobilePhoneRsId('1234')
+        settings.setFactorType(FactorTypeEnum.OTP);
+        service.updateMultiFactorSettings(userId, settings)
+
+        then: // cannot set OTP to an SMS user
+        thrown(BadRequestException)
+
+        when:
+        user.setMultifactorEnabled(false)
+        settings.setEnabled(null)
+        settings.setFactorType(FactorTypeEnum.SMS)
+        service.updateMultiFactorSettings(userId, settings)
+
+        then: // no-op trying to set factor type if the user have multi-factor disabled
+        0 * userService.updateUserForMultiFactor(user)
     }
 
 }

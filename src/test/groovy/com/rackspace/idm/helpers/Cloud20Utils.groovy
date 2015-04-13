@@ -2,7 +2,6 @@ package com.rackspace.idm.helpers
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
@@ -12,12 +11,9 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
-import com.rackspace.idm.domain.entity.MobilePhone
 import com.sun.jersey.api.client.ClientResponse
-import com.sun.jersey.api.client.GenericType
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
-import org.apache.xml.resolver.apps.resolver
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
@@ -68,6 +64,17 @@ class Cloud20Utils {
 
     def getToken(username, password=DEFAULT_PASSWORD) {
         def response = methods.authenticatePassword(username, password)
+        assert (response.status == SC_OK)
+        def entity = response.getEntity(AuthenticateResponse).value
+        assert (entity != null)
+        entity.token.id
+    }
+
+    def getMFAToken(username, passcode, password=DEFAULT_PASSWORD) {
+        def response = methods.authenticatePassword(username, password)
+        assert (response.status == SC_UNAUTHORIZED)
+        def sessionId = extractSessionIdFromWwwAuthenticateHeader(response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE))
+        response = methods.authenticateMFAWithSessionIdAndPasscode(sessionId, passcode)
         assert (response.status == SC_OK)
         def entity = response.getEntity(AuthenticateResponse).value
         assert (entity != null)

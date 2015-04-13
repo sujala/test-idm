@@ -50,7 +50,7 @@ class MultiFactorCloud20ServiceUserEnforcementIntegrationTest extends RootConcur
         userAdmin.getUserMultiFactorEnforcementLevel() == null
 
         when: "set level to OPTIONAL"
-        MultiFactor settings = v2Factory.createMultiFactorSettings(false)
+        MultiFactor settings = v2Factory.createMultiFactorSettings(null)
         settings.setUserMultiFactorEnforcementLevel(UserMultiFactorEnforcementLevelEnum.OPTIONAL)
         def response = cloud20.updateMultiFactorSettings(specificationIdentityAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
         userAdmin = utils.getUserByName(userAdmin.getUsername(), userAdminToken)

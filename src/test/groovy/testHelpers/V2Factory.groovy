@@ -562,7 +562,7 @@ class V2Factory {
         }
     }
 
-    def createMultiFactorSettings(Boolean enabled = true, Boolean unlock = null ) {
+    def createMultiFactorSettings(Boolean enabled = true, Boolean unlock = null) {
         new MultiFactor().with {
             it.enabled = enabled
             it.unlock = unlock

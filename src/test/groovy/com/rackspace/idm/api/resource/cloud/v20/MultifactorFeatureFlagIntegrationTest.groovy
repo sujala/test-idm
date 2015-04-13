@@ -273,10 +273,10 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         response.status == status
 
         cleanup:
-        if (user != null) {
+        try { if (user != null) {
             if (multiFactorService.removeMultiFactorForUser(user.id))  //remove duo profile
                 deleteUserQuietly(user)
-        }
+        } } catch (Exception e) {}
 
         where:
         requestContentMediaType | acceptMediaType | addMfaRole | addPhone | flagSettingsFile | status
