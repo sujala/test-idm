@@ -150,7 +150,7 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
         User finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
 
         //STEP 4: enable multifactor
-        MultiFactor enableSettings = v2Factory.createMultiFactorSettings(true, null)
+        MultiFactor enableSettings = v2Factory.createMultiFactorSettings(true)
         multiFactorService.updateMultiFactorSettings(userAdminOpenStack.getId(), enableSettings)
         finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
 
@@ -275,7 +275,7 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
 
         when:
         //STEP 4: enable multifactor
-        MultiFactor enableSettings = v2Factory.createMultiFactorSettings(true, null)
+        MultiFactor enableSettings = v2Factory.createMultiFactorSettings(true)
         multiFactorService.updateMultiFactorSettings(userAdminOpenStack.getId(), enableSettings)
         finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
 

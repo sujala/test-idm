@@ -1,24 +1,32 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.util.OTPHelper
 import com.unboundid.util.Base32
 import org.apache.http.HttpStatus
 import groovy.json.JsonSlurper
 import org.apache.http.client.utils.URLEncodedUtils
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.ClassPathResource
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import javax.ws.rs.core.MediaType
 
+import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static com.rackspace.idm.domain.service.IdentityUserTypeEnum.*
 
+@ContextConfiguration(locations = ["classpath:app-config.xml"
+        , "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
@@ -29,6 +37,23 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
 
     @Autowired
     OTPHelper otpHelper
+
+    /**
+     * Override the grizzly start because we want to add additional context file.
+     * @return
+     */
+    @Override
+    public void doSetupSpec() {
+        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
+        resource.exists()
+        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
+                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
+    }
+
+    @Override
+    public void doCleanupSpec() {
+        stopGrizzly();
+    }
 
     @Unroll
     def "Get devices for user returns devices accept: #accept contentType: #contentType"() {
@@ -168,9 +193,7 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         device.getQrcode() == null
 
         when: "verify the device"
-        if ((((int) (System.currentTimeMillis() / 1000)) % 30) < 3) {
-            Thread.sleep(4000) // avoid race test on the time shift
-        }
+        delay()
         def code = new VerificationCode()
         code.setCode(otpHelper.TOTP(secret))
         utils.verifyOTPDevice(userAdminToken, userAdmin.id, deviceId, code)
@@ -214,7 +237,6 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
-        staticIdmConfiguration.reset()
         getReloadableConfiguration().reset()
     }
 
@@ -356,19 +378,194 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         where:
         caller         | targetUser   | differentDomain | expectedResponse
         SERVICE_ADMIN  | DEFAULT_USER | false           | 200
-//        IDENTITY_ADMIN | DEFAULT_USER | false           | 200
-//        USER_ADMIN     | DEFAULT_USER | false           | 200
-//        USER_MANAGER   | DEFAULT_USER | false           | 200
-//        DEFAULT_USER   | DEFAULT_USER | false           | 200
-//        USER_ADMIN     | DEFAULT_USER | true            | 403
-//        USER_MANAGER   | DEFAULT_USER | true            | 403
-//        DEFAULT_USER   | DEFAULT_USER | true            | 403
-//        USER_ADMIN     | USER_ADMIN   | false           | 200
-//        USER_MANAGER   | USER_ADMIN   | false           | 403
-//        DEFAULT_USER   | USER_ADMIN   | false           | 403
-//        USER_ADMIN     | USER_ADMIN   | true            | 403
-//        USER_MANAGER   | USER_ADMIN   | true            | 403
-//        DEFAULT_USER   | USER_ADMIN   | true            | 403
+        IDENTITY_ADMIN | DEFAULT_USER | false           | 200
+        USER_ADMIN     | DEFAULT_USER | false           | 200
+        USER_MANAGER   | DEFAULT_USER | false           | 200
+        DEFAULT_USER   | DEFAULT_USER | false           | 200
+        USER_ADMIN     | DEFAULT_USER | true            | 403
+        USER_MANAGER   | DEFAULT_USER | true            | 403
+        DEFAULT_USER   | DEFAULT_USER | true            | 403
+        USER_ADMIN     | USER_ADMIN   | false           | 200
+        USER_MANAGER   | USER_ADMIN   | false           | 403
+        DEFAULT_USER   | USER_ADMIN   | false           | 403
+        USER_ADMIN     | USER_ADMIN   | true            | 403
+        USER_MANAGER   | USER_ADMIN   | true            | 403
+        DEFAULT_USER   | USER_ADMIN   | true            | 403
+    }
+
+    def "test multifactor update settings for OTP"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def MultiFactor settings
+        def response, user
+        def User user1
+
+        when: "add OTP device"
+        def name = "test"
+        OTPDevice request = new OTPDevice()
+        request.setName(name)
+        def device = utils.addOTPDevice(userAdminToken, userAdmin.id, request)
+
+        then: "gets added"
+        device.id != null
+        device.name == name
+        device.verified == false
+        device.getKeyUri() != null
+        device.getQrcode() != null
+
+        when:
+        def secret = Base32.decode(URLEncodedUtils.parse(new URI(device.getKeyUri()), "UTF-8").find { it.name == 'secret' }.value)
+
+        then:
+        secret.length == 20
+
+        when: "get device"
+        def deviceId = device.id
+        device = utils.getOTPDevice(userAdminToken, userAdmin.id, deviceId)
+
+        then: "device is found and values are populated correctly"
+        device.id == deviceId
+        device.name == name
+        device.verified == false
+        device.getKeyUri() == null
+        device.getQrcode() == null
+
+        when: "update multifactor settings to enable (with OTP unverified)"
+        settings = new MultiFactor().with { it.enabled = true; it }
+        response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+
+        then: "it should fail"
+        response.status == 400
+
+        when: "verify the device"
+        def code = new VerificationCode()
+        code.setCode(otpHelper.TOTP(secret))
+        utils.verifyOTPDevice(userAdminToken, userAdmin.id, deviceId, code)
+        device = utils.getOTPDevice(userAdminToken, userAdmin.id, deviceId)
+
+        then: "device is marked as verified"
+        device.verified == true
+
+        when: "update multifactor settings to enable, SMS type (with OTP verified)"
+        settings = new MultiFactor().with { it.enabled = true; it.factorType = FactorTypeEnum.SMS; it }
+        response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+
+        then: "it should fail"
+        response.status == 400
+
+        when: "update multifactor settings to enable, empty type (with OTP verified)"
+        settings = new MultiFactor().with { it.enabled = true; it }
+        utils.updateMultiFactor(userAdminToken, userAdmin.id, settings)
+        user = userRepository.getUserById(userAdmin.id)
+
+        then: "it should set to OTP (default)"
+        user.multiFactorEnabled == true
+        user.multiFactorType == "OTP"
+
+        when: "disable multifactor"
+        settings = new MultiFactor().with { it.enabled = false; it }
+        userAdminToken = utils.getMFAToken(userAdmin.username, otpHelper.TOTP(secret), DEFAULT_PASSWORD)
+        utils.updateMultiFactor(userAdminToken, userAdmin.id, settings)
+        user1 = utils.getUserById(userAdmin.id)
+
+        then: "mfa should be disabled"
+        user1.isMultiFactorEnabled() == false
+
+        when: "retrieve user from ldap"
+        user = userRepository.getUserById(userAdmin.id)
+
+        then: "it should unset type"
+        user.multiFactorEnabled == false
+        user.multiFactorType == null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
+    def "test multifactor update settings [CIDMDEV-4953]"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def user
+        def MultiFactor settings
+        def response
+
+        when: "add an verified OTP device"
+        def name = "test"
+        OTPDevice request = new OTPDevice()
+        request.setName(name)
+        def device = utils.addOTPDevice(userAdminToken, userAdmin.id, request)
+        def secret = Base32.decode(URLEncodedUtils.parse(new URI(device.getKeyUri()), "UTF-8").find { it.name == 'secret' }.value)
+        def deviceId = device.id
+        def code = new VerificationCode()
+        code.setCode(otpHelper.TOTP(secret))
+        utils.verifyOTPDevice(userAdminToken, userAdmin.id, deviceId, code)
+        device = utils.getOTPDevice(userAdminToken, userAdmin.id, deviceId)
+
+        then: "device is marked as verified"
+        device.verified == true
+
+        when: "add an verified Phone device"
+        def phone = utils.addPhone(userAdminToken, userAdmin.id)
+        user = userRepository.getUserById(userAdmin.id)
+        user.multiFactorDeviceVerified = true
+        userRepository.updateUser(user)
+        MobilePhones phoneList = utils.listDevices(userAdmin)
+
+        then:
+        phoneList != null
+        phoneList.mobilePhone.size() == 1
+        phoneList.mobilePhone[0].isVerified() == true
+
+        when: "update multifactor settings to enable, with type empty"
+        settings = new MultiFactor().with { it.enabled = true; it }
+        response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+
+        then: "you should get an error stating that you must specify the type"
+        response.status == 400
+
+        when: "update multifactor settings to enable OTP"
+        settings = new MultiFactor().with { it.enabled = true; it.factorType = FactorTypeEnum.OTP; it }
+        response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+        user = userRepository.getUserById(userAdmin.id)
+
+        then: "it should set to OTP"
+        response.status == 204
+        user.multiFactorEnabled == true
+        user.multiFactorType == "OTP"
+
+        when: "retrieving an token using OTP"
+        userAdminToken = utils.getMFAToken(userAdmin.username, otpHelper.TOTP(secret), DEFAULT_PASSWORD)
+
+        then: "it works"
+        userAdminToken != null
+
+        when: "update multifactor settings to enable SMS"
+        settings = new MultiFactor().with { it.enabled = true; it.factorType = FactorTypeEnum.SMS; it }
+        response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+        user = userRepository.getUserById(userAdmin.id)
+
+        then: "it should set to SMS"
+        response.status == 204
+        user.multiFactorEnabled == true
+        user.multiFactorType == "SMS"
+
+        cleanup:
+        try { utils.deleteUsers(users) } catch (Exception e) {}
+        try { utils.deleteDomain(domainId) } catch (Exception e) {}
+        try { mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(phone.id)) } catch (Exception e) {}
+    }
+
+    private delay() {
+        if ((((int) (System.currentTimeMillis() / 1000)) % 30) < 3) {
+            Thread.sleep(4000) // avoid race test on the time shift
+        }
     }
 
 }

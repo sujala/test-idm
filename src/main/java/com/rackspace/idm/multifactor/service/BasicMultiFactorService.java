@@ -225,9 +225,62 @@ public class BasicMultiFactorService implements MultiFactorService {
     @Override
     public void updateMultiFactorSettings(String userId, MultiFactor multiFactor) {
         final User user = userService.checkAndGetUserById(userId);
-        handleMultiFactorUnlock(user, multiFactor);
-        handleMultiFactorEnable(user, multiFactor);
-        handleMultiFactorUserEnforcementLevel(user, multiFactor);
+
+        if (Boolean.TRUE.equals(multiFactor.isEnabled()) ||
+                (multiFactor.getFactorType() != null && Boolean.TRUE.equals(user.isMultiFactorEnabled()))) {
+            // Validate for enable multi-factor or change factor type
+            if (multiFactor.isUnlock() != null
+                    || multiFactor.getUserMultiFactorEnforcementLevel() != null) {
+                throw new BadRequestException("Cannot change other settings while setting multi factor.");
+            }
+
+            // Change multi-factor type
+            final int verifiedOTPDevicesCount = otpDeviceDao.countVerifiedOTPDevicesByParent(user);
+            boolean changed = handleMultiFactorType(user, multiFactor, verifiedOTPDevicesCount);
+
+            // Enable multi-factor
+            if (Boolean.TRUE.equals(multiFactor.isEnabled())) {
+                changed |= handleMultiFactorEnable(user, multiFactor, verifiedOTPDevicesCount);
+            }
+            if (changed) {
+                userService.updateUserForMultiFactor(user);
+            }
+
+        } else if (Boolean.FALSE.equals(multiFactor.isEnabled())) {
+            // Validate for disable multi-factor
+            if (multiFactor.isUnlock() != null
+                    || multiFactor.getUserMultiFactorEnforcementLevel() != null
+                    || multiFactor.getFactorType() != null) {
+                throw new BadRequestException("Cannot change other settings while disabling multi factor.");
+            }
+
+            // Disable multi-factor
+            if (user.isMultiFactorEnabled()) {
+                disableMultiFactorForUser(user);
+            }
+
+        } else if (Boolean.TRUE.equals(multiFactor.isUnlock())) {
+            // Validate for unlock multi-factor
+            if (multiFactor.isEnabled() != null
+                    || multiFactor.getUserMultiFactorEnforcementLevel() != null
+                    || multiFactor.getFactorType() != null) {
+                throw new BadRequestException("Cannot change other settings while unlocking multi factor.");
+            }
+
+            // Unlock multi-factor
+            handleMultiFactorUnlock(user, multiFactor);
+
+        } else if (multiFactor.getUserMultiFactorEnforcementLevel() != null) {
+            // Validate for setting user enforcement for multi-factor
+            if (multiFactor.isEnabled() != null
+                    || multiFactor.isUnlock() != null
+                    || multiFactor.getFactorType() != null) {
+                throw new BadRequestException("Cannot change other settings while setting user enforcement level.");
+            }
+
+            // Setting user enforcement for multi-factor
+            handleMultiFactorUserEnforcementLevel(user, multiFactor);
+        }
     }
 
     private void handleMultiFactorUnlock(User user, MultiFactor multiFactor) {
@@ -241,22 +294,18 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
     }
 
-    private void handleMultiFactorEnable(User user, MultiFactor multiFactor) {
-        //only mess with enabling/disabling mfa on user if non-null
-        if (multiFactor.isEnabled() != null && user.isMultiFactorEnabled() != multiFactor.isEnabled()) {
-            final int verifiedOTPDevicesCount = otpDeviceDao.countVerifiedOTPDevicesByParent(user);
+    private boolean handleMultiFactorEnable(User user, MultiFactor multiFactor, int verifiedOTPDevicesCount) {
+        // Only mess with enabling/disabling mfa on user if non-null or changing factor type
+        if (multiFactor.isEnabled() != null && multiFactor.isEnabled().booleanValue() != user.isMultiFactorEnabled()) {
             if (!userHasMultiFactorDevices(user)) {
                 throw new IllegalStateException(ERROR_MSG_NO_DEVICE);
             } else if (!userHasVerifiedMultiFactorDevices(user, verifiedOTPDevicesCount)) {
                 throw new IllegalStateException(ERROR_MSG_NO_VERIFIED_DEVICE);
             }
 
-            if (multiFactor.isEnabled()) {
-                enableMultiFactorForUser(user, multiFactor, verifiedOTPDevicesCount);
-            } else {
-                disableMultiFactorForUser(user);
-            }
+            return enableMultiFactorForUser(user, verifiedOTPDevicesCount);
         }
+        return false;
     }
 
     private void handleMultiFactorUserEnforcementLevel(User user, MultiFactor multiFactor) {
@@ -269,33 +318,41 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
     }
 
-    private void handleMultiFactorType(User user, MultiFactor multiFactor, int verifiedOTPDevicesCount) {
-        boolean hasOTPDevice = verifiedOTPDevicesCount > 0;
-        boolean hasPhone = userHasVerifiedMobilePhone(user);
-
-        if (multiFactor.getFactorType() == null) {
+    private boolean handleMultiFactorType(User user, MultiFactor multiFactor, int verifiedOTPDevicesCount) {
+        final boolean hasPhone = userHasVerifiedMobilePhone(user);
+        final boolean hasOTPDevice = verifiedOTPDevicesCount > 0;
+        final FactorTypeEnum factorType = multiFactor.getFactorType();
+        boolean changed = false;
+        if (factorType == null) {
             // Default values
-            if (hasOTPDevice) {
+            if (hasOTPDevice && !hasPhone) {
                 user.setMultiFactorType(FactorTypeEnum.OTP.value());
+                changed = true;
             } else if (!hasOTPDevice && hasPhone) {
                 user.setMultiFactorType(FactorTypeEnum.SMS.value());
+                changed = true;
+            } else if (hasOTPDevice && hasPhone) {
+                throw new BadRequestException("Must specify multi-factor authentication type to enable multi-factor authentication.");
             }
         } else {
             // Explicit set
-            final boolean isOTP = FactorTypeEnum.OTP.equals(multiFactor.getFactorType());
-            final boolean isSMS = FactorTypeEnum.SMS.equals(multiFactor.getFactorType());
+            final boolean isOTP = FactorTypeEnum.OTP.equals(factorType);
+            final boolean isSMS = FactorTypeEnum.SMS.equals(factorType);
             if (isOTP && hasOTPDevice) {
                 user.setMultiFactorType(FactorTypeEnum.OTP.value());
+                changed = true;
             } else if (isSMS && hasPhone) {
                 user.setMultiFactorType(FactorTypeEnum.SMS.value());
+                changed = true;
             } else if (isOTP && !hasOTPDevice) {
-                throw new MultiFactorDeniedException("User doesn't have a verified OTP device.");
+                throw new BadRequestException("User doesn't have a verified OTP device.");
             } else if (isSMS && !hasPhone) {
-                throw new MultiFactorDeniedException("User doesn't have a verified phone.");
+                throw new BadRequestException("User doesn't have a verified phone.");
             } else {
-                throw new MultiFactorDeniedException("Cannot set factor type '" + multiFactor.getFactorType().value() + "' to this user.");
+                throw new BadRequestException("Cannot set factor type '" + factorType.value() + "' to this user.");
             }
         }
+        return changed;
     }
 
     @Override
@@ -567,52 +624,54 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
     }
 
-    private void enableMultiFactorForUser(User user, MultiFactor multiFactor, int verifiedOTPDevicesCount) {
-        handleMultiFactorType(user, multiFactor, verifiedOTPDevicesCount);
+    private boolean enableMultiFactorForUser(User user, int verifiedOTPDevicesCount) {
         if (verifiedOTPDevicesCount > 0 && isMultiFactorTypeOTP(user)) {
-            enableMultifactorAndPostFeed(user);
+            return enableMultifactorAndPostFeed(user);
         } else if (isMultiFactorTypePhone(user)) {
-            enableMultiFactorUsingPhoneForUser(user);
+            return enableMultiFactorUsingPhoneForUser(user);
         }
+        return false;
     }
 
-    private void enableMultiFactorUsingPhoneForUser(User user) {
-        MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
+    private boolean enableMultiFactorUsingPhoneForUser(User user) {
+        final MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
 
-        DuoPhone duoPhone = new DuoPhone();
+        final DuoPhone duoPhone = new DuoPhone();
         duoPhone.setNumber(phone.getTelephoneNumber());
 
-        DuoUser duoUser = new DuoUser();
+        final DuoUser duoUser = new DuoUser();
         duoUser.setUsername(user.getId());
 
-        ProviderUser providerUser = userManagement.createUser(duoUser);
+        final ProviderUser providerUser = userManagement.createUser(duoUser);
         user.setExternalMultiFactorUserId(providerUser.getProviderId());
 
         try {
             ProviderPhone providerPhone = userManagement.linkMobilePhoneToUser(providerUser.getProviderId(), duoPhone);
             phone.setExternalMultiFactorPhoneId(providerPhone.getProviderId());
         } catch (com.rackspace.identity.multifactor.exceptions.NotFoundException e) {
-            //translate to IDM not found exception. Thrown if user does not exist in duo, though it should since was created
-            //above
+            // Translate to IDM not found exception.
+            // Thrown if user does not exist in duo, though it should since was created above
             multiFactorConsistencyLogger.error(String.format("An error occurred enabling multifactor for user '%s'. Duo returned a NotFoundException for the user's duo profile '%s'.", user.getId(), providerUser.getProviderId()), e);
             throw new NotFoundException(e.getMessage(), e);
         }
+
         mobilePhoneDao.updateObjectAsIs(phone);
-        enableMultifactorAndPostFeed(user);
+        return enableMultifactorAndPostFeed(user);
     }
 
-    private void enableMultifactorAndPostFeed(User user) {
-        boolean alreadyEnabled = user.isMultiFactorEnabled();
+    private boolean enableMultifactorAndPostFeed(User user) {
+        final boolean alreadyEnabled = user.isMultiFactorEnabled();
 
         user.setMultifactorEnabled(true);
         user.setMultiFactorState(MULTI_FACTOR_STATE_ACTIVE);
-        userService.updateUserForMultiFactor(user);
 
         if (!alreadyEnabled) {
             revokeAllMFAProtectedTokensForUser(user);
             atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
             emailClient.asyncSendMultiFactorEnabledMessage(user);
         }
+
+        return true;
     }
 
     /**
@@ -632,6 +691,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultifactorEnabled(false);
         user.setMultiFactorState(null);
         user.setExternalMultiFactorUserId(null);
+        user.setMultiFactorType(null);
         userService.updateUserForMultiFactor(user);
 
         if (enabled){
@@ -836,7 +896,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             final User user = (User) baseUser;
             if (user.getMultiFactorType() != null) {
                 return user.getMultiFactorType();
-            } else if (userHasVerifiedMobilePhone(user)) {
+            } else if (userHasEnabledMobilePhone(user)) {
                 return FactorTypeEnum.SMS.value();
             }
         }
@@ -868,11 +928,14 @@ public class BasicMultiFactorService implements MultiFactorService {
     private boolean userHasEnabledMultiFactorDevices(User user) {
         return userHasEnabledMultiFactorDevices(user, otpDeviceDao.countVerifiedOTPDevicesByParent(user));
     }
-
     private boolean userHasEnabledMultiFactorDevices(User user, int verifiedOTPDevicesCount) {
         boolean hasOTPDevice = verifiedOTPDevicesCount > 0;
-        boolean hasEnabledPhone = userHasVerifiedMobilePhone(user) && StringUtils.hasText(user.getExternalMultiFactorUserId());
+        boolean hasEnabledPhone = userHasEnabledMobilePhone(user);
         return user.isMultiFactorEnabled() && (hasOTPDevice || hasEnabledPhone);
+    }
+
+    private boolean userHasEnabledMobilePhone(User user) {
+        return userHasVerifiedMobilePhone(user) && StringUtils.hasText(user.getExternalMultiFactorUserId());
     }
 
     private boolean userHasVerifiedMobilePhone(User user) {

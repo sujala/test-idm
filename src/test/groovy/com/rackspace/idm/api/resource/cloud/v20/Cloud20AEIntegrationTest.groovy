@@ -295,8 +295,8 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         response.status == 200
 
         cleanup:
-        utils.deleteUsers(users)
-        utils.deleteDomain(domainId)
+        try { utils.deleteUsers(users) } catch (Exception e) {}
+        try { utils.deleteDomain(domainId) } catch (Exception e) {}
 
         where:
         authTokenFormat      | validateTokenFormat  | getTokenVersion

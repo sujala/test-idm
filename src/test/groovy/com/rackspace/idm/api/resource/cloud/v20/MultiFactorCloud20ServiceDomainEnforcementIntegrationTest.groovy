@@ -227,7 +227,7 @@ class MultiFactorCloud20ServiceDomainEnforcementIntegrationTest extends RootConc
         String defaultUserMfaToken = getMfaTokenForUser(userDefault.username)
 
         when: "update domain to REQUIRED"
-        MultiFactor userMfaSettings = v2Factory.createMultiFactorSettings(false).with {it.userMultiFactorEnforcementLevel = UserMultiFactorEnforcementLevelEnum.OPTIONAL; return it}
+        MultiFactor userMfaSettings = v2Factory.createMultiFactorSettings(false).with {it.enabled = null; it.userMultiFactorEnforcementLevel = UserMultiFactorEnforcementLevelEnum.OPTIONAL; return it}
         utils.updateMultiFactor(userAdminToken, userAdmin.id, userMfaSettings)
         MultiFactorDomain settingsRequired = v2Factory.createMultiFactorDomainSettings(DomainMultiFactorEnforcementLevelEnum.REQUIRED)
         cloud20.updateMultiFactorDomainSettings(userAdminToken, userAdmin.getDomainId(), settingsRequired)
@@ -257,7 +257,7 @@ class MultiFactorCloud20ServiceDomainEnforcementIntegrationTest extends RootConc
     }
 
     def void setUserMfaEnforcementLevel(String authToken, String userId, UserMultiFactorEnforcementLevelEnum level) {
-        MultiFactor userMfaSettings = v2Factory.createMultiFactorSettings(false).with {it.userMultiFactorEnforcementLevel = level; return it}
+        MultiFactor userMfaSettings = v2Factory.createMultiFactorSettings(false).with {it.enabled = null; it.userMultiFactorEnforcementLevel = level; return it}
         utils.updateMultiFactor(authToken, userId, userMfaSettings)
     }
 
