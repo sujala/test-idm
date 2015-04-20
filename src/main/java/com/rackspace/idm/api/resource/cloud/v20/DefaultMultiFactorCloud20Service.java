@@ -406,7 +406,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     }
 
     @Override
-    public Response.ResponseBuilder listDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
+    public Response.ResponseBuilder listMobilePhoneDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
         try {
             ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
@@ -520,6 +520,26 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             return response;
         } catch (Exception ex) {
             LOG.error(String.format("Error adding an OTP device to user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder listOTPDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
+        try {
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
+            userService.checkUserDisabled(requester); //must verify user/domain is enabled
+            User user = requestContextHolder.checkAndGetTargetUser(userId);
+
+            verifyAccessToOtherUser(token, requester, user);
+
+            List<com.rackspace.idm.domain.entity.OTPDevice> otpList = multiFactorService.getOTPDevicesForUser(user);
+            return Response.ok().entity(otpDeviceConverterCloudV20.toOTPDevicesForWeb(otpList));
+        } catch (IllegalStateException ex) {
+            return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
+        } catch (Exception ex) {
+            LOG.error(String.format("Error listing otp devices on user '%s'", userId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }

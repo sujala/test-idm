@@ -73,10 +73,25 @@ public class LdapOTPDeviceRepository extends LdapGenericRepository<OTPDevice> im
         }
     }
 
+    @Override
+    public Iterable<OTPDevice> getOTPDevicesByParent(UniqueId parent) {
+        try {
+            return getObjects(searchOTPDevicesByParent(parent), getContainerDN(parent));
+        } catch (Exception e) {
+            return Collections.EMPTY_LIST;
+        }
+    }
+
     private Filter searchVerifiedOTPDevicesByParent(UniqueId parent) {
         final Filter filter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_OTP_DEVICE)
                 .addEqualAttribute(ATTR_MULTIFACTOR_DEVICE_VERIFIED, "TRUE").build();
+        return filter;
+    }
+
+    private Filter searchOTPDevicesByParent(UniqueId parent) {
+        final Filter filter = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_OTP_DEVICE).build();
         return filter;
     }
 

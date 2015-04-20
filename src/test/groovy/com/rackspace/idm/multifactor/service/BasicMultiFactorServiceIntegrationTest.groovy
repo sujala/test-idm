@@ -3,6 +3,7 @@ package com.rackspace.idm.multifactor.service
 import com.google.i18n.phonenumbers.Phonenumber
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.dao.OTPDeviceDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
@@ -43,6 +44,9 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
 
     @Autowired
     private UserManagement duoUserManagement
+
+    @Autowired
+    private OTPDeviceDao otpDeviceDao
 
     /**
      * This tests linking a phone number to a user
@@ -428,6 +432,40 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         multiFactorService.getOTPDeviceFromUserById(finalUserAdmin.id, otpDevice.id) == null
 
         cleanup:
+        userRepository.deleteObject(finalUserAdmin)
+    }
+
+    def "Get a list of OTP devices on a user-admin"() {
+        setup:
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+        User finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        //create a verified device on user
+        String otp1Name = getNormalizedRandomString()
+        OTPDevice otpDevice1 = multiFactorService.addOTPDeviceToUser(finalUserAdmin.id, otp1Name)
+        otpDevice1.multiFactorDeviceVerified = true
+        otpDeviceDao.updateObjectAsIs(otpDevice1)
+
+        when: "list devices"
+        def devices = multiFactorService.getOTPDevicesForUser(finalUserAdmin)
+
+        then: "we find the verified device"
+        devices.size() == 1
+        devices.find() {it.name == otp1Name} != null
+
+        when: "add an unverified device and list devices again"
+        String otp2Name = getNormalizedRandomString()
+        OTPDevice otpDevice2 = multiFactorService.addOTPDeviceToUser(finalUserAdmin.id, otp2Name)
+        def multipleDevices = multiFactorService.getOTPDevicesForUser(finalUserAdmin)
+
+        then:
+        multipleDevices.size() == 2
+        multipleDevices.find() {it.name == otp1Name} != null
+        multipleDevices.find() {it.name == otp2Name} != null
+
+        cleanup:
+        otpDeviceDao.deleteObject(otpDevice1)
+        otpDeviceDao.deleteObject(otpDevice2)
         userRepository.deleteObject(finalUserAdmin)
     }
 

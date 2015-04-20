@@ -46,6 +46,14 @@ public interface OTPDeviceDao extends GenericDao<OTPDevice> {
     Iterable<OTPDevice> getVerifiedOTPDevicesByParent(UniqueId parent);
 
     /**
+     * Returns the list of OTP devices, regardless of status, associated with the parent.
+     *
+     * @param parent
+     * @return
+     */
+    Iterable<OTPDevice> getOTPDevicesByParent(UniqueId parent);
+
+    /**
      * Removes all OTP devices from a parent.
      *
      * @param parent

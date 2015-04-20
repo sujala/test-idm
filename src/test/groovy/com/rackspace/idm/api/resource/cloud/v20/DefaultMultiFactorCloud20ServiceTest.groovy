@@ -6,8 +6,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.api.security.RequestContext
-import com.rackspace.idm.api.security.SecurityContext
 import com.rackspace.idm.domain.entity.BaseUser
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ScopeAccess
@@ -53,7 +51,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
     def "listDevicesForUser validates x-auth-token"() {
         when:
         allowMultiFactorAccess()
-        service.listDevicesForUser(null, "token", null)
+        service.listMobilePhoneDevicesForUser(null, "token", null)
 
         then:
         securityContext.getAndVerifyEffectiveCallerToken(_) >> { throw new NotAuthenticatedException() }
@@ -370,6 +368,59 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
 
         then:
         responseBuilder.build().status == HttpServletResponse.SC_NOT_FOUND
+    }
+
+    def "listOTPDevices: verify authorization logic called appropriately for non-self calls for identity admin"() {
+        given:
+        BaseUser caller = entityFactory.createUser().with { it.id = "caller"; return it }
+        ScopeAccess callerToken = entityFactory.createUserToken(caller.getId())
+        BaseUser targetUser = entityFactory.createUser().with { it.id = "target"; return it }
+
+        when:
+        Response.ResponseBuilder responseBuilder = service.listOTPDevicesForUser(null, callerToken.accessTokenString, targetUser.id)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken //validates caller provided token
+        1 * userService.checkUserDisabled(caller) //validates caller user state
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * requestContextHolder.checkAndGetTargetUser(targetUser.id) >> targetUser
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, targetUser)
+    }
+
+    def "listOTPDevices: verify authorization logic called appropriately for non-self calls for user admin"() {
+        given:
+        BaseUser caller = entityFactory.createUser().with { it.id = "caller"; return it }
+        ScopeAccess callerToken = entityFactory.createUserToken(caller.getId())
+        BaseUser targetUser = entityFactory.createUser().with { it.id = "target"; return it }
+
+        when:
+        Response.ResponseBuilder responseBuilder = service.listOTPDevicesForUser(null, callerToken.accessTokenString, targetUser.id)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken //validates caller provided token
+        1 * userService.checkUserDisabled(caller) //validates caller user state
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * requestContextHolder.checkAndGetTargetUser(targetUser.id) >> targetUser
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, targetUser)
+        1 * authorizationService.authorizeCloudUserAdmin(callerToken) >> true
+        1 * authorizationService.verifyDomain(caller, targetUser)
+    }
+
+    def "listOTPDevices: verify authorization logic called appropriately for self calls"() {
+        given:
+        BaseUser caller = entityFactory.createUser().with { it.id = "caller"; return it }
+        ScopeAccess callerToken = entityFactory.createUserToken(caller.getId())
+
+        when:
+        Response.ResponseBuilder responseBuilder = service.listOTPDevicesForUser(null, callerToken.accessTokenString, caller.id)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken //validates caller provided token
+        1 * userService.checkUserDisabled(caller) //validates caller user state
+        1 * requestContext.getEffectiveCaller() >> caller
+        0 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, _)
+        0 * authorizationService.authorizeCloudUserAdmin(callerToken)
+        0 * authorizationService.verifyDomain(caller, _)
     }
 
     @Unroll

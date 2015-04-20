@@ -28,6 +28,7 @@ import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.BypassHelper;
 import com.rackspace.idm.util.OTPHelper;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -834,6 +835,16 @@ public class BasicMultiFactorService implements MultiFactorService {
         final User user = userService.getUserById(userId);
         final OTPDevice device = getOTPDeviceFromUserById(user, deviceId);
         return device;
+    }
+
+    @Override
+    public List<OTPDevice> getOTPDevicesForUser(User user) {
+        Assert.notNull(user);
+        Assert.notNull(user.getUniqueId(), "User must have been retrieved from backend and have a populated DN");
+        Iterable<OTPDevice> devicesAsIterable = otpDeviceDao.getOTPDevicesByParent(user);
+        List<OTPDevice> devices = IteratorUtils.toList(devicesAsIterable.iterator());
+
+        return devices;
     }
 
     public OTPDevice getOTPDeviceFromUserById(User user, String deviceId) {

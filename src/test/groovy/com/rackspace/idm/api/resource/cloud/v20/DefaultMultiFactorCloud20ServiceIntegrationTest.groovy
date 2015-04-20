@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevices
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
@@ -279,6 +280,68 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         accept | _
         MediaType.APPLICATION_XML_TYPE  | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "test get OTP devices for user, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        def token = utils.getToken(userAdmin.username)
+
+        when: "add first device"
+        def otpDeviceRequest1 = new OTPDevice().with {
+            it.name = "myOtp1"
+            it
+        }
+        def device1 = utils.addOTPDevice(token, userAdmin.id, otpDeviceRequest1)
+        def response = cloud20.getOTPDevicesFromUser(token, userAdmin.id, accept)
+        def otpResponse = response.getEntity(OTPDevices)
+
+        then: "can list single device"
+        response.status == 200
+
+        assert otpResponse.otpDevice.size() == 1
+        def returnedDevice1 = otpResponse.otpDevice.find() {it.name == otpDeviceRequest1.name}
+        verifyDevice(device1, returnedDevice1)
+
+        when: "add second device"
+        def otpDeviceRequest2 = new OTPDevice().with {
+            it.name = "myOtp2"
+            it
+        }
+        def device2 = utils.addOTPDevice(token, userAdmin.id, otpDeviceRequest2)
+
+        response = cloud20.getOTPDevicesFromUser(token, userAdmin.id, accept)
+        def multipleOtpResponse = response.getEntity(OTPDevices)
+
+        then: "can list both devices"
+        response.status == 200
+
+        assert multipleOtpResponse.otpDevice.size() == 2
+        def mReturnedDevice1 = multipleOtpResponse.otpDevice.find() {it.name == otpDeviceRequest1.name}
+        verifyDevice(device1, mReturnedDevice1)
+
+        def mReturnedDevice2 = multipleOtpResponse.otpDevice.find() {it.name == otpDeviceRequest2.name}
+        verifyDevice(device2, mReturnedDevice2)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        accept | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def void verifyDevice(OTPDevice expected, OTPDevice actual) {
+        assert expected != null
+        assert expected.verified == actual.verified
+        assert expected.name == actual.name
+        assert expected.id == actual.id
     }
 
     def "get OTP device with invalid user ID returns 404"() {

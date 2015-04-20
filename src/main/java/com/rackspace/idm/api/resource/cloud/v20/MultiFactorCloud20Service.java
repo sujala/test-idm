@@ -169,7 +169,7 @@ public interface MultiFactorCloud20Service {
      * @param userId
      * @return
      */
-    Response.ResponseBuilder listDevicesForUser(UriInfo uriInfo, String authToken, String userId);
+    Response.ResponseBuilder listMobilePhoneDevicesForUser(UriInfo uriInfo, String authToken, String userId);
 
     /**
      * The multifactor service to generate bypass codes for a given user.
@@ -202,6 +202,17 @@ public interface MultiFactorCloud20Service {
      * @return
      */
     Response.ResponseBuilder addOTPDeviceToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice otpDevice);
+
+    /**
+     * List the multifactor otp devices associated with a given user.
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @return
+     */
+    Response.ResponseBuilder listOTPDevicesForUser(UriInfo uriInfo, String authToken, String userId);
+
 
     /**
      * Retrieves the OTP device associated with the user specified by userId.
