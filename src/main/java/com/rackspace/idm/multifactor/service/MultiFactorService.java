@@ -200,6 +200,14 @@ public interface MultiFactorService {
     OTPDevice addOTPDeviceToUser(String userId, String name);
 
     /**
+     * Get a list of OTP devices, regardless of status, associated with the user
+     *
+     * @param user
+     * @return
+     */
+    List<OTPDevice> getOTPDevicesForUser(User user);
+
+    /**
      * Gets checks an OTP device from the user by id.
      */
     OTPDevice checkAndGetOTPDeviceFromUserById(String userId, String deviceId);

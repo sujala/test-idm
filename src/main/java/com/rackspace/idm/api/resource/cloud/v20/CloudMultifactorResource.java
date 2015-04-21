@@ -35,11 +35,11 @@ public class CloudMultifactorResource {
      */
     @GET
     @Path("mobile-phones")
-    public Response listDevicesForUser(
+    public Response listMobilePhoneDevicesForUser(
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId) {
-        return multiFactorCloud20Service.listDevicesForUser(uriInfo, authToken, userId).build();
+        return multiFactorCloud20Service.listMobilePhoneDevicesForUser(uriInfo, authToken, userId).build();
     }
 
     /**
@@ -130,6 +130,24 @@ public class CloudMultifactorResource {
         } else {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+    }
+
+    /**
+     * The multifactor service to list devices for a given user.
+     *
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @return
+     */
+    @GET
+    @Path("otp-devices")
+    public Response listOTPDevicesForUser(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId) {
+        return multiFactorCloud20Service.listOTPDevicesForUser(uriInfo, authToken, userId).build();
     }
 
     @GET
