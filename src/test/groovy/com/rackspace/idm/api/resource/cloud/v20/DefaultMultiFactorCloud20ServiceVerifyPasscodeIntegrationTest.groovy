@@ -103,10 +103,8 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     }
 
     def cleanup() {
-        if (userAdmin != null) {
-            if (multiFactorService.removeMultiFactorForUser(userAdmin.id))  //remove duo profile
-            deleteUserQuietly(userAdmin)
-        }
+        try { multiFactorService.removeMultiFactorForUser(userAdmin.id) } catch (Exception e) {}
+        deleteUserQuietly(userAdmin)
     }
 
     @Unroll("Initial auth returns 401 with encrypted sessionId in www-authenticate header: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
@@ -371,6 +369,138 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         !regularToken.getAuthenticatedBy().credential.contains(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
         regularToken.getAuthenticatedBy().credential.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
         mfaToken.id != regularToken.id
+    }
+
+    @Unroll
+    def "Check if local locking is working: requestContentType: #requestContentMediaType; acceptMediaType=#acceptMediaType; sms=#isSMS"() {
+        setup:
+        reloadableConfiguration.reset()
+        reloadableConfiguration.setProperty("feature.multifactor.locking.enabled", true)
+        reloadableConfiguration.setProperty("feature.multifactor.locking.attempts.maximumNumber", 3)
+        reloadableConfiguration.setProperty("feature.multifactor.locking.expirationInSeconds", 1800)
+
+        setUpAndEnableMultiFactor(isSMS)
+        if (isSMS) {
+            def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, null, null)
+            when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
+        }
+
+        def oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        String wwwHeader = oneFactorResponse.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+        def response, directoryUser
+
+        when:
+        for (int i=0; i<4; i++) {
+            response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong", requestContentMediaType, acceptMediaType)
+        }
+        directoryUser = userDao.getUserById(userAdmin.id)
+
+        then:
+        assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG)
+        directoryUser.multiFactorState == 'LOCKED'
+        directoryUser.multiFactorFailedAttemptCount != null
+        directoryUser.multiFactorLastFailedTimestamp != null
+
+        when:
+        response = cloud20.updateMultiFactorSettings(utils.getIdentityAdminToken(), userAdmin.id, v2Factory.createMultiFactorSettings(null, true))
+        directoryUser = userDao.getUserById(userAdmin.id)
+
+        then:
+        response.status == 204
+        directoryUser.multiFactorState == 'ACTIVE'
+        directoryUser.multiFactorFailedAttemptCount == null
+        directoryUser.multiFactorLastFailedTimestamp == null
+        0 * mockUserManagement.unlockUser(userAdmin.id)
+
+        // TODO: Uncomment for "[CIDMDEV-4952] Multi-Factor Mobile Passcode :: Automatic Account Unlock"
+//        when:
+//        for (int i=0; i<4; i++) {
+//            response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong", requestContentMediaType, acceptMediaType)
+//        }
+//
+//        then:
+//        response.status == 403
+//
+//        when: // wait for the expiration on local locking
+//        directoryUser = userDao.getUserById(userAdmin.id)
+//        directoryUser.setMultiFactorLastFailedTimestamp(new Date(0)) // force expiration
+//        userDao.updateUserAsIs(directoryUser)
+//
+//        cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong")
+//        directoryUser = userDao.getUserById(userAdmin.id)
+//
+//        then: // check auto-unlock (roll back the counter to 1)
+//        directoryUser.multiFactorFailedAttemptCount == 1
+//        directoryUser.multiFactorLastFailedTimestamp != null
+
+        where:
+        requestContentMediaType         | acceptMediaType                 | isSMS
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | false
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | false
+    }
+
+    @Unroll
+    def "Test local locking feature flag: #requestContentMediaType; acceptMediaType=#acceptMediaType"() {
+        setup:
+        reloadableConfiguration.reset()
+        reloadableConfiguration.setProperty("feature.multifactor.locking.enabled", false)
+
+        setUpAndEnableMultiFactor()
+
+        def oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        String wwwHeader = oneFactorResponse.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+        def response, directoryUser, mfaServiceResponse
+
+        when:
+        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, null, null)
+        when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
+        response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong", requestContentMediaType, acceptMediaType)
+        directoryUser = userDao.getUserById(userAdmin.id)
+
+        then:
+        assertOpenStackV2FaultResponse(response, UnauthorizedFault, HttpStatus.SC_UNAUTHORIZED, DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_GENERIC_ERROR_MSG)
+        directoryUser.multiFactorFailedAttemptCount == null
+        directoryUser.multiFactorLastFailedTimestamp == null
+
+        when:
+        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.LOCKEDOUT, null, null)
+        when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
+        response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong", requestContentMediaType, acceptMediaType)
+        directoryUser = userDao.getUserById(userAdmin.id)
+
+        then:
+        assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG)
+        directoryUser.multiFactorFailedAttemptCount == null
+        directoryUser.multiFactorLastFailedTimestamp == null
+        directoryUser.multiFactorState == 'LOCKED'
+
+        when:
+        cloud20.updateMultiFactorSettings(utils.getIdentityAdminToken(), userAdmin.id, v2Factory.createMultiFactorSettings(null, true))
+        mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, null, null)
+        when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
+        reloadableConfiguration.setProperty("feature.multifactor.locking.enabled", true)
+        response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong", requestContentMediaType, acceptMediaType)
+        directoryUser = userDao.getUserById(userAdmin.id)
+
+        then:
+        assertOpenStackV2FaultResponse(response, UnauthorizedFault, HttpStatus.SC_UNAUTHORIZED, DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_GENERIC_ERROR_MSG)
+        directoryUser.multiFactorFailedAttemptCount != null
+        directoryUser.multiFactorLastFailedTimestamp != null
+
+        where:
+        requestContentMediaType         | acceptMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
     def void setUpAndEnableMultiFactor(def phone = true) {

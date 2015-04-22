@@ -285,13 +285,22 @@ public class BasicMultiFactorService implements MultiFactorService {
     }
 
     private void handleMultiFactorUnlock(User user, MultiFactor multiFactor) {
-        if (multiFactor.isUnlock() != null
-                && multiFactor.isUnlock()
-                && StringUtils.hasText(user.getExternalMultiFactorUserId())) {
+        if (Boolean.TRUE.equals(multiFactor.isUnlock())) {
             //want to try and unlock user regardless of mfa enable/disable
-            userManagement.unlockUser(user.getExternalMultiFactorUserId());
-            user.setMultiFactorState(MULTI_FACTOR_STATE_ACTIVE);
+            if (!identityConfig.getReloadableConfig().getFeatureMultifactorLockingEnabled()
+                    && StringUtils.hasText(user.getExternalMultiFactorUserId())) {
+                userManagement.unlockUser(user.getExternalMultiFactorUserId());
+            }
+            setMultiFactorUnlockState(user);
             userService.updateUserForMultiFactor(user);
+        }
+    }
+
+    private void setMultiFactorUnlockState(User user) {
+        user.setMultiFactorState(MULTI_FACTOR_STATE_ACTIVE);
+        if (identityConfig.getReloadableConfig().getFeatureMultifactorLockingEnabled()) {
+            user.setMultiFactorFailedAttemptCount(null);
+            user.setMultiFactorLastFailedTimestamp(null);
         }
     }
 
@@ -310,7 +319,7 @@ public class BasicMultiFactorService implements MultiFactorService {
     }
 
     private void handleMultiFactorUserEnforcementLevel(User user, MultiFactor multiFactor) {
-        UserMultiFactorEnforcementLevelEnum existingLevel = userMultiFactorEnforcementLevelConverter.convertTo(user.getUserMultiFactorEnforcementLevel(), null);
+        final UserMultiFactorEnforcementLevelEnum existingLevel = userMultiFactorEnforcementLevelConverter.convertTo(user.getUserMultiFactorEnforcementLevel(), null);
 
         if (multiFactor.getUserMultiFactorEnforcementLevel() != null
                 && multiFactor.getUserMultiFactorEnforcementLevel() != existingLevel) {
@@ -505,6 +514,15 @@ public class BasicMultiFactorService implements MultiFactorService {
         User user = userService.checkAndGetUserById(userId);
         verifyMultiFactorStateOnUser(user);
 
+        // First check if the user is locally locked (and fail fast)
+        if (isUserLocalLocked(user)) {
+            return new GenericMfaAuthenticationResponse(
+                    MfaAuthenticationDecision.DENY,
+                    MfaAuthenticationDecisionReason.LOCKEDOUT,
+                    "Account is locked.",
+                    null);
+        }
+
         MfaAuthenticationResponse response = null;
 
         // Checks against OTP devices
@@ -535,13 +553,23 @@ public class BasicMultiFactorService implements MultiFactorService {
             if (check) {
                 response = new GenericMfaAuthenticationResponse(
                         MfaAuthenticationDecision.ALLOW,
-                        MfaAuthenticationDecisionReason.ALLOW,
+                        MfaAuthenticationDecisionReason.BYPASS,
                         "Authenticated by bypass code",
                         null);
             }
         }
 
-        // If none worked and the response was not pre-populated by Duo
+        // If none worked and local locking is enabled, count one fail
+        if ((response == null || MfaAuthenticationDecision.DENY.equals(response.getDecision())) &&
+                countAndCheckLocalLockingOnUser(user)) {
+            response = new GenericMfaAuthenticationResponse(
+                    MfaAuthenticationDecision.DENY,
+                    MfaAuthenticationDecisionReason.LOCKEDOUT,
+                    "Incorrect passcode. Account is locked.",
+                    null);
+        }
+
+        // If none worked and the response was not pre-populated by anything
         if (response == null) {
             response = new GenericMfaAuthenticationResponse(
                     MfaAuthenticationDecision.DENY,
@@ -550,7 +578,62 @@ public class BasicMultiFactorService implements MultiFactorService {
                     null);
         }
 
+        // If it successfully auth, reset the local locking counter
+        if (response != null && MfaAuthenticationDecision.ALLOW.equals(response.getDecision())) {
+            resetLocalLockingOnUser(user);
+        }
+
         return response;
+    }
+
+    private boolean countAndCheckLocalLockingOnUser(User user) {
+        if (identityConfig.getReloadableConfig().getFeatureMultifactorLockingEnabled()) {
+            if (isUserLocalLocked(user)) {
+                return true;
+            } else {
+                if (user.getMultiFactorFailedAttemptCount() == null ||
+                        isLocalLockingExpired(user.getMultiFactorLastFailedTimestamp())) {
+                    user.setMultiFactorFailedAttemptCount(1);
+                } else {
+                    user.setMultiFactorFailedAttemptCount(user.getMultiFactorFailedAttemptCount() + 1);
+                }
+                user.setMultiFactorLastFailedTimestamp(new Date());
+                userService.updateUserForMultiFactor(user);
+
+                // Check if the user got locked
+                return isUserLocalLocked(user);
+            }
+        }
+        return false;
+    }
+
+    private void resetLocalLockingOnUser(User user) {
+        if (identityConfig.getReloadableConfig().getFeatureMultifactorLockingEnabled() &&
+                (user.getMultiFactorFailedAttemptCount() != null || user.getMultiFactorLastFailedTimestamp() != null)) {
+            setMultiFactorUnlockState(user);
+            userService.updateUserForMultiFactor(user);
+        }
+    }
+
+    // Test if the user is locked
+    private boolean isUserLocalLocked(User user) {
+        if (identityConfig.getReloadableConfig().getFeatureMultifactorLockingEnabled() &&
+            !isLocalLockingExpired(user.getMultiFactorLastFailedTimestamp())) {
+            return isUserReachedMaximumAttempts(user);
+        }
+        return false;
+    }
+
+    private boolean isUserReachedMaximumAttempts(User user) {
+        final int max = identityConfig.getReloadableConfig().getFeatureMultifactorLockingMax();
+        return user.getMultiFactorFailedAttemptCount() != null && user.getMultiFactorFailedAttemptCount() >= max;
+    }
+
+    private boolean isLocalLockingExpired(Date timestamp) {
+        // TODO: Uncomment and test for "[CIDMDEV-4952] Multi-Factor Mobile Passcode :: Automatic Account Unlock"
+        // final int expiration = identityConfig.getReloadableConfig().getFeatureMultifactorLockingExpiration();
+        // return new DateTime(timestamp).plusSeconds(expiration).isBeforeNow();
+        return false;
     }
 
     private void verifyMultiFactorStateOnUser(User user) {
@@ -693,6 +776,8 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorState(null);
         user.setExternalMultiFactorUserId(null);
         user.setMultiFactorType(null);
+        user.setMultiFactorFailedAttemptCount(null);
+        user.setMultiFactorLastFailedTimestamp(null);
         userService.updateUserForMultiFactor(user);
 
         if (enabled){
