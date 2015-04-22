@@ -157,6 +157,13 @@ name: Default
 rsId: 0
 description: Default Limits
 
+dn: rsId=1,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsGroup
+name: rax_status_restricted
+rsId: 1
+description: Terminator Rate Limit Group
+
 dn: ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
