@@ -115,6 +115,12 @@ public class IdentityConfig {
     public static final String IMPLICIT_ROLE_OVERRIDE_PROP_REG = IMPLICIT_ROLE_PROP_PREFIX + ".%s";
     public static final String FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP = "feature.racker.username.auth.enabled";
 
+    public static final String FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP = "feature.multifactor.locking.enabled";
+    public static final boolean FEATURE_MULTIFACTOR_LOCKING_ENABLED_DEFAULT = false;
+    public static final String FEATURE_MULTIFACTOR_LOCKING_EXPIRATION_PROP = "feature.multifactor.locking.expirationInSeconds";
+    public static final int FEATURE_MULTIFACTOR_LOCKING_EXPIRATION_DEFAULT = 1800;
+    public static final String FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP = "feature.multifactor.locking.attempts.maximumNumber";
+    public static final int FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_DEFAULT = 3;
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -174,6 +180,9 @@ public class IdentityConfig {
         defaults.put(BYPASS_DEFAULT_NUMBER, BigInteger.ONE);
         defaults.put(BYPASS_MAXIMUM_NUMBER, BigInteger.TEN);
         defaults.put(FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS, FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS_DEFAULT);
+        defaults.put(FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP, FEATURE_MULTIFACTOR_LOCKING_ENABLED_DEFAULT);
+        defaults.put(FEATURE_MULTIFACTOR_LOCKING_EXPIRATION_PROP, FEATURE_MULTIFACTOR_LOCKING_EXPIRATION_DEFAULT);
+        defaults.put(FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_DEFAULT);
         return defaults;
     }
 
@@ -654,6 +663,21 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS, versionAdded = "2.14.0", description = "enable local multifactor bypass codes")
         public boolean getFeatureLocalMultifactorBypassEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS);
+        }
+
+        @IdmProp(key = FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP, versionAdded = "2.15.0", description = "enable local multifactor locking")
+        public boolean getFeatureMultifactorLockingEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP);
+        }
+
+        @IdmProp(key = FEATURE_MULTIFACTOR_LOCKING_EXPIRATION_PROP, versionAdded = "2.15.0", description = "local multifactor locking expiration in seconds")
+        public int getFeatureMultifactorLockingExpiration() {
+            return getIntSafely(reloadableConfiguration, FEATURE_MULTIFACTOR_LOCKING_EXPIRATION_PROP);
+        }
+
+        @IdmProp(key = FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, versionAdded = "2.15.0", description = "local multifactor locking maximum number of attempts")
+        public int getFeatureMultifactorLockingMax() {
+            return getIntSafely(reloadableConfiguration, FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP);
         }
     }
 

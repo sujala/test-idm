@@ -267,6 +267,18 @@ public class User implements EndUser {
     @LDAPField(attribute = LdapRepository.ATTR_CONTACT_ID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String contactId;
 
+    @LDAPField(attribute=LdapRepository.ATTR_MULTI_FACTOR_LAST_FAILED_TIMESTAMP,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            inRDN = false,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private Date multiFactorLastFailedTimestamp;
+
+    @LDAPField(attribute=LdapRepository.ATTR_MULTI_FACTOR_FAILED_ATTEMPT_COUNT,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            inRDN = false,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private Integer multiFactorFailedAttemptCount;
+
     private List<TenantRole> roles;
 
     TokenFormatConverter tfEnumConverter = new TokenFormatConverter();

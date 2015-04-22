@@ -935,6 +935,21 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.121) = {
     description = "The bypass code"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.122) = {
+    name = rsMultiFactorFailedAttemptCount
+    ldap-names = rsMultiFactorFailedAttemptCount
+    syntax = integer
+    description = "Failed attempt counter for multi-factor"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.123) = {
+    name = rsMultiFactorLastFailedTimestamp
+    ldap-names = rsMultiFactorLastFailedTimestamp
+    equality = generalizedTimeMatch
+    syntax = generalizedTime
+    description = "Last time a multi-factor check failed"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -990,7 +1005,9 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
         rsUserMultiFactorEnforcementLevel,
         rsTokenFormat,
         rsMultiFactorType,
-        rsContactId
+        rsContactId,
+        rsMultiFactorFailedAttemptCount,
+        rsMultiFactorLastFailedTimestamp
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
