@@ -877,8 +877,8 @@
 
     <complexType name="MultiFactorDevices">
         <sequence>
-            <element ref="RAX-AUTH:mobilePhone" minOccurs="0" maxOccurs="unbounded"/>
-            <element ref="RAX-AUTH:otpDevice" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="RAX-AUTH:mobilePhones" minOccurs="0" maxOccurs="1"/>
+            <element ref="RAX-AUTH:otpDevices" minOccurs="0" maxOccurs="1"/>
         </sequence>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>

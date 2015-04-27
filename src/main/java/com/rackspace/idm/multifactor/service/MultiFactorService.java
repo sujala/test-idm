@@ -5,10 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.MobilePhone;
-import com.rackspace.idm.domain.entity.OTPDevice;
-import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.entity.*;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -262,4 +259,11 @@ public interface MultiFactorService {
      * Checks if the multifactor device user by this user is an OTP device.
      */
     boolean isMultiFactorTypeOTP(BaseUser user);
+
+    /**
+     * Get a list of all MFA devices associated with the user
+     * @param user
+     * @return
+     */
+    List<MultiFactorDevice> getMultiFactorDevicesForUser(User user);
 }

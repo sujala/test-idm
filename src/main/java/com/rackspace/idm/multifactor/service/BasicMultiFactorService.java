@@ -22,6 +22,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.BypassDevice;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.MobilePhone;
+import com.rackspace.idm.domain.entity.MultiFactorDevice;
 import com.rackspace.idm.domain.entity.OTPDevice;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -974,6 +975,22 @@ public class BasicMultiFactorService implements MultiFactorService {
         } else {
             throw new NotFoundException("The device was not found on the specified user");
         }
+    }
+
+    @Override
+    public List<MultiFactorDevice> getMultiFactorDevicesForUser(User user) {
+        Assert.notNull(user);
+        Assert.notNull(user.getUniqueId(), "User must have been retrieved from backend and have a populated DN");
+
+        List<MultiFactorDevice> mfaDevices = new ArrayList<MultiFactorDevice>();
+
+        List<MobilePhone> phones = getMobilePhonesForUser(user);
+        List<OTPDevice> otpDevices = getOTPDevicesForUser(user);
+
+        org.apache.commons.collections4.CollectionUtils.addAll(mfaDevices, phones);
+        org.apache.commons.collections4.CollectionUtils.addAll(mfaDevices, otpDevices);
+
+        return mfaDevices;
     }
 
     @Override

@@ -40,7 +40,12 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
         return read(entityStream, rootValue, null);
     }
 
+
     protected T read(InputStream entityStream, String rootValue, Map prefixValues) {
+        return read(entityStream, rootValue, prefixValues, true);
+    }
+
+        protected T read(InputStream entityStream, String rootValue, Map prefixValues, boolean pluralizeArrays) {
         try {
 
             String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
@@ -66,7 +71,7 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
                 jsonObject = outer;
             }
 
-            arrayTransformer.transformIncludeWrapper(jsonObject);
+            arrayTransformer.transformIncludeWrapper(jsonObject, pluralizeArrays);
 
             String jsonString = jsonObject.toString();
             ObjectMapper om = new ObjectMapper();

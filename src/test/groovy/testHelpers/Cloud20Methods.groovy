@@ -66,6 +66,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_VERIFICATION_CODE = "verificationcode"
     static def SERVICE_PATH_BYPASS_CODES = "bypass-codes"
     static def SERVICE_PATH_OTP_DEVICES = "otp-devices"
+    static def SERVICE_PATH_MULTI_FACTOR_DEVICES = "devices"
 
     static def ENDPOINTS = "endpoints"
 
@@ -429,6 +430,14 @@ class Cloud20Methods {
         initOnUse()
         resource.path(path20).path(USERS).path(userId)
                 .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_OTP_DEVICES)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString())
+                .get(ClientResponse)
+    }
+
+    def getMultiFactorDevicesFromUser(String token, String userId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(userId)
+                .path(RAX_AUTH).path(SERVICE_PATH_MULTI_FACTOR).path(SERVICE_PATH_MULTI_FACTOR_DEVICES)
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString())
                 .get(ClientResponse)
     }
