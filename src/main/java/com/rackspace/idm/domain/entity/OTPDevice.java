@@ -12,7 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_OTP_DEVICE)
-public class OTPDevice implements UniqueId, Auditable {
+public class OTPDevice implements UniqueId, Auditable, MultiFactorDevice {
 
     @LDAPDNField
     private String uniqueId;

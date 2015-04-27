@@ -29,7 +29,7 @@ import java.util.Set;
 @Setter
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_MULTIFACTOR_MOBILE_PHONE, superiorClass={ "groupOfNames",
         "top" })
-public class MobilePhone implements Auditable, UniqueId {
+public class MobilePhone implements Auditable, UniqueId, MultiFactorDevice {
     @LDAPEntryField()
     private ReadOnlyEntry ldapEntry;
 

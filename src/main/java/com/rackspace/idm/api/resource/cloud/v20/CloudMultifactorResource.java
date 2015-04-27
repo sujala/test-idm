@@ -24,9 +24,35 @@ public class CloudMultifactorResource {
     @Autowired
     private IdentityConfig config;
 
+    @GET
+    @Path("devices")
+    public Response listMultiFactorDevicesForUser(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId) {
+        return multiFactorCloud20Service.listMultiFactorDevicesForUser(uriInfo, authToken, userId).build();
+    }
+
     /**
-     * The multifactor service to list devices for a given user.
+     * The multifactor service to list mobile phone devices for a given user.
      *
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @return
+     */
+    @GET
+    @Path("devices/mobile-phones")
+    public Response listMobilePhoneDevicesForUserAlternative(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId) {
+        return listMobilePhoneDevicesForUser(uriInfo, authToken, userId);
+    }
+
+    /**
+     * The multifactor service to list mobile phone devices for a given user.
      *
      * @param uriInfo
      * @param authToken
@@ -133,7 +159,7 @@ public class CloudMultifactorResource {
     }
 
     /**
-     * The multifactor service to list devices for a given user.
+     * The multifactor service to list otp devices for a given user.
      *
      *
      * @param uriInfo
@@ -148,6 +174,24 @@ public class CloudMultifactorResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId) {
         return multiFactorCloud20Service.listOTPDevicesForUser(uriInfo, authToken, userId).build();
+    }
+
+    /**
+     * The multifactor service to list devices for a given user.
+     *
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @return
+     */
+    @GET
+    @Path("devices/otp-devices")
+    public Response listOTPDevicesForUserAlternative(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId) {
+        return listOTPDevicesForUser(uriInfo, authToken, userId);
     }
 
     @GET

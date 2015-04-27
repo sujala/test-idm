@@ -12,6 +12,7 @@ import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
+import com.rackspace.idm.api.converter.cloudv20.MultiFactorDeviceConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.OTPDeviceConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
@@ -22,6 +23,7 @@ import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.MobilePhone;
+import com.rackspace.idm.domain.entity.MultiFactorDevice;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.exception.*;
@@ -122,6 +124,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Autowired
     private OTPDeviceConverterCloudV20 otpDeviceConverterCloudV20;
+
+    @Autowired
+    private MultiFactorDeviceConverterCloudV20 multiFactorDeviceConverterCloudV20;
 
     @Autowired
     private JAXBObjectFactories objFactories;
@@ -602,6 +607,26 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             return exceptionHandler.notFoundExceptionResponse(ex.getMessage());
         } catch (Exception ex) {
             LOG.error(String.format(ERROR_VERIFYING_CODE_FOR_DEVICE, deviceId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder listMultiFactorDevicesForUser(UriInfo uriInfo, String authToken, String userId) {
+        try {
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
+            userService.checkUserDisabled(requester); //must verify caller user/domain is enabled
+            User user = requestContextHolder.checkAndGetTargetUser(userId);
+
+            verifyAccessToOtherUser(token, requester, user);
+
+            List<MultiFactorDevice> deviceList = multiFactorService.getMultiFactorDevicesForUser(user);
+            return Response.ok().entity(multiFactorDeviceConverterCloudV20.toMultiFactorDevicesForWeb(deviceList, user));
+        } catch (IllegalStateException ex) {
+            return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
+        } catch (Exception ex) {
+            LOG.error(String.format("Error listing multifactor devices on user '%s'", userId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }

@@ -254,4 +254,13 @@ public interface MultiFactorCloud20Service {
      */
     Response.ResponseBuilder verifyOTPCode(String authToken, String userId, String deviceId, VerificationCode verificationCode);
 
+    /**
+     * Retrieve all multifactor devices associated with the user
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @return
+     */
+    Response.ResponseBuilder listMultiFactorDevicesForUser(UriInfo uriInfo, String authToken, String userId);
 }

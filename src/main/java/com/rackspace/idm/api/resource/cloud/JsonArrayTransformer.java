@@ -41,14 +41,19 @@ import org.json.simple.JSONObject;
  */
 public class JsonArrayTransformer {
 
-    public JSONObject transformIncludeWrapper(JSONObject object){
+
+    public JSONObject transformIncludeWrapper(JSONObject object) {
+        return transformIncludeWrapper(object, true);
+    }
+
+    public JSONObject transformIncludeWrapper(JSONObject object, boolean pluralizeArrays){
         for(Object key : object.keySet()){
             Object value = object.get(key);
             if (value instanceof JSONObject) {
-                value = transformIncludeWrapper((JSONObject) value);
+                value = transformIncludeWrapper((JSONObject) value, pluralizeArrays);
             }
 
-            if (value instanceof JSONArray) {
+            if (pluralizeArrays && value instanceof JSONArray) {
                 //create new wrapper element. following convention
                 //{wrapperName}.{elementName}
                 //what we get from json object is actually the wrapper name.

@@ -1,16 +1,11 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevices;
-import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.util.OTPHelper;
-import org.openstack.docs.identity.api.v2.ObjectFactory;
-import org.openstack.docs.identity.api.v2.UserList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
