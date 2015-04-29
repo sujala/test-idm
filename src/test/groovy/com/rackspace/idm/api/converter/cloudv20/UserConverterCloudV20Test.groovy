@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.AuthorizationService
+import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspacecloud.docs.auth.api.v1.GroupsList
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.Role
@@ -31,8 +32,8 @@ class UserConverterCloudV20Test extends Specification {
     @Shared SecretQAConverterCloudV20 mockSecretQAConverterCloudV20
     @Shared GroupConverterCloudV20 mockGroupConverterCloudV20
     @Shared AuthorizationService authorizationService
-
     @Shared Configuration mockConfig;
+    @Shared BasicMultiFactorService basicMultiFactorService
 
     def setupSpec() {
         ExternalBeansConfiguration config = new ExternalBeansConfiguration()
@@ -51,6 +52,9 @@ class UserConverterCloudV20Test extends Specification {
         mockSecretQAConverterCloudV20()
         mockGroupConverterCloudV20()
         mockConfig()
+
+        basicMultiFactorService = Mock(BasicMultiFactorService)
+        converterCloudV20.basicMultiFactorService = basicMultiFactorService
     }
 
     def mockRoleConverterCloudV20() {

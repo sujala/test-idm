@@ -3,6 +3,7 @@ package com.rackspace.idm.multifactor.service;
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
 import com.rackspace.idm.domain.entity.*;
@@ -266,4 +267,12 @@ public interface MultiFactorService {
      * @return
      */
     List<MultiFactorDevice> getMultiFactorDevicesForUser(User user);
+
+    /**
+     * Get the logical state of the user's multi-factor state (locked vs active).
+     *
+     * @param user
+     * @return
+     */
+    MultiFactorStateEnum getLogicalUserMultiFactorState(User user);
 }
