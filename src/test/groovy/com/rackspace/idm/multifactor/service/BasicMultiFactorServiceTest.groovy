@@ -23,6 +23,7 @@ import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.ErrorCodeIdmException
+import com.rackspace.idm.util.BypassDeviceCreationResult
 import com.rackspace.idm.util.BypassHelper
 import com.rackspace.idm.util.OTPHelper
 import spock.lang.Shared
@@ -407,16 +408,22 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         true            |  true         |  FactorTypeEnum.OTP   | 1                | true
     }
 
+    /**
+     * Local bypass codes can be used for both SMS and OTP
+     * @return
+     */
     @Unroll
-    def "test bypass code logic: local=#local, type=#type"() {
+    def "test local bypass code logic for type=#type"() {
         setup:
         staticConfig.getBypassDefaultNumber() >> BigInteger.ONE
         staticConfig.getBypassMaximumNumber() >> BigInteger.TEN
-        reloadableConfig.getFeatureLocalMultifactorBypassEnabled() >> local
+        reloadableConfig.getFeatureLocalMultifactorBypassEnabled() >> true
+        reloadableConfig.getLocalBypassCodeIterationCount() >> 1000
+        def setOfCodes = ["1", "2"] as Set
 
         User user = entityFactory.createUser().with {
             it.multifactorEnabled = true
-            it.multiFactorType = type
+            it.multiFactorType = type.value()
             return it
         }
         OTPDevice otpDevice = new OTPDevice().with {
@@ -424,9 +431,54 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
             it.multiFactorDeviceVerified = true
             return it
         }
-        BypassDevice bypassDevice = new BypassDevice()
+        BypassDeviceCreationResult bypassDeviceCreationResult = new BypassDeviceCreationResult(new BypassDevice(), setOfCodes)
+
+        userService.checkAndGetUserById(user.id) >> user
+        mockOTPDeviceDao.getOTPDeviceByParentAndId(user, otpDevice.id) >> otpDevice
+        mockOTPDeviceDao.countVerifiedOTPDevicesByParent(user) >> 1
+
+        when: "try to add bypass codes"
+        def codes = service.getSelfServiceBypassCodes(user, 120, 2)
+
+        then:
+        1 * mockBypassDeviceDao.deleteAllBypassDevices(user)
+        1 * mockBypassDeviceDao.addBypassDevice(user, _)
+        0 * multiFactorUserManagement.getBypassCodes(_, _, _) //local bypass codes don't use Duo regardless of type
+        1 * mockBypassHelper.createBypassDevice(_, _) >> bypassDeviceCreationResult
+
+        codes.size() == 2
+        codes == setOfCodes.toList()
+
+        where:
+        type | _
+        FactorTypeEnum.OTP | _
+        FactorTypeEnum.SMS | _
+    }
+
+    /**
+     * Duo bypass codes are unavailable for OTP, but can be used for SMS
+     * @return
+     */
+    @Unroll
+    def "test duo bypass code logic for type=#type"() {
+        setup:
+        staticConfig.getBypassDefaultNumber() >> BigInteger.ONE
+        staticConfig.getBypassMaximumNumber() >> BigInteger.TEN
+        reloadableConfig.getFeatureLocalMultifactorBypassEnabled() >> false
+
         def arrayOfCodes = ["1", "2"]
         List<String> fakeCodes = arrayOfCodes.asList()
+
+        User user = entityFactory.createUser().with {
+            it.multifactorEnabled = true
+            it.multiFactorType = type.value()
+            return it
+        }
+        OTPDevice otpDevice = new OTPDevice().with {
+            it.id = "1"
+            it.multiFactorDeviceVerified = true
+            return it
+        }
 
         userService.checkAndGetUserById(user.id) >> user
         mockOTPDeviceDao.getOTPDeviceByParentAndId(user, otpDevice.id) >> otpDevice
@@ -442,29 +494,27 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         }
 
         then:
-        if (local) {
-            1 * mockBypassHelper.createBypassDevice(2, 120) >> bypassDevice
-            1 * mockBypassDeviceDao.deleteAllBypassDevices(user)
-            1 * mockBypassDeviceDao.addBypassDevice(user, bypassDevice)
-            1 * mockBypassHelper.calculateBypassCodes(bypassDevice) >> fakeCodes
-        } else if (type == FactorTypeEnum.SMS.value()) {
-            1 * multiFactorUserManagement.getBypassCodes(_, _, _) >> arrayOfCodes
+        0 * mockBypassDeviceDao.deleteAllBypassDevices(user)
+        0 * mockBypassDeviceDao.addBypassDevice(user, _)
+        interaction {
+            def userManagementInteractionCount = 0
+            if (type == FactorTypeEnum.SMS) {
+                userManagementInteractionCount = 1
+            }
+            userManagementInteractionCount * multiFactorUserManagement.getBypassCodes(_, _, _) >> arrayOfCodes
         }
 
-        then:
-        if (exception == null) {
-            codes.size() == 2
-            codes == fakeCodes
-        } else {
-            exception instanceof BadRequestException
+        if (type == FactorTypeEnum.SMS) {
+            assert codes == fakeCodes
+            assert codes.size() == 2
+        } else if (type == FactorTypeEnum.OTP) {
+            assert exception instanceof BadRequestException
         }
 
         where:
-        local | type
-        true  | FactorTypeEnum.OTP.value()
-        true  | FactorTypeEnum.SMS.value()
-        false | FactorTypeEnum.OTP.value()
-        false | FactorTypeEnum.SMS.value()
+        type | _
+        FactorTypeEnum.OTP | _
+        FactorTypeEnum.SMS | _
     }
 
     def "test multi-factor setting validation for 'disable multi-factor'"() {

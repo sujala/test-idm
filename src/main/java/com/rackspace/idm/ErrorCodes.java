@@ -13,4 +13,6 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_INVALID_NUM_OTP_DIGITS = "OTP-004";
     public static final String ERROR_CODE_HOTP_ENCRYPTION_ERROR = "OTP-005";
     public static final String ERROR_CODE_DELETE_OTP_DEVICE_FORBIDDEN_STATE = "OTP-006";
+    public static final String ERROR_CODE_OTP_BYPASS_MISSING_HASH_ALGORITHM = "OTP-007";
+    public static final String ERROR_CODE_OTP_BYPASS_ERROR_ENCODING = "OTP-008";
 }

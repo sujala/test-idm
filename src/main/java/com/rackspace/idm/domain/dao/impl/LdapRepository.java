@@ -62,6 +62,7 @@ public abstract class LdapRepository {
 
     public static final String OBJECTCLASS_BYPASS_DEVICE = "rsBypassDevice";
     public static final String ATTR_BYPASS_CODE = "rsBypassCode";
+    public static final String ATTR_ITERATION_COUNT = "rsIterationCount";
 
     public static final String OBJECTCLASS_KEY_DESCRIPTOR = "rsKeyDescriptor";
     public static final String OBJECTCLASS_KEY_METADATA = "rsKeyMetadata";
