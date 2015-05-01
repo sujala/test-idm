@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
@@ -10,6 +11,7 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCloudAuthenticationResponseToken
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
@@ -89,7 +91,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
 
     @Override
     public void doCleanupSpec() {
-        stopGrizzly();
+        stopGrizzly()
     }
 
     /**
@@ -374,24 +376,25 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     @Unroll
     def "Check if local locking is working: requestContentType: #requestContentMediaType; acceptMediaType=#acceptMediaType; sms=#isSMS"() {
         setup:
+        def maxAttempts = 3
+        def autoUnlockSeconds = 1800
         reloadableConfiguration.reset()
-        reloadableConfiguration.setProperty("feature.multifactor.locking.enabled", true)
-        reloadableConfiguration.setProperty("feature.multifactor.locking.attempts.maximumNumber", 3)
-        reloadableConfiguration.setProperty("feature.multifactor.locking.expirationInSeconds", 1800)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, maxAttempts)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, autoUnlockSeconds)
 
         setUpAndEnableMultiFactor(isSMS)
         if (isSMS) {
+            //need to mock the response as we don't use Duo for real
             def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, null, null)
             when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
         }
 
-        def oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
-        String wwwHeader = oneFactorResponse.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
-        String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+        String encryptedSessionId = getSessionId(userAdmin.username)
         def response, directoryUser
 
         when:
-        for (int i=0; i<4; i++) {
+        for (int i=0; i<maxAttempts; i++) {
             response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong", requestContentMediaType, acceptMediaType)
         }
         directoryUser = userDao.getUserById(userAdmin.id)
@@ -413,26 +416,63 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         directoryUser.multiFactorLastFailedTimestamp == null
         0 * mockUserManagement.unlockUser(userAdmin.id)
 
-        // TODO: Uncomment for "[CIDMDEV-4952] Multi-Factor Mobile Passcode :: Automatic Account Unlock"
-//        when:
-//        for (int i=0; i<4; i++) {
-//            response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong", requestContentMediaType, acceptMediaType)
-//        }
-//
-//        then:
-//        response.status == 403
-//
-//        when: // wait for the expiration on local locking
-//        directoryUser = userDao.getUserById(userAdmin.id)
-//        directoryUser.setMultiFactorLastFailedTimestamp(new Date(0)) // force expiration
-//        userDao.updateUserAsIs(directoryUser)
-//
-//        cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong")
-//        directoryUser = userDao.getUserById(userAdmin.id)
-//
-//        then: // check auto-unlock (roll back the counter to 1)
-//        directoryUser.multiFactorFailedAttemptCount == 1
-//        directoryUser.multiFactorLastFailedTimestamp != null
+        when: "fail passcode auth the number of times takes to cause account to be locked"
+        for (int i=0; i<maxAttempts; i++) {
+            //last attempt should lock the account
+            response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong", requestContentMediaType, acceptMediaType)
+        }
+        org.openstack.docs.identity.api.v2.User retrievedUserAdmin = utils.getUserById(userAdmin.id)
+        directoryUser = userDao.getUserById(userAdmin.id)
+
+        then: "get 403"
+        response.status == 403
+        retrievedUserAdmin.getMultiFactorState() == MultiFactorStateEnum.LOCKED
+        directoryUser.multiFactorFailedAttemptCount == maxAttempts
+
+        when: "invalid auth again"
+        cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong", requestContentMediaType, acceptMediaType)
+        retrievedUserAdmin = utils.getUserById(userAdmin.id)
+        directoryUser = userDao.getUserById(userAdmin.id)
+
+        then: "still get 403"
+        response.status == 403
+        retrievedUserAdmin.getMultiFactorState() == MultiFactorStateEnum.LOCKED
+
+        and: "failed attempt count not increased"
+        directoryUser.multiFactorFailedAttemptCount == maxAttempts
+
+        when: "list users for domain when user is locked"
+        List<org.openstack.docs.identity.api.v2.User> users = utils.getUsersByDomainId(userAdmin.getDomainId())
+        retrievedUserAdmin = users.find() {it.id == userAdmin.id}
+
+        then: "list returns user as locked"
+        retrievedUserAdmin != null
+        retrievedUserAdmin.getMultiFactorState() == MultiFactorStateEnum.LOCKED
+
+        when: "hack the last failed attempt on local locking to simulate auto-unlocking and get user again"
+        directoryUser = userDao.getUserById(userAdmin.id)
+        directoryUser.setMultiFactorLastFailedTimestamp(new DateTime().minusSeconds(autoUnlockSeconds + 5).toDate()) // set to less than auto-unlock
+        userDao.updateUserAsIs(directoryUser)
+        retrievedUserAdmin = utils.getUserById(userAdmin.id)
+
+        then: "user is no longer locked"
+        retrievedUserAdmin.getMultiFactorState() == MultiFactorStateEnum.ACTIVE
+
+        when: "list users for domain when user is active"
+        users = utils.getUsersByDomainId(userAdmin.getDomainId())
+        retrievedUserAdmin = users.find() {it.id == userAdmin.id}
+
+        then: "list returns user as active"
+        retrievedUserAdmin != null
+        retrievedUserAdmin.getMultiFactorState() == MultiFactorStateEnum.ACTIVE
+
+        when: "invalid attempt again"
+        cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong")
+        directoryUser = userDao.getUserById(userAdmin.id)
+
+        then: "invalid attempts is rolled back to 1"
+        directoryUser.multiFactorFailedAttemptCount == 1
+        directoryUser.multiFactorLastFailedTimestamp != null
 
         where:
         requestContentMediaType         | acceptMediaType                 | isSMS
@@ -447,16 +487,66 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     }
 
     @Unroll
+    def "Check local locking resets failed counter when ttl of last failure passes: sms=#useSmsDevice"() {
+        setup:
+        def maxAttempts = 3
+        def loginFailureTTL = 1800
+        reloadableConfiguration.reset()
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, maxAttempts)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, loginFailureTTL)
+
+        setUpAndEnableMultiFactor(useSmsDevice)
+        if (useSmsDevice) {
+            //need to mock the response as we don't use Duo for real
+            def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, null, null)
+            when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
+        }
+
+        String encryptedSessionId = getSessionId(userAdmin.username)
+        def response, directoryUser
+
+        when: "fail login first time"
+        response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong")
+        directoryUser = userDao.getUserById(userAdmin.id)
+
+        then: "records single failed login"
+        directoryUser.multiFactorFailedAttemptCount == 1
+
+        when: "fail login second time"
+        response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong")
+        directoryUser = userDao.getUserById(userAdmin.id)
+
+        then: "records single failed login"
+        directoryUser.multiFactorFailedAttemptCount == 2
+
+        when: "hack the last failed attempt to simulate TTL passing and fail login a third time"
+        directoryUser = userDao.getUserById(userAdmin.id)
+        directoryUser.setMultiFactorLastFailedTimestamp(new DateTime().minusSeconds(loginFailureTTL).toDate()) //set to now() - TTL
+        userDao.updateUserAsIs(directoryUser)
+        response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong")
+        directoryUser = userDao.getUserById(userAdmin.id)
+        org.openstack.docs.identity.api.v2.User retrievedUserAdmin = utils.getUserById(userAdmin.id)
+
+        then: "invalid attempts is rolled back to 1 and user is not locked"
+        directoryUser.multiFactorFailedAttemptCount == 1
+        retrievedUserAdmin.getMultiFactorState() == MultiFactorStateEnum.ACTIVE
+
+        where:
+        useSmsDevice | _
+        true | _
+    }
+
+
+    @Unroll
     def "Test local locking feature flag: #requestContentMediaType; acceptMediaType=#acceptMediaType"() {
         setup:
         reloadableConfiguration.reset()
         reloadableConfiguration.setProperty("feature.multifactor.locking.enabled", false)
 
         setUpAndEnableMultiFactor()
+        String encryptedSessionId = getSessionId(userAdmin.username)
 
-        def oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
-        String wwwHeader = oneFactorResponse.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
-        String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
         def response, directoryUser, mfaServiceResponse
 
         when:
@@ -501,6 +591,13 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    def String getSessionId(username, pwd = DEFAULT_PASSWORD) {
+        def oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        String wwwHeader = oneFactorResponse.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+        return encryptedSessionId;
     }
 
     def void setUpAndEnableMultiFactor(def phone = true) {

@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.JSONConstants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
@@ -340,6 +341,13 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
 
     def "locked mfa user should have mfa state updated to 'ACTIVE' when unlock mfa call is made"() {
         given:
+        reloadableConfiguration.reset()
+        def maxAttempts = 3
+        def autoUnlockSeconds = 1800
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP, localLocking)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, maxAttempts)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, autoUnlockSeconds)
+
         def settings = v2Factory.createMultiFactorSettings(true)
         def user = createUserAdmin()
         def token = utils.authenticate(user).token.id
@@ -361,7 +369,13 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
 
         when: "user mfa state is updated to 'LOCKED'"
         directoryUser = userDao.getUserById(user.id)
-        directoryUser.multiFactorState = BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED
+        if (localLocking) {
+            directoryUser.setMultiFactorFailedAttemptCount(maxAttempts)
+            directoryUser.setMultiFactorLastFailedTimestamp(new Date())
+        } else {
+            //directly update state to show it's unset
+            directoryUser.multiFactorState = BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED
+        }
         userDao.updateUserAsIs(directoryUser)
         userById = utils.getUserById(user.id)
 
@@ -379,6 +393,11 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
+
+        where:
+        localLocking | _
+        true | _
+        false | _
     }
 
     def "user-admin and user-manage should be able to mfa unlock user's in their domain"() {

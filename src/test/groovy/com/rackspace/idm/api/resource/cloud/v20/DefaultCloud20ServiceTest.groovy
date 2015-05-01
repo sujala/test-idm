@@ -17,6 +17,7 @@ import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.*
+import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.StringUtils
@@ -2792,6 +2793,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         converter.groupConverterCloudV20 =  Mock(GroupConverterCloudV20)
         converter.authorizationService = Mock(AuthorizationService)
         converter.identityConfig = new IdentityConfig(Mock(Configuration), Mock(Configuration))
+        converter.basicMultiFactorService = Mock(BasicMultiFactorService)
         service.userConverterCloudV20 = converter
 
         def email = "email@gmail.com"

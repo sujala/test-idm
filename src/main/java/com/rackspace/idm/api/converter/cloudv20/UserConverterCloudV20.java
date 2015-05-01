@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
 import org.joda.time.DateTime;
@@ -59,6 +60,9 @@ public class UserConverterCloudV20 {
 
     @Autowired
     RequestContextHolder requestContextHolder;
+
+    @Autowired
+    private BasicMultiFactorService basicMultiFactorService;
 
     public void setMapper(Mapper mapper) {
         this.mapper = mapper;
@@ -198,16 +202,8 @@ public class UserConverterCloudV20 {
             */
             jaxbUser.setRoles(null);
 
-            //legacy users will not have a multifactor state in the directory, if they are mfa enabled then their state is active
-            if(user.getMultifactorEnabled() != null && user.getMultifactorEnabled() && user.getMultiFactorState() == null) {
-                jaxbUser.setMultiFactorState(MultiFactorStateEnum.ACTIVE);
-            }
-
-            //protect against invalid data in the directory
-            //if a user is not using multifactor then they should not have a mfa state
-            if(user.getMultifactorEnabled() == null || !user.getMultifactorEnabled()) {
-                jaxbUser.setMultiFactorState(null);
-            }
+            //override mfa state using dynamic logic
+            jaxbUser.setMultiFactorState(basicMultiFactorService.getLogicalUserMultiFactorState(user));
 
             if(includeOtherAttributes) {
                 if (user.getSecretQuestion() != null || user.getSecretAnswer() != null) {
