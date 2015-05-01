@@ -73,6 +73,8 @@ public class BasicMultiFactorService implements MultiFactorService {
     private static final String PIN_DOES_NOT_MATCH = "Pin does not match";
     private static final String DEVICE_ALREADY_VERIFIED = "Device already verified";
 
+    public static final String MAX_OTP_DEVICES_REACHED = "You have added the maximum number of devices allowed for your profile";
+
     private final UserMultiFactorEnforcementLevelConverter userMultiFactorEnforcementLevelConverter = new UserMultiFactorEnforcementLevelConverter();
 
     private MultiFactorStateConverter multiFactorStateConverter = new MultiFactorStateConverter();
@@ -400,7 +402,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         if (StringUtils.hasText(phoneRsId)) {
             MobilePhone phone = mobilePhoneDao.getById(phoneRsId);
-            unlinkPhoneFromUser(phone, user);
+            if (phone != null) {
+                unlinkPhoneFromUser(phone, user);
+            }
         }
 
         //note - if this fails we will have a orphaned user account in duo that is not linked to anything in ldap since
@@ -1003,6 +1007,12 @@ public class BasicMultiFactorService implements MultiFactorService {
         Assert.notNull(userId);
 
         final User user = userService.checkAndGetUserById(userId);
+
+        List<OTPDevice> userDevices = getOTPDevicesForUser(user);
+
+        if (userDevices.size() >= identityConfig.getReloadableConfig().getMaxOTPDevicesPerUser()) {
+            throw new BadRequestException(MAX_OTP_DEVICES_REACHED);
+        }
 
         final OTPDevice device = otpHelper.createOTPDevice(name);
         otpDeviceDao.addOTPDevice(user, device);
