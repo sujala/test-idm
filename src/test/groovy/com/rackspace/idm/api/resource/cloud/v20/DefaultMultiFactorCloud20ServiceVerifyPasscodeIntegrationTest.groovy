@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
@@ -16,6 +17,8 @@ import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.security.TokenFormat
+import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.util.OTPHelper
@@ -70,6 +73,9 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
 
     @Autowired
     private OTPHelper otpHelper
+
+    @Autowired
+    TokenFormatSelector tokenFormatSelector
 
     org.openstack.docs.identity.api.v2.User userAdmin
     String userAdminToken
@@ -165,8 +171,13 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         then:
         mfaAuthResponse.getStatus() == HttpStatus.SC_OK
         token.id != null
-        token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.PASSCODE.toString())
-        token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.PASSWORD.toString())
+        if (phone) {
+            token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.PASSCODE.getValue())
+            token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
+        } else {
+            token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.OTPPASSCODE.getValue())
+            token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
+        }
 
         where:
         requestContentMediaType         | acceptMediaType                 | mfaDecisionReason                       | phone
@@ -189,6 +200,29 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | null                                    | false
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | null                                    | false
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | null                                    | false
+    }
+
+    def "Successful mobile passcode authentication with AE token sets OTP_PASSCODE auth by"() {
+        setup:
+        setUpAndEnableMultiFactor(false)
+        userAdmin.setTokenFormat(TokenFormatEnum.AE)
+        utils.updateUser(userAdmin)
+        def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+
+        when:
+        def passcode = getOTPCode()
+        def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, passcode)
+        AuthenticateResponse responseEntity = mfaAuthResponse.getEntity(AuthenticateResponse).value
+        Token token = responseEntity.token
+
+        then:
+        mfaAuthResponse.getStatus() == HttpStatus.SC_OK
+        token.id != null
+        tokenFormatSelector.formatForExistingToken(token.id) == TokenFormat.AE
+        token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.OTPPASSCODE.getValue())
+        token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
     }
 
     @Unroll("Fail with 401 when wrong passcode: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")

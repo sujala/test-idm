@@ -46,7 +46,7 @@ public interface TokenRevocationService {
      * Static constant defining MFA tokens that can be passed to the {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} and
      * {@link #revokeTokensForBaseUser(String, java.util.List)} methods
      */
-    public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_MFA_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.PASSWORD_PASSCODE));
+    public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_MFA_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.PASSWORD_PASSCODE, AuthenticatedByMethodGroup.PASSWORD_OTPPASSCODE));
 
     /**
      * Revoke the specified token if it is valid (not expired) and has not been revoked previously.

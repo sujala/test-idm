@@ -11,6 +11,7 @@ public enum AuthenticatedByMethodEnum {
     ,PASSCODE("PASSCODE")
     ,RSAKEY("RSAKEY")
     ,SYSTEM("SYSTEM") //auto created by system. Should not be exposed externally
+    ,OTPPASSCODE("OTPPASSCODE")
     ;
 
     String value;
