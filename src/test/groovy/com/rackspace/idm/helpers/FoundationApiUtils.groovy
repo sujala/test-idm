@@ -1,7 +1,6 @@
 package com.rackspace.idm.helpers
 
 import com.rackspace.api.idm.v1.AuthData
-import com.rackspace.api.idm.v1.Tenant
 import com.rackspace.api.idm.v1.Token
 import com.rackspace.api.idm.v1.User
 import com.rackspace.api.idm.v1.UserPasswordCredentials
@@ -49,28 +48,10 @@ class FoundationApiUtils {
         response.getEntity(User)
     }
 
-    def createTenant(String token) {
-        def tenant = factory.createTenant()
-        def response = methods.createTenant(token, tenant)
-        assert (response.status == SC_CREATED)
-        response.getEntity(Tenant)
-    }
-
-    def getTenant(String token, String tenantId) {
-        def response = methods.getTenant(token, tenantId)
-        assert (response.status == SC_OK)
-        response.getEntity(Tenant)
-    }
-
     def getUserPasswordCredentials(String token, String userId) {
         def response = methods.getUserPasswordCredentials(token, userId)
         assert (response.status == SC_OK)
         response.getEntity(UserPasswordCredentials)
-    }
-
-    def addUserTenantRole(String token, String userId, String roleId, String tenantId) {
-        def response = methods.addUserTenantRole(token, userId, roleId, tenantId)
-        assert (response.status == SC_NO_CONTENT)
     }
 
     def authenticateUser(String clientId, String clientSecret, String username, String password) {

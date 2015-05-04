@@ -20,7 +20,6 @@ import static org.hamcrest.Matchers.equalTo;
 public class ObjectFactoryTest {
     ObjectFactory objectFactory;
     UserList userList;
-    Tenant tenant;
     ApplicationList applicationList;
     Racker racker;
     Application application;
@@ -36,7 +35,6 @@ public class ObjectFactoryTest {
 
         // Classes that needs to be tested
         userList = objectFactory.createUserList();
-        tenant = objectFactory.createTenant();
         applicationList = objectFactory.createApplicationList();
         racker = objectFactory.createRacker();
         application = objectFactory.createApplication();
@@ -83,20 +81,6 @@ public class ObjectFactoryTest {
     public void createRackerCredentials_returnsNewCreatedObject() throws Exception {
         RackerCredentials result = objectFactory.createRackerCredentials();
         assertThat("detail", result.authorizationCode, equalTo(null));
-    }
-
-    @Test
-    public void tenant_getAny_anyIsNull_returnsNewList() throws Exception {
-        List<Object> result = tenant.getAny();
-        assertThat("list", result.isEmpty(), equalTo(true));
-    }
-
-    @Test
-    public void tenant_getAny_anyExists_returnsExistingList() throws Exception {
-        List<Object> any = tenant.getAny();
-        any.add("test");
-        List<Object> result = tenant.getAny();
-        assertThat("list", result.size(), equalTo(1));
     }
 
     @Test
@@ -291,12 +275,6 @@ public class ObjectFactoryTest {
         idmFault.setCode(1);
         int result = idmFault.getCode();
         assertThat("Code", result, equalTo(1));
-    }
-
-    @Test
-    public void createTenants_returnsNewCreatedJAXBElementObject() throws Exception {
-        JAXBElement<Tenants> result = objectFactory.createTenants(new Tenants());
-        assertThat("tenant", result.getValue().tenant, equalTo(null));
     }
 
     @Test
