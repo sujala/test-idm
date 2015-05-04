@@ -92,6 +92,8 @@ public class IdentityConfig {
     public static final boolean FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT = false;
     public static final String FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP = "feature.identity.admin.create.subuser.enabled";
     public static final String FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP = "domain.restricted.to.one.user.admin.enabled";
+    public static final String MAX_OTP_DEVICE_PER_USER_PROP = "max.otp.device.per.user";
+    public static final int MAX_OTP_DEVICE_PER_USER_DEFAULT = 5;
 
     /**
      * Name of the property that specifies the name of the identity role users are assigned to gain access to MFA during
@@ -186,6 +188,8 @@ public class IdentityConfig {
         defaults.put(FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_DEFAULT);
         defaults.put(FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_DEFAULT);
         defaults.put(LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_PROP, LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_DEFAULT);
+        defaults.put(MAX_OTP_DEVICE_PER_USER_PROP, MAX_OTP_DEVICE_PER_USER_DEFAULT);
+
         return defaults;
     }
 
@@ -688,7 +692,10 @@ public class IdentityConfig {
             return getIntSafely(reloadableConfiguration, LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_PROP);
         }
 
-
+        @IdmProp(key = MAX_OTP_DEVICE_PER_USER_PROP, versionAdded = "2.15.0", description = "Maximum number of OTP devices a user can associate with his/her account")
+        public int getMaxOTPDevicesPerUser() {
+            return getIntSafely(reloadableConfiguration, MAX_OTP_DEVICE_PER_USER_PROP);
+        }
     }
 
     @Deprecated

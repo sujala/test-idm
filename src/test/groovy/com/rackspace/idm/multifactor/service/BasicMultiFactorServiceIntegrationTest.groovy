@@ -3,6 +3,7 @@ package com.rackspace.idm.multifactor.service
 import com.google.i18n.phonenumbers.Phonenumber
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.OTPDeviceDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
@@ -10,6 +11,7 @@ import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.OTPDevice
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
+import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.identity.multifactor.domain.BasicPin
 import com.rackspace.identity.multifactor.domain.Pin
@@ -416,6 +418,50 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
 
         cleanup:
         userRepository.deleteObject(finalUserAdmin)
+    }
+
+    /**
+     * This tests linking an OTP device to a user
+     *
+     * @return
+     */
+    def "AddOTPDevice enforces max OTP Device limit per user limit"() {
+        setup:
+        reloadableConfiguration.setProperty(IdentityConfig.MAX_OTP_DEVICE_PER_USER_PROP, 2)
+
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+        User finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+        String name = getNormalizedRandomString()
+
+        when: "first device allowed"
+        OTPDevice otpDevice1 = multiFactorService.addOTPDeviceToUser(finalUserAdmin.id, name)
+
+        then:
+        multiFactorService.checkAndGetOTPDeviceFromUserById(finalUserAdmin.id, otpDevice1.id) != null
+
+        when: "second device allowed"
+        OTPDevice otpDevice2 = multiFactorService.addOTPDeviceToUser(finalUserAdmin.id, name)
+
+        then:
+        multiFactorService.checkAndGetOTPDeviceFromUserById(finalUserAdmin.id, otpDevice2.id) != null
+
+        when: "attempt to add 3rd device"
+        multiFactorService.addOTPDeviceToUser(finalUserAdmin.id, name)
+
+        then: "get bad request"
+        thrown(BadRequestException)
+
+        when: "updated max limit and attempt to add 3rd device"
+        reloadableConfiguration.setProperty(IdentityConfig.MAX_OTP_DEVICE_PER_USER_PROP, 3)
+        OTPDevice otpDevice3 = multiFactorService.addOTPDeviceToUser(finalUserAdmin.id, name)
+
+        then: "can add"
+        notThrown(BadRequestException)
+        multiFactorService.checkAndGetOTPDeviceFromUserById(finalUserAdmin.id, otpDevice3.id) != null
+
+        cleanup:
+        userRepository.deleteObject(finalUserAdmin)
+        reloadableConfiguration.reset()
     }
 
     def "Delete an unverified OTP device from a user-admin"() {
