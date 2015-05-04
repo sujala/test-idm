@@ -41,9 +41,19 @@ public class BypassDevice implements UniqueId, Auditable {
             requiredForEncode = false)
     private Set<String> bypassCodes;
 
+    @LDAPField(attribute=LdapRepository.ATTR_ENCRYPTION_SALT,
+            objectClass=LdapRepository.OBJECTCLASS_BYPASS_DEVICE,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private String salt;
+
+    @LDAPField(attribute=LdapRepository.ATTR_ITERATION_COUNT,
+            objectClass=LdapRepository.OBJECTCLASS_BYPASS_DEVICE,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private Integer iterations;
+
     @Override
     public String getAuditContext() {
-        return "bypassCodes=" + bypassCodes;
+        return "id=" + id;
     }
 
 }

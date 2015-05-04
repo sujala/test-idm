@@ -17,6 +17,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.BypassDeviceDao;
 import com.rackspace.idm.domain.dao.MobilePhoneDao;
 import com.rackspace.idm.domain.dao.OTPDeviceDao;
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dozer.converters.MultiFactorStateConverter;
 import com.rackspace.idm.domain.dozer.converters.UserMultiFactorEnforcementLevelConverter;
 import com.rackspace.idm.domain.entity.*;
@@ -27,6 +28,7 @@ import com.rackspace.idm.domain.entity.MultiFactorDevice;
 import com.rackspace.idm.domain.entity.OTPDevice;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.util.BypassDeviceCreationResult;
 import com.rackspace.idm.util.BypassHelper;
 import com.rackspace.idm.util.OTPHelper;
 import org.apache.commons.collections.CollectionUtils;
@@ -555,7 +557,7 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         // Check against bypass codes
         if (response == null || MfaAuthenticationDecision.DENY.equals(response.getDecision())) {
-            final boolean check = bypassDeviceDao.useBypassCode(user, passcode);
+            final boolean check = consumeBypassCodeForUser(user, passcode);
             if (check) {
                 response = new GenericMfaAuthenticationResponse(
                         MfaAuthenticationDecision.ALLOW,
@@ -590,6 +592,57 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
 
         return response;
+    }
+
+    private boolean consumeBypassCodeForUser(User user, String passcode) {
+        if (org.apache.commons.lang.StringUtils.isBlank(passcode)) {
+            return false;
+        }
+
+        for (BypassDevice bypassDevice : getUnexpiredAndCleanExpiredBypassDevices(user)) {
+            //encode the user provided code to compare to device codes
+            String encodedCode = bypassHelper.encodeCodeForDevice(bypassDevice, passcode);
+            for (String deviceEncodedCode : bypassDevice.getBypassCodes()) {
+                if (encodedCode.equals(deviceEncodedCode)) {
+                    consumeBypassCodeFromBypassDevice(bypassDevice, deviceEncodedCode);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * If it's the last bypass code for the device, delete the bypass code device; otherwise just remove the bypass
+     * code.
+     *
+     * @param bypassDevice
+     * @param bypassCode
+     */
+    private boolean consumeBypassCodeFromBypassDevice(BypassDevice bypassDevice, String bypassCode) {
+        boolean removed = bypassDevice.getBypassCodes().remove(bypassCode);
+        if (removed) {
+            if (bypassDevice.getBypassCodes().size() == 0) {
+                bypassDeviceDao.deleteBypassDevice(bypassDevice);
+            } else {
+                bypassDeviceDao.updateBypassDevice(bypassDevice);
+            }
+        }
+        return removed;
+    }
+
+    private Iterable<BypassDevice> getUnexpiredAndCleanExpiredBypassDevices(UniqueId parent) {
+        final List<BypassDevice> result = new ArrayList<BypassDevice>();
+        for (BypassDevice bypassDevice : bypassDeviceDao.getAllBypassDevices(parent)) {
+            if (bypassDevice.getMultiFactorDevicePinExpiration() == null ||
+                    bypassDevice.getMultiFactorDevicePinExpiration().compareTo(new Date()) >= 0) {
+                result.add(bypassDevice);
+            } else {
+                LOG.info("Clean expired bypass code: " + bypassDevice.getId());
+                bypassDeviceDao.deleteBypassDevice(bypassDevice);
+            }
+        }
+        return result;
     }
 
     /**
@@ -742,9 +795,13 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     private List<String> createBypassCodes(User user, int normalizedNumberOfCodes, int normalizedValidSecs) {
         bypassDeviceDao.deleteAllBypassDevices(user);
-        final BypassDevice bypassDevice = bypassHelper.createBypassDevice(normalizedNumberOfCodes, normalizedValidSecs);
-        bypassDeviceDao.addBypassDevice(user, bypassDevice);
-        return bypassHelper.calculateBypassCodes(bypassDevice);
+        final BypassDeviceCreationResult result = bypassHelper.createBypassDevice(normalizedNumberOfCodes, normalizedValidSecs);
+
+        //persist the hashed codes to ldap
+        bypassDeviceDao.addBypassDevice(user, result.getDevice());
+
+        //return the plaintext codes
+        return new ArrayList<String>(result.getPlainTextBypassCodes());
     }
 
     private int getNumberOfCodes(BigInteger requested, boolean isSelfService) {

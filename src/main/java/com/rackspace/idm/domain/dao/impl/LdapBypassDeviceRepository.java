@@ -45,51 +45,19 @@ public class LdapBypassDeviceRepository extends LdapGenericRepository<BypassDevi
         }
     }
 
-    private Iterable<BypassDevice> getUnexpiredAndCleanExpiredBypassDevices(UniqueId parent) {
-        final List<BypassDevice> result = new ArrayList<BypassDevice>();
-        for (BypassDevice bypassDevice : getAllBypassDevices(parent)) {
-            if (bypassDevice.getMultiFactorDevicePinExpiration() == null ||
-                    bypassDevice.getMultiFactorDevicePinExpiration().compareTo(new Date()) >= 0) {
-                result.add(bypassDevice);
-            } else {
-                LOGGER.info("Clean expired bypass code: " + bypassDevice.getId());
-                deleteBypassDevice(bypassDevice);
-            }
+    @Override
+    public boolean deleteBypassDevice(BypassDevice bypassDevice) {
+        try {
+            deleteObject(bypassDevice);
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Cannot remove bypass device: " + bypassDevice.getId(), e);
+            return false;
         }
-        return result;
     }
 
     @Override
-    public boolean useBypassCode(UniqueId parent, String passcode) {
-        for (BypassDevice bypassDevice : getUnexpiredAndCleanExpiredBypassDevices(parent)) {
-            for (String bypassCode : bypassDevice.getBypassCodes()) {
-                if (bypassCode.equals(passcode)) {
-                    removeBypassCodeFromBypassDevice(bypassDevice, bypassCode);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private void removeBypassCodeFromBypassDevice(BypassDevice bypassDevice, String bypassCode) {
-        bypassDevice.getBypassCodes().remove(bypassCode);
-        if (bypassDevice.getBypassCodes().size() == 0) {
-            deleteBypassDevice(bypassDevice);
-        } else {
-            updateBypassDevice(bypassDevice);
-        }
-    }
-
-    private void deleteBypassDevice(BypassDevice bypassDevice) {
-        try {
-            deleteObject(bypassDevice);
-        } catch (Exception e) {
-            LOGGER.error("Cannot remove bypass device: " + bypassDevice.getId(), e);
-        }
-    }
-
-    private void updateBypassDevice(BypassDevice bypassDevice) {
+    public void updateBypassDevice(BypassDevice bypassDevice) {
         try {
             updateObject(bypassDevice);
         } catch (Exception e) {
@@ -97,7 +65,8 @@ public class LdapBypassDeviceRepository extends LdapGenericRepository<BypassDevi
         }
     }
 
-    private Iterable<BypassDevice> getAllBypassDevices(UniqueId parent) {
+    @Override
+    public Iterable<BypassDevice> getAllBypassDevices(UniqueId parent) {
         try {
             final Filter filter = new LdapSearchBuilder()
                     .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BYPASS_DEVICE).build();
