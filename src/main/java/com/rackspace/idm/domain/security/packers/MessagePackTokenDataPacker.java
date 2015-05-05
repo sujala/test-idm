@@ -80,13 +80,15 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
     private AETokenService aeTokenService;
 
     static {
-        AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_PASSWORD, 1);
-        AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_APIKEY, 2);
-        AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_FEDERATION, 3);
-        AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_PASSCODE, 4);
-        AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_RSAKEY, 5);
-        AUTH_BY_MARSHALL.put(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION, 6);
+        AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.PASSWORD.getValue(), 1);
+        AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.APIKEY.getValue(), 2);
+        AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.FEDERATION.getValue(), 3);
+        AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.PASSCODE.getValue(), 4);
+        AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.RSAKEY.getValue(), 5);
+        AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.IMPERSONATION.getValue(), 6);
         AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.SYSTEM.getValue(), 7);
+        AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.OTPPASSCODE.getValue(), 8);
+
         for (String key : AUTH_BY_MARSHALL.keySet()) {
             AUTH_BY_UNMARSHALL.put(AUTH_BY_MARSHALL.get(key), key);
         }
@@ -336,7 +338,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             }
             UserScopeAccess usa = new UserScopeAccess();
             usa.setUserRsId(impersonatedUser.getId());
-            usa.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION);
+            usa.getAuthenticatedBy().add(AuthenticatedByMethodEnum.IMPERSONATION.getValue());
             usa.setAccessTokenExp(scopeAccess.getAccessTokenExp());
             aeTokenService.marshallTokenForUser(impersonatedUser, usa);
             scopeAccess.setImpersonatingToken(usa.getAccessTokenString());
@@ -405,7 +407,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             }
             UserScopeAccess usa = new UserScopeAccess();
             usa.setUserRsId(impersonatedUser.getId());
-            usa.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION);
+            usa.getAuthenticatedBy().add(AuthenticatedByMethodEnum.IMPERSONATION.getValue());
             usa.setAccessTokenExp(scopeAccess.getAccessTokenExp());
             aeTokenService.marshallTokenForUser(impersonatedUser, usa);
             scopeAccess.setImpersonatingToken(usa.getAccessTokenString());

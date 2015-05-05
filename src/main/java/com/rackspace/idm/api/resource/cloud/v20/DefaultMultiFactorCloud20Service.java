@@ -376,7 +376,19 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         if (!CollectionUtils.isEmpty(sessionId.getAuthenticatedBy())) {
             authBySet.addAll(sessionId.getAuthenticatedBy());
         }
-        authBySet.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE);
+
+        /*
+        on successful auth, set the authenticatedBy on the token based on the type of MFA user is configured for. Even
+        if the user was auth'd via bypass code, we still set to the type the user is configured for rather than show
+        bypass code
+         */
+        AuthenticatedByMethodEnum authByMethod;
+        if (multiFactorService.isMultiFactorTypeOTP(user) ) {
+            authByMethod = AuthenticatedByMethodEnum.OTPPASSCODE;
+        } else {
+            authByMethod = AuthenticatedByMethodEnum.PASSCODE;
+        }
+        authBySet.add(authByMethod.getValue());
 
         UserScopeAccess scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(user, getCloudAuthClientId(), new ArrayList<String>(authBySet));
         AuthResponseTuple authResponseTuple = new AuthResponseTuple();
