@@ -394,7 +394,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
             //populate impersonator user info
             String impersonatorId = safeRead(unpacker, String.class);
-            scopeAccess.setUserRsId(impersonatorId);
+            scopeAccess.setRackerId(impersonatorId);
 
             //populate impersonated information
             String impersonatedUserId = safeRead(unpacker, String.class);

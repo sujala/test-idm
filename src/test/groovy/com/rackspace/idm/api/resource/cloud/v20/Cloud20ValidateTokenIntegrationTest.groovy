@@ -1,11 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.security.TokenFormat
+import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -44,6 +47,9 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     @Autowired
     AuthorizationService authorizationService
+
+    @Autowired
+    TokenFormatSelector tokenFormatSelector
 
     def "Validate user token" () {
         def expirationTimeInSeconds = 86400
@@ -178,6 +184,30 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         token != null
 
         cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Validate Impersonated user's token using a racker where racker uses AE Tokens" () {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_RACKER_TOKEN_FORMAT, TokenFormatEnum.AE.value())
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, true)
+
+        def domainId = utils.createDomain()
+        (defaultUser, users) = utils.createDefaultUser(domainId)
+
+        when:
+        def response = utils.impersonateWithRacker(defaultUser)
+        def token = response.token.id
+        assert tokenFormatSelector.formatForExistingToken(token) == TokenFormat.AE
+        utils.validateToken(token)
+
+        then:
+        token != null
+
+        cleanup:
+        staticIdmConfiguration.reset()
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
     }
