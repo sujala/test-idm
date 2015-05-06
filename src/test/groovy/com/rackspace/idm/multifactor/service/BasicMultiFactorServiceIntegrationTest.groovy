@@ -83,6 +83,47 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
     }
 
     /**
+     * This tests linking a phone number to a user
+     *
+     * @return
+     */
+    def "Add same phone to a user-admin while MFA disabled"() {
+        setup:
+        org.openstack.docs.identity.api.v2.User userAdminOpenStack = createUserAdmin()
+
+        Phonenumber.PhoneNumber telephoneNumber = PhoneNumberGenerator.randomUSNumber();
+        String canonTelephoneNumber = PhoneNumberGenerator.canonicalizePhoneNumberToString(telephoneNumber)
+
+        when: "add for first time"
+        MobilePhone phone = multiFactorService.addPhoneToUser(userAdminOpenStack.getId(), telephoneNumber)
+
+        then: "phone is added"
+        //verify passed in object is updated with id, and phone number still as expected
+        phone.getId() != null
+        phone.getTelephoneNumber() == canonTelephoneNumber
+
+        when: "add same phone again"
+        MobilePhone secondPhone = multiFactorService.addPhoneToUser(userAdminOpenStack.getId(), telephoneNumber)
+        User finalUserAdmin = userRepository.getUserById(userAdminOpenStack.getId())
+
+        then: "returned phone is same as before"
+        //verify passed in object is updated with id, and phone number still as expected
+        secondPhone.getId() == phone.getId()
+
+        and: "user is linked to original phone"
+        secondPhone.getId() == phone.getId()
+        finalUserAdmin.getMultiFactorMobilePhoneRsId() == phone.getId()
+
+        cleanup:
+        if (finalUserAdmin != null) {
+            userRepository.deleteObject(finalUserAdmin)
+        }
+        if (phone != null) {
+            mobilePhoneRepository.deleteObject(phone)
+        }
+    }
+
+    /**
      * Verifies that sending pin to phone sets appropriate information on user.
      *
      * @return
