@@ -1,5 +1,6 @@
 package com.rackspace.idm.multifactor.service
 
+import com.google.i18n.phonenumbers.Phonenumber
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
@@ -10,6 +11,7 @@ import com.rackspace.identity.multifactor.providers.MultiFactorAuthenticationSer
 import com.rackspace.identity.multifactor.providers.ProviderPhone
 import com.rackspace.identity.multifactor.providers.ProviderUser
 import com.rackspace.identity.multifactor.providers.UserManagement
+import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.BypassDeviceDao
@@ -22,10 +24,13 @@ import com.rackspace.idm.domain.entity.OTPDevice
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.ErrorCodeIdmException
+import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.idm.util.BypassDeviceCreationResult
 import com.rackspace.idm.util.BypassHelper
 import com.rackspace.idm.util.OTPHelper
+import org.apache.commons.configuration.Configuration
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -82,6 +87,9 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         mockTokenRevocationService(service)
         mockIdentityConfig(service)
 
+        config = Mock(Configuration)
+        service.globalConfig = config
+
         service.multiFactorAuthenticationService = multiFactorAuthenticationService
         service.userManagement = multiFactorUserManagement
         service.mobilePhoneVerification = multiFactorMobilePhoneVerification
@@ -122,6 +130,106 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         result != null
         result.size() == 1
         result.get(0).telephoneNumber == mobilePhone.telephoneNumber
+    }
+
+    @Unroll
+    def "adding new mobile phone deletes old phone duo profile if last linked user and delete duo phone feature enabled. delete duo enabled: #deleteDuoPhone "() {
+        given:
+        Phonenumber.PhoneNumber telephoneNumber1 = PhoneNumberGenerator.randomUSNumber();
+        Phonenumber.PhoneNumber telephoneNumber2 = PhoneNumberGenerator.randomUSNumber();
+        reloadableConfig.getFeatureDeleteUnusedDuoPhones() >> deleteDuoPhone
+        config.getBoolean(BasicMultiFactorService.CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, false) >> true;
+
+        def mobilePhone1 = entityFactory.createMobilePhone().with {
+            it.id = 1
+            it.telephoneNumber = IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(telephoneNumber1)
+            it.externalMultiFactorPhoneId = "duo"
+            it
+        }
+        def mobilePhone2 = entityFactory.createMobilePhone().with {
+            it.id = 2
+            it.telephoneNumber = IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(telephoneNumber2)
+            it
+        }
+        def user = entityFactory.createUser().with {
+            it.multiFactorMobilePhoneRsId = mobilePhone1.id
+            it.multifactorEnabled = false
+            it
+        }
+        mobilePhoneDao.addObject(_) >> {throw new DuplicateException()}
+        userService.checkAndGetUserById(user.id) >> user
+        mobilePhoneDao.getById(mobilePhone1.id) >> mobilePhone1
+        mobilePhoneDao.getByTelephoneNumber(mobilePhone1.telephoneNumber) >> mobilePhone1
+        mobilePhoneDao.getByTelephoneNumber(mobilePhone2.telephoneNumber) >> mobilePhone2
+
+        def result = service.addPhoneToUser(user.id, telephoneNumber1)
+
+        when:
+        def addSecondReponse = service.addPhoneToUser(user.id, telephoneNumber2)
+
+        then:
+        1 * userService.updateUserForMultiFactor(user)
+        mobilePhoneDao.getById(mobilePhone2.id) >> mobilePhone2
+        1 * mobilePhoneDao.deleteObject(mobilePhone1)
+
+        interaction {
+            def callCount = 0
+            if (deleteDuoPhone) {
+                callCount = 1
+            }
+            callCount * multiFactorUserManagement.deleteMobilePhone(mobilePhone1.externalMultiFactorPhoneId)
+        }
+
+        user.multiFactorMobilePhoneRsId == mobilePhone2.id
+
+        where:
+        deleteDuoPhone | _
+        true    | _
+        false   | _
+    }
+
+    @Unroll
+    def "adding new mobile phone does not try to delete old phone duo profile if old phone does not have duo profile"() {
+        given:
+        Phonenumber.PhoneNumber telephoneNumber1 = PhoneNumberGenerator.randomUSNumber();
+        Phonenumber.PhoneNumber telephoneNumber2 = PhoneNumberGenerator.randomUSNumber();
+        reloadableConfig.getFeatureDeleteUnusedDuoPhones() >> true
+        config.getBoolean(BasicMultiFactorService.CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, false) >> true;
+
+        def mobilePhone1 = entityFactory.createMobilePhone().with {
+            it.id = 1
+            it.telephoneNumber = IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(telephoneNumber1)
+            it.externalMultiFactorPhoneId = null
+            it
+        }
+        def mobilePhone2 = entityFactory.createMobilePhone().with {
+            it.id = 2
+            it.telephoneNumber = IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(telephoneNumber2)
+            it
+        }
+        def user = entityFactory.createUser().with {
+            it.multiFactorMobilePhoneRsId = mobilePhone1.id
+            it.multifactorEnabled = false
+            it
+        }
+        mobilePhoneDao.addObject(_) >> {throw new DuplicateException()}
+        userService.checkAndGetUserById(user.id) >> user
+        mobilePhoneDao.getById(mobilePhone1.id) >> mobilePhone1
+        mobilePhoneDao.getByTelephoneNumber(mobilePhone1.telephoneNumber) >> mobilePhone1
+        mobilePhoneDao.getByTelephoneNumber(mobilePhone2.telephoneNumber) >> mobilePhone2
+
+        def result = service.addPhoneToUser(user.id, telephoneNumber1)
+
+        when:
+        def addSecondReponse = service.addPhoneToUser(user.id, telephoneNumber2)
+
+        then:
+        1 * userService.updateUserForMultiFactor(user)
+        mobilePhoneDao.getById(mobilePhone2.id) >> mobilePhone2
+        1 * mobilePhoneDao.deleteObject(mobilePhone1)
+        0 * multiFactorUserManagement.deleteMobilePhone(mobilePhone1.externalMultiFactorPhoneId)
+
+        user.multiFactorMobilePhoneRsId == mobilePhone2.id
     }
 
     def "listing mobile phones returns empty list even if directory inconsistent"() {

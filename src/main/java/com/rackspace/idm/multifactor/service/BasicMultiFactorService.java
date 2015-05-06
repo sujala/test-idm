@@ -3,7 +3,6 @@ package com.rackspace.idm.multifactor.service;
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.identity.multifactor.domain.*;
-import com.rackspace.identity.multifactor.exceptions.MultiFactorException;
 import com.rackspace.identity.multifactor.providers.*;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser;
@@ -157,22 +156,51 @@ public class BasicMultiFactorService implements MultiFactorService {
             if(user.isMultiFactorEnabled()) {
                 // The user currently has mfa enabled, return an error.
                 // If we replace the device now the user would have mfa enabled with an unvalidated phone
-                String errMsg = "Cannot replace device with multifactor enabled";
+                String errMsg = "Cannot replace device with multi-factor enabled";
                 LOG.warn(errMsg);
                 throw new IllegalStateException(errMsg);
             } else {
-                MobilePhone originalPhone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
-                user.setMultiFactorDeviceVerified(null);
-                user.setMultiFactorDevicePin(null);
-                user.setMultiFactorDevicePinExpiration(null);
-                MobilePhone newPhone = linkPhoneToUser(phoneNumber, user);
-                unlinkPhoneFromUser(originalPhone, user);
-                return newPhone;
+                return replacePhoneOnUser(user, phoneNumber);
             }
         } else {
             return linkPhoneToUser(phoneNumber, user);
         }
 
+    }
+
+    /**
+     * Replace the device on the user, resetting all verification of the device on the user. If the phone is already linked
+     * to the user, this is a NO-OP and just returns the existing device.
+     * @param user
+     * @param phoneNumber
+     */
+    private MobilePhone replacePhoneOnUser(User user, Phonenumber.PhoneNumber phoneNumber) {
+        MobilePhone oldPhone = null;
+        MobilePhone newPhone = null;
+
+        String oldPhoneId = user.getMultiFactorMobilePhoneRsId();
+        if (org.apache.commons.lang.StringUtils.isNotBlank(oldPhoneId)) {
+            oldPhone = mobilePhoneDao.getById(oldPhoneId);
+        }
+
+        //are we linking to a new phone or an existing?
+        if (oldPhone != null && oldPhone.getTelephoneNumber().equals(IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(phoneNumber)) ) {
+            //user is adding same phone number, so this is a no-op. Just return existing phone.
+            LOG.debug(String.format("User %s is adding same phone number %s. Ignoring", user.getId(), phoneNumber));
+            newPhone = oldPhone;
+        } else {
+            //create/link new phone (this updates the user state)
+            newPhone = linkPhoneToUser(phoneNumber, user);
+
+            /*
+            Clean up the old phone if it exists. Double check that it's not the same as the newPhone just to be paranoid.
+            If for some reason this fails, not really a big deal.
+             */
+            if (oldPhone != null && !oldPhone.getId().equals(newPhone.getId())) {
+                unlinkPhoneFromUser(oldPhone, user);
+            }
+        }
+        return newPhone;
     }
 
     @Override
@@ -475,6 +503,9 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         //now link user to the created/retrieved phone
         user.setMultiFactorMobilePhoneRsId(mobilePhone.getId());
+        user.setMultiFactorDeviceVerified(null);
+        user.setMultiFactorDevicePin(null);
+        user.setMultiFactorDevicePinExpiration(null);
         userService.updateUserForMultiFactor(user);
 
         return mobilePhone;
@@ -482,22 +513,33 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     /**
      * A utility method to remove a user from a mobile phone. This method will check to see if the mobile phone is now orphaned
-     * and delete the phone if so. If any errors occur while trying to delete the phone from duo or the directory, the error will be caught and logged.
+     * and delete the phone from persistent storage and the associated duo profile (if applicable). It will also remove
+     * the phone from  If any errors occur while trying to delete the phone from duo or the directory, the error
+     * will be caught and logged.
+     *
+     * Note
      *
      */
     private void unlinkPhoneFromUser(MobilePhone phone, User user) {
+        Assert.notNull(phone);
+        Assert.notNull(user);
+
         try {
             if (isPhoneUserMembershipEnabled()) {
                 //get and unlink phone
                 phone.removeMember(user);
+
                 //delete the phone from the directory and external provider is no other links to phone exist
                 if(CollectionUtils.isEmpty(phone.getMembers())) {
                     mobilePhoneDao.deleteObject(phone);
-                    try {
-                        userManagement.deleteMobilePhone(phone.getExternalMultiFactorPhoneId());
-                    } catch(MultiFactorException e) {
-                        multiFactorConsistencyLogger.error(String.format("Error deleting phone '%s' from external provider. " +
-                                "The phone has been removed from the directory but still exists in the external provider.", phone.getExternalMultiFactorPhoneId()));
+                    //only delete the duo phone if one exists && feature flagged on
+                    if (identityConfig.getReloadableConfig().getFeatureDeleteUnusedDuoPhones() && org.apache.commons.lang.StringUtils.isNotBlank(phone.getExternalMultiFactorPhoneId())) {
+                        try {
+                            userManagement.deleteMobilePhone(phone.getExternalMultiFactorPhoneId());
+                        } catch (Exception e) {
+                            multiFactorConsistencyLogger.error(String.format("Error deleting phone '%s' from external provider. " +
+                                    "The phone has been removed from the directory but still exists in the external provider.", phone.getExternalMultiFactorPhoneId()), e);
+                        }
                     }
                 } else {
                     mobilePhoneDao.updateObjectAsIs(phone);
@@ -967,6 +1009,7 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         return mobilePhone;
     }
+
 
     private Integer getPinValidityInMinutes() {
         return globalConfig.getInt(PIN_VALIDITY_LENGTH_PROP_NAME, PIN_VALIDITY_LENGTH_DEFAULT_VALUE);
