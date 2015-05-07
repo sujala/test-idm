@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
@@ -7,12 +8,12 @@ import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
-import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.ClassPathResource
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 
@@ -25,17 +26,37 @@ import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 /**
  * Tests the multifactor sendVerificationCode REST service
  */
+@ContextConfiguration(locations = ["classpath:app-config.xml"
+        , "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
+    private LdapMobilePhoneRepository mobilePhoneRepository
 
     @Autowired
-    private LdapUserRepository userRepository;
+    private LdapUserRepository userRepository
 
-    org.openstack.docs.identity.api.v2.User userAdmin;
-    String userAdminToken;
-    com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone;
-    VerificationCode constantVerificationCode;
+    org.openstack.docs.identity.api.v2.User userAdmin
+    String userAdminToken
+    com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone
+    OTPDevice responseOTP
+    VerificationCode constantVerificationCode
+
+    /**
+     * Override the grizzly start because we want to add additional context file.
+     * @return
+     */
+    @Override
+    public void doSetupSpec() {
+        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
+        resource.exists()
+        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
+                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
+    }
+
+    @Override
+    public void doCleanupSpec() {
+        stopGrizzly()
+    }
 
     /**
      * Sets up a new user with a phone that has the verification code sent.
@@ -83,6 +104,28 @@ class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest exte
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
+    def "Can add a phone and verify it when user has OTP MFA enabled, without disabling MFA"() {
+        setup:
+        //don't want the useradmin set up with mobile phone at first so reset shared variables
+        userAdmin = createUserAdmin()
+        userAdminToken = authenticate(userAdmin.username) //get a password token
+
+        responseOTP = utils.setUpAndEnableUserForMultiFactorOTP(userAdminToken, userAdmin)
+
+        //get MFA OTP token
+        userAdminToken = utils.authenticateWithOTPDevice(userAdmin, responseOTP)
+
+        when: "add and verify a phone"
+        responsePhone = utils.addVerifiedMobilePhoneToUser(userAdminToken, userAdmin)
+        User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+
+        then: "verify successfully, and OTP MFA is still enabled"
+        finalUserAdmin.getMultiFactorDevicePinExpiration() == null
+        finalUserAdmin.getMultiFactorDevicePin() == null
+        finalUserAdmin.getMultiFactorDeviceVerified()
+        finalUserAdmin.getMultifactorEnabled()
     }
 
     def "verifyVerificationCode - User admin can add a phone, send a verification code, and verify the code on a subuser"() {

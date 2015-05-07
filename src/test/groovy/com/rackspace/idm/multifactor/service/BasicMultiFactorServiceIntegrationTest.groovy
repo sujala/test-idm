@@ -228,7 +228,6 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         userAdmin.getMultiFactorDevicePinExpiration() == null  //date reset
         userAdmin.getMultiFactorDevicePin() == null
         userAdmin.getMultiFactorDeviceVerified()
-        !userAdmin.getMultifactorEnabled()
 
         cleanup:
         userRepository.deleteObject(userAdmin)
