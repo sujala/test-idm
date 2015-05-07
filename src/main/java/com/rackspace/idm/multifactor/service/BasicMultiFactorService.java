@@ -250,7 +250,6 @@ public class BasicMultiFactorService implements MultiFactorService {
         currentUser.setMultiFactorDevicePinExpiration(null);
         currentUser.setMultiFactorDevicePin(null);
         currentUser.setMultiFactorDeviceVerified(true);
-        currentUser.setMultifactorEnabled(false);
         userService.updateUserForMultiFactor(currentUser);
     }
 

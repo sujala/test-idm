@@ -3,19 +3,23 @@ package com.rackspace.idm.helpers
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
+import com.rackspace.idm.util.OTPHelper
 import com.sun.jersey.api.client.ClientResponse
+import com.unboundid.util.Base32
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
-
+import org.apache.http.client.utils.URLEncodedUtils
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
@@ -53,6 +57,9 @@ class Cloud20Utils {
 
     @Autowired
     CloudTestUtils testUtils
+
+    @Autowired
+    OTPHelper otpHelper
 
     @Shared
     def serviceAdminToken
@@ -801,4 +808,63 @@ class Cloud20Utils {
         return false
     }
 
+
+    def MobilePhone setUpAndEnableUserForMultiFactorSMS(String userToken, User user) {
+        MobilePhone phone = addVerifiedMobilePhoneToUser(userToken, user)
+        updateMultiFactor(userToken, user.id, factory.createMultiFactorSettings(true))
+        return phone
+    }
+
+    def OTPDevice setUpAndEnableUserForMultiFactorOTP(String userToken, User user) {
+        OTPDevice device = addVerifiedOTPDeviceToUser(userToken, user)
+        updateMultiFactor(userToken, user.id, factory.createMultiFactorSettings(true))
+        return device
+    }
+
+    def MobilePhone addVerifiedMobilePhoneToUser(String userToken, User user) {
+        MobilePhone phone = addMobilePhoneToUser(userToken, user)
+        sendVerificationCodeToPhone(userToken, user.id, phone.id)
+        def constantVerificationCode = factory.createVerificationCode(MFA_DEFAULT_PIN);
+        verifyPhone(userToken, user.id, phone.id, constantVerificationCode)
+        return phone
+    }
+
+    def OTPDevice addVerifiedOTPDeviceToUser(String userToken, User user) {
+        OTPDevice device = addOtpDeviceToUser(userToken, user)
+        verifyOTPDevice(userToken, user.id, device.id, getOTPVerificationCodeForDevice(device))
+        return device
+    }
+
+    def MobilePhone addMobilePhoneToUser(String userToken, User user) {
+        return addPhone(userToken, user.id)
+    }
+
+    def OTPDevice addOtpDeviceToUser(String userToken, User user) {
+        OTPDevice device = new OTPDevice()
+        device.setName("test-" + UUID.randomUUID().toString().replaceAll("-", ""))
+        return addOTPDevice(userToken, user.id, device)
+    }
+
+    def VerificationCode getOTPVerificationCodeForDevice(OTPDevice device) {
+        final VerificationCode verificationCode = new VerificationCode()
+        verificationCode.code = getOTPCodeForDevice(device)
+        return verificationCode
+    }
+
+    def getOTPCodeForDevice(OTPDevice device) {
+        def secret = Base32.decode(URLEncodedUtils.parse(new URI(device.getKeyUri()), "UTF-8").find { it.name == 'secret' }.value)
+        return otpHelper.TOTP(secret)
+    }
+
+    def String authenticateWithOTPDevice(User user, OTPDevice otpDevice) {
+        //get MFA OTP token
+        def response = methods.authenticate(user.username, DEFAULT_PASSWORD)
+        String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        String encryptedSessionId = extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+        def passcode = getOTPCodeForDevice(otpDevice)
+        def mfaAuthResponse = methods.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, passcode)
+        Token token = mfaAuthResponse.getEntity(AuthenticateResponse).value.token
+        def userAdminToken = token.id
+        return userAdminToken
+    }
 }
