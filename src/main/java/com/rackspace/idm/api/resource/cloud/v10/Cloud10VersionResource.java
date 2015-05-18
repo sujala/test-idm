@@ -2,8 +2,10 @@ package com.rackspace.idm.api.resource.cloud.v10;
 
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
+import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -28,6 +30,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -71,6 +74,7 @@ public class Cloud10VersionResource {
     private final AuthWithApiKeyCredentials authWithApiKeyCredentials;
     private final TenantService tenantService;
     private final AuthorizationService authorizationService;
+    private final IdentityConfig identityConfig;
 
     @Autowired
     public Cloud10VersionResource(Configuration config,
@@ -80,7 +84,8 @@ public class Cloud10VersionResource {
         MultiFactorCloud20Service multiFactorCloud20Service,
         AuthWithApiKeyCredentials authWithApiKeyCredentials,
         TenantService tenantService,
-        AuthorizationService authorizationService) {
+        AuthorizationService authorizationService,
+        IdentityConfig identityConfig) {
         this.config = config;
         this.scopeAccessService = scopeAccessService;
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
@@ -89,6 +94,7 @@ public class Cloud10VersionResource {
         this.authWithApiKeyCredentials = authWithApiKeyCredentials;
         this.tenantService = tenantService;
         this.authorizationService = authorizationService;
+        this.identityConfig = identityConfig;
     }
 
     @GET
@@ -109,20 +115,33 @@ public class Cloud10VersionResource {
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();
         }
 
-        User user = this.userService.getUser(username);
 
+        //commenting out because the call to getUserScopeAccessForClientIdByUsernameAndApiCredentials will throw a
+        //notauthenticatedexception if the user is null - which is caught in the try/catch block and will result in
+        //the same response to be returned as this block would.
+        /*
+        User user = this.userService.getUser(username);
         if (user == null) {
             return builder.status(HttpServletResponse.SC_UNAUTHORIZED).entity(AUTH_V1_0_FAILED_MSG).build();
         }
+         */
 
         try {
-            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
-            if(userService.userDisabledByTenants(user)) {
+            //switching to use authWithApiKeyCredentials service in order to eliminate having to retrieve the user multiple times
+//            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
+            UserAuthenticationResult result = authWithApiKeyCredentials.authenticate(username, key);
+            ServiceCatalogInfo scInfo = scopeAccessService.getServiceCatalogInfo(result.getUser());
+
+            //verify the user is allowed to login
+            if (authorizationService.restrictUserAuthentication((EndUser) result.getUser(), scInfo)) {
                 throw new ForbiddenException(GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE);
             }
-            List<OpenstackEndpoint> endpointlist = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
 
-            ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(endpointlist);
+            //create the scope access (if necessary)
+            AuthResponseTuple authResponseTuple = authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(result);
+            UserScopeAccess usa = authResponseTuple.getUserScopeAccess();
+
+            ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(scInfo.getUserEndpoints());
 
             List<Service> services = catalog.getService();
 

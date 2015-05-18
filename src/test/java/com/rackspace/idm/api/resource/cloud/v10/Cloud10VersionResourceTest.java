@@ -2,8 +2,10 @@ package com.rackspace.idm.api.resource.cloud.v10;
 
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudClient;
+import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
@@ -24,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -48,6 +51,9 @@ public class Cloud10VersionResourceTest {
     MultiFactorCloud20Service multiFactorCloud20Service;
     AuthWithApiKeyCredentials authWithApiKeyCredentials;
     AuthorizationService authorizationService;
+    IdentityConfig identityConfig;
+    IdentityConfig.StaticConfig staticConfig;
+    IdentityConfig.ReloadableConfig reloadableConfig;
 
     @Before
     public void setUp() throws Exception {
@@ -61,7 +67,12 @@ public class Cloud10VersionResourceTest {
         multiFactorCloud20Service = mock(MultiFactorCloud20Service.class);
         authWithApiKeyCredentials = mock(AuthWithApiKeyCredentials.class);
         authorizationService = mock(AuthorizationService.class);
-        cloud10VersionResource = new Cloud10VersionResource(config, scopeAccessService, endpointConverterCloudV11, userService, multiFactorCloud20Service, authWithApiKeyCredentials, tenantService, authorizationService);
+        identityConfig = mock(IdentityConfig.class);
+        staticConfig = mock(IdentityConfig.StaticConfig.class);
+        reloadableConfig = mock(IdentityConfig.ReloadableConfig.class);
+        when(identityConfig.getStaticConfig()).thenReturn(staticConfig);
+        when(identityConfig.getReloadableConfig()).thenReturn(reloadableConfig);
+        cloud10VersionResource = new Cloud10VersionResource(config, scopeAccessService, endpointConverterCloudV11, userService, multiFactorCloud20Service, authWithApiKeyCredentials, tenantService, authorizationService, identityConfig);
     }
 
     @Test
@@ -78,26 +89,37 @@ public class Cloud10VersionResourceTest {
 
     @Test
     public void getCloud10VersionInfo_notRouting_withNullUser_returnsUnauthorizedResponse() throws Exception {
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenThrow(new NotAuthenticatedException());
         when(userService.getUser("username")).thenReturn(null);
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
-        assertThat("response status", response.getStatus(), equalTo(401));
+        assertEquals("response status", response.getStatus(), 401);
     }
 
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_setsXAuthTokenHeader() throws Exception {
-        when(userService.getUser("username")).thenReturn(new User());
+        User user = new User();
+        when(userService.getUser("username")).thenReturn(user);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(new ServiceCatalog());
+
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
+        authResponseTuple.setUser(user);
+        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        when(authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
+        when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
+
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response token", response.getMetadata().getFirst("X-Auth-Token").toString(), equalTo("token"));
     }
 
     @Test
     public void getCloud10VersionInfo_notRouting_withDisabledUser_returns403Status() throws Exception {
-        when(userService.getUser("username")).thenReturn(new User());
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenThrow(new UserDisabledException());
+        User user = new User();
+        when(userService.getUser("username")).thenReturn(user);
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenThrow(new UserDisabledException());
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response token", response.getStatus(), equalTo(403));
     }
@@ -128,7 +150,8 @@ public class Cloud10VersionResourceTest {
 
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesCdnService_withEndpoints_setsProperHeaders() throws Exception {
-        when(userService.getUser("username")).thenReturn(new User());
+        User user = new User();
+        when(userService.getUser("username")).thenReturn(user);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -141,6 +164,12 @@ public class Cloud10VersionResourceTest {
         serviceCatalog.getService().add(service);
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
+        authResponseTuple.setUser(user);
+        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        when(authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
+        when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-CDN-Management-Url").toString(), equalTo("publicUrl"));
@@ -168,7 +197,9 @@ public class Cloud10VersionResourceTest {
 
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudServersService_withEndpoints_setsProperHeaders() throws Exception {
-        when(userService.getUser("username")).thenReturn(new User());
+        User user = new User();
+
+        when(userService.getUser("username")).thenReturn(user);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -181,6 +212,12 @@ public class Cloud10VersionResourceTest {
         serviceCatalog.getService().add(service);
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
+        authResponseTuple.setUser(user);
+        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        when(authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
+        when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-Server-Management-Url").toString(), equalTo("publicUrl"));
@@ -217,7 +254,8 @@ public class Cloud10VersionResourceTest {
 
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudFilesCdnService_withMultipleEndpoints_setsV1DefaultProperHeaders() throws Exception {
-        when(userService.getUser("username")).thenReturn(new User());
+        User user = new User();
+        when(userService.getUser("username")).thenReturn(user);
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
@@ -235,15 +273,24 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
 
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
+        authResponseTuple.setUser(user);
+        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        when(authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
+        when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
+
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-CDN-Management-Url").toString(), equalTo("publicUrl2"));
     }
 
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withCloudServersService_withMultipleEndpoints_setsV1DefaultProperHeaders() throws Exception {
-        when(userService.getUser("username")).thenReturn(new User());
-        UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
+        final User user = new User();
+        when(userService.getUser("username")).thenReturn(user);
+        final UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
+
         when(userScopeAccess.getAccessTokenString()).thenReturn("token");
         ServiceCatalog serviceCatalog = new ServiceCatalog();
         Service service = new Service();
@@ -258,6 +305,12 @@ public class Cloud10VersionResourceTest {
         serviceCatalog.getService().add(service);
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
+        authResponseTuple.setUser(user);
+        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        when(authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
+        when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-Server-Management-Url").toString(), equalTo("publicUrl2"));
@@ -265,6 +318,7 @@ public class Cloud10VersionResourceTest {
 
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_withNoServices_setsNoHeaders() throws Exception {
+        User user = new User();
         when(userService.getUser("username")).thenReturn(new User());
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
@@ -272,6 +326,12 @@ public class Cloud10VersionResourceTest {
         ServiceCatalog serviceCatalog = new ServiceCatalog();
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
+        authResponseTuple.setUser(user);
+        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        when(authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
+        when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("X-Server-Management-Url"), nullValue());
@@ -283,6 +343,8 @@ public class Cloud10VersionResourceTest {
 
     @Test
     public void getCloud10VersionInfo_notRouting_withNonNullUser_setsCacheControlHeader() throws Exception {
+        User user = new User();
+
         when(userService.getUser("username")).thenReturn(new User());
         UserScopeAccess userScopeAccess = mock(UserScopeAccess.class);
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString())).thenReturn(userScopeAccess);
@@ -290,6 +352,13 @@ public class Cloud10VersionResourceTest {
         ServiceCatalog serviceCatalog = new ServiceCatalog();
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
         when(userScopeAccess.getAccessTokenExp()).thenReturn(new DateTime(1).toDate());
+
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
+        authResponseTuple.setUser(user);
+        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        when(authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
+        when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 
         Response response = cloud10VersionResource.getCloud10VersionInfo(null, "username", "password", null, null);
         assertThat("response header", response.getMetadata().getFirst("Cache-Control"), notNullValue());
