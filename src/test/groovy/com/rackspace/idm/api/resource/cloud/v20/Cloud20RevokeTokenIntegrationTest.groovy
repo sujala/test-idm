@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.security.TokenFormat
+import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TokenRevocationService
@@ -24,6 +25,9 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     IdentityUserService identityUserService
+
+    @Autowired
+    TokenFormatSelector tokenFormatSelector
 
     @Unroll
     def "Revoke other user's token; tokenFormat: #tokenFormat" () {
@@ -142,6 +146,26 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
         then:
         cloud20.validateToken(serviceAdminToken, aeToken).status == SC_NOT_FOUND
         cloud20.validateToken(serviceAdminToken, uuidToken).status == SC_NOT_FOUND
+
+        cleanup:
+        utils.deleteUsers(identityAdmin)
+    }
+
+    def "Revoke AE token using v1.1" () {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.AE.name())
+        def identityAdmin = utils.createIdentityAdmin()
+        def aeToken = utils.getToken(identityAdmin.username)
+        def serviceAdminToken = utils.getServiceAdminToken()
+
+        assert tokenFormatSelector.formatForExistingToken(aeToken) == TokenFormat.AE
+
+        when: "revoke all tokens by userid"
+        cloud11.revokeToken(aeToken)
+        tokenRevocationService.revokeAllTokensForBaseUser(identityAdmin.id)
+
+        then:
+        cloud20.validateToken(serviceAdminToken, aeToken).status == SC_NOT_FOUND
 
         cleanup:
         utils.deleteUsers(identityAdmin)

@@ -22,6 +22,7 @@ import com.rackspacecloud.docs.auth.api.v1.*;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.Group;
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
+import lombok.Setter;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -124,6 +125,10 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Autowired
     private ApplicationService applicationService;
 
+    @Setter
+    @Autowired
+    private TokenRevocationService tokenRevocationService;
+
     public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
         final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page();
         JAXBContext context = JAXBContext.newInstance(VersionChoice.class);
@@ -145,12 +150,7 @@ public class DefaultCloud11Service implements Cloud11Service {
                 throw new NotFoundException(String.format("token %s not found", tokenId));
             }
 
-            UserScopeAccess usa = (UserScopeAccess) sa;
-            usa.setAccessTokenExpired();
-            this.scopeAccessService.updateScopeAccess(usa);
-            User user = (User) userService.getUserByScopeAccess(sa);
-            atomHopperClient.asyncTokenPost(user, tokenId);
-
+            tokenRevocationService.revokeToken(tokenId);
             return Response.noContent();
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
