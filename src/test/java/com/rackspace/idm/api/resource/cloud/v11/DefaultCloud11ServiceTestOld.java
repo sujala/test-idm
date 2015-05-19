@@ -79,9 +79,11 @@ public class DefaultCloud11ServiceTestOld {
     private CloudContractDescriptionBuilder cloudContratDescriptionBuilder;
     Validator validator;
     Tenant tenant;
+    TokenRevocationService tokenRevocationService;
 
     @Before
     public void setUp() throws Exception {
+        tokenRevocationService = mock(TokenRevocationService.class);
         userConverterCloudV11 = mock(UserConverterCloudV11.class);
         authConverterCloudv11 = mock(AuthConverterCloudV11.class);
         authHeaderHelper = mock(AuthHeaderHelper.class);
@@ -148,6 +150,7 @@ public class DefaultCloud11ServiceTestOld {
         defaultCloud11Service.setEndpointConverterCloudV11(endpointConverterCloudV11);
         defaultCloud11Service.setCloudExceptionResponse(cloudExceptionResponse);
         defaultCloud11Service.setTenantService(tenantService);
+        defaultCloud11Service.setTokenRevocationService(tokenRevocationService);
     }
 
     @Test
@@ -363,24 +366,13 @@ public class DefaultCloud11ServiceTestOld {
 
     @PrepareForTest(DefaultCloud11Service.class)
     @Test
-    public void revokeToken_userScopeAccess_setAccessTokenExpired() throws Exception {
+    public void revokeToken_userScopeAccess_revokeToken() throws Exception {
         DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
         PowerMockito.doReturn(new UserScopeAccess()).when(tempSpy, "authenticateAndAuthorizeCloudAdminUser", request);
         UserScopeAccess userScopeAccessMock = mock(UserScopeAccess.class);
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(userScopeAccessMock);
         tempSpy.revokeToken(request, "test", null);
-        verify(userScopeAccessMock).setAccessTokenExpired();
-    }
-
-    @PrepareForTest(DefaultCloud11Service.class)
-    @Test
-    public void revokeToken_userScopeAccess_updateScopeAccess() throws Exception {
-        DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
-        PowerMockito.doReturn(new UserScopeAccess()).when(tempSpy, "authenticateAndAuthorizeCloudAdminUser", request);
-        UserScopeAccess userScopeAccessMock = mock(UserScopeAccess.class);
-        when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(userScopeAccessMock);
-        tempSpy.revokeToken(request, "test", null);
-        verify(scopeAccessService).updateScopeAccess(userScopeAccessMock);
+        verify(tokenRevocationService).revokeToken(anyString());
     }
 
     @Test (expected = NotAuthorizedException.class)

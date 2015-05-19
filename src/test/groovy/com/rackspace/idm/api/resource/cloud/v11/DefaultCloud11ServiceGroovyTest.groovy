@@ -52,6 +52,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         mockEndpointService(service)
         mockAtomHopperClient(service)
         mockValidator(service)
+        mockTokenRevocationService(service)
     }
 
     def "addBaseUrl handles missing attribute error"() {
@@ -417,6 +418,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
 
         then:
         result.build().status == 204
+        1 * tokenRevocationService.revokeToken(token)
         1 * scopeAccessService.getScopeAccessByAccessToken(token) >> sa
     }
 
