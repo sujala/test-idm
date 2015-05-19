@@ -14,6 +14,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -116,28 +117,43 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess token) {
+        BaseUser baseUser = userService.getUserByScopeAccess(token, false);
+
+        ServiceCatalogInfo scInfo = getServiceCatalogInfo(baseUser);
+        return scInfo.getUserEndpoints();
+    }
+
+    @Override
+    public ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser) {
         final List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
+        final List<Tenant> tenants = new ArrayList<Tenant>();
 
         // First get the tenantRoles for the token
-        final List<TenantRole> roles = this.tenantService.getTenantRolesForScopeAccess(token);
-        if (roles == null || roles.size() == 0) {
-            return endpoints;
-        }
+        final List<TenantRole> tenantRoles = this.tenantService.getTenantRolesForUser(baseUser);
 
         // Second get the tenants from each of those roles
-        final HashMap<Tenant, String> tenants = getTenants(roles);
+        if (CollectionUtils.isNotEmpty(tenantRoles)) {
+            final HashMap<Tenant, String> tenantMap = getTenants(tenantRoles);
+            CollectionUtils.addAll(tenants, tenantMap.keySet());
 
-        // Third get the endpoints for each tenant
-        final String region = getRegion(token);
-        for (Tenant tenant : tenants.keySet()) {
-            final OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, tenants.get(tenant), region);
-            if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
-                endpoints.add(endpoint);
+            String region = null;
+            if (baseUser != null && EndUser.class.isAssignableFrom(baseUser.getClass())) {
+                EndUser user = (EndUser) baseUser;
+                region = user.getRegion();
+            }
+
+            // Third get the endpoints for each tenant
+            for (Tenant tenant : tenantMap.keySet()) {
+                final OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, tenantMap.get(tenant), region);
+                if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
+                    endpoints.add(endpoint);
+                }
             }
         }
 
-        return endpoints;
+        return new ServiceCatalogInfo(tenantRoles, tenants, endpoints);
     }
+
 
     private HashMap<Tenant, String> getTenants(List<TenantRole> roles) {
         HashMap<Tenant, String> tenants = new HashMap<Tenant, String>();

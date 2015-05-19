@@ -144,4 +144,19 @@ public interface AuthorizationService {
      * @return
      */
     List<ImmutableClientRole> getImplicitRolesForRole(String roleName);
+
+    /**
+     * Checks that a user should be considered disabled based on the user state and the service catalog information
+     * that would be returned for the user.
+     *
+     * Returns TRUE if the user should be considered disabled by meeting the following criteria:
+     * - The user has AT LEAST ONE tenant
+     * - ALL tenants on the user are disabled
+     * - The user is a user admin or below level of access
+     *
+     * @param user
+     * @param serviceCatalogInfo
+     * @return
+     */
+    boolean restrictUserAuthentication(EndUser user, ServiceCatalogInfo serviceCatalogInfo);
 }

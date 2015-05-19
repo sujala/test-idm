@@ -544,6 +544,25 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return identityRole != null ? getIdentityTypeRoleAsEnum(identityRole) : null;
     }
 
+    public IdentityUserTypeEnum getIdentityTypeRoleAsEnum(ServiceCatalogInfo serviceCatalogInfo) {
+        List<TenantRole> userRoles = serviceCatalogInfo.getUserTenantRoles();
+        ImmutableClientRole userLowestWeightIdentityRole = null;
+
+        for (TenantRole tenantRole : userRoles) {
+            ImmutableClientRole clientRole = identityRoleIdToRoleMap.get(tenantRole.getRoleRsId());
+
+            //verify is identity role (client role not null) && role weight of this client role is < role weight of
+            //current lowest weight client role)
+            if (clientRole != null && (userLowestWeightIdentityRole == null
+                    || clientRole.getRsWeight() < userLowestWeightIdentityRole.getRsWeight())) {
+                userLowestWeightIdentityRole = clientRole;
+            }
+        }
+
+        return userLowestWeightIdentityRole != null ? getIdentityTypeRoleAsEnum(userLowestWeightIdentityRole.asClientRole()) : null;
+    }
+
+
     private boolean authorize(BaseUser user, ScopeAccess scopeAccess, List<ClientRole> clientRoles) {
         if (scopeAccessService.isScopeAccessExpired(scopeAccess)) {
             return false;
@@ -696,6 +715,20 @@ public class DefaultAuthorizationService implements AuthorizationService {
         }
 
         return found;
+    }
+
+    @Override
+    public boolean restrictUserAuthentication(EndUser user, ServiceCatalogInfo serviceCatalogInfo) {
+        if(identityConfig.getReloadableConfig().getFeatureUserDisabledByTenantsEnabled()
+                && serviceCatalogInfo.allTenantsDisabled()) {
+
+            //identity-admins+ bypass terminator restriction
+            IdentityUserTypeEnum userType = getIdentityTypeRoleAsEnum(serviceCatalogInfo);
+            if(userType != null && !userType.hasAtLeastIdentityAdminAccessLevel()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String getRoleString(List<ClientRole> clientRoles) {

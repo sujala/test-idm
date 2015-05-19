@@ -959,7 +959,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
             def tenant = Mock(com.rackspace.idm.domain.entity.Tenant)
             def tenant2 = Mock(com.rackspace.idm.domain.entity.Tenant)
 
-            tenantService.getTenantRolesForScopeAccess(_) >>listRoles
+            tenantService.getTenantRolesForUser(_) >>listRoles
             tenantService.getTenant(_)>>>[tenant, tenant2];
             role.getTenantIds() >> ["1"].asList()
             endPoint.getBaseUrls() >> [Mock(CloudBaseUrl)].asList()

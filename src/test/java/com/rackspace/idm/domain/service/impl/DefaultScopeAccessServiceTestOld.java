@@ -78,23 +78,23 @@ public class DefaultScopeAccessServiceTestOld {
     public void getOpenStackEndpointsForScopeAccess_tokenNotInstanceOfDelegatedClientScopeAccess_setsParentUniqueId() throws Exception {
         ScopeAccess token = new UserScopeAccess();
         token.setUniqueId("cn=rdn,dc=parent");
-        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(null);
+        when(tenantService.getTenantRolesForUser(null)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantService).getTenantRolesForScopeAccess(any(ScopeAccess.class));
+        verify(tenantService).getTenantRolesForUser(any(BaseUser.class));
     }
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_tokenNotInstanceOfDelegatedClientScopeAccessAndFails_stillPasses() throws Exception {
         ScopeAccess token = new UserScopeAccess();
-        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(null);
+        when(tenantService.getTenantRolesForUser(null)).thenReturn(null);
         defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantService).getTenantRolesForScopeAccess(any(ScopeAccess.class));
+        verify(tenantService).getTenantRolesForUser(any(BaseUser.class));
     }
 
     @Test
     public void getOpenStackEndpointsForScopeAccess_rolesNull_returnsEmptyList() throws Exception {
         ScopeAccess token = new UserScopeAccess();
-        when(tenantService.getTenantRolesForScopeAccess(null)).thenReturn(null);
+        when(tenantService.getTenantRolesForUser(null)).thenReturn(null);
         List<OpenstackEndpoint> endpoints = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
         assertThat("size", endpoints.size(),equalTo(0));
     }

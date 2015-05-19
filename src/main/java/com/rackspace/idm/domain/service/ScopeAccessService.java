@@ -110,6 +110,13 @@ public interface ScopeAccessService {
 
     List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess scopeAccess);
 
+    /**
+     * Returns a list of endpoints for the user along with tenants and roles associated with the user for the token
+     * @param baseUser
+     * @return
+     */
+    ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser);
+
     UserScopeAccess updateExpiredUserScopeAccess(User user, String clientId, List<String> authenticatedBy);
 
     boolean isScopeAccessExpired(ScopeAccess scopeAccess);
