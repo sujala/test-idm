@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
@@ -7,9 +9,15 @@ import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.core.io.ClassPathResource
+import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
 
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 
+
+@ContextConfiguration(locations = ["classpath:app-config.xml"
+        , "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
@@ -22,7 +30,15 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
     @Autowired
     private IdentityUserService userService
 
-    def "user can only replace their device when mfa is disabled"() {
+    @Override
+    public void doSetupSpec() {
+        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
+        resource.exists()
+        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
+                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
+    }
+    
+    def "user can replace their mobile phone device when mfa is disabled"() {
         setup:
         def users
         def userAdmin
@@ -62,6 +78,32 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
         def phoneEntity = mobilePhoneRepository.getByTelephoneNumber(phoneToAdd.number)
         phoneEntity != null
         phoneEntity.members.contains(userEntity.ldapEntry.getParsedDN())
+
+        cleanup:
+        utils.deleteUsers(users)
+    }
+
+    def "user can replace their mobile phone device when mfa is enabled for OTP"() {
+        setup:
+        def users
+        def userAdmin
+        (userAdmin, users) = utils.createUserAdmin()
+        String userAdminToken = utils.getToken(userAdmin.username) //pwdToken
+
+        OTPDevice device = utils.setUpAndEnableUserForMultiFactorOTP(userAdminToken, userAdmin)
+        userAdminToken = utils.authenticateWithOTPDevice(userAdmin, device)
+
+        when: "add a verified phone to the user"
+        MobilePhone phone1 = utils.addVerifiedMobilePhoneToUser(userAdminToken, userAdmin)
+
+        then: "can add while MFA OTP is enabled"
+        phone1 != null
+
+        when: "replace the phone with a new one"
+        MobilePhone phone2 = utils.addVerifiedMobilePhoneToUser(userAdminToken, userAdmin)
+
+        then: "can replace while MFA OTP is enabled"
+        phone2 != null
 
         cleanup:
         utils.deleteUsers(users)

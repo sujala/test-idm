@@ -153,10 +153,10 @@ public class BasicMultiFactorService implements MultiFactorService {
         User user = userService.checkAndGetUserById(userId);
         if (user.getMultiFactorMobilePhoneRsId() != null) {
             // The user currently has a device on their account
-            if(user.isMultiFactorEnabled()) {
+            if(user.isMultiFactorEnabled() && isMultiFactorTypePhone(user)) {
                 // The user currently has mfa enabled, return an error.
                 // If we replace the device now the user would have mfa enabled with an unvalidated phone
-                String errMsg = "Cannot replace device with multi-factor enabled";
+                String errMsg = "Cannot replace device with multi-factor enabled for SMS";
                 LOG.warn(errMsg);
                 throw new IllegalStateException(errMsg);
             } else {
