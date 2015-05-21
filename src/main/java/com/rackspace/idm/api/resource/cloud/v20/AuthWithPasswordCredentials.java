@@ -23,7 +23,7 @@ public class AuthWithPasswordCredentials extends BaseUserAuthenticationFactor {
 
     public AuthResponseTuple authenticateForAuthResponse(AuthenticationRequest authenticationRequest) {
         UserAuthenticationResult authResult = authenticate(authenticationRequest);
-        return createScopeAccessForUserAuthenticationResult(authResult);
+        return scopeAccessService.createScopeAccessForUserAuthenticationResult(authResult);
     }
 
     public UserAuthenticationResult authenticate(AuthenticationRequest authenticationRequest) {

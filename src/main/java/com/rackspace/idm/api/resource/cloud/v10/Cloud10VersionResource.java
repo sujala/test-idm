@@ -138,7 +138,7 @@ public class Cloud10VersionResource {
             }
 
             //create the scope access (if necessary)
-            AuthResponseTuple authResponseTuple = authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(result);
+            AuthResponseTuple authResponseTuple = scopeAccessService.createScopeAccessForUserAuthenticationResult(result);
             UserScopeAccess usa = authResponseTuple.getUserScopeAccess();
 
             ServiceCatalog catalog = endpointConverterCloudV11.toServiceCatalog(scInfo.getUserEndpoints());

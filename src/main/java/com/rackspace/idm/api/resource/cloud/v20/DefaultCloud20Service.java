@@ -1109,7 +1109,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                         checkIfSetupMfaScopeAllowed(authResult.getUser());
                     }
 
-                    authResponseTuple = userAuthenticationFactor.createScopeAccessForUserAuthenticationResult(authResult);
+                    authResponseTuple = scopeAccessService.createScopeAccessForUserAuthenticationResult(authResult);
                     restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
                 }
             }

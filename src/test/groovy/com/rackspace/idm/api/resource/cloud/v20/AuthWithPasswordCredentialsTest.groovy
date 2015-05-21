@@ -14,7 +14,6 @@ class AuthWithPasswordCredentialsTest extends RootServiceTest {
     }
 
     def setup() {
-        mockIdentityConfig(service)
         mockValidator20(service)
         mockScopeAccessService(service)
         mockUserService(service)
@@ -47,7 +46,7 @@ class AuthWithPasswordCredentialsTest extends RootServiceTest {
         def response = service.authenticateForAuthResponse(authRequest)
 
         then:
-        1 * scopeAccessService.getValidUserScopeAccessForClientId(_, _, _) >> scopeAccess
+        1 * scopeAccessService.createScopeAccessForUserAuthenticationResult(_) >> new AuthResponseTuple(user, scopeAccess)
         userService.authenticate(_, _) >> new UserAuthenticationResult(user, true)
         response.impersonatedScopeAccess == null
         response.user == user

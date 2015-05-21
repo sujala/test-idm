@@ -14,7 +14,6 @@ class AuthWithApiKeyCredentialsTest extends RootServiceTest {
     }
 
     def setup() {
-        mockIdentityConfig(service)
         mockUserService(service)
         mockScopeAccessService(service)
         mockValidator20(service)
@@ -47,7 +46,7 @@ class AuthWithApiKeyCredentialsTest extends RootServiceTest {
         def result = service.authenticateForAuthResponse(authRequest)
 
         then:
-        1 * scopeAccessService.getValidUserScopeAccessForClientId(_, _, _) >> scopeAccess
+        1 * scopeAccessService.createScopeAccessForUserAuthenticationResult(_) >> new AuthResponseTuple(user, scopeAccess)
         userService.authenticateWithApiKey(_, _) >> new UserAuthenticationResult(user, true)
         result.impersonatedScopeAccess == null
         result.userScopeAccess == scopeAccess

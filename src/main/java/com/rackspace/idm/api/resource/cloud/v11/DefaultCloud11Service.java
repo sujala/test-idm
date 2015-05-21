@@ -7,12 +7,15 @@ import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
+import com.rackspace.idm.api.resource.cloud.v20.AuthWithPasswordCredentials;
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -29,6 +32,7 @@ import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.common.api.v1.VersionChoice;
+import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,6 +86,9 @@ public class DefaultCloud11Service implements Cloud11Service {
     private IdentityUserService identityUserService;
 
     private org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
+    private org.openstack.docs.identity.api.v2.ObjectFactory v2ObjectFactory = new org.openstack.docs.identity.api.v2.ObjectFactory();
+
+
     private Logger logger = LoggerFactory.getLogger(this.getClass());
     private Map<String, JAXBElement<Extension>> extensionMap;
     private JAXBElement<Extensions> currentExtensions;
@@ -119,8 +126,13 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Autowired
     private MultiFactorCloud20Service multiFactorCloud20Service;
 
+    @Setter
     @Autowired
     private AuthWithApiKeyCredentials authWithApiKeyCredentials;
+
+    @Setter
+    @Autowired
+    private AuthWithPasswordCredentials authWithPasswordCredentials;
 
     @Autowired
     private ApplicationService applicationService;
@@ -128,6 +140,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Setter
     @Autowired
     private TokenRevocationService tokenRevocationService;
+
 
     public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
         final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page();
@@ -1046,10 +1059,12 @@ public class DefaultCloud11Service implements Cloud11Service {
             return handleRedirect("v1.1/auth");
         }
 
-        User user = null;
-        UserScopeAccess usa = null;
-
+        /*
+        For mosso, nast, and password credentials this validate call will verify the user exists and is not disabled.
+        If the user does not exists or is disabled, an exception will be thrown.
+         */
         credentialValidator.validateCredential(cred.getValue(), userService);
+        V11AuthResponseTuple v11AuthResponseTuple;
         if (cred.getValue() instanceof MossoCredentials || cred.getValue() instanceof  NastCredentials) {
             String tenantId = null;
             String apiKey;
@@ -1063,30 +1078,58 @@ public class DefaultCloud11Service implements Cloud11Service {
                 apiKey = nastCreds.getKey();
             }
 
-            user = this.userService.getUserByTenantId(tenantId);
-
-            if(userService.userDisabledByTenants(user)) {
-                throw new ForbiddenException(GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE);
-            }
-
-            usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(user.getUsername(), apiKey, getCloudAuthClientId());
+            User user = this.userService.getUserByTenantId(tenantId);
+            v11AuthResponseTuple = innerAPIAuth(user.getUsername(), apiKey);
         } else {
             PasswordCredentials passCreds = (PasswordCredentials) cred.getValue();
             String username = passCreds.getUsername();
             String password = passCreds.getPassword();
 
-            user = userService.getUserByUsernameForAuthentication(username);
-            if(userService.userDisabledByTenants(user)) {
-                throw new ForbiddenException(GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE);
-            }
+            /*
+            taking this out because not needed to retrieve user anymore, and guaranteed user will exist due to validateCredential
+            call earlier so exception won't be thrown.
+             */
+//            user = userService.getUserByUsernameForAuthentication(username);
 
-            usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndPassword(username, password, getCloudAuthClientId());
+            v11AuthResponseTuple = innerPwdAuth(username, password);
         }
 
-        List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+        List<OpenstackEndpoint> endpoints = v11AuthResponseTuple.serviceCatalogInfo.getUserEndpoints();
         //TODO Hiding admin urls to keep old functionality - Need to revisit
         hideAdminUrls(endpoints);
-        return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
+        return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(v11AuthResponseTuple.userScopeAccess, endpoints)).getValue());
+    }
+
+    private V11AuthResponseTuple innerAPIAuth(String username, String key) {
+        UserAuthenticationResult result = authWithApiKeyCredentials.authenticate(username, key);
+        return generateV11AuthResponseTupleFromUserAuthResult(result);
+    }
+
+    private V11AuthResponseTuple innerPwdAuth(String username, String password) {
+        //convert to v2.0 pwd auth request
+        AuthenticationRequest pwdRequest = new AuthenticationRequest();
+        PasswordCredentialsRequiredUsername pwdCred = new PasswordCredentialsRequiredUsername();
+        pwdCred.setUsername(username);
+        pwdCred.setPassword(password);
+        pwdRequest.setCredential(v2ObjectFactory.createPasswordCredentials(pwdCred));
+
+        UserAuthenticationResult result = authWithPasswordCredentials.authenticate(pwdRequest);
+        return generateV11AuthResponseTupleFromUserAuthResult(result);
+    }
+
+    private V11AuthResponseTuple generateV11AuthResponseTupleFromUserAuthResult(UserAuthenticationResult userAuthenticationResult) {
+        ServiceCatalogInfo scInfo = scopeAccessService.getServiceCatalogInfo(userAuthenticationResult.getUser());
+
+        //verify the user is allowed to login
+        if (authorizationService.restrictUserAuthentication((EndUser) userAuthenticationResult.getUser(), scInfo)) {
+            throw new ForbiddenException(GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE);
+        }
+
+        //create the scope access (if necessary)
+        AuthResponseTuple authResponseTuple = scopeAccessService.createScopeAccessForUserAuthenticationResult(userAuthenticationResult);
+        UserScopeAccess usa = authResponseTuple.getUserScopeAccess();
+
+        return new V11AuthResponseTuple(userAuthenticationResult, scInfo, usa);
     }
 
     Response.ResponseBuilder authenticateJSON(UriInfo uriInfo, String body,
@@ -1105,7 +1148,6 @@ public class DefaultCloud11Service implements Cloud11Service {
     @SuppressWarnings("unchecked")
     Response.ResponseBuilder authenticateXML(UriInfo uriInfo, String body,
                                              boolean isAdmin) throws IOException {
-
         JAXBElement<? extends Credentials> cred = null;
         try {
             JAXBContext context = JAXBContextResolver.get();
@@ -1132,32 +1174,26 @@ public class DefaultCloud11Service implements Cloud11Service {
             Credentials value = cred.getValue();
             String username = null;
             User user = null;
-            UserScopeAccess usa = null;
-            String cloudAuthClientId = getCloudAuthClientId();
             credentialValidator.validateCredential(value, userService);
+            V11AuthResponseTuple v11AuthResponseTuple = null;
+
             if (value instanceof UserCredentials) {
                 UserCredentials userCreds = (UserCredentials) value;
                 username = userCreds.getUsername();
                 String apiKey = userCreds.getKey();
-                user = userService.getUser(username);
-
-                if(user != null && userService.userDisabledByTenants(user)) {
-                    throw new ForbiddenException(GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE);
-                }
-
-                usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, apiKey, cloudAuthClientId);
+                v11AuthResponseTuple = innerAPIAuth(username, apiKey);
             }
 
-            if (user == null) {
+            if (v11AuthResponseTuple == null || v11AuthResponseTuple.userAuthenticationResult == null || v11AuthResponseTuple.userAuthenticationResult.getUser() == null) {
                 String errMsg = String.format(USER_S_NOT_FOUND, username);
                 throw new NotFoundException(errMsg);
             }
 
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(usa);
+            List<OpenstackEndpoint> endpoints = v11AuthResponseTuple.serviceCatalogInfo.getUserEndpoints();
             //TODO Hiding admin urls to keep old functionality - Need to revisit
             hideAdminUrls(endpoints);
 
-            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(usa, endpoints)).getValue());
+            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(v11AuthResponseTuple.userScopeAccess, endpoints)).getValue());
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }
@@ -1312,5 +1348,17 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
+    }
+
+    private static class V11AuthResponseTuple {
+        UserAuthenticationResult userAuthenticationResult;
+        ServiceCatalogInfo serviceCatalogInfo;
+        UserScopeAccess userScopeAccess;
+
+        public V11AuthResponseTuple(UserAuthenticationResult userAuthenticationResult, ServiceCatalogInfo serviceCatalogInfo, UserScopeAccess userScopeAccess) {
+            this.userAuthenticationResult = userAuthenticationResult;
+            this.serviceCatalogInfo = serviceCatalogInfo;
+            this.userScopeAccess = userScopeAccess;
+        }
     }
 }
