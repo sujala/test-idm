@@ -5,6 +5,9 @@ import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
+import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
+import com.rackspace.idm.api.resource.cloud.v20.AuthWithPasswordCredentials;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -25,6 +28,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mortbay.jetty.HttpHeaders;
+import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
@@ -37,6 +41,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -80,9 +85,13 @@ public class DefaultCloud11ServiceTestOld {
     Validator validator;
     Tenant tenant;
     TokenRevocationService tokenRevocationService;
+    AuthWithApiKeyCredentials authWithApiKeyCredentials;
+    AuthWithPasswordCredentials authWithPasswordCredentials;
 
     @Before
     public void setUp() throws Exception {
+        authWithApiKeyCredentials = mock(AuthWithApiKeyCredentials.class);
+        authWithPasswordCredentials = mock(AuthWithPasswordCredentials.class);
         tokenRevocationService = mock(TokenRevocationService.class);
         userConverterCloudV11 = mock(UserConverterCloudV11.class);
         authConverterCloudv11 = mock(AuthConverterCloudV11.class);
@@ -151,6 +160,8 @@ public class DefaultCloud11ServiceTestOld {
         defaultCloud11Service.setCloudExceptionResponse(cloudExceptionResponse);
         defaultCloud11Service.setTenantService(tenantService);
         defaultCloud11Service.setTokenRevocationService(tokenRevocationService);
+        defaultCloud11Service.setAuthWithApiKeyCredentials(authWithApiKeyCredentials);
+        defaultCloud11Service.setAuthWithPasswordCredentials(authWithPasswordCredentials);
     }
 
     @Test
@@ -175,7 +186,12 @@ public class DefaultCloud11ServiceTestOld {
         com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
         user.setUsername("name");
         when(userService.getUserByTenantId(anyString())).thenReturn(user);
-        defaultCloud11Service.adminAuthenticateResponse(null,new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials));
+
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
+        when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(user, new UserScopeAccess()));
+        when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
+        defaultCloud11Service.adminAuthenticateResponse(null, new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials));
+
         verify(credentialValidator).validateCredential(nastCredentials, userService);
     }
 
@@ -184,29 +200,6 @@ public class DefaultCloud11ServiceTestOld {
         JAXBElement<MossoCredentials> credentials = new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, new MossoCredentials());
         Response response = defaultCloud11Service.authenticateResponse(uriInfo ,credentials).build();
         assertThat("response status", response.getStatus(), equalTo(302));
-    }
-
-    @Test
-    public void authenticateResponse_withUserCredentials_callsUserService_getUser() throws Exception {
-        UserCredentials userCredentials = new UserCredentials();
-        userCredentials.setUsername("username");
-        userCredentials.setKey("key");
-        JAXBElement<UserCredentials> credentials =
-                new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
-        defaultCloud11Service.authenticateResponse(uriInfo ,credentials);
-        verify(userService).getUser("username");
-    }
-
-    @Test
-    public void authenticateResponse_withUserCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByUsernameAndApiCredentials() throws Exception {
-        UserCredentials userCredentials = new UserCredentials();
-        userCredentials.setUsername("foo");
-        userCredentials.setKey("key");
-        JAXBElement<UserCredentials> credentials =
-                new JAXBElement<UserCredentials>(QName.valueOf("foo"), UserCredentials.class, userCredentials);
-        when(userService.getUser(null)).thenReturn(new com.rackspace.idm.domain.entity.User());
-        defaultCloud11Service.authenticateResponse(uriInfo ,credentials);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -238,9 +231,14 @@ public class DefaultCloud11ServiceTestOld {
         passwordCredentials.setPassword("password");
         when(credentials.getValue()).thenReturn(passwordCredentials);
         userDO.setEnabled(true);
+
         when(userService.getUser("username")).thenReturn(userDO);
-        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndPassword(eq("username"), eq("password"), anyString());
+        when(authWithPasswordCredentials.authenticate(any(AuthenticationRequest.class))).thenReturn(new UserAuthenticationResult(userDO, true));
+        when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(userDO, new UserScopeAccess()));
+        when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
+
+        Response.ResponseBuilder response = defaultCloud11Service.adminAuthenticateResponse(null, credentials);
+        assertEquals(response.build().getStatus(), 200);
     }
 
     @Test
@@ -250,18 +248,14 @@ public class DefaultCloud11ServiceTestOld {
         user.setUsername("name");
         when(credentials.getValue()).thenReturn(new NastCredentials());
         when(userService.getUserByTenantId(anyString())).thenReturn(user);
+
+        when(userService.getUser("username")).thenReturn(userDO);
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(userDO, true));
+        when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(userDO, new UserScopeAccess()));
+        when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
+
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(userService).getUserByTenantId(null);
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withNastCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByNastIdAndApiCredentials() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        when(credentials.getValue()).thenReturn(new NastCredentials());
-        userDO.setEnabled(true);
-        when(userService.getUserByTenantId(null)).thenReturn(userDO);
-        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -274,35 +268,14 @@ public class DefaultCloud11ServiceTestOld {
         when(credentials.getValue()).thenReturn(mossoCredentials);
         when(mossoCredentials.getKey()).thenReturn("apiKey");
         when(mossoCredentials.getMossoId()).thenReturn(12345);
+
+        when(userService.getUser("username")).thenReturn(userDO);
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(userDO, true));
+        when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(userDO, new UserScopeAccess()));
+        when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
+
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(userService).getUserByTenantId("12345");
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withMossoCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByMossoIdAndApiCredentials() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        MossoCredentials mossoCredentials = mock(MossoCredentials.class);
-        when(credentials.getValue()).thenReturn(mossoCredentials);
-        when(mossoCredentials.getKey()).thenReturn("apiKey");
-        when(mossoCredentials.getMossoId()).thenReturn(12345);
-        when(userService.getUserByTenantId(anyString())).thenReturn(userDO);
-        userDO.setEnabled(true);
-        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
-        verify(scopeAccessService).getUserScopeAccessForClientIdByUsernameAndApiCredentials(eq(userDO.getUsername()), eq("apiKey"), anyString());
-    }
-
-    @Test
-    public void adminAuthenticateResponse_withMossoCredentials_callsEndpointService_getEndpointsForUser() throws Exception {
-        JAXBElement credentials = mock(JAXBElement.class);
-        MossoCredentials mossoCredentials = mock(MossoCredentials.class);
-        when(credentials.getValue()).thenReturn(mossoCredentials);
-        when(mossoCredentials.getKey()).thenReturn("apiKey");
-        when(mossoCredentials.getMossoId()).thenReturn(12345);
-        when(userService.getUserByTenantId(anyString())).thenReturn(userDO);
-        userDO.setEnabled(true);
-        when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
-        defaultCloud11Service.adminAuthenticateResponse(null, credentials);
-        verify(scopeAccessService).getOpenstackEndpointsForScopeAccess(Matchers.<ScopeAccess>anyObject());
     }
 
     @Test
@@ -314,6 +287,12 @@ public class DefaultCloud11ServiceTestOld {
         when(mossoCredentials.getMossoId()).thenReturn(12345);
         when(userService.getUserByTenantId(anyString())).thenReturn(userDO);
         userDO.setEnabled(true);
+
+        when(userService.getUser("username")).thenReturn(userDO);
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(userDO, true));
+        when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(userDO, new UserScopeAccess()));
+        when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
+
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         verify(authConverterCloudv11).toCloudv11AuthDataJaxb(any(UserScopeAccess.class), anyList());
@@ -328,6 +307,12 @@ public class DefaultCloud11ServiceTestOld {
         when(mossoCredentials.getMossoId()).thenReturn(12345);
         when(userService.getUserByTenantId(anyString())).thenReturn(userDO);
         userDO.setEnabled(true);
+
+        when(userService.getUser("username")).thenReturn(userDO);
+        when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(userDO, true));
+        when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(userDO, new UserScopeAccess()));
+        when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
+
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(null, credentials);
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));

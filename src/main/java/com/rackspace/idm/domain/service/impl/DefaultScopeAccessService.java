@@ -3,8 +3,10 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.AETokenService;
@@ -16,6 +18,7 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,6 +88,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Autowired
     private AETokenService aeTokenService;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Autowired
     @Qualifier("tokenRevocationService")
@@ -784,6 +790,34 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         this.scopeAccessDao.addScopeAccess(user, scopeAccessToAdd);
 
         return scopeAccessToAdd;
+    }
+
+    //TODO - little smelly that result is a AuthResponseTuple, but not able to do a full refactor here
+    @Override
+    public AuthResponseTuple createScopeAccessForUserAuthenticationResult(UserAuthenticationResult userAuthenticationResult) {
+
+        UserScopeAccess sa;
+
+        // If the token is going to be scoped we create it directly, otherwise we'll go through the usual call
+        if (StringUtils.isNotBlank(userAuthenticationResult.getScope())) {
+            int expirationSeconds = identityConfig.getScopedTokenExpirationSeconds();
+            sa = (UserScopeAccess) addScopedScopeAccess(userAuthenticationResult.getUser(),
+                    identityConfig.getCloudAuthClientId(),
+                    userAuthenticationResult.getAuthenticatedBy(),
+                    expirationSeconds,
+                    userAuthenticationResult.getScope());
+
+        }  else {
+            sa = getValidUserScopeAccessForClientId((User) userAuthenticationResult.getUser(),
+                    identityConfig.getCloudAuthClientId(),
+                    userAuthenticationResult.getAuthenticatedBy());
+        }
+
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
+        authResponseTuple.setUser((User)userAuthenticationResult.getUser());
+        authResponseTuple.setUserScopeAccess(sa);
+
+        return authResponseTuple;
     }
 
     private void deleteExpiredScopeAccessesExceptForMostRecent(Iterable<ScopeAccess> scopeAccessList, ScopeAccess mostRecent) {

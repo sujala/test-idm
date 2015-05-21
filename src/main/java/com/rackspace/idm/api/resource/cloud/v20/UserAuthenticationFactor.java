@@ -22,6 +22,4 @@ public interface UserAuthenticationFactor {
      * @return
      */
     UserAuthenticationResult authenticate(AuthenticationRequest authenticationRequest);
-
-    AuthResponseTuple createScopeAccessForUserAuthenticationResult(UserAuthenticationResult userAuthenticationResult);
 }

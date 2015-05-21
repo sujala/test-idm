@@ -2136,9 +2136,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         authWithToken.authenticate(_) >> authResponseTuple
         authWithPasswordCredentials.authenticate(_) >> userAuthenticationResult
-        authWithPasswordCredentials.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple
+        scopeAccessService.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple
         authWithApiKeyCredentials.authenticate(_) >> userAuthenticationResult
-        authWithApiKeyCredentials.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple
+        scopeAccessService.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple
 
         res1.status == 200
         res2.status == 200
