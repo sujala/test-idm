@@ -36,6 +36,29 @@ public class ServiceCatalogInfo {
         return !userTenants.isEmpty() && CollectionUtils.find(userTenants, new TenantEnabledPredicate()) == null;
     }
 
+    public Tenant findUserTenantById(String id) {
+        if (id != null) {
+            for (Tenant userTenant : userTenants) {
+                if (id.equals(userTenant.getTenantId())) {
+                    return userTenant;
+                }
+            }
+        }
+        return null;
+    }
+
+    public Tenant findUserTenantByName(String name) {
+        if (name != null) {
+            for (Tenant userTenant : userTenants) {
+                if (name.equals(userTenant.getName())) {
+                    return userTenant;
+                }
+            }
+        }
+        return null;
+    }
+
+
     /**
      * A predicate that will return true if the given tenant is enabled
      */

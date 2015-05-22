@@ -82,6 +82,13 @@ public interface AuthorizationService {
     IdentityUserTypeEnum getIdentityTypeRoleAsEnum(BaseUser baseUser);
 
     /**
+     * Given a serviceCatalogInfo object, determine the associated Identity role
+     * @param serviceCatalogInfo
+     * @return
+     */
+    IdentityUserTypeEnum getIdentityTypeRoleAsEnum(ServiceCatalogInfo serviceCatalogInfo);
+
+    /**
      * Look up an identity role by id within the cache that is populated at node startup
      *
      * @param id
