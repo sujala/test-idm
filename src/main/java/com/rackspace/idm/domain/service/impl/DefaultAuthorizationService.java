@@ -516,6 +516,16 @@ public class DefaultAuthorizationService implements AuthorizationService {
     public IdentityUserTypeEnum getIdentityTypeRoleAsEnum(ClientRole identityTypeRole) {
         Validate.notNull(identityTypeRole);
 
+        IdentityUserTypeEnum identityUserTypeEnum = convertToIdentityUserType(identityTypeRole);
+        if (identityUserTypeEnum == null) {
+            throw new IllegalArgumentException(String.format("Unrecognized identity classification role '%s'", identityTypeRole.getName()));
+        }
+        return identityUserTypeEnum;
+    }
+
+    private IdentityUserTypeEnum convertToIdentityUserType(ClientRole identityTypeRole) {
+        Validate.notNull(identityTypeRole);
+
         String userRoleName = identityTypeRole.getName();
         if (identityConfig.getIdentityServiceAdminRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.SERVICE_ADMIN;}
         if (identityConfig.getIdentityIdentityAdminRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.IDENTITY_ADMIN;}
@@ -523,7 +533,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (identityConfig.getIdentityUserManagerRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.USER_MANAGER;}
         if (identityConfig.getIdentityDefaultUserRoleName().equals(userRoleName)) { return IdentityUserTypeEnum.DEFAULT_USER;}
 
-        throw new IllegalArgumentException(String.format("Unrecognized identity classification role '%s'", userRoleName));
+        return null;
     }
 
     public IdentityUserTypeEnum getIdentityTypeRoleAsEnum(BaseUser baseUser) {
@@ -544,22 +554,33 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return identityRole != null ? getIdentityTypeRoleAsEnum(identityRole) : null;
     }
 
+    @Override
     public IdentityUserTypeEnum getIdentityTypeRoleAsEnum(ServiceCatalogInfo serviceCatalogInfo) {
         List<TenantRole> userRoles = serviceCatalogInfo.getUserTenantRoles();
-        ImmutableClientRole userLowestWeightIdentityRole = null;
+        ClientRole userLowestWeightIdentityRole = null;
+        IdentityUserTypeEnum userLowestWeightIdentityRoleType = null;
 
         for (TenantRole tenantRole : userRoles) {
-            ImmutableClientRole clientRole = identityRoleIdToRoleMap.get(tenantRole.getRoleRsId());
-
-            //verify is identity role (client role not null) && role weight of this client role is < role weight of
-            //current lowest weight client role)
-            if (clientRole != null && (userLowestWeightIdentityRole == null
-                    || clientRole.getRsWeight() < userLowestWeightIdentityRole.getRsWeight())) {
-                userLowestWeightIdentityRole = clientRole;
+            ImmutableClientRole immutableClientRole = identityRoleIdToRoleMap.get(tenantRole.getRoleRsId());
+            if (immutableClientRole != null) {
+                //try to convert to classification role
+                ClientRole clientRole = immutableClientRole.asClientRole();
+                IdentityUserTypeEnum identityUserTypeEnum = convertToIdentityUserType(clientRole);
+                if (identityUserTypeEnum != null) {
+                    //only comparing identity user types
+                    //role weight of this client role is < role weight of
+                    //current lowest weight client role)
+                    if (userLowestWeightIdentityRole == null
+                            || clientRole.getRsWeight() < userLowestWeightIdentityRole.getRsWeight()) {
+                        userLowestWeightIdentityRole = clientRole;
+                        userLowestWeightIdentityRoleType = identityUserTypeEnum;
+                    }
+                }
+            } else {
+                logger.error(String.format("Tenant role '%s' is linked to missing identity client role '%s'", tenantRole.getAuditContext(), tenantRole.getRoleRsId()));
             }
         }
-
-        return userLowestWeightIdentityRole != null ? getIdentityTypeRoleAsEnum(userLowestWeightIdentityRole.asClientRole()) : null;
+        return userLowestWeightIdentityRoleType;
     }
 
 

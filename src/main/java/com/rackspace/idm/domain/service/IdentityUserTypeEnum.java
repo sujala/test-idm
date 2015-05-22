@@ -33,7 +33,16 @@ public enum IdentityUserTypeEnum {
         return hasLevelAccessOf(IDENTITY_ADMIN);
     }
 
+    /**
+     * Returns false if provided argument is null.
+     *
+     * @param that
+     * @return
+     */
     public boolean hasLevelAccessOf(IdentityUserTypeEnum that) {
+        if (that == null) {
+            return false;
+        }
         return this.level <= that.level;
     }
 

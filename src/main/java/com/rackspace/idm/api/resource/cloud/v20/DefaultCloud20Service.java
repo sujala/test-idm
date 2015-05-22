@@ -1108,7 +1108,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                         // issuing one. If not required, we'll throw a FORBIDDEN EXCEPTION.
                         checkIfSetupMfaScopeAllowed(authResult.getUser());
                     }
-
                     authResponseTuple = scopeAccessService.createScopeAccessForUserAuthenticationResult(authResult);
                     restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
                 }
@@ -1147,22 +1146,25 @@ public class DefaultCloud20Service implements Cloud20Service {
     public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, EndUser user, AuthenticationRequest authenticationRequest) {
         AuthenticateResponse auth;
 
-        //create empty service catalog if all the tenats for the user are disabled
-        List<OpenstackEndpoint> endpoints;
-        if (userService.userDisabledByTenants(user)) {
-            endpoints = new ArrayList<OpenstackEndpoint>();
-        } else {
-            endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(userScopeAccess);
+        ServiceCatalogInfo scInfo = scopeAccessService.getServiceCatalogInfo(user);
+
+        //verify the user is allowed to login
+        List<OpenstackEndpoint> endpoints = scInfo.getUserEndpoints();
+        if (authorizationService.restrictUserAuthentication(user, scInfo)) {
+            endpoints = Collections.EMPTY_LIST;
         }
 
-        // Remove Admin URLs if non admin token
-        if (!this.authorizationService.authorizeCloudServiceAdmin(userScopeAccess)) {
+        IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(scInfo);
+        // Remove Admin URLs if non admin token or if user does not have a user type (all users should, but just in case)
+        if (userType == null || !userType.hasLevelAccessOf(IdentityUserTypeEnum.SERVICE_ADMIN)) {
             stripEndpoints(endpoints);
         }
+        
         //filter endpoints by tenant
         String tenantId = authenticationRequest.getTenantId();
         String tenantName = authenticationRequest.getTenantName();
-        List<TenantRole> roles = tenantService.getTenantRolesForUser(user);
+
+        List<TenantRole> roles = scInfo.getUserTenantRoles();
 
         org.openstack.docs.identity.api.v2.Token convertedToken = null;
         if (impersonatedScopeAccess != null) {
@@ -1177,9 +1179,19 @@ public class DefaultCloud20Service implements Cloud20Service {
             Tenant tenant;
 
             if (!StringUtils.isBlank(tenantId)) {
-                tenant = tenantService.getTenant(tenantId);
+                tenant = scInfo.findUserTenantById(tenantId);
             } else {
-                tenant = tenantService.getTenantByName(tenantName);
+                tenant = scInfo.findUserTenantByName(tenantName);
+            }
+
+            //fallback to old logic if for some reason tenant wasn't in catalog. Don't think is actually possible, but technically
+            //this code would allow it.
+            if (tenant == null) {
+                if (!StringUtils.isBlank(tenantId)) {
+                    tenant = tenantService.getTenant(tenantId);
+                } else {
+                    tenant = tenantService.getTenantByName(tenantName);
+                }
             }
 
             convertedToken.setTenant(convertTenantEntityToApi(tenant));

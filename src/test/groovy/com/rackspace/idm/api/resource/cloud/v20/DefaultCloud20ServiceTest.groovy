@@ -16,6 +16,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.exception.*
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
@@ -2127,6 +2128,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def userAuthenticationResult = new UserAuthenticationResult(user, true)
 
         scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [].asList()
+        scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
 
         when:
         def res1 = service.authenticate(headers, tokenAuthRequest).build()
@@ -2145,7 +2147,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         res3.status == 200
     }
 
-    def "buildAuthResponse gets User's tenantRoles from the User"() {
+    def "buildAuthResponse gets service catalog for User"() {
         given:
         mockAuthConverterCloudV20(service)
         mockTokenConverter(service)
@@ -2154,13 +2156,11 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def authRequest = v2Factory.createAuthenticationRequest("token", "", "")
 
-        scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [].asList()
-
         when:
         service.buildAuthResponse(userScopeAccess, null, user, authRequest)
 
         then:
-        1 * tenantService.getTenantRolesForUser(user)
+        1 * scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
     }
 
     def "buildAuthResponse adds tenant to response if tenant ID is specified in request"() {
@@ -2175,7 +2175,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.tenantId = tenantId
             it
         }
-        tenantService.getTenant(tenantId) >> tenant
         def authRequest = v2Factory.createAuthenticationRequest("token", "$tenantId", "")
 
         def endpoint1 = new OpenstackEndpoint().with({
@@ -2188,7 +2187,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.baseUrls = [].asList()
             it
         })
-        scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [endpoint1, endpoint2].asList()
+
+        scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo(null, [tenant], [endpoint1, endpoint2].asList())
 
         when:
         def response = service.buildAuthResponse(userScopeAccess, null, user, authRequest)
@@ -2209,9 +2209,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.tenantId = tenantId
             it
         }
-        tenantService.getTenant(tenantId) >> tenant
+
         def authRequest = v2Factory.createAuthenticationRequest("token", null, "")
-        scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [].asList()
+        scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo(null, [tenant], null)
 
         when:
         def response = service.buildAuthResponse(userScopeAccess, null, user, authRequest)
@@ -2229,7 +2229,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def authRequest = v2Factory.createAuthenticationRequest("token", "", "")
 
-        scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [].asList()
+        scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
 
         when:
         service.buildAuthResponse(null, impersonatedScopeAccess, user, authRequest)
