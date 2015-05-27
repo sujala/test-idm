@@ -56,7 +56,9 @@ public class AEScopeAccessRepository implements AEScopeAccessDao {
         try {
             return aeTokenService.unmarshallTokenAndCheckRevoked(accessToken);
         } catch (UnmarshallTokenException e) {
-            LOGGER.error("Error unmarshalling the token: " + accessToken, e);
+            //only log at debug level as old tokens can't be unmarshalled and would throw this error. Don't want to fill
+            //up logs with stacktraces of attempts to unmarshall old tokens
+            LOGGER.debug("Error unmarshalling the token: " + accessToken, e);
             return null;
         }
     }

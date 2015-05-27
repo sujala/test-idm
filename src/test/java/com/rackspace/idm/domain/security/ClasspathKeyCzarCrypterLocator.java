@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.security;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.security.encrypters.FileSystemKeyCzarCrypterLocator;
 import com.rackspace.idm.domain.security.encrypters.KeyCzarCrypterLocator;
 import lombok.Getter;
@@ -22,18 +23,20 @@ import java.io.IOException;
 public class ClasspathKeyCzarCrypterLocator implements KeyCzarCrypterLocator {
 
     private FileSystemKeyCzarCrypterLocator configLocator;
-    private Configuration keyConfiguration;
+    private Configuration staticConfiguration;
+    private IdentityConfig identityConfig;
 
     public ClasspathKeyCzarCrypterLocator() {
-        keyConfiguration = new PropertiesConfiguration();
+        staticConfiguration = new PropertiesConfiguration();
+        identityConfig = new IdentityConfig(staticConfiguration, null);
     }
 
     public void setKeysClassPathLocation(String location) {
         ClassPathResource resource = new ClassPathResource(location);
         try {
             String absoluteKeysPath = resource.getFile().getAbsolutePath();
-            keyConfiguration.setProperty(FileSystemKeyCzarCrypterLocator.SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, absoluteKeysPath);
-            configLocator = new FileSystemKeyCzarCrypterLocator(keyConfiguration);
+            staticConfiguration.setProperty(IdentityConfig.SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, absoluteKeysPath);
+            configLocator = new FileSystemKeyCzarCrypterLocator(identityConfig);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
