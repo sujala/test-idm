@@ -54,13 +54,12 @@
 
     <!-- Scans within the base package of the application for @Components to configure as beans-->
     <context:component-scan base-package="com.rackspace.idm"/>
-    <!--Used for async -->
+    <!--Used for async and Scheduler -->
     <task:annotation-driven/>
-    <!--
-         Instruct Spring to perform automatic transaction management on annotated classes.
-         The SpringJdbcIntro class uses @Transactional annotations.
-     <tx:annotation-driven/>
-     -->
+
+    <task:scheduled-tasks>
+        <task:scheduled ref="aeControl" method="reloadKeys" fixed-delay="#{identityConfig.staticConfig.AEKeysReloadDelay * 1000}" />
+    </task:scheduled-tasks>
 
     <import resource="namespaces.xml"/>
 

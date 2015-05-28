@@ -6,12 +6,20 @@ import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocat
 import com.rackspace.idm.domain.security.encrypters.keyczar.KeyCzarKeyMetadataDao
 import com.rackspace.idm.domain.security.encrypters.keyczar.KeyCzarKeyVersionDao
 import com.rackspace.idm.domain.security.encrypters.keyczar.LdapKeyMetadata
+import org.joda.time.DateTime
 import org.keyczar.Crypter
 import org.keyczar.exceptions.KeyczarException
 import org.springframework.beans.factory.annotation.Autowired
 import testHelpers.RootIntegrationTest
 
 class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
+    def first_primary= '{"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT","type":"AES","versions":[{"exportable":false,"status":"PRIMARY","versionNumber":1}],"encrypted":false}'
+    def second_primary = '{"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT","type":"AES","versions":[{"exportable":false,"status":"PRIMARY","versionNumber":2}],"encrypted":false}'
+    def two_keys_first_primary = '{"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT","type":"AES","versions":[{"exportable":false,"status":"PRIMARY","versionNumber":1},{"exportable":false,"status":"ACTIVE","versionNumber":2}],"encrypted":false}'
+    def two_keys_second_primary = '{"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT","type":"AES","versions":[{"exportable":false,"status":"ACTIVE","versionNumber":1},{"exportable":false,"status":"PRIMARY","versionNumber":2}],"encrypted":false}'
+
+    def bad_meta_purpose= '{"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT_BLAH","type":"AES","versions":[{"exportable":false,"status":"PRIMARY","versionNumber":1}],"encrypted":false}'
+    def bad_meta_version= '{"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT","type":"AES","versions":[{"exportable":false,"status":"PRIMARY","versionNumber":12023}],"encrypted":false}'
 
     @Autowired
     CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator
@@ -39,7 +47,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         info.getSize() == data.get('size')
     }
 
-    def "test update metadata cache info"() {
+    def "update metadata cache info - no-op when keys don't change"() {
         given:
         def response1 = devops.getInfo(utils.getServiceAdminToken())
         Thread.sleep(1000)
@@ -55,7 +63,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
         data1.get('size') == data2.get('size')
         data1.get('updated') == data2.get('updated')
-        data1.get('retrieved') != data2.get('retrieved')
+        data1.get('retrieved') == data2.get('retrieved')
     }
 
     def "test encryption and decryption"() {
@@ -95,11 +103,6 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
     def "test rotation of keys"() {
         given:
-        def first_primary= '{"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT","type":"AES","versions":[{"exportable":false,"status":"PRIMARY","versionNumber":1}],"encrypted":false}'
-        def second_primary = '{"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT","type":"AES","versions":[{"exportable":false,"status":"PRIMARY","versionNumber":2}],"encrypted":false}'
-        def two_keys_first_primary = '{"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT","type":"AES","versions":[{"exportable":false,"status":"PRIMARY","versionNumber":1},{"exportable":false,"status":"ACTIVE","versionNumber":2}],"encrypted":false}'
-        def two_keys_second_primary = '{"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT","type":"AES","versions":[{"exportable":false,"status":"ACTIVE","versionNumber":1},{"exportable":false,"status":"PRIMARY","versionNumber":2}],"encrypted":false}'
-
         LdapKeyMetadata metadata = keyCzarKeyMetadataDao.getKeyMetadataByName('meta')
         def original = metadata.data
 
@@ -108,6 +111,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
         when: "test encryption with v1 key"
         metadata.data = first_primary
+        metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
         cacheableKeyCzarCrypterLocator.resetCache()
         info = cacheableKeyCzarCrypterLocator.getCacheInfo()
@@ -123,6 +127,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
         when: "test encryption with v2 key"
         metadata.data = second_primary
+        metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
         cacheableKeyCzarCrypterLocator.resetCache()
         info = cacheableKeyCzarCrypterLocator.getCacheInfo()
@@ -144,6 +149,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
         when: "test decryption with v1 key (with v2)"
         metadata.data = two_keys_first_primary
+        metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
         cacheableKeyCzarCrypterLocator.resetCache()
         info = cacheableKeyCzarCrypterLocator.getCacheInfo()
@@ -159,6 +165,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
         when: "test decryption with v2 key (with v1)"
         metadata.data = two_keys_second_primary
+        metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
         cacheableKeyCzarCrypterLocator.resetCache()
         info = cacheableKeyCzarCrypterLocator.getCacheInfo()
@@ -174,6 +181,55 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         metadata.data = original
+        metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
+        keyMetadataLdapGenericRepository.updateObject(metadata)
+    }
+
+    def "failure to load new keys to cache leaves old keys in place"() {
+        LdapKeyMetadata metadata = keyCzarKeyMetadataDao.getKeyMetadataByName('meta')
+        def original = metadata.data
+
+        def originalCache, afterResetCache, encrypt1, decrypt1, encrypt2, decrypt2
+        Crypter crypter
+
+        when: "test encryption with v1 key"
+        metadata.data = first_primary
+        metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
+        keyMetadataLdapGenericRepository.updateObject(metadata)
+        cacheableKeyCzarCrypterLocator.resetCache()
+        originalCache = cacheableKeyCzarCrypterLocator.getCacheInfo()
+
+        //test encrypting/decrypting
+        crypter = cacheableKeyCzarCrypterLocator.getCrypter()
+        encrypt1 = crypter.encrypt('foobar')
+        decrypt1 = crypter.decrypt(encrypt1)
+
+        then: "can encrypt and decrypt with v1 key"
+        originalCache.size == 1
+        encrypt1 != null
+        decrypt1 == 'foobar'
+
+        when: "try to reset with bad data"
+        metadata.data = bad_meta_purpose
+        metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
+        keyMetadataLdapGenericRepository.updateObject(metadata)
+
+        //try to reload
+        cacheableKeyCzarCrypterLocator.resetCache()
+        afterResetCache = cacheableKeyCzarCrypterLocator.getCacheInfo()
+
+        then: "cache wasn't updated"
+        originalCache.created == afterResetCache.created
+        originalCache.retrieved == afterResetCache.retrieved
+        originalCache.size == afterResetCache.size
+        originalCache.getKey().get(0).version == afterResetCache.getKey().get(0).version
+
+        and: "and can still decrypt previously generated keys"
+        cacheableKeyCzarCrypterLocator.getCrypter().decrypt(encrypt1) == 'foobar'
+
+        cleanup:
+        metadata.data = original
+        metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
     }
 
