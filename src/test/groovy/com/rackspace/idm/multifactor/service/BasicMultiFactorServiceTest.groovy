@@ -6,6 +6,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
+import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.identity.multifactor.providers.MultiFactorAuthenticationService
 import com.rackspace.identity.multifactor.providers.ProviderPhone
@@ -844,6 +847,60 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
 
         then: // no-op trying to set factor type if the user have multi-factor disabled
         0 * userService.updateUserForMultiFactor(user)
+    }
+
+    @Unroll
+    def "test auto-unlock on Duo when local locking is: #localLocking"() {
+        given:
+        def userId = "123"
+        def phoneId = "234"
+        def passcode = "123456"
+        def externalId = "345"
+
+        User user = entityFactory.createUser().with {
+            it.id = userId
+            it.multifactorEnabled = true
+            it.multiFactorType = FactorTypeEnum.SMS.value()
+            it.multiFactorMobilePhoneRsId = phoneId
+            it.multiFactorDeviceVerified = true
+            it.externalMultiFactorUserId = externalId
+            return it
+        }
+        userService.checkAndGetUserById(userId) >> user
+
+        MobilePhone phone = entityFactory.createMobilePhoneWithId(phoneId).with {
+            it.externalMultiFactorPhoneId = externalId
+            return it
+        }
+        mobilePhoneDao.getById(phoneId) >> phone
+
+        identityConfig.getReloadableConfig().getFeatureMultifactorLockingEnabled() >> localLocking
+        mockBypassDeviceDao.getAllBypassDevices(user) >> []
+
+        def responses = [
+                new GenericMfaAuthenticationResponse(
+                        MfaAuthenticationDecision.DENY,
+                        MfaAuthenticationDecisionReason.LOCKEDOUT,
+                        "", new Object()),
+                new GenericMfaAuthenticationResponse(
+                        MfaAuthenticationDecision.ALLOW,
+                        MfaAuthenticationDecisionReason.ALLOW,
+                        "", new Object())
+        ]
+
+        when:
+        def response = service.verifyPasscode(userId, passcode)
+
+        then:
+        duoCalls * multiFactorAuthenticationService.verifyPasscodeChallenge(externalId, externalId, passcode) >>> responses
+        unlockCalls * multiFactorUserManagement.unlockUser(externalId);
+        response != null
+        response == responses[responseIndex]
+
+        where:
+        localLocking | duoCalls | unlockCalls | responseIndex
+        true         | 2        | 1           | 1
+        false        | 1        | 0           | 0
     }
 
 }

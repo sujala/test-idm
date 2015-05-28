@@ -593,11 +593,21 @@ public class BasicMultiFactorService implements MultiFactorService {
             }
         }
 
-        // Checks against mobile phones
+        // Checks against mobile phones (Duo)
         if (response == null && isMultiFactorTypePhone(user)) {
             final MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
             verifyMultiFactorStateOnPhone(user, phone);
-            response = multiFactorAuthenticationService.verifyPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId(), passcode);
+            response =  multiFactorAuthenticationService.verifyPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId(), passcode);
+
+            // Check if it was locked on Duo, unlock and try again once [CIDMDEV-5058]
+            if (response != null
+                    && identityConfig.getReloadableConfig().getFeatureMultifactorLockingEnabled()
+                    && MfaAuthenticationDecision.DENY.equals(response.getDecision())
+                    && MfaAuthenticationDecisionReason.LOCKEDOUT.equals(response.getDecisionReason())
+                    && response.getProviderResponse() != null) {
+                userManagement.unlockUser(user.getExternalMultiFactorUserId());
+                response =  multiFactorAuthenticationService.verifyPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId(), passcode);
+            }
         }
 
         // Check against bypass codes
