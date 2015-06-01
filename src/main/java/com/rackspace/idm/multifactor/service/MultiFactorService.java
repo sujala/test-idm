@@ -275,4 +275,12 @@ public interface MultiFactorService {
      * @return
      */
     MultiFactorStateEnum getLogicalUserMultiFactorState(User user);
+
+    /**
+     * Is the user locked from a local MFA perspective
+     *
+     * @param user
+     * @return
+     */
+    boolean isUserLocalLocked(User user);
 }

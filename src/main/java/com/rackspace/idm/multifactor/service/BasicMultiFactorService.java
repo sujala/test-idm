@@ -744,7 +744,8 @@ public class BasicMultiFactorService implements MultiFactorService {
      * @param user
      * @return
      */
-    private boolean isUserLocalLocked(User user) {
+    @Override
+    public boolean isUserLocalLocked(User user) {
         if (identityConfig.getReloadableConfig().getFeatureMultifactorLockingEnabled() &&
             !hasUserMfaLastFailedTimeStampExpired(user)) {
             return isUserReachedMaximumAttempts(user);
