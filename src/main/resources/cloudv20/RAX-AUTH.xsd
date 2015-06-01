@@ -31,6 +31,7 @@
     <attribute name="userMultiFactorEnforcementLevel" type="RAX-AUTH:UserMultiFactorEnforcementLevelEnum" />
     <attribute name="scope" type="RAX-AUTH:ScopeEnum" />
     <attribute name="tokenFormat" type="RAX-AUTH:TokenFormatEnum" />
+    <attribute name="factorType" type="RAX-AUTH:FactorTypeEnum" />
 
     <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />

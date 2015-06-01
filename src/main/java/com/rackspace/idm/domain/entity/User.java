@@ -270,6 +270,7 @@ public class User implements EndUser {
     @LDAPField(attribute = LdapRepository.ATTR_TOKEN_FORMAT, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String tokenFormat;
 
+    @Mapping("factorType")
     @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_TYPE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String multiFactorType;
 
@@ -322,8 +323,16 @@ public class User implements EndUser {
         return tfEnumConverter.convertTo(tokenFormat, null);
     }
 
+    /**
+     * Return the logic setting for factor type - where default is SMS is mfa is enabled.
+     *
+     * @return
+     */
     public FactorTypeEnum getMultiFactorTypeAsEnum() {
         if (multiFactorType == null) {
+            if (isMultiFactorEnabled()) {
+                return FactorTypeEnum.SMS;
+            }
             return null;
         }
 

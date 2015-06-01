@@ -13,6 +13,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
+import com.rackspace.idm.util.JSONReaderForRoles
 import com.rackspace.idm.util.OTPHelper
 import com.sun.jersey.api.client.ClientResponse
 import com.unboundid.util.Base32
@@ -571,17 +572,37 @@ class Cloud20Utils {
         }
     }
 
-    def getUserByName(String username, String token=getServiceAdminToken()){
-        def response = methods.getUserByName(token, username)
+    def User getUserByIdReturnUser(String id, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){
+        def response = methods.getUserById(token, id, mediaType)
         assert (response.status == SC_OK)
-        response.getEntity(User).value
+        def entity = response.getEntity(User)
+        if (mediaType == APPLICATION_XML_TYPE) {
+            return entity.value
+        } else {
+            return entity
+        }
     }
 
-    def getUsersByDomainId(String domainId, String token=getServiceAdminToken()) {
-        def response = methods.getUsersByDomainId(token, domainId)
+    def User getUserByName(String username, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){
+        def response = methods.getUserByName(token, username, mediaType)
+        assert (response.status == SC_OK)
+        def entity = response.getEntity(User)
+        if (mediaType == APPLICATION_XML_TYPE) {
+            return entity.value
+        } else {
+            return entity
+        }
+    }
+
+    def getUsersByDomainId(String domainId, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE) {
+        def response = methods.getUsersByDomainId(token, domainId, mediaType)
         assert(response.status == SC_OK)
-        List<User> users = response.getEntity(UserList).value.user
-        users
+        if (mediaType == APPLICATION_XML_TYPE) {
+            List<User> users = response.getEntity(UserList).value.user
+            return users
+        } else {
+            return new ObjectMapper().readValue(response.getEntity(String), Map)
+        }
     }
 
     def getUsersByEmail(String email, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){

@@ -1,6 +1,7 @@
 package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum;
@@ -249,7 +250,7 @@ public interface MultiFactorService {
     /**
      * Gets the type of the multifactor device used by this user.
      */
-    String getMultiFactorType(BaseUser user);
+    FactorTypeEnum getMultiFactorType(BaseUser user);
 
     /**
      * Checks if the multifactor device used by this user is a phone.

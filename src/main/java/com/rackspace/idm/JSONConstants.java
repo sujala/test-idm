@@ -29,6 +29,7 @@ public final class JSONConstants {
     public static final String DOMAIN_ID = "domainId";
     public static final String MULTI_FACTOR_ENABLED = "multiFactorEnabled";
     public static final String MULTI_FACTOR_STATE = "multiFactorState";
+    public static final String MULTI_FACTOR_TYPE = "factorType";
     public static final String DOMAINS = "domains";
     public static final String ENABLED = "enabled";
     public static final String ENDPOINT = "endpoint";
@@ -163,6 +164,7 @@ public final class JSONConstants {
     public static final String RAX_AUTH_DOMAIN_ID = "RAX-AUTH:domainId";
     public static final String RAX_AUTH_MULTI_FACTOR_ENABLED = "RAX-AUTH:multiFactorEnabled";
     public static final String RAX_AUTH_MULTI_FACTOR_STATE = "RAX-AUTH:multiFactorState";
+    public static final String RAX_AUTH_MULTI_FACTOR_TYPE = "RAX-AUTH:factorType";
     public static final String RAX_AUTH_USER_MULTI_FACTOR_ENFORCEMENT_LEVEL = "RAX-AUTH:userMultiFactorEnforcementLevel";
     public static final String RAX_AUTH_POLICY = "RAX-AUTH:policy";
     public static final String RAX_AUTH_POLICIES = "RAX-AUTH:policies";
@@ -238,12 +240,14 @@ public final class JSONConstants {
     public static final String USER_DOMAIN_ID_PATH = "user.domainId";
     public static final String USER_MULTI_FACTOR_ENABLED_PATH = "user.multiFactorEnabled";
     public static final String USER_MULTI_FACTOR_STATE_PATH = "user.multiFactorState";
+    public static final String USER_MULTI_FACTOR_TYPE_PATH = "user.factorType";
     public static final String USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_PATH = "user.userMultiFactorEnforcementLevel";
     public static final String USER_OS_KSADM_PASSWORD_PATH = "user.OS-KSADM:password";
     public static final String USER_RAX_AUTH_DEFAULT_REGION_PATH = "user.RAX-AUTH:defaultRegion";
     public static final String USER_RAX_AUTH_DOMAIN_ID_PATH = "user.RAX-AUTH:domainId";
     public static final String USER_RAX_AUTH_MULTI_FACTOR_ENABLED_PATH = "user.RAX-AUTH:multiFactorEnabled";
     public static final String USER_RAX_AUTH_MULTI_FACTOR_STATE_PATH = "user.RAX-AUTH:multiFactorState";
+    public static final String USER_RAX_AUTH_MULTI_FACTOR_TYPE_PATH = "user.RAX-AUTH:factorType";
 
     public static final String CONTACT_ID = "contactId";
     public static final String USER_CONTACT_ID_PATH = "user.contactId";

@@ -1174,26 +1174,22 @@ public class BasicMultiFactorService implements MultiFactorService {
     }
 
     @Override
-    public String getMultiFactorType(BaseUser baseUser) {
+    public FactorTypeEnum getMultiFactorType(BaseUser baseUser) {
         if (baseUser instanceof User) {
             final User user = (User) baseUser;
-            if (user.getMultiFactorType() != null) {
-                return user.getMultiFactorType();
-            } else if (userHasEnabledMobilePhone(user)) {
-                return FactorTypeEnum.SMS.value();
-            }
+            return user.getMultiFactorTypeAsEnum();
         }
         return null;
     }
 
     @Override
     public boolean isMultiFactorTypePhone(BaseUser user) {
-        return FactorTypeEnum.SMS.value().equals(getMultiFactorType(user));
+        return FactorTypeEnum.SMS == getMultiFactorType(user);
     }
 
     @Override
     public boolean isMultiFactorTypeOTP(BaseUser user) {
-        return FactorTypeEnum.OTP.value().equals(getMultiFactorType(user));
+        return FactorTypeEnum.OTP == getMultiFactorType(user);
     }
 
     private boolean userHasMultiFactorDevices(User user, int verifiedOTPDevicesCount) {

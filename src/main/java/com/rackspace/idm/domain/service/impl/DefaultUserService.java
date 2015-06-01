@@ -871,11 +871,12 @@ public class DefaultUserService implements UserService {
         /*
          some mfa properties on user should never be set via updateUser call (which is used by various front end services
          such as updateUser, addUserToDomain, etc). To prevent inadvertent updating, just null them out here regardless
-         of the value so the Dao will skip them. The appropriate service in MultiFactorService should be used to appropriately
+         of the value so the Dao will skip them. The appropriate service in MultiFactorService should be used to
          change these values
          */
         user.setMultifactorEnabled(null);
         user.setUserMultiFactorEnforcementLevel(null);
+        user.setMultiFactorType(null);
 
         user.setLdapEntry(currentUser.getLdapEntry());
         user.setRsGroupId(currentUser.getRsGroupId());

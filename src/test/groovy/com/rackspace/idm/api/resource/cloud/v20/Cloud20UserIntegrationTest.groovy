@@ -1,14 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.domain.dao.UserDao
 import org.apache.commons.httpclient.HttpStatus
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.Tenant
 import org.springframework.beans.factory.annotation.Autowired
-import org.openstack.docs.identity.api.v2.CredentialListType
 import org.openstack.docs.identity.api.v2.User
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -431,41 +428,99 @@ class Cloud20UserIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
-    def "Multi-factor status is exposed for get user calls"() {
+    @Unroll
+    def "Multi-factor attributes exposed on get user calls appropriately when MFA enabled: #multiFactorEnabled returning XML"() {
         given:
+        def acceptType = MediaType.APPLICATION_XML_TYPE
+
         def domainId = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
         def daoUser = userDao.getUserByUsername(defaultUser.username)
         daoUser.multifactorEnabled = multiFactorEnabled
         userDao.updateUser(daoUser)
 
-        when:
-        def userById = utils.getUserById(defaultUser.id)
-        def userByUsername = utils.getUserByName(defaultUser.username)
-        def userByEmail = utils.getUserByEmail(defaultUser.email)
-        def users = utils.listUsers()
+        def identityAdminToken = utils.getIdentityAdminToken()
 
-        then:
-        userById.multiFactorEnabled == expectedResult
-        userByUsername.multiFactorEnabled == expectedResult
-        userByEmail.multiFactorEnabled == expectedResult
-        for (def user : users) {
-            if (user.id == defaultUser.id) {
-                assert (user.multiFactorEnabled == expectedResult)
-            }
-        }
+        when:
+        def userById = utils.getUserByIdReturnUser(defaultUser.id, identityAdminToken, acceptType)
+        def userByUsername = utils.getUserByName(defaultUser.username, identityAdminToken, acceptType)
+        def usersByEmail = utils.getUsersByEmail(defaultUser.email, identityAdminToken, acceptType)
+        def usersByDomain = utils.getUsersByDomainId(domainId, identityAdminToken, acceptType)
+
+        then: "enabled is always shown"
+        verifyMFAAttributesPresence(userById, multiFactorEnabled)
+        verifyMFAAttributesPresence(userByUsername, multiFactorEnabled)
+        verifyMFAAttributesPresence(usersByEmail.find {it.id == defaultUser.id}, multiFactorEnabled)
+        verifyMFAAttributesPresence(usersByDomain.find {it.id == defaultUser.id}, multiFactorEnabled)
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
 
         where:
-        multiFactorEnabled  | expectedResult
-        true                | true
-        false               | false
+        multiFactorEnabled  | _
+        Boolean.TRUE        | _
+        Boolean.FALSE      | _
     }
 
-        def "Assigning user 'compute:default' global role should allow authentication" () {
+    @Unroll
+    def "Multi-factor attributes exposed on get user calls appropriately when MFA enabled: #multiFactorEnabled returning JSON"() {
+        given:
+        def acceptType = MediaType.APPLICATION_JSON_TYPE
+        def domainId = utils.createDomain()
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def daoUser = userDao.getUserByUsername(defaultUser.username)
+        daoUser.multifactorEnabled = multiFactorEnabled
+        userDao.updateUser(daoUser)
+
+        def identityAdminToken = utils.getIdentityAdminToken()
+
+        when:
+        def userById = utils.getUserByIdReturnUser(defaultUser.id, identityAdminToken, acceptType)
+        def userByUsername = utils.getUserByName(defaultUser.username, identityAdminToken, acceptType)
+        def usersByEmail = utils.getUsersByEmail(defaultUser.email, identityAdminToken, acceptType)
+        def usersByDomain = utils.getUsersByDomainId(domainId, identityAdminToken, acceptType)
+        def usersByEmailSource = usersByEmail["users"].find {it['id'] == defaultUser.id}
+        def usersByDomainSource = usersByDomain["users"].find {it['id'] == defaultUser.id}
+
+        then: "enabled is always shown"
+        verifyMFAAttributesPresence(userById, multiFactorEnabled)
+        verifyMFAAttributesPresence(userByUsername, multiFactorEnabled)
+        verifyMFAAttributesPresence(new User().with {
+            it.multiFactorEnabled = usersByEmailSource['RAX-AUTH:multiFactorEnabled']
+            it.multiFactorState = usersByEmailSource['RAX-AUTH:multiFactorState']
+            it.factorType = usersByEmailSource['RAX-AUTH:factorType']
+            it
+        }, multiFactorEnabled);
+        verifyMFAAttributesPresence(new User().with {
+            it.multiFactorEnabled = usersByDomainSource['RAX-AUTH:multiFactorEnabled']
+            it.multiFactorState = usersByDomainSource['RAX-AUTH:multiFactorState']
+            it.factorType = usersByDomainSource['RAX-AUTH:factorType']
+            it
+        }, multiFactorEnabled);
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+
+        where:
+        multiFactorEnabled  | _
+        Boolean.TRUE        | _
+        Boolean.FALSE       | _
+    }
+
+    def void verifyMFAAttributesPresence(User user, boolean expectedMFAEnabledValue) {
+        assert user.multiFactorEnabled == expectedMFAEnabledValue
+        if (user.multiFactorEnabled) {
+            assert user.multiFactorState != null
+            assert user.factorType != null
+        } else {
+            assert user.multiFactorState == null
+            assert user.factorType == null
+        }
+    }
+
+    def "Assigning user 'compute:default' global role should allow authentication" () {
         given:
         def domainId = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
