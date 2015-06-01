@@ -282,9 +282,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Override
     public Response.ResponseBuilder performMultiFactorChallenge(User user, List<String> alreadyAuthenticatedBy) {
-        /*
-        only supported option is SMS passcode so send it and return sessionid header
-         */
+        if (identityConfig.getReloadableConfig().getThrowErrorOnInitialAuthWhenLocked() && multiFactorService.isUserLocalLocked(user)) {
+            throw new NotAuthorizedException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
+        }
+
         DateTime created = new DateTime();
         DateTime expiration = created.plusMinutes(getSessionIdLifetime());
 
@@ -295,10 +296,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         sessionId.setExpirationDate(expiration);
         sessionId.setAuthenticatedBy(alreadyAuthenticatedBy);
 
-        //generate the new sessionId first
+        //generate the new sessionId
         String encodedSessionId = sessionIdReaderWriter.writeEncoded(sessionId);
 
-        //now send the passcode
+        //now send the passcode (if SMS used)
         if (multiFactorService.isMultiFactorTypePhone(user)) {
             try {
                 multiFactorService.sendSmsPasscode(user.getId());

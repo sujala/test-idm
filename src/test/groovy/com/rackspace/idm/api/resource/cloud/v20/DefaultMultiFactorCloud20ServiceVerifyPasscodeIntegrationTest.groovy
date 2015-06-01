@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
@@ -439,11 +440,11 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         directoryUser.multiFactorFailedAttemptCount != null
         directoryUser.multiFactorLastFailedTimestamp != null
 
-        when:
+        when: "unlock user"
         response = cloud20.updateMultiFactorSettings(utils.getIdentityAdminToken(), userAdmin.id, v2Factory.createMultiFactorSettings(null, true))
         directoryUser = userDao.getUserById(userAdmin.id)
 
-        then:
+        then: "user is unlocked"
         response.status == 204
         directoryUser.multiFactorState == 'ACTIVE'
         directoryUser.multiFactorFailedAttemptCount == null
@@ -521,6 +522,61 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     }
 
     @Unroll
+    def "initial pwd auth denied if mfa enabled and locally locked: factorType=#factorType"() {
+        setup:
+        def maxAttempts = 3
+        def autoUnlockSeconds = 1800
+        reloadableConfiguration.reset()
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, maxAttempts)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, autoUnlockSeconds)
+
+        setUpAndEnableMultiFactor(factorType == FactorTypeEnum.SMS)
+        if (factorType == FactorTypeEnum.SMS) {
+            //need to mock the response as we don't use Duo for real
+            def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, null, null)
+            when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
+        }
+
+        String encryptedSessionId = getSessionId(userAdmin.username)
+        def response, directoryUser
+
+        //lock the account
+        for (int i = 0; i < maxAttempts; i++) {
+            response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "wrong")
+        }
+        directoryUser = userDao.getUserById(userAdmin.id)
+        assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG)
+        directoryUser.multiFactorState == 'LOCKED'
+        directoryUser.multiFactorFailedAttemptCount != null
+        directoryUser.multiFactorLastFailedTimestamp != null
+
+        when: "perform first factor auth again"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP, true)
+        def oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+
+        then: "get 401 without sessionId"
+        oneFactorResponse.status == 401
+        oneFactorResponse.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE) == null
+
+        when: "perform first factor auth again"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP, false)
+        oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+
+        then: "get 401 with sessionId"
+        oneFactorResponse.status == 401
+        oneFactorResponse.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE) != null
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        factorType | _
+        FactorTypeEnum.OTP  | _
+        FactorTypeEnum.SMS | _
+    }
+
+        @Unroll
     def "Check local locking resets failed counter when ttl of last failure passes: sms=#useSmsDevice"() {
         setup:
         def maxAttempts = 3
