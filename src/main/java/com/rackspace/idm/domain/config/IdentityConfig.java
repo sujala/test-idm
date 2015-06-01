@@ -145,6 +145,9 @@ public class IdentityConfig {
     public static final String FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP = "feature.mfa.return.immediate.error.when.account.locked";
     public static final boolean FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_DEFAULT_VALUE = true;
 
+    public static final String FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP = "feature.differentiate.otp.in.www.auth.header.enabled";
+    public static final boolean FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_DEFAULT_VALUE = true;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -214,6 +217,7 @@ public class IdentityConfig {
         defaults.put(AE_TOKEN_STORAGE_TYPE_PROP, AE_TOKEN_STORAGE_TYPE_DEFAULT_VALUE);
         defaults.put(SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP, FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_DEFAULT_VALUE);
+        defaults.put(FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_DEFAULT_VALUE);
 
         return defaults;
     }
@@ -750,6 +754,10 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP);
         }
 
+        @IdmProp(key = FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, description = "Whether or not to differentiate OTP factor from SMS factor in WWW-Authenticate header on initial login", versionAdded = "2.16.0")
+        public boolean differentiateOTPInWWWAuthHeader() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP);
+        }
     }
 
     @Deprecated

@@ -778,6 +778,11 @@ class Cloud20Utils {
         matcher[0][1]
     }
 
+    def extractFactorFromWwwAuthenticateHeader(String headerValue) {
+        def matcher = ( headerValue =~ DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE_VALUE_SESSIONID_REGEX )
+        matcher[0][2]
+    }
+
     def listDevices(user, token=getToken(user.username)) {
         def response = methods.listDevices(token, user.id)
         assert (response.status = SC_OK)

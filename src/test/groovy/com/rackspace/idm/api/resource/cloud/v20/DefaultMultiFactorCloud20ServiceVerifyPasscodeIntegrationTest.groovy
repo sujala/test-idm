@@ -116,10 +116,11 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         deleteUserQuietly(userAdmin)
     }
 
-    @Unroll("Initial auth returns 401 with encrypted sessionId in www-authenticate header: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
-    def "Initial auth returns 401 with encrypted sessionId in www-authenticate header"() {
+    @Unroll
+    def "Initial auth returns 401 with encrypted sessionId and factor in in www-authenticate header: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
-        setUpAndEnableMultiFactor()
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, true)
+        setUpAndEnableMultiFactor(factorType == FactorTypeEnum.SMS)
 
         when:
         def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD, requestContentMediaType, acceptMediaType)
@@ -127,8 +128,9 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
         //verify the provided sessionid can be decrypted
         SessionId plaintextSessionId = encryptedSessionIdReaderWriter.readEncoded(encryptedSessionId)
+        def expectedFactor = factorType == FactorTypeEnum.OTP ? AuthenticatedByMethodEnum.OTPPASSCODE.getValue() : AuthenticatedByMethodEnum.PASSCODE.getValue()
 
-        then:
+        then: "sessionId can be decrypted"
         response.getStatus() == HttpStatus.SC_UNAUTHORIZED
         encryptedSessionId != null
         //verify the provided sessionid can be decrypted and contains appropriate info
@@ -136,12 +138,39 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         plaintextSessionId.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
         Minutes.minutesBetween(plaintextSessionId.getCreatedDate(), plaintextSessionId.getExpirationDate()).getMinutes() == defaultMultiFactorCloud20Service.getSessionIdLifetime()
 
+        and: "auth header shows appropriate value"
+        utils.extractFactorFromWwwAuthenticateHeader(wwwHeader) == expectedFactor
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        requestContentMediaType | acceptMediaType | factorType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE | FactorTypeEnum.OTP
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.OTP
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.SMS
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE | FactorTypeEnum.SMS
+    }
+
+    def "Initial auth www-authenticate header maintains backwards compatibility when feature flag is disabled"() {
+        setup:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, false)
+        setUpAndEnableMultiFactor(false) //set up for OTP
+
+        when:
+        def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD, requestContentMediaType, acceptMediaType)
+        String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+
+        then: "sessionId can be decrypted"
+        response.getStatus() == HttpStatus.SC_UNAUTHORIZED
+        utils.extractFactorFromWwwAuthenticateHeader(wwwHeader) == AuthenticatedByMethodEnum.PASSCODE.getValue()
+
+        cleanup:
+        reloadableConfiguration.reset()
+
         where:
         requestContentMediaType | acceptMediaType
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
     @Unroll("Successful passcode authentication: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
