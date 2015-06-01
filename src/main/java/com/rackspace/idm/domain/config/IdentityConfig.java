@@ -77,8 +77,9 @@ public class IdentityConfig {
     //OPTIONAL PROPERTIES
     private static final boolean REQUIRED = true;
     private static final boolean OPTIONAL = false;
-    private static final String PROPERTY_SET_MESSAGE = "Configuration Property '%s' set with value '%s'";
-    private static final String PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is NOT set but is required";
+    private static final String PROPERTY_SET_MESSAGE = "Configuration Property '%s' set with value '%s' in '%s'";
+    private static final String PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is NOT set but is required in '%s'";
+
     private static final String INVALID_PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is invalid";
     public static final String FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP = "feature.allow.federated.impersonation";
     public static final String EXPOSE_V11_ADD_BASE_URL_PROP = "feature.v11.add.base.url.exposed";
@@ -137,7 +138,7 @@ public class IdentityConfig {
     public static final boolean FEATURE_AUTO_RELOAD_AE_KEYS_ENABLED_DEFAULT_VALUE = true;
 
     public static final String AE_TOKEN_STORAGE_TYPE_PROP = "feature.KeyCzarCrypterLocator.storage";
-    public static final String AE_TOKEN_STORAGE_TYPE_DEFAULT_VALUE = MultiKeyCzarCrypterLocatorConfiguration.FILE;
+    public static final AEKeyStorageType AE_TOKEN_STORAGE_TYPE_DEFAULT_VALUE = AEKeyStorageType.FILE;
 
     public static final String SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME = EncryptedSessionIdReaderWriter.MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME;
     public static final String SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT = EncryptedSessionIdReaderWriter.MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT;
@@ -147,6 +148,10 @@ public class IdentityConfig {
 
     public static final String FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP = "feature.differentiate.otp.in.www.auth.header.enabled";
     public static final boolean FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_DEFAULT_VALUE = true;
+    public static final String AE_NODE_NAME_FOR_SIGNOFF_PROP = "ae.node.name.for.signoff"; //no default
+
+    public static final String FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP = "feature.ae.sync.signoff.enabled";
+    public static final boolean FEATURE_AE_SYNC_SIGNOFF_ENABLED = true;
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -218,6 +223,7 @@ public class IdentityConfig {
         defaults.put(SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP, FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_DEFAULT_VALUE);
         defaults.put(FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_DEFAULT_VALUE);
+        defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
 
         return defaults;
     }
@@ -229,35 +235,46 @@ public class IdentityConfig {
     @PostConstruct
     private void verifyConfigs() {
         // Verify and Log Required Values
-        verifyAndLogProperty(GA_USERNAME, REQUIRED);
+        verifyAndLogStaticProperty(GA_USERNAME, REQUIRED);
 
-        verifyAndLogProperty(EMAIL_FROM_EMAIL_ADDRESS, REQUIRED);
-        verifyAndLogProperty(EMAIL_LOCKED_OUT_SUBJECT, REQUIRED);
-        verifyAndLogProperty(EMAIL_MFA_ENABLED_SUBJECT, REQUIRED);
-        verifyAndLogProperty(EMAIL_MFA_DISABLED_SUBJECT, REQUIRED);
-        verifyAndLogProperty(EMAIL_HOST, OPTIONAL);
-        verifyAndLogProperty(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, OPTIONAL);
-        verifyAndLogProperty(SCOPED_TOKEN_EXPIRATION_SECONDS, REQUIRED);
-        verifyAndLogProperty(CLOUD_AUTH_CLIENT_ID, REQUIRED);
+        verifyAndLogStaticProperty(EMAIL_FROM_EMAIL_ADDRESS, REQUIRED);
+        verifyAndLogStaticProperty(EMAIL_LOCKED_OUT_SUBJECT, REQUIRED);
+        verifyAndLogStaticProperty(EMAIL_MFA_ENABLED_SUBJECT, REQUIRED);
+        verifyAndLogStaticProperty(EMAIL_MFA_DISABLED_SUBJECT, REQUIRED);
+        verifyAndLogStaticProperty(EMAIL_HOST, OPTIONAL);
+        verifyAndLogStaticProperty(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, OPTIONAL);
+        verifyAndLogStaticProperty(SCOPED_TOKEN_EXPIRATION_SECONDS, REQUIRED);
+        verifyAndLogStaticProperty(CLOUD_AUTH_CLIENT_ID, REQUIRED);
 
-        verifyAndLogProperty(IDENTITY_ACCESS_ROLE_NAMES_PROP, REQUIRED);
-        verifyAndLogProperty(IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP, REQUIRED);
-        verifyAndLogProperty(IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP, REQUIRED);
-        verifyAndLogProperty(IDENTITY_USER_ADMIN_ROLE_NAME_PROP, REQUIRED);
-        verifyAndLogProperty(IDENTITY_USER_MANAGE_ROLE_NAME_PROP, REQUIRED);
-        verifyAndLogProperty(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP, REQUIRED);
+        verifyAndLogStaticProperty(IDENTITY_ACCESS_ROLE_NAMES_PROP, REQUIRED);
+        verifyAndLogStaticProperty(IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP, REQUIRED);
+        verifyAndLogStaticProperty(IDENTITY_SERVICE_ADMIN_ROLE_NAME_PROP, REQUIRED);
+        verifyAndLogStaticProperty(IDENTITY_USER_ADMIN_ROLE_NAME_PROP, REQUIRED);
+        verifyAndLogStaticProperty(IDENTITY_USER_MANAGE_ROLE_NAME_PROP, REQUIRED);
+        verifyAndLogStaticProperty(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP, REQUIRED);
 
-        verifyAndLogProperty(EXPOSE_V11_ADD_BASE_URL_PROP, OPTIONAL);
+        verifyAndLogStaticProperty(EXPOSE_V11_ADD_BASE_URL_PROP, OPTIONAL);
 
         logFederatedTokenFormatOverrides();
+
+        verifyAndLogReloadableProperty(AE_NODE_NAME_FOR_SIGNOFF_PROP, REQUIRED);
     }
 
-    private void verifyAndLogProperty(String property, boolean required) {
+    private void verifyAndLogStaticProperty(String property, boolean required) {
         String readProperty = staticConfiguration.getString(property);
         if (required && StringUtils.isBlank(readProperty)) {
-            logger.error(String.format(PROPERTY_ERROR_MESSAGE, property));
+            logger.error(String.format(PROPERTY_ERROR_MESSAGE, property, PropertyFileConfiguration.CONFIG_FILE_NAME));
         } else {
-            logger.warn(String.format(PROPERTY_SET_MESSAGE, property, readProperty));
+            logger.warn(String.format(PROPERTY_SET_MESSAGE, property, readProperty, PropertyFileConfiguration.CONFIG_FILE_NAME));
+        }
+    }
+
+    private void verifyAndLogReloadableProperty(String property, boolean required) {
+        String readProperty = reloadableConfiguration.getString(property);
+        if (required && StringUtils.isBlank(readProperty)) {
+            logger.error(String.format(PROPERTY_ERROR_MESSAGE, property, PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME));
+        } else {
+            logger.warn(String.format(PROPERTY_SET_MESSAGE, property, readProperty, PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME));
         }
     }
 
@@ -340,6 +357,24 @@ public class IdentityConfig {
         }
     }
 
+    private <T extends Enum<T>> T getEnumSafely(Configuration config, String prop, Class<T> enumType) {
+        T defaultValue = enumType.cast(propertyDefaults.get(prop));
+        T result;
+        try {
+            String name = config.getString(prop);
+            if (!StringUtils.isBlank(name)) {
+                //convert to enum
+                result = Enum.valueOf(enumType, name);
+            } else {
+                result = defaultValue;
+            }
+        } catch (Exception e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop), e);
+            result = defaultValue;
+        }
+        return result;
+    }
+
     /**
      * Return JSON representation of properties and their values, as annotated by {@link com.rackspace.idm.domain.config.IdmProp}.
      *
@@ -358,21 +393,16 @@ public class IdentityConfig {
                 final String msg = String.format("error getting the value of '%s'", a.key());
                 JSONObject prop = new JSONObject();
                 try {
-                    Object value = m.invoke(config);
                     prop.put(description, a.description());
                     prop.put(versionAdded, a.versionAdded());
-                    prop.put(defaultValue, propertyDefaults.get(a.key()));
-                    if (value instanceof String || value instanceof Number || value instanceof Boolean) {
-                        prop.put(propValue, value);
-                    } else if (value instanceof String[] ) {
-                        JSONArray valueArray = new JSONArray();
-                        for (String val : (String[])value) {
-                            valueArray.add(val);
-                        }
-                        prop.put(propValue, valueArray);
-                    } else {
-                        prop.put(propValue, value.toString());
-                    }
+
+                    Object defaultValueValue = propertyDefaults.get(a.key());
+                    Object convertedDefaultValue = valueToAddToJSON(defaultValueValue);
+                    prop.put(defaultValue, convertedDefaultValue);
+
+                    Object value = m.invoke(config);
+                    Object convertedValue = valueToAddToJSON(value);
+                    prop.put(propValue, convertedValue);
                     props.put(a.key(), prop);
                 } catch (Exception e) {
                     logger.error(msg, e);
@@ -380,6 +410,22 @@ public class IdentityConfig {
             }
         }
         return props;
+    }
+
+    private Object valueToAddToJSON(Object value) {
+        if (value == null || value instanceof String || value instanceof Number || value instanceof Boolean) {
+            return value;
+        } else if (value instanceof String[] ) {
+            JSONArray valueArray = new JSONArray();
+            for (String val : (String[])value) {
+                valueArray.add(val);
+            }
+            return valueArray;
+        } else if (value instanceof Enum) {
+            return ((Enum)value).name();
+        } else {
+            return value.toString();
+        }
     }
 
     /**
@@ -630,8 +676,8 @@ public class IdentityConfig {
             return getIntSafely(staticConfiguration, RELOAD_AE_KEYS_FIXED_DELAY_SECONDS);
         }
         @IdmProp(key = AE_TOKEN_STORAGE_TYPE_PROP, description = "Whether to load keys from FILE or LDAP", versionAdded = "2.13.0")
-        public String getAETokenStorageType() {
-            return getStringSafely(staticConfiguration, AE_TOKEN_STORAGE_TYPE_PROP);
+        public AEKeyStorageType getAETokenStorageType() {
+            return getEnumSafely(staticConfiguration, AE_TOKEN_STORAGE_TYPE_PROP, AEKeyStorageType.class);
         }
         @IdmProp(key = SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, description = "When FILE is used for AE key storage, where the keys are located", versionAdded = "2.13.0")
         public String getAEFileStorageKeyLocation() {
@@ -757,6 +803,16 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, description = "Whether or not to differentiate OTP factor from SMS factor in WWW-Authenticate header on initial login", versionAdded = "2.16.0")
         public boolean differentiateOTPInWWWAuthHeader() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP);
+        }
+
+        @IdmProp(key = AE_NODE_NAME_FOR_SIGNOFF_PROP, description = "The unique name for this API Node used for signoff on the AE keys loaded by this node", versionAdded = "2.16.0")
+        public String getAENodeNameForSignoff() {
+            return reloadableConfiguration.getString(AE_NODE_NAME_FOR_SIGNOFF_PROP); //required property so no default
+        }
+
+        @IdmProp(key = FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, description = "Whether or not to keep the signoff object in sync with the loaded AE Key cache", versionAdded = "2.16.0")
+        public boolean getAESyncSignOffEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP);
         }
     }
 
