@@ -202,8 +202,10 @@ public class UserConverterCloudV20 {
             */
             jaxbUser.setRoles(null);
 
-            //override mfa state using dynamic logic
             jaxbUser.setMultiFactorState(basicMultiFactorService.getLogicalUserMultiFactorState(user));
+            if (user.isMultiFactorEnabled()) {
+                jaxbUser.setFactorType(user.getMultiFactorTypeAsEnum());
+            }
 
             if(includeOtherAttributes) {
                 if (user.getSecretQuestion() != null || user.getSecretAnswer() != null) {

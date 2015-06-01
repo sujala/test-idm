@@ -154,15 +154,18 @@ public final class JsonWriterHelper {
             outer.put(JSONConstants.RAX_AUTH_FEDERATED_IDP, user.getFederatedIdp());
         }
 
-        if (isMultiFactorGloballyEnabled) {
-            boolean mfaEnabledValue = user.isMultiFactorEnabled() == null ? false : user.isMultiFactorEnabled();
+        boolean mfaEnabledValue = user.isMultiFactorEnabled() == null ? false : user.isMultiFactorEnabled();
+        if (isMultiFactorGloballyEnabled || mfaEnabledValue) {
             outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED, mfaEnabledValue);
             if(mfaEnabledValue) {
-                outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_STATE, user.getMultiFactorState().toString());
+                //only set these if MFA enabled && not null
+                if (user.getMultiFactorState() != null) {
+                    outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_STATE, user.getMultiFactorState().toString());
+                }
+                if (user.getFactorType() != null) {
+                    outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_TYPE, user.getFactorType().name());
+                }
             }
-        } else if (Boolean.TRUE.equals(user.isMultiFactorEnabled())) {
-            outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED, true);
-            outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_STATE, user.getMultiFactorState().toString());
         }
 
         //display the user multifactor enforcement level if it's non-null regardless of the mfa setting
