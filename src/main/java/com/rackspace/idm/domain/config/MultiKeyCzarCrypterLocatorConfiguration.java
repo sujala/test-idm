@@ -9,14 +9,10 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class MultiKeyCzarCrypterLocatorConfiguration {
-
-    public static final String FILE = "FILE";
-    public static final String LDAP = "LDAP";
-
     @Bean
     @Autowired
     public KeyCzarCrypterLocator keyCzarCrypterLocator(IdentityConfig config) {
-        if (LDAP.equalsIgnoreCase(config.getStaticConfig().getAETokenStorageType())) {
+        if (AEKeyStorageType.LDAP == config.getStaticConfig().getAETokenStorageType()) {
             return new LDAPKeyCzarCrypterLocator();
         } else {
             return new FileSystemKeyCzarCrypterLocator(config);

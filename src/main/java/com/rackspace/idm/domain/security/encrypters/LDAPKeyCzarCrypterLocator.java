@@ -3,6 +3,8 @@ package com.rackspace.idm.domain.security.encrypters;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.security.signoff.KeyCzarAPINodeSignoffRepository;
+import com.rackspace.idm.domain.security.signoff.LdapAPINodeSignoff;
 import com.rackspace.idm.domain.security.encrypters.keyczar.*;
 import com.rackspace.idm.domain.security.encrypters.keyczar.KeyMetadata;
 import com.rackspace.idm.domain.security.encrypters.keyczar.KeyVersion;
@@ -16,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
+import java.util.Date;
 import java.util.List;
 
 public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator {
@@ -31,6 +34,9 @@ public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator
 
     @Autowired
     private KeyCzarKeyVersionDao keyCzarKeyVersionDao;
+
+    @Autowired
+    private KeyCzarAPINodeSignoffRepository keyCzarAPINodeSignoffDao;
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -66,19 +72,25 @@ public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator
     @Override
     public void resetCache() {
         try {
-            if (replaceCacheSupplierIfNecessary()) {
-                /*
-                now that memoized is updated and being used, record the change in directory. Must only record the change
-                AFTER the memoized variable is updated. While it is not ideal to use the newest key data and fail to
-                record it, it won't cause errors. However, if we recorded that we are using the newest version, but
-                aren't, then it could cause significant issues (e.g. - a new key could be promoted to primary when this
-                node doesn't actually know about it).
-                */
-                recordCachedVersion();
-            }
+            replaceCacheSupplierIfNecessary();
         } catch (Exception e) {
             //when resetting the cache, catch any thrown errors, log, but continue using existing cache entry
             logger.error(String.format("Error repopulating AE meta cache. Please check earlier logs for more information"), e);
+        }
+
+        /*
+        regardless of whether cache was updated, verify the signoff entry for this node correctly reflects the cache
+        entry. Must only record the change
+        AFTER the memoized variable is updated. While it is not ideal to use the newest key data and fail to
+        record it, it won't cause errors. However, if we recorded that we are using the newest version, but
+        aren't, then it could cause significant issues (e.g. - a new key could be promoted to primary when this
+        node doesn't actually know about it).
+        */
+        try {
+            recordCachedVersionIfNecessary();
+        } catch (Exception e) {
+            //when resetting the cache, catch any thrown errors, log, but continue using existing cache entry
+            logger.error(String.format("Error recording AE Key Signoff for node. Please check earlier logs for more information"), e);
         }
     }
 
@@ -141,13 +153,64 @@ public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator
             return newMemCrypterCacheSupplier;
     }
 
-    //TODO: Update LDAP with the newly cached version
-    public void recordCachedVersion() {
-        logger.info(String.format("Recording newly loaded AE Meta data Cache"));
+    private void recordCachedVersionIfNecessary() {
+        if (!identityConfig.getReloadableConfig().getAESyncSignOffEnabled()) {
+            return; //no sync
+        }
 
-        // CrypterCache cache = memoizedCrypterCache.get();
-        logger.info(String.format("Would record newly loaded meta now"));
+        String nodeName = identityConfig.getReloadableConfig().getAENodeNameForSignoff();
+        logger.debug(String.format("Validating registered AE key Signoff for node '%s'", nodeName));
 
+        CrypterCache cache = memoizedCrypterCache.get();
+
+        //retrieve the registered signoff entry for this node
+        LdapAPINodeSignoff signoff = keyCzarAPINodeSignoffDao.getByNodeAndMetaName(DN_META, nodeName);
+
+        DateTime currentSignOffDate = signoff != null && signoff.getCachedMetaCreatedDate() != null ? new DateTime(signoff.getCachedMetaCreatedDate()) : null;
+        String prettyCurrentSignoffDate = currentSignOffDate == null ? null : dateLoggerFormat.print(currentSignOffDate);
+
+        if (cache != null) {
+            //make sure signoff reflects cache
+            DateTime cachedMetaCreationDate = new DateTime(cache.inMemoryKeyCzarReader.getStoredMetadata().getCreated());
+            DateTime cachedMetaRetrievedDate = new DateTime(cache.inMemoryKeyCzarReader.getRetrieved());
+            String prettyCachedCreationDate = dateLoggerFormat.print(cachedMetaCreationDate);
+
+            if (currentSignOffDate == null
+                    || !cachedMetaCreationDate.equals(currentSignOffDate)) {
+
+                //signoff is not synchronized with the loaded cache. Update info.
+                if (currentSignOffDate != null
+                        && cachedMetaCreationDate.isBefore(currentSignOffDate)) {
+                    //the signoff in CA for this node represents a date LATER than what the node has loaded in cache! This should not happen!
+                    logger.error(String.format("Illegal State! Registered AE key signoff for node '%s' is before the loaded cache! Signoff creation date is set to '%s' while loaded cache is '%s'. Updating signoff to reflect cache.", nodeName, prettyCurrentSignoffDate, prettyCachedCreationDate));
+                } else {
+                    //normal update
+                    logger.debug(String.format("Registered AE key signoff for node '%s' is out of date with the loaded cache. Updating from meta with creation date '%s' to meta with creation date '%s'", nodeName, prettyCurrentSignoffDate, prettyCachedCreationDate));
+                }
+
+                if (signoff == null) {
+                    //create new if needed
+                    signoff = new LdapAPINodeSignoff();
+                }
+
+                signoff.setCachedMetaCreatedDate(cachedMetaCreationDate.toDate());
+                signoff.setKeyMetadataId(DN_META);
+                signoff.setLoadedDate(cachedMetaRetrievedDate.toDate());
+                signoff.setNodeName(nodeName);
+                keyCzarAPINodeSignoffDao.addOrUpdateObject(signoff);
+
+                logger.warn(String.format("Successfully updated AE key signoff for node '%s'. Updated from meta with creation date '%s' to meta with creation date '%s'", nodeName, prettyCurrentSignoffDate, prettyCachedCreationDate));
+            } else {
+                logger.debug(String.format("Registered AE key signoff for node '%s' is up to date. Using meta with creation date '%s'", nodeName, prettyCachedCreationDate));
+            }
+        } else if (signoff != null) {
+            //delete the signoff object because the cache is empty (e.g. - AE tokens have become disabled)
+            logger.warn(String.format("Node '%s' has an empty AE Key Cache, but associated signoff record shows a sign off for version '%s' . Removing AE Signoff Record.", nodeName, prettyCurrentSignoffDate));
+            keyCzarAPINodeSignoffDao.deleteObject(signoff);
+        } else {
+            //signup and cache are null so this is a no-op
+            logger.debug(String.format("There is no AE Token Signoff record for node '%s'", nodeName));
+        }
     }
 
     /**

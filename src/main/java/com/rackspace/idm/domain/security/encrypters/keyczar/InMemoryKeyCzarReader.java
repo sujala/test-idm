@@ -69,6 +69,10 @@ public class InMemoryKeyCzarReader implements KeyczarReader {
         return metadata;
     }
 
+    public Date getRetrieved() {
+        return retrieved;
+    }
+
     public com.rackspace.docs.identity.api.ext.rax_auth.v1.KeyMetadata getMetadataInfo() {
         return info;
     }

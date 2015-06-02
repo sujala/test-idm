@@ -1,11 +1,14 @@
 package com.rackspace.idm.domain.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapGenericRepository
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator
+import com.rackspace.idm.domain.security.encrypters.LDAPKeyCzarCrypterLocator
 import com.rackspace.idm.domain.security.encrypters.keyczar.KeyCzarKeyMetadataDao
 import com.rackspace.idm.domain.security.encrypters.keyczar.KeyCzarKeyVersionDao
 import com.rackspace.idm.domain.security.encrypters.keyczar.LdapKeyMetadata
+import com.rackspace.idm.domain.security.signoff.KeyCzarAPINodeSignoffDao
 import org.joda.time.DateTime
 import org.keyczar.Crypter
 import org.keyczar.exceptions.KeyczarException
@@ -29,6 +32,13 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     KeyCzarKeyMetadataDao keyCzarKeyMetadataDao
+
+    @Autowired
+    KeyCzarAPINodeSignoffDao apiNodeSignoffDao
+
+    @Autowired
+    IdentityConfig identityConfig;
+
 
     @Autowired
     LdapGenericRepository<LdapKeyMetadata> keyMetadataLdapGenericRepository
@@ -125,6 +135,9 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         encrypt1 != null
         decrypt1 == 'foobar'
 
+        and: "signoff exists for this version"
+        verifyKeySignoff(metadata)
+
         when: "test encryption with v2 key"
         metadata.data = second_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
@@ -147,6 +160,9 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         decrypt2 == 'foobar'
         decrypt1 == null
 
+        and: "signoff exists for this version"
+        verifyKeySignoff(metadata)
+
         when: "test decryption with v1 key (with v2)"
         metadata.data = two_keys_first_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
@@ -163,6 +179,9 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         decrypt2 == 'foobar'
         decrypt1 == 'foobar'
 
+        and: "signoff exists for this version"
+        verifyKeySignoff(metadata)
+
         when: "test decryption with v2 key (with v1)"
         metadata.data = two_keys_second_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
@@ -178,6 +197,9 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         info.size == 2
         decrypt2 == 'foobar'
         decrypt1 == 'foobar'
+
+        and: "signoff exists for this version"
+        verifyKeySignoff(metadata)
 
         cleanup:
         metadata.data = original
@@ -209,7 +231,12 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         encrypt1 != null
         decrypt1 == 'foobar'
 
+        and: "signoff exists for this version"
+        verifyKeySignoff(metadata)
+
         when: "try to reset with bad data"
+        LdapKeyMetadata currentMetaData = keyCzarKeyMetadataDao.getKeyMetadataByName('meta')
+
         metadata.data = bad_meta_purpose
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
@@ -227,10 +254,54 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         and: "and can still decrypt previously generated keys"
         cacheableKeyCzarCrypterLocator.getCrypter().decrypt(encrypt1) == 'foobar'
 
+        and: "signoff exists for the old version of key"
+        verifyKeySignoff(currentMetaData)
+
         cleanup:
         metadata.data = original
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
         keyMetadataLdapGenericRepository.updateObject(metadata)
+        cacheableKeyCzarCrypterLocator.resetCache()
     }
 
+    def "disable of signoff causes updates not to happen"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, true)
+        cacheableKeyCzarCrypterLocator.resetCache()
+
+        LdapKeyMetadata metadata = keyCzarKeyMetadataDao.getKeyMetadataByName('meta')
+        assert metadata != null
+        verifyKeySignoff(metadata)
+
+        LdapKeyMetadata metaForUpdate = new LdapKeyMetadata().with {
+            it.name = metadata.name
+            it.created = metadata.created
+            it.data = metadata.data
+            it.uniqueId = metadata.uniqueId
+            it
+        }
+
+        def signoffObj = apiNodeSignoffDao.getByNodeAndMetaName(LDAPKeyCzarCrypterLocator.DN_META, identityConfig.getReloadableConfig().getAENodeNameForSignoff())
+        assert signoffObj != null
+        metaForUpdate.data = two_keys_first_primary
+        metaForUpdate.created = new DateTime(metadata.created).plusMillis(1).toDate()
+        keyMetadataLdapGenericRepository.updateObject(metaForUpdate)
+
+        when:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, false)
+        cacheableKeyCzarCrypterLocator.resetCache()
+
+        then: "signoff is not updated"
+        verifyKeySignoff(metadata) //compare to original
+
+        cleanup:
+        reloadableConfiguration.reset()
+        keyMetadataLdapGenericRepository.updateObject(metadata)
+    }
+
+    def void verifyKeySignoff(LdapKeyMetadata metadata) {
+        def signoffObj = apiNodeSignoffDao.getByNodeAndMetaName(LDAPKeyCzarCrypterLocator.DN_META, identityConfig.getReloadableConfig().getAENodeNameForSignoff())
+        assert signoffObj != null
+        assert signoffObj.cachedMetaCreatedDate != null
+        assert new DateTime(signoffObj.cachedMetaCreatedDate).equals(new DateTime(metadata.created))
+    }
 }

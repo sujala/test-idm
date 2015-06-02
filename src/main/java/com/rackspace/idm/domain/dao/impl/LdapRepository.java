@@ -66,9 +66,12 @@ public abstract class LdapRepository {
 
     public static final String OBJECTCLASS_KEY_DESCRIPTOR = "rsKeyDescriptor";
     public static final String OBJECTCLASS_KEY_METADATA = "rsKeyMetadata";
+    public static final String OBJECTCLASS_API_NODE_SIGNOFF = "rsApiNodeSignOff";
     public static final String ATTR_KEY_DATA = "rsKeyData";
     public static final String ATTR_KEY_VERSION = "rsKeyVersion";
     public static final String ATTR_KEY_CREATED = "rsKeyCreated";
+    public static final String ATTR_LOADED_DATE = "rsLoadedDate";
+    public static final String ATTR_KEY_METADATA_ID = "rsKeyMetadataId";
 
     public static final String ATTR_ID = "rsId";
 

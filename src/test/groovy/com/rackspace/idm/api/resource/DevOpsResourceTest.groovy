@@ -29,7 +29,8 @@ class DevOpsResourceTest extends RootIntegrationTest {
         def response = devops.getIdmProps(utils.getServiceAdminToken())
 
         when:
-        def data = new ObjectMapper().readValue(response.getEntity(String), Map)
+        def stringResp = response.getEntity(String)
+        def data = new ObjectMapper().readValue(stringResp, Map)
 
         then:
         response.status == 200
