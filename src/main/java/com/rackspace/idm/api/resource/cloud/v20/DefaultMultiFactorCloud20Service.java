@@ -80,8 +80,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     private static final String SESSION_ID_PRIMARY_VERSION_PROP_NAME = "multifactor.primary.sessionid.version";
     public static final String MFA_ADDITIONAL_AUTH_CREDENTIALS_REQUIRED_MSG = "Additional authentication credentials required";
     public static final String HEADER_WWW_AUTHENTICATE = "WWW-Authenticate";
-    public static final String HEADER_WWW_AUTHENTICATE_VALUE = "OS-MF sessionId='%s', factor='PASSCODE'";
-    public static final String HEADER_WWW_AUTHENTICATE_VALUE_SESSIONID_REGEX = String.format("^" + HEADER_WWW_AUTHENTICATE_VALUE + "$", "(.*)");
+    public static final String HEADER_WWW_AUTHENTICATE_VALUE = "OS-MF sessionId='%s', factor='%s'";
+    public static final String HEADER_WWW_AUTHENTICATE_VALUE_SESSIONID_REGEX = String.format("^" + HEADER_WWW_AUTHENTICATE_VALUE + "$", "(.*)", "(.*)");
     public static final String INVALID_CREDENTIALS_GENERIC_ERROR_MSG = "Can not authenticate with credentials provided";
     public static final String INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG = "Can not authenticate with credentials provided. Session has expired.";
     public static final String INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG = "Can not authenticate with credentials provided. The account has been locked due to excessive invalid attempts. Please contact an administrator";
@@ -300,7 +300,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         String encodedSessionId = sessionIdReaderWriter.writeEncoded(sessionId);
 
         //now send the passcode (if SMS used)
+        String secondFactor = AuthenticatedByMethodEnum.PASSCODE.getValue();
         if (multiFactorService.isMultiFactorTypePhone(user)) {
+            LOG.debug(String.format("Sending SMS challenge to user '%s'", user.getId()));
             try {
                 multiFactorService.sendSmsPasscode(user.getId());
             } catch (DuoLockedOutException lockedOutException) {
@@ -308,6 +310,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
                 user.setMultiFactorState(BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED);
                 userService.updateUserForMultiFactor(user);
                 throw new ForbiddenException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
+            }
+        } else {
+            LOG.debug(String.format("User '%s' requires OTP MFA", user.getId()));
+            if (identityConfig.getReloadableConfig().differentiateOTPInWWWAuthHeader()) {
+                secondFactor = AuthenticatedByMethodEnum.OTPPASSCODE.getValue();
             }
         }
 
@@ -319,11 +326,11 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         fault.setMessage(MFA_ADDITIONAL_AUTH_CREDENTIALS_REQUIRED_MSG);
         return Response.status(HttpServletResponse.SC_UNAUTHORIZED).entity(
                 objFactories.getOpenStackIdentityV2Factory().createUnauthorized(fault).getValue())
-                .header(HEADER_WWW_AUTHENTICATE, createWwwAuthenticateHeaderValue(encodedSessionId));
+                .header(HEADER_WWW_AUTHENTICATE, createWwwAuthenticateHeaderValue(encodedSessionId, secondFactor));
     }
 
-    private String createWwwAuthenticateHeaderValue(String sessionId) {
-        return String.format(HEADER_WWW_AUTHENTICATE_VALUE, sessionId);
+    private String createWwwAuthenticateHeaderValue(String sessionId, String factor) {
+        return String.format(HEADER_WWW_AUTHENTICATE_VALUE, sessionId, factor);
     }
 
     @Override
