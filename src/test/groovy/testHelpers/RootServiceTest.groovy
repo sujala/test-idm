@@ -106,6 +106,7 @@ import com.rackspace.idm.validation.InputValidator
 import com.rackspace.idm.validation.ObjectConverter
 import com.rackspace.idm.validation.PrecedenceValidator
 import com.rackspace.idm.validation.Validator20
+import com.rackspace.idm.validation.entity.Constants
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.ObjectFactory
@@ -1046,6 +1047,10 @@ class RootServiceTest extends Specification {
 
     def m(String value){
         return value.multiply(100)
+    }
+
+    def t(String value){
+        return value.multiply(Constants.MAX_TOKEN_LENGTH)
     }
 
     def mm(String value){
