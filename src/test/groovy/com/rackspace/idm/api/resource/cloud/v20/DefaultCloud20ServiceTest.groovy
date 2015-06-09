@@ -2163,10 +2163,46 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
     }
 
-    def "buildAuthResponse adds tenant to response if tenant ID is specified in request"() {
+    def "buildAuthResponse (pre-terminator) adds tenant to response if tenant ID is specified in request and user has access to tenant"() {
         given:
         mockAuthConverterCloudV20(service)
         mockTokenConverter(service)
+
+        def userScopeAccess = createUserScopeAccess()
+        def user = entityFactory.createUser()
+        def tenantId = "tenantId"
+        def tenant = new Tenant().with {
+            it.tenantId = tenantId
+            it
+        }
+        def authRequest = v2Factory.createAuthenticationRequest("token", "$tenantId", "")
+
+        def endpoint1 = new OpenstackEndpoint().with({
+            it.tenantId = tenantId
+            it.baseUrls = [].asList()
+            it
+        })
+        def endpoint2 = new OpenstackEndpoint().with({
+            it.tenantId = tenantId
+            it.baseUrls = [].asList()
+            it
+        })
+
+        scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo(null, [tenant], [endpoint1, endpoint2].asList())
+        tenantService.hasTenantAccess(_, _) >> true
+
+        when:
+        def response = service.buildAuthResponse(userScopeAccess, null, user, authRequest)
+
+        then:
+        response.token.tenant.id == tenantId
+    }
+
+    def "buildAuthResponse (post-terminator) adds tenant to response if tenant ID is specified in request and user has access"() {
+        given:
+        mockAuthConverterCloudV20(service)
+        mockTokenConverter(service)
+        reloadableConfig.getTerminatorSupportedForAuthWithToken() >> true
 
         def userScopeAccess = createUserScopeAccess()
         def user = entityFactory.createUser()
