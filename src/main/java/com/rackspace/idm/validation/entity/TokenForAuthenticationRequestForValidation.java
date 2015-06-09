@@ -5,7 +5,7 @@ import lombok.Setter;
 
 import javax.validation.constraints.Size;
 
-import static com.rackspace.idm.validation.entity.Constants.MAX;
+import static com.rackspace.idm.validation.entity.Constants.MAX_TOKEN_LENGTH;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,7 +17,7 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 @Getter
 @Setter
 public class TokenForAuthenticationRequestForValidation {
-    @Size(max = MAX)
+    @Size(max = MAX_TOKEN_LENGTH)
     private String id;
 
 }

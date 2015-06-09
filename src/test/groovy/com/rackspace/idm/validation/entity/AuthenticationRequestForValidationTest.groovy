@@ -3,7 +3,8 @@ package com.rackspace.idm.validation.entity;
 import com.rackspace.idm.aspect.ValidateAspect
 import com.rackspace.idm.validation.DefaultObjectValidator;
 import com.rackspace.idm.validation.ObjectConverter
-import spock.lang.Shared;
+import spock.lang.Shared
+import spock.lang.Unroll;
 import testHelpers.RootServiceTest
 
 class AuthenticationRequestForValidationTest extends RootServiceTest {
@@ -18,7 +19,8 @@ class AuthenticationRequestForValidationTest extends RootServiceTest {
         objectValidator.setup()
     }
 
-    def "validate fields for AuthenticationRequestForValidation"() {
+    @Unroll
+    def "validate fields for AuthenticationRequestForValidation: id: #id; tenantId: #tenantId; tenantName: #tenantName; credential: #credential"() {
         when:
         def entity = entityFactoryForValidation.createAuthenticationRequest(tenantId, tenantName, id, credential)
         def result = objectValidator.getViolationMessages(entity)
@@ -29,12 +31,12 @@ class AuthenticationRequestForValidationTest extends RootServiceTest {
         where:
         expected    | id        | tenantId          | tenantName        | credential
         0           | "id"      | "tenantId"        | "tenantName"      | entityFactoryForValidation.createPasswordCredentials("username", "Password1")
-        1           | m("id")   | "tenantId"        | "tenantName"      | entityFactoryForValidation.createPasswordCredentials("username", "Password1")
+        1           | t("id")   | "tenantId"        | "tenantName"      | entityFactoryForValidation.createPasswordCredentials("username", "Password1")
         1           | "id"      | m("tenantId")     | "tenantName"      | entityFactoryForValidation.createPasswordCredentials("username", "Password1")
         1           | "id"      | "tenantId"        | m("tenantName")   | entityFactoryForValidation.createPasswordCredentials("username", "Password1")
         1           | "id"      | "tenantId"        | "tenantName"      | entityFactoryForValidation.createPasswordCredentials(m("username"), "Password1")
         1           | "id"      | "tenantId"        | "tenantName"      | entityFactoryForValidation.createPasswordCredentials("username", m("Password1"))
-        5           | m("id")   | m("tenantId")     | m("tenantName")   | entityFactoryForValidation.createPasswordCredentials(m("username"), m("Password1"))
+        5           | t("id")   | m("tenantId")     | m("tenantName")   | entityFactoryForValidation.createPasswordCredentials(m("username"), m("Password1"))
 
         0           | "id"      | "tenantId"        | "tenantName"      | entityFactoryForValidation.createApiKeyCredentials("username", "123456790")
         1           | "id"      | "tenantId"        | "tenantName"      | entityFactoryForValidation.createApiKeyCredentials(m("username"), "123456790")
