@@ -317,6 +317,25 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
     }
 
+    def "auth with AE Token + tenant"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        setUserTokenFormat(userAdmin, TokenFormatEnum.AE)
+        def userAdminToken = getToken(userAdmin, GetTokenVersion.v20)
+
+        when: "auth w/token and tenant"
+        def newToken = utils.getTokenFromAuthWithToken(userAdminToken, domainId)
+
+        then:
+        userAdminToken == newToken
+
+        cleanup:
+        try { utils.deleteUsers(users) } catch (Exception e) {}
+        try { utils.deleteDomain(domainId) } catch (Exception e) {}
+    }
+
     def setUserTokenFormat(user, tokenFormat) {
         def retrievedUser = utils.getUserById(user.id)
         retrievedUser.tokenFormat = tokenFormat

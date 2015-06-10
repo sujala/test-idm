@@ -153,6 +153,9 @@ public class IdentityConfig {
     public static final String FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP = "feature.ae.sync.signoff.enabled";
     public static final boolean FEATURE_AE_SYNC_SIGNOFF_ENABLED = true;
 
+    public static final String FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP = "feature.terminator.support.for.auth.with.tenant.enabled";
+    public static final boolean FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_DEFAULT = true;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -224,6 +227,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP, FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_DEFAULT_VALUE);
         defaults.put(FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_DEFAULT_VALUE);
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
+        defaults.put(FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP, FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_DEFAULT);
 
         return defaults;
     }
@@ -813,6 +817,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, description = "Whether or not to keep the signoff object in sync with the loaded AE Key cache", versionAdded = "2.16.0")
         public boolean getAESyncSignOffEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP);
+        }
+
+        @IdmProp(key = FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP, description = "Whether or not terminator is active for authentication requests where a tenant is provided", versionAdded = "2.16.0")
+        public boolean getTerminatorSupportedForAuthWithToken() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP);
         }
     }
 

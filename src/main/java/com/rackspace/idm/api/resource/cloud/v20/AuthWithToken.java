@@ -70,17 +70,6 @@ public class AuthWithToken {
             scopeAccessService.updateExpiredUserScopeAccess((User) authResponseTuple.getUser(), sa.getClientId(), null);
         }
 
-        if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantName())) {
-            String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantName() + "'";
-            logger.warn(errMsg);
-            throw new NotAuthenticatedException(errMsg);
-        }
-        if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantId())) {
-            String errMsg = "Token doesn't belong to Tenant with Id/Name: '" + authenticationRequest.getTenantId() + "'";
-            logger.warn(errMsg);
-            throw new NotAuthenticatedException(errMsg);
-        }
-
         return authResponseTuple;
     }
 

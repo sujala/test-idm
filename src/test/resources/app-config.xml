@@ -44,7 +44,7 @@
 
     <aop:aspectj-autoproxy />
 
-    <!--bean id="validateAspect" class="com.rackspace.idm.aspect.ValidateAspect" factory-method="aspectOf" /-->
+    <!--<bean id="validateAspect" class="com.rackspace.idm.aspect.ValidateAspect" factory-method="aspectOf" />-->
 
     <bean id="bootstrapOpenSaml" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
         <property name="targetClass"><value>org.opensaml.DefaultBootstrap</value></property>

@@ -142,54 +142,6 @@ class AuthWithTokenTest extends RootServiceTest {
         result.user == user
     }
 
-    def "ImpersonatedScopeAccess: authenticate throws NotAuthenticatedException because of tenantAccess after token has been validated"() {
-        given:
-        def authRequestWithTenantId = v2Factory.createAuthenticationRequest("tokenOne", "tenantId", "")
-        def authRequestWithTenantName = v2Factory.createAuthenticationRequest("tokenTwo", "", "tenantName")
-        def user = entityFactory.createUser()
-
-        def mockedImpersonatedScopeAccess = Mock(ImpersonatedScopeAccess)
-        def mockedUserScopeAccess = Mock(UserScopeAccess)
-
-        scopeAccessService.getScopeAccessByAccessToken("tokenOne") >> mockedImpersonatedScopeAccess
-        scopeAccessService.getScopeAccessByAccessToken(_) >> mockedUserScopeAccess
-        userService.checkAndGetUserById(_) >> user
-
-        when:
-        service.authenticate(authRequestWithTenantId)
-
-        then:
-        1 * mockedImpersonatedScopeAccess.isAccessTokenExpired(_) >> false
-        1 * mockedUserScopeAccess.isAccessTokenExpired(_) >> false
-        1 * scopeAccessService.updateExpiredUserScopeAccess(_, _, _) >> { return createUserScopeAccess() }
-
-        then:
-        1 * tenantService.hasTenantAccess(_, _) >> false
-        thrown(NotAuthenticatedException)
-    }
-
-    def "UserScopeAccess: authenticate throws NotAuthenticatedException because of tenantAccess after token has been validated"() {
-        given:
-        def authRequestWithTenantName = v2Factory.createAuthenticationRequest("tokenTwo", "", "tenantName")
-        def user = entityFactory.createUser()
-
-        def mockedUserScopeAccess = Mock(UserScopeAccess)
-
-        scopeAccessService.getScopeAccessByAccessToken("tokenTwo") >> mockedUserScopeAccess
-        userService.checkAndGetUserById(_) >> user
-
-        when:
-        service.authenticate(authRequestWithTenantName)
-
-        then:
-        1 * mockedUserScopeAccess.isAccessTokenExpired(_) >> false
-        1 * scopeAccessService.updateExpiredUserScopeAccess(_, _, _) >> { return createUserScopeAccess() }
-
-        then:
-        1 * tenantService.hasTenantAccess(_, _) >> false
-        thrown(NotAuthenticatedException)
-    }
-
     def "a user is returned by getUserByIdForAuthenciation if user is found"() {
         given:
         identityUserService.checkAndGetUserById("id") >> entityFactory.createUser()

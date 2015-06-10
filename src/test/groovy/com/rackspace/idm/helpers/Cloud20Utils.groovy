@@ -115,6 +115,14 @@ class Cloud20Utils {
         return entity.token.id
     }
 
+    def getTokenFromAuthWithToken(token, tenantId) {
+        def response = methods.authenticateTokenAndTenant(token, tenantId)
+        assert(response.status == 200)
+        def entity = response.getEntity(AuthenticateResponse).value
+        assert (entity != null)
+        return entity.token.id
+    }
+
     def createUser(token, username=testUtils.getRandomUUID(), domainId=null) {
         def response = methods.createUser(token, factory.createUserForCreate(username, "display", "${username}@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
 
