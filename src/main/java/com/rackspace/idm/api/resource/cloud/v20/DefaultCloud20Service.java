@@ -31,7 +31,6 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
-import com.rackspace.idm.util.predicate.UserEnabledPredicate;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
@@ -1054,22 +1053,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                     logger.warn("Request for multifactor authentication was made on account for which multifactor is not enabled", e);
                     throw new BadRequestException("Unknown credential type");
                 }
-                restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
             }
             else if (authenticationRequest.getToken() != null) {
-                //TODO: What do when MFA token is provided...Should it just be refreshed similar to one-factor tokens?
                 // Scoped tokens not supported here
                 if (authenticationRequest.getScope() != null) {
                     throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
                 }
 
                 authResponseTuple = authWithToken.authenticate(authenticationRequest);
-                /*
-                This call to restrictTenant (and its corresponding LDAP call) appears to be completely unnecessary as AuthWithToken performs similar calls (just with different
-                 error message. Leaving in for now just to limit the changes for MFA and there are tests verifying the call is made
-                 both from the AuthWithToken class AND this authenticate method.
-                 */
-                restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
             }
             else {
                 boolean canUseMfaWithCredential = false;
@@ -1109,7 +1100,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                         checkIfSetupMfaScopeAllowed(authResult.getUser());
                     }
                     authResponseTuple = scopeAccessService.createScopeAccessForUserAuthenticationResult(authResult);
-                    restrictTenantInAuthentication(authenticationRequest, authResponseTuple);
                 }
             }
             AuthenticateResponse auth = buildAuthResponse(authResponseTuple.getUserScopeAccess(), authResponseTuple.getImpersonatedScopeAccess(), authResponseTuple.getUser(), authenticationRequest);
@@ -1119,16 +1109,20 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private void restrictTenantInAuthentication(AuthenticationRequest authenticationRequest, AuthResponseTuple authResponseTuple) {
-        if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantName())) {
-            String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantName() + "' is not valid for User '" + authResponseTuple.getUser().getUsername() + "' (id: '" + authResponseTuple.getUser().getId() + "')";
-            logger.warn(errMsg);
-            throw new NotAuthenticatedException(errMsg);
+    /**
+     * Throws NotAuthenticatedException if the authRequest specifies a tenant and the user does not have access
+     * to that tenant. Access, in this case, is defined by both having a role on that tenant AND that the tenant is
+     * enabled.
+     *
+     * @param authenticationRequest
+     * @param user
+     */
+    private void restrictTenantInAuthentication(AuthenticationRequest authenticationRequest, EndUser user) {
+        if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(user, authenticationRequest.getTenantName())) {
+            throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, authenticationRequest.getTenantName());
         }
-        if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(authResponseTuple.getUser(), authenticationRequest.getTenantId())) {
-            String errMsg = "Tenant with Name/Id: '" + authenticationRequest.getTenantId() + "' is not valid for User '" + authResponseTuple.getUser().getUsername() + "' (id: '" + authResponseTuple.getUser().getId() + "')";
-            logger.warn(errMsg);
-            throw new NotAuthenticatedException(errMsg);
+        if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(user, authenticationRequest.getTenantId())) {
+            throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, authenticationRequest.getTenantId());
         }
     }
 
@@ -1144,14 +1138,42 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, EndUser user, AuthenticationRequest authenticationRequest) {
-        AuthenticateResponse auth;
+        if (!identityConfig.getReloadableConfig().getTerminatorSupportedForAuthWithToken()) {
+            /*
+            if feature is disabled, then this call must be made prior to any other checks (which was done pre-terminator)
+            for auth w/ token calls
+             */
+            restrictTenantInAuthentication(authenticationRequest, user);
+        }
 
+        /*
+        common case will be a successful auth, so get the service catalog assuming the user has access to specified tenant.
+        The user would have successfully authenticated prior to reaching this point
+         */
         ServiceCatalogInfo scInfo = scopeAccessService.getServiceCatalogInfo(user);
 
-        //verify the user is allowed to login
+        boolean restrictingAuthByTenant = isUserRestrictingAuthByTenant(authenticationRequest);
+
+        /*
+        if user specified a tenantId/tenantName for auth request, must verify user has access to that tenant (regardless of
+        whether the tenant is disabled or not)
+         */
+        if (restrictingAuthByTenant) {
+            verifyUserHasRoleOnSpecifiedTenant(user, scInfo, authenticationRequest);
+        }
+
+        //verify the user is allowed to login [TERMINATOR]
         List<OpenstackEndpoint> endpoints = scInfo.getUserEndpoints();
         if (authorizationService.restrictUserAuthentication(user, scInfo)) {
+            //terminator is in effect. All tenants disabled so blank service catalog
             endpoints = Collections.EMPTY_LIST;
+        } else if (restrictingAuthByTenant) {
+            /*
+            if terminator is in play, doesn't matter if the user specified a disabled tenant. However, if terminator
+            is not in play and user specified tenant, must validate that the tenant the user specified is actually
+            enabled, otherwise throw an error
+             */
+            verifyUserSpecifiedTenantIsEnabled(user, scInfo, authenticationRequest);
         }
 
         IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(scInfo);
@@ -1159,10 +1181,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (userType == null || !userType.hasLevelAccessOf(IdentityUserTypeEnum.SERVICE_ADMIN)) {
             stripEndpoints(endpoints);
         }
-        
-        //filter endpoints by tenant
-        String tenantId = authenticationRequest.getTenantId();
-        String tenantName = authenticationRequest.getTenantName();
 
         List<TenantRole> roles = scInfo.getUserTenantRoles();
 
@@ -1173,10 +1191,13 @@ public class DefaultCloud20Service implements Cloud20Service {
             convertedToken = tokenConverterCloudV20.toToken(userScopeAccess, null);
         }
 
-        //tenant was specified
-        if (!StringUtils.isBlank(tenantId) || !StringUtils.isBlank(tenantName)) {
+        AuthenticateResponse auth;
+        if (restrictingAuthByTenant) {
+            //tenant was specified
             List<OpenstackEndpoint> tenantEndpoints = new ArrayList<OpenstackEndpoint>();
             Tenant tenant;
+            String tenantId = authenticationRequest.getTenantId();
+            String tenantName = authenticationRequest.getTenantName();
 
             if (!StringUtils.isBlank(tenantId)) {
                 tenant = scInfo.findUserTenantById(tenantId);
@@ -1184,8 +1205,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 tenant = scInfo.findUserTenantByName(tenantName);
             }
 
-            //fallback to old logic if for some reason tenant wasn't in catalog. Don't think is actually possible, but technically
-            //this code would allow it.
+            //fallback to legacy logic if for some reason tenant wasn't in catalog. Don't think is actually possible, but technically
+            //legacy code would allow it.
             if (tenant == null) {
                 if (!StringUtils.isBlank(tenantId)) {
                     tenant = tenantService.getTenant(tenantId);
@@ -1196,6 +1217,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             convertedToken.setTenant(convertTenantEntityToApi(tenant));
 
+            //filter endpoints by tenant
             if (shouldFilterServiceCatalogByTenant(tenant.getTenantId(), roles)) {
                 for (OpenstackEndpoint endpoint : endpoints) {
                     if (tenant.getTenantId().equals(endpoint.getTenantId())) {
@@ -1221,6 +1243,73 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         return auth;
+    }
+
+    private boolean isUserRestrictingAuthByTenant(AuthenticationRequest authenticationRequest) {
+        String tenantId = authenticationRequest.getTenantId();
+        String tenantName = authenticationRequest.getTenantName();
+        return StringUtils.isNotBlank(tenantId) || StringUtils.isNotBlank(tenantName);
+    }
+
+    /**
+     * Throws NotAuthenticatedException if the user does not have a tenant role on the specified tenant. Does not
+     * matter if the tenant is enabled or disabled.
+     *
+     * @param user
+     * @param scInfo
+     * @param authenticationRequest
+     */
+    private void verifyUserHasRoleOnSpecifiedTenant(EndUser user, ServiceCatalogInfo scInfo, AuthenticationRequest authenticationRequest) {
+        String tenantId = authenticationRequest.getTenantId();
+        String tenantName = authenticationRequest.getTenantName();
+        if (StringUtils.isNotBlank(tenantId) && scInfo.findUserTenantById(tenantId) == null) {
+            throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, tenantId);
+        } else if (StringUtils.isNotBlank(tenantName) && scInfo.findUserTenantByName(tenantName) == null) {
+            throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, tenantName);
+        }
+    }
+
+    /**
+     * Throws NotAuthenticatedException if the user does not have a tenant role on the specified tenant. Does not
+     * matter if the tenant is enabled or disabled.
+     *
+     * @param user
+     * @param scInfo
+     * @param authenticationRequest
+     */
+    private void verifyUserSpecifiedTenantIsEnabled(EndUser user, ServiceCatalogInfo scInfo, AuthenticationRequest authenticationRequest) {
+        String tenantId = authenticationRequest.getTenantId();
+        String tenantName = authenticationRequest.getTenantName();
+        if (StringUtils.isNotBlank(tenantId)) {
+            Tenant tenant = scInfo.findUserTenantById(tenantId);
+            if (tenant == null || Boolean.FALSE.equals(tenant.getEnabled())) {
+                throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, tenantId);
+            }
+        } else if (StringUtils.isNotBlank(tenantName)) {
+            Tenant tenant = scInfo.findUserTenantByName(tenantName);
+            if (tenant == null || Boolean.FALSE.equals(tenant.getEnabled())) {
+                throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, tenantName);
+            }
+        }
+    }
+
+    /**
+     * Throw an error because the user does not have proper access to the tenant. The error message differs based on
+     * the authentication method used.
+     *
+     * @param authenticationRequest
+     * @param user
+     * @param tenantIdentifier
+     */
+    private void throwRestrictTenantErrorMessageForAuthenticationRequest(AuthenticationRequest authenticationRequest, EndUser user, String tenantIdentifier) {
+        String errorMsg;
+        if (authenticationRequest.getToken() != null) {
+            errorMsg = String.format("Token doesn't belong to Tenant with Id/Name: '%s'", tenantIdentifier);
+        } else {
+            errorMsg =  String.format("Tenant with Name/Id: '%s' is not valid for User '%s' (id: '%s')", tenantIdentifier, user.getUsername(), user.getId());
+        }
+        logger.warn(errorMsg);
+        throw new NotAuthenticatedException(errorMsg);
     }
 
     private boolean shouldFilterServiceCatalogByTenant(String tenantId, List<TenantRole> roles) {
