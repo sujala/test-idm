@@ -697,6 +697,33 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         user.multiFactorEnabled == true
         user.multiFactorType == "SMS"
 
+        and: "user should have externalMultiFactor id"
+        user.externalMultiFactorUserId != null
+        user.multiFactorMobilePhoneRsId != null
+
+        and: "phone is linked to Duo phone"
+        def userPhone = mobilePhoneRepository.getById(user.multiFactorMobilePhoneRsId)
+        userPhone != null
+        userPhone.externalMultiFactorPhoneId != null
+
+        when: "set back to OTP"
+        settings = new MultiFactor().with { it.enabled = true; it.factorType = FactorTypeEnum.OTP; it }
+        response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+        user = userRepository.getUserById(userAdmin.id)
+
+        then: "user has no external id"
+        response.status == 204
+        user.multiFactorEnabled == true
+        user.multiFactorType == "OTP"
+        user.externalMultiFactorUserId == null
+        user.multiFactorMobilePhoneRsId != null
+
+        and: "phone still has link to Duo Phone"
+        def newlyRetrievedUserPhone = mobilePhoneRepository.getById(user.multiFactorMobilePhoneRsId)
+        newlyRetrievedUserPhone != null
+        newlyRetrievedUserPhone.externalMultiFactorPhoneId != null
+        newlyRetrievedUserPhone.id == userPhone.id
+
         cleanup:
         try { utils.deleteUsers(users) } catch (Exception e) {}
         try { utils.deleteDomain(domainId) } catch (Exception e) {}
