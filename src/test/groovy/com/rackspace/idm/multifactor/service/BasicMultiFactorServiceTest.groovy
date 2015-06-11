@@ -656,13 +656,6 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         then:
         thrown(BadRequestException)
         settings.setUserMultiFactorEnforcementLevel(null)
-
-        when: // cannot set the factor type
-        settings.setFactorType(FactorTypeEnum.SMS)
-        service.updateMultiFactorSettings(userId, settings)
-
-        then:
-        thrown(BadRequestException)
     }
 
     def "test multi-factor setting validation for 'unlock multi-factor'"() {
@@ -794,8 +787,22 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         }
         userService.checkAndGetUserById(userId) >> user
 
+        User userDisabledMfa = entityFactory.createUser().with {
+            it.id = "disabled"
+            it.multifactorEnabled = false
+            return it
+        }
+        userService.checkAndGetUserById(user.id) >> user
+        userService.checkAndGetUserById(userDisabledMfa.id) >> userDisabledMfa
+
         MultiFactor settings = new MultiFactor();
         settings.setFactorType(FactorTypeEnum.OTP);
+
+        when: "try to update factor type on disable MFA user"
+        service.updateMultiFactorSettings(userDisabledMfa.id, settings)
+
+        then:
+        thrown(BadRequestException)
 
         when: // cannot unlock multi-factor
         settings.setUnlock(true)
@@ -822,7 +829,8 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         mockOTPDeviceDao.getOTPDeviceByParentAndId(user, otpDevice.id) >> otpDevice
         mockOTPDeviceDao.countVerifiedOTPDevicesByParent(user) >> 1
         settings.setFactorType(FactorTypeEnum.SMS);
-        service.updateMultiFactorSettings(userId, settings)
+        settings.enabled = true
+        service.updateMultiFactorSettings(userDisabledMfa.id, settings)
 
         then: // cannot set SMS to an OTP user
         thrown(BadRequestException)
@@ -845,8 +853,8 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         settings.setFactorType(FactorTypeEnum.SMS)
         service.updateMultiFactorSettings(userId, settings)
 
-        then: // no-op trying to set factor type if the user have multi-factor disabled
-        0 * userService.updateUserForMultiFactor(user)
+        then: // bad request trying to set just factor type and the user has multi-factor disabled
+        thrown(BadRequestException)
     }
 
     @Unroll

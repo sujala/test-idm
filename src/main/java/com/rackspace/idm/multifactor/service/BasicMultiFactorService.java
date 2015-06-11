@@ -58,6 +58,10 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     public static final String ERROR_MSG_NO_DEVICE = "User not associated with a multifactor device";
     public static final String ERROR_MSG_NO_VERIFIED_DEVICE = "Device not verified";
+    public static final String ERROR_MSG_NO_VERIFIED_PHONE = "User doesn't have a verified phone.";
+    public static final String ERROR_MSG_NO_VERIFIED_OTP_DEVICE = "User doesn't have a verified OTP device.";
+
+
 
     private static final String EXTERNAL_PROVIDER_ERROR_FORMAT = "operation={},userId={},username={},externalId={},externalResponse={}";
     public static final String DELETE_OTP_DEVICE_REQUEST_INVALID_MSG = "You can not delete the last verified OTP device when your account is configured to use OTP multifactor.";
@@ -263,24 +267,17 @@ public class BasicMultiFactorService implements MultiFactorService {
         final User user = userService.checkAndGetUserById(userId);
 
         if (Boolean.TRUE.equals(multiFactor.isEnabled()) ||
-                (multiFactor.getFactorType() != null && Boolean.TRUE.equals(user.isMultiFactorEnabled()))) {
+                (multiFactor.getFactorType() != null)) {
             // Validate for enable multi-factor or change factor type
-            if (multiFactor.isUnlock() != null
+            if (multiFactor.isEnabled() == null
+                    && multiFactor.getFactorType() != null
+                    && Boolean.FALSE.equals(user.isMultiFactorEnabled())) {
+                throw new BadRequestException("Can only set factor type when MFA is already enabled or while enabling MFA");
+            } else if (multiFactor.isUnlock() != null
                     || multiFactor.getUserMultiFactorEnforcementLevel() != null) {
                 throw new BadRequestException("Cannot change other settings while setting multi factor.");
             }
-
-            // Change multi-factor type
-            final int verifiedOTPDevicesCount = otpDeviceDao.countVerifiedOTPDevicesByParent(user);
-            boolean changed = handleMultiFactorType(user, multiFactor, verifiedOTPDevicesCount);
-
-            // Enable multi-factor
-            if (Boolean.TRUE.equals(multiFactor.isEnabled())) {
-                changed |= handleMultiFactorEnable(user, multiFactor, verifiedOTPDevicesCount);
-            }
-            if (changed) {
-                userService.updateUserForMultiFactor(user);
-            }
+           handleMFAEnablementAndFactorType(user, multiFactor);
 
         } else if (Boolean.FALSE.equals(multiFactor.isEnabled())) {
             // Validate for disable multi-factor
@@ -319,6 +316,79 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
     }
 
+    /**
+     * Supports 3 use cases:
+     * <ol>
+     * <li>User enabling MFA (when previously disabled) without specifying a factorType (in which case a default is chosen)</li>
+     * <li>User enabling MFA (when previously disabled) along with specifying a factorType</li>
+     * <li>User switching factor types with MFA already enabled</li>
+     * </ol>
+     *
+     * <p>
+     * Other scenarios:
+     * <ul>
+     *     <li>If the user already has MFA enabled and either don't specify a factor type or specify what they are already using,
+     * this is a No-Op</li>
+     * <li>If the user does not have MFA enabled and doesn't request it be enabled, throws an IllegalArgumentException</li>
+     * <li>If the user specifies a factorType for which they have no verified devices, a BadRequestException will be throw</li>
+     * <li>If the user is enabling MFA, but does not specify a factor type and either has no verified devices or verified
+     * devices of multiple types (e.g. both a verified phone and OTP device) a BadRequestException will be thrown</li>
+     * </ul>
+     *
+     * The end result of this method returning successfully (without an error) is that the user has MFA enabled with
+     * either the specified factorType or a chosen default (whichever type has a verified device)
+     * </p>
+     *
+     * @param user
+     * @param multiFactor
+     */
+    private void handleMFAEnablementAndFactorType(User user, MultiFactor multiFactor) {
+        boolean userAlreadyHasMFAEnabled = user.isMultiFactorEnabled();
+        FactorTypeEnum currentEffectiveMFAType = getMultiFactorType(user);
+        FactorTypeEnum requestedMFAType = multiFactor.getFactorType();
+        boolean factorTypeChange = requestedMFAType != null && requestedMFAType != currentEffectiveMFAType;
+
+        if (!userAlreadyHasMFAEnabled && !Boolean.TRUE.equals(multiFactor.isEnabled())) {
+            throw new IllegalArgumentException("Must request for MFA to be enabled");
+        } else if (userAlreadyHasMFAEnabled && !factorTypeChange) {
+            return; //no op. MFA already enabled, factor type is already set appropriately (e.g user asked for SMS, but SMS already used)
+        }
+
+        FactorTypeEnum finalFactorType = null;
+        if (requestedMFAType != null) {
+            //User is specifying a factor type. Determine if allowed
+            verifyUserCanEnableFactorType(user, requestedMFAType);
+            finalFactorType = requestedMFAType;
+        } else {
+            //the user did not specify a factor type. Only way could reach this part of code is if they are enabling
+            // mfa from a disabled state so need to determine if we can set a default. This throws error if user state
+            //is not set up to allow a default to be chosen
+            finalFactorType = calculateDefaultFactorTypeForUser(user);
+        }
+
+        String externalUserId = user.getExternalMultiFactorUserId();
+        user.setMultiFactorType(finalFactorType.value());
+        if (finalFactorType == FactorTypeEnum.OTP) {
+            user.setExternalMultiFactorUserId(null); //OTP doesn't use this. Doesn't matter if was already null. just make sure it is now.
+        } else if (finalFactorType == FactorTypeEnum.SMS) {
+            //no clean up necessary moving to SMS from OTP
+        } else {
+            //will never happen - unless we expand to more factors and don't add support in.
+            throw new IllegalStateException(String.format("Unrecognized factorType '%s'", finalFactorType));
+        }
+
+        //update the user
+        enableMultiFactorForUser(user);
+        userService.updateUserForMultiFactor(user);
+
+        //at this point user is setup for new factor type. Duo is setup, etc.
+
+        //If using OTP and a profile previously existed in DUO for this user, delete the profile
+        if (finalFactorType == FactorTypeEnum.OTP && org.apache.commons.lang.StringUtils.isNotBlank(externalUserId)) {
+            deleteExternalUser(user.getId(), user.getUsername(), externalUserId);
+        }
+    }
+
     private void handleMultiFactorUnlock(User user, MultiFactor multiFactor) {
         if (Boolean.TRUE.equals(multiFactor.isUnlock())) {
             //want to try and unlock user regardless of mfa enable/disable
@@ -341,20 +411,6 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
     }
 
-    private boolean handleMultiFactorEnable(User user, MultiFactor multiFactor, int verifiedOTPDevicesCount) {
-        // Only mess with enabling/disabling mfa on user if non-null or changing factor type
-        if (multiFactor.isEnabled() != null && multiFactor.isEnabled().booleanValue() != user.isMultiFactorEnabled()) {
-            if (!userHasMultiFactorDevices(user)) {
-                throw new IllegalStateException(ERROR_MSG_NO_DEVICE);
-            } else if (!userHasVerifiedMultiFactorDevices(user, verifiedOTPDevicesCount)) {
-                throw new IllegalStateException(ERROR_MSG_NO_VERIFIED_DEVICE);
-            }
-
-            return enableMultiFactorForUser(user, verifiedOTPDevicesCount);
-        }
-        return false;
-    }
-
     private void handleMultiFactorUserEnforcementLevel(User user, MultiFactor multiFactor) {
         final UserMultiFactorEnforcementLevelEnum existingLevel = userMultiFactorEnforcementLevelConverter.convertTo(user.getUserMultiFactorEnforcementLevel(), null);
 
@@ -365,41 +421,47 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
     }
 
-    private boolean handleMultiFactorType(User user, MultiFactor multiFactor, int verifiedOTPDevicesCount) {
-        final boolean hasPhone = userHasVerifiedMobilePhone(user);
-        final boolean hasOTPDevice = verifiedOTPDevicesCount > 0;
-        final FactorTypeEnum factorType = multiFactor.getFactorType();
-        boolean changed = false;
-        if (factorType == null) {
-            // Default values
-            if (hasOTPDevice && !hasPhone) {
-                user.setMultiFactorType(FactorTypeEnum.OTP.value());
-                changed = true;
-            } else if (!hasOTPDevice && hasPhone) {
-                user.setMultiFactorType(FactorTypeEnum.SMS.value());
-                changed = true;
-            } else if (hasOTPDevice && hasPhone) {
-                throw new BadRequestException("Must specify multi-factor authentication type to enable multi-factor authentication.");
+    /**
+     * Throws a BadRequestException if the user's state will not support the user enabling the specified type of MFA
+     * @param user
+     * @param factorTypeEnum
+     */
+    private void verifyUserCanEnableFactorType(User user, FactorTypeEnum factorTypeEnum) {
+        if (factorTypeEnum == FactorTypeEnum.OTP) {
+            final int verifiedOTPDevicesCount = otpDeviceDao.countVerifiedOTPDevicesByParent(user);
+            if (verifiedOTPDevicesCount == 0) {
+                throw new BadRequestException(ERROR_MSG_NO_VERIFIED_OTP_DEVICE);
+            }
+        } else if (factorTypeEnum == FactorTypeEnum.SMS) {
+            if (!userHasVerifiedMobilePhone(user)) {
+                throw new BadRequestException(ERROR_MSG_NO_VERIFIED_PHONE);
             }
         } else {
-            // Explicit set
-            final boolean isOTP = FactorTypeEnum.OTP.equals(factorType);
-            final boolean isSMS = FactorTypeEnum.SMS.equals(factorType);
-            if (isOTP && hasOTPDevice) {
-                user.setMultiFactorType(FactorTypeEnum.OTP.value());
-                changed = true;
-            } else if (isSMS && hasPhone) {
-                user.setMultiFactorType(FactorTypeEnum.SMS.value());
-                changed = true;
-            } else if (isOTP && !hasOTPDevice) {
-                throw new BadRequestException("User doesn't have a verified OTP device.");
-            } else if (isSMS && !hasPhone) {
-                throw new BadRequestException("User doesn't have a verified phone.");
+            throw new BadRequestException("Cannot set factor type '" + factorTypeEnum.value() + "' on this user.");
+        }
+    }
+
+    private FactorTypeEnum calculateDefaultFactorTypeForUser(User user) {
+        final boolean hasVerifiedPhone = userHasVerifiedMobilePhone(user);
+        final boolean hasVerifiedOTPDevice = otpDeviceDao.countVerifiedOTPDevicesByParent(user) > 0;
+        FactorTypeEnum defaultVal = null;
+
+        // Default values
+        if (hasVerifiedOTPDevice && !hasVerifiedPhone) {
+            defaultVal = FactorTypeEnum.OTP;
+        } else if (hasVerifiedPhone && !hasVerifiedOTPDevice) {
+            defaultVal = FactorTypeEnum.SMS;
+        } else if (hasVerifiedOTPDevice && hasVerifiedPhone) {
+            throw new BadRequestException("Must specify multi-factor authentication type to enable multi-factor authentication.");
+        } else {
+            //user doesn't have either a verified phone or verified OTP device
+            if (!userHasMultiFactorDevices(user)) {
+                throw new BadRequestException(ERROR_MSG_NO_DEVICE);
             } else {
-                throw new BadRequestException("Cannot set factor type '" + factorType.value() + "' to this user.");
+                throw new BadRequestException(ERROR_MSG_NO_VERIFIED_DEVICE);
             }
         }
-        return changed;
+        return defaultVal;
     }
 
     @Override
@@ -872,16 +934,15 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
     }
 
-    private boolean enableMultiFactorForUser(User user, int verifiedOTPDevicesCount) {
-        if (verifiedOTPDevicesCount > 0 && isMultiFactorTypeOTP(user)) {
-            return enableMultifactorAndPostFeed(user);
+    private void enableMultiFactorForUser(User user) {
+        if (isMultiFactorTypeOTP(user)) {
+            enableMultifactorAndPostFeed(user);
         } else if (isMultiFactorTypePhone(user)) {
-            return enableMultiFactorUsingPhoneForUser(user);
+            enableMultiFactorUsingPhoneForUser(user);
         }
-        return false;
     }
 
-    private boolean enableMultiFactorUsingPhoneForUser(User user) {
+    private void enableMultiFactorUsingPhoneForUser(User user) {
         final MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
 
         final DuoPhone duoPhone = new DuoPhone();
@@ -904,10 +965,10 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
 
         mobilePhoneDao.updateObjectAsIs(phone);
-        return enableMultifactorAndPostFeed(user);
+        enableMultifactorAndPostFeed(user);
     }
 
-    private boolean enableMultifactorAndPostFeed(User user) {
+    private void enableMultifactorAndPostFeed(User user) {
         final boolean alreadyEnabled = user.isMultiFactorEnabled();
 
         user.setMultifactorEnabled(true);
@@ -918,8 +979,6 @@ public class BasicMultiFactorService implements MultiFactorService {
             atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
             emailClient.asyncSendMultiFactorEnabledMessage(user);
         }
-
-        return true;
     }
 
     /**

@@ -1,7 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
@@ -313,6 +315,37 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
+    def "Fail with 400 when phone not verified when specify SMS"() {
+        setup:
+        addPhone()
+        MultiFactor settings = v2Factory.createMultiFactorSettings(true).with {
+            it.factorType = FactorTypeEnum.SMS
+            it
+        }
+
+        when:
+        def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+
+        then:
+        assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, BasicMultiFactorService.ERROR_MSG_NO_VERIFIED_PHONE)
+    }
+
+    def "Fail with 400 when OTP not verified when specify SMS"() {
+        setup:
+        addOTP()
+
+        MultiFactor settings = v2Factory.createMultiFactorSettings(true).with {
+            it.factorType = FactorTypeEnum.OTP
+            it
+        }
+
+        when:
+        def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+
+        then:
+        assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, BasicMultiFactorService.ERROR_MSG_NO_VERIFIED_OTP_DEVICE)
+    }
+
     @Unroll
     def "Fail with 400 when no multifactor device on user account: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
@@ -421,6 +454,12 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         responsePhone = utils.addPhone(userAdminToken, userAdmin.id)
         utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
         constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN);
+    }
+
+    def void addOTP() {
+        OTPDevice request = new OTPDevice()
+        request.setName("test")
+        def device = utils.addOTPDevice(userAdminToken, userAdmin.id, request)
     }
 
     def void addDefaultUserPhone() {
