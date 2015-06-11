@@ -273,6 +273,11 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_GRPADM).path(GROUPS).path(groupId).path(USERS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
+    def authenticateTokenAndTenant(String token, String tenantId) {
+        initOnUse()
+        authenticate(v2Factory.createTokenAuthenticationRequest(token, tenantId, null))
+    }
+
     def authenticatePassword(String username, String password=DEFAULT_PASSWORD) {
         initOnUse()
         authenticate(v2Factory.createPasswordAuthenticationRequest(username, password))
