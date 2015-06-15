@@ -7,7 +7,7 @@ public class UserEnabledPredicate implements Predicate<User> {
 
     @Override
     public boolean evaluate(User user) {
-        return user.getEnabled();
+        return !user.isDisabled();
     }
 
 }

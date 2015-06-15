@@ -1,42 +1,59 @@
-package com.rackspace.idm.util
+package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest
+import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.DomainDao
+import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Domain
+import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
+import com.rackspace.idm.domain.entity.SamlAuthResponse
+import com.rackspace.idm.domain.entity.TargetUserSourceEnum
+import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.RoleService
+import com.rackspace.idm.domain.service.ScopeAccessService
+import com.rackspace.idm.domain.service.ServiceCatalogInfo
+import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.exception.BadRequestException
-import com.rackspace.idm.exception.SignatureValidationException
+import com.rackspace.idm.exception.DuplicateUsernameException
+import com.rackspace.idm.util.SamlSignatureValidator
+import com.rackspace.idm.util.SamlUnmarshaller
 import com.rackspace.idm.validation.PrecedenceValidator
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.opensaml.saml2.core.Response
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
+import testHelpers.saml.SamlAssertionFactory
 
-import java.security.GeneralSecurityException
-
-class SamlResponseValidatorTest extends Specification {
-    @Shared SamlResponseValidator samlResponseValidator
+class ProvisionedUserSourceFederationHandlerTest extends Specification {
+    @Shared ProvisionedUserSourceFederationHandler provisionedUserSourceFederationHandler
 
     @Shared def IDP_NAME = "dedicated";
     @Shared def IDP_URI = "http://my.test.idp"
     @Shared def IDP_PUBLIC_CERTIFICATE = "--BEGIN CERTIFICATE-- bla bla bla --END CERTIFICATE--"
     @Shared def ROLE_NAME = "rbacRole1"
     @Shared def DOMAIN = "1234"
+    @Shared def USERNAME = "john.doe"
+    @Shared def UUID = "729238492sklff293824923423423"
+    @Shared def DOMAIN_ID = "1234"
+    @Shared def EMAIL="federated-noreply@rackspace.com"
 
     @Shared def samlUnmarshaller
     @Shared def samlStr
     @Shared Response samlResponse
     @Shared def samlResponseDecorator
+    @Shared def user
 
     @Shared IdentityProviderDao mockIdentityProviderDao
     @Shared def mockRoleService
@@ -47,32 +64,86 @@ class SamlResponseValidatorTest extends Specification {
     @Shared def mockDomainService
     @Shared def domainAdmin
     @Shared def mockIdentityUserService
+    @Shared FederatedUserDao mockFederatedUserDao
+    @Shared def mockRoleDao
+
+    @Shared def mockScopeAccessService
+    @Shared def mockTenantService
+    @Shared def endpoints
+    @Shared def roles
+    @Shared def tenants
+    @Shared def theIdentityProvider
+
+    def mockAuthorizationService = Mock(AuthorizationService)
 
     @Shared EntityFactory entityFactory = new EntityFactory()
     @Shared ClientRole dummyRbacRole = entityFactory.createClientRole(ROLE_NAME, PrecedenceValidator.RBAC_ROLES_WEIGHT)
+
+    def FOUNDATION_CLIENT_ID = "asdjwehuqrew"
+    def CLOUD_AUTH_CLIENT_ID = "345hjkwetugfhj5346hiou"
+
+    IdentityConfig identityConfig = Mock(IdentityConfig)
+    IdentityConfig.StaticConfig staticConfig = Mock(IdentityConfig.StaticConfig)
+    IdentityConfig.ReloadableConfig reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
+
+    def SamlAssertionFactory samlAssertionFactory = new SamlAssertionFactory()
 
     def setupSpec() {
         //initializes open saml. allows us use unmarshaller
         org.opensaml.DefaultBootstrap.bootstrap();
 
         samlUnmarshaller = new SamlUnmarshaller()
-        samlResponseValidator = new SamlResponseValidator()
+        provisionedUserSourceFederationHandler = new ProvisionedUserSourceFederationHandler();
     }
 
     def setup() {
-        mockIdentityProviderDao(samlResponseValidator)
-        mockRoleService(samlResponseValidator)
-        mockSamlSignatureValidator(samlResponseValidator)
-        mockDomainDao(samlResponseValidator)
-        mockPrecedenceValidator(samlResponseValidator)
-        mockConfig(samlResponseValidator)
-        mockDomainService(samlResponseValidator)
-        mockIdentityUserService(samlResponseValidator)
+        identityConfig.getReloadableConfig() >> reloadableConfig
+        identityConfig.getStaticConfig() >> staticConfig
+
+        staticConfig.getFoundationClientId() >> FOUNDATION_CLIENT_ID
+        staticConfig.getCloudAuthClientId() >> CLOUD_AUTH_CLIENT_ID
+
+        provisionedUserSourceFederationHandler.identityConfig = identityConfig
+        provisionedUserSourceFederationHandler.authorizationService = mockAuthorizationService
+
+        mockIdentityProviderDao(provisionedUserSourceFederationHandler)
+        mockRoleService(provisionedUserSourceFederationHandler)
+        mockSamlSignatureValidator(provisionedUserSourceFederationHandler)
+        mockDomainDao(provisionedUserSourceFederationHandler)
+        mockPrecedenceValidator(provisionedUserSourceFederationHandler)
+        mockConfig(provisionedUserSourceFederationHandler)
+        mockDomainService(provisionedUserSourceFederationHandler)
+        mockIdentityUserService(provisionedUserSourceFederationHandler)
+        mockFederatedUserDao(provisionedUserSourceFederationHandler)
+        mockRoleDao(provisionedUserSourceFederationHandler)
+        mockScopeAccessService(provisionedUserSourceFederationHandler)
+        mockTenantService(provisionedUserSourceFederationHandler)
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
+
         domainAdmin = new User().with {
             it.enabled = true
+            it.domainId = DOMAIN_ID
             it
+
         }
+        theIdentityProvider = new IdentityProvider().with {
+            it.name = IDP_NAME
+            it.uri = IDP_URI
+            it.targetUserSource = TargetUserSourceEnum.PROVISIONED.name()
+            return it
+        }
+
+        user = new FederatedUser().with{
+            it.username = USERNAME
+            it.federatedIdpUri = IDP_URI
+            it.domainId = DOMAIN_ID
+            it.email = EMAIL
+            return it
+        };
+
+        endpoints = [].toList()
+        roles = [].toList()
+        tenants = [createTenant("tenantId"), createTenant("nastTenantId")].toList()
 
         samlStr = "<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"bc1c335f-8078-4769-81a1-bb519194279c\" IssueInstant=\"2013-10-01T15:02:42.110Z\" Version=\"2.0\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
                 "   <saml2:Issuer xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + IDP_URI + "</saml2:Issuer>\n" +
@@ -124,6 +195,45 @@ class SamlResponseValidatorTest extends Specification {
                 "</saml2p:Response>"
     }
 
+    def "processRequestForProvider - nulls throw IllegalArguments"() {
+        when:
+        provisionedUserSourceFederationHandler.processRequestForProvider(null, new IdentityProvider())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        provisionedUserSourceFederationHandler.processRequestForProvider(Mock(SamlResponseDecorator), null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+
+    def "parseSaml - no racker throws error"() {
+        given:
+        def samlResponse = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, null, 1)
+        SamlResponseDecorator decoratedSaml = new SamlResponseDecorator(samlResponse)
+
+        when:
+        FederatedUserRequest request = provisionedUserSourceFederationHandler.parseAndValidateSaml(decoratedSaml, theIdentityProvider)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "parseSaml - request date in past throws error"() {
+        given:
+        def samlResponse = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, USERNAME, -1)
+        SamlResponseDecorator decoratedSaml = new SamlResponseDecorator(samlResponse)
+
+        when:
+        FederatedUserRequest request = provisionedUserSourceFederationHandler.parseAndValidateSaml(decoratedSaml, theIdentityProvider)
+
+        then:
+        thrown(BadRequestException)
+    }
+
     def "validate correct saml response" (){
         given:
         mockConfig.getInt("maxNumberOfFederatedUsersInDomainPerIdp", _) >> 1000
@@ -131,81 +241,25 @@ class SamlResponseValidatorTest extends Specification {
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
         mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(_, _) >> 0
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(_, _) >> null
         def idp = createIdentityProvider()
+        mockTenantService.getTenantsByDomainId(_) >> tenants
+        mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
+        mockTenantService.getTenantRolesForUser(_) >> roles
+        mockDomainService.getDomainAdmins(_) >> [new User()].asList()
+        mockAuthorizationService.restrictUserAuthentication(_, _) >> false
 
         and:
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
         mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
+        mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints)
 
         when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
+        provisionedUserSourceFederationHandler.processRequestForProvider(samlResponseDecorator, idp)
 
         then:
         noExceptionThrown()
-        1 * mockSamlSignatureValidator.validateSignatureForIdentityProvider(_,idp)
-    }
-
-    def "validate saml response when signature is not specified" (){
-        given:
-        samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
-        samlResponse.setSignature(null)
-        samlResponseDecorator = new SamlResponseDecorator(samlResponse)
-        def idp = createIdentityProvider()
-
-        and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
-
-        when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validate saml response when signature is invalid" (){
-        given:
-        samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
-        samlResponseDecorator = new SamlResponseDecorator(samlResponse)
-        def idp = createIdentityProvider()
-
-        and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
-        1 * mockSamlSignatureValidator.validateSignatureForIdentityProvider(_,idp) >> { throw new SignatureValidationException("Invalid Siganture")}
-
-        when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validate saml response when issuer is not specified" (){
-        samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
-        samlResponse.setIssuer(null)
-        samlResponse.getAssertions().get(0).setIssuer(null)
-        samlResponseDecorator = new SamlResponseDecorator(samlResponse)
-
-        when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validate saml response when incorrect issuer is specified" (){
-        given:
-        samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
-        samlResponseDecorator = new SamlResponseDecorator(samlResponse)
-
-        and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> null
-
-        when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
-
-        then:
-        thrown(BadRequestException)
     }
 
     def "validate saml response when subject is not specified" (){
@@ -213,12 +267,13 @@ class SamlResponseValidatorTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponse.getAssertions().get(0).getSubject().setNameID(null)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
+        def idp = createIdentityProvider()
 
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
 
         when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
+        provisionedUserSourceFederationHandler.processRequestForProvider(samlResponseDecorator, idp)
 
         then:
         thrown(BadRequestException)
@@ -229,12 +284,13 @@ class SamlResponseValidatorTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponse.getAssertions().get(0).getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData().setNotOnOrAfter(null)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
+        def idp = createIdentityProvider()
 
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
 
         when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
+        provisionedUserSourceFederationHandler.processRequestForProvider(samlResponseDecorator, idp)
 
         then:
         thrown(BadRequestException)
@@ -245,61 +301,13 @@ class SamlResponseValidatorTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponse.getAssertions().get(0).getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData().setNotOnOrAfter(new DateTime().minusDays(2))
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
+        def idp = createIdentityProvider()
 
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
 
         when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validate saml response when AuthnInstant is not specified" (){
-        given:
-        samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
-        samlResponse.getAssertions().get(0).getAuthnStatements().get(0).setAuthnInstant(null)
-        samlResponseDecorator = new SamlResponseDecorator(samlResponse)
-
-        and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-
-        when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validate saml response when AuthContextClassRef is not specified" (){
-        given:
-        samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
-        samlResponse.getAssertions().get(0).getAuthnStatements().get(0).getAuthnContext().setAuthnContextClassRef(null)
-        samlResponseDecorator = new SamlResponseDecorator(samlResponse)
-
-        and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-
-        when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "validate saml response when AuthContextClassRef is invalid" (){
-        given:
-        samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
-        samlResponse.getAssertions().get(0).getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().setAuthnContextClassRef("fake String");
-
-        samlResponseDecorator = new SamlResponseDecorator(samlResponse)
-
-        and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
-
-        when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
+        provisionedUserSourceFederationHandler.processRequestForProvider(samlResponseDecorator, idp)
 
         then:
         thrown(BadRequestException)
@@ -355,11 +363,12 @@ class SamlResponseValidatorTest extends Specification {
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
 
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
+        def idp = createIdentityProvider()
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
         mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
 
         when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
+        provisionedUserSourceFederationHandler.processRequestForProvider(samlResponseDecorator, idp)
 
         then:
         thrown(BadRequestException)
@@ -419,13 +428,14 @@ class SamlResponseValidatorTest extends Specification {
 
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
+        def idp = createIdentityProvider()
 
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
         mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
 
         when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
+        provisionedUserSourceFederationHandler.processRequestForProvider(samlResponseDecorator, idp)
 
         then:
         thrown(BadRequestException)
@@ -433,7 +443,7 @@ class SamlResponseValidatorTest extends Specification {
 
     def "validate saml response when domain does not exist" (){
         given:
-        mockDomainDao(samlResponseValidator)
+        mockDomainDao(provisionedUserSourceFederationHandler)
         mockDomainDao.getDomain(DOMAIN) >> null
 
         samlStr = "<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"bc1c335f-8078-4769-81a1-bb519194279c\" IssueInstant=\"2013-10-01T15:02:42.110Z\" Version=\"2.0\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
@@ -487,13 +497,13 @@ class SamlResponseValidatorTest extends Specification {
 
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
-
+        def idp = createIdentityProvider()
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
         mockRoleService.getRoleByName(ROLE_NAME) >> Mock(ClientRole)
 
         when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
+        provisionedUserSourceFederationHandler.processRequestForProvider(samlResponseDecorator, idp)
 
         then:
         thrown(BadRequestException)
@@ -553,12 +563,20 @@ class SamlResponseValidatorTest extends Specification {
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
         mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(_, _) >> 0
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(_, _) >> null
+        def idp = createIdentityProvider()
+        mockTenantService.getTenantsByDomainId(_) >> tenants
+        mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
+        mockTenantService.getTenantRolesForUser(_) >> roles
+        mockDomainService.getDomainAdmins(_) >> [new User()].asList()
+        mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints)
+        mockAuthorizationService.restrictUserAuthentication(_, _) >> false
 
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
 
         when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
+        provisionedUserSourceFederationHandler.processRequestForProvider(samlResponseDecorator, idp)
 
         then:
         noExceptionThrown()
@@ -620,13 +638,14 @@ class SamlResponseValidatorTest extends Specification {
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
         mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderName(_, _) >> [].asList()
+        def idp = createIdentityProvider()
 
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
         mockRoleService.getRoleByName(ROLE_NAME) >> null
 
         when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
+        provisionedUserSourceFederationHandler.processRequestForProvider(samlResponseDecorator, idp)
 
         then:
         thrown(BadRequestException)
@@ -689,17 +708,106 @@ class SamlResponseValidatorTest extends Specification {
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
         mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(_, _) >> 0
+        def idp = createIdentityProvider()
 
         and:
-        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> createIdentityProvider()
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
         mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
 
         when:
-        samlResponseValidator.validateAndPopulateRequest(samlResponseDecorator)
+        provisionedUserSourceFederationHandler.processRequestForProvider(samlResponseDecorator, idp)
 
         then:
         thrown(BadRequestException)
     }
+
+    def "Generate authentication info from saml response when user does not exist"() {
+        samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
+
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(USERNAME, IDP_NAME) >> null
+        mockTenantService.getTenantsByDomainId(_) >> tenants
+        mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
+        mockTenantService.getTenantRolesForUser(_) >> roles
+        mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
+        mockConfig.getInt("maxNumberOfFederatedUsersInDomainPerIdp", 1000) >> 1000
+        mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
+        mockAuthorizationService.restrictUserAuthentication(_, _) >> false
+        when:
+        def authInfo = provisionedUserSourceFederationHandler.processRequestForProvider(new SamlResponseDecorator(samlResponse), theIdentityProvider)
+
+        then:
+        //shouldn't try to delete tokens since it's a new user
+        0 * mockScopeAccessService.deleteExpiredTokensQuietly(_)
+        1 * mockFederatedUserDao.addUser(_, _)
+        1 * mockScopeAccessService.addUserScopeAccess(_, _)
+        1 * mockTenantService.addTenantRolesToUser(_,_)
+        1 * mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints)
+
+        authInfo.token != null
+        authInfo.endpoints == endpoints
+        authInfo.user.username == USERNAME
+        ((FederatedUser) authInfo.user).getFederatedIdpUri() == IDP_URI
+        authInfo.user.domainId == DOMAIN_ID
+    }
+
+    def "Generate authentication info from saml response when user already exists"() {
+        samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
+
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> theIdentityProvider
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(USERNAME, IDP_NAME) >> user
+        mockTenantService.getTenantsByDomainId(DOMAIN_ID) >> tenants
+        mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
+        mockTenantService.getTenantRolesForUser(_) >> roles
+        mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
+        mockConfig.getInt("maxNumberOfFederatedUsersInDomainPerIdp", 1000) >> 1000
+        mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
+        mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints)
+        mockAuthorizationService.restrictUserAuthentication(_, _) >> false
+
+        when:
+        SamlAuthResponse authInfo = provisionedUserSourceFederationHandler.processRequestForProvider(new SamlResponseDecorator(samlResponse), theIdentityProvider)
+
+        then:
+        1 * mockScopeAccessService.deleteExpiredTokensQuietly(user)
+        1 * mockScopeAccessService.addUserScopeAccess(user, _)
+        0 * mockTenantService.addTenantRolesToUser(_,_)
+        0 * mockFederatedUserDao.addUser(_,_)
+        1 * mockTenantService.getRbacRolesForUser(_) >> Collections.EMPTY_LIST
+
+        authInfo.token != null
+        authInfo.endpoints == endpoints
+        authInfo.user == user
+        ((FederatedUser) authInfo.user).getFederatedIdpUri() == IDP_URI
+        authInfo.userRoles == roles
+        authInfo.user.domainId == DOMAIN_ID
+    }
+
+    def "Generate authentication info from saml response when user exists under different domainId throws exception"() {
+        given:
+        samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
+        FederatedUser existingUser = new FederatedUser().with{
+            it.domainId="diffDomain"
+            return it
+        }
+
+        mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> theIdentityProvider
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(USERNAME, IDP_NAME) >> existingUser
+        mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
+        mockConfig.getInt("maxNumberOfFederatedUsersInDomainPerIdp", 1000) >> 1000
+        mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
+
+        when:
+        def authInfo = provisionedUserSourceFederationHandler.processRequestForProvider(new SamlResponseDecorator(samlResponse), theIdentityProvider)
+
+        then:
+        0 * mockTenantService.addTenantRolesToUser(_,_)
+        0 * mockFederatedUserDao.addUser(_,_)
+
+        DuplicateUsernameException ex = thrown()
+        ex.getMessage() == ProvisionedUserSourceFederationHandler.DUPLICATE_USERNAME_ERROR_MSG
+    }
+
+
 
     def mockIdentityProviderDao(validator) {
         mockIdentityProviderDao = Mock(IdentityProviderDao)
@@ -741,6 +849,26 @@ class SamlResponseValidatorTest extends Specification {
         validator.identityUserService = mockIdentityUserService
     }
 
+    def mockFederatedUserDao(validator) {
+        mockFederatedUserDao = Mock(FederatedUserDao)
+        validator.federatedUserDao = mockFederatedUserDao
+    }
+
+    def mockRoleDao(service) {
+        mockRoleDao = Mock(ApplicationRoleDao)
+        mockRoleDao.getRoleByName(_) >> createClientRole("1000", "roleName")
+        service.roleDao = mockRoleDao
+    }
+    def mockScopeAccessService(service) {
+        mockScopeAccessService = Mock(ScopeAccessService)
+        service.scopeAccessService = mockScopeAccessService
+    }
+
+    def mockTenantService(service) {
+        mockTenantService = Mock(TenantService)
+        service.tenantService = mockTenantService
+    }
+
     def createIdentityProvider() {
         new IdentityProvider().with({
             it.name = IDP_NAME
@@ -758,5 +886,19 @@ class SamlResponseValidatorTest extends Specification {
             return it
         })
     }
+    def createClientRole(String id, String name) {
+        new ClientRole().with {
+            it.id = id
+            it.name = name
+            it.clientId = "2398293842342"
+            return it
+        }
+    }
 
+    def createTenant(String id) {
+        new Tenant().with {
+            it.tenantId
+            return it
+        }
+    }
 }

@@ -155,6 +155,17 @@ public class IdentityConfig {
 
     public static final String FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP = "feature.terminator.support.for.auth.with.tenant.enabled";
     public static final boolean FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_DEFAULT = true;
+    public static final String RACKER_IMPERSONATE_ROLE_NAME_PROP = "racker.impersonate.role";
+    public static final String RACKER_IMPERSONATE_ROLE_NAME_DEFAULT = "cloud-identity-impersonate";
+    /**
+     * Required static prop
+     */
+    public static final String ROLE_ID_RACKER_PROP = "cloudAuth.rackerRoleRsId";
+
+    /**
+     * Required static prop
+     */
+    public static final String CLIENT_ID_FOUNDATION_PROP = "idm.clientId";
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -228,6 +239,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_DEFAULT_VALUE);
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
         defaults.put(FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP, FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_DEFAULT);
+        defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
 
         return defaults;
     }
@@ -256,6 +268,9 @@ public class IdentityConfig {
         verifyAndLogStaticProperty(IDENTITY_USER_ADMIN_ROLE_NAME_PROP, REQUIRED);
         verifyAndLogStaticProperty(IDENTITY_USER_MANAGE_ROLE_NAME_PROP, REQUIRED);
         verifyAndLogStaticProperty(IDENTITY_DEFAULT_USER_ROLE_NAME_PROP, REQUIRED);
+
+        verifyAndLogStaticProperty(ROLE_ID_RACKER_PROP, REQUIRED);
+        verifyAndLogStaticProperty(CLIENT_ID_FOUNDATION_PROP, REQUIRED);
 
         verifyAndLogStaticProperty(EXPOSE_V11_ADD_BASE_URL_PROP, OPTIONAL);
 
@@ -287,7 +302,7 @@ public class IdentityConfig {
         while (fedOverrideUris.hasNext()) {
             String fedOverrideProperty = fedOverrideUris.next();
             String fedUri = fedOverrideProperty.substring(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX.length()+1); //add 1 to skip '.'
-            TokenFormat tf = getStaticConfig().getIdentityFederatedUserTokenFormatForIdp(fedUri);
+            TokenFormat tf = getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(fedUri);
             logger.warn(String.format("Federated Provider Token Format Override: Identity provider '%s' will receive '%s' formatted tokens",fedUri, tf.name()));
         }
     }
@@ -377,6 +392,15 @@ public class IdentityConfig {
             result = defaultValue;
         }
         return result;
+    }
+
+    private TokenFormat convertToTokenFormat(String strFormat) {
+        for (TokenFormat tokenFormat : TokenFormat.values()) {
+            if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
+                return tokenFormat;
+            }
+        }
+        return TokenFormat.UUID;
     }
 
     /**
@@ -549,15 +573,6 @@ public class IdentityConfig {
             return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_RACKER_TOKEN_FORMAT));
         }
 
-        @IdmProp(key = IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP)
-        public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
-            return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP));
-        }
-
-        public TokenFormat getIdentityFederatedUserTokenFormatForIdp(String idpLabeledUri) {
-            return convertToTokenFormat(staticConfiguration.getString(String.format(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, idpLabeledUri), "${" + IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP + "}"));
-        }
-
         @IdmProp(key = IDENTITY_RACKER_AE_TOKEN_ROLE)
         public String getIdentityRackerAETokenRole() {
             return getStringSafely(staticConfiguration, IDENTITY_RACKER_AE_TOKEN_ROLE);
@@ -641,15 +656,6 @@ public class IdentityConfig {
             return result;
         }
 
-        private TokenFormat convertToTokenFormat(String strFormat) {
-            for (TokenFormat tokenFormat : TokenFormat.values()) {
-                if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
-                    return tokenFormat;
-                }
-            }
-            return TokenFormat.UUID;
-        }
-
         @IdmProp(key = OTP_ISSUER)
         public String getOTPIssuer() {
             return getStringSafely(staticConfiguration, OTP_ISSUER);
@@ -686,6 +692,21 @@ public class IdentityConfig {
         @IdmProp(key = SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, description = "When FILE is used for AE key storage, where the keys are located", versionAdded = "2.13.0")
         public String getAEFileStorageKeyLocation() {
             return getStringSafely(staticConfiguration, SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME);
+        }
+
+        @IdmProp(key = ROLE_ID_RACKER_PROP, description = "The rsid id of the racker role", versionAdded = "1.0.14.8")
+        public String getRackerRoleId() {
+            return staticConfiguration.getString(ROLE_ID_RACKER_PROP);
+        }
+
+        @IdmProp(key = CLIENT_ID_FOUNDATION_PROP, description = "The foundation client id", versionAdded = "1.0.14.8")
+        public String getFoundationClientId() {
+            return staticConfiguration.getString(CLIENT_ID_FOUNDATION_PROP);
+        }
+
+        @IdmProp(key = RACKER_IMPERSONATE_ROLE_NAME_PROP, description = "The group name in EDir to determine whether racker has authorization to impersonate", versionAdded = "2.3.0")
+        public String getRackerImpersonateRoleName() {
+            return getStringSafely(staticConfiguration, RACKER_IMPERSONATE_ROLE_NAME_PROP);
         }
     }
 
@@ -823,6 +844,15 @@ public class IdentityConfig {
         public boolean getTerminatorSupportedForAuthWithToken() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP);
         }
+
+        public TokenFormat getIdentityFederationRequestTokenFormatForIdp(String idpLabeledUri) {
+            return convertToTokenFormat(reloadableConfiguration.getString(String.format(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, idpLabeledUri), "${" + IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP + "}"));
+        }
+
+        @IdmProp(key = IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, description = "When an override property does not exist for a given federated provider, this determines the token format to use for that provide's federated users. AE | UUID", versionAdded = "2.13.0")
+        public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
+            return convertToTokenFormat(getStringSafely(reloadableConfiguration, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP));
+        }
     }
 
     @Deprecated
@@ -903,16 +933,6 @@ public class IdentityConfig {
     @Deprecated
     public TokenFormat getIdentityRackerTokenFormat() {
         return getStaticConfig().getIdentityRackerTokenFormat();
-    }
-
-    @Deprecated
-    public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
-        return getStaticConfig().getIdentityFederatedUserDefaultTokenFormat();
-    }
-
-    @Deprecated
-    public TokenFormat getIdentityFederatedUserTokenFormatForIdp(String idpLabeledUri) {
-        return getStaticConfig().getIdentityFederatedUserTokenFormatForIdp(idpLabeledUri);
     }
 
     @Deprecated

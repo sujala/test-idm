@@ -1,5 +1,6 @@
 package com.rackspace.idm.exception;
 
+import com.rackspace.idm.ErrorCodes;
 import lombok.Getter;
 
 public class ErrorCodeIdmException extends IdmException {
@@ -27,7 +28,7 @@ public class ErrorCodeIdmException extends IdmException {
     }
 
     @Override
-    public String getMessage() {
-        return String.format("Error code: '%s'; %s", errorCode, super.getMessage());
+    public String getMessage()  {
+        return ErrorCodes.generateErrorCodeFormattedMessage(errorCode, super.getMessage());
     }
 }

@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
@@ -8,13 +7,16 @@ import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 
 import java.util.List;
+import java.util.regex.*;
+import java.util.regex.Pattern;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKER)
-public class Racker implements BaseUser {
+public class Racker implements BaseUser, FederatedBaseUser {
 
     //TODO: Not sure why this property is needed. Look into and remove if not necessary
     private String uniqueId;
@@ -35,6 +37,8 @@ public class Racker implements BaseUser {
     private String username;
 
     private List<String> rackerRoles;
+
+    public static final java.util.regex.Pattern RACKER_ID_PATTERN = Pattern.compile("^(.+)@(.+)$");
 
     @Override
     public String getAuditContext() {
@@ -67,4 +71,56 @@ public class Racker implements BaseUser {
     public String getId() {
         return getRackerId();
     }
+
+    /**
+     * Alternative name for setting the rackerId
+     * @param id
+     */
+    @Override
+    public void setId(String id) {
+        rackerId = id;
+    }
+
+    public boolean isFederatedRacker() {
+        return StringUtils.isNotBlank(getFederatedIdpUri());
+    }
+
+    /**
+     * Return the identity provider URI (part of rackerId suffixed to end of '@' or null
+     *
+     * @return
+     */
+    public String getFederatedIdpUri() {
+        if (StringUtils.isBlank(rackerId)) {
+            return null;
+        }
+
+        Matcher matcher = RACKER_ID_PATTERN.matcher(rackerId);
+        boolean matchFound = matcher.find();
+        if (matchFound) {
+            return matcher.group(2);
+        }
+        return null;
+    }
+
+    public String getFederatedUserName() {
+        if (StringUtils.isBlank(rackerId)) {
+            return null;
+        }
+
+        Matcher matcher = RACKER_ID_PATTERN.matcher(rackerId);
+        boolean matchFound = matcher.find();
+        if (matchFound) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
+    public String getUsername() {
+        if (StringUtils.isBlank(username) && StringUtils.isNotBlank(getFederatedIdpUri())) {
+            return getFederatedUserName();
+        }
+        return username;
+    }
+
 }

@@ -9,6 +9,9 @@ import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.collections4.EnumerationUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.enums.EnumUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -47,6 +50,9 @@ public class IdentityProvider implements Auditable, UniqueId {
     @DeleteNullValues
     @LDAPField(attribute = LdapRepository.ATTR_USER_CERTIFICATES, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
     private List<byte[]> userCertificates;
+
+    @LDAPField(attribute = LdapRepository.ATTR_TARGET_USER_SOURCE, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
+    private String targetUserSource;
 
     @Override
     public String getUniqueId() {
@@ -109,4 +115,20 @@ public class IdentityProvider implements Auditable, UniqueId {
         }
     }
 
+    /**
+     * The default source is provisioned
+     *
+     * @return
+     */
+    public TargetUserSourceEnum getTargetUserSourceAsEnum() {
+        if (StringUtils.isBlank(targetUserSource)) {
+            return TargetUserSourceEnum.PROVISIONED;
+        }
+        for (TargetUserSourceEnum that : TargetUserSourceEnum.values()) {
+            if  (that.name().equals(targetUserSource)) {
+                return that;
+            }
+        }
+        return TargetUserSourceEnum.PROVISIONED;
+    }
 }

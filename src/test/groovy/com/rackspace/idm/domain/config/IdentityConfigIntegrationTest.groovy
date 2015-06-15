@@ -20,6 +20,7 @@ class IdentityConfigIntegrationTest  extends Specification {
     private IdentityConfig config;
 
     @Shared SingletonConfiguration staticIdmConfiguration = SingletonConfiguration.getInstance();
+    @Shared SingletonReloadableConfiguration reloadableConfiguration = SingletonReloadableConfiguration.getInstance();
 
     String testIpdLabeledUriAe = "http://www.test.com/ae"
     String testIpdLabeledUriUUID = "http://www.test.com/uuid"
@@ -86,18 +87,19 @@ class IdentityConfigIntegrationTest  extends Specification {
             return it
         }
         def reloadablePropertiesFile = config.reloadableConfiguration.idmPropertiesConfig.file
-        FileUtils.copyFile(reloadablePropertiesFile, tempFile)
+        config.reloadableConfiguration.idmPropertiesConfig.file = tempFile
 
         when:
-        writeProp(reloadablePropertiesFile, IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, propertyValue)
-        System.sleep(1000) //need to delay a second so lastmodifieddate of file will change
+        writeProp(tempFile, IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, propertyValue)
+        config.reloadableConfiguration.idmPropertiesConfig.refresh()
         boolean returnedProp = config.reloadableConfig.getFeatureUserDisabledByTenantsEnabled()
 
         then:
         returnedProp == returnValue
 
         cleanup:
-        FileUtils.copyFile(tempFile, reloadablePropertiesFile)
+        config.reloadableConfiguration.idmPropertiesConfig.file = reloadablePropertiesFile
+        config.reloadableConfiguration.idmPropertiesConfig.refresh()
 
         where:
         propertyValue | returnValue
@@ -122,23 +124,23 @@ class IdentityConfigIntegrationTest  extends Specification {
         //set default for when
 
         when: "retrieving the override property that is set to use AE tokens"
-        def format = config.getIdentityFederatedUserTokenFormatForIdp(testIpdLabeledUriAe)
+        def format = config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(testIpdLabeledUriAe)
 
         then: "get AE token format back"
         format == TokenFormat.AE
 
         when: "retrieving the override property that is set to use UUID tokens"
-        format = config.getIdentityFederatedUserTokenFormatForIdp(testIpdLabeledUriUUID)
+        format = config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(testIpdLabeledUriUUID)
 
         then: "get UUID token format back"
         format == TokenFormat.UUID
 
         when: "override for that idp does not exist"
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, TokenFormat.UUID.name())
-        def formatDefUUID = config.getIdentityFederatedUserTokenFormatForIdp(testIpdLabeledUriNone)
+        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, TokenFormat.UUID.name())
+        def formatDefUUID = config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(testIpdLabeledUriNone)
 
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, TokenFormat.AE.name())
-        def formatDefAe = config.getIdentityFederatedUserTokenFormatForIdp(testIpdLabeledUriNone)
+        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, TokenFormat.AE.name())
+        def formatDefAe = config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(testIpdLabeledUriNone)
 
         then: "the default property is used"
         formatDefUUID == TokenFormat.UUID

@@ -36,7 +36,7 @@ public interface ScopeAccessService {
     void deleteScopeAccessesForUser(User user, String clientId);
 
     /**
-     * Delete a user's tokens - and error if there was an error deleting one. In general, the {@link #deleteExpiredTokensQuietly(com.rackspace.idm.domain.entity.EndUser)} should
+     * Delete a user's tokens - and error if there was an error deleting one. In general, the {@link #deleteExpiredTokensQuietly(com.rackspace.idm.domain.entity.BaseUser)} should
      * be used in preference to this one.
      *
      * @param user
@@ -47,7 +47,7 @@ public interface ScopeAccessService {
      * Delete all the user's tokens quietly. An error trying to delete an expired token does not result in an error. It is simply logged.
      * @param user
      */
-    void deleteExpiredTokensQuietly(EndUser user);
+    void deleteExpiredTokensQuietly(BaseUser user);
 
     /**
      * @deprecated Use appropriate method from TokenRevocationService
@@ -148,4 +148,10 @@ public interface ScopeAccessService {
     boolean isSetupMfaScopedToken(ScopeAccess scopeAccess);
 
     AuthResponseTuple createScopeAccessForUserAuthenticationResult(UserAuthenticationResult userAuthenticationResult);
- }
+
+    /**
+     * Generate a UUID token string
+     * @return
+     */
+    String generateToken();
+}

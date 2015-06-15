@@ -3,10 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.FederatedUserDao;
-import com.rackspace.idm.domain.dao.RackerDao;
-import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -109,6 +106,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private IdentityUserService identityUserService;
+
+    @Autowired
+    private FederatedRackerDao federatedRackerDao;
 
     @Override
     public void addRacker(Racker racker) {
@@ -514,7 +514,17 @@ public class DefaultUserService implements UserService {
     @Override
     public Racker getRackerByRackerId(String rackerId) {
         logger.debug("Getting Racker: {}", rackerId);
-        Racker racker = rackerDao.getRackerByRackerId(rackerId);
+
+        //slight hack to use logic on racker object
+        Racker tempRacker = new Racker();
+        tempRacker.setRackerId(rackerId);
+
+        Racker racker;
+        if (tempRacker.isFederatedRacker()) {
+            racker = federatedRackerDao.getUserById(rackerId);
+        } else {
+            racker = rackerDao.getRackerByRackerId(rackerId);
+        }
 
         //set username to same as rackerId
         if (identityConfig.getReloadableConfig().getFeatureRackerUsernameOnAuthEnabled() &&
@@ -534,11 +544,19 @@ public class DefaultUserService implements UserService {
             throw new ForbiddenException();
         }
 
-        List<String> roles = authDao.getRackerRoles(rackerId);
+        String finalRackerId = rackerId;
+
+        //slight hack to use logic on racker object
+        Racker tempRacker = new Racker();
+        tempRacker.setRackerId(rackerId);
+        if (tempRacker.isFederatedRacker()) {
+            finalRackerId = tempRacker.getFederatedUserName();
+        }
+
+        List<String> roles = authDao.getRackerRoles(finalRackerId);
         logger.debug("Got Roles for Racker: {}", rackerId);
         return roles;
     }
-
 
     @Override
     public User getUser(String username) {
