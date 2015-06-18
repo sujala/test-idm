@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.api.common.fault.v1.BadRequestFault
+import com.rackspace.idm.validation.entity.Constants
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
@@ -37,4 +39,31 @@ class Cloud20InvalidAuthenticationIntegrationTest extends RootIntegrationTest{
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
     }
+
+    def "auth with token validates token length"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def token = utils.getToken(userAdmin.username)
+
+        when:
+        def response = cloud20.authenticateTokenAndTenant(token, domainId)
+
+        then:
+        response.status == 200
+
+        when:
+        response = cloud20.authenticateTokenAndTenant('token' * 100, domainId)
+
+        then:
+        response.status == 400
+        def fault = response.getEntity(BadRequestFault)
+        fault.message == "token.id: size must be between 0 and " + Constants.MAX_TOKEN_LENGTH
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
 }
