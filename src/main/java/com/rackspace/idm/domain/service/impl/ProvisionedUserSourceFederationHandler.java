@@ -94,7 +94,7 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
 
         TargetUserSourceEnum targetUserSourceEnum = provider.getTargetUserSourceAsEnum();
         if (targetUserSourceEnum != TargetUserSourceEnum.PROVISIONED) {
-            throw new IllegalStateException(String.format("Invalid target user source for provisioned user federation", targetUserSourceEnum));
+            throw new IllegalStateException(String.format("Invalid target user source '%s' for provisioned user federation", targetUserSourceEnum));
         }
 
         samlResponseDecorator.checkAndGetAssertion();

@@ -67,13 +67,6 @@ public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken, B
      * @return
      */
     public String getFederatedIdpUri() {
-        if (org.apache.commons.lang.StringUtils.isNotBlank(rackerId)) {
-            Matcher matcher = Racker.RACKER_ID_PATTERN.matcher(rackerId);
-            boolean matchFound = matcher.find();
-            if (matchFound) {
-                return matcher.group(2);
-            }
-        }
-        return null;
+        return Racker.getIdpUriFromFederatedId(rackerId);
     }
 }

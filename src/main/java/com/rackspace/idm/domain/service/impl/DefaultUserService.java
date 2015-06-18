@@ -515,18 +515,14 @@ public class DefaultUserService implements UserService {
     public Racker getRackerByRackerId(String rackerId) {
         logger.debug("Getting Racker: {}", rackerId);
 
-        //slight hack to use logic on racker object
-        Racker tempRacker = new Racker();
-        tempRacker.setRackerId(rackerId);
-
         Racker racker;
-        if (tempRacker.isFederatedRacker()) {
+        if (Racker.isFederatedRackerId(rackerId)) {
             racker = federatedRackerDao.getUserById(rackerId);
         } else {
             racker = rackerDao.getRackerByRackerId(rackerId);
         }
 
-        //set username to same as rackerId
+        //set username to same as rackerId (note - getUsername is always non-null for federated rackers)
         if (identityConfig.getReloadableConfig().getFeatureRackerUsernameOnAuthEnabled() &&
                 racker != null && org.apache.commons.lang.StringUtils.isBlank(racker.getUsername())) {
             racker.setUsername(racker.getRackerId());
@@ -543,17 +539,16 @@ public class DefaultUserService implements UserService {
         if (!isTrustedServer()) {
             throw new ForbiddenException();
         }
+        String rackerIdForSearch = rackerId;
 
-        String finalRackerId = rackerId;
-
-        //slight hack to use logic on racker object
-        Racker tempRacker = new Racker();
-        tempRacker.setRackerId(rackerId);
-        if (tempRacker.isFederatedRacker()) {
-            finalRackerId = tempRacker.getFederatedUserName();
+        /*
+        If the id is a federated id format, must extract username from id
+         */
+        if (Racker.isFederatedRackerId(rackerId)) {
+            rackerIdForSearch = Racker.getUsernameFromFederatedId(rackerId);
         }
 
-        List<String> roles = authDao.getRackerRoles(finalRackerId);
+        List<String> roles = authDao.getRackerRoles(rackerIdForSearch);
         logger.debug("Got Roles for Racker: {}", rackerId);
         return roles;
     }

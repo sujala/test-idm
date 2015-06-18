@@ -1,15 +1,10 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.FederatedRackerDao;
-import com.rackspace.idm.domain.dao.FederatedUserDao;
-import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.service.impl.RackerSourceFederationHandler;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.springframework.stereotype.Component;
-
-import java.util.Collections;
 
 /**
  * Persistence methods for racker based identity providers.
@@ -39,7 +34,7 @@ public class LdapFederatedRackerRepository extends LdapFederatedGenericRepositor
 
     @Override
     public Racker getUserByUsernameForIdentityProviderUri(String username, String uri) {
-        return getUserById(String.format(RackerSourceFederationHandler.FEDERATED_RACKER_ID_PATTERN, username, uri));
+        return getUserById(Racker.asFederatedRackerId(username, uri));
     }
 
     @Override

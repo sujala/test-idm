@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.ErrorCodes;
-import com.rackspace.idm.SAMLConstants;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
@@ -9,9 +8,6 @@ import com.rackspace.idm.domain.service.FederatedIdentityService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.SignatureValidationException;
 import com.rackspace.idm.util.SamlSignatureValidator;
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
-import org.opensaml.saml2.core.Assertion;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.xml.signature.Signature;
 import org.slf4j.Logger;
@@ -46,7 +42,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         SamlResponseDecorator decoratedSamlResponse = new SamlResponseDecorator(response);
 
         //before anything, validate the issuer and signature
-        IdentityProvider provider = validateIssuer(decoratedSamlResponse);
+        IdentityProvider provider = getIdentityProviderForResponse(decoratedSamlResponse);
         validateSignatureForProvider(decoratedSamlResponse.checkAndGetSignature(), provider);
 
         //sig valid. Now validate format of the request. Don't need to use results, just perform the validation
@@ -66,7 +62,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         throw new UnsupportedOperationException(String.format("Provider user source '%s' not supported", providerSource));
     }
 
-    private IdentityProvider validateIssuer(SamlResponseDecorator samlResponseDecorator) {
+    private IdentityProvider getIdentityProviderForResponse(SamlResponseDecorator samlResponseDecorator) {
         IdentityProvider provider = identityProviderDao.getIdentityProviderByUri(samlResponseDecorator.checkAndGetIssuer());
         if (provider == null) {
             throw new BadRequestException(ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_FEDERATION_INVALID_PROVIDER, "Issuer is unknown"));

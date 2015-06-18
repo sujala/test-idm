@@ -38,8 +38,6 @@ public class Racker implements BaseUser, FederatedBaseUser {
 
     private List<String> rackerRoles;
 
-    public static final java.util.regex.Pattern RACKER_ID_PATTERN = Pattern.compile("^(.+)@(.+)$");
-
     @Override
     public String getAuditContext() {
         return String.format("Racker(%s)", rackerId);
@@ -82,7 +80,7 @@ public class Racker implements BaseUser, FederatedBaseUser {
     }
 
     public boolean isFederatedRacker() {
-        return StringUtils.isNotBlank(getFederatedIdpUri());
+        return isFederatedRackerId(rackerId);
     }
 
     /**
@@ -91,36 +89,87 @@ public class Racker implements BaseUser, FederatedBaseUser {
      * @return
      */
     public String getFederatedIdpUri() {
-        if (StringUtils.isBlank(rackerId)) {
-            return null;
-        }
-
-        Matcher matcher = RACKER_ID_PATTERN.matcher(rackerId);
-        boolean matchFound = matcher.find();
-        if (matchFound) {
-            return matcher.group(2);
-        }
-        return null;
+        return getIdpUriFromFederatedId(rackerId);
     }
 
     public String getFederatedUserName() {
         if (StringUtils.isBlank(rackerId)) {
             return null;
         }
-
-        Matcher matcher = RACKER_ID_PATTERN.matcher(rackerId);
-        boolean matchFound = matcher.find();
-        if (matchFound) {
-            return matcher.group(1);
-        }
-        return null;
+        return getUsernameFromFederatedId(rackerId);
     }
 
     public String getUsername() {
-        if (StringUtils.isBlank(username) && StringUtils.isNotBlank(getFederatedIdpUri())) {
-            return getFederatedUserName();
+        String finalUserName = username;
+        if (StringUtils.isBlank(username) && StringUtils.isNotBlank(rackerId)) {
+            FederatedRackerIdParts parts = new FederatedRackerIdParts(rackerId);
+            if (parts.isValidFederatedRackerId()) {
+                finalUserName = parts.username;
+            }
         }
-        return username;
+        return finalUserName;
     }
 
+    /**
+     * A given id is considered a "federated" racker id if it matces the federated regex and the idp is not blank.
+     * @param id
+     * @return
+     */
+    public static boolean isFederatedRackerId(String id) {
+        FederatedRackerIdParts splitId = new FederatedRackerIdParts(id);
+        return splitId.isValidFederatedRackerId();
+    }
+
+    public static String asFederatedRackerId(String rackerUsername, String federatedIdpUri) {
+        FederatedRackerIdParts parts = new FederatedRackerIdParts(rackerUsername, federatedIdpUri);
+        if (!parts.isValidFederatedRackerId()) {
+            throw new IllegalArgumentException(String.format("Provided username '%s' and idp '%s' are not valid for federated racker id", rackerUsername, federatedIdpUri));
+        }
+        return parts.asRackerId();
+    }
+
+    public static String getIdpUriFromFederatedId(String id) {
+        FederatedRackerIdParts splitId = new FederatedRackerIdParts(id);
+        return splitId.idpUri;
+    }
+
+    public static String getUsernameFromFederatedId(String id) {
+        FederatedRackerIdParts splitId = new FederatedRackerIdParts(id);
+        return splitId.username;
+    }
+
+    private static class FederatedRackerIdParts {
+        public static final String FEDERATED_RACKER_ID_PATTERN = "%s@%s";
+        public static final java.util.regex.Pattern RACKER_ID_PATTERN = Pattern.compile("^(.+)@(.+)$");
+
+        private String username;
+        private String idpUri;
+
+        public FederatedRackerIdParts(String rackerId) {
+            if (StringUtils.isNotBlank(rackerId)) {
+                Matcher matcher = RACKER_ID_PATTERN.matcher(rackerId);
+                boolean matchFound = matcher.find();
+                if (matchFound) {
+                    username = matcher.group(1);
+                    idpUri = matcher.group(2);
+                }
+            }
+        }
+
+        public FederatedRackerIdParts(String username, String idpUri) {
+            this.username = username;
+            this.idpUri = idpUri;
+        }
+
+        public boolean isValidFederatedRackerId() {
+            return StringUtils.isNotBlank(idpUri) && StringUtils.isNotBlank(username);
+        }
+
+        public String asRackerId() {
+            if (!isValidFederatedRackerId()) {
+                throw new IllegalStateException("Can not generate federated racker id from current state. Null idp or username");
+            }
+            return String.format(FEDERATED_RACKER_ID_PATTERN, username, idpUri);
+        }
+    }
 }

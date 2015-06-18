@@ -167,11 +167,6 @@ public class SamlResponseDecorator {
         return checkAndGetAssertion().getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef();
     }
 
-    //TODO: Not sure why this gets the issuer off the assertion rather than the response itself (see getIssuer)
-    public String getIdpUri() {
-        return getAssertion().getIssuer().getValue();
-    }
-
     public List<String> getAttribute(String attributeName) {
         Assertion samlAssertion = checkAndGetAssertion();
         if (samlAssertion == null || samlAssertion.getAttributeStatements() == null

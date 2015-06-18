@@ -31,7 +31,6 @@ import java.util.List;
 public class RackerSourceFederationHandler implements FederationHandler {
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
 
-    public static final String FEDERATED_RACKER_ID_PATTERN = "%s@%s";
 
     @Autowired
     FederatedRackerDao federatedRackerDao;
@@ -55,7 +54,7 @@ public class RackerSourceFederationHandler implements FederationHandler {
 
         TargetUserSourceEnum targetUserSourceEnum = provider.getTargetUserSourceAsEnum();
         if (targetUserSourceEnum != TargetUserSourceEnum.RACKER) {
-            throw new IllegalStateException(String.format("Invalid target user source for racker user federation", targetUserSourceEnum));
+            throw new IllegalStateException(String.format("Invalid target user source '%s' for racker user federation", targetUserSourceEnum));
         }
 
         FederatedRackerRequest request = parseSaml(samlResponseDecorator, provider);
@@ -80,8 +79,7 @@ public class RackerSourceFederationHandler implements FederationHandler {
         //set racker
         Racker federatedRacker = new Racker();
         String rackerUserName = samlResponseDecorator.checkAndGetUsername();
-        String federatedRackerId = String.format(FEDERATED_RACKER_ID_PATTERN, rackerUserName, provider.getUri());
-        federatedRacker.setId(federatedRackerId);
+        federatedRacker.setId(Racker.asFederatedRackerId(rackerUserName, provider.getUri()));
         federatedRacker.setEnabled(true);
 
         request.setIdentityProvider(provider);

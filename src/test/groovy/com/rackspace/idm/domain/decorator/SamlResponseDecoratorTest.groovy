@@ -77,15 +77,6 @@ class SamlResponseDecoratorTest extends Specification {
         result == samlResponse
     }
 
-    def "Get idp uri" () {
-        when:
-        def result = samlResponseDecorator.getIdpUri()
-
-        then:
-        result == IDP_URI
-    }
-
-
     def "Get attribute that exists" () {
         when:
         def result = samlResponseDecorator.getAttribute("roles")
