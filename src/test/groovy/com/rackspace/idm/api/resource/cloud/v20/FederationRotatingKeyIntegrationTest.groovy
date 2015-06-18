@@ -129,9 +129,6 @@ class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest
 
     }
 
-    def "verify second key successfully authenticates"() {
-    }
-
     def deleteFederatedUserQuietly(username) {
         try {
             def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)

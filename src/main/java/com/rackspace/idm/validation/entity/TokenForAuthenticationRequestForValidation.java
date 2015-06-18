@@ -19,5 +19,4 @@ import static com.rackspace.idm.validation.entity.Constants.MAX_TOKEN_LENGTH;
 public class TokenForAuthenticationRequestForValidation {
     @Size(max = MAX_TOKEN_LENGTH)
     private String id;
-
 }

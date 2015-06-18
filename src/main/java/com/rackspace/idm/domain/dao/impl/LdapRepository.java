@@ -94,6 +94,7 @@ public abstract class LdapRepository {
     public static final String ATTR_DEF = "def";
     public static final String ATTR_PUBLIC_KEY = "nisPublicKey";
     public static final String ATTR_USER_CERTIFICATES = "userCertificate;binary";
+    public static final String ATTR_TARGET_USER_SOURCE = "rsTargetUserSource";
     public static final String ATTR_DESCRIPTION = "description";
     public static final String ATTR_POLICYTYPE = "policyType";
     public static final String ATTR_DISPLAY_NAME = "rsDisplayName";
@@ -213,6 +214,7 @@ public abstract class LdapRepository {
     protected static final String APPLICATIONS_BASE_DN = "ou=applications,o=rackspace,dc=rackspace,dc=com";
     protected static final String USERS_BASE_DN = "ou=users,o=rackspace,dc=rackspace,dc=com";
     protected static final String RACKERS_BASE_DN = "ou=rackers,o=rackspace,dc=rackspace,dc=com";
+    protected static final String FEDERATED_RACKERS_BASE_DN = EXTERNAL_PROVIDERS_BASE_DN;
     protected static final String NEXT_IDS_BASE_DN = "ou=nextIds,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_USERS_BASE_DN = "ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String SOFT_DELETED_POLICIES_BASE_DN = "ou=policies,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";

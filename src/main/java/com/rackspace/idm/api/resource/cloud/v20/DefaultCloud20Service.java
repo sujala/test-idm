@@ -1129,8 +1129,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder validateSamlResponse(HttpHeaders httpHeaders, org.opensaml.saml2.core.Response samlResponse) {
         try {
-            AuthData authInfo = federatedIdentityService.processSamlResponse(samlResponse);
-            AuthenticateResponse response = authConverterCloudV20.toAuthenticationResponse(authInfo);
+            SamlAuthResponse samlAuthResponse = federatedIdentityService.processSamlResponse(samlResponse);
+            AuthenticateResponse response = authConverterCloudV20.toAuthenticationResponse(samlAuthResponse);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(response).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -3948,7 +3948,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     private String getRackerImpersonateRole(){
-        return config.getString("racker.impersonate.role");
+        return identityConfig.getStaticConfig().getRackerImpersonateRoleName();
     }
 
     private Boolean getCheckRackerImpersonateRole(){

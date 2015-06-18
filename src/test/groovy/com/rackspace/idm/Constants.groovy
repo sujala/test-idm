@@ -59,6 +59,13 @@ class Constants {
     static def IDP_2_PRIVATE_KEY = "saml-qe-idp.pkcs8"
     static def DEFAULT_FED_EMAIL = "federated@rackspace.com"
 
+    static def RACKER_IDP_NAME = "rackertest"
+    static def RACKER_IDP_URI = "http://racker.rackspace.com"
+    static def RACKER_IDP_PRIVATE_KEY = "saml.pkcs8"
+    static def RACKER_IDP_PUBLIC_KEY = "saml.crt"
+    static def RACKER_IDP_PUBLIC_KEY_2 = "saml-qe-idp.crt"
+    static def RACKER_IDP_PRIVATE_KEY_2 = "saml-qe-idp.pkcs8"
+
     public static String MFA_DEFAULT_PIN = "1234"
     public static String MFA_DEFAULT_USER_PROVIDER_ID = "USER123"
     public static String MFA_DEFAULT_PHONE_PROVIDER_ID = "PHONE123"

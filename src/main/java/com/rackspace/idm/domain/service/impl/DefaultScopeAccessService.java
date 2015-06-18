@@ -723,9 +723,17 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
-    public void deleteExpiredTokensQuietly(EndUser user) {
+    public void deleteExpiredTokensQuietly(BaseUser user) {
+        Iterable<ScopeAccess> tokenIterator = Collections.EMPTY_LIST;
+        if (user instanceof EndUser) {
+            //little weird that we search for all tokens assigned to this user across entire DIT rather than just under
+            //the user, but this is legacy code
+            tokenIterator = getScopeAccessListByUserId(user.getId());
+        } else if (user instanceof Racker) {
+            tokenIterator = scopeAccessDao.getScopeAccesses(user);
+        }
+
         try {
-            Iterable<ScopeAccess> tokenIterator = this.getScopeAccessListByUserId(user.getId());
             DateTime now = new DateTime();
             if (tokenIterator != null) {
                 for (ScopeAccess token : tokenIterator) {
@@ -966,7 +974,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         this.userService = userService;
     }
 
-    String generateToken() {
+    @Override
+    public String generateToken() {
         return UUID.randomUUID().toString().replace("-", "");
     }
 

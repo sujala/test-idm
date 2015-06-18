@@ -80,7 +80,7 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         def fedEmail = "fedIntTest@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertion(DEFAULT_IDP_URI, fedUsername, 5, userAdmin.domainId, null, fedEmail);
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, fedUsername, 5, userAdmin.domainId, null, fedEmail);
         AuthenticateResponse samlAuthResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
         UserForAuthenticateResponse samlUser = samlAuthResponse.user
 

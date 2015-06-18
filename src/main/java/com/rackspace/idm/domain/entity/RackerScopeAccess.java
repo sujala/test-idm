@@ -8,6 +8,7 @@ import org.joda.time.DateTime;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.Date;
+import java.util.regex.Matcher;
 
 @Data
 @EqualsAndHashCode(callSuper=false)
@@ -54,5 +55,18 @@ public class RackerScopeAccess extends ScopeAccess implements HasRefreshToken, B
     @Override
     public String getIssuedToUserId() {
         return getRackerId();
+    }
+
+    public boolean isFederatedRackerToken() {
+        return org.apache.commons.lang.StringUtils.isNotBlank(getFederatedIdpUri());
+    }
+
+    /**
+     * Return the identity provider URI (part of rackerId suffixed to end of '@' or null
+     *
+     * @return
+     */
+    public String getFederatedIdpUri() {
+        return Racker.getIdpUriFromFederatedId(rackerId);
     }
 }

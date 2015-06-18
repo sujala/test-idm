@@ -129,6 +129,11 @@ public class UserConverterCloudV20 {
         if(roles != null){
             userForAuthenticateResponse.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
         }
+        if (racker.isFederatedRacker() && isSamlEnabled()) {
+            userForAuthenticateResponse.setFederatedIdp(racker.getFederatedIdpUri());
+            userForAuthenticateResponse.setId(racker.getUsername());
+            userForAuthenticateResponse.setName(racker.getUsername());
+        }
         return userForAuthenticateResponse;
     }
 

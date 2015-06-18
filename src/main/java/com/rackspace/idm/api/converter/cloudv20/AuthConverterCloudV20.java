@@ -36,6 +36,7 @@ public class AuthConverterCloudV20 {
      * @param authData
      * @return
      */
+    @Deprecated
     public AuthenticateResponse toAuthenticationResponse(AuthData authData) {
         AuthenticateResponse auth = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
@@ -50,7 +51,11 @@ public class AuthConverterCloudV20 {
         return getAuthResponseWithoutServiceId(auth);
     }
 
-    @Deprecated
+    public AuthenticateResponse toAuthenticationResponse(SamlAuthResponse samlAuthResponse) {
+        return toAuthenticationResponse(samlAuthResponse.getUser()
+                , samlAuthResponse.getToken(), samlAuthResponse.getUserRoles(), samlAuthResponse.getEndpoints());
+    }
+
     public AuthenticateResponse toAuthenticationResponse(BaseUser user, ScopeAccess scopeAccess, List<TenantRole> roles, List<OpenstackEndpoint> endpoints) {
         AuthenticateResponse auth = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 

@@ -3,10 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.dao.AuthDao;
-import com.rackspace.idm.domain.dao.FederatedUserDao;
-import com.rackspace.idm.domain.dao.RackerDao;
-import com.rackspace.idm.domain.dao.UserDao;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -109,6 +106,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private IdentityUserService identityUserService;
+
+    @Autowired
+    private FederatedRackerDao federatedRackerDao;
 
     @Override
     public void addRacker(Racker racker) {
@@ -514,9 +514,15 @@ public class DefaultUserService implements UserService {
     @Override
     public Racker getRackerByRackerId(String rackerId) {
         logger.debug("Getting Racker: {}", rackerId);
-        Racker racker = rackerDao.getRackerByRackerId(rackerId);
 
-        //set username to same as rackerId
+        Racker racker;
+        if (Racker.isFederatedRackerId(rackerId)) {
+            racker = federatedRackerDao.getUserById(rackerId);
+        } else {
+            racker = rackerDao.getRackerByRackerId(rackerId);
+        }
+
+        //set username to same as rackerId (note - getUsername is always non-null for federated rackers)
         if (identityConfig.getReloadableConfig().getFeatureRackerUsernameOnAuthEnabled() &&
                 racker != null && org.apache.commons.lang.StringUtils.isBlank(racker.getUsername())) {
             racker.setUsername(racker.getRackerId());
@@ -533,12 +539,19 @@ public class DefaultUserService implements UserService {
         if (!isTrustedServer()) {
             throw new ForbiddenException();
         }
+        String rackerIdForSearch = rackerId;
 
-        List<String> roles = authDao.getRackerRoles(rackerId);
+        /*
+        If the id is a federated id format, must extract username from id
+         */
+        if (Racker.isFederatedRackerId(rackerId)) {
+            rackerIdForSearch = Racker.getUsernameFromFederatedId(rackerId);
+        }
+
+        List<String> roles = authDao.getRackerRoles(rackerIdForSearch);
         logger.debug("Got Roles for Racker: {}", rackerId);
         return roles;
     }
-
 
     @Override
     public User getUser(String username) {

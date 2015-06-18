@@ -76,4 +76,22 @@ class IdmAssert {
             assert expectedMessagePattern.matcher(fault.message).matches()
         }
     }
+
+    static def <T extends IdentityFault> void assertOpenStackV2FaultResponseWithErrorCode(ClientResponse clientResponse, Class<T> expectedTypeClazz, int expectedStatus, String errorCode) {
+        assertOpenStackV2FaultResponseWithMessagePattern(clientResponse, expectedTypeClazz, expectedStatus, generateErrorCodePattern(errorCode))
+    }
+
+    /**
+     * This is the required format for messages that return error codes. This allows consumers to parse error messages
+     * for specific issues without having the message changed underneath them. Only the first part of the message is
+     * guaranteed per contract. After the ';', change is fair game.
+     *
+     * @param errorCode
+     * @return
+     */
+    static Pattern generateErrorCodePattern(String errorCode) {
+        Pattern.compile(String.format("^Error code: '%s';.*", errorCode))
+    }
+
+
 }

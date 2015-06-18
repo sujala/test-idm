@@ -973,6 +973,13 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.124) = {
     description = "Iteration count for hashing"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.125) = {
+    name = rsTargetUserSource
+    ldap-names = rsTargetUserSource
+    equality = caseExactMatch
+    syntax = directoryString
+    description = "The backing source for the users being authenticated. For example, RACKER vs PROVISIONED"
+};
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
@@ -1493,7 +1500,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.35) = {
     may-contain
         description,
         nisPublicKey,
-        userCertificate
+        userCertificate,
+        rsTargetUserSource
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.36) = {

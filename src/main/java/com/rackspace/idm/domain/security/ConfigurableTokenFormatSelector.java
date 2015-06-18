@@ -49,18 +49,24 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
 
         // Racker user
         if (user instanceof Racker) {
-            final Racker racker = (Racker) user;
-            if (ldapAuthRepository.getRackerRoles(racker.getRackerId()).contains(identityConfig.getIdentityRackerAETokenRole())) {
-                return TokenFormat.AE;
+            Racker racker = (Racker) user;
+
+            //if federated racker request
+            if (racker.isFederatedRacker()) {
+                return identityConfig.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(racker.getFederatedIdpUri());
             } else {
-                return identityConfig.getIdentityRackerTokenFormat();
+                if (ldapAuthRepository.getRackerRoles(racker.getRackerId()).contains(identityConfig.getIdentityRackerAETokenRole())) {
+                    return TokenFormat.AE;
+                } else {
+                    return identityConfig.getIdentityRackerTokenFormat();
+                }
             }
         }
 
         //if federated user
         if (user instanceof FederatedUser) {
             final FederatedUser federatedUser = (FederatedUser) user;
-            return identityConfig.getIdentityFederatedUserTokenFormatForIdp(federatedUser.getFederatedIdpUri());
+            return identityConfig.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(federatedUser.getFederatedIdpUri());
         }
 
         return TokenFormat.UUID;

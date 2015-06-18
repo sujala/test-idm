@@ -21,7 +21,7 @@ import java.util.List;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON)
-public class FederatedUser implements EndUser {
+public class FederatedUser implements EndUser, FederatedBaseUser {
 
     //TODO: Not sure why this property is needed. Look into and remove if not necessary
     private String uniqueId;

@@ -15,4 +15,28 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_DELETE_OTP_DEVICE_FORBIDDEN_STATE = "OTP-006";
     public static final String ERROR_CODE_OTP_BYPASS_MISSING_HASH_ALGORITHM = "OTP-007";
     public static final String ERROR_CODE_OTP_BYPASS_ERROR_ENCODING = "OTP-008";
+
+    //federation errors
+    public static final String ERROR_CODE_FEDERATION_INVALID_PROVIDER = "FED-000";
+    public static final String ERROR_CODE_FEDERATION_INVALID_SIGNATURE = "FED-001";
+    public static final String ERROR_CODE_FEDERATION_MISSING_SIGNATURE = "FED-002";
+    public static final String ERROR_CODE_FEDERATION_INVALID_ISSUER = "FED-003";
+    public static final String ERROR_CODE_FEDERATION_MISSING_ASSERTION = "FED-004";
+    public static final String ERROR_CODE_FEDERATION_MISSING_SUBJECT = "FED-005";
+    public static final String ERROR_CODE_FEDERATION_MISSING_USERNAME = "FED-006";
+    public static final String ERROR_CODE_FEDERATION_MISSING_SUBJECT_NOTONORAFTER = "FED-007";
+    public static final String ERROR_CODE_FEDERATION_INVALID_SUBJECT_NOTONORAFTER = "FED-008";
+    public static final String ERROR_CODE_FEDERATION_MISSING_AUTH_INSTANT = "FED-009";
+
+    public static final String ERROR_CODE_FEDERATION_MISSING_AUTH_CONTEXT_CLASSREF = "FED-010";
+    public static final String ERROR_CODE_FEDERATION_INVALID_AUTH_CONTEXT_CLASSREF = "FED-011";
+
+
+    //fed racker specific errors
+    public static final String ERROR_CODE_FEDERATION_RACKER_NON_EXISTANT_RACKER = "FED_R-001";
+    public static final String ERROR_MESSAGE_FORMAT_FEDERATION_RACKER_NON_EXISTANT_RACKER = "The user '%s' is invalid";
+
+    public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
+        return String.format("Error code: '%s'; %s", errorCode, message);
+    }
 }
