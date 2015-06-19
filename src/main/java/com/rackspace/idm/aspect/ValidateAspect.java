@@ -7,6 +7,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -14,6 +15,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.lang.annotation.Annotation;
 
 @Aspect
+@Component
 public class ValidateAspect {
 
     @Autowired

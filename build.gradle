@@ -31,8 +31,6 @@ sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
 def srcJava = 'src/main/java'
-def srcDelomboked = 'build/src-delomboked'
-def srcTestDelomboked = 'build/test/src-delomboked'
 def generatedSrc = 'build/generated-src/jaxb/'
 
 configurations {
@@ -40,7 +38,6 @@ configurations {
     ajc
     aspects
     ajInpath
-    delombokJava
     jaxb
     wadl.extendsFrom compile
 }
@@ -74,8 +71,6 @@ dependencies {
     jaxb group: 'org.jvnet.jaxb2_commons', name: 'jaxb2-basics-ant', version: '0.6.4'
     jaxb group: 'org.jvnet.jaxb2_commons', name: 'jaxb2-basics-annotate', version: '0.6.4'
 
-    ajc 'org.aspectj:aspectjtools:1.7.1'
-    compile 'org.aspectj:aspectjrt:1.7.1'
     compile 'org.opensaml:opensaml:2.5.3'
 
     compile group: 'joda-time', name: 'joda-time', version:'1.6'
@@ -91,7 +86,6 @@ dependencies {
     compile group: 'org.springframework', name: 'spring-beans', version:'4.0.1.RELEASE'
     compile group: 'com.googlecode.json-simple', name: 'json-simple', version:'1.1'
     compile group: 'org.springframework', name: 'spring-aop', version:'4.0.1.RELEASE'
-    compile group: 'org.aspectj', name: 'aspectjrt', version:'1.7.1'
     compile group: 'org.aspectj', name: 'aspectjweaver', version:'1.7.1'
     compile group: 'org.slf4j', name: 'slf4j-api', version:'1.5.10'
     compile group: 'org.slf4j', name: 'slf4j-log4j12', version:'1.5.10'
@@ -369,56 +363,9 @@ task jaxb() {
     }
 }
 
-def delombok(srcDir, targetDir) {
-    FileCollection collection = files(configurations.compile)
-    FileCollection sumTree = collection + fileTree(dir: 'bin')
-    ant.taskdef(name: 'replacer', classname: 'lombok.delombok.ant.DelombokTask', classpath: configurations.compile.asPath)
-    ant.replacer(from:srcDir, to:targetDir, classpath: sumTree.asPath)
-}
-
-task delombokJava {
-    inputs.files file(srcJava)
-    outputs.dir file(srcDelomboked)
-
-    doLast {
-        delombok(srcJava, srcDelomboked)
-    }
-}
-
-def aspectjWeave(srcDirs, destDir) {
-    ant.taskdef(
-            resource: 'org/aspectj/tools/ant/taskdefs/aspectjTaskdefs.properties',
-            classpath: configurations.ajc.asPath)
-    ant.iajc(
-            source: sourceCompatibility,
-            target: targetCompatibility,
-            destDir: destDir.absolutePath,
-            fork: 'true',
-            aspectPath: configurations.aspects.asPath,
-            inpath: configurations.ajInpath.asPath,
-            sourceRootCopyFilter: '**/*.java,**/*.aj',
-            classpath: configurations.compile.asPath) {
-
-        sourceroots {
-            srcDirs.each { dir ->
-                if (dir.exists()) {
-                    pathelement(location: dir.absolutePath)
-                }
-            }
-        }
-    }
-}
-
 compileJava() {
-    actions = []
-    dependsOn configurations.ajc.getTaskDependencyFromProjectDependency(true, 'compileJava')
-
     inputs.dir sourceSets.main.java.srcDirs
     outputs.dir sourceSets.main.output.classesDir
-
-    doLast {
-        aspectjWeave(sourceSets.main.java.srcDirs, sourceSets.main.output.classesDir)
-    }
 }
 
 copyBaseConfig.dependsOn copyConfig
@@ -431,8 +378,7 @@ war.dependsOn zipEdirLdif
 war.dependsOn zipEdirConfig
 jettyRun.dependsOn copyBaseConfig
 
-delombokJava.dependsOn jaxb
-compileJava.dependsOn delombokJava
+compileJava.dependsOn jaxb
 
 task copyToLib(type: Copy) {
     into "$buildDir/output/lib"
@@ -481,7 +427,7 @@ sonarRunner {
 sourceSets {
     main {
         java {
-            srcDirs = [srcDelomboked, generatedSrc]
+            srcDirs = [srcJava, generatedSrc]
         }
     }
 }
