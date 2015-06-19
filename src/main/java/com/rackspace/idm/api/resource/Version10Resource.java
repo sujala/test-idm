@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource;
 
-import com.rackspace.idm.api.resource.token.TokensResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,22 +19,14 @@ import javax.ws.rs.core.MediaType;
 public class Version10Resource {
 
     private final UsersResource usersResource;
-    private final TokensResource tokenResource;
 
     @Autowired
-    public Version10Resource(UsersResource usersResource,
-        TokensResource tokenResource) {
+    public Version10Resource(UsersResource usersResource) {
         this.usersResource = usersResource;
-        this.tokenResource = tokenResource;
     }
 
     @Path("users")
     public UsersResource getUsersResource() {
         return usersResource;
-    }
-   
-    @Path("tokens")
-    public TokensResource getTokenResource() {
-        return tokenResource;
     }
 }

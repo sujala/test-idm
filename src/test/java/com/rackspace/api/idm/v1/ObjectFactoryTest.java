@@ -24,7 +24,6 @@ public class ObjectFactoryTest {
     Racker racker;
     Application application;
     IdentityProfileList identityProfileList;
-    PasswordRuleResult passwordRuleResult;
     RoleList roleList;
     User user;
     IdmFault idmFault;
@@ -39,7 +38,6 @@ public class ObjectFactoryTest {
         racker = objectFactory.createRacker();
         application = objectFactory.createApplication();
         identityProfileList = objectFactory.createIdentityProfileList();
-        passwordRuleResult = objectFactory.createPasswordRuleResult();
         roleList = objectFactory.createRoleList();
         user = objectFactory.createUser();
         idmFault = objectFactory.createIdmFault();
@@ -75,12 +73,6 @@ public class ObjectFactoryTest {
     public void createNotProvisionedFault_returnsNewCreatedObject() throws Exception {
         NotProvisionedFault result = objectFactory.createNotProvisionedFault();
         assertThat("detail", result.getDetail(), equalTo(null));
-    }
-
-    @Test
-    public void createRackerCredentials_returnsNewCreatedObject() throws Exception {
-        RackerCredentials result = objectFactory.createRackerCredentials();
-        assertThat("detail", result.authorizationCode, equalTo(null));
     }
 
     @Test
@@ -181,18 +173,6 @@ public class ObjectFactoryTest {
     }
 
     @Test
-    public void createAuthCredentials_returnsNewCreatedObject() throws Exception {
-        AuthCredentials result = objectFactory.createAuthCredentials();
-        assertThat("detail", result.authorizationCode, equalTo(null));
-    }
-
-    @Test
-    public void passwordRuleResult_isPassed_returnsBoolean() throws Exception {
-        boolean result = passwordRuleResult.isPassed();
-        assertThat("boolean", result, equalTo(false));
-    }
-
-    @Test
     public void createCustomerIdConflictFault_returnsNewCreatedObject() throws Exception {
         CustomerIdConflictFault result = objectFactory.createCustomerIdConflictFault();
         assertThat("detail", result.getDetail(), equalTo(null));
@@ -208,12 +188,6 @@ public class ObjectFactoryTest {
     public void createUserDisabledFault_returnsNewCreatedObject() throws Exception {
         UserDisabledFault result = objectFactory.createUserDisabledFault();
         assertThat("detail", result.getDetail(), equalTo(null));
-    }
-
-    @Test
-    public void createRSACredentials_returnsNewCreatedObject() throws Exception {
-        RSACredentials result = objectFactory.createRSACredentials();
-        assertThat("detail", result.authorizationCode, equalTo(null));
     }
 
     @Test
@@ -251,12 +225,6 @@ public class ObjectFactoryTest {
     }
 
     @Test
-    public void createPasswordRotationPolicy_returnsNewCreatedObject() throws Exception {
-        PasswordRotationPolicy result = objectFactory.createPasswordRotationPolicy();
-        assertThat("duration", result.duration, equalTo(0));
-    }
-
-    @Test
     public void idmFault_getMessage_returnsMessage() throws Exception {
         idmFault.setMessage("test");
         String result = idmFault.getMessage();
@@ -278,18 +246,6 @@ public class ObjectFactoryTest {
     }
 
     @Test
-    public void createPasswordRuleResult_returnsNewCreatedJAXBElementObject() throws Exception {
-        JAXBElement<PasswordRuleResult> result = objectFactory.createPasswordRuleResult(new PasswordRuleResult());
-        assertThat("rule message", result.getValue().ruleMessage, equalTo(null));
-    }
-
-    @Test
-    public void createRackerCredentials_returnsNewCreatedJAXBElementObject() throws Exception {
-        JAXBElement<RackerCredentials> result = objectFactory.createRackerCredentials(new RackerCredentials());
-        assertThat("authorization code", result.getValue().authorizationCode, equalTo(null));
-    }
-
-    @Test
     public void createRole_returnsNewCreatedJAXBElementObject() throws Exception {
         JAXBElement<Role> result = objectFactory.createRole(new Role());
         assertThat("application id", result.getValue().applicationId, equalTo(null));
@@ -302,27 +258,9 @@ public class ObjectFactoryTest {
     }
 
     @Test
-    public void createRSACredentials_returnsNewCreatedJAXBElementObject() throws Exception {
-        JAXBElement<RSACredentials> result = objectFactory.createRsaCredentials(new RSACredentials());
-        assertThat("authorization code", result.getValue().authorizationCode, equalTo(null));
-    }
-
-    @Test
-    public void createDelegatedToken_returnsNewCreatedJAXBElementObject() throws Exception {
-        JAXBElement<DelegatedToken> result = objectFactory.createDelegatedToken(new DelegatedToken());
-        assertThat("client id", result.getValue().clientId, equalTo(null));
-    }
-
-    @Test
     public void createCustomerIdentityprofiles_returnsNewCreatedJAXBElementObject() throws Exception {
         JAXBElement<IdentityProfileList> result = objectFactory.createCustomeridentityprofiles(new IdentityProfileList());
         assertThat("identity profile", result.getValue().identityProfile, equalTo(null));
-    }
-
-    @Test
-    public void createAuthCredentials_returnsNewCreatedJAXBElementObject() throws Exception {
-        JAXBElement<AuthCredentials> result = objectFactory.createAuthCredentials(new AuthCredentials());
-        assertThat("client id", result.getValue().clientId, equalTo(null));
     }
 
     @Test
@@ -335,17 +273,5 @@ public class ObjectFactoryTest {
     public void createUserNotFound_returnsNewCreatedJAXBElementObject() throws Exception {
         JAXBElement<UserNotFoundFault> result = objectFactory.createMissingUsername(new UserNotFoundFault());
         assertThat("detail", result.getValue().getDetail(), equalTo(null));
-    }
-
-    @Test
-    public void createPasswordRuleResults_returnsNewCreatedJAXBElementObject() throws Exception {
-        JAXBElement<PasswordRuleResultList> result = objectFactory.createPasswordRuleResults(new PasswordRuleResultList());
-        assertThat("password rule results", result.getValue().passwordRuleResults, equalTo(null));
-    }
-
-    @Test
-    public void authGrantType_fromValue_returnsValue() throws Exception {
-        AuthGrantType result = AuthGrantType.fromValue("RACKER");
-        assertThat("racker", result.toString(), equalTo("RACKER"));
     }
 }

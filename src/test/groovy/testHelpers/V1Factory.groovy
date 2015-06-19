@@ -1,12 +1,10 @@
 package testHelpers
 
-import com.rackspace.api.idm.v1.RackerCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.BaseURL
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
-import com.rackspacecloud.docs.auth.api.v1.KeyCredentials
 import com.rackspacecloud.docs.auth.api.v1.MossoCredentials
 import com.rackspacecloud.docs.auth.api.v1.NastCredentials
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials
@@ -89,14 +87,6 @@ class V1Factory {
         new NastCredentials().with {
             it.nastId = nastId
             it.key = apiKey
-            it
-        }
-    }
-
-    def createRackerCredentials(String username, String password){
-        new RackerCredentials().with {
-            it.username = username
-            it.password = password
             it
         }
     }
