@@ -94,30 +94,6 @@ class RootResourceIntegrationTest extends RootIntegrationTest {
         response.status == SC_UNAUTHORIZED
     }
 
-    def "Verify foundation tenant resource is not found - access = false" () {
-        given:
-        staticIdmConfiguration.setProperty("feature.access.to.foundation.api", false)
-
-        when:
-        def response = foundation.getTenant("token", "tenantId")
-
-        then:
-        response.status == SC_NOT_FOUND
-    }
-
-    def "Verify foundation tenant resource - access = true" () {
-        given:
-        staticIdmConfiguration.setProperty("feature.access.to.foundation.api", true)
-
-        when:
-        def tenant = utils.createTenant()
-        def authData  = foundationUtils.authenticate(CLIENT_ID, CLIENT_SECRET)
-        def response = foundation.getTenant(authData.accessToken.id, tenant.id)
-
-        then:
-        response.status == SC_OK
-    }
-
     def "Verify foundation tenant resource - access = true - invalid token" () {
         given:
         staticIdmConfiguration.setProperty("feature.access.to.foundation.api", true)

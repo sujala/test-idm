@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource;
 
-import com.rackspace.idm.api.resource.tenant.TenantsResource;
 import com.rackspace.idm.api.resource.token.TokensResource;
 import com.rackspace.idm.api.resource.user.UsersResource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,15 +21,12 @@ public class Version10Resource {
 
     private final UsersResource usersResource;
     private final TokensResource tokenResource;
-    private final TenantsResource tenantsResource;
 
     @Autowired
     public Version10Resource(UsersResource usersResource,
-        TokensResource tokenResource,
-        TenantsResource tenantsResource) {
+        TokensResource tokenResource) {
         this.usersResource = usersResource;
         this.tokenResource = tokenResource;
-        this.tenantsResource = tenantsResource;
     }
 
     @Path("users")
@@ -41,10 +37,5 @@ public class Version10Resource {
     @Path("tokens")
     public TokensResource getTokenResource() {
         return tokenResource;
-    }
-
-    @Path("tenants")
-    public TenantsResource getTenantResource() {
-        return tenantsResource;
     }
 }
