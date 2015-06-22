@@ -92,12 +92,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     private static final String ERROR_VERIFYING_CODE_FOR_DEVICE = "Error verifying code for device '%s'";
 
-    /*
-    Used for convenience only. TODO:// Refactor cloud20 service to extract common code.
-     */
-    @Autowired
-    private DefaultCloud20Service cloud20Service;
-
     @Autowired
     private UserService userService;
 
@@ -149,12 +143,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Autowired
     private RequestContextHolder requestContextHolder;
 
-    @Autowired
-    private DomainService domainService;
-
-    @Autowired
-    private IdentityUserService identityUserService;
-
     private boolean isSelfCall(BaseUser caller, BaseUser user) {
         return caller.getId().equals(user.getId());
     }
@@ -190,6 +178,36 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             return response;
         } catch (Exception ex) {
             LOG.error(String.format("Error adding a phone to user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder deletePhoneFromUser(UriInfo uriInfo, String authToken, String userId, String mobilePhoneId) {
+        try {
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
+
+            // Verify if the user is valid
+            userService.validateUserIsEnabled(requester);
+
+            //if the target user is not a provisioned user (e.g. - a fed user), throw bad request cause fed users can't have MFA
+            EndUser endUser = requestContextHolder.getAndCheckTargetEndUser(userId);
+            if (!(endUser instanceof User)) {
+                throw new BadRequestException("Federated users do not store multi-factor information within Identity");
+            }
+            User user = (User) endUser;
+            verifyAccessToOtherUser(token, requester, user);
+
+            multiFactorService.deleteMobilePhoneFromUser(user, mobilePhoneId);
+            return Response.status(Response.Status.NO_CONTENT);
+        } catch (Exception ex) {
+            LOG.error(String.format("Error deleting device '%s' on user '%s'", mobilePhoneId, userId), ex);
+            if (ex instanceof ErrorCodeIdmException
+                    && (ErrorCodes.ERROR_CODE_DELETE_MOBILE_PHONE_FORBIDDEN_STATE.equals(((ErrorCodeIdmException) ex).getErrorCode()))) {
+                //if can't delete due to user's MFA state, it's a bad request.
+                return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
+            }
             return exceptionHandler.exceptionResponse(ex);
         }
     }

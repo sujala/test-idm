@@ -73,12 +73,30 @@ public interface MultiFactorService {
     void verifyPhoneForUser(String userId, String mobilePhoneId, Pin pin);
 
     /**
-     * Return the mobilephone associated with the given mobilePhoneId or null if not found
+     * Retrieve the specified phone associated with the user.
+     * @param user
+     * @param mobilePhoneId
+     * @return
      *
+     * @throws com.rackspace.idm.exception.NotFoundException if the specified phone does not exist or is not associated with the user
+     */
+    MobilePhone checkAndGetMobilePhoneFromUser(User user, String mobilePhoneId);
+
+
+    /**
+     * Deletes the mobile phone associated with the user. The phone can only be deleted in the following
+     * circumstances:
+     *
+     * <ul>
+     *     <li>The user has multi-factor type set to [OTP] for their profile</li>
+     *     <li>The user has multi-factor authentication [Disabled] for their profile</li>
+     * </ul>
+     *
+     * @param user
      * @param mobilePhoneId
      * @return
      */
-    MobilePhone getMobilePhoneById(String mobilePhoneId);
+    void deleteMobilePhoneFromUser(User user, String mobilePhoneId);
 
     /**
      * Updates the account's multifactor settings. Must verify that the account is properly configured to enable

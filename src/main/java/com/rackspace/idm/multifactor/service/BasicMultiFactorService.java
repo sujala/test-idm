@@ -61,10 +61,10 @@ public class BasicMultiFactorService implements MultiFactorService {
     public static final String ERROR_MSG_NO_VERIFIED_PHONE = "User doesn't have a verified phone.";
     public static final String ERROR_MSG_NO_VERIFIED_OTP_DEVICE = "User doesn't have a verified OTP device.";
 
-
-
     private static final String EXTERNAL_PROVIDER_ERROR_FORMAT = "operation={},userId={},username={},externalId={},externalResponse={}";
     public static final String DELETE_OTP_DEVICE_REQUEST_INVALID_MSG = "You can not delete the last verified OTP device when your account is configured to use OTP multifactor.";
+
+    public static final String DELETE_MOBILE_PHONE_REQUEST_INVALID_MSG = "You can not delete your mobile phone when your account is configured to use SMS multifactor.";
 
     private final Logger multiFactorConsistencyLogger = LoggerFactory.getLogger(GlobalConstants.MULTIFACTOR_CONSISTENCY_LOG_NAME);
 
@@ -257,9 +257,56 @@ public class BasicMultiFactorService implements MultiFactorService {
         userService.updateUserForMultiFactor(currentUser);
     }
 
-    @Override
-    public MobilePhone getMobilePhoneById(String mobilePhoneId) {
+    private MobilePhone getMobilePhoneById(String mobilePhoneId) {
         return mobilePhoneDao.getById(mobilePhoneId);
+    }
+
+    @Override
+    public MobilePhone checkAndGetMobilePhoneFromUser(User user, String mobilePhoneId) {
+        MobilePhone mobilePhone = null;
+        if (user != null
+                && org.apache.commons.lang.StringUtils.isNotBlank(mobilePhoneId)) {
+            //make sure the user is associated with this phone
+            if (mobilePhoneId.equals(user.getMultiFactorMobilePhoneRsId())) {
+                mobilePhone = getMobilePhoneById(mobilePhoneId);
+            }
+        }
+
+        if (mobilePhone == null) {
+            //use same error regardless of why phone not found (e.g. even if user was null)
+            throw new NotFoundException("Mobile phone not found");
+        }
+
+        return mobilePhone;
+    }
+
+    public void deleteMobilePhoneFromUser(User user, String mobilePhoneId) {
+        MobilePhone phone = checkAndGetMobilePhoneFromUser(user, mobilePhoneId);
+
+        if (phone != null) {
+            FactorTypeEnum userMfaType = user.getMultiFactorTypeAsEnum();
+
+            //check the conditions that would allow the device to be deleted
+            if (!user.isMultiFactorEnabled() || userMfaType == FactorTypeEnum.OTP) {
+                //reload the user to guarantee state is correct on user updating.
+                User userToUpdate = userService.checkAndGetUserById(user.getId());
+
+                //null out phone specific MFA stuff
+                userToUpdate.setMultiFactorMobilePhoneRsId(null);
+                userToUpdate.setMultiFactorDeviceVerified(null);
+                userToUpdate.setMultiFactorDevicePin(null);
+                userToUpdate.setMultiFactorDevicePinExpiration(null);
+
+                userService.updateUserForMultiFactor(userToUpdate);
+
+                //Unlink the phone from the user
+                unlinkPhoneFromUser(phone, user);
+            } else {
+                throw new ErrorCodeIdmException(ErrorCodes.ERROR_CODE_DELETE_MOBILE_PHONE_FORBIDDEN_STATE, DELETE_MOBILE_PHONE_REQUEST_INVALID_MSG);
+            }
+        } else {
+            throw new NotFoundException("The phone was not found on the specified user");
+        }
     }
 
     @Override

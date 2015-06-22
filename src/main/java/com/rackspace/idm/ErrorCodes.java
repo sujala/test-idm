@@ -16,6 +16,8 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_OTP_BYPASS_MISSING_HASH_ALGORITHM = "OTP-007";
     public static final String ERROR_CODE_OTP_BYPASS_ERROR_ENCODING = "OTP-008";
 
+    public static final String ERROR_CODE_DELETE_MOBILE_PHONE_FORBIDDEN_STATE = "MOBP-000";
+
     //federation errors
     public static final String ERROR_CODE_FEDERATION_INVALID_PROVIDER = "FED-000";
     public static final String ERROR_CODE_FEDERATION_INVALID_SIGNATURE = "FED-001";
