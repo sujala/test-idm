@@ -22,17 +22,6 @@ class RootResourceIntegrationTest extends RootIntegrationTest {
         response.status == SC_NOT_FOUND
     }
 
-    def "Verify that foundation resource is accessible: feature.access.to.foundation.api=true" () {
-        given:
-        staticIdmConfiguration.setProperty("feature.access.to.foundation.api", true)
-
-        when:
-        def response = foundation.authenticate(CLIENT_ID, CLIENT_SECRET)
-
-        then:
-        response.status == SC_OK
-    }
-
     def "Test invalid foundation call - /idm/v1/invalid - access false" () {
         given:
         staticIdmConfiguration.setProperty("feature.access.to.foundation.api", false)
@@ -64,22 +53,6 @@ class RootResourceIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == SC_NOT_FOUND
-    }
-
-
-    def "Verify foundation user resource - access true" () {
-        given:
-
-        def domainId = utils.createDomain()
-        staticIdmConfiguration.setProperty("feature.access.to.foundation.api", true)
-
-        when:
-        (userAdmin, users) = utils.createUserAdmin(domainId)
-        def authData  = foundationUtils.authenticate(CLIENT_ID, CLIENT_SECRET)
-        def response = foundation.getUser(authData.accessToken.id, userAdmin.id)
-
-        then:
-        response.status == SC_OK
     }
 
     def "Verify foundation user resource - access true - invalid token" () {
