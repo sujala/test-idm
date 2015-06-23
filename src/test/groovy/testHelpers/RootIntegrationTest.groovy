@@ -1,17 +1,12 @@
 package testHelpers
 
-import com.rackspace.identity.multifactor.domain.BasicPin
-import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
-import com.rackspace.idm.Constants
 import com.rackspace.idm.helpers.Cloud10Utils
 import com.rackspace.idm.helpers.Cloud11Utils
 import com.rackspace.idm.helpers.Cloud20Utils
 import com.rackspace.idm.helpers.CloudTestUtils
-import com.rackspace.idm.helpers.FoundationApiUtils
 import com.sun.jersey.api.client.WebResource
 import org.apache.commons.lang.math.RandomUtils
 import org.joda.time.DateTime
-import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -35,8 +30,6 @@ class RootIntegrationTest extends Specification {
 
     @Autowired CloudTestUtils testUtils
 
-    @Autowired FoundationApiUtils foundationUtils
-
     @Shared double entropy
     @Shared int defaultExpirationSeconds
 
@@ -45,12 +38,10 @@ class RootIntegrationTest extends Specification {
     @Shared def v1Factory  = new V1Factory()
     @Shared def v2Factory = new V2Factory()
     @Shared def entityFactory = new EntityFactory()
-    @Shared def factory = new FoundationFactory()
 
     @Shared Cloud10Methods cloud10 = new Cloud10Methods()
     @Shared Cloud11Methods cloud11 = new Cloud11Methods()
     @Shared Cloud20Methods cloud20 = new Cloud20Methods()
-    @Shared FoundationApiMethods foundation = new FoundationApiMethods()
     @Shared DevOpsMethods devops = new DevOpsMethods()
 
     @Shared SingletonConfiguration staticIdmConfiguration = SingletonConfiguration.getInstance();

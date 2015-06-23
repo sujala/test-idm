@@ -19,13 +19,10 @@ import static org.hamcrest.Matchers.equalTo;
  */
 public class ObjectFactoryTest {
     ObjectFactory objectFactory;
-    UserList userList;
     ApplicationList applicationList;
-    Racker racker;
     Application application;
     IdentityProfileList identityProfileList;
     RoleList roleList;
-    User user;
     IdmFault idmFault;
 
     @Before
@@ -33,13 +30,10 @@ public class ObjectFactoryTest {
         objectFactory = new ObjectFactory();
 
         // Classes that needs to be tested
-        userList = objectFactory.createUserList();
         applicationList = objectFactory.createApplicationList();
-        racker = objectFactory.createRacker();
         application = objectFactory.createApplication();
         identityProfileList = objectFactory.createIdentityProfileList();
         roleList = objectFactory.createRoleList();
-        user = objectFactory.createUser();
         idmFault = objectFactory.createIdmFault();
     }
 
@@ -53,20 +47,6 @@ public class ObjectFactoryTest {
     public void createClientGroupConflictFault_returnsNewCreatedObject() throws Exception {
         ClientGroupConflictFault result = objectFactory.createClientGroupConflictFault();
         assertThat("detail", result.getDetail(), equalTo(null));
-    }
-
-    @Test
-    public void userList_getLink_linkIsNull_returnsNewList() throws Exception {
-        List<Link> result = userList.getLink();
-        assertThat("list", result.isEmpty(), equalTo(true));
-    }
-
-    @Test
-    public void userList_getLink_linkExists_returnsExistingList() throws Exception {
-        List<Link> link = userList.getLink();
-        link.add(new Link());
-        List<Link> result = userList.getLink();
-        assertThat("list", result.size(), equalTo(1));
     }
 
     @Test
@@ -105,27 +85,6 @@ public class ObjectFactoryTest {
         link.add(new Link());
         List<Link> result = applicationList.getLink();
         assertThat("list", result.size(), equalTo(1));
-    }
-
-    @Test
-    public void racker_getFirstName_returnsFirstName() throws Exception {
-        racker.setFirstName("test");
-        String result = racker.getFirstName();
-        assertThat("first name", result, equalTo("test"));
-    }
-
-    @Test
-    public void racker_getLastName_returnsLastName() throws Exception {
-        racker.setLastName("test");
-        String result = racker.getLastName();
-        assertThat("Last name", result, equalTo("test"));
-    }
-
-    @Test
-    public void racker_getDisplayName_returnsDisplayName() throws Exception {
-        racker.setDisplayName("test");
-        String result = racker.getDisplayName();
-        assertThat("Display name", result, equalTo("test"));
     }
 
     @Test
@@ -219,12 +178,6 @@ public class ObjectFactoryTest {
     }
 
     @Test
-    public void user_getRoles_returnRoles() throws Exception {
-        RoleList result = user.getRoles();
-        assertThat("role list", result, equalTo(null));
-    }
-
-    @Test
     public void idmFault_getMessage_returnsMessage() throws Exception {
         idmFault.setMessage("test");
         String result = idmFault.getMessage();
@@ -249,12 +202,6 @@ public class ObjectFactoryTest {
     public void createRole_returnsNewCreatedJAXBElementObject() throws Exception {
         JAXBElement<Role> result = objectFactory.createRole(new Role());
         assertThat("application id", result.getValue().applicationId, equalTo(null));
-    }
-
-    @Test
-    public void createUserPassword_returnsNewCreatedJAXBElementObject() throws Exception {
-        JAXBElement<UserPassword> result = objectFactory.createUserPassword(new UserPassword());
-        assertThat("password", result.getValue().password, equalTo(null));
     }
 
     @Test
