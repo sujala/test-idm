@@ -1,25 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.google.i18n.phonenumbers.Phonenumber
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.domain.entity.BaseUser
-import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
-import com.rackspace.idm.exception.ForbiddenException
-import com.rackspace.idm.exception.MultiFactorDeviceAlreadyVerifiedException
-import com.rackspace.idm.exception.MultiFactorDevicePinValidationException
-import com.rackspace.idm.exception.NotAuthenticatedException
-import com.rackspace.idm.exception.NotFoundException
-import com.rackspace.idm.multifactor.PhoneNumberGenerator
+import com.rackspace.idm.exception.*
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -721,6 +706,87 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
 
         when:
         service.deletePhoneFromUser(uriInfo, callerToken.accessTokenString, user.id, "blah")
+
+        then: "verify calls appropriate external services to validate"
+        1 * userService.validateUserIsEnabled(caller)
+        0 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+        0 * authorizationService.verifyDomain(caller, user)
+
+        where:
+        callerUserIdentityRoleType              | _
+        IdentityUserTypeEnum.SERVICE_ADMIN      | _
+        IdentityUserTypeEnum.IDENTITY_ADMIN     | _
+        IdentityUserTypeEnum.USER_ADMIN         | _
+        IdentityUserTypeEnum.USER_MANAGER       | _
+        IdentityUserTypeEnum.DEFAULT_USER       | _
+    }
+
+    @Unroll
+    def "get phone verifies access for callers of type: #callerUserIdentityRoleType"() {
+        User caller = entityFactory.createUser().with { it.id = "caller"; return it }
+
+        UserScopeAccess callerToken = entityFactory.createUserToken()
+
+        def User user = entityFactory.createUser().with { it.id = "user"; return it }
+
+        // Mock UriInfo
+        UriInfo uriInfo = Mock()
+        UriBuilder uriBuilder = Mock()
+        URI uri = new URI("http://a.com")
+        uriInfo.getRequestUriBuilder() >> uriBuilder
+        uriBuilder.path(_) >> uriBuilder
+        uriBuilder.build() >> uri
+
+        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
+        requestContextHolder.getAndCheckTargetEndUser(user.id) >> user
+
+        authorizationService.authorizeCloudUserAdmin(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_ADMIN)
+        authorizationService.authorizeUserManageRole(callerToken) >> (callerUserIdentityRoleType == IdentityUserTypeEnum.USER_MANAGER)
+
+        when:
+        service.getPhoneFromUser(uriInfo, callerToken.accessTokenString, user.id, "blah")
+
+        then: "verify calls appropriate external services to validate"
+        1 * userService.validateUserIsEnabled(caller)
+        1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, user)
+
+        interaction {
+            def domainVerifyCount = callerUserIdentityRoleType.isDomainBasedAccessLevel() && callerUserIdentityRoleType != IdentityUserTypeEnum.DEFAULT_USER ? 1 : 0
+            domainVerifyCount * authorizationService.verifyDomain(caller, user)
+        }
+
+        where:
+        callerUserIdentityRoleType              | _
+        IdentityUserTypeEnum.SERVICE_ADMIN      | _
+        IdentityUserTypeEnum.IDENTITY_ADMIN     | _
+        IdentityUserTypeEnum.USER_ADMIN         | _
+        IdentityUserTypeEnum.USER_MANAGER       | _
+        IdentityUserTypeEnum.DEFAULT_USER       | _
+    }
+
+    @Unroll
+    def "get phone allows self access for callers of type: #callerUserIdentityRoleType"() {
+        User caller = entityFactory.createUser().with { it.id = "caller"; return it }
+
+        UserScopeAccess callerToken = entityFactory.createUserToken()
+
+        def User user = caller
+
+        // Mock UriInfo
+        UriInfo uriInfo = Mock()
+        UriBuilder uriBuilder = Mock()
+        URI uri = new URI("http://a.com")
+        uriInfo.getRequestUriBuilder() >> uriBuilder
+        uriBuilder.path(_) >> uriBuilder
+        uriBuilder.build() >> uri
+
+        securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken
+        requestContext.getEffectiveCaller() >> caller
+        requestContextHolder.getAndCheckTargetEndUser(user.id) >> user
+
+        when:
+        service.getPhoneFromUser(uriInfo, callerToken.accessTokenString, user.id, "blah")
 
         then: "verify calls appropriate external services to validate"
         1 * userService.validateUserIsEnabled(caller)
