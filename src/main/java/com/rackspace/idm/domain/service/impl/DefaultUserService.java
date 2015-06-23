@@ -1198,7 +1198,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void validateUserIsEnabled(User user) {
+    public void validateUserIsEnabled(BaseUser user) {
         if (user != null) {
             if (user.isDisabled()) {
                 logger.error(user.getUsername());

@@ -185,7 +185,7 @@ public interface UserService {
      * @param user
      * @throws com.rackspace.idm.exception.UserDisabledException If user is not enabled or otherwise should be considered not enabled.
      */
-    void validateUserIsEnabled(User user);
+    void validateUserIsEnabled(BaseUser user);
 
     void checkUserDisabled(BaseUser user);
 

@@ -48,7 +48,7 @@ public class CloudMultifactorResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId) {
-        return listMobilePhoneDevicesForUser(uriInfo, authToken, userId);
+        return multiFactorCloud20Service.listMobilePhoneDevicesForUser(uriInfo, authToken, userId).build();
     }
 
     /**
@@ -65,7 +65,7 @@ public class CloudMultifactorResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId) {
-        return multiFactorCloud20Service.listMobilePhoneDevicesForUser(uriInfo, authToken, userId).build();
+        return listMobilePhoneDevicesForUserAlternative(uriInfo, authToken, userId);
     }
 
     /**
@@ -78,13 +78,23 @@ public class CloudMultifactorResource {
      * @return
      */
     @POST
-    @Path("mobile-phones")
-    public Response addMultiFactorMobilePhone(
+         @Path("mobile-phones")
+         public Response addMultiFactorMobilePhone(
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
             MobilePhone mobilePhone) {
         return multiFactorCloud20Service.addPhoneToUser(uriInfo, authToken, userId, mobilePhone).build();
+    }
+
+    @DELETE
+    @Path("mobile-phones/{mobilePhoneId}")
+    public Response deleteMultiFactorMobilePhoneFromUser(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            @PathParam("mobilePhoneId") String mobilePhoneId) {
+        return multiFactorCloud20Service.deletePhoneFromUser(uriInfo, authToken, userId, mobilePhoneId).build();
     }
 
     /**

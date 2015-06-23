@@ -77,7 +77,6 @@ class DefaultMultifactorCloud20Test extends Specification {
         multiFactorService = Mock(MultiFactorService)
         service.multiFactorService = multiFactorService
         defaultCloud20Service = Mock(DefaultCloud20Service)
-        service.cloud20Service = defaultCloud20Service
         precedenceValidator = Mock(PrecedenceValidator)
         service.precedenceValidator = precedenceValidator
         authorizationService = Mock(AuthorizationService)

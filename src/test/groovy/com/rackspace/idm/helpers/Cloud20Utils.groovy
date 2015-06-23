@@ -671,6 +671,18 @@ class Cloud20Utils {
         response.getEntity(com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone)
     }
 
+    def getPhoneFromUser(token, userId, mobilePhoneId) {
+        def response = methods.getPhoneFromUser(token, userId, mobilePhoneId)
+        assert(response.status == SC_OK)
+        response.getEntity(com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone)
+    }
+
+    def deletePhoneFromUser(token, userId, mobilePhoneId) {
+        def response = methods.deletePhoneFromUser(token, userId, mobilePhoneId)
+        assert(response.status == SC_NO_CONTENT)
+        response
+    }
+
     def addOTPDevice(token, userId, OTPDevice otpDevice) {
         def response = methods.addOTPDeviceToUser(token, userId, otpDevice)
         assert(response.status == SC_CREATED)
@@ -872,6 +884,7 @@ class Cloud20Utils {
     def MobilePhone addMobilePhoneToUser(String userToken, User user) {
         return addPhone(userToken, user.id)
     }
+
 
     def OTPDevice addOtpDeviceToUser(String userToken, User user) {
         OTPDevice device = new OTPDevice()

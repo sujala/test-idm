@@ -69,6 +69,18 @@ public interface MultiFactorCloud20Service {
     Response.ResponseBuilder addPhoneToUser(UriInfo uriInfo, String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone mobilePhone);
 
     /**
+     * Delete the specified phone from the user. Only allowed if phone is not actively being used for MFA authentication
+     * on that user.
+     *
+     * @param uriInfo
+     * @param authToken
+     * @param userId
+     * @param mobilePhoneId
+     * @return
+     */
+    Response.ResponseBuilder deletePhoneFromUser(UriInfo uriInfo, String authToken, String userId, String mobilePhoneId);
+
+    /**
      * Sends a verification code (PIN) to the specified device.
      * @param uriInfo
      * @param authToken
