@@ -30,8 +30,6 @@ public class RootResource {
     @Autowired
     private CloudVersionsResource cloudVersionsResource;
     @Autowired
-    private Version10Resource versionResource;
-    @Autowired
     private DevOpsResource devOpsResource;
     @Autowired
     private ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
@@ -99,17 +97,6 @@ public class RootResource {
         return version.toJSONString();
     }
 
-    @Path("{versionId: v[1-9](\\.[0-9])?}")
-    public Version10Resource getVersionResource(@PathParam("versionId") String versionId) {
-        if ((versionId.equalsIgnoreCase("v1.0") || versionId.equalsIgnoreCase("v1")) && isFoundationEnabled()) {
-            return versionResource;
-        }
-        
-        String errMsg = String.format("Version %s does not exist", versionId);
-        logger.warn(errMsg);
-        throw new NotFoundException(errMsg);
-    }
-
     public void setConfig(Configuration config) {
         this.config = config;
     }
@@ -118,15 +105,7 @@ public class RootResource {
         this.cloudVersionsResource = cloudVersionResource;
     }
 
-    public void setVersion10Resource(Version10Resource version10Resource) {
-        this.versionResource = version10Resource;
-    }
-
     public void setServiceProfileDescriptionBuilder(ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder) {
         this.serviceProfileDescriptionBuilder = serviceProfileDescriptionBuilder;
-    }
-
-    private boolean isFoundationEnabled(){
-        return config.getBoolean("feature.access.to.foundation.api", true);
     }
 }

@@ -32,15 +32,6 @@
 		</xsd:documentation>
 	</annotation>
 
-	<include schemaLocation="user.xsd">
-		<annotation>
-			<xsd:documentation xml:lang="EN"
-				xmlns="http://www.w3.org/1999/xhtml">
-				<p>User entities.</p>
-			</xsd:documentation>
-		</annotation>
-	</include>
-
 	<include schemaLocation="application.xsd">
 		<annotation>
 			<xsd:documentation xml:lang="EN"

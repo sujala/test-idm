@@ -28,19 +28,16 @@ import static org.mockito.Mockito.when;
 public class RootResourceTest {
     private RootResource rootResource;
     private CloudVersionsResource cloudVersionsResource;
-    private Version10Resource version10Resource;
     private ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
     private Configuration config;
 
     @Before
     public void setUp() throws Exception {
         cloudVersionsResource = mock(CloudVersionsResource.class);
-        version10Resource = mock(Version10Resource.class);
         config = mock(Configuration.class);
         serviceProfileDescriptionBuilder = mock(ServiceProfileDescriptionBuilder.class);
         rootResource = new RootResource();
         rootResource.setCloudVersionResource(cloudVersionsResource);
-        rootResource.setVersion10Resource(version10Resource);
         rootResource.setConfig(config);
         rootResource.setServiceProfileDescriptionBuilder(serviceProfileDescriptionBuilder);
     }
@@ -69,25 +66,6 @@ public class RootResourceTest {
         when(config.getString("buildVersion")).thenReturn("build");
         String buildInfo = rootResource.getBuildInfo();
         assertThat("version", buildInfo, equalTo("{\"build\":\"build\",\"version\":\"version\"}"));
-    }
-
-    @Test
-    public void getVersionResource_versionIdMatchesV10_returnsVersionResource() throws Exception {
-        when(config.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
-        Version10Resource resource = rootResource.getVersionResource("v1.0");
-        assertThat("version resource", resource, equalTo(version10Resource));
-    }
-
-    @Test
-    public void getVersionResource_versionIdMatchesV1_returnsVersionResource() throws Exception {
-        when(config.getBoolean("feature.access.to.foundation.api", true)).thenReturn(true);
-        Version10Resource resource = rootResource.getVersionResource("v1");
-        assertThat("version resource", resource, equalTo(version10Resource));
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void getVersionResource_versionIdDoesNotMatch_throwsNotFoundException() throws Exception {
-        rootResource.getVersionResource("notMatch");
     }
 
     @Test
