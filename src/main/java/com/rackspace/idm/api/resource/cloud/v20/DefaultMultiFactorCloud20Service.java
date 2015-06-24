@@ -183,6 +183,33 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     }
 
     @Override
+    public Response.ResponseBuilder getPhoneFromUser(UriInfo uriInfo, String authToken, String userId, String mobilePhoneId) {
+        try {
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser requester = requestContextHolder.getRequestContext().getEffectiveCaller();
+
+            // Verify if the user is valid
+            userService.validateUserIsEnabled(requester);
+
+            //if the target user is not a provisioned user (e.g. - a fed user), throw bad request cause fed users can't have MFA
+            EndUser endUser = requestContextHolder.getAndCheckTargetEndUser(userId);
+            if (!(endUser instanceof User)) {
+                throw new BadRequestException("Federated users do not store multi-factor information within Identity");
+            }
+            User user = (User) endUser;
+            verifyAccessToOtherUser(token, requester, user);
+
+            MobilePhone phone = multiFactorService.checkAndGetMobilePhoneFromUser(user, mobilePhoneId);
+            return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhoneWebIncludingVerifiedFlag(phone, user));
+        } catch (IllegalStateException ex) {
+            return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
+        } catch (Exception ex) {
+            LOG.error(String.format("Error retrieving phone on user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
     public Response.ResponseBuilder deletePhoneFromUser(UriInfo uriInfo, String authToken, String userId, String mobilePhoneId) {
         try {
             ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);

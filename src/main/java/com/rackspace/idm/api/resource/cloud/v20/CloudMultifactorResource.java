@@ -87,6 +87,16 @@ public class CloudMultifactorResource {
         return multiFactorCloud20Service.addPhoneToUser(uriInfo, authToken, userId, mobilePhone).build();
     }
 
+    @GET
+    @Path("mobile-phones/{mobilePhoneId}")
+    public Response getMultiFactorMobilePhoneFromUser(
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("userId") String userId,
+            @PathParam("mobilePhoneId") String mobilePhoneId) {
+        return multiFactorCloud20Service.getPhoneFromUser(uriInfo, authToken, userId, mobilePhoneId).build();
+    }
+
     @DELETE
     @Path("mobile-phones/{mobilePhoneId}")
     public Response deleteMultiFactorMobilePhoneFromUser(
