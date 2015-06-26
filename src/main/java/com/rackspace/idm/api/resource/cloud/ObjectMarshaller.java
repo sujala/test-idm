@@ -25,7 +25,6 @@ public class ObjectMarshaller <T> {
         JAXBContext context = new JSONJAXBContext(
             jsonConfiguration,
             "com.rackspace.api.common.fault.v1:" +
-            "com.rackspace.api.idm.v1:" +
             "com.rackspace.docs.identity.api.ext.rax_ksgrp.v1:" +
             "com.rackspace.docs.identity.api.ext.rax_kskey.v1:" +
             "com.rackspace.docs.identity.api.ext.rax_ksqa.v1:" +

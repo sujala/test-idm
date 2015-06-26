@@ -76,7 +76,6 @@ public abstract class JSONReaderForArrayEntity<T> implements MessageBodyReader<T
         JSONConfiguration jsonConfiguration = JSONConfiguration.natural().rootUnwrapping(true).build();
         JSONJAXBContext context = new JSONJAXBContext(
                 jsonConfiguration,
-	            "com.rackspace.api.idm.v1:" +
                 "com.rackspacecloud.docs.auth.api.v1:" +
                 "org.openstack.docs.common.api.v1:" +
                 "org.openstack.docs.compute.api.v1:" +

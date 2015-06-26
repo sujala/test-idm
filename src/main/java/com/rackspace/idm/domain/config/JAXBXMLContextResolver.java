@@ -39,7 +39,6 @@ public class JAXBXMLContextResolver implements ContextResolver<JAXBContext> {
     private static void init() throws JAXBException {
 
         context = JAXBContext.newInstance(
-	            "com.rackspace.api.idm.v1:"+
                 "com.rackspacecloud.docs.auth.api.v1:" +
                 "org.openstack.docs.common.api.v1:"+
                 "org.openstack.docs.compute.api.v1:" +

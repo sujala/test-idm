@@ -47,7 +47,6 @@ public class XMLReader implements MessageBodyReader<Object> {
         try {
 
             jaxbContext = JAXBContext.newInstance(
-                    "com.rackspace.api.idm.v1:" +
                     "com.rackspacecloud.docs.auth.api.v1:" +
                     "org.openstack.docs.common.api.v1:" +
                     "org.openstack.docs.compute.api.v1:" +
@@ -64,7 +63,6 @@ public class XMLReader implements MessageBodyReader<Object> {
 
 
             classes = PackageClassDiscoverer.findClassesIn(
-                    "com.rackspace.api.idm.v1",
                     "com.rackspacecloud.docs.auth.api.v1",
                     "org.openstack.docs.common.api.v1",
                     "org.openstack.docs.compute.api.v1",

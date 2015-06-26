@@ -14,8 +14,6 @@ public class IdmWadlGeneratorConfig extends WadlGeneratorConfig {
     public List<WadlGeneratorDescription> configure() {
         return generator(WadlGeneratorApplicationDoc.class).prop(
             "applicationDocsStream", "application-doc.xml").generator(
-            WadlGeneratorGrammarsSupport.class).prop("grammarsStream",
-            "application-grammars.xml").generator(
             WadlGeneratorResourceDocSupport.class).prop("resourceDocStream",
             "resourcedoc.xml").descriptions();
     }
