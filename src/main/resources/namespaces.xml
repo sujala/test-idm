@@ -36,10 +36,6 @@
             <value>atom</value>
         </entry>
 
-        <entry key="http://idm.api.rackspace.com/v1.0">
-            <value>rax-idmv10</value>
-        </entry>
-
         <entry key="http://docs.openstack.org/common/api/v1.0">
             <value>os-v10</value>
         </entry>

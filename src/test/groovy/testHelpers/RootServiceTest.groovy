@@ -12,7 +12,6 @@ import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RegionConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
-import com.rackspace.idm.api.converter.RolesConverter
 import com.rackspace.idm.api.converter.cloudv20.SecretQAConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20
@@ -148,7 +147,6 @@ class RootServiceTest extends Specification {
     @Shared AuthConverterCloudV20 authConverter
     @Shared EndpointConverterCloudV20 endpointConverter
     @Shared RoleConverterCloudV20 roleConverter
-    @Shared RolesConverter rolesConverter
     @Shared ServiceConverterCloudV20 serviceConverter
     @Shared TenantConverterCloudV20 tenantConverter
     @Shared TokenConverterCloudV20 tokenConverter

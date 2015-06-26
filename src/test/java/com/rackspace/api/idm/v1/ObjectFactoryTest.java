@@ -19,10 +19,6 @@ import static org.hamcrest.Matchers.equalTo;
  */
 public class ObjectFactoryTest {
     ObjectFactory objectFactory;
-    ApplicationList applicationList;
-    Application application;
-    IdentityProfileList identityProfileList;
-    RoleList roleList;
     IdmFault idmFault;
 
     @Before
@@ -30,10 +26,6 @@ public class ObjectFactoryTest {
         objectFactory = new ObjectFactory();
 
         // Classes that needs to be tested
-        applicationList = objectFactory.createApplicationList();
-        application = objectFactory.createApplication();
-        identityProfileList = objectFactory.createIdentityProfileList();
-        roleList = objectFactory.createRoleList();
         idmFault = objectFactory.createIdmFault();
     }
 
@@ -74,40 +66,6 @@ public class ObjectFactoryTest {
     }
 
     @Test
-    public void applicationList_getLink_linkIsNull_returnsNewList() throws Exception {
-        List<Link> result = applicationList.getLink();
-        assertThat("list", result.isEmpty(), equalTo(true));
-    }
-
-    @Test
-    public void applicationList_getLink_linkExists_returnsExistingList() throws Exception {
-        List<Link> link = applicationList.getLink();
-        link.add(new Link());
-        List<Link> result = applicationList.getLink();
-        assertThat("list", result.size(), equalTo(1));
-    }
-
-    @Test
-    public void application_getRoles_returnsRoles() throws Exception {
-        RoleList result = application.getRoles();
-        assertThat("role list", result, equalTo(null));
-    }
-
-    @Test
-    public void identityProfileList_getIdentityProfile_identityProfileIsNull_returnsNewList() throws Exception {
-        List<IdentityProfile> result = identityProfileList.getIdentityProfile();
-        assertThat("list", result.isEmpty(), equalTo(true));
-    }
-
-    @Test
-    public void identityProfileList_getIdentityProfile_identityProfileExists_returnsExistingList() throws Exception {
-        List<IdentityProfile> IdentityProfile = identityProfileList.getIdentityProfile();
-        IdentityProfile.add(new IdentityProfile());
-        List<IdentityProfile> result = identityProfileList.getIdentityProfile();
-        assertThat("list", result.size(), equalTo(1));
-    }
-
-    @Test
     public void createStalePasswordFault_returnsNewCreatedObject() throws Exception {
         StalePasswordFault result = objectFactory.createStalePasswordFault();
         assertThat("details", result.getDetail(), equalTo(null));
@@ -144,40 +102,6 @@ public class ObjectFactoryTest {
     }
 
     @Test
-    public void createUserDisabledFault_returnsNewCreatedObject() throws Exception {
-        UserDisabledFault result = objectFactory.createUserDisabledFault();
-        assertThat("detail", result.getDetail(), equalTo(null));
-    }
-
-    @Test
-    public void roleList_getLink_linkIsNull_returnsNewList() throws Exception {
-        List<Link> result = roleList.getLink();
-        assertThat("list", result.isEmpty(), equalTo(true));
-    }
-
-    @Test
-    public void roleList_getLink_linkExists_returnsExistingList() throws Exception {
-        List<Link> link = roleList.getLink();
-        link.add(new Link());
-        List<Link> result = roleList.getLink();
-        assertThat("list", result.size(), equalTo(1));
-    }
-
-    @Test
-    public void roleList_getOffset_returnsOffset() throws Exception {
-        roleList.setOffset(1);
-        Integer result = roleList.getOffset();
-        assertThat("offset", result, equalTo(1));
-    }
-
-    @Test
-    public void roleList_getLimit_returnsLimit() throws Exception {
-        roleList.setLimit(1);
-        Integer result = roleList.getLimit();
-        assertThat("Limit", result, equalTo(1));
-    }
-
-    @Test
     public void idmFault_getMessage_returnsMessage() throws Exception {
         idmFault.setMessage("test");
         String result = idmFault.getMessage();
@@ -196,18 +120,6 @@ public class ObjectFactoryTest {
         idmFault.setCode(1);
         int result = idmFault.getCode();
         assertThat("Code", result, equalTo(1));
-    }
-
-    @Test
-    public void createRole_returnsNewCreatedJAXBElementObject() throws Exception {
-        JAXBElement<Role> result = objectFactory.createRole(new Role());
-        assertThat("application id", result.getValue().applicationId, equalTo(null));
-    }
-
-    @Test
-    public void createCustomerIdentityprofiles_returnsNewCreatedJAXBElementObject() throws Exception {
-        JAXBElement<IdentityProfileList> result = objectFactory.createCustomeridentityprofiles(new IdentityProfileList());
-        assertThat("identity profile", result.getValue().identityProfile, equalTo(null));
     }
 
     @Test
