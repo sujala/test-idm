@@ -212,7 +212,6 @@ class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
     def getUser(id) {
         new User().with {
             it.id = id
-            it.customerId = "customerId"
             it.username = "username$id"
             it.email = "username@test.com"
             it.password = 'Password1'

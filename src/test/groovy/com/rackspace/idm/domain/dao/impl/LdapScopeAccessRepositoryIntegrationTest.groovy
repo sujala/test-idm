@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.dao.impl
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientScopeAccess
-import com.rackspace.idm.domain.entity.ClientSecret
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
@@ -77,7 +76,7 @@ class LdapScopeAccessRepositoryIntegrationTest extends Specification {
     }
 
     def createClient(clientId) {
-        new Application(clientId, ClientSecret.newInstance("secret"), "name", clientRCN)
+        new Application(clientId, "name")
     }
 
     def createScopeAccess(clientId, authenticatedBy) {

@@ -38,12 +38,6 @@ public class Tenant implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_TENANT_DISPLAY_NAME, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String displayName;
 
-    @LDAPField(attribute = LdapRepository.ATTR_CREATED_DATE, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private Date created;
-
-    @LDAPField(attribute = LdapRepository.ATTR_UPDATED_DATE, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private Date updated;
-
     @LDAPField(attribute = LdapRepository.ATTR_BASEURL_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private HashSet<String> baseUrlIds;
 

@@ -1,30 +1,18 @@
 package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.entity.Application
-import com.rackspace.idm.domain.entity.ClientSecret
-import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.test.SingleTestConfiguration
-import com.unboundid.ldap.sdk.Attribute
-import com.unboundid.ldap.sdk.DeleteRequest
 import com.unboundid.ldap.sdk.Filter
 import com.unboundid.ldap.sdk.LDAPInterface
-import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl
 import com.unboundid.ldap.sdk.persist.LDAPPersister
-import org.apache.commons.lang.NotImplementedException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.test.context.ContextConfiguration
-import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.Cloud20Utils
 import testHelpers.ConcurrentStageTaskRunner
 import testHelpers.MultiStageTask
 import testHelpers.MultiStageTaskFactory
-
-import static org.mockito.Mockito.mock
-import static org.mockito.Mockito.when
 
 /**
  * This test is used to test the update functions of the LdapGenericRepository/LdapRepository and the integration with the unboundid sdk. It uses the Application object as the
@@ -166,7 +154,7 @@ class LdapGenericRepositoryUpdateIntegrationTest extends Specification {
 
     def createClient() {
         def id = Cloud20Utils.createRandomString()
-        Application app = new Application("client$id", ClientSecret.newInstance("secret"), "name", "clientRCN$id")
+        Application app = new Application("client$id", "name")
         app.setEnabled(true)
         return app;
     }

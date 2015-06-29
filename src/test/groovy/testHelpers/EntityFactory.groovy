@@ -49,8 +49,6 @@ class EntityFactory extends Specification {
             it.clientId = clientId
             it.name = name
             it.enabled = true
-            it.encryptionVersion = VERSION
-            it.salt = SALT
             return it
         }
     }

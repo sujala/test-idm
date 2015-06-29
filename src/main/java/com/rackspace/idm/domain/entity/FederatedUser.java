@@ -99,17 +99,6 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
         return false;
     }
 
-    /**
-     * Federated users don't use customer id. Other code expected this on base classes though so...
-     * TODO: Remove this
-     *
-     * @return
-     */
-    @Override
-    public String getCustomerId() {
-        return null;
-    }
-
     @Override
     public String toString() {
         return getAuditContext();

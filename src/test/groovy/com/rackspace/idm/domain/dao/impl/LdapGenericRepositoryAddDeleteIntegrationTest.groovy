@@ -1,9 +1,7 @@
 package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.entity.Application
-import com.rackspace.idm.domain.entity.ClientSecret
 import com.rackspace.idm.exception.DuplicateException
-import com.rackspace.test.SingleTestConfiguration
 import com.unboundid.ldap.sdk.Attribute
 import com.unboundid.ldap.sdk.DeleteRequest
 import com.unboundid.ldap.sdk.LDAPInterface
@@ -12,7 +10,6 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.NotImplementedException
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Bean
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -351,7 +348,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
     ############################################################################### */
 
     def createClient() {
-        Application app = new Application("client$FEATURE_RANDOM", ClientSecret.newInstance("secret"), "name", "clientRCN$FEATURE_RANDOM")
+        Application app = new Application("client$FEATURE_RANDOM", "name")
         return app;
     }
 

@@ -897,7 +897,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     public UserScopeAccess createInstanceOfUserScopeAccess(EndUser user, String clientId, String clientRCN) {
         UserScopeAccess usa = new UserScopeAccess();
         usa.setUserRsId(user.getId());
-        usa.setUserRCN(user.getCustomerId());
         usa.setClientId(clientId);
         usa.setClientRCN(clientRCN);
         usa.setAccessTokenString(UUID.randomUUID().toString().replace("-", ""));

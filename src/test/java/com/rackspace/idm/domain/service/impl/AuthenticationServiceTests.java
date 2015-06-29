@@ -172,9 +172,7 @@ public class AuthenticationServiceTests {
     }
 
     private Application getTestClient() {
-        final Application client = new Application(clientId, ClientSecret
-                .newInstance(clientSecret), "DELETE_My_Name", customerId
-        );
+        final Application client = new Application(clientId, "DELETE_My_Name");
         return client;
     }
 

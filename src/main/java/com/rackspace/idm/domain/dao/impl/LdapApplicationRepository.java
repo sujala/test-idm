@@ -41,16 +41,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
-    public void doPreEncode(Application application) {
-        encryptionService.encryptApplication(application);
-    }
-
-    @Override
-    public void doPostEncode(Application application) {
-        encryptionService.decryptApplication(application);
-    }
-
-    @Override
     public void addApplication(Application application) {
         addObject(application);
         application.setClientSecretObj(application.getClientSecretObj().toExisting());

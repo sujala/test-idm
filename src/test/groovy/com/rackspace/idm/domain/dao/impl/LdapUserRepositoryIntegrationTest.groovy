@@ -65,9 +65,7 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         retrievedUser.getPasswordLastUpdated() != null
         retrievedUser.getUserPassword() != null
         retrievedUser.isPasswordWasSelfUpdated() == false
-        retrievedUser.getSoftDeletedTimestamp() == null
         retrievedUser.getPasswordFailureDate() == null
-        retrievedUser.getSecureId() != null
         retrievedUser.getRsGroupDN() == null
 
         when: "delete object already deleted when using recursion delete algorithm"
@@ -322,13 +320,11 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
         then:
         retrievedUser.displayName == user.displayName
-        retrievedUser.firstname == user.firstname
         retrievedUser.email == user.email
         retrievedUser.apiKey == user.apiKey
         retrievedUser.secretAnswer == user.secretAnswer
         retrievedUser.secretQuestion == user.secretQuestion
         retrievedUser.secretQuestionId == user.secretQuestionId
-        retrievedUser.lastname == user.lastname
     }
 
     def "updateUserEncryption with no salt or encryptionversion updates user encryption"() {
@@ -343,13 +339,11 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
         then:
         retrievedUser.displayName == user.displayName
-        retrievedUser.firstname == user.firstname
         retrievedUser.email == user.email
         retrievedUser.apiKey == user.apiKey
         retrievedUser.secretAnswer == user.secretAnswer
         retrievedUser.secretQuestion == user.secretQuestion
         retrievedUser.secretQuestionId == user.secretQuestionId
-        retrievedUser.lastname == user.lastname
     }
 
     def "calling getUsersToReEncrypt gets the users that need to be re-encrypted"() {
@@ -407,18 +401,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
     def createUser(String id, String username, String domainId, String email, boolean enabled, String region, String password) {
         new User().with {
             it.apiKey = "key"
-            it.country = "country"
-            it.customerId = "customerId"
             it.displayName = "displayName"
-            it.firstname = "first"
-            it.lastname = "last"
-            it.middlename = "middle"
             it.mossoId = 0
             it.nastId = "nastId"
-            it.personId = "personId"
-            it.preferredLang = "en_US"
-            it.timeZoneId = "American/Chicago"
-            it.secureId = "secureId"
             it.secretAnswer = "answer"
             it.secretQuestion = "question"
             it.secretQuestionId = "id"

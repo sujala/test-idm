@@ -31,8 +31,6 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         def secretQuestion = "secretQuestion"
         def secretAnwser = "secretAnwser"
         def secretQuestionId = "secretQuestionId"
-        def firstName = "firstName"
-        def lastName = "lastName"
         def displayName = "displayName"
         def apiKey = "apiKey"
 
@@ -41,8 +39,6 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         user.secretQuestion = secretQuestion
         user.secretAnswer = secretAnwser
         user.secretQuestionId = secretQuestionId
-        user.firstname = firstName
-        user.lastname = lastName
         user.displayName = displayName
         user.apiKey = apiKey
 
@@ -69,8 +65,6 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         user.secretQuestion = secretQuestion
         user.secretAnswer = secretAnwser
         user.secretQuestionId = secretQuestionId
-        user.firstname = firstName
-        user.lastname = lastName
         user.displayName = displayName
         user.apiKey = apiKey
 
@@ -80,8 +74,6 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         user.secretQuestion = ""
         user.secretAnswer = ""
         user.secretQuestionId = ""
-        user.firstname = ""
-        user.lastname = ""
         user.displayName = ""
         user.apiKey = ""
         encryptionService.decryptUser(user);
@@ -91,8 +83,6 @@ class DefaultEncryptionServiceIntegrationTest extends RootServiceTest {
         secretQuestion == user.secretQuestion
         secretAnwser == user.secretAnswer
         secretQuestionId == user.secretQuestionId
-        firstName == user.firstname
-        lastName == user.lastname
         displayName == user.displayName
         apiKey == user.apiKey
     }
