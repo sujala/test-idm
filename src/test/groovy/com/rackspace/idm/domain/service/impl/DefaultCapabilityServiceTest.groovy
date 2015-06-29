@@ -48,7 +48,7 @@ class DefaultCapabilityServiceTest extends Specification {
         capabilities1.add(getCapability("GET", "get_server", "get_server", "description", "http://someUrl", list, null, null))
         capabilities1.get(0).type = "comnpute"
         capabilities1.get(0).version = "1"
-        ldapCapabilityRepository.getObjects(_) >> capabilities1
+        ldapCapabilityRepository.getCapabilities(_, _) >> capabilities1
 
 
         when:
@@ -77,7 +77,7 @@ class DefaultCapabilityServiceTest extends Specification {
         capabilities.get(0).version = "1"
         capabilities.get(1).type = "comnputeTest"
         capabilities.get(1).version = "1"
-        ldapCapabilityRepository.getObjects(_) >> capabilities
+        ldapCapabilityRepository.getCapabilities(_, _) >> capabilities
 
         when:
         defaultCapabilityService.updateCapabilities(capabilities, "computeTest", "1")
@@ -91,7 +91,7 @@ class DefaultCapabilityServiceTest extends Specification {
         setupMocks()
         List<Capability> capabilities1 = new ArrayList<Capability>()
         capabilities1.add(getCapability(null, "get_server", "get_server", "description", "http://someUrl", null, null, null))
-        ldapCapabilityRepository.getObjects(_) >> new ArrayList()
+        ldapCapabilityRepository.getCapabilities(_, _) >> new ArrayList()
 
         when:
         defaultCapabilityService.updateCapabilities(capabilities1, "computeTest", "1")
@@ -105,7 +105,7 @@ class DefaultCapabilityServiceTest extends Specification {
         setupMocks()
         List<Capability> capabilities1 = new ArrayList<Capability>()
         capabilities1.add(getCapability("GET", null, "get_server", "description", "http://someUrl", null, null, null))
-        ldapCapabilityRepository.getObjects(_) >> new ArrayList()
+        ldapCapabilityRepository.getCapabilities(_, _) >> new ArrayList()
 
         when:
         defaultCapabilityService.updateCapabilities(capabilities1, "computeTest", "1")
@@ -119,7 +119,7 @@ class DefaultCapabilityServiceTest extends Specification {
         setupMocks()
         List<Capability> capabilities1 = new ArrayList<Capability>()
         capabilities1.add(getCapability("GET", "get_server", null, "description", "http://someUrl", null, null, null))
-        ldapCapabilityRepository.getObjects(_) >> new ArrayList()
+        ldapCapabilityRepository.getCapabilities(_, _) >> new ArrayList()
 
         when:
         defaultCapabilityService.updateCapabilities(capabilities1, "computeTest", "1")
@@ -160,7 +160,7 @@ class DefaultCapabilityServiceTest extends Specification {
         capabilities1.add(getCapability("GET", "get_server", "get_servers", null, "http://someUrl", list, null, null))
         capabilities1.get(0).type = "computeTest"
         capabilities1.get(0).version = "1"
-        ldapCapabilityRepository.getObjects(_) >> capabilities1
+        ldapCapabilityRepository.getCapabilities(_, _) >> capabilities1
 
         when:
         defaultCapabilityService.updateCapabilities(capabilities1, "computeTest", "1")
@@ -192,7 +192,7 @@ class DefaultCapabilityServiceTest extends Specification {
         capabilities.get(0).version = "1"
         capabilities.get(1).type = "computeTest"
         capabilities.get(1).version = "1"
-        ldapCapabilityRepository.getObjects(_) >> capabilities
+        ldapCapabilityRepository.getCapabilities(_, _) >> capabilities
 
         when:
         defaultCapabilityService.updateCapabilities(capabilities, "computeTest", "1")
@@ -210,7 +210,7 @@ class DefaultCapabilityServiceTest extends Specification {
     def "not found on getCapabilities" () {
         given:
         setupMocks()
-        ldapCapabilityRepository.getObjects(_) >> new ArrayList();
+        ldapCapabilityRepository.getCapabilities(_, _) >> new ArrayList();
 
         when:
         List<Capability> capabilities = defaultCapabilityService.getCapabilities("computeTest","10")
@@ -222,13 +222,13 @@ class DefaultCapabilityServiceTest extends Specification {
         given:
         setupMocks()
         List<Capability> capabilityList = new ArrayList<Capability>()
-        ldapCapabilityRepository.getObjects(_) >> capabilityList
+        ldapCapabilityRepository.getCapabilities(_, _) >> capabilityList
 
         when:
         defaultCapabilityService.removeCapabilities("someType", "10")
 
         then:
-        0 * ldapCapabilityRepository.deleteObject(_)
+        0 * ldapCapabilityRepository.deleteCapability(_)
     }
 
     def "null values on removeCapabilities" () {

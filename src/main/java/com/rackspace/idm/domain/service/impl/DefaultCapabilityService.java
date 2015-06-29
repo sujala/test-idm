@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.impl.LdapCapabilityRepository;
+import com.rackspace.idm.domain.dao.CapabilityDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.dao.impl.LdapServiceApiRepository;
 import com.rackspace.idm.domain.entity.Capabilities;
@@ -28,7 +28,7 @@ import java.util.List;
 public class DefaultCapabilityService extends LdapRepository implements CapabilityService {
 
     @Autowired
-    private LdapCapabilityRepository ldapCapabilityRepository;
+    private CapabilityDao ldapCapabilityRepository;
 
     @Autowired
     private LdapServiceApiRepository ldapServiceApiRepository;
@@ -51,7 +51,7 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
         validateCapabilities(capabilities, type, version);
         for(Capability capability : capabilities){
             capability.setRsId(ldapCapabilityRepository.getNextCapabilityId());
-            ldapCapabilityRepository.addObject(capability);
+            ldapCapabilityRepository.addCapability(capability);
         }
     }
 
@@ -80,7 +80,7 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
             }
             capability.setType(type);
             capability.setVersion(version);
-            Capability exist = ldapCapabilityRepository.getObject(createCapabilityFilter(capability.getId(), capability.getType(), capability.getVersion()));
+            Capability exist = ldapCapabilityRepository.getCapability(capability.getId(), capability.getType(), capability.getVersion());
             if(exist != null){
                 String errMsg = String.format("Capability with id: %s, version: %s, and type: %s already exist."
                         ,exist.getId(), exist.getVersion(), exist.getType());
@@ -111,7 +111,7 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
         if(StringUtils.isBlank(type)){
             throw new BadRequestException("Capability's type cannot be null.");
         }
-        return ldapCapabilityRepository.getObjects(createCapabilitiesFilter(type, version));
+        return ldapCapabilityRepository.getCapabilities(type, version);
     }
 
     @Override
@@ -122,8 +122,8 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
         if(StringUtils.isBlank(type)){
             throw new BadRequestException("Capability's type cannot be null.");
         }
-        for(Capability capability : ldapCapabilityRepository.getObjects(createCapabilitiesFilter(type, version))){
-            ldapCapabilityRepository.deleteObject(createCapabilityFilter(capability.getId(), capability.getType(), capability.getVersion()));
+        for(Capability capability : ldapCapabilityRepository.getCapabilities(type, version)){
+            ldapCapabilityRepository.deleteCapability(capability.getId(), capability.getType(), capability.getVersion());
         }
     }
 
@@ -145,21 +145,6 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
             }
         }
         return noDup;
-    }
-
-    private Filter createCapabilityFilter(String capabilityId, String type, String version) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_CAPABILITY_ID, capabilityId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CAPABILITY)
-                .addEqualAttribute(ATTR_VERSION_ID, version)
-                .addEqualAttribute(ATTR_OPENSTACK_TYPE, type).build();
-    }
-
-    private Filter createCapabilitiesFilter(String type, String version) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CAPABILITY)
-                .addEqualAttribute(ATTR_VERSION_ID, version)
-                .addEqualAttribute(ATTR_OPENSTACK_TYPE, type).build();
     }
 
     private Filter createServiceApiFilter() {

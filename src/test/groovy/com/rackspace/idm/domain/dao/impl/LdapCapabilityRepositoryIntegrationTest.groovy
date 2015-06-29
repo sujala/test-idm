@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder
 import com.rackspace.idm.domain.entity.Capability
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.service.EndpointService
@@ -79,9 +78,9 @@ class LdapCapabilityRepositoryIntegrationTest extends Specification {
         cloudBaseUrl = getCloudBaseUrl(baseUrlId, "NAST", "test", "test", false, true, false, "cloudServers")
         endpointService.addBaseUrl(cloudBaseUrl)
         ldapCapabilityRepository.addObject(getCapability("100123321","GET", "get_server", "get_server", "description", "http://someUrl","compute","1", null))
-        Capability capability1 = ldapCapabilityRepository.getObject(createSearchFilter("get_server","1","compute").build())
-        ldapCapabilityRepository.deleteObject(createSearchFilter("get_server","1","compute").build())
-        Capability capability2 = ldapCapabilityRepository.getObject(createSearchFilter("get_server","1","compute").build())
+        Capability capability1 = ldapCapabilityRepository.getCapability("get_server","compute","1")
+        ldapCapabilityRepository.deleteCapability("get_server","compute","1")
+        Capability capability2 = ldapCapabilityRepository.getCapability("get_server","compute", "1")
         endpointService.deleteBaseUrl(baseUrlId)
 
         then:
@@ -128,15 +127,5 @@ class LdapCapabilityRepositoryIntegrationTest extends Specification {
             it.resources = resources
             return it
         }
-    }
-
-    def createSearchFilter(String id, String version, String type){
-         new LdapSearchBuilder().with {
-             it.addEqualAttribute("objectClass","rsCapability")
-             it.addEqualAttribute("capabilityId", id)
-             it.addEqualAttribute("versionId",version)
-             it.addEqualAttribute("openStackType", type)
-             return it
-         }
     }
 }
