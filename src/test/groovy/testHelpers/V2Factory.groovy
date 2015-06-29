@@ -123,6 +123,17 @@ class V2Factory {
         }
     }
 
+    def createApiKeyAuthenticationRequestWithTenantId(String username, String apiKey, String tenantId) {
+        def credentials = createApiKeyCredentials(username, apiKey)
+
+        new AuthenticationRequest().with {
+            it.setCredential(objFactory.createCredential(credentials))
+            it.tenantId = tenantId
+            return it
+        }
+    }
+
+
     def createPasswordAuthenticationRequest(String username, String password) {
         def credentials = createPasswordCredentialsRequiredUsername(username, password)
 
@@ -137,6 +148,16 @@ class V2Factory {
 
         new AuthenticationRequest().with {
             it.setCredential(raxAuthObjFactory.createPasscodeCredentials(credentials))
+            return it
+        }
+    }
+
+    def createPasscodeAuthenticationRequestWithTenantId(String passcode, String tenantId) {
+        def credentials = createPasscodeCredentials(passcode)
+
+        new AuthenticationRequest().with {
+            it.setCredential(raxAuthObjFactory.createPasscodeCredentials(credentials))
+            it.tenantId = tenantId
             return it
         }
     }

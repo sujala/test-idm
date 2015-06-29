@@ -90,6 +90,13 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).header(X_SESSION_ID, sessionId).entity(credentials).post(ClientResponse)
     }
 
+    def authenticateMFAWithSessionIdAndPasscodeAndTenant(sessionId, passcode, tenantId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        def credentials = v2Factory.createPasscodeAuthenticationRequest(passcode)
+        credentials.tenantId = tenantId
+        resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).header(X_SESSION_ID, sessionId).entity(credentials).post(ClientResponse)
+    }
+
     //TODO: remove once auth plugin is fixed
     def invalidAuthenticatePassword(username,password) {
         initOnUse()
