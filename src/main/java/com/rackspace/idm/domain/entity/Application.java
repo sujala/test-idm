@@ -12,6 +12,7 @@ import org.dozer.Mapping;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION)
@@ -29,26 +30,12 @@ public class Application implements Auditable, UniqueId {
 
     @NotNull
     @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
-    @LDAPField(attribute = LdapRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private String rcn;
-
-    @NotNull
-    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String name;
 
     @Mapping("type")
     @LDAPField(attribute = LdapRepository.ATTR_OPENSTACK_TYPE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String openStackType;
-
-    @LDAPField(attribute = LdapRepository.ATTR_TOKEN_SCOPE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private String scope;
-
-    @LDAPField(attribute = LdapRepository.ATTR_CALLBACK_URL, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private String callBackUrl;
-
-    @LDAPField(attribute = LdapRepository.ATTR_TITLE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private String title;
 
     @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String description;
@@ -59,27 +46,16 @@ public class Application implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_USE_FOR_DEFAULT_REGION, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private Boolean useForDefaultRegion;
 
-    @LDAPField(attribute = LdapRepository.ATTR_ENCRYPTION_VERSION_ID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private String encryptionVersion;
-
-    @LDAPField(attribute = LdapRepository.ATTR_ENCRYPTION_SALT, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private String salt;
-
-    @LDAPField(attribute = LdapRepository.ATTR_CLEAR_PASSWORD, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEAPPLICATION, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private byte[] clearPasswordBytes;
-
-    private String clearPassword;
-
     private List<TenantRole> roles;
 
     public Application() {
     }
 
-    public Application(String clientId, ClientSecret clientSecret, String name, String rcn) {
+    public Application(String clientId, String name) {
         this.clientId = clientId;
-        this.rcn = rcn;
-        this.clientSecret = clientSecret;
         this.name = name;
+        // In order to avoid a schema change, setting deprecated clientSecret to random uuid.
+        this.clientSecret = ClientSecret.newInstance(UUID.randomUUID().toString().replaceAll("-", ""));
     }
 
     public String getUniqueId() {
@@ -121,36 +97,12 @@ public class Application implements Auditable, UniqueId {
 
     public void copyChanges(Application modifiedClient) {
 
-    	if (modifiedClient.getRcn() != null) {
-    		setRcn(modifiedClient.getRcn());
-    	}
-
     	if (modifiedClient.getEnabled() != null) {
     		setEnabled(modifiedClient.getEnabled());
     	}
 
-        if (modifiedClient.getCallBackUrl() != null) {
-            setCallBackUrl(modifiedClient.getCallBackUrl());
-        }
-
         if (modifiedClient.getDescription() != null) {
             setDescription(modifiedClient.getDescription());
-        }
-
-        if (modifiedClient.getScope() != null) {
-            setScope(modifiedClient.getScope());
-        }
-
-        if (modifiedClient.getTitle() != null) {
-            setTitle(modifiedClient.getTitle());
-        }
-
-        if (modifiedClient.getSalt() != null) {
-            setSalt(modifiedClient.getSalt());
-        }
-
-        if (modifiedClient.getEncryptionVersion() != null) {
-            setEncryptionVersion(modifiedClient.getEncryptionVersion());
         }
     }
 
@@ -161,7 +113,7 @@ public class Application implements Auditable, UniqueId {
 
     @Override
     public String getAuditContext() {
-        String format = "clientId=%s,customerId=%s";
-        return String.format(format, getClientId(), rcn);
+        String format = "clientId=%s";
+        return String.format(format, getClientId());
     }
 }

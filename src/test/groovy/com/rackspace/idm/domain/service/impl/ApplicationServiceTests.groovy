@@ -128,15 +128,16 @@ public class ApplicationServiceTests {
 
     @Test
     public void shouldDeleteClient() {
+        Application fakeClient = getFakeClient()
         applicationDao.deleteApplication(EasyMock.anyObject(Application.class));
         EasyMock.expect(applicationDao.getApplicationByClientId(clientId)).andReturn(
-            getFakeClient());
+            fakeClient);
 
         EasyMock.expect(
             scopeAccessService.getMostRecentDirectScopeAccessForUserByClientId(EasyMock.anyObject(User.class), EasyMock.anyObject(String.class))).andReturn(getFakeScopeAccess());
 
         List<ClientRole> clientRoles = new ArrayList<ClientRole>();
-        EasyMock.expect(applicationRoleDao.getClientRolesForApplication(getFakeClient())).andReturn(clientRoles);
+        EasyMock.expect(applicationRoleDao.getClientRolesForApplication(fakeClient)).andReturn(clientRoles);
 
         EasyMock.replay(applicationDao, scopeAccessService, applicationRoleDao);
 
@@ -223,8 +224,7 @@ public class ApplicationServiceTests {
     }
 
     private Application getFakeClient() {
-        Application client = new Application(clientId, clientSecret, name,
-            customerId);
+        Application client = new Application(clientId, name);
         return client;
     }
 

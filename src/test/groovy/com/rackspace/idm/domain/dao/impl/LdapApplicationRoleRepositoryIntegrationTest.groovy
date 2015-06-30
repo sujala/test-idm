@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ClientSecret
-import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.commons.collections4.IteratorUtils
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
@@ -88,11 +87,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
 
         ClientSecret clientSecret = ClientSecret.newInstance("secret")
 
-        def application = new Application(clientId, clientSecret, "name", "RCN-123").with {
-            it.salt = "a1 b1"
-            it.encryptionVersion = "0"
-            it
-        }
+        def application = new Application(clientId, "name")
 
         def clientRole = entityFactory.createClientRole().with {
             it.clientId = clientId
@@ -134,11 +129,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
 
         ClientSecret clientSecret = ClientSecret.newInstance("secret")
 
-        def application = new Application(clientId, clientSecret, "name", "RCN-123").with {
-            it.salt = "a1 b1"
-            it.encryptionVersion = "0"
-            it
-        }
+        def application = new Application(clientId, "name")
 
         def clientRole1 = entityFactory.createClientRole().with {
             it.clientId = clientId
@@ -181,11 +172,7 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
 
         ClientSecret clientSecret = ClientSecret.newInstance("secret")
 
-        def application = new Application(clientId, clientSecret, "name", "RCN-123").with {
-            it.salt = "a1 b1"
-            it.encryptionVersion = "0"
-            it
-        }
+        def application = new Application(clientId, "name")
 
         def clientRole = entityFactory.createClientRole().with {
             it.clientId = clientId

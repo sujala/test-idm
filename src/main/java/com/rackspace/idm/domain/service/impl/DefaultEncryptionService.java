@@ -20,16 +20,11 @@ public class DefaultEncryptionService implements EncryptionService {
     public static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
     public static final String USER_ENCRYPTION_ERROR_MESSAGE = "Error encrypting %s value for user %s";
     public static final String USER_DECRYPTION_ERROR_MESSAGE = "Error decrypting %s value for user %s";
-    public static final String APPLICATION_ENCRYPTION_ERROR_MESSAGE = "Error encrypting %s value for application %s";
-    public static final String APPLICATION_DECRYPTION_ERROR_MESSAGE = "Error decrypting %s value for application %s";
     public static final String SECRET_QUESTION = "SecretQuestion";
     public static final String SECRET_QUESTION_ID = "SecretQuestionId";
     public static final String SECRET_ANSWER = "SecretAnswer";
-    public static final String FIRSTNAME = "Firstname";
-    public static final String LASTNAME = "Lastname";
     public static final String DISPLAY_NAME = "DisplayName";
     public static final String API_KEY = "ApiKey";
-    public static final String CLEAR_PASSWORD = "ClearPassword";
 
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -87,26 +82,6 @@ public class DefaultEncryptionService implements EncryptionService {
         }
 
         try {
-            if (user.getFirstname() != null) {
-                user.setEncryptedFirstName(cryptHelper.encrypt(user.getFirstname(), encryptionVersionId, encryptionSalt));
-            }
-        } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()), e);
-        } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()), e);
-        }
-
-        try {
-            if (user.getLastname() != null) {
-                user.setEncryptedLastname(cryptHelper.encrypt(user.getLastname(), encryptionVersionId, encryptionSalt));
-            }
-        } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()), e);
-        } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_ENCRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()), e);
-        }
-
-        try {
             if (user.getDisplayName() != null) {
                 user.setEncryptedDisplayName(cryptHelper.encrypt(user.getDisplayName(), encryptionVersionId, encryptionSalt));
             }
@@ -127,24 +102,6 @@ public class DefaultEncryptionService implements EncryptionService {
         }
     }
 
-    @Override
-    public void encryptApplication(Application application) {
-        String encryptionVersionId = getEncryptionVersionId(application);
-        String encryptionSalt = getEncryptionSalt(application);
-        application.setEncryptionVersion(encryptionVersionId);
-        application.setSalt(encryptionSalt);
-
-        try {
-            if (application.getClearPassword() != null) {
-                application.setClearPasswordBytes(cryptHelper.encrypt(application.getClearPassword(), encryptionVersionId, encryptionSalt));
-            }
-        } catch (GeneralSecurityException e) {
-            logger.error(String.format(APPLICATION_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, application.getClientId()), e);
-        } catch (InvalidCipherTextException e) {
-            logger.error(String.format(APPLICATION_ENCRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, application.getClientId()), e);
-        }
-    }
-
     private String getEncryptionSalt(User user) {
         if (user.getSalt() == null) {
             return config.getString("crypto.salt");
@@ -153,27 +110,11 @@ public class DefaultEncryptionService implements EncryptionService {
         }
     }
 
-    private String getEncryptionSalt(Application application) {
-        if (application.getSalt() == null) {
-            return cryptHelper.generateSalt();
-        } else {
-            return application.getSalt();
-        }
-    }
-
     private String getEncryptionVersionId(User user) {
         if (user.getEncryptionVersion() == null) {
             return propertiesService.getValue(ENCRYPTION_VERSION_ID);
         } else {
             return user.getEncryptionVersion();
-        }
-    }
-
-    private String getEncryptionVersionId(Application application) {
-        if (application.getEncryptionVersion() == null) {
-            return propertiesService.getValue(ENCRYPTION_VERSION_ID);
-        } else {
-            return application.getEncryptionVersion();
         }
     }
 
@@ -213,26 +154,6 @@ public class DefaultEncryptionService implements EncryptionService {
         }
 
         try {
-            if (user.getEncryptedFirstName() != null) {
-                user.setFirstname(cryptHelper.decrypt(user.getEncryptedFirstName(), encryptionVersionId, encryptionSalt));
-            }
-        } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()), e);
-        } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, FIRSTNAME, user.getId()), e);
-        }
-
-        try {
-            if (user.getEncryptedLastname() != null) {
-                user.setLastname(cryptHelper.decrypt(user.getEncryptedLastname(), encryptionVersionId, encryptionSalt));
-            }
-        } catch (GeneralSecurityException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()), e);
-        } catch (InvalidCipherTextException e) {
-            logger.error(String.format(USER_DECRYPTION_ERROR_MESSAGE, LASTNAME, user.getId()), e);
-        }
-
-        try {
             if (user.getEncryptedDisplayName() != null) {
                 user.setDisplayName(cryptHelper.decrypt(user.getEncryptedDisplayName(), encryptionVersionId, encryptionSalt));
             }
@@ -254,22 +175,6 @@ public class DefaultEncryptionService implements EncryptionService {
     }
 
     @Override
-    public void decryptApplication(Application application) {
-        String encryptionVersionId = getDecryptionVersionId(application);
-        String encryptionSalt = getDecryptionSalt(application);
-
-        try {
-            if (application.getClearPasswordBytes() != null) {
-                application.setClearPassword(cryptHelper.decrypt(application.getClearPasswordBytes(), encryptionVersionId, encryptionSalt));
-            }
-        } catch (GeneralSecurityException e) {
-            logger.error(String.format(APPLICATION_DECRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, application.getClientId()), e);
-        } catch (InvalidCipherTextException e) {
-            logger.error(String.format(APPLICATION_DECRYPTION_ERROR_MESSAGE, CLEAR_PASSWORD, application.getClientId()), e);
-        }
-    }
-
-    @Override
     public String getEncryptionVersionId() {
         return propertiesService.getValue(ENCRYPTION_VERSION_ID);
     }
@@ -287,22 +192,6 @@ public class DefaultEncryptionService implements EncryptionService {
             return config.getString("crypto.salt");
         } else {
             return user.getSalt();
-        }
-    }
-
-    private String getDecryptionVersionId(Application application) {
-        if (application.getEncryptionVersion() == null) {
-            return "0";
-        } else {
-            return application.getEncryptionVersion();
-        }
-    }
-
-    private String getDecryptionSalt(Application application) {
-        if (application.getSalt() == null) {
-            return config.getString("crypto.salt");
-        } else {
-            return application.getSalt();
         }
     }
 }

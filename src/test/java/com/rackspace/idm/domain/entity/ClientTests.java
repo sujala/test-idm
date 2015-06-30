@@ -14,13 +14,12 @@ public class ClientTests {
     private final String clientId = "Id";
     private final String clientPassword = "Secret";
     private final String name = "Name";
-    private final String customerId = "CustomerId";
 
     private Application getTestClient() {
         ClientSecret clientSecret = ClientSecret.newInstance(clientPassword);
-
-        return new Application(clientId, clientSecret, name,
-            customerId);
+        Application application = new Application(clientId, name);
+        application.setClientSecret(clientSecret.getValue());
+        return  application;
     }
 
     @Test
@@ -47,12 +46,10 @@ public class ClientTests {
 
         client1.setClientId(null);
         client1.setClientSecretObj(null);
-        client1.setRcn(null);
         client1.setName(null);
 
         client2.setClientId(null);
         client2.setClientSecretObj(null);
-        client2.setRcn(null);
         client2.setName(null);
 
         Assert.assertTrue(client1.equals(client2));
@@ -78,12 +75,6 @@ public class ClientTests {
         Assert.assertFalse(client2.equals(client1));
         client2.setClientSecretObj(client1.getClientSecretObj());
 
-        client2.setRcn("SomeOtherValue");
-        Assert.assertFalse(client1.equals(client2));
-        client2.setRcn(null);
-        Assert.assertFalse(client2.equals(client1));
-        client2.setRcn(client1.getRcn());
-
         client2.setName("SomeOtherValue");
         Assert.assertFalse(client1.equals(client2));
         client2.setName(null);
@@ -95,7 +86,7 @@ public class ClientTests {
     public void shouldRunValidation() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
         Set<ConstraintViolation<Application>> violations = validator.validate(new Application());
-        Assert.assertEquals(2, violations.size());
+        Assert.assertEquals(1, violations.size());
         System.out.println(violations);
     }
 }

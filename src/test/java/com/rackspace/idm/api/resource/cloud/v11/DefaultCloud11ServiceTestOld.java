@@ -76,7 +76,7 @@ public class DefaultCloud11ServiceTestOld {
     ImpersonatedScopeAccess impersonatedScopeAccess;
     javax.ws.rs.core.HttpHeaders httpHeaders;
     CloudExceptionResponse cloudExceptionResponse;
-    Application application = new Application("id",null,"myApp", null);
+    Application application = new Application("id", "myApp");
     AtomHopperClient atomHopperClient;
     GroupService userGroupService, cloudGroupService;
     AuthConverterCloudV11 authConverterCloudv11;
@@ -139,7 +139,7 @@ public class DefaultCloud11ServiceTestOld {
         when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
         when(config.getString("serviceName.cloudFiles")).thenReturn("cloudFiles");
         application.setOpenStackType("foo");
-        Application testService = new Application(null, null, "testService", null);
+        Application testService = new Application(null, "testService");
         testService.setOpenStackType("foo");
         defaultCloud11Service = new DefaultCloud11Service();
         defaultCloud11Service.setValidator(validator);

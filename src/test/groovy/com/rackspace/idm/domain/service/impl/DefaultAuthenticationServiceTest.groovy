@@ -125,10 +125,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
     def "Calls getAndUpdateRackerScopeAccessForClientId deletes old and adds new"() {
         given:
         config.getString("idm.clientId") >> "idmClientId"
-        def application = entityFactory.createApplication("1", "client1").with {
-            it.rcn = "RCN"
-            return it
-        }
+        def application = entityFactory.createApplication("1", "client1")
         def tenantRole = entityFactory.createTenantRole("Racker").with {
             it.clientId = "idmClientId"
             return it
@@ -157,10 +154,7 @@ class DefaultAuthenticationServiceTest extends RootServiceTest {
     def "Calls getAndUpdateRackerScopeAccessForClientId returns existing scopeAccess if not expired"() {
         given:
         config.getString("idm.clientId") >> "idmClientId"
-        def application = entityFactory.createApplication("1", "client1").with {
-            it.rcn = "RCN"
-            return it
-        }
+        def application = entityFactory.createApplication("1", "client1")
         def tenantRole = entityFactory.createTenantRole("Racker").with {
             it.clientId = "idmClientId"
             return it

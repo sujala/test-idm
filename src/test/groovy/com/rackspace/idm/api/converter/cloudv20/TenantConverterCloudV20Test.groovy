@@ -42,8 +42,6 @@ class TenantConverterCloudV20Test extends Specification {
         tenant.name == tenantEntity.name
         tenant.enabled == tenantEntity.enabled
         tenant.description == tenantEntity.description
-        tenantEntity.created.equals(createdXML())
-        tenantEntity.updated.equals(createdXML())
     }
 
     def "convert tenant from ldap to jersey object - verify display-name is null"() {
@@ -70,8 +68,6 @@ class TenantConverterCloudV20Test extends Specification {
         tenant.name == tenantEntity.name
         tenant.enabled == tenantEntity.enabled
         tenant.description == tenantEntity.description
-        tenant.created == created()
-        tenant.updated == created()
     }
 
     def "convert tenant from jersey object to ldap - should set defaults"() {
@@ -86,8 +82,6 @@ class TenantConverterCloudV20Test extends Specification {
         tenant.tenantId == tenantEntity.id
         tenant.name == tenantEntity.name
         tenant.description == tenantEntity.description
-        tenant.created == created()
-        tenant.updated == created()
         tenantEntity.enabled == true
     }
 
@@ -107,8 +101,6 @@ class TenantConverterCloudV20Test extends Specification {
         tenant.name == tenantEntity.name
         tenant.enabled == tenantEntity.enabled
         tenant.description == tenantEntity.description
-        tenantEntity.created == createdXML()
-        tenantEntity.updated == createdXML()
     }
 
     def tenant() {
@@ -122,8 +114,6 @@ class TenantConverterCloudV20Test extends Specification {
             it.enabled = enabled
             it.description = description
             it.displayName = displayName
-            it.created = created()
-            it.updated = created()
             return it
         }
     }
@@ -149,8 +139,6 @@ class TenantConverterCloudV20Test extends Specification {
             it.enabled = enabled
             it.description = description
             it.displayName = displayName
-            it.created = createdXML()
-            it.updated = createdXML()
             return it
         }
     }

@@ -53,11 +53,6 @@ public class User implements EndUser {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String username;
 
-    @LDAPField(attribute=LdapRepository.ATTR_RACKSPACE_CUSTOMER_NUMBER,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private String customerId;
-
     @LDAPField(attribute=LdapRepository.ATTR_MAIL,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
@@ -104,47 +99,6 @@ public class User implements EndUser {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String userPassword;
 
-    @LDAPField(attribute=LdapRepository.ATTR_RACKSPACE_PERSON_NUMBER,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private String personId;
-
-    @LDAPField(attribute=LdapRepository.ATTR_GIVEN_NAME,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private byte[] encryptedFirstName;
-    private String firstname;
-
-    @LDAPField(attribute=LdapRepository.ATTR_MIDDLE_NAME,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private String middlename;
-
-    @LDAPField(attribute=LdapRepository.ATTR_SN,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private byte[] encryptedLastname;
-    private String lastname;
-
-    @LDAPField(attribute=LdapRepository.ATTR_LANG,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED,
-            defaultEncodeValue = GlobalConstants.USER_PREFERRED_LANG_DEFAULT,
-            defaultDecodeValue = GlobalConstants.USER_PREFERRED_LANG_DEFAULT)
-    private String preferredLang;
-
-    @LDAPField(attribute=LdapRepository.ATTR_TIME_ZONE,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED,
-            defaultEncodeValue = GlobalConstants.USER_TIME_ZONE_DEFAULT,
-            defaultDecodeValue = GlobalConstants.USER_TIME_ZONE_DEFAULT)
-    private String timeZoneId;
-
-     @LDAPField(attribute=LdapRepository.ATTR_C,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private String country;
-
     @LDAPField(attribute=LdapRepository.ATTR_DISPLAY_NAME,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
@@ -183,21 +137,11 @@ public class User implements EndUser {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED, inModify = false)
     private Date updated;
 
-    @LDAPField(attribute=LdapRepository.ATTR_SOFT_DELETED_DATE,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private Date softDeletedTimestamp;
-
     @LDAPField(attribute=LdapRepository.ATTR_PWD_ACCOUNT_LOCKOUT_TIME,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private Date passwordFailureDate;
     private Boolean maxLoginFailuresExceeded;
-
-    @LDAPField(attribute=LdapRepository.ATTR_SECURE_ID,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private String secureId;
 
     @Mapping("enabled")
     @LDAPField(attribute=LdapRepository.ATTR_ENABLED,
@@ -350,8 +294,8 @@ public class User implements EndUser {
 
     @Override
     public String getAuditContext() {
-        String format = "username=%s, customer=%s";
-        return String.format(format, getUsername(), getCustomerId());
+        String format = "username=%s";
+        return String.format(format, getUsername());
     }
 
     @Override

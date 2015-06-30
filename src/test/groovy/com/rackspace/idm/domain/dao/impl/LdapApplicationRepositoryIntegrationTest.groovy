@@ -17,12 +17,10 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
     String password = "Secret"
     String password2 = "Secret2"
     ClientSecret clientSecret = ClientSecret.newInstance(password)
-    ClientSecret clientSecret2 = ClientSecret.newInstance(password)
     String name = "somerandomname"
     String customerId = "customerId"
     String encryptionSalt = "a1 b1"
     String version = "0"
-    String tokenScope = "scope"
 
     def setup() {
         def randomness = UUID.randomUUID()
@@ -39,8 +37,6 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
         Application retrievedApp = applicationDao.getApplicationByClientId(random)
         Application updatingApp = applicationDao.getApplicationByClientId(random)
         Application namedApp = applicationDao.getApplicationByName(name)
-        Application customerAndClientApp = applicationDao.getApplicationByCustomerIdAndClientId(customerId, random)
-        Application scopeApp = applicationDao.getApplicationByScope(tokenScope)
 
         updatingApp.setDescription("description2")
         updatingApp.setClientSecretObj(ClientSecret.newInstance(password2))
@@ -55,8 +51,6 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
         then:
         deletedApp == null
         namedApp == retrievedApp
-        customerAndClientApp == retrievedApp
-        scopeApp == retrievedApp
     }
 
     def "can soft delete and unsoftdelete app"() {
@@ -84,28 +78,20 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
     }
 
     def getApp(id) {
-        new Application(id, clientSecret, name, customerId).with {
+        new Application(id, name).with {
             it.description = "description"
-            it.clearPassword = password
-            it.salt = encryptionSalt
-            it.encryptionVersion = version
             it.enabled = true
             it.openStackType = openStackType
-            it.scope = tokenScope
             return it
         }
     }
 
     def getUpdateApp(id) {
-        new Application(id, clientSecret, name, customerId).with {
+        new Application(id, name).with {
             it.clientSecretObj.toExisting()
             it.description = "description2"
-            it.clearPassword = password2
-            it.salt = encryptionSalt
-            it.setEncryptionVersion(version)
             it.enabled = false
             it.openStackType = openStackType
-            it.scope = tokenScope
             return it
         }
     }

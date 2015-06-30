@@ -12,7 +12,6 @@ public interface EndUser extends BaseUser {
     String getUsername();
     String getDomainId();
     List<TenantRole> getRoles();
-    String getCustomerId();
     HashSet<String> getRsGroupId();
 
     /*
