@@ -1,19 +1,11 @@
 package com.rackspace.idm.domain.service.impl
 
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
 import spock.lang.Shared
-import org.springframework.beans.factory.annotation.Autowired
-
-import com.rackspace.idm.domain.entity.Capabilities
 import com.rackspace.idm.domain.entity.Capability
-import com.rackspace.idm.domain.service.CapabilityService
-import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.domain.dao.impl.LdapCapabilityRepository
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities
-import com.rackspace.idm.domain.entity.ServiceApis
 import com.rackspace.idm.domain.dao.impl.LdapServiceApiRepository
 import com.rackspace.idm.domain.entity.ServiceApi
 
@@ -261,7 +253,7 @@ class DefaultCapabilityServiceTest extends Specification {
         serviceApis1.add(api)
         serviceApis1.add(api2)
         serviceApis1.add(api3)
-        ldapServiceApiRepository.getObjects(_) >> serviceApis1
+        ldapServiceApiRepository.getServiceApis() >> serviceApis1
 
         when:
         List<ServiceApi> serviceApis = defaultCapabilityService.getServiceApis()
@@ -290,8 +282,8 @@ class DefaultCapabilityServiceTest extends Specification {
 
     def setupMocks() {
         ldapCapabilityRepository = Mock()
-        defaultCapabilityService.ldapCapabilityRepository = ldapCapabilityRepository
+        defaultCapabilityService.capabilityDao = ldapCapabilityRepository
         ldapServiceApiRepository = Mock()
-        defaultCapabilityService.ldapServiceApiRepository = ldapServiceApiRepository
+        defaultCapabilityService.serviceApiDao = ldapServiceApiRepository
     }
 }
