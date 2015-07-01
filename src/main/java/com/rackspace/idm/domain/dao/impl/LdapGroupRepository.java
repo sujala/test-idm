@@ -35,7 +35,7 @@ public class LdapGroupRepository extends LdapGenericRepository<Group> implements
     @Override
     public void updateGroup(Group group) {
         Group oldGroup = getGroupById(group.getGroupId());
-        group.setLdapEntry(oldGroup.getLdapEntry());
+        group.setUniqueId(oldGroup.getUniqueId());
         updateObject(group);
     }
 

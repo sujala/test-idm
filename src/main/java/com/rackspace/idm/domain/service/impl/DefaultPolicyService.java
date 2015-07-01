@@ -119,7 +119,7 @@ public class DefaultPolicyService implements PolicyService {
         if(StringUtils.isBlank(policy.getPolicyType())) {
             policy.setPolicyType(null);
         }
-        policy.setLdapEntry(policyDao.getPolicy(policyId).getLdapEntry());
+        policy.setUniqueId(policyDao.getPolicy(policyId).getUniqueId());
         logger.info("Updating Policy: {}", policy);
         policyDao.updatePolicy(policy);
     }

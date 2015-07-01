@@ -31,7 +31,7 @@ class LdapTenantRepositoryIntegrationTest extends Specification {
         tenantDao.addTenant(tenant)
         Tenant createdTenant = tenantDao.getTenant(tenantId)
 
-        updateTenant.ldapEntry = createdTenant.ldapEntry
+        updateTenant.uniqueId = createdTenant.uniqueId
         tenantDao.updateTenant(updateTenant);
         Tenant updatedTenant = tenantDao.getTenant(tenantId)
 

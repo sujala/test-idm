@@ -57,7 +57,7 @@ public class ImmutableClientRole {
         target.setDescription(source.getDescription());
         target.setId(source.getId());
         target.setClientId(source.getClientId());
-        target.setLdapEntry(source.getLDAPEntry());
+        target.setUniqueId(source.getUniqueId());
         target.setRsWeight(source.getRsWeight());
 
         return target;

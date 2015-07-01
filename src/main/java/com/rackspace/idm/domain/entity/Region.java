@@ -2,9 +2,8 @@ package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
+import com.unboundid.ldap.sdk.persist.LDAPDNField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
@@ -21,8 +20,8 @@ import org.dozer.Mapping;
 @Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_REGION)
 public class Region implements Auditable, UniqueId {
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    @LDAPDNField()
+    private String uniqueId;
 
     @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_REGION, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String name;
@@ -43,11 +42,4 @@ public class Region implements Auditable, UniqueId {
         return String.format("regionId=%s", name);
     }
 
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
-        }
-    }
 }

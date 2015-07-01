@@ -1,21 +1,15 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.domain.dozer.converters.MultiFactorStateConverter;
 import com.rackspace.idm.domain.dozer.converters.TokenFormatConverter;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
-import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
-import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
-import com.unboundid.ldap.sdk.persist.LDAPField;
-import com.unboundid.ldap.sdk.persist.LDAPObject;
+import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
@@ -32,11 +26,12 @@ import java.util.List;
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
 public class User implements EndUser {
 
-    //TODO: Not sure why this property is needed. Look into and remove if not necessary
-    private String uniqueId;
+    // TODO: Remove those as soon as we remove the LDAP dependencies.
+    @LDAPEntryField
+    private ReadOnlyEntry readOnlyEntry;
 
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    @LDAPDNField
+    private String uniqueId;
 
     @LDAPField(attribute= LdapRepository.ATTR_ID,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
@@ -177,7 +172,7 @@ public class User implements EndUser {
     @LDAPField(attribute=LdapRepository.ATTR_MEMBER_OF,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private DN rsGroupDN;
+    private String rsGroupDN;
 
     @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_MOBILE_PHONE_RSID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     private String multiFactorMobilePhoneRsId;
@@ -296,17 +291,6 @@ public class User implements EndUser {
     public String getAuditContext() {
         String format = "username=%s";
         return String.format(format, getUsername());
-    }
-
-    @Override
-    public String getUniqueId() {
-        if (uniqueId != null) {
-            return uniqueId;
-        } else if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
-        }
     }
 
     public HashSet<String> getRsGroupId() {

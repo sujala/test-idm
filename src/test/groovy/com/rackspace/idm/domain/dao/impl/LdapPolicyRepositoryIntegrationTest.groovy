@@ -120,7 +120,7 @@ class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
 
         when:
         repo.addPolicy(policy)
-        policyForUpdate.ldapEntry = repo.getPolicy(policy.policyId).ldapEntry
+        policyForUpdate.uniqueId = repo.getPolicy(policy.policyId).uniqueId
         repo.updatePolicy(policyForUpdate)
         Policy updatedPolicy = repo.getPolicy(policy.policyId)
         repo.deletePolicy(policy.policyId)

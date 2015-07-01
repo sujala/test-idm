@@ -4,11 +4,7 @@ import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
-import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
-import com.unboundid.ldap.sdk.persist.LDAPField;
-import com.unboundid.ldap.sdk.persist.LDAPObject;
+import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
@@ -23,11 +19,8 @@ import java.util.List;
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON)
 public class FederatedUser implements EndUser, FederatedBaseUser {
 
-    //TODO: Not sure why this property is needed. Look into and remove if not necessary
+    @LDAPDNField
     private String uniqueId;
-
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
 
     @LDAPField(attribute= LdapRepository.ATTR_ID,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
@@ -108,17 +101,6 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
     public String getAuditContext() {
         String format = "username=%s";
         return String.format(format, getUsername());
-    }
-
-    @Override
-    public String getUniqueId() {
-        if (uniqueId != null) {
-            return uniqueId;
-        } else if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
-        }
     }
 
     public HashSet<String> getRsGroupId() {

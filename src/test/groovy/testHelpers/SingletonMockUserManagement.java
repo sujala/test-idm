@@ -4,7 +4,7 @@ import com.rackspace.identity.multifactor.providers.UserManagement;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone;
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser;
 import com.rackspace.idm.Constants;
-import lombok.Delegate;
+import lombok.experimental.Delegate;
 
 import static org.mockito.Mockito.*;
 
@@ -23,6 +23,7 @@ public class SingletonMockUserManagement implements UserManagement<DuoUser, DuoP
         return instance;
     }
 
+    @SuppressWarnings("unchecked")
     public synchronized void reset() {
         mock = mock(UserManagement.class);
         DuoUser user = new DuoUser();

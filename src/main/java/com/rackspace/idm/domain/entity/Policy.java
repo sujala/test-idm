@@ -2,9 +2,8 @@ package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
+import com.unboundid.ldap.sdk.persist.LDAPDNField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
@@ -19,12 +18,12 @@ import org.dozer.Mapping;
  * To change this template use File | Settings | File Templates.
  */
 @Data
-@EqualsAndHashCode(exclude = "ldapEntry")
+@EqualsAndHashCode(exclude = "uniqueId")
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_POLICY)
 public class Policy implements Auditable, UniqueId {
 
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    @LDAPDNField
+    private String uniqueId;
 
     @Mapping("id")
     @LDAPField(attribute = LdapRepository.ATTR_ID,
@@ -67,18 +66,6 @@ public class Policy implements Auditable, UniqueId {
             objectClass = LdapRepository.OBJECTCLASS_POLICY,
             filterUsage = FilterUsage.CONDITIONALLY_ALLOWED)
     private String description;
-
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
-        }
-    }
-
-    public void setUniqueId(String id){
-        this.ldapEntry.setDN(id);
-    }
 
     @Override
     public String getAuditContext() {

@@ -19,10 +19,8 @@ import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.ListUtils;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
-import org.opensaml.saml2.core.Assertion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -432,7 +430,7 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
         for (User userAdmin : domainUserAdmins) {
             for (TenantRole role : tenantService.getTenantRolesForUser(userAdmin)) {
                 if (role.getPropagate()) {
-                    role.setLdapEntry(null);
+                    role.setUniqueId(null);
                     role.setUserId(null);
                     propagatingRoles.add(role);
                 }

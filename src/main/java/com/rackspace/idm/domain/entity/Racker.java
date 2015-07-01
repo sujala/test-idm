@@ -1,28 +1,21 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
-import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
-import com.unboundid.ldap.sdk.persist.LDAPField;
-import com.unboundid.ldap.sdk.persist.LDAPObject;
+import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 
 import java.util.List;
-import java.util.regex.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKER)
 public class Racker implements BaseUser, FederatedBaseUser {
 
-    //TODO: Not sure why this property is needed. Look into and remove if not necessary
+    @LDAPDNField
     private String uniqueId;
-
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
 
     @Mapping("id")
     @LDAPField(attribute=LdapRepository.ATTR_RACKER_ID,
@@ -45,15 +38,6 @@ public class Racker implements BaseUser, FederatedBaseUser {
 
     public boolean isDisabled() {
         return this.enabled == null ? false : !this.enabled;
-    }
-
-    @Override
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
-        }
     }
 
     /**

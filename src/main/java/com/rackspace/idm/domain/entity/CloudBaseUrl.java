@@ -1,13 +1,11 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
 import com.unboundid.ldap.sdk.Entry;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,15 +15,15 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.HashSet;
 
-import static com.rackspace.idm.GlobalConstants.*;
+import static com.rackspace.idm.GlobalConstants.TENANT_ALIAS_PATTERN;
 
 @Data
-@EqualsAndHashCode(exclude={"ldapEntry"})
+@EqualsAndHashCode(exclude={"uniqueId"})
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_BASEURL,
         postEncodeMethod="doPostEncode")
 public class CloudBaseUrl implements Auditable, UniqueId {
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    @LDAPDNField
+    private String uniqueId;
 
     private Boolean v1Default;
 
@@ -149,14 +147,6 @@ public class CloudBaseUrl implements Auditable, UniqueId {
     @Override
     public String getAuditContext() {
         return String.format("baseUrl=%s", baseUrlId);
-    }
-
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
-        }
     }
 
     public HashSet<String> getPolicyList() {

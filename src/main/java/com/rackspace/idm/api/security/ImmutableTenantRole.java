@@ -65,7 +65,7 @@ public class ImmutableTenantRole {
         target.setDescription(source.getDescription());
         target.setRoleRsId(source.getRoleRsId());
         target.setClientId(source.getClientId());
-        target.setLdapEntry(source.getLDAPEntry());
+        target.setUniqueId(source.getUniqueId());
         target.setUserId(source.getUserId());
         target.setTenantIds(new HashSet<String>(source.getTenantIds()));
 

@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 @Component
 public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
 
-    private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-fA-F]{8}-{0,1}[0-9a-fA-F]{4}-{0,1}[0-9a-fA-F]{4}-{0,1}[0-9a-fA-F]{4}-{0,1}[0-9a-fA-F]{12}-{0,1}");
+    private static final Pattern UUID_PATTERN = Pattern.compile("[0-9a-fA-F]{8}-{0,1}[0-9a-fA-F]{4}-{0,1}[0-9a-fA-F]{4}-{0,1}[0-9a-fA-F]{4}-{0,1}[0-9a-fA-F]{12}");
 
     @Autowired
     private IdentityConfig identityConfig;

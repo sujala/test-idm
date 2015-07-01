@@ -89,7 +89,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         ldapIdentityProviderRepository.addObject(provider)
 
         then: "Application object should now be populated with ldap entry and entry should exist in ldap"
-        provider.getLdapEntry() != null
+        provider.getUniqueId() != null
         provider.getUniqueId() == getExpectedProviderDn(provider)
 
         when: "can retrieve directly from ldap using sdk"
@@ -120,7 +120,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         ldapIdentityProviderRepository.addObject(provider)
 
         then: "Application object should now be populated with ldap entry and entry should exist in ldap"
-        provider.getLdapEntry() != null
+        provider.getUniqueId() != null
         provider.getUniqueId() == getExpectedProviderDn(provider)
         provider.userCertificates.size() == certs.size()
 
@@ -149,7 +149,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         ldapIdentityProviderRepository.addObject(provider)
 
         then: "Application object should now be populated with ldap entry and entry should exist in ldap"
-        provider.getLdapEntry() != null
+        provider.getUniqueId() != null
         provider.getUniqueId() == getExpectedProviderDn(provider)
         provider.userCertificates == null
 

@@ -1,9 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.UniqueId;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
-import lombok.Data;
 
 /**
  * Marker interface that represents all classes of "users" within Identity.

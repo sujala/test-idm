@@ -47,7 +47,7 @@ public class LdapPolicyRepositoryTest {
     @Before
     public void setUp() throws Exception {
         policy = new Policy();
-        policy.setLdapEntry(new ReadOnlyEntry("dn:rsId=id,ou=rackspace", "policy:policyId"));
+        policy.setUniqueId(new ReadOnlyEntry("dn:rsId=id,ou=rackspace", "policy:policyId").getDN());
         policy.setPolicyType("someType");
         policy.setBlob("someBlob");
         policy.setDescription("someDescription");

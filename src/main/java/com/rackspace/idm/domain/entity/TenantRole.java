@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.Entry;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,13 +11,13 @@ import org.dozer.Mapping;
 import java.util.HashSet;
 
 @Data
-@EqualsAndHashCode(exclude={"ldapEntry"})
+@EqualsAndHashCode(exclude={"uniqueId"})
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_TENANT_ROLE,
         postEncodeMethod="doPostEncode")
 public class TenantRole implements Auditable, UniqueId {
 
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    @LDAPDNField
+    private String uniqueId;
 
     @Mapping("id")
     @LDAPField(attribute = LdapRepository.ATTR_ROLE_RS_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
@@ -34,26 +33,9 @@ public class TenantRole implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_USER_RS_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String userId;
 
-    public ReadOnlyEntry getLDAPEntry() {
-        return ldapEntry;
-    }
-
-    public void setLdapEntry(ReadOnlyEntry ldapEntry) {
-        this.ldapEntry = ldapEntry;
-    }
-
     private String name;
     private String description;
     private Boolean propagate;
-
-
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
-        }
-    }
 
     @Override
     public String toString() {

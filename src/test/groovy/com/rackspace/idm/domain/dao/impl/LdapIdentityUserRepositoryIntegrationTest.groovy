@@ -98,7 +98,11 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
 
     def "Verify retrieving a provisioned user"() {
         setup:
-        User user = entityFactory.createUser()
+        User user = entityFactory.createUser().with {
+            it.readOnlyEntry = null
+            it.uniqueId = null
+            it
+        }
         provisionedUserDao.addUser(user)
         String expectedDn =  getExpectedProvisionedUserDn(user)
 
@@ -136,6 +140,8 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         def expectedFederatedUserDn =  getExpectedFederatedUserDn(commonIdentityProvider, fedUser)
         def provisionedUser = entityFactory.createUser().with {
             it.domainId = domainId
+            it.readOnlyEntry = null
+            it.uniqueId = null
             it
         }
         provisionedUserDao.addUser(provisionedUser)
@@ -179,6 +185,8 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         def provisionedUser = entityFactory.createRandomUser().with {
             it.domainId = domainId
             it.getRsGroupId().add(group.getGroupId())
+            it.readOnlyEntry = null
+            it.uniqueId = null
             it
         }
 
@@ -186,6 +194,8 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
             it.domainId = domainId
             it.enabled = false
             it.getRsGroupId().add(group.getGroupId())
+            it.readOnlyEntry = null
+            it.uniqueId = null
             it
         }
 
@@ -237,7 +247,7 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         assert CollectionUtils.isEqualCollection(retrievedUser.getRsGroupId(), originalUser.getRsGroupId())
         assert retrievedUser.email == originalUser.email
         assert retrievedUser.federatedIdpUri == originalUser.federatedIdpUri
-        assert retrievedUser.getLdapEntry() != null
+        assert retrievedUser.getUniqueId() != null
 
         assert retrievedUser.getUniqueId() == expectedDn
 
@@ -251,7 +261,7 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         assert retrievedUser.region == originalUser.region
         assert retrievedUser.domainId == originalUser.domainId
         assert retrievedUser.email == originalUser.email
-        assert retrievedUser.getLdapEntry() != null
+        assert retrievedUser.getUniqueId() != null
 
         assert retrievedUser.getUniqueId() == expectedDn
 

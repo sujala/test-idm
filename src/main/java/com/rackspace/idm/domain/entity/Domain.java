@@ -3,11 +3,7 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
-import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
-import com.unboundid.ldap.sdk.persist.LDAPField;
-import com.unboundid.ldap.sdk.persist.LDAPObject;
+import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import org.dozer.Mapping;
 
@@ -25,8 +21,8 @@ import java.util.Arrays;
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DOMAIN)
 public class Domain implements Auditable, UniqueId {
 
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    @LDAPDNField
+    private String uniqueId;
 
     @Mapping("id")
     @LDAPField(attribute = LdapRepository.ATTR_ID, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
@@ -53,14 +49,6 @@ public class Domain implements Auditable, UniqueId {
             this.tenantIds = null;
         } else {
             this.tenantIds = Arrays.copyOf(tenantIDs, tenantIDs.length);
-        }
-    }
-
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
         }
     }
 

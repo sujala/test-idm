@@ -122,7 +122,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
 
         for (TenantRole tenantRole : getObjects(searchFilterGetTenantRolesByRoleId(roleId))) {
             try {
-                userIds.add(getUserIdFromDN(tenantRole.getLDAPEntry().getParsedDN()));
+                userIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
             } catch (LDAPException e) {
                 throw new IllegalStateException();
             }
@@ -149,7 +149,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         //get the userIds
         for (TenantRole tenantRole : roles) {
             try {
-                userIds.add(getUserIdFromDN(tenantRole.getLDAPEntry().getParsedDN()));
+                userIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
             } catch (LDAPException e) {
                 throw new IllegalStateException();
             }
@@ -184,10 +184,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         }
     }
 
-    protected String getUserIdFromDN(DN dn) {
+    protected String getUserIdFromUniqueId(String uniqueId) throws LDAPException {
+        DN dn = new DN(uniqueId);
         DN userDN = getBaseDnForSearch(dn);
         if (userDN != null) {
-            List<RDN> userRDNs= new ArrayList<RDN>(Arrays.asList(userDN.getRDNs()));
+            List<RDN> userRDNs = new ArrayList<RDN>(Arrays.asList(userDN.getRDNs()));
             for (RDN rdn : userRDNs) {
                 if (rdn.hasAttribute("rsId")) {
                     String rdnString = rdn.toString();

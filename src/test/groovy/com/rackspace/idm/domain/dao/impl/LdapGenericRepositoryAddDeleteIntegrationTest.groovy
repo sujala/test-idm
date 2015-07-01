@@ -80,7 +80,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         overriddenGenericApplicationRepository.addObject(app)
 
         then: "Application object should now be populated with ldap entry and entry should exist in ldap"
-        app.getLdapEntry() != null
+        app.getUniqueId() != null
         app.getUniqueId() == expectedDn
         con.getEntry(app.getUniqueId()) != null
 
@@ -155,7 +155,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         genericApplicationRepository.addObject(LdapRepository.APPLICATIONS_BASE_DN, app)
 
         then: "Application object should now be populated with ldap entry and entry should exist in ldap"
-        app.getLdapEntry() != null
+        app.getUniqueId() != null
         app.getUniqueId() == expectedDn
         con.getEntry(app.getUniqueId()) != null
 
