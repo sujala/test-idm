@@ -1,15 +1,14 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.dao.CapabilityDao;
+import com.rackspace.idm.domain.dao.ServiceApiDao;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.domain.dao.impl.LdapServiceApiRepository;
 import com.rackspace.idm.domain.entity.Capabilities;
 import com.rackspace.idm.domain.entity.Capability;
 import com.rackspace.idm.domain.entity.ServiceApi;
 import com.rackspace.idm.domain.service.CapabilityService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
-import com.unboundid.ldap.sdk.Filter;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -28,10 +27,10 @@ import java.util.List;
 public class DefaultCapabilityService extends LdapRepository implements CapabilityService {
 
     @Autowired
-    private CapabilityDao ldapCapabilityRepository;
+    private CapabilityDao capabilityDao;
 
     @Autowired
-    private LdapServiceApiRepository ldapServiceApiRepository;
+    private ServiceApiDao serviceApiDao;
 
     @Override
     public void updateCapabilities(List<Capability> capabilities, String type, String version) {
@@ -50,8 +49,8 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
 
         validateCapabilities(capabilities, type, version);
         for(Capability capability : capabilities){
-            capability.setRsId(ldapCapabilityRepository.getNextCapabilityId());
-            ldapCapabilityRepository.addCapability(capability);
+            capability.setRsId(capabilityDao.getNextCapabilityId());
+            capabilityDao.addCapability(capability);
         }
     }
 
@@ -80,7 +79,7 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
             }
             capability.setType(type);
             capability.setVersion(version);
-            Capability exist = ldapCapabilityRepository.getCapability(capability.getId(), capability.getType(), capability.getVersion());
+            Capability exist = capabilityDao.getCapability(capability.getId(), capability.getType(), capability.getVersion());
             if(exist != null){
                 String errMsg = String.format("Capability with id: %s, version: %s, and type: %s already exist."
                         ,exist.getId(), exist.getVersion(), exist.getType());
@@ -111,7 +110,7 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
         if(StringUtils.isBlank(type)){
             throw new BadRequestException("Capability's type cannot be null.");
         }
-        return ldapCapabilityRepository.getCapabilities(type, version);
+        return capabilityDao.getCapabilities(type, version);
     }
 
     @Override
@@ -122,14 +121,14 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
         if(StringUtils.isBlank(type)){
             throw new BadRequestException("Capability's type cannot be null.");
         }
-        for(Capability capability : ldapCapabilityRepository.getCapabilities(type, version)){
-            ldapCapabilityRepository.deleteCapability(capability.getId(), capability.getType(), capability.getVersion());
+        for(Capability capability : capabilityDao.getCapabilities(type, version)){
+            capabilityDao.deleteCapability(capability.getId(), capability.getType(), capability.getVersion());
         }
     }
 
     @Override
     public List<ServiceApi> getServiceApis() {
-        Iterable<ServiceApi> serviceApis = ldapServiceApiRepository.getObjects(createServiceApiFilter());
+        Iterable<ServiceApi> serviceApis = serviceApiDao.getServiceApis();
         List<ServiceApi> noDup = new ArrayList<ServiceApi>();
         if(serviceApis.iterator().hasNext()){
             noDup = removeDuplicateServices(serviceApis);
@@ -145,12 +144,5 @@ public class DefaultCapabilityService extends LdapRepository implements Capabili
             }
         }
         return noDup;
-    }
-
-    private Filter createServiceApiFilter() {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL)
-                .addPresenceAttribute(ATTR_VERSION_ID)
-                .addPresenceAttribute(ATTR_OPENSTACK_TYPE).build();
     }
 }
