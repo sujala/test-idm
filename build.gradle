@@ -216,6 +216,12 @@ task zipLdap(type: Zip) {
     from "ldap"
 }
 
+task zipSql(type: Zip) {
+    classifier = 'sql'
+    from "sql"
+    exclude "sql_dump.sh"
+}
+
 task zipEdirLdif(type: Zip) {
     classifier = 'edir-ldif'
     from "edir/ldif"
@@ -278,6 +284,7 @@ jettyRunWar {
 artifacts {
     archives zipConfig
     archives zipLdap
+    archives zipSql
     archives zipEdirLdif
     archives zipEdirConfig
     archives zipResources
@@ -374,6 +381,7 @@ zipConfig.dependsOn copyBaseConfig
 copyBaseConfig.dependsOn copyGeneratedSrc
 war.dependsOn zipConfig
 war.dependsOn zipLdap
+war.dependsOn zipSql
 war.dependsOn zipEdirLdif
 war.dependsOn zipEdirConfig
 jettyRun.dependsOn copyBaseConfig
