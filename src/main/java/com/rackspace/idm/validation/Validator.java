@@ -2,7 +2,7 @@ package com.rackspace.idm.validation;
 
 
 import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService;
-import com.rackspace.idm.domain.dao.impl.LdapPatternRepository;
+import com.rackspace.idm.domain.dao.PatternDao;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.GroupService;
@@ -10,8 +10,8 @@ import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
-import org.apache.commons.configuration.Configuration;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
+import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +39,7 @@ public class Validator {
     private static final boolean FEATURE_VALIDATE_SUBUSER_DEFAULTREGION_ENABLED_DEFAULT_VALUE=true;
 
     @Autowired
-    LdapPatternRepository ldapPatternRepository;
+    PatternDao ldapPatternRepository;
 
     @Autowired
     DefaultRegionService defaultRegionService;

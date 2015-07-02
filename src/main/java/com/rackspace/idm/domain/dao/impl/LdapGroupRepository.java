@@ -71,18 +71,18 @@ public class LdapGroupRepository extends LdapGenericRepository<Group> implements
 
     private Filter searchFilterGetGroupById(String groupId) {
         return new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRepository.ATTR_ID, groupId)
-                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_CLOUDGROUP).build();
+                .addEqualAttribute(ATTR_ID, groupId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLOUDGROUP).build();
     }
 
     private Filter searchFilterGetGroupByName(String name) {
         return new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRepository.ATTR_GROUP_NAME, name)
-                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_CLOUDGROUP).build();
+                .addEqualAttribute(ATTR_GROUP_NAME, name)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLOUDGROUP).build();
     }
 
     private Filter searchFilterGetGroups() {
         return new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRegionRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_CLOUDGROUP).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLOUDGROUP).build();
     }
 }

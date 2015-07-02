@@ -1,7 +1,7 @@
 package com.rackspace.idm.domain.security;
 
+import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.UniqueId;
-import com.rackspace.idm.domain.dao.impl.LdapIdentityProviderRepository;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.encrypters.AuthenticatedMessageProvider;
 import com.rackspace.idm.domain.security.packers.TokenDataPacker;
@@ -35,7 +35,7 @@ public class DefaultAETokenService implements AETokenService {
     private AuthenticatedMessageProvider authenticatedMessageProvider;
 
     @Autowired
-    LdapIdentityProviderRepository identityProviderRepository;
+    IdentityProviderDao identityProviderRepository;
 
     @Autowired
     private AETokenRevocationService aeTokenRevocationService;

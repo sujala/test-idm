@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.domain.dao.impl.LdapQuestionRepository;
+import com.rackspace.idm.domain.dao.QuestionDao;
 import com.rackspace.idm.domain.entity.Question;
 import com.rackspace.idm.domain.service.QuestionService;
 import com.rackspace.idm.exception.BadRequestException;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class DefaultQuestionService implements QuestionService {
 
     @Autowired
-    LdapQuestionRepository questionDao;
+    QuestionDao questionDao;
 
     @Override
     public String addQuestion(Question question) {

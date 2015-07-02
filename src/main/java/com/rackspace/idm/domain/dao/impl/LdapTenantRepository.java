@@ -59,18 +59,18 @@ public class LdapTenantRepository extends LdapGenericRepository<Tenant> implemen
 
     private Filter searchFilterGetTenantById(String tenantId) {
         return new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRepository.ATTR_ID, tenantId)
-                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_TENANT).build();
+                .addEqualAttribute(ATTR_ID, tenantId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT).build();
     }
 
     private Filter searchFilterGetTenantByName(String name) {
         return new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRepository.ATTR_NAME, name)
-                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_TENANT).build();
+                .addEqualAttribute(ATTR_NAME, name)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT).build();
     }
 
     private Filter searchFilterGetTenants() {
          return new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_TENANT).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT).build();
     }
 }

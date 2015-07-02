@@ -185,7 +185,7 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
 
     private Filter searchFilterGetApplications() {
         return new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRegionRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_RACKSPACEAPPLICATION).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION).build();
     }
 
     private Filter searchFilterGetApplicationByClientId(String clientId) {

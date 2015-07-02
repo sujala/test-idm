@@ -18,4 +18,5 @@ public interface QuestionDao {
     void deleteQuestion(String questionId);
     Question getQuestion(String questionId);
     Iterable<Question> getQuestions();
+    String getNextId();
 }

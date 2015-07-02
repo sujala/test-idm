@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.dao.DaoGetEntityType;
-import com.rackspace.idm.domain.dao.IdentityUserDao;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Filter;
@@ -29,13 +28,13 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     private static List<Filter> ALLUSER_CLASS_FILTERS = Arrays.asList(PROVISIONED_USER_CLASS_FILTER, FEDERATED_USER_CLASS_FILTER, RACKER_USER_CLASS_FILTER);
 
     @Autowired
-    private LdapUserRepository userDao;
+    private UserDao userDao;
 
     @Autowired
-    private LdapFederatedUserRepository fedUserDao;
+    private FederatedUserDao fedUserDao;
 
     @Autowired
-    private LdapGroupRepository groupDao;
+    private GroupDao groupDao;
 
     public User getProvisionedUserById(String userId) {
         return searchForUserById(userId, PROVISIONED_USER_CLASS_FILTERS, User.class);
@@ -306,10 +305,10 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Override
     public void updateObject(BaseUser object) {
         if (object instanceof User) {
-            userDao.updateObject((User) object);
+            userDao.updateUser((User) object);
         }
         else if (object instanceof FederatedUser) {
-            fedUserDao.updateObject((FederatedUser) object);
+            fedUserDao.updateUser((FederatedUser) object);
         } else {
             throw new UnsupportedOperationException("Not supported");
         }
