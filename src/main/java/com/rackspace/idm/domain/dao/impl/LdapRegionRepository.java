@@ -62,25 +62,25 @@ public class LdapRegionRepository extends LdapGenericRepository<Region> implemen
     private Filter searchFilterGetRegionByName(String name) {
         return new LdapRepository.LdapSearchBuilder()
                 .addEqualAttribute(LdapRepository.ATTR_NAME, name)
-                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_REGION).build();
+                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, OBJECTCLASS_REGION).build();
     }
 
     private Filter searchFilterGetDefaultRegion(String cloud) {
         return new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRegionRepository.ATTR_CLOUD, cloud)
-                .addEqualAttribute(LdapRegionRepository.ATTR_USE_FOR_DEFAULT_REGION, "TRUE")
-                .addEqualAttribute(LdapRegionRepository.ATTR_ENABLED, "TRUE")
-                .addEqualAttribute(LdapRegionRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_REGION).build();
+                .addEqualAttribute(ATTR_CLOUD, cloud)
+                .addEqualAttribute(ATTR_USE_FOR_DEFAULT_REGION, "TRUE")
+                .addEqualAttribute(ATTR_ENABLED, "TRUE")
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_REGION).build();
     }
 
     private Filter searchFilterGetRegions() {
         return new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRegionRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_REGION).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_REGION).build();
     }
 
     private Filter searchFilterGetRegionsByCloud(String cloud) {
         return new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRegionRepository.ATTR_CLOUD, cloud)
-                .addEqualAttribute(LdapRegionRepository.ATTR_OBJECT_CLASS, LdapRegionRepository.OBJECTCLASS_REGION).build();
+                .addEqualAttribute(ATTR_CLOUD, cloud)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_REGION).build();
     }
 }

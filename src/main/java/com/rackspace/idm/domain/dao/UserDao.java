@@ -85,4 +85,8 @@ public interface UserDao {
     void deleteGroupFromUser(String groupId, String userId);
 
     Iterable<Group> getGroupsForUser(String userId);
+
+    void doPreEncode(User user);
+
+    void doPostEncode(User user);
 }

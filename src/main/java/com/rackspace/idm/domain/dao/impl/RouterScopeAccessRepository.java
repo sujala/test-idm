@@ -1,9 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.domain.dao.AEScopeAccessDao;
-import com.rackspace.idm.domain.dao.ScopeAccessDao;
-import com.rackspace.idm.domain.dao.UUIDScopeAccessDao;
-import com.rackspace.idm.domain.dao.UniqueId;
+import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -19,7 +16,7 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     private final UUIDScopeAccessDao uuidScopeAccessDao;
 
     @Autowired
-    private LdapUserRepository ldapUserRepository;
+    private UserDao ldapUserRepository;
 
     @Autowired
     private TokenFormatSelector tokenFormatSelector;

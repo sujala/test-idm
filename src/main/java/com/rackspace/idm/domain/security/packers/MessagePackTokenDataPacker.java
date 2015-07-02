@@ -1,7 +1,7 @@
 package com.rackspace.idm.domain.security.packers;
 
 import com.rackspace.idm.GlobalConstants;
-import com.rackspace.idm.domain.dao.impl.LdapIdentityProviderRepository;
+import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.security.MarshallTokenException;
@@ -71,7 +71,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
     private UserService provisionedUserService;
 
     @Autowired
-    LdapIdentityProviderRepository identityProviderRepository;
+    IdentityProviderDao identityProviderRepository;
 
     /*
     This adds circular reference since AETokenService needs the message packer...

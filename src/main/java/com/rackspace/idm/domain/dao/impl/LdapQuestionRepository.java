@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  * To change this template use File | Settings | File Templates.
  */
 @Component
-public class LdapQuestionRepository extends LdapGenericRepository<Question> implements QuestionDao{
+public class LdapQuestionRepository extends LdapGenericRepository<Question> implements QuestionDao {
 
     public String getBaseDn(){
         return QUESTION_BASE_DN;

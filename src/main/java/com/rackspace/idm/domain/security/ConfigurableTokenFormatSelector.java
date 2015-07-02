@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.security;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.dao.impl.LdapAuthRepository;
+import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Racker;
@@ -23,7 +23,7 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
     private IdentityConfig identityConfig;
 
     @Autowired
-    private LdapAuthRepository ldapAuthRepository;
+    private AuthDao ldapAuthRepository;
 
     @Override
     public TokenFormat formatForNewToken(BaseUser user) {

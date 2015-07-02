@@ -79,18 +79,18 @@ public class LdapPolicyRepository extends LdapGenericRepository<Policy> implemen
 
     private Filter searchFilterGetPolicyById(String policyId) {
         return new LdapSearchBuilder()
-                .addEqualAttribute(LdapPolicyRepository.ATTR_ID, policyId)
-                .addEqualAttribute(LdapPolicyRepository.ATTR_OBJECT_CLASS, LdapPolicyRepository.OBJECTCLASS_POLICY).build();
+                .addEqualAttribute(ATTR_ID, policyId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_POLICY).build();
     }
 
     private Filter searchFilterGetPolicyByName(String name) {
         return new LdapSearchBuilder()
-                .addEqualAttribute(LdapPolicyRepository.ATTR_NAME, name)
-                .addEqualAttribute(LdapPolicyRepository.ATTR_OBJECT_CLASS, LdapPolicyRepository.OBJECTCLASS_POLICY).build();
+                .addEqualAttribute(ATTR_NAME, name)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_POLICY).build();
     }
 
     private Filter searchFilterGetPolicies() {
         return new LdapSearchBuilder()
-                .addEqualAttribute(LdapPolicyRepository.ATTR_OBJECT_CLASS, LdapPolicyRepository.OBJECTCLASS_POLICY).build();
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_POLICY).build();
     }
 }
