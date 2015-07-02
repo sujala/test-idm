@@ -83,7 +83,7 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
         retrievedPhone.getTelephoneNumber() == canonTelephoneNumber
         finalUserAdmin.getMultiFactorMobilePhoneRsId() == phone.getId()
         phone.getMembers() != null
-        phone.getMembers().contains(finalUserAdmin.getLdapEntry().getParsedDN())
+        phone.getMembers().contains(finalUserAdmin.getUniqueId())
 
         cleanup:
         deleteObjectFromLdapQuietly(finalUserAdmin, retrievedPhone)
@@ -134,8 +134,8 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
         MobilePhone phone = multiFactorService.addPhoneToUser(userAdminOpenStack.getId(), telephoneNumber)
         MobilePhone phone2 = multiFactorService.addPhoneToUser(userAdmin2OpenStack.getId(), telephoneNumber)
         MobilePhone initialPhone = mobilePhoneRepository.getById(phone.getId())
-        assert initialPhone.getMembers().contains(initialUserAdmin.getLdapEntry().getParsedDN())
-        assert initialPhone.getMembers().contains(initialUserAdmin2.getLdapEntry().getParsedDN())
+        assert initialPhone.getMembers().contains(initialUserAdmin.getUniqueId())
+        assert initialPhone.getMembers().contains(initialUserAdmin2.getUniqueId())
 
         when:
         multiFactorService.removeMultiFactorForUser(userAdminOpenStack.getId())
@@ -144,8 +144,8 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
 
         then:
         finalUserAdmin.getMultiFactorMobilePhoneRsId() == null
-        !finalPhone.getMembers().contains(initialUserAdmin.getLdapEntry().getParsedDN())
-        finalPhone.getMembers().contains(initialUserAdmin2.getLdapEntry().getParsedDN())
+        !finalPhone.getMembers().contains(initialUserAdmin.getUniqueId())
+        finalPhone.getMembers().contains(initialUserAdmin2.getUniqueId())
 
         cleanup:
         deleteObjectFromLdapQuietly(finalUserAdmin, finalPhone)

@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,17 +23,6 @@ public class ClientScopeAccessTest {
     @Before
     public void setUp() throws Exception {
         clientScopeAccess = new ClientScopeAccess();
-    }
-
-    @Test
-    public void getUniqueId_ldapEntryNull_returnsNull() throws Exception {
-        assertThat("returns  null",clientScopeAccess.getUniqueId(),equalTo(null));
-    }
-
-    @Test
-    public void getUniqueId_ldapEntryExists_returnsDn() throws Exception {
-        clientScopeAccess.setUniqueId("uniqueId");
-        assertThat("returns dn",clientScopeAccess.getUniqueId(),equalTo("uniqueId"));
     }
 
     @Test

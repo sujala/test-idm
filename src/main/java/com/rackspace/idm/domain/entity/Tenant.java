@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.Entry;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -13,13 +12,13 @@ import java.util.Date;
 import java.util.HashSet;
 
 @Data
-@EqualsAndHashCode(exclude={"ldapEntry"})
+@EqualsAndHashCode(exclude={"uniqueId"})
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_TENANT,
         postEncodeMethod="doPostEncode")
 public class Tenant implements Auditable, UniqueId {
 
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    @LDAPDNField
+    private String uniqueId;
 
     @Mapping("id")
     @LDAPField(attribute = LdapRepository.ATTR_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
@@ -46,14 +45,6 @@ public class Tenant implements Auditable, UniqueId {
 
     @LDAPField(attribute = LdapRepository.ATTR_DOMAIN_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String domainId;
-
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
-        }
-    }
 
     @Override
     public String getAuditContext() {

@@ -28,7 +28,7 @@ class LdapEndpointRepositoryIntegrationTest extends Specification {
         endpointDao.addBaseUrl(baseUrlToCreate)
         def createdBaseUrl = endpointDao.getBaseUrlById(baseUrlId)
 
-        baseUrlToUpdate.ldapEntry = createdBaseUrl.ldapEntry
+        baseUrlToUpdate.uniqueId = createdBaseUrl.uniqueId
         endpointDao.updateCloudBaseUrl(baseUrlToUpdate)
         def updatedBaseUrl = endpointDao.getBaseUrlById(baseUrlId)
 

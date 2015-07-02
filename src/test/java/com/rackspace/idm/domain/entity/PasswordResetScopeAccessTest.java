@@ -32,17 +32,6 @@ public class PasswordResetScopeAccessTest {
     }
 
     @Test
-    public void getUniqueId_ldapEntryIsNull_returnsNull() throws Exception {
-        assertThat("returns null",passwordResetScopeAccess.getUniqueId(),equalTo(null));
-    }
-
-    @Test
-    public void getUniqueId_ldapEntryIsNotNull_returnsDn() throws Exception {
-        passwordResetScopeAccess.setUniqueId("dn");
-        assertThat("returns dn", passwordResetScopeAccess.getUniqueId(), equalTo("dn"));
-    }
-
-    @Test
     public void getUsername_returnsCorrectUsername() throws Exception {
         passwordResetScopeAccess.setUsername("username");
         assertThat("returns username",passwordResetScopeAccess.getUsername(),equalTo("username"));

@@ -33,7 +33,7 @@ public class DefaultQuestionService implements QuestionService {
         }
 
         Question oldQuestion = checkAndGetQuestion(questionId);
-        question.setLdapEntry(oldQuestion.getLdapEntry());
+        question.setUniqueId(oldQuestion.getUniqueId());
 
         questionDao.updateQuestion(question);
     }

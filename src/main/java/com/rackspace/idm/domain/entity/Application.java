@@ -19,8 +19,12 @@ import java.util.UUID;
 public class Application implements Auditable, UniqueId {
     private static final long serialVersionUID = -3160754818606772239L;
 
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    // TODO: Remove those as soon as we remove the LDAP dependencies.
+    @LDAPEntryField
+    private ReadOnlyEntry readOnlyEntry;
+
+    @LDAPDNField
+    private String uniqueId;
 
     private ClientSecret clientSecret;
 
@@ -56,14 +60,6 @@ public class Application implements Auditable, UniqueId {
         this.name = name;
         // In order to avoid a schema change, setting deprecated clientSecret to random uuid.
         this.clientSecret = ClientSecret.newInstance(UUID.randomUUID().toString().replaceAll("-", ""));
-    }
-
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
-        }
     }
 
     public void setClientSecretObj(ClientSecret clientSecret) {

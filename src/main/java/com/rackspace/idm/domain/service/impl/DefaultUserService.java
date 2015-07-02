@@ -891,7 +891,10 @@ public class DefaultUserService implements UserService {
         user.setUserMultiFactorEnforcementLevel(null);
         user.setMultiFactorType(null);
 
-        user.setLdapEntry(currentUser.getLdapEntry());
+        // TODO: Remove those as soon as we remove the LDAP dependencies.
+        user.setReadOnlyEntry(currentUser.getReadOnlyEntry());
+
+        user.setUniqueId(currentUser.getUniqueId());
         user.setRsGroupId(currentUser.getRsGroupId());
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
         user.setSalt(currentUser.getSalt());

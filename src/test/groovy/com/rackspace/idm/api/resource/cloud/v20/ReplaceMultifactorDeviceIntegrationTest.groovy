@@ -77,7 +77,7 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
         and: "the new phone is now in the directory with the user as a member"
         def phoneEntity = mobilePhoneRepository.getByTelephoneNumber(phoneToAdd.number)
         phoneEntity != null
-        phoneEntity.members.contains(userEntity.ldapEntry.getParsedDN())
+        phoneEntity.members.contains(userEntity.getUniqueId())
 
         cleanup:
         utils.deleteUsers(users)
@@ -139,8 +139,8 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
         def userAdminEntity1 = userService.getProvisionedUserById(userAdmin1.id)
         def userAdminEntity2 = userService.getProvisionedUserById(userAdmin2.id)
         phoneEntity != null
-        !phoneEntity.members.contains(userAdminEntity1.ldapEntry.getParsedDN())
-        phoneEntity.members.contains(userAdminEntity2.ldapEntry.getParsedDN())
+        !phoneEntity.members.contains(userAdminEntity1.getUniqueId())
+        phoneEntity.members.contains(userAdminEntity2.getUniqueId())
 
         when: "disable mfa and replace the phone on the other user"
         utils.updateMultiFactor(userAdminToken2, userAdmin2.id, v2Factory.createMultiFactorSettings(false))

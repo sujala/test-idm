@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.unboundid.ldap.sdk.Attribute;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,14 +34,6 @@ public class DomainTestOld {
         assertThat("name", domain.getName(), equalTo("name"));
         assertThat("description", domain.getDescription(), equalTo("description"));
         assertThat("enabled", domain.getEnabled(), equalTo(true));
-    }
-
-    @Test
-    public void getLdapEntry_returnsLdapEntry() throws Exception {
-        ReadOnlyEntry readOnlyEntry = new ReadOnlyEntry("uniqueId", new Attribute[0]);
-        domain.setLdapEntry(readOnlyEntry);
-        ReadOnlyEntry result = domain.getLdapEntry();
-        assertThat("ldap entry", result, equalTo(readOnlyEntry));
     }
 
     @Test

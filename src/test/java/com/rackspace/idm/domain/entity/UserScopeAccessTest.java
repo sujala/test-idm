@@ -25,13 +25,6 @@ public class UserScopeAccessTest {
     }
 
     @Test
-    public void getUniqueId_ldapEntryNotNull_returnsUniqueId() throws Exception {
-        userScopeAccess.setUniqueId("uniqueId");
-        String result = userScopeAccess.getUniqueId();
-        assertThat("unique id", result, equalTo("uniqueId"));
-    }
-
-    @Test
     public void isAccessTokenExpired_accessTokenExpIsNull_returnsTrue() throws Exception {
         userScopeAccess.setAccessTokenString("expired");
         userScopeAccess.setAccessTokenExp(null);

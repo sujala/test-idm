@@ -1,12 +1,8 @@
 package com.rackspace.idm.domain.entity;
 
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.junit.Test;
 
-import java.util.Arrays;
-
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItemInArray;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
@@ -18,12 +14,6 @@ import static org.junit.Assert.assertThat;
  */
 public class TenantRoleTest {
     private TenantRole tenantRole = new TenantRole();
-
-    @Test
-    public void getLdapEntry_returnsLdapEntry() throws Exception {
-        ReadOnlyEntry result = tenantRole.getLDAPEntry();
-        assertThat("ldap", result, equalTo(null));
-    }
 
     @Test
     public void hashCode_attributesIsNull_returnsHashCode() throws Exception {

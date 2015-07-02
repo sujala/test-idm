@@ -118,7 +118,7 @@ class LdapGenericRepositoryUpdateIntegrationTest extends Specification {
         Application localApp = new Application()
         localApp.setName(newName)
         localApp.setClientId(app.getClientId())
-        localApp.setLdapEntry(overriddenGenericApplicationRepository.getObject(searchFilterGetApplicationByClientId(app.clientId)).getLdapEntry())
+        localApp.setUniqueId(overriddenGenericApplicationRepository.getObject(searchFilterGetApplicationByClientId(app.clientId)).getUniqueId())
 
         /*
         now change the enabled property behind the scenes. While probably not required, do this in a completely separate

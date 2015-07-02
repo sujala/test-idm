@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,12 +19,6 @@ public class ClientRoleTest {
     @Before
     public void setUp() throws Exception {
         clientRole = new ClientRole();
-    }
-
-    @Test
-    public void getLdapEntry_returnsLdapEntry() throws Exception {
-        ReadOnlyEntry result = clientRole.getLDAPEntry();
-        assertThat("ldap entry", result, equalTo(null));
     }
 
     @Test

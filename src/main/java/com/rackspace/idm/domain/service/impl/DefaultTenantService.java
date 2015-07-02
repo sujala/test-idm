@@ -11,7 +11,6 @@ import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.PrecedenceValidator;
-import org.apache.commons.collections.functors.TruePredicate;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
@@ -23,7 +22,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 @Component
 public class DefaultTenantService implements TenantService {
@@ -320,7 +322,7 @@ public class DefaultTenantService implements TenantService {
                 //add the role to all sub-users
                 for (User subUser : userService.getSubUsers((User) user)) {
                     try {
-                        role.setLdapEntry(null);
+                        role.setUniqueId(null);
                         tenantRoleDao.addTenantRoleToUser(subUser, role);
                         atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
                     } catch (ClientConflictException ex) {
@@ -332,7 +334,7 @@ public class DefaultTenantService implements TenantService {
                 //add role to all federated users
                 for(FederatedUser subUser : federatedUserDao.getUsersByDomainId(user.getDomainId())) {
                     try {
-                        role.setLdapEntry(null);
+                        role.setUniqueId(null);
                         tenantRoleDao.addTenantRoleToUser(subUser, role);
                     } catch (ClientConflictException ex) {
                         String msg = String.format("Federated user %s already has tenantRole %s", subUser.getId(), role.getName());
@@ -430,7 +432,7 @@ public class DefaultTenantService implements TenantService {
                 //remove propagating roles from sub-users
                 for (User subUser : userService.getSubUsers(user)) {
                     try {
-                        role.setLdapEntry(null);
+                        role.setUniqueId(null);
                         tenantRoleDao.deleteTenantRoleForUser(subUser, role);
                         atomHopperClient.asyncPost(subUser, AtomHopperConstants.ROLE);
                     } catch (NotFoundException ex) {
@@ -442,7 +444,7 @@ public class DefaultTenantService implements TenantService {
                 //remove propagating roles from federated users
                 for(FederatedUser subUser : federatedUserDao.getUsersByDomainId(user.getDomainId())) {
                     try {
-                        role.setLdapEntry(null);
+                        role.setUniqueId(null);
                         tenantRoleDao.deleteTenantRoleForUser(subUser, role);
                     } catch (NotFoundException ex) {
                         String msg = String.format("Federated user %s does not have tenantRole %s", user.getId(), role.getName());

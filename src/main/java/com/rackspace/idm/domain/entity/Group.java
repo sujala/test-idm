@@ -3,19 +3,17 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.Entry;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
-@EqualsAndHashCode(exclude={"ldapEntry"})
+@EqualsAndHashCode(exclude={"uniqueId"})
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_CLOUDGROUP,
         postEncodeMethod="doPostEncode")
 public class Group implements Auditable, UniqueId {
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
 
+    @LDAPDNField
     private String uniqueId;
 
     @LDAPField(attribute=LdapRepository.ATTR_ID,
@@ -39,15 +37,6 @@ public class Group implements Auditable, UniqueId {
     @Override
     public String getAuditContext() {
         return String.format("groupId=%s", groupId);
-    }
-
-    @Override
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
-        }
     }
 
     private void doPostEncode(final Entry entry) throws LDAPPersistException {

@@ -44,7 +44,7 @@ class LdapFederatedUserRepositoryIntegrationTest extends Specification {
 
         then:
         user.id != null
-        user.getLdapEntry() != null
+        user.getUniqueId() != null
 
         when:
         def addedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, Constants.DEFAULT_IDP_NAME)

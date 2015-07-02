@@ -35,20 +35,6 @@ public class ImpersonatedScopeAccessTest {
     }
 
     @Test
-    public void getUniqueId_ldapEntryIsNull_returnsNull() throws Exception {
-        impersonatedScopeAccess.setUniqueId(null);
-        String result = impersonatedScopeAccess.getUniqueId();
-        assertThat("unique id", result, equalTo(null));
-    }
-
-    @Test
-    public void getUniqueId_ldapEntryNotNull_returnsLdapEntryGetDn() throws Exception {
-        impersonatedScopeAccess.setUniqueId("uniqueId");
-        String result = impersonatedScopeAccess.getUniqueId();
-        assertThat("unique id", result, equalTo("uniqueId"));
-    }
-
-    @Test
     public void getUserPasswordExpirationDate_returnsUserPasswordExpirationDate() throws Exception {
         DateTime dateTime = new DateTime(1);
         impersonatedScopeAccess.setUserPasswordExpirationDate(dateTime);

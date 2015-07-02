@@ -25,20 +25,6 @@ public class RackerScopeAccessTest {
     }
 
     @Test
-    public void getUniqueId_ldapEntryIsNull_returnsNull() throws Exception {
-        rackerScopeAccess.setUniqueId(null);
-        String result = rackerScopeAccess.getUniqueId();
-        assertThat("ldap entry", result, equalTo(null));
-    }
-
-    @Test
-    public void getUniqueId_ldapEntryNotNull_returnsUniqueId() throws Exception {
-        rackerScopeAccess.setUniqueId("uniqueId");
-        String result = rackerScopeAccess.getUniqueId();
-        assertThat("ldap entry", result, equalTo("uniqueId"));
-    }
-
-    @Test
     public void isAccessTokenExpired_accessTokenStringIsBlank_returnsTrue() throws Exception {
         rackerScopeAccess.setAccessTokenString("");
         boolean result = rackerScopeAccess.isAccessTokenExpired(new DateTime());

@@ -2,9 +2,8 @@ package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPEntryField;
+import com.unboundid.ldap.sdk.persist.LDAPDNField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
@@ -23,8 +22,8 @@ import java.util.List;
 @Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_CAPABILITY)
 public class Capability implements Auditable, UniqueId {
-    @LDAPEntryField()
-    private ReadOnlyEntry ldapEntry;
+    @LDAPDNField
+    private String uniqueId;
 
     @LDAPField(attribute = LdapRepository.ATTR_ID, objectClass = LdapRepository.OBJECTCLASS_CAPABILITY, inRDN = true, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
     private String rsId;
@@ -63,15 +62,4 @@ public class Capability implements Auditable, UniqueId {
         return getAuditContext();
     }
 
-    public String getUniqueId() {
-        if (ldapEntry == null) {
-            return null;
-        } else {
-            return ldapEntry.getDN();
-        }
-    }
-
-    public void setUniqueId(String id){
-        this.ldapEntry.setDN(id);
-    }
 }

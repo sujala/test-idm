@@ -27,14 +27,6 @@ public class TenantTest {
     }
 
     @Test
-    public void getLdapEntry_returnsLdapEntry() throws Exception {
-        ReadOnlyEntry readOnlyEntry = new ReadOnlyEntry("uniqueId", new Attribute[0]);
-        tenant.setLdapEntry(readOnlyEntry);
-        ReadOnlyEntry result = tenant.getLdapEntry();
-        assertThat("ldap entry", result, equalTo(readOnlyEntry));
-    }
-
-    @Test
     public void addBaseUrlId_baseUrlDoesContainUrlId_doesNotRemoveId() throws Exception {
         tenant.getBaseUrlIds().add("123");
         tenant.getBaseUrlIds().add("123");

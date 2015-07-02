@@ -119,9 +119,8 @@ class LdapClientRoleRepositoryIntegrationTest extends Specification {
 
     def application(String id) {
         def dn = "clientId=$id,ou=applications,o=rackspace,dc=rackspace,dc=com"
-        Entry entry = new Entry(dn)
         Application app = new Application(id, name)
-        app.ldapEntry = new ReadOnlyEntry(entry)
+        app.uniqueId = dn
         return app
     }
 }

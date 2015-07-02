@@ -43,9 +43,8 @@ class EntityFactory extends Specification {
 
     def createApplication(String clientId, String name) {
         def id = clientId ? clientId : CLIENT
-        def entry = new Entry("clientId=$id,ou=applications,o=rackspace")
         new Application().with {
-            it.ldapEntry = new ReadOnlyEntry(entry);
+            it.uniqueId = "clientId=$id,ou=applications,o=rackspace"
             it.clientId = clientId
             it.name = name
             it.enabled = true
@@ -373,7 +372,7 @@ class EntityFactory extends Specification {
             it.userId = "1"
             it.roleRsId = "1"
             it.clientId = CLIENT
-            it.ldapEntry = new ReadOnlyEntry("roleRsId=1,cn=ROLES,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com")
+            it.uniqueId = "roleRsId=1,cn=ROLES,rsId=1,ou=users,o=rackspace,dc=rackspace,dc=com"
             return it
         }
     }
@@ -410,13 +409,15 @@ class EntityFactory extends Specification {
     }
 
     def createUser(String username, String userId, String domainId, String region) {
-        def id = userId ? userId : "id"
+        def id = userId ? userId : Cloud20Utils.createRandomString()
+        def dn = "rsId=$id,ou=users,o=rackspace"
         new User().with {
             it.username = username
             it.id = id
             it.domainId = domainId
             it.region = region
-            it.uniqueId = "rsId=$id,ou=users,o=rackspace"
+            it.readOnlyEntry = new ReadOnlyEntry(dn)
+            it.uniqueId = dn
             it.enabled = true
             return it
         }
@@ -434,10 +435,6 @@ class EntityFactory extends Specification {
 
     def createGroups() {
         return new ArrayList<Group>()
-    }
-
-    private createLdapEntryWithDn(String dn) {
-       return new ReadOnlyEntry(dn)
     }
 
     def createClientSecret() {

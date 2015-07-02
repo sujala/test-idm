@@ -48,7 +48,7 @@ class LdapMobilePhoneRepositoryIntegrationTest extends Specification {
         MobilePhone retrievedPhone = mobilePhoneDao.getById(phone.getId())
 
         then: "Object should now be populated with ldap entry, entry should exist in ldap, and populated correctly"
-        phone.getLdapEntry() != null
+        phone.getUniqueId() != null
         phone.getUniqueId() == expectedDn
         ldapHelper.entryExists(phone)
         retrievedPhone != null
