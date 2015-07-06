@@ -5,35 +5,16 @@
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:util="http://www.springframework.org/schema/util"
        xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
 
+       xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+			http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.1.xsd
+			http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
 
-       xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
-			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
-			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
-			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.0.xsd">
-
-    <!--
-        Uses Apache Commons DBCP for connection pooling. See Commons DBCP documentation
-        for the required JAR files. See the PetStore sample application also shipped with
-        Spring, for an example of Commons DBCP usage and the necessary build script.
-        Alternatively you can use another connection pool such as C3P0, similarly configured
-        using Spring.
-        A standalone connection pool such as Commons DBCP is a good choice for use outside an
-        application server environment, including web applications running in a web container without
-        JTA, or integration testing using the org.springframework.test package.
-    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close"
-            p:driverClassName="${jdbc.driverClassName}" p:url="${jdbc.url}" p:username="${jdbc.username}"
-            p:password="${jdbc.password}"/>
-
-    -->
-    <!-- Transaction manager for a single JDBC DataSource (alternative to JTA)
-        <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"
-                p:dataSource-ref="dataSource"/>
-
-    -->
-
-    <!-- ========================= COMPONENT DEFINITIONS =========================
-    -->
+    <!-- ========================= COMPONENT DEFINITIONS ========================= -->
 
     <!--
          Activates various annotations to be detected in bean classes: Spring's
@@ -52,6 +33,7 @@
 
     <!-- Scans within the base package of the application for @Components to configure as beans-->
     <context:component-scan base-package="com.rackspace.idm"/>
+
     <!--Used for async and Scheduler -->
     <task:annotation-driven/>
 
@@ -60,5 +42,39 @@
     </task:scheduled-tasks>
 
     <import resource="namespaces.xml"/>
+
+    <beans profile="SQL">
+        <jpa:repositories base-package="com.rackspace.idm" />
+
+        <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+            <property name="driverClassName" value="#{identityConfig.staticConfig.sqlDriverClassName}"/>
+            <property name="url" value="#{identityConfig.staticConfig.sqlUrl}"/>
+            <property name="username" value="#{identityConfig.staticConfig.sqlUsername}"/>
+            <property name="password" value="#{identityConfig.staticConfig.sqlPassword}"/>
+        </bean>
+
+        <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+            <property name="entityManagerFactory" ref="entityManagerFactory"/>
+            <property name="jpaDialect">
+                <bean class="org.springframework.orm.jpa.vendor.HibernateJpaDialect"/>
+            </property>
+        </bean>
+
+        <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+            <property name="dataSource" ref="dataSource"/>
+            <property name="packagesToScan" value="com.rackspace.idm.domain.sql.entity"/>
+            <property name="jpaVendorAdapter">
+                <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+                    <property name="generateDdl" value="false"/>
+                    <property name="showSql" value="#{identityConfig.staticConfig.sqlShowSql}"/>
+                </bean>
+            </property>
+            <property name="jpaProperties">
+                <props>
+                    <prop key="hibernate.hbm2ddl.auto">none</prop>
+                </props>
+            </property>
+        </bean>
+    </beans>
 
 </beans>

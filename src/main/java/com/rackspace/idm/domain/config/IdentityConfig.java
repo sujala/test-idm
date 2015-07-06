@@ -157,6 +157,7 @@ public class IdentityConfig {
     public static final boolean FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_DEFAULT = true;
     public static final String RACKER_IMPERSONATE_ROLE_NAME_PROP = "racker.impersonate.role";
     public static final String RACKER_IMPERSONATE_ROLE_NAME_DEFAULT = "cloud-identity-impersonate";
+
     /**
      * Required static prop
      */
@@ -166,6 +167,20 @@ public class IdentityConfig {
      * Required static prop
      */
     public static final String CLIENT_ID_FOUNDATION_PROP = "idm.clientId";
+
+    /**
+     * SQL config properties
+     */
+    private static final String SQL_DRIVER_CLASS_NAME_PROP = "sql.driverClassName";
+    private static final String SQL_URL_PROP = "sql.url";
+    private static final String SQL_USERNAME_PROP = "sql.username";
+    private static final String SQL_PASSWORD_PROP = "sql.password";
+
+    /**
+     * SQL debug property
+     */
+    private static final String SQL_SHOW_SQL_PROP = "sql.showSql";
+    private static final Boolean SQL_SHOW_DEFAULT = Boolean.FALSE;
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -240,6 +255,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
         defaults.put(FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP, FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_DEFAULT);
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
+        defaults.put(SQL_SHOW_SQL_PROP, SQL_SHOW_DEFAULT);
 
         return defaults;
     }
@@ -273,6 +289,11 @@ public class IdentityConfig {
         verifyAndLogStaticProperty(CLIENT_ID_FOUNDATION_PROP, REQUIRED);
 
         verifyAndLogStaticProperty(EXPOSE_V11_ADD_BASE_URL_PROP, OPTIONAL);
+
+        verifyAndLogStaticProperty(SQL_DRIVER_CLASS_NAME_PROP, REQUIRED);
+        verifyAndLogStaticProperty(SQL_URL_PROP, REQUIRED);
+        verifyAndLogStaticProperty(SQL_USERNAME_PROP, REQUIRED);
+        verifyAndLogStaticProperty(SQL_PASSWORD_PROP, REQUIRED);
 
         logFederatedTokenFormatOverrides();
 
@@ -708,6 +729,32 @@ public class IdentityConfig {
         public String getRackerImpersonateRoleName() {
             return getStringSafely(staticConfiguration, RACKER_IMPERSONATE_ROLE_NAME_PROP);
         }
+
+        @IdmProp(key = SQL_DRIVER_CLASS_NAME_PROP, versionAdded = "3.0.0")
+        public String getSqlDriverClassName() {
+            return getStringSafely(staticConfiguration, SQL_DRIVER_CLASS_NAME_PROP);
+        }
+
+        @IdmProp(key = SQL_URL_PROP, versionAdded = "3.0.0")
+        public String getSqlUrl() {
+            return getStringSafely(staticConfiguration, SQL_URL_PROP);
+        }
+
+        @IdmProp(key = SQL_USERNAME_PROP, versionAdded = "3.0.0")
+        public String getSqlUsername() {
+            return getStringSafely(staticConfiguration, SQL_USERNAME_PROP);
+        }
+
+        @IdmProp(key = SQL_PASSWORD_PROP, versionAdded = "3.0.0")
+        public String getSqlPassword() {
+            return getStringSafely(staticConfiguration, SQL_PASSWORD_PROP);
+        }
+
+        @IdmProp(key = SQL_SHOW_SQL_PROP, versionAdded = "3.0.0")
+        public Boolean getSqlShowSql() {
+            return getBooleanSafely(staticConfiguration, SQL_SHOW_SQL_PROP);
+        }
+
     }
 
     /**
