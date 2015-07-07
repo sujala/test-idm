@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Profile("LDAP")
+@Profile({"LDAP", "default"})
 @Component
 public @interface LDAPComponent {
 }

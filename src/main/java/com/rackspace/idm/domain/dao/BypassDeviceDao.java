@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.BypassDevice;
 
-public interface BypassDeviceDao extends GenericDao<BypassDevice> {
+public interface BypassDeviceDao {
     void addBypassDevice(UniqueId parent, BypassDevice bypassDevice);
     boolean deleteBypassDevice(BypassDevice bypassDevice);
     void updateBypassDevice(BypassDevice bypassDevice);
