@@ -1,7 +1,6 @@
 package com.rackspace.idm.annotation;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,7 +9,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Profile("SQL")
-@Component
-public @interface SQLComponent {
+@SQLComponent
+@Repository
+public @interface SQLRepository {
 }
