@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.sql.mapper;
 
+import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -10,6 +11,7 @@ import org.springframework.beans.BeansException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 
 public abstract class SqlMapper<Entity, SQLEntity> {
@@ -38,26 +40,30 @@ public abstract class SqlMapper<Entity, SQLEntity> {
 
             for (String field : declaredFields.keySet()) {
                 try {
-                    final Object value = entityWrapper.getPropertyValue(declaredFields.get(field));
+                    Object value = entityWrapper.getPropertyValue(declaredFields.get(field));
+                    value = convertBase64(value, field, sqlEntityClass);
                     sqlEntityWrapper.setPropertyValue(field, value);
                 } catch (BeansException e) {
                     LOGGER.warn("Error mapping field '" + field + "'.", e);
                 }
             }
 
-            JSONObject extra = new JSONObject();
-            for (String attribute : getExtraAttributes()) {
-                try {
-                    final Object value = entityWrapper.getPropertyValue(attribute);
-                    if (value != null) {
-                        extra.put(attribute, value);
+            final List<String> extraAttributes = getExtraAttributes();
+            if (extraAttributes.size() > 0) {
+                JSONObject extra = new JSONObject();
+                for (String attribute : extraAttributes) {
+                    try {
+                        final Object value = entityWrapper.getPropertyValue(attribute);
+                        if (value != null) {
+                            extra.put(attribute, value);
+                        }
+                    } catch (BeansException e) {
+                        LOGGER.warn("Error mapping attribute '" + attribute + "'.", e);
                     }
-                } catch (BeansException e) {
-                    LOGGER.warn("Error mapping attribute '" + attribute + "'.", e);
                 }
-            }
-            if (getExtraAttributes().size() > 0) {
-                sqlEntityWrapper.setPropertyValue(EXTRA_FIELD, extra.toJSONString());
+                if (declaredFields.keySet().contains(EXTRA_FIELD)) {
+                    sqlEntityWrapper.setPropertyValue(EXTRA_FIELD, extra.toJSONString());
+                }
             }
 
         } catch (ReflectiveOperationException e) {
@@ -84,7 +90,8 @@ public abstract class SqlMapper<Entity, SQLEntity> {
 
             for (String field : declaredFields.keySet()) {
                 try {
-                    final Object value = sqlEntityWrapper.getPropertyValue(field);
+                    Object value = sqlEntityWrapper.getPropertyValue(field);
+                    value = convertBase64(value, field, entityClass);
                     entityWrapper.setPropertyValue(declaredFields.get(field), value);
                 } catch (BeansException e) {
                     LOGGER.warn("Error mapping field '" + field + "'.", e);
@@ -92,7 +99,6 @@ public abstract class SqlMapper<Entity, SQLEntity> {
             }
 
             final List<String> extraAttributes = getExtraAttributes();
-
             if (extraAttributes.size() > 0) {
                 JSONObject jsonObject = null;
                 try {
@@ -145,6 +151,22 @@ public abstract class SqlMapper<Entity, SQLEntity> {
     }
 
     public void overrideFields(Map<String, String> map) {
+    }
+
+    private Object convertBase64(Object value, String field, Class<?> entity) {
+        Object newValue = value;
+        if (value instanceof String || value instanceof byte[]) {
+            try {
+                final Type fieldType = entity.getDeclaredField(field).getType();
+                if (fieldType.equals(String.class) && value instanceof byte[]) {
+                    newValue = Base64.encodeBase64String((byte[]) value);
+                } else if (fieldType.equals(byte[].class) && value instanceof String) {
+                    newValue = Base64.decodeBase64((String) value);
+                }
+            } catch (NoSuchFieldException e) {
+            }
+        }
+        return newValue;
     }
 
 }

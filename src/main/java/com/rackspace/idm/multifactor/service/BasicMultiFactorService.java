@@ -1226,7 +1226,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             throw new MultiFactorDeviceAlreadyVerifiedException(DEVICE_ALREADY_VERIFIED);
         } else if (otpHelper.checkTOTP(device.getKey(), verificationCode)) {
             device.setMultiFactorDeviceVerified(true);
-            otpDeviceDao.updateObject(device);
+            otpDeviceDao.updateOTPDevice(device);
         } else {
             throw new MultiFactorDevicePinValidationException(PIN_DOES_NOT_MATCH);
         }
@@ -1244,7 +1244,7 @@ public class BasicMultiFactorService implements MultiFactorService {
                     || userMfaType == null || userMfaType == FactorTypeEnum.SMS
                     || otpDeviceDao.countVerifiedOTPDevicesByParent(user) > 1) {
                 //allowed to be deleted
-                otpDeviceDao.deleteObject(device);
+                otpDeviceDao.deleteOTPDevice(device);
             } else {
                 throw new ErrorCodeIdmException(ErrorCodes.ERROR_CODE_DELETE_OTP_DEVICE_FORBIDDEN_STATE, DELETE_OTP_DEVICE_REQUEST_INVALID_MSG);
             }

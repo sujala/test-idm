@@ -465,7 +465,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         then:
         mockOTPDeviceDao.getOTPDeviceByParentAndId(user, otpDevice.id) >> otpDevice
         mockOTPDeviceDao.countVerifiedOTPDevicesByParent(user) >> verifiedOTPCount
-        1 * mockOTPDeviceDao.deleteObject(otpDevice)
+        1 * mockOTPDeviceDao.deleteOTPDevice(otpDevice)
         notThrown(ErrorCodeIdmException)
 
         where:

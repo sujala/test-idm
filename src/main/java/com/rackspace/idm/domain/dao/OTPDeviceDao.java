@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.OTPDevice;
 
-public interface OTPDeviceDao extends GenericDao<OTPDevice> {
+public interface OTPDeviceDao {
 
     /**
      * Add an OTP device to a parent.
@@ -59,5 +59,19 @@ public interface OTPDeviceDao extends GenericDao<OTPDevice> {
      * @param parent
      */
     void deleteAllOTPDevicesFromParent(UniqueId parent);
+
+    /**
+     * Deletes an OTP device.
+     *
+     * @param otpDevice
+     */
+    void deleteOTPDevice(OTPDevice otpDevice);
+
+    /**
+     * Updates an OTP device.
+     *
+     * @param otpDevice
+     */
+    void updateOTPDevice(OTPDevice otpDevice);
 
 }
