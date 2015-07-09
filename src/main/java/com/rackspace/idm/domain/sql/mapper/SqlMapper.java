@@ -49,8 +49,8 @@ public abstract class SqlMapper<Entity, SQLEntity> {
             }
 
             final List<String> extraAttributes = getExtraAttributes();
+            JSONObject extra = new JSONObject();
             if (extraAttributes.size() > 0) {
-                JSONObject extra = new JSONObject();
                 for (String attribute : extraAttributes) {
                     try {
                         final Object value = entityWrapper.getPropertyValue(attribute);
@@ -61,9 +61,9 @@ public abstract class SqlMapper<Entity, SQLEntity> {
                         LOGGER.warn("Error mapping attribute '" + attribute + "'.", e);
                     }
                 }
-                if (declaredFields.keySet().contains(EXTRA_FIELD)) {
-                    sqlEntityWrapper.setPropertyValue(EXTRA_FIELD, extra.toJSONString());
-                }
+            }
+            if (declaredFields.keySet().contains(EXTRA_FIELD)) {
+                sqlEntityWrapper.setPropertyValue(EXTRA_FIELD, extra.toJSONString());
             }
 
         } catch (ReflectiveOperationException e) {

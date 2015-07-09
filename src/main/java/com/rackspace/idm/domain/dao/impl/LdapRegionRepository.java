@@ -1,11 +1,11 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.RegionDao;
 import com.rackspace.idm.domain.entity.Region;
 import com.unboundid.ldap.sdk.Filter;
-import org.springframework.stereotype.Component;
 
-@Component
+@LDAPComponent
 public class LdapRegionRepository extends LdapGenericRepository<Region> implements RegionDao {
 
     public String getBaseDn(){
