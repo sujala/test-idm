@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.OTPDeviceDao;
 import com.rackspace.idm.domain.dao.UniqueId;
@@ -7,11 +8,10 @@ import com.rackspace.idm.domain.entity.OTPDevice;
 import com.unboundid.ldap.sdk.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 
-@Component
+@LDAPComponent
 public class LdapOTPDeviceRepository extends LdapGenericRepository<OTPDevice> implements OTPDeviceDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LdapOTPDeviceRepository.class);
@@ -103,6 +103,16 @@ public class LdapOTPDeviceRepository extends LdapGenericRepository<OTPDevice> im
         } catch (IllegalStateException e) {
             LOGGER.warn("Unable to remove OTP devices", e);
         }
+    }
+
+    @Override
+    public void deleteOTPDevice(OTPDevice otpDevice) {
+        deleteObject(otpDevice);
+    }
+
+    @Override
+    public void updateOTPDevice(OTPDevice otpDevice) {
+        updateObject(otpDevice);
     }
 
     private String getContainerDN(UniqueId parent) {
