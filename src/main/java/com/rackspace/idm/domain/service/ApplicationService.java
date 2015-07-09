@@ -58,13 +58,9 @@ public interface ApplicationService {
     
     ClientRole getClientRoleById(String id);
     
-    Iterable<ClientRole> getAllClientRoles();
-
     PaginatorContext<ClientRole> getAvailableClientRolesPaged(int offset, int limit, int maxWeightAvailable);
 
     PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int offset, int limit, int maxWeightAvailable);
-
-    PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, String roleName, int offset, int limit);
 
     Iterable<Application> getOpenStackServices();
 

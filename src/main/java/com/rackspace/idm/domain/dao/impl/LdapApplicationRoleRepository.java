@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
@@ -10,7 +11,6 @@ import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +24,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 
-@Component
+@LDAPComponent
 public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientRole> implements ApplicationRoleDao {
 
     @Autowired
@@ -85,11 +85,6 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     }
 
     @Override
-    public Iterable<ClientRole> getAllClientRoles() {
-        return getObjects(searchFilter_getAllClientRoles());
-    }
-
-    @Override
     public PaginatorContext<ClientRole> getAvailableClientRolesPaged(int offset, int limit, int maxWeightAvailable) {
         return getObjectsPaged(searchFilter_availableClientRoles(maxWeightAvailable), offset, limit);
     }
@@ -97,11 +92,6 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     @Override
     public PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int offset, int limit, int maxWeightAvailable) {
         return getObjectsPaged(searchFilter_availableRolesByApplicationId(applicationId, maxWeightAvailable), offset, limit);
-    }
-
-    @Override
-    public PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, String roleName, int offset, int limit) {
-        return getObjectsPaged(searchFilterApplicationIdAndRoleName(applicationId, roleName), offset, limit);
     }
 
     @Override
