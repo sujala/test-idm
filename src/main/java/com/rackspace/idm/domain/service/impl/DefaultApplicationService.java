@@ -270,14 +270,6 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public PaginatorContext<ClientRole> getClientRolesPaged(String applicationId, String roleName, int offset, int limit) {
-        logger.debug("Getting all Client Roles page: {}");
-        PaginatorContext<ClientRole> context = applicationRoleDao.getClientRolesPaged(applicationId, roleName, offset, limit);
-        logger.debug("Got {} Client Roles", context.getTotalRecords());
-        return context;
-    }
-
-    @Override
     public PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int offset, int limit, int maxWeightAvailable) {
         logger.debug("Getting all Client Roles page: {}");
         PaginatorContext<ClientRole> context = applicationRoleDao.getAvailableClientRolesPaged(applicationId, offset, limit, maxWeightAvailable);
@@ -293,12 +285,6 @@ public class DefaultApplicationService implements ApplicationService {
         return context;
     }
     
-    @Override
-    public Iterable<ClientRole> getAllClientRoles() {
-        logger.debug("Getting Client Roles");
-        return this.applicationRoleDao.getAllClientRoles();
-    }
-
     @Override
     public ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName) {
         logger.debug("Getting Client Role {} for client {}", roleName, clientId);

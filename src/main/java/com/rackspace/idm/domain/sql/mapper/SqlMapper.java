@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.sql.mapper;
 
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -8,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.BeansException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -169,4 +172,20 @@ public abstract class SqlMapper<Entity, SQLEntity> {
         return newValue;
     }
 
+    public PageRequest getPageRequest(int offset, int limit) {
+        int page = limit == 0? 0 : offset / limit;
+        int size = limit == 0? offset : limit + offset % limit;
+        return new PageRequest(page, size);
+    }
+
+    public PaginatorContext<Entity> fromSQL(Page<SQLEntity> sqlEntities, int offset, int limit) {
+        List<Entity> entities = fromSQL(sqlEntities);
+
+        PaginatorContext<Entity> context = new PaginatorContext<Entity>();
+        context.setOffset(offset);
+        context.setLimit(limit);
+        context.setValueList(entities.subList(limit == 0 ? 0 : offset % limit, entities.size()));
+
+        return context;
+    }
 }
