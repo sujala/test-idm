@@ -67,6 +67,8 @@
                 <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
                     <property name="generateDdl" value="false"/>
                     <property name="showSql" value="#{identityConfig.staticConfig.sqlShowSql}"/>
+                    <property name="database" value="MYSQL"/>
+                    <property name="databasePlatform" value="org.hibernate.dialect.MySQL5Dialect"/>
                 </bean>
             </property>
             <property name="jpaProperties">
