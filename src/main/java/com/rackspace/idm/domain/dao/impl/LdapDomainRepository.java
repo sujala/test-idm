@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.PaginatorContext;
@@ -19,7 +20,7 @@ import java.util.List;
  * Time: 3:46 PM
  * To change this template use File | Settings | File Templates.
  */
-@Component
+@LDAPComponent
 public class LdapDomainRepository extends LdapGenericRepository<Domain> implements DomainDao {
 
     public static final String NULL_OR_EMPTY_DOMAIN_ID_PARAMETER = "Null or Empty domainId parameter";
