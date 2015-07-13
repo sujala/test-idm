@@ -1,10 +1,10 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.PolicyDao;
 import com.rackspace.idm.domain.entity.Policies;
 import com.rackspace.idm.domain.entity.Policy;
 import com.unboundid.ldap.sdk.Filter;
-import org.springframework.stereotype.Component;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  * Time: 3:46 PM
  * To change this template use File | Settings | File Templates.
  */
-@Component
+@LDAPComponent
 public class LdapPolicyRepository extends LdapGenericRepository<Policy> implements PolicyDao {
 
     public String getBaseDn() {
