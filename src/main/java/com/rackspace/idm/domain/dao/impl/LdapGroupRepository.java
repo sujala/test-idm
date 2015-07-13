@@ -1,9 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
 import com.unboundid.ldap.sdk.Filter;
-import org.springframework.stereotype.Component;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * Time: 2:33 PM
  * To change this template use File | Settings | File Templates.
  */
-@Component
+@LDAPComponent
 public class LdapGroupRepository extends LdapGenericRepository<Group> implements GroupDao {
 
     public String getBaseDn() {
