@@ -1,8 +1,8 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.CapabilityDao;
 import com.rackspace.idm.domain.entity.Capability;
-import org.springframework.stereotype.Component;
 import com.unboundid.ldap.sdk.Filter;
 
 
@@ -14,7 +14,7 @@ import com.unboundid.ldap.sdk.Filter;
  * Time: 4:43 PM
  * To change this template use File | Settings | File Templates.
  */
-@Component
+@LDAPComponent
 public class LdapCapabilityRepository  extends LdapGenericRepository<Capability> implements CapabilityDao {
     public String getBaseDn(){
         return CAPABILITY_BASE_DN;
@@ -26,6 +26,10 @@ public class LdapCapabilityRepository  extends LdapGenericRepository<Capability>
 
     public String getNextCapabilityId() {
         return getNextId(NEXT_CAPABILITY_ID);
+    }
+
+    public String getSortAttribute() {
+        return ATTR_ID;
     }
 
     @Override
