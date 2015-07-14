@@ -5,9 +5,9 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapGenericRepository
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator
 import com.rackspace.idm.domain.security.encrypters.LDAPKeyCzarCrypterLocator
-import com.rackspace.idm.domain.security.encrypters.keyczar.KeyCzarKeyMetadataDao
-import com.rackspace.idm.domain.security.encrypters.keyczar.KeyCzarKeyVersionDao
-import com.rackspace.idm.domain.security.encrypters.keyczar.LdapKeyMetadata
+import com.rackspace.idm.domain.dao.KeyCzarKeyMetadataDao
+import com.rackspace.idm.domain.dao.KeyCzarKeyVersionDao
+import com.rackspace.idm.domain.entity.LdapKeyMetadata
 import com.rackspace.idm.domain.security.signoff.KeyCzarAPINodeSignoffDao
 import org.joda.time.DateTime
 import org.keyczar.Crypter

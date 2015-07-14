@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.security.encrypters.keyczar;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.KeyVersionStatusEnum;
+import com.rackspace.idm.domain.entity.KeyMetadata;
+import com.rackspace.idm.domain.entity.KeyVersion;
 import org.keyczar.exceptions.KeyczarException;
 import org.keyczar.interfaces.KeyczarReader;
 
