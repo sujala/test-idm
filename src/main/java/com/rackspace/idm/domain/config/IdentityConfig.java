@@ -51,6 +51,7 @@ public class IdentityConfig {
     public static final String IDENTITY_PROVISIONED_TOKEN_FORMAT = "feature.provisioned.defaultTokenFormat";
     private static final String FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME = "feature.aetoken.cleanup.uuid.on.revokes";
     public static final String PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME = "reloadable.properties.ttl.seconds";
+    public static final String GROUP_DOMAINID_DEFAULT = "group.domainId.default";
 
     // left as static var to support external reference
     public static final int PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE = 30;
@@ -294,6 +295,7 @@ public class IdentityConfig {
         verifyAndLogStaticProperty(SQL_URL_PROP, REQUIRED);
         verifyAndLogStaticProperty(SQL_USERNAME_PROP, REQUIRED);
         verifyAndLogStaticProperty(SQL_PASSWORD_PROP, REQUIRED);
+        verifyAndLogStaticProperty(GROUP_DOMAINID_DEFAULT, REQUIRED);
 
         logFederatedTokenFormatOverrides();
 
@@ -755,6 +757,10 @@ public class IdentityConfig {
             return getBooleanSafely(staticConfiguration, SQL_SHOW_SQL_PROP);
         }
 
+        @IdmProp(key = GROUP_DOMAINID_DEFAULT, description = "Default domain_id when creating a group in sql", versionAdded = "3.0.0")
+        public String getGroupDefaultDomainId() {
+            return getStringSafely(staticConfiguration, GROUP_DOMAINID_DEFAULT);
+        }
     }
 
     /**
