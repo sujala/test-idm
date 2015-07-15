@@ -61,4 +61,5 @@ public class SqlGroupRepository implements GroupDao {
     public void updateGroup(Group group) {
         groupRepository.save(mapper.toSQL(group));
     }
+
 }

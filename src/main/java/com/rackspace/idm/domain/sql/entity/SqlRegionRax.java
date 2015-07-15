@@ -2,7 +2,10 @@ package com.rackspace.idm.domain.sql.entity;
 
 import lombok.Data;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Data
 @Entity
@@ -21,4 +24,5 @@ public class SqlRegionRax {
 
     @Column(name = "default_region")
     private Boolean isDefault;
+
 }

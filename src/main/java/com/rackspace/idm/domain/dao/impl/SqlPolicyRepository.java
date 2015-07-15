@@ -62,4 +62,5 @@ public class SqlPolicyRepository implements PolicyDao {
     public void softDeletePolicy(Policy policy) {
         policyRepository.delete(mapper.toSQL(policy));
     }
+
 }

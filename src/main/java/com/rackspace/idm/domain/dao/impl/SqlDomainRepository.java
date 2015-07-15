@@ -53,4 +53,5 @@ public class SqlDomainRepository implements DomainDao {
     public Iterable<Domain> getDomainsForTenant(List<Tenant> tenants) {
         return null;
     }
+
 }

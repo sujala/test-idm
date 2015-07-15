@@ -12,8 +12,9 @@ import java.util.List;
 public interface RegionRepository extends JpaSpecificationExecutor<SqlRegion>, JpaRepository<SqlRegion, String> {
 
     @EntityGraph(value = "SqlRegion.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public List<SqlRegion> findByRaxCloud(String cloud);
+    List<SqlRegion> findByRaxCloud(String cloud);
 
     @EntityGraph(value = "SqlRegion.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public SqlRegion findByRaxCloudAndRaxIsDefault(String cloud, Boolean defaultRegion);
+    SqlRegion findByRaxCloudAndRaxIsDefault(String cloud, Boolean defaultRegion);
+
 }

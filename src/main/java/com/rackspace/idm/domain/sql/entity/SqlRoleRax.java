@@ -2,7 +2,10 @@ package com.rackspace.idm.domain.sql.entity;
 
 import lombok.Data;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Data
 @Entity
@@ -24,4 +27,5 @@ public class SqlRoleRax {
 
     @Column(name = "client_id", length = 64)
     private String clientId;
+
 }

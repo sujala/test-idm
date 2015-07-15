@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.IdentityProvider;
@@ -7,7 +8,7 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;
 
-@Component
+@LDAPComponent
 public class LdapIdentityProviderRepository extends LdapGenericRepository<IdentityProvider> implements IdentityProviderDao {
 
     public static final String NULL_OR_EMPTY_PARAMETER = "Null or Empty parameter";
