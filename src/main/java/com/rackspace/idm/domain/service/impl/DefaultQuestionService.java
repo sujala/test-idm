@@ -34,6 +34,7 @@ public class DefaultQuestionService implements QuestionService {
 
         Question oldQuestion = checkAndGetQuestion(questionId);
         question.setUniqueId(oldQuestion.getUniqueId());
+        question.setId(oldQuestion.getId());
 
         questionDao.updateQuestion(question);
     }
