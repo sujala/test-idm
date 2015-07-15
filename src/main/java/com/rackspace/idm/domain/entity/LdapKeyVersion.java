@@ -1,8 +1,8 @@
-package com.rackspace.idm.domain.security.encrypters.keyczar;
+package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.ReadOnlyEntry;
+import com.rackspace.idm.domain.entity.KeyVersion;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Getter;
 import lombok.Setter;

@@ -1,4 +1,6 @@
-package com.rackspace.idm.domain.security.encrypters.keyczar;
+package com.rackspace.idm.domain.dao;
+
+import com.rackspace.idm.domain.entity.KeyVersion;
 
 import java.util.List;
 

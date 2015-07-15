@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.security.encrypters.keyczar;
+package com.rackspace.idm.domain.entity;
 
 import java.util.Date;
 

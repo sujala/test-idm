@@ -3,11 +3,13 @@ package com.rackspace.idm.domain.security.encrypters;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.dao.KeyCzarKeyMetadataDao;
+import com.rackspace.idm.domain.dao.KeyCzarKeyVersionDao;
 import com.rackspace.idm.domain.security.signoff.KeyCzarAPINodeSignoffRepository;
 import com.rackspace.idm.domain.security.signoff.LdapAPINodeSignoff;
 import com.rackspace.idm.domain.security.encrypters.keyczar.*;
-import com.rackspace.idm.domain.security.encrypters.keyczar.KeyMetadata;
-import com.rackspace.idm.domain.security.encrypters.keyczar.KeyVersion;
+import com.rackspace.idm.domain.entity.KeyMetadata;
+import com.rackspace.idm.domain.entity.KeyVersion;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -18,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
-import java.util.Date;
 import java.util.List;
 
 public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator {

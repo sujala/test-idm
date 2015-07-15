@@ -1,17 +1,19 @@
-package com.rackspace.idm.domain.security.encrypters.keyczar;
+package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.dao.impl.LdapGenericRepository;
+import com.rackspace.idm.domain.dao.KeyCzarKeyVersionDao;
+import com.rackspace.idm.domain.entity.KeyVersion;
+import com.rackspace.idm.domain.entity.LdapKeyVersion;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
-public class KeyCzarKeyVersionRepository extends LdapGenericRepository<LdapKeyVersion> implements KeyCzarKeyVersionDao {
+@LDAPComponent
+public class LdapKeyCzarKeyVersionRepository extends LdapGenericRepository<LdapKeyVersion> implements KeyCzarKeyVersionDao {
 
     @Autowired
     private IdentityConfig config;
