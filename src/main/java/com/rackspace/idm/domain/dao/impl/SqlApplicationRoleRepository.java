@@ -96,4 +96,5 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
     public Iterable<ClientRole> getAllIdentityRoles() {
         return mapper.fromSQL(repository.findAll());
     }
+
 }

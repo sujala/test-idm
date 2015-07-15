@@ -28,4 +28,5 @@ public class SqlRegion {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id", referencedColumnName = "id", nullable = false)
     private SqlRegionRax rax;
+
 }

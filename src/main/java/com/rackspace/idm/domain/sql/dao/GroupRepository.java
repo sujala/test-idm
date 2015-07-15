@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 @SQLRepository
 public interface GroupRepository extends JpaSpecificationExecutor<SqlGroup>, JpaRepository<SqlGroup, String> {
 
-    public SqlGroup findByName(String name);
+    SqlGroup findByName(String name);
 
 }

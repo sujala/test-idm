@@ -2,7 +2,10 @@ package com.rackspace.idm.domain.sql.entity;
 
 import lombok.Data;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Data
 @Entity
@@ -15,4 +18,5 @@ public class SqlDomainRax {
 
     @Column(name = "mfa_enforcement_level", length = 64)
     private String domainMultiFactorEnforcementLevel;
+
 }

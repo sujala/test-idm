@@ -156,7 +156,7 @@ public abstract class SqlMapper<Entity, SQLEntity> {
     public void overrideFields(Map<String, String> map) {
     }
 
-    private Object convertBase64(Object value, String field, Class<?> entity) {
+    protected Object convertBase64(Object value, String field, Class<?> entity) {
         Object newValue = value;
         if (value instanceof String || value instanceof byte[]) {
             try {
@@ -173,19 +173,20 @@ public abstract class SqlMapper<Entity, SQLEntity> {
     }
 
     public PageRequest getPageRequest(int offset, int limit) {
-        int page = limit == 0? 0 : offset / limit;
-        int size = limit == 0? offset : limit + offset % limit;
+        final int page = limit == 0? 0 : offset / limit;
+        final int size = limit == 0? offset : limit + offset % limit;
         return new PageRequest(page, size);
     }
 
     public PaginatorContext<Entity> fromSQL(Page<SQLEntity> sqlEntities, int offset, int limit) {
-        List<Entity> entities = fromSQL(sqlEntities);
+        final List<Entity> entities = fromSQL(sqlEntities);
 
-        PaginatorContext<Entity> context = new PaginatorContext<Entity>();
+        final PaginatorContext<Entity> context = new PaginatorContext<Entity>();
         context.setOffset(offset);
         context.setLimit(limit);
         context.setValueList(entities.subList(limit == 0 ? 0 : offset % limit, entities.size()));
 
         return context;
     }
+
 }

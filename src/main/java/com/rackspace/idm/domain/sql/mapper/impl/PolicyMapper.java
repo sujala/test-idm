@@ -15,4 +15,5 @@ public class PolicyMapper extends SqlRaxMapper<Policy, SqlPolicy, SqlPolicyRax> 
     public List<String> getExtraAttributes() {
         return Arrays.asList("user_id", "project_id");
     }
+
 }

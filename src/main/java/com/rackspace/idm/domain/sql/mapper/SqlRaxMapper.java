@@ -1,20 +1,20 @@
 package com.rackspace.idm.domain.sql.mapper;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.BeansException;
 
 import java.lang.reflect.ParameterizedType;
-import java.util.*;
+import java.util.Map;
 
-public class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlMapper<Entity, SQLEntity> {
+public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlMapper<Entity, SQLEntity> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SqlMapper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqlRaxMapper.class);
 
     public static final String RAX_FIELD = "rax";
 
+    final private Class<Entity> entityClass = (Class<Entity>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
     final private Class<SQLRaxEntity> sqlRaxEntityClass = (Class<SQLRaxEntity>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[2];
 
     public SQLEntity toSQL(Entity entity) {
@@ -28,16 +28,17 @@ public class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlMapper<Ent
             sqlEntity = super.toSQL(entity);
             sqlRaxEntity = sqlRaxEntityClass.newInstance();
 
-            BeanWrapperImpl entityWrapper = new BeanWrapperImpl(entity);
-            BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
-            BeanWrapperImpl sqlRaxEntityWrapper = new BeanWrapperImpl(sqlRaxEntity);
+            final BeanWrapperImpl entityWrapper = new BeanWrapperImpl(entity);
+            final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
+            final BeanWrapperImpl sqlRaxEntityWrapper = new BeanWrapperImpl(sqlRaxEntity);
 
-            Map<String, String> declaredRaxFields = getDeclaredFields(sqlRaxEntityClass);
+            final Map<String, String> declaredRaxFields = getDeclaredFields(sqlRaxEntityClass);
             overrideRaxFields(declaredRaxFields);
 
             for (String field : declaredRaxFields.keySet()) {
                 try {
                     Object value = entityWrapper.getPropertyValue(declaredRaxFields.get(field));
+                    value = convertBase64(value, field, sqlRaxEntityClass);
                     sqlRaxEntityWrapper.setPropertyValue(field, value);
                 } catch (BeansException e) {
                     LOGGER.warn("Error mapping field '" + field + "'.", e);
@@ -45,10 +46,7 @@ public class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlMapper<Ent
             }
 
             sqlEntityWrapper.setPropertyValue(RAX_FIELD, sqlRaxEntity);
-
-        } catch (InstantiationException e) {
-            LOGGER.error("Error mapping data.", e);
-        } catch (IllegalAccessException e) {
+        } catch (ReflectiveOperationException e) {
             LOGGER.error("Error mapping data.", e);
         }
 
@@ -62,22 +60,22 @@ public class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlMapper<Ent
 
         Entity entity = null;
         SQLRaxEntity sqlRaxEntity = null;
-
         entity = super.fromSQL(sqlEntity);
-        BeanWrapperImpl entityWrapper = new BeanWrapperImpl(entity);
 
-        BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
+        final BeanWrapperImpl entityWrapper = new BeanWrapperImpl(entity);
+        final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
 
         sqlRaxEntity = (SQLRaxEntity) sqlEntityWrapper.getPropertyValue(RAX_FIELD);
         if (sqlRaxEntity != null) {
-            BeanWrapperImpl sqlRaxEntityWrapper = new BeanWrapperImpl(sqlRaxEntity);
+            final BeanWrapperImpl sqlRaxEntityWrapper = new BeanWrapperImpl(sqlRaxEntity);
 
-            Map<String, String> declaredRaxFields = getDeclaredFields(sqlRaxEntityClass);
+            final Map<String, String> declaredRaxFields = getDeclaredFields(sqlRaxEntityClass);
             overrideRaxFields(declaredRaxFields);
 
             for (String field : declaredRaxFields.keySet()) {
                 try {
                     Object value = sqlRaxEntityWrapper.getPropertyValue(field);
+                    value = convertBase64(value, field, entityClass);
                     entityWrapper.setPropertyValue(declaredRaxFields.get(field), value);
                 } catch (BeansException e) {
                     LOGGER.warn("Error mapping field '" + field + "'.", e);
@@ -90,4 +88,5 @@ public class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlMapper<Ent
 
     public void overrideRaxFields(Map<String, String> map){
     }
+
 }

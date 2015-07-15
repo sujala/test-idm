@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collections;
 
-
 @SQLComponent
 public class SqlRegionRepository implements RegionDao {
 
@@ -98,4 +97,5 @@ public class SqlRegionRepository implements RegionDao {
         }
         return null;
     }
+
 }

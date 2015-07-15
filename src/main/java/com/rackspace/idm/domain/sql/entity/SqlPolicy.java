@@ -28,4 +28,5 @@ public class SqlPolicy {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id", referencedColumnName = "id", nullable = false)
     private SqlPolicyRax rax;
+
 }

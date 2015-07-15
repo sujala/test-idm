@@ -20,4 +20,5 @@ public class SqlPatternRepository implements PatternDao {
     public Pattern getPattern(String name) {
         return mapper.fromSQL(patternRepository.findOne(name));
     }
+
 }

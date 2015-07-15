@@ -10,5 +10,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface PolicyRepository extends JpaSpecificationExecutor<SqlPolicy>, JpaRepository<SqlPolicy, String> {
 
     @EntityGraph(value = "SqlPolicy.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public SqlPolicy findByRaxName(String cloud);
+    SqlPolicy findByRaxName(String cloud);
+
 }
