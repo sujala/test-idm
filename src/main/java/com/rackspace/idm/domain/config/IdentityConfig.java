@@ -52,6 +52,8 @@ public class IdentityConfig {
     private static final String FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME = "feature.aetoken.cleanup.uuid.on.revokes";
     public static final String PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME = "reloadable.properties.ttl.seconds";
     public static final String GROUP_DOMAINID_DEFAULT = "group.domainId.default";
+    public static final String TENANT_DOMAINID_DEFAULT = "tenant.domainId.default";
+
 
     // left as static var to support external reference
     public static final int PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE = 30;
@@ -298,6 +300,7 @@ public class IdentityConfig {
         verifyAndLogStaticProperty(SQL_USERNAME_PROP, REQUIRED);
         verifyAndLogStaticProperty(SQL_PASSWORD_PROP, REQUIRED);
         verifyAndLogStaticProperty(GROUP_DOMAINID_DEFAULT, REQUIRED);
+        verifyAndLogStaticProperty(TENANT_DOMAINID_DEFAULT, REQUIRED);
 
         logFederatedTokenFormatOverrides();
 
@@ -763,11 +766,6 @@ public class IdentityConfig {
         public Boolean getSqlShowSql() {
             return getBooleanSafely(staticConfiguration, SQL_SHOW_SQL_PROP);
         }
-
-        @IdmProp(key = GROUP_DOMAINID_DEFAULT, description = "Default domain_id when creating a group in sql", versionAdded = "3.0.0")
-        public String getGroupDefaultDomainId() {
-            return getStringSafely(staticConfiguration, GROUP_DOMAINID_DEFAULT);
-        }
     }
 
     /**
@@ -912,6 +910,16 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_PERSIST_RACKERS_PROP, description = "Whether shell Racker users are persisted within Identity", versionAdded = "3.0.0")
         public boolean shouldPersistRacker() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_PERSIST_RACKERS_PROP);
+        }
+
+        @IdmProp(key = GROUP_DOMAINID_DEFAULT, description = "Default domain_id when creating a group in sql", versionAdded = "3.0.0")
+        public String getGroupDefaultDomainId() {
+            return getStringSafely(reloadableConfiguration, GROUP_DOMAINID_DEFAULT);
+        }
+
+        @IdmProp(key = TENANT_DOMAINID_DEFAULT, description = "Default domain_id when creating a tenant in sql", versionAdded = "3.0.0")
+        public String getTenantDefaultDomainId() {
+            return getStringSafely(reloadableConfiguration, TENANT_DOMAINID_DEFAULT);
         }
     }
 
