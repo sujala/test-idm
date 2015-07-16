@@ -21,59 +21,86 @@ public abstract class SqlMapper<Entity, SQLEntity> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlMapper.class);
 
-    private static final String EXTRA_FIELD = "extra";
+    protected static final String EXTRA_FIELD = "extra";
 
     final private Class<Entity> entityClass = (Class<Entity>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
     final private Class<SQLEntity> sqlEntityClass = (Class<SQLEntity>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[1];
+
+    protected Set<String> getIgnoredSetFields() {
+        return Collections.singleton(EXTRA_FIELD);
+    }
 
     public SQLEntity toSQL(Entity entity) {
         if (entity == null) {
             return null;
         }
 
-        SQLEntity sqlEntity = null;
         try {
-            sqlEntity = sqlEntityClass.newInstance();
+            return modifyToSQL(entity, sqlEntityClass.newInstance());
+        } catch (ReflectiveOperationException e) {
+            LOGGER.error("Error creating entity.", e);
+            return null;
+        }
+    }
 
-            final BeanWrapperImpl entityWrapper = new BeanWrapperImpl(entity);
-            final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
+    public SQLEntity modifyToSQL(Entity entity, SQLEntity sqlEntity) {
+        if (entity == null || sqlEntity == null) {
+            return sqlEntity;
+        }
 
-            final Map<String, String> declaredFields = getDeclaredFields(sqlEntityClass);
-            overrideFields(declaredFields);
+        final BeanWrapperImpl entityWrapper = new BeanWrapperImpl(entity);
+        final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
 
-            for (String field : declaredFields.keySet()) {
+        final Map<String, String> declaredFields = getDeclaredFields(sqlEntityClass);
+        overrideFields(declaredFields);
+        setToSQL(declaredFields, entityWrapper, sqlEntityWrapper, sqlEntityClass);
+
+        if (declaredFields.keySet().contains(EXTRA_FIELD)) {
+            setExtraToSQL(entityWrapper, sqlEntityWrapper);
+        }
+
+        return sqlEntity;
+    }
+
+    protected final void setToSQL(Map<String, String> declaredFields, BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper, Class<?> entityClass) {
+        final Set<String> ignored = getIgnoredSetFields();
+        for (String field : declaredFields.keySet()) {
+            if (!ignored.contains(field) && sqlEntityWrapper.isWritableProperty(field)) {
                 try {
                     Object value = entityWrapper.getPropertyValue(declaredFields.get(field));
-                    value = convertBase64(value, field, sqlEntityClass);
+                    value = convertBase64(value, field, entityClass);
                     sqlEntityWrapper.setPropertyValue(field, value);
                 } catch (BeansException e) {
                     LOGGER.warn("Error mapping field '" + field + "'.", e);
                 }
             }
+        }
+    }
 
-            final List<String> extraAttributes = getExtraAttributes();
-            JSONObject extra = new JSONObject();
-            if (extraAttributes.size() > 0) {
-                for (String attribute : extraAttributes) {
-                    try {
-                        final Object value = entityWrapper.getPropertyValue(attribute);
-                        if (value != null) {
-                            extra.put(attribute, value);
-                        }
-                    } catch (BeansException e) {
-                        LOGGER.warn("Error mapping attribute '" + attribute + "'.", e);
-                    }
-                }
-            }
-            if (declaredFields.keySet().contains(EXTRA_FIELD)) {
-                sqlEntityWrapper.setPropertyValue(EXTRA_FIELD, extra.toJSONString());
-            }
-
-        } catch (ReflectiveOperationException e) {
-            LOGGER.error("Error mapping data.", e);
+    private void setExtraToSQL(BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper) {
+        JSONObject extra = null;
+        try {
+            extra = (JSONObject) new JSONParser().parse((String) sqlEntityWrapper.getPropertyValue(EXTRA_FIELD));
+        } catch (Exception ignored) {
+        }
+        if (extra == null) {
+            extra = new JSONObject();
         }
 
-        return sqlEntity;
+        final List<String> extraAttributes = getExtraAttributes();
+        if (extraAttributes.size() > 0) {
+            for (String attribute : extraAttributes) {
+                try {
+                    final Object value = entityWrapper.getPropertyValue(attribute);
+                    if (value != null) {
+                        extra.put(attribute, value);
+                    }
+                } catch (BeansException e) {
+                    LOGGER.warn("Error mapping attribute '" + attribute + "'.", e);
+                }
+            }
+        }
+        sqlEntityWrapper.setPropertyValue(EXTRA_FIELD, extra.toJSONString());
     }
 
     public Entity fromSQL(SQLEntity sqlEntity) {
@@ -90,47 +117,58 @@ public abstract class SqlMapper<Entity, SQLEntity> {
 
             final Map<String, String> declaredFields = getDeclaredFields(sqlEntityClass);
             overrideFields(declaredFields);
+            setFromSQL(declaredFields, entityWrapper, sqlEntityWrapper, entityClass);
 
-            for (String field : declaredFields.keySet()) {
-                try {
-                    Object value = sqlEntityWrapper.getPropertyValue(field);
-                    value = convertBase64(value, field, entityClass);
-                    entityWrapper.setPropertyValue(declaredFields.get(field), value);
-                } catch (BeansException e) {
-                    LOGGER.warn("Error mapping field '" + field + "'.", e);
-                }
+            if (declaredFields.keySet().contains(EXTRA_FIELD)) {
+                setExtraFromSQL(entityWrapper, sqlEntityWrapper);
             }
-
-            final List<String> extraAttributes = getExtraAttributes();
-            if (extraAttributes.size() > 0) {
-                JSONObject jsonObject = null;
-                try {
-                    final String jsonString = (String) sqlEntityWrapper.getPropertyValue(EXTRA_FIELD);
-                    if (jsonString != null) {
-                        final JSONParser jsonParser = new JSONParser();
-                        jsonObject = (JSONObject) jsonParser.parse(jsonString);
-                    }
-                } catch (ParseException e) {
-                    LOGGER.warn("Error mapping extras.", e);
-                }
-
-                if (jsonObject != null) {
-                    for (String attribute : extraAttributes) {
-                        try {
-                            final Object value = jsonObject.get(attribute);
-                            entityWrapper.setPropertyValue(attribute, value);
-                        } catch (BeansException e) {
-                            LOGGER.warn("Error mapping attribute '" + attribute + "'.", e);
-                        }
-                    }
-                }
-            }
-
         } catch (ReflectiveOperationException e) {
             LOGGER.error("Error mapping data.", e);
         }
 
         return entity;
+    }
+
+    protected void setFromSQL(Map<String, String> declaredFields, BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper, Class<?> entityType) {
+        final Set<String> ignored = getIgnoredSetFields();
+        for (String field : declaredFields.keySet()) {
+            if (!ignored.contains(field) && entityWrapper.isWritableProperty(declaredFields.get(field))) {
+                try {
+                    Object value = sqlEntityWrapper.getPropertyValue(field);
+                    value = convertBase64(value, field, entityType);
+                    entityWrapper.setPropertyValue(declaredFields.get(field), value);
+                } catch (BeansException e) {
+                    LOGGER.warn("Error mapping field '" + field + "'.", e);
+                }
+            }
+        }
+    }
+
+    private void setExtraFromSQL(BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper) {
+        final List<String> extraAttributes = getExtraAttributes();
+        if (extraAttributes.size() > 0) {
+            JSONObject jsonObject = null;
+            try {
+                final String jsonString = (String) sqlEntityWrapper.getPropertyValue(EXTRA_FIELD);
+                if (jsonString != null) {
+                    final JSONParser jsonParser = new JSONParser();
+                    jsonObject = (JSONObject) jsonParser.parse(jsonString);
+                }
+            } catch (ParseException e) {
+                LOGGER.warn("Error mapping extras.", e);
+            }
+
+            if (jsonObject != null) {
+                for (String attribute : extraAttributes) {
+                    try {
+                        final Object value = jsonObject.get(attribute);
+                        entityWrapper.setPropertyValue(attribute, value);
+                    } catch (BeansException e) {
+                        LOGGER.warn("Error mapping attribute '" + attribute + "'.", e);
+                    }
+                }
+            }
+        }
     }
 
     public List<Entity> fromSQL(Iterable<SQLEntity> sqlEntities) {
@@ -156,11 +194,11 @@ public abstract class SqlMapper<Entity, SQLEntity> {
     public void overrideFields(Map<String, String> map) {
     }
 
-    protected Object convertBase64(Object value, String field, Class<?> entity) {
+    protected Object convertBase64(Object value, String field, Class<?> entityType) {
         Object newValue = value;
         if (value instanceof String || value instanceof byte[]) {
             try {
-                final Type fieldType = entity.getDeclaredField(field).getType();
+                final Type fieldType = entityType.getDeclaredField(field).getType();
                 if (fieldType.equals(String.class) && value instanceof byte[]) {
                     newValue = Base64.encodeBase64String((byte[]) value);
                 } else if (fieldType.equals(byte[].class) && value instanceof String) {
