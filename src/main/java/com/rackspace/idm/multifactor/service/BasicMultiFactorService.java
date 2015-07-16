@@ -639,7 +639,7 @@ public class BasicMultiFactorService implements MultiFactorService {
 
                 //delete the phone from the directory and external provider is no other links to phone exist
                 if(CollectionUtils.isEmpty(phone.getMembers())) {
-                    mobilePhoneDao.deleteObject(phone);
+                    mobilePhoneDao.deleteMobilePhone(phone);
                     //only delete the duo phone if one exists && feature flagged on
                     if (identityConfig.getReloadableConfig().getFeatureDeleteUnusedDuoPhones() && org.apache.commons.lang.StringUtils.isNotBlank(phone.getExternalMultiFactorPhoneId())) {
                         try {
@@ -650,7 +650,7 @@ public class BasicMultiFactorService implements MultiFactorService {
                         }
                     }
                 } else {
-                    mobilePhoneDao.updateObjectAsIs(phone);
+                    mobilePhoneDao.updateMobilePhone(phone);
                 }
             }
         } catch (Exception e) {
@@ -1011,7 +1011,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             throw new NotFoundException(e.getMessage(), e);
         }
 
-        mobilePhoneDao.updateObjectAsIs(phone);
+        mobilePhoneDao.updateMobilePhone(phone);
         enableMultifactorAndPostFeed(user);
     }
 
@@ -1100,7 +1100,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             }
         }
 
-        mobilePhoneDao.addObject(mobilePhone);
+        mobilePhoneDao.addMobilePhone(mobilePhone);
         return mobilePhone;
     }
 
@@ -1116,7 +1116,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         if (isPhoneUserMembershipEnabled()) {
             try {
                 mobilePhone.addMember(user);
-                mobilePhoneDao.updateObjectAsIs(mobilePhone);
+                mobilePhoneDao.updateMobilePhone(mobilePhone);
             } catch (Exception e) {
                 multiFactorConsistencyLogger.error(String.format("Error adding user '%s' to phone '%s' membership. The phone membership will" +
                         "be inconsistent unless this is corrected. The user's DN should be added to the phone's 'member' attribute.", user.getId(), mobilePhone.getId()), e);
