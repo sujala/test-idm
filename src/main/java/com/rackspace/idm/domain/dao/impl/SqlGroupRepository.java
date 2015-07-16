@@ -59,7 +59,7 @@ public class SqlGroupRepository implements GroupDao {
 
     @Override
     public void updateGroup(Group group) {
-        groupRepository.save(mapper.toSQL(group));
+        groupRepository.save(mapper.toSQL(group, groupRepository.findOne(group.getGroupId())));
     }
 
 }
