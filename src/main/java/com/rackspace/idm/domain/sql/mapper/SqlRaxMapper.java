@@ -25,8 +25,8 @@ public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlM
     }
 
     @Override
-    public SQLEntity modifyToSQL(Entity entity, SQLEntity sqlEntity) {
-        final SQLEntity finalEntity = super.modifyToSQL(entity, sqlEntity);
+    public SQLEntity toSQL(Entity entity, SQLEntity sqlEntity) {
+        final SQLEntity finalEntity = super.toSQL(entity, sqlEntity);
 
         final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
         SQLRaxEntity sqlRaxEntity;
