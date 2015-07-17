@@ -159,7 +159,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
             it.multifactorEnabled = false
             it
         }
-        mobilePhoneDao.addObject(_) >> {throw new DuplicateException()}
+        mobilePhoneDao.addMobilePhone(_) >> {throw new DuplicateException()}
         userService.checkAndGetUserById(user.id) >> user
         mobilePhoneDao.getById(mobilePhone1.id) >> mobilePhone1
         mobilePhoneDao.getByTelephoneNumber(mobilePhone1.telephoneNumber) >> mobilePhone1
@@ -173,7 +173,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         then:
         1 * userService.updateUserForMultiFactor(user)
         mobilePhoneDao.getById(mobilePhone2.id) >> mobilePhone2
-        1 * mobilePhoneDao.deleteObject(mobilePhone1)
+        1 * mobilePhoneDao.deleteMobilePhone(mobilePhone1)
 
         interaction {
             def callCount = 0
@@ -215,7 +215,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
             it.multifactorEnabled = false
             it
         }
-        mobilePhoneDao.addObject(_) >> {throw new DuplicateException()}
+        mobilePhoneDao.addMobilePhone(_) >> {throw new DuplicateException()}
         userService.checkAndGetUserById(user.id) >> user
         mobilePhoneDao.getById(mobilePhone1.id) >> mobilePhone1
         mobilePhoneDao.getByTelephoneNumber(mobilePhone1.telephoneNumber) >> mobilePhone1
@@ -229,7 +229,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         then:
         1 * userService.updateUserForMultiFactor(user)
         mobilePhoneDao.getById(mobilePhone2.id) >> mobilePhone2
-        1 * mobilePhoneDao.deleteObject(mobilePhone1)
+        1 * mobilePhoneDao.deleteMobilePhone(mobilePhone1)
         0 * multiFactorUserManagement.deleteMobilePhone(mobilePhone1.externalMultiFactorPhoneId)
 
         user.multiFactorMobilePhoneRsId == mobilePhone2.id
@@ -511,7 +511,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         then:
         ErrorCodeIdmException ex = thrown()
         ex.errorCode == ErrorCodes.ERROR_CODE_DELETE_OTP_DEVICE_FORBIDDEN_STATE
-        0 * mockOTPDeviceDao.deleteObject(otpDevice)
+        0 * mockOTPDeviceDao.deleteOTPDevice(otpDevice)
 
         where:
         deviceVerified  |  mfaEnabled   |  factorType           | verifiedOTPCount | verifiedPhone

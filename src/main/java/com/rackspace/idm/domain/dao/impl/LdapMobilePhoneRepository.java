@@ -1,15 +1,15 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.MobilePhoneDao;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.unboundid.ldap.sdk.Filter;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.stereotype.Component;
 
 /**
  * Responsible for storing and retrieving MobilePhones to/from the LDAP repository
  */
-@Component
+@LDAPComponent
 public class LdapMobilePhoneRepository extends LdapGenericRepository<MobilePhone> implements MobilePhoneDao {
 
     @Override
@@ -70,4 +70,20 @@ public class LdapMobilePhoneRepository extends LdapGenericRepository<MobilePhone
                 .addEqualAttribute(ATTR_TELEPHONE_NUMBER, telephoneNumber)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_MULTIFACTOR_MOBILE_PHONE).build();
     }
+
+    @Override
+    public void addMobilePhone(MobilePhone mobilePhone) {
+        addObject(mobilePhone);
+    }
+
+    @Override
+    public void deleteMobilePhone(MobilePhone mobilePhone) {
+        deleteObject(mobilePhone);
+    }
+
+    @Override
+    public void updateMobilePhone(MobilePhone mobilePhone) {
+        updateObjectAsIs(mobilePhone);
+    }
+
 }

@@ -260,7 +260,7 @@ jacoco {
 test {
     // set heap size for the test JVM(s)
     minHeapSize = "256m"
-    maxHeapSize = "768m"
+    maxHeapSize = "1024m"
 
     // set JVM arguments for the test JVM(s)
     jvmArgs '-XX:MaxPermSize=1024m'
@@ -282,8 +282,8 @@ jettyRun {
     httpPort = 8083
 
     // set heap size for the test JVM(s)
-    minHeapSize = "128m"
-    maxHeapSize = "512m"
+    minHeapSize = "256m"
+    maxHeapSize = "1024m"
 
     // set JVM arguments for the test JVM(s)
     //jvmArgs '-XX:MaxPermSize=1024m'

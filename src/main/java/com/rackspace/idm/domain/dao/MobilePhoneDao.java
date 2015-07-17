@@ -4,7 +4,7 @@ import com.rackspace.idm.domain.entity.MobilePhone;
 
 /**
  */
-public interface MobilePhoneDao extends GenericDao<MobilePhone> {
+public interface MobilePhoneDao {
 
     /**
      * Searches for a mobile phone with the specified externalMultiFactorPhoneId. At most one entry should be retrieved. Null returned if
@@ -35,4 +35,13 @@ public interface MobilePhoneDao extends GenericDao<MobilePhone> {
      * @return
      */
     MobilePhone getByTelephoneNumber(String telephoneNumber);
+
+    void addMobilePhone(MobilePhone mobilePhone);
+
+    void deleteMobilePhone(MobilePhone mobilePhone);
+
+    String getNextId();
+
+    void updateMobilePhone(MobilePhone mobilePhone);
+
 }
