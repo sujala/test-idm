@@ -1,21 +1,15 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.EncryptionService;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.CryptHelper;
-import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.ResultCode;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-import java.util.List;
 
-@Component
+@LDAPComponent
 public class LdapApplicationRepository extends LdapGenericRepository<Application> implements ApplicationDao {
 
     @Autowired
@@ -47,30 +41,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
-    public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
-        BindResult result;
-        Application client = checkAndGetApplicationByClientId(clientId);
-
-        Audit audit = Audit.authClient(client);
-
-        try {
-            result = getBindConnPool().bind(client.getUniqueId(), clientSecret);
-            audit.succeed();
-        } catch (LDAPException e) {
-            audit.fail(e.getMessage());
-            if (ResultCode.INVALID_CREDENTIALS.equals(e.getResultCode())) {
-                return new ClientAuthenticationResult(client, false);
-            }
-            getLogger().error("Bind operation on clientId " + clientId + " failed.", e);
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-
-        boolean isAuthenticated = ResultCode.SUCCESS.equals(result.getResultCode());
-        getLogger().debug("Client {} authenticated == {}", isAuthenticated);
-        return new ClientAuthenticationResult(client, isAuthenticated);
-    }
-
-    @Override
     public void deleteApplication(Application application) {
             deleteObject(application);
     }
@@ -91,60 +61,8 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
-    public Application checkAndGetApplicationByClientId(String clientId) {
-        Application application = getApplicationByClientId(clientId);
-        if(application == null) {
-            String errMsg = String.format("Application %s was not found.", clientId);
-            throw new NotFoundException(errMsg);
-        }
-        return application;
-    }
-
-    @Override
     public Application getApplicationByName(String name) {
         return getObject(searchFilterGetApplicationByName(name));
-    }
-
-    @Override
-    public Application getApplicationByCustomerIdAndClientId(String customerId, String clientId) {
-        return getObject(searchFilterGetApplicationByCustomerIdAndClientId(customerId, clientId));
-    }
-
-    @Override
-    public Application getApplicationByScope(String scope) {
-        return getObject(searchFilterGetApplicationByScope(scope));
-    }
-
-    @Override
-    public Applications getApplicationsByCustomerId(String customerId, int offset, int limit) {
-        PaginatorContext<Application> page = getObjectsPaged(searchFilterGetApplicationsByCustomerId(customerId), offset, limit);
-        Applications apps = new Applications();
-        apps.setClients(page.getValueList());
-        apps.setLimit(page.getLimit());
-        apps.setOffset(page.getOffset());
-        apps.setTotalRecords(page.getTotalRecords());
-        return apps;
-    }
-
-    @Override
-    public PaginatorContext<Application> getApplicationsByCustomerIdPaged(String customerId, int offset, int limit) {
-        return getObjectsPaged(searchFilterGetApplicationsByCustomerId(customerId), offset, limit);
-    }
-
-    @Override
-    public Applications getAllApplications(List<FilterParam> filters, int offset, int limit) {
-        PaginatorContext<Application> page = getObjectsPaged(searchFilterGetApplications(), offset, limit);
-        Applications apps = new Applications();
-        apps.setClients(page.getValueList());
-        apps.setLimit(page.getLimit());
-        apps.setOffset(page.getOffset());
-        apps.setTotalRecords(page.getTotalRecords());
-        return apps;
-    }
-
-    @Override
-    public PaginatorContext<Application> getAllApplicationsPaged(List<FilterParam> filters, int offset, int limit) {
-        return getObjectsPaged(searchFilterGetApplications(), offset, limit);
     }
 
     @Override
@@ -154,33 +72,8 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
     }
 
     @Override
-    public Iterable<Application> getAvailableScopes() {
-        return getObjects(searchFilterGetAvailableScopes());
-    }
-
-    @Override
     public Iterable<Application> getOpenStackServices() {
         return getObjects(searchFilterGetOpenstackServices());
-    }
-
-    @Override
-    public void softDeleteApplication(Application application) {
-        softDeleteObject(application);
-    }
-
-    @Override
-    public Application getSoftDeletedApplicationById(String id) {
-        return getObject(searchFilterGetApplicationByClientId(id), getSoftDeletedBaseDn());
-    }
-
-    @Override
-    public Application getSoftDeletedClientByName(String clientName) {
-        return getObject(searchFilterGetApplicationByName(clientName), getSoftDeletedBaseDn());
-    }
-
-    @Override
-    public void unSoftDeleteApplication(Application application) {
-        unSoftDeleteObject(application);
     }
 
     private Filter searchFilterGetApplications() {
@@ -207,35 +100,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
                 .addEqualAttribute(ATTR_OPENSTACK_TYPE, type)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
                 .build();
-    }
-
-    private Filter searchFilterGetApplicationByCustomerIdAndClientId(String customerId, String clientId) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_CLIENT_ID, clientId)
-                .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-                .build();
-    }
-
-    private Filter searchFilterGetApplicationByScope(String scope) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_TOKEN_SCOPE, scope)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION)
-                .build();
-    }
-
-    private Filter searchFilterGetApplicationsByCustomerId(String customerId) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS,
-                                   OBJECTCLASS_RACKSPACEAPPLICATION).build();
-    }
-
-    private Filter searchFilterGetAvailableScopes() {
-        return new LdapSearchBuilder()
-                .addPresenceAttribute(ATTR_TOKEN_SCOPE)
-                .addEqualAttribute(ATTR_OBJECT_CLASS,
-                                   OBJECTCLASS_RACKSPACEAPPLICATION).build();
     }
 
     private Filter searchFilterGetOpenstackServices() {

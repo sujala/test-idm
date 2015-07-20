@@ -8,17 +8,7 @@ public interface ApplicationService {
 
     void add(Application client);
 
-    ClientAuthenticationResult authenticate(String clientId, String clientSecret);
-
     void delete(String clientId);
-
-    Applications getAllApplications(List<FilterParam> filters, int offset, int limit);
-
-    Applications getByCustomerId(String customerId, int offset, int limit);
-
-    PaginatorContext<Application> getAllApplicationsPaged(List<FilterParam> filters, int offset, int limit);
-
-    PaginatorContext<Application> getByCustomerIdPaged(String customerId, int offset, int limit);
 
     Application loadApplication(String applicationId);
     
@@ -30,8 +20,6 @@ public interface ApplicationService {
 
     Application checkAndGetApplication(String applicationId);
 
-    Application getClient(String customerId, String clientId);
-
     Applications getClientServices(Application client);
 
     Application getApplicationByScopeAccess(ScopeAccess scopeAccess);
@@ -42,8 +30,6 @@ public interface ApplicationService {
     
     void updateClient(Application client);
 
-    Application getClientByScope(String scope);
-    
     void addClientRole(ClientRole role);
 
     void addClientRole(ClientRole role, String roleId);
@@ -63,8 +49,6 @@ public interface ApplicationService {
     PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int offset, int limit, int maxWeightAvailable);
 
     Iterable<Application> getOpenStackServices();
-
-    void softDeleteApplication(Application application);
 
     ClientRole getUserIdentityRole(EndUser user);
 }

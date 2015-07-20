@@ -77,11 +77,6 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public ClientAuthenticationResult authenticate(String clientId, String clientSecret) {
-        return applicationDao.authenticate(clientId, clientSecret);
-    }
-
-    @Override
     public Application loadApplication(String applicationId) {
         Application client = applicationDao.getApplicationByClientId(applicationId);
         if (client == null) {
@@ -91,26 +86,6 @@ public class DefaultApplicationService implements ApplicationService {
         }
 
         return client;
-    }
-
-    @Override
-    public Applications getAllApplications(List<FilterParam> filters, int offset, int limit) {
-        return applicationDao.getAllApplications(filters, offset, limit);
-    }
-
-    @Override
-    public Applications getByCustomerId(String customerId, int offset, int limit) {
-        return applicationDao.getApplicationsByCustomerId(customerId, offset, limit);
-    }
-
-    @Override
-    public PaginatorContext<Application> getAllApplicationsPaged(List<FilterParam> filters, int offset, int limit) {
-        return applicationDao.getAllApplicationsPaged(filters, offset, limit);
-    }
-
-    @Override
-    public PaginatorContext<Application> getByCustomerIdPaged(String customerId, int offset, int limit) {
-        return applicationDao.getApplicationsByCustomerIdPaged(customerId, offset, limit);
     }
 
     @Override
@@ -130,11 +105,6 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    public Application getClient(String customerId, String clientId) {
-        return applicationDao.getApplicationByCustomerIdAndClientId(customerId, clientId);
-    }
-
-    @Override
     public Application getByName(String clientName) {
         return applicationDao.getApplicationByName(clientName);
     }
@@ -142,11 +112,6 @@ public class DefaultApplicationService implements ApplicationService {
     @Override
     public Iterable<Application> getByType(String type) {
         return applicationDao.getApplicationByType(type);
-    }
-
-    @Override
-    public Application getClientByScope(String scope) {
-        return applicationDao.getApplicationByScope(scope);
     }
 
     @Override
@@ -305,13 +270,6 @@ public class DefaultApplicationService implements ApplicationService {
     public Iterable<Application> getOpenStackServices() {
         logger.debug("Getting Open Stack Services");
         return this.applicationDao.getOpenStackServices();
-    }
-
-    @Override
-    public void softDeleteApplication(Application application) {
-        logger.debug("SoftDeleting Application: {}", application);
-        applicationDao.softDeleteApplication(application);
-        logger.debug("SoftDeleted Application: {}", application);
     }
 
     @Override

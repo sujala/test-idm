@@ -80,43 +80,6 @@ public class AuthenticationServiceTests {
         authenticationService.setInputValidator(inputValidator);
     }
 
-    @Test
-    public void shouldGetAuthDataFromToken_WhenTokenBelongsToApplication() {
-        //setup
-        final ScopeAccess scopeAccess = getFakeClientScopeAccess();
-
-        EasyMock.expect(mockScopeAccessService.loadScopeAccessByAccessToken(tokenVal)).andReturn(scopeAccess);
-        PowerMockito.when(mockTenantService.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(tenantRoles);
-
-        EasyMock.replay(mockScopeAccessService);
-
-        final AuthData authData = authenticationService.getAuthDataFromToken(tokenVal);
-
-        Assert.assertNotNull(authData.getAccessToken());
-        Assert.assertNotNull(authData.getApplication());
-        Assert.assertEquals(tenantRoles, authData.getApplication().getRoles());
-    }
-
-    @Test
-    public void shouldGetAuthDataFromToken_WhenTokenBelongsToRacker() {
-        //setup
-        final ScopeAccess scopeAccess = getFakeRackerScopeAcces();
-        final List<String> rackerRoles = Arrays.asList("role1", "role2");
-
-        EasyMock.expect(mockScopeAccessService.loadScopeAccessByAccessToken(tokenVal)).andReturn(scopeAccess);
-        EasyMock.expect(mockAuthDao.getRackerRoles(rackerId)).andReturn(rackerRoles);
-        EasyMock.expect(mockAuthDao.getRackerRoles(rackerId)).andReturn(rackerRoles);
-
-        EasyMock.replay(mockScopeAccessService, mockAuthDao);
-
-        final AuthData authData = authenticationService.getAuthDataFromToken(tokenVal);
-
-        Assert.assertNotNull(authData.getAccessToken());
-        Assert.assertNotNull(authData.getRefreshToken());
-        Assert.assertNotNull(authData.getRacker());
-        Assert.assertEquals(rackerRoles, authData.getRacker().getRackerRoles());
-    }
-
     private UserScopeAccess getFakeUserScopeAccess() {
         final UserScopeAccess usa = new UserScopeAccess();
         usa.setAccessTokenString(tokenVal);
