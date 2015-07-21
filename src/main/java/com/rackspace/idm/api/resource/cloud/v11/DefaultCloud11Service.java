@@ -975,12 +975,19 @@ public class DefaultCloud11Service implements Cloud11Service {
             cloudBaseUrl.setInternalUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
             cloudBaseUrl.setPublicUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
             cloudBaseUrl.setAdminUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
-            if (baseUrl.getServiceName() != null) {
-                final Application application = applicationService.getByName(baseUrl.getServiceName());
+            String serviceName = baseUrl.getServiceName();
+            if (serviceName != null) {
+                final Application application = applicationService.getByName(serviceName);
                 if (application != null) {
                     cloudBaseUrl.setClientId(application.getClientId());
                 } else {
-                    throw new RuntimeException("[K3] There is no application with name '" + baseUrl.getServiceName() + "'.");
+                    /*
+                     *  Endpoints have `service_id` as a foreign key defined on the sql keystone schema. We will no
+                     *  longer allow v1.1 to create baseUrls without a valid serviceName.
+                     */
+                    String errMsg = String.format("Client %s not found", serviceName);
+                    logger.warn(errMsg);
+                    throw new NotFoundException(errMsg);
                 }
             } else {
                 throw new RuntimeException("[K3] BaseURL '" + baseUrl.getAdminURL() + "' is not associated to a serviceName.");

@@ -1,15 +1,15 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.unboundid.ldap.sdk.Filter;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@LDAPComponent
 public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> implements EndpointDao {
 
     private static final String ENCODED_BLANK_SPACE = "<blank>";
@@ -74,11 +74,6 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
     }
 
     @Override
-    public Iterable<CloudBaseUrl> getBaseUrlsByOpenStackType(String openStackType) {
-        return getObjects(searchFilterGetBaseurlByOpenstackType(openStackType));
-    }
-
-    @Override
     public Iterable<CloudBaseUrl> getGlobalUSBaseUrlsByBaseUrlType(String baseUrlType) {
         return getObjects(searchFilterGetGlobalUSBaseurlsByBaseUrlType(baseUrlType));
     }
@@ -136,12 +131,6 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
                 .addEqualAttribute(ATTR_BASEURL_TYPE, baseUrlType)
                 .addEqualAttribute(ATTR_DEF, Boolean.toString(true).toUpperCase())
                 .addEqualAttribute(ATTR_ENABLED, Boolean.toString(enabled).toUpperCase())
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
-    }
-
-    private Filter searchFilterGetBaseurlByOpenstackType(String openstackType) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OPENSTACK_TYPE, openstackType)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
     }
 
