@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
 
 import java.util.List;
@@ -34,7 +35,18 @@ public interface AuthorizationService {
 
     void verifyIdmSuperAdminAccess(String authToken);
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
-    void verifyRackerOrIdentityAdminAccess(ScopeAccess authScopeAccess);
+
+    /**
+     * Verifies a user can impersonate another user.
+     *
+     * @param caller
+     * @param callerToken
+     *
+     * @throws com.rackspace.idm.exception.NotFoundException if the specified caller does not exist (e.g. Racker doesn't exist in eDir)
+     * @throws ForbiddenException If the user does not have the appropriate role to impersonate another user.
+     */
+    void verifyCallerCanImpersonate(BaseUser caller, ScopeAccess callerToken);
+
     void verifyIdentityAdminLevelAccess(ScopeAccess authScopeAccess);
     void verifyUserAdminLevelAccess(ScopeAccess authScopeAccess);
     void verifyUserManagedLevelAccess(ScopeAccess authScopeAccess);

@@ -23,8 +23,6 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
 import static org.apache.http.HttpStatus.SC_CREATED
 import static org.apache.http.HttpStatus.SC_OK
 
-@ContextConfiguration(locations = ["classpath:app-config.xml"
-        , "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
     @Shared def identityAdmin, userAdmin, userManage, defaultUser, users
@@ -43,19 +41,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         v20,
         v11,
         v10
-    }
-
-    @Override
-    public void doSetupSpec() {
-        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
-        resource.exists()
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly();
     }
 
     def "update token format on user"() {
@@ -388,22 +373,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         setUserTokenFormat(userAdmin, authTokenFormat)
         utils.addApiKeyToUser(userAdmin)
 
-        when: "racker auth v2.0"
-        response = cloud20.authenticateRacker(authTokenFormat == TokenFormatEnum.AE ? 'test.ae' : 'test.racker', 'password')
-        authToken = response.getEntity(AuthenticateResponse).value
-
-        then:
-        response.status == 200
-        authTokenFormat == TokenFormatEnum.AE ? authToken.token.id.length() > 32 : authToken.token.id.length() == 32
-
-        when: "racker validate v2.0"
-        response = cloud20.validateToken(identityAdminToken, authToken.token.id)
-        responseToken = response.getEntity(AuthenticateResponse).value
-
-        then:
-        response.status == 200
-        compareTwoTokens(authToken, responseToken)
-
         when: "user auth v2.0"
         response = cloud20.authenticatePassword(userAdmin.username)
         authToken = response.getEntity(AuthenticateResponse).value
@@ -426,6 +395,49 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
         where:
         authTokenFormat << [TokenFormatEnum.AE, TokenFormatEnum.UUID]
+    }
+
+    /**
+     * With this change it is expected that all Racker use AE tokens
+     * @return
+     */
+    @Unroll
+    def "auth and validate racker AE tokens to verify content"() {
+        given:
+        def response
+        def authToken
+        def responseToken
+
+        def identityAdminToken = utils.getIdentityAdminToken()
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+        setUserTokenFormat(userAdmin, authTokenFormat)
+        utils.addApiKeyToUser(userAdmin)
+
+        when: "racker auth v2.0"
+        response = cloud20.authenticateRacker('test.ae', 'password')
+        authToken = response.getEntity(AuthenticateResponse).value
+
+        then:
+        response.status == 200
+        authTokenFormat == TokenFormatEnum.AE ? authToken.token.id.length() > 32 : authToken.token.id.length() == 32
+
+        when: "racker validate v2.0"
+        response = cloud20.validateToken(identityAdminToken, authToken.token.id)
+        responseToken = response.getEntity(AuthenticateResponse).value
+
+        then:
+        response.status == 200
+        compareTwoTokens(authToken, responseToken)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        authTokenFormat << [TokenFormatEnum.AE]
     }
 
     def compareTwoTokens(authToken, responseToken) {

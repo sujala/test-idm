@@ -29,7 +29,6 @@ import org.apache.http.HttpStatus
 import org.dozer.DozerBeanMapper
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
@@ -1584,7 +1583,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def responseBuilder = service.impersonate(headers, authToken, impRequest)
 
         then:
-        1 * authorizationService.verifyRackerOrIdentityAdminAccess(_)
+        1 * authorizationService.verifyCallerCanImpersonate(_, _)
         1 * scopeAccessService.processImpersonatedScopeAccessRequest(_, _, _, _, _) >> impersonatedToken
         responseBuilder.build().status == 200
     }
@@ -1619,7 +1618,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * domainConverter.fromDomain(domain)
         1 * authenticationService.authenticateDomainUsernamePassword(_, _, _) >> authResult
         1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
-        1 * tenantService.getTenantRolesForUser(racker)
+        1 * tenantService.getEphemeralRackerTenantRoles(racker.id)
     }
 
     def "authenticateFederatedDomain handles authentication with RSA credentials"() {
@@ -1640,7 +1639,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * domainConverter.fromDomain(domain)
         1 * authenticationService.authenticateDomainRSA(_, _, _) >> authResult
         1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> createRackerScopeAcccss()
-        1 * tenantService.getTenantRolesForUser(racker)
+        1 * tenantService.getEphemeralRackerTenantRoles(racker.id)
     }
 
     def "getUserCredential verifies access token"() {
@@ -2287,8 +2286,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * userService.getRackerByRackerId(_) >> racker
-        1 * tenantService.getTenantRolesForUser(racker) >> [].asList()
-        1 * userService.getRackerRoles(_) >> [].asList()
+        1 * tenantService.getEphemeralRackerTenantRoles(racker.id) >> [].asList()
     }
 
     def "validateToken when caller token is user token gets tenantRoles by user"() {
@@ -2771,14 +2769,15 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             assert (arg3.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
             createRackerScopeAcccss()
         }
-        1 * authConverter.toAuthenticationResponse(_, _, _, _) >> { arg1, ScopeAccess arg2, arg3, arg4 ->
-            assert (arg2.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
-            new AuthenticateResponse()
-        }
+        1 * authConverter.toAuthenticationResponse(_, _, _, _) >> new AuthenticateResponse()
     }
 
     def "authenticateFederatedDomain sets token authenticatedBy with rsa credentials"() {
         given:
+        def rackerToken = new RackerScopeAccess().with {
+            it.accessTokenString = "x"
+            it
+        }
         mockDomainConverter(service)
         mockAuthConverterCloudV20(service)
         def racker = entityFactory.createRacker()
@@ -2797,11 +2796,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * scopeAccessService.getValidRackerScopeAccessForClientId(_, _, _) >> { arg1, arg2, List<String> arg4 ->
             assert (arg4.contains(GlobalConstants.AUTHENTICATED_BY_RSAKEY))
             createRackerScopeAcccss()
-        }
-        1 * authConverter.toAuthenticationResponse(_, _, _, _) >> { arg1, ScopeAccess arg2, arg3, arg4 ->
-            assert (arg2.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_RSAKEY))
-            new AuthenticateResponse()
-        }
+        } >> rackerToken
+        1 * authConverter.toAuthenticationResponse(_, _, _, _) >> new AuthenticateResponse()
     }
 
     def "calling getUserByEmail returns the user"() {

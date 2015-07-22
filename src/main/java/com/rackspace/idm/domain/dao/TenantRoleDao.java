@@ -12,7 +12,7 @@ public interface TenantRoleDao {
     Iterable<TenantRole> getTenantRolesForApplication(Application application);
     Iterable<TenantRole> getTenantRolesForApplication(Application application, String applicationId);
     Iterable<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId);
-    Iterable<TenantRole> getTenantRolesForUser(BaseUser user);
+    Iterable<TenantRole> getTenantRolesForUser(EndUser user);
     Iterable<TenantRole> getTenantRolesForUser(EndUser user, String applicationId);
     Iterable<TenantRole> getTenantRolesForUser(EndUser user, String applicationId, String tenantId);
     Iterable<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
@@ -20,7 +20,7 @@ public interface TenantRoleDao {
     Iterable<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId);
     Iterable<TenantRole> getAllTenantRolesForClientRole(ClientRole role);
     TenantRole getTenantRoleForApplication(Application application, String roleId);
-    TenantRole getTenantRoleForUser(BaseUser user, String roleId);
+    TenantRole getTenantRoleForUser(EndUser user, String roleId);
     void updateTenantRole(TenantRole tenantRole);
     void deleteTenantRoleForUser(EndUser user, TenantRole tenantRole);
     void deleteTenantRoleForApplication(Application application, TenantRole tenantRole);

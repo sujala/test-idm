@@ -18,6 +18,8 @@ import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.ClassPathResource
+import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -26,8 +28,9 @@ import testHelpers.saml.SamlAssertionFactory
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static org.apache.http.HttpStatus.*
-
 
 class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     private static final Logger LOG = Logger.getLogger(Cloud20ImpersonationIntegrationTest.class)
@@ -124,9 +127,8 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     }
 
     @Unroll
-    def "Validate racker token, exposeUsername = #exposeUsername" () {
+    def "Validate racker token" () {
         when:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP, exposeUsername)
         def response = utils.authenticateRacker(RACKER, RACKER_PASSWORD)
         def token = response.token.id
         AuthenticateResponse valResponse = utils.validateToken(token)
@@ -135,19 +137,10 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         token != null
         valResponse.user != null
         valResponse.user.id == RACKER
-        if(exposeUsername) {
-            valResponse.user.name == RACKER
-        } else {
-            valResponse.user.name == null
-        }
+        valResponse.user.name == RACKER
 
         cleanup:
         reloadableConfiguration.reset()
-
-        where:
-        exposeUsername | _
-        true           | _
-        false          | _
     }
 
     def "Validate Impersonated user's token" () {
@@ -239,19 +232,53 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     def "Previously created impersonation tokens are no longer valid once the impersonated user's domain is disabled" () {
         given:
         def domainId = utils.createDomain()
-        def domain = v1Factory.createDomain().with {
+        def domainDisable = v1Factory.createDomain().with {
             it.id = domainId
             it.name = domainId
             it.enabled = false
             it
         }
-        (defaultUser, users) = utils.createDefaultUser(domainId)
+        def domainEnable = v1Factory.createDomain().with {
+            it.id = domainId
+            it.name = domainId
+            it.enabled = true
+            it
+        }
 
-        when:
+        (defaultUser, users) = utils.createDefaultUser(domainId)
+        def identityAdmin = users[2]
+
+        when: "Impersonate with Racker using AE impersonation tokens"
         def response = utils.impersonateWithRacker(defaultUser)
         def token = response.token.id
-        utils.updateDomain(domainId, domain)
+        utils.updateDomain(domainId, domainDisable)
         def resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
+
+        then:
+        token != null
+        resp.status == SC_OK
+
+        when: "Impersonate with provisioned user using AE impersonation tokens"
+        identityAdmin.tokenFormat = TokenFormatEnum.AE
+        utils.updateUser(identityAdmin)
+        utils.updateDomain(domainId, domainEnable)
+        response = utils.impersonateWithToken(utils.getToken(identityAdmin.username), defaultUser)
+        token = response.token.id
+        utils.updateDomain(domainId, domainDisable)
+        resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
+
+        then:
+        token != null
+        resp.status == SC_OK
+
+        when: "Impersonate with user using UUID impersonation tokens"
+        identityAdmin.tokenFormat = TokenFormatEnum.UUID
+        utils.updateUser(identityAdmin)
+        utils.updateDomain(domainId, domainEnable)
+        response = utils.impersonateWithToken(utils.getToken(identityAdmin.username), defaultUser)
+        token = response.token.id
+        utils.updateDomain(domainId, domainDisable)
+        resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
 
         then:
         token != null
@@ -288,13 +315,22 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
-    def "trying to validate an impersonation token for deleted provisioned user token returns 404"() {
+    /**
+     * Note - AE impersonation tokens dynamically generate a new user token each use so it's impossible to revoke
+     * the underlying user token.
+     *
+     * @return
+     */
+    def "trying to validate a UUID impersonation token with deleted provisioned user token returns 404"() {
         given:
         def domainId = utils.createDomain()
         (defaultUser, users) = utils.createDefaultUser(domainId)
+        def identityAdmin = users[2]
+        identityAdmin.tokenFormat = TokenFormatEnum.UUID
+        utils.updateUser(identityAdmin)
 
         when: "impersonate the user"
-        def response = utils.impersonateWithRacker(defaultUser)
+        def response = utils.impersonateWithToken(utils.getToken(identityAdmin.username), defaultUser)
         def token = response.token.id
         def resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
 
@@ -316,7 +352,13 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
-    def "trying to validate an impersonation token for deleted federated user token returns 404"() {
+    /**
+     * Note - AE impersonation tokens dynamically generate a new user token each use so it's impossible to revoke
+     * the underlying user token.
+     *
+     * @return
+     */
+    def "trying to validate a UUID impersonation token for deleted federated user token returns 404"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
@@ -326,12 +368,16 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def identityAdmin = users[0]
+        identityAdmin.tokenFormat = TokenFormatEnum.UUID
+        utils.updateUser(identityAdmin)
+
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
         def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
         def federatedUser = utils.getUserById(authResponse.getUser().getId())
 
         when: "impersonate the user"
-        def response = utils.impersonateWithRacker(federatedUser)
+        def response = utils.impersonateWithToken(utils.getToken(identityAdmin.username), federatedUser)
         def token = response.token.id
         def resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
 
@@ -355,7 +401,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         staticIdmConfiguration.reset()
     }
 
-    def "impersonation tokens created before a federated user's domain is disabled are no longer valid"() {
+    def "UUID impersonation tokens created before a federated user's domain is disabled are no longer valid"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
@@ -365,12 +411,15 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def identityAdmin = users[0]
+        identityAdmin.tokenFormat = TokenFormatEnum.UUID
+        utils.updateUser(identityAdmin)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
         def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
         def federatedUser = utils.getUserById(authResponse.getUser().getId())
 
         when: "impersonate the user"
-        def response = utils.impersonateWithRacker(federatedUser)
+        def response = utils.impersonateWithToken(utils.getToken(identityAdmin.username), federatedUser)
         def token = response.token.id
         def resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
 

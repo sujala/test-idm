@@ -120,7 +120,6 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_IMPLICIT_ROLE_PROP="feature.enable.implicit.roles";
     public static final String IMPLICIT_ROLE_PROP_PREFIX = "implicit.roles";
     public static final String IMPLICIT_ROLE_OVERRIDE_PROP_REG = IMPLICIT_ROLE_PROP_PREFIX + ".%s";
-    public static final String FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP = "feature.racker.username.auth.enabled";
 
     public static final String FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP = "feature.multifactor.locking.enabled";
     public static final boolean FEATURE_MULTIFACTOR_LOCKING_ENABLED_DEFAULT = false;
@@ -158,6 +157,9 @@ public class IdentityConfig {
     public static final boolean FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_DEFAULT = true;
     public static final String RACKER_IMPERSONATE_ROLE_NAME_PROP = "racker.impersonate.role";
     public static final String RACKER_IMPERSONATE_ROLE_NAME_DEFAULT = "cloud-identity-impersonate";
+
+    public static final String FEATURE_PERSIST_RACKERS_PROP = "feature.persist.rackers.enabled";
+    public static final boolean FEATURE_PERSIST_RACKERS_DEFAULT = true;
 
     /**
      * Required static prop
@@ -231,7 +233,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP, false);
         defaults.put(FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP, false);
         defaults.put(FEATURE_ENABLE_IMPLICIT_ROLE_PROP, false);
-        defaults.put(FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP, false);
         defaults.put(FEATURE_AE_TOKENS_ENCRYPT, true);
         defaults.put(FEATURE_AE_TOKENS_DECRYPT, true);
         defaults.put(FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME, true);
@@ -257,6 +258,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP, FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_DEFAULT);
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
         defaults.put(SQL_SHOW_SQL_PROP, SQL_SHOW_DEFAULT);
+        defaults.put(FEATURE_PERSIST_RACKERS_PROP, FEATURE_PERSIST_RACKERS_DEFAULT);
 
         return defaults;
     }
@@ -300,11 +302,12 @@ public class IdentityConfig {
         logFederatedTokenFormatOverrides();
 
         verifyAndLogReloadableProperty(AE_NODE_NAME_FOR_SIGNOFF_PROP, REQUIRED);
+        verifyAndLogReloadableProperty(FEATURE_PERSIST_RACKERS_PROP, OPTIONAL);
     }
 
     private void verifyAndLogStaticProperty(String property, boolean required) {
         String readProperty = staticConfiguration.getString(property);
-        if (required && StringUtils.isBlank(readProperty)) {
+        if (required && readProperty == null) {
             logger.error(String.format(PROPERTY_ERROR_MESSAGE, property, PropertyFileConfiguration.CONFIG_FILE_NAME));
         } else {
             logger.warn(String.format(PROPERTY_SET_MESSAGE, property, readProperty, PropertyFileConfiguration.CONFIG_FILE_NAME));
@@ -312,8 +315,8 @@ public class IdentityConfig {
     }
 
     private void verifyAndLogReloadableProperty(String property, boolean required) {
-        String readProperty = reloadableConfiguration.getString(property);
-        if (required && StringUtils.isBlank(readProperty)) {
+        Object readProperty = reloadableConfiguration.getProperty(property);
+        if (required && readProperty == null) {
             logger.error(String.format(PROPERTY_ERROR_MESSAGE, property, PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME));
         } else {
             logger.warn(String.format(PROPERTY_SET_MESSAGE, property, readProperty, PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME));
@@ -591,8 +594,12 @@ public class IdentityConfig {
             return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_PROVISIONED_TOKEN_FORMAT));
         }
 
-        @IdmProp(key = IDENTITY_RACKER_TOKEN_FORMAT, description = "Defines the default token format for eDir Racker tokens.", versionAdded = "2.12.0")
+        @IdmProp(key = IDENTITY_RACKER_TOKEN_FORMAT, description = "Defines the default token format for eDir Racker tokens. If racker persistence is disable, is AE", versionAdded = "2.12.0")
         public TokenFormat getIdentityRackerTokenFormat() {
+            if (!reloadableConfig.shouldPersistRacker()) {
+                //if we're not persisting rackers, the only viable format is AE
+                return TokenFormat.AE;
+            }
             return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_RACKER_TOKEN_FORMAT));
         }
 
@@ -828,11 +835,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP);
         }
 
-        @IdmProp(key = FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP)
-        public boolean getFeatureRackerUsernameOnAuthEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP);
-        }
-
         @IdmProp(key = FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS, versionAdded = "2.14.0", description = "enable local multifactor bypass codes")
         public boolean getFeatureLocalMultifactorBypassEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS);
@@ -905,6 +907,11 @@ public class IdentityConfig {
         @IdmProp(key = IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, description = "When an override property does not exist for a given federated provider, this determines the token format to use for that provide's federated users. AE | UUID", versionAdded = "2.13.0")
         public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
             return convertToTokenFormat(getStringSafely(reloadableConfiguration, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP));
+        }
+
+        @IdmProp(key = FEATURE_PERSIST_RACKERS_PROP, description = "Whether shell Racker users are persisted within Identity", versionAdded = "3.0.0")
+        public boolean shouldPersistRacker() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_PERSIST_RACKERS_PROP);
         }
     }
 

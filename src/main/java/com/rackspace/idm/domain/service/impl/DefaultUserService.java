@@ -112,6 +112,9 @@ public class DefaultUserService implements UserService {
 
     @Override
     public void addRacker(Racker racker) {
+        if (!identityConfig.getReloadableConfig().shouldPersistRacker()) {
+            throw new UnsupportedOperationException("Racker persistence is not supported");
+        }
         logger.info("Adding Racker {}", racker);
         Racker exists = this.rackerDao.getRackerByRackerId(racker.getRackerId());
         if (exists != null) {
@@ -513,27 +516,29 @@ public class DefaultUserService implements UserService {
 
     @Override
     public Racker getRackerByRackerId(String rackerId) {
-        logger.debug("Getting Racker: {}", rackerId);
+        Racker racker = new Racker();
 
-        Racker racker;
+        String username = rackerId;
         if (Racker.isFederatedRackerId(rackerId)) {
-            racker = federatedRackerDao.getUserById(rackerId);
-        } else {
-            racker = rackerDao.getRackerByRackerId(rackerId);
-        }
+            username = Racker.getUsernameFromFederatedId(rackerId);
 
-        //set username to same as rackerId (note - getUsername is always non-null for federated rackers)
-        if (identityConfig.getReloadableConfig().getFeatureRackerUsernameOnAuthEnabled() &&
-                racker != null && org.apache.commons.lang.StringUtils.isBlank(racker.getUsername())) {
-            racker.setUsername(racker.getRackerId());
         }
+        racker.setRackerId(rackerId);
+        racker.setUsername(username);
+        racker.setEnabled(true);
 
-        logger.debug("Got Racker: {}", racker);
         return racker;
     }
 
+    /**
+     *
+     * @param rackerId
+     * @return
+     *
+     * @throws NotFoundException If racker not found in eDir
+     */
     @Override
-    public List<String> getRackerRoles(String rackerId) {
+    public List<String> getRackerEDirRoles(String rackerId) {
         logger.debug("Getting Roles for Racker: {}", rackerId);
 
         if (!isTrustedServer()) {

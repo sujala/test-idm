@@ -164,7 +164,7 @@ public class AuthenticationFilterTests {
         when(requestMock.getPath()).thenReturn("migration/some/path");
         when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
         when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
-        when(userService.getRackerRoles(anyString())).thenReturn(new ArrayList<String >());
+        when(userService.getRackerEDirRoles(anyString())).thenReturn(new ArrayList<String >());
         authenticationFilterWithMock.filter(requestMock);
     }
 
@@ -174,7 +174,7 @@ public class AuthenticationFilterTests {
         when(requestMock.getPath()).thenReturn("migration/some/path");
         when(requestMock.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER)).thenReturn("authToken");
         when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(new RackerScopeAccess());
-        when(userService.getRackerRoles(anyString())).thenReturn(null);
+        when(userService.getRackerEDirRoles(anyString())).thenReturn(null);
         authenticationFilterWithMock.filter(requestMock);
     }
 

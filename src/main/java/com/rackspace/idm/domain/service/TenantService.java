@@ -71,7 +71,7 @@ public interface TenantService {
 
     @Deprecated
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
-    List<Tenant> getTenantsForUserByTenantRoles(BaseUser user);
+    List<Tenant> getTenantsForUserByTenantRoles(EndUser user);
 
     /**
      * Returns TRUE if the user matches the following criteria:
@@ -82,7 +82,7 @@ public interface TenantService {
      * @param user the user to check tenants for
      *
      */
-    boolean allTenantsDisabledForUser(BaseUser user);
+    boolean allTenantsDisabledForUser(EndUser user);
 
     /**
      * Whether the user has access to the specified tenant. The provided tenantId is compared against both the tenant
@@ -126,4 +126,19 @@ public interface TenantService {
      * @throws IllegalArgumentException if roles is null
      */
     String getMossoIdFromTenantRoles(List<TenantRole> roles);
+
+    /**
+     * Returns an ephemeral set of TenantRoles that the specified racker has. This includes the Identity based "Racker"
+     * role and all groups the user belongs to within EDir
+     *
+     * @return
+     */
+    List<TenantRole> getEphemeralRackerTenantRoles(String rackerId);
+
+    /**
+     * Returns a unique Identity "Racker" tenant role that all rackers are considered to have.
+     *
+     * @return
+     */
+    TenantRole getEphemeralRackerTenantRole();
 }

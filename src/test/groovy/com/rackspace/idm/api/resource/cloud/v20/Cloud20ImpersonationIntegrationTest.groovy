@@ -171,31 +171,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    def "UUID - impersonate - impersonation request greater than max racker user token lifetime throws exception"() {
-        given:
-        //get new impersonator token with this format
-        def token = utils.getToken(specificationIdentityAdmin.username)
-        def now = new DateTime()
-
-        //request the maximum impersonation lifetime
-        def requestedImpersonationTokenLifetimeSeconds = rackerImpersonatorTokenMaxLifetimeInSeconds() + ONE_HOUR_IN_SECONDS
-
-        //make sure the user token expires before this maximum
-        Integer userTokenLifetimeSeconds =  requestedImpersonationTokenLifetimeSeconds - ONE_HOUR_IN_SECONDS
-        DateTime userTokenExpirationDate = now.plusSeconds(userTokenLifetimeSeconds)
-        def localDefaultUser = createUserWithTokenExpirationDate(userTokenExpirationDate)
-
-        when:
-        def response = impersonateUserAsRackerForTokenLifetimeRawResponse(localDefaultUser, requestedImpersonationTokenLifetimeSeconds)
-
-        then: "throws error"
-        IdmAssert.assertOpenStackV2FaultResponseWithMessagePattern(response, BadRequestFault, 400, Pattern.compile("Expire in element cannot be more than \\d*"))
-
-        cleanup:
-        utils.deleteUsers(localDefaultUser)
-    }
-
-    @Unroll
     def "impersonate federated user as identity admin; tokenFormat = #tokenFormat, request=#requestContentType, accept=#acceptContentType"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
@@ -345,10 +320,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(localDefaultUser)
     }
 
-    def "impersonating user - racker with impersonate role feature flag = true" () {
+    def "impersonating user - racker with impersonate role" () {
         given:
         def localDefaultUser = utils.createUser(userAdminToken)
-        staticIdmConfiguration.setProperty("feature.restrict.impersonation.to.rackers.with.role.enabled", true)
 
         when:
         def response = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD)
@@ -362,9 +336,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(localDefaultUser)
     }
 
-    def "impersonating user - racker with no impersonate role - feature flag = true" () {
+    def "impersonating user - racker with no impersonate role" () {
         given:
-        staticIdmConfiguration.setProperty("feature.restrict.impersonation.to.rackers.with.role.enabled", true)
         def localDefaultUser = utils.createUser(userAdminToken)
 
         when:
@@ -375,23 +348,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         then:
         rackerToken != null
         impersonateResponse.status == 403
-
-        cleanup:
-        utils.deleteUsers(localDefaultUser)
-    }
-
-    def "impersonating user - racker with no impersonate role - feature flag = false" () {
-        given:
-        staticIdmConfiguration.setProperty("feature.restrict.impersonation.to.rackers.with.role.enabled", false)
-        def localDefaultUser = utils.createUser(userAdminToken)
-
-        when:
-        def response = utils.authenticateRacker(RACKER, RACKER_PASSWORD)
-        def rackerToken = response.token.id
-        utils.impersonateWithToken(rackerToken, localDefaultUser)
-
-        then:
-        rackerToken != null
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
@@ -689,7 +645,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
         def samlToken = authResponse.token.id
         def federatedUser = utils.getUserById(authResponse.getUser().getId())
-        def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
+        def impersonatorToken = specificationIdentityAdminToken
 
         when: "impersonate the federated user"
         def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
@@ -702,7 +658,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         assertImpersonatedToken(impersonatedToken1)
 
         when: "impersonate the federated user with another user"
-        impersonationResponse = cloud20.impersonate(rackerToken, federatedUser)
+        impersonationResponse = cloud20.impersonate(impersonatorToken, federatedUser)
 
         then: "the impersonation token is referencing the previously created impersonated token"
         impersonationResponse.status == 200
@@ -714,7 +670,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         when: "expire the impersonated token and impersonate the user again using the first user"
         expireToken(impersonatedToken1.accessTokenString)
-        impersonationResponse = cloud20.impersonate(rackerToken, federatedUser)
+        impersonationResponse = cloud20.impersonate(impersonatorToken, federatedUser)
 
         then: "a new impersonated token is created"
         impersonationResponse.status == 200
@@ -1354,7 +1310,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     def impersonateUserAsRackerForTokenLifetimeRawResponse(User user, Integer impersonationTokenExpireInSeconds) {
-        def auth = utils.authenticateRacker(RACKER, RACKER_PASSWORD)
+        def auth = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD)
         def response = cloud20.impersonate(auth.token.id, user, impersonationTokenExpireInSeconds)
         return response
     }

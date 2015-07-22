@@ -974,7 +974,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             Domain domainDO = domainConverterCloudV20.fromDomain(domain);
             UserAuthenticationResult result = authenticationService.authenticateDomainUsernamePassword(creds.getUsername(), creds.getPassword(), domainDO);
             user = result.getUser();
-            ((Racker)user).setRackerId(((Racker) result.getUser()).getRackerId());
             authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD);
         } else if (authenticationRequest.getCredential().getValue() instanceof RsaCredentials) {
             RsaCredentials creds = (RsaCredentials) authenticationRequest.getCredential().getValue();
@@ -988,26 +987,9 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
         rsa = scopeAccessService.getValidRackerScopeAccessForClientId((Racker) user, getCloudAuthClientId(), authenticatedBy);
 
-        usa = new UserScopeAccess();
-        usa.setAccessTokenExp(rsa.getAccessTokenExp());
-        usa.setAccessTokenString(rsa.getAccessTokenString());
-        usa.setAuthenticatedBy(authenticatedBy);
-
-        List<TenantRole> roleList = tenantService.getTenantRolesForUser(user);
-        //Add Racker eDir Roles
-        List<String> rackerRoles = null;
-        if (((Racker) user).getRackerId() != null) {
-            rackerRoles = userService.getRackerRoles(((Racker) user).getRackerId());
-        }
-        if (rackerRoles != null) {
-            for (String r : rackerRoles) {
-                TenantRole t = new TenantRole();
-                t.setName(r);
-                roleList.add(t);
-            }
-        }
-
-        return auth = authConverterCloudV20.toAuthenticationResponse(user, usa, roleList, new ArrayList());
+        //Get the roles for the racker
+        List<TenantRole> roleList =  tenantService.getEphemeralRackerTenantRoles(user.getId());
+        return authConverterCloudV20.toAuthenticationResponse(user, rsa, roleList, new ArrayList());
     }
 
     @Override
@@ -2238,7 +2220,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserLevelAccess(access);
 
             List<Tenant> tenants = null;
-            BaseUser user = userService.getUserByScopeAccess(access);
+
+            //safe cast as only enduser would pass verify check
+            EndUser user = (EndUser) userService.getUserByScopeAccess(access);
+
             tenants = this.tenantService.getTenantsForUserByTenantRoles(user);
 
             return Response.ok(
@@ -2385,24 +2370,16 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder impersonate(HttpHeaders httpHeaders, String authToken, ImpersonationRequest impersonationRequest) {
         try {
             ScopeAccess callerScopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyRackerOrIdentityAdminAccess(callerScopeAccess);
+            BaseUser impersonator = userService.getUserByScopeAccess(callerScopeAccess);
+            authorizationService.verifyCallerCanImpersonate(impersonator, callerScopeAccess);
 
             ImpersonatorType impersonatorType = null;
-            BaseUser impersonator = null;
             if (callerScopeAccess instanceof RackerScopeAccess) {
-                impersonatorType = ImpersonatorType.RACKER;
                 validator20.validateImpersonationRequestForRacker(impersonationRequest);
-                impersonator = this.userService.getRackerByRackerId(((RackerScopeAccess)callerScopeAccess).getRackerId());
-                if(getCheckRackerImpersonateRole()){
-                    List<String> rackerRoles = userService.getRackerRoles(((Racker)impersonator).getRackerId());
-                    if(rackerRoles.isEmpty() || !rackerRoles.contains(getRackerImpersonateRole())){
-                        throw new ForbiddenException("Missing RackImpersonation role needed for this operation.");
-                    }
-                }
+                impersonatorType = ImpersonatorType.RACKER;
             } else if (callerScopeAccess instanceof UserScopeAccess) {
-                impersonatorType = ImpersonatorType.SERVICE;
                 validator20.validateImpersonationRequestForService(impersonationRequest);
-                impersonator = this.userService.getUserById(((UserScopeAccess)callerScopeAccess).getUserRsId());
+                impersonatorType = ImpersonatorType.SERVICE;
             } else {
                 //this shouldn't really happen due to verification that user is racker or identity admin, but just in case.
                 // TODO: Should be a 403 rather than 401, but this is how it has been historically
@@ -3664,18 +3641,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (sa instanceof RackerScopeAccess) {
                 RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) sa;
                 Racker racker = userService.getRackerByRackerId(rackerScopeAccess.getRackerId());
-                List<TenantRole> roleList = tenantService.getTenantRolesForUser(racker);
-
-                //Add Racker eDir Roles
-                List<String> rackerRoles = userService.getRackerRoles(racker.getRackerId());
-                if (rackerRoles != null) {
-                    for (String r : rackerRoles) {
-                        TenantRole t = new TenantRole();
-                        t.setName(r);
-                        roleList.add(t);
-                    }
-                }
-
+                List<TenantRole> roleList = tenantService.getEphemeralRackerTenantRoles(racker.getRackerId());
                 access.setUser(userConverterCloudV20.toRackerForAuthenticateResponse(racker, roleList));
             }
             else if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
@@ -3722,11 +3688,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                         access.getUser().setContactId(null);
                     }
 
-                    List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator);
                     UserForAuthenticateResponse userForAuthenticateResponse = null;
+                    List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator);
                     if (impersonator instanceof User) {
                         userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse((User)impersonator, impRoles);
                     } else if (impersonator instanceof Racker) {
+                        //The impersonator section when the impersonator is a Racker only displays the "Racker" role, not all the
+                        //edir groups to which the user belongs.
                         userForAuthenticateResponse = userConverterCloudV20.toRackerForAuthenticateResponse((Racker)impersonator, impRoles);
                     } else {
                         throw new IllegalStateException("Unrecognized type of user '" + user.getClass().getName() + "'");
@@ -3948,10 +3916,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private String getRackerImpersonateRole(){
         return identityConfig.getStaticConfig().getRackerImpersonateRoleName();
-    }
-
-    private Boolean getCheckRackerImpersonateRole(){
-        return config.getBoolean("feature.restrict.impersonation.to.rackers.with.role.enabled", false);
     }
 
     JAXBElement<? extends CredentialType> getJSONCredentials(String jsonBody) {
