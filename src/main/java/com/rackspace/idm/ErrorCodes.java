@@ -7,6 +7,10 @@ package com.rackspace.idm;
  * @see <a href="https://one.rackspace.com/display/auth/Log+Message+Prefixes">https://one.rackspace.com/display/auth/Log+Message+Prefixes</a>
  */
 public final class ErrorCodes {
+    public static final String ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE = "MIG-001";
+    public static final String ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_MESSAGE = "The modification of this entity has been temporarily disabled.";
+
+
     public static final String ERROR_CODE_ERROR_CREATING_QR_CODE = "OTP-001";
     public static final String ERROR_CODE_ERROR_ENCODING_TOTP_URI = "OTP-002";
     public static final String ERROR_CODE_OTP_MISSING_SECURE_RANDOM_ALGORITHM = "OTP-003";

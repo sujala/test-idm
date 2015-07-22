@@ -187,6 +187,9 @@ public class IdentityConfig {
     private static final String SQL_SHOW_SQL_PROP = "sql.showSql";
     private static final Boolean SQL_SHOW_DEFAULT = Boolean.FALSE;
 
+    public static final String FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP = "feature.migration.read.only.mode.enabled";
+    public static final Boolean FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_DEFAULT = false;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -261,6 +264,7 @@ public class IdentityConfig {
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
         defaults.put(SQL_SHOW_SQL_PROP, SQL_SHOW_DEFAULT);
         defaults.put(FEATURE_PERSIST_RACKERS_PROP, FEATURE_PERSIST_RACKERS_DEFAULT);
+        defaults.put(FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP, FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_DEFAULT);
 
         return defaults;
     }
@@ -920,6 +924,11 @@ public class IdentityConfig {
         @IdmProp(key = TENANT_DOMAINID_DEFAULT, description = "Default domain_id when creating a tenant in sql", versionAdded = "3.0.0")
         public String getTenantDefaultDomainId() {
             return getStringSafely(reloadableConfiguration, TENANT_DOMAINID_DEFAULT);
+        }
+
+        @IdmProp(key = FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP, description = "Whether entities that can be switched to read-only should be switched", versionAdded = "3.0.0")
+        public boolean migrationReadOnlyEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP);
         }
     }
 
