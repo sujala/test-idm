@@ -27,12 +27,17 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.ClassPathResource
+import org.springframework.test.context.ContextConfiguration
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import javax.servlet.http.HttpServletResponse
+
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
 class Cloud20IntegrationTest extends RootIntegrationTest {
     Logger LOG = Logger.getLogger(Cloud20IntegrationTest.class)
@@ -2910,9 +2915,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.destroyUser(serviceAdminToken, createUser.id)
     }
 
+    @Unroll
     def "racker token returns 403 when making admin calls" () {
         given:
-        rackerToken = cloud20.authenticateRacker(racker, rackerPassword).getEntity(AuthenticateResponse).value.token.id
+        rackerToken = cloud20.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD).getEntity(AuthenticateResponse).value.token.id
 
         expect:
         response.status == 403

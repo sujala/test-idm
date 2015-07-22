@@ -70,7 +70,7 @@ public interface UserService {
     
     Racker getRackerByRackerId(String rackerId);
     
-    List<String> getRackerRoles(String rackerId);
+    List<String> getRackerEDirRoles(String rackerId);
 
     User getUser(String username);
 

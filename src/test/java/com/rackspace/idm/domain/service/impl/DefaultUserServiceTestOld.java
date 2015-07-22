@@ -165,13 +165,13 @@ public class DefaultUserServiceTestOld {
     @Test (expected = ForbiddenException.class)
     public void getRackerRoles_notTrustedServer_throwsForbiddenException() throws Exception {
         when(config.getBoolean("ldap.server.trusted", false)).thenReturn(false);
-        defaultUserService.getRackerRoles("rackerId");
+        defaultUserService.getRackerEDirRoles("rackerId");
     }
 
     @Test
     public void getRackerRoles_callsAuthDao_getRackerRoles() throws Exception {
         when(config.getBoolean("ldap.server.trusted", false)).thenReturn(true);
-        defaultUserService.getRackerRoles("rackerId");
+        defaultUserService.getRackerEDirRoles("rackerId");
         verify(authDao).getRackerRoles("rackerId");
     }
 
@@ -181,7 +181,7 @@ public class DefaultUserServiceTestOld {
         rackeList.add("test");
         when(config.getBoolean("ldap.server.trusted", false)).thenReturn(true);
         when(authDao.getRackerRoles("rackerId")).thenReturn(rackeList);
-        List<String> roles = defaultUserService.getRackerRoles("rackerId");
+        List<String> roles = defaultUserService.getRackerEDirRoles("rackerId");
         assertThat("roles", roles.get(0), equalTo("test"));
     }
 

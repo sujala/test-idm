@@ -9,11 +9,15 @@ import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.ClassPathResource
+import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
 class Cloud20TokenIntegrationTest extends RootIntegrationTest {
 
@@ -41,29 +45,18 @@ class Cloud20TokenIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
-    @Unroll
-    def "Authenticate racker, exposeUsername = #exposeUsername"() {
+    def "Authenticate racker"() {
         when:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RACKER_USERNAME_ON_AUTH_ENABLED_PROP, exposeUsername)
         AuthenticateResponse auth = utils.authenticateRacker(RACKER, RACKER_PASSWORD)
 
         then:
         auth != null
         auth.user != null
         auth.user.id == RACKER
-        if(exposeUsername) {
-            assert auth.user.name == RACKER
-        } else {
-            assert auth.user.name == null
-        }
+        assert auth.user.name == RACKER
 
         cleanup:
         reloadableConfiguration.reset()
-
-        where:
-        exposeUsername | _
-        true           | _
-        false          | _
     }
 
     def "Authenticate racker with no groups"() {

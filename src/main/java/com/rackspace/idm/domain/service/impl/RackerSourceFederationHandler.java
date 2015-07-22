@@ -11,7 +11,6 @@ import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ErrorCodeIdmException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
@@ -30,7 +29,6 @@ import java.util.List;
 @Component
 public class RackerSourceFederationHandler implements FederationHandler {
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
-
 
     @Autowired
     FederatedRackerDao federatedRackerDao;
@@ -65,10 +63,25 @@ public class RackerSourceFederationHandler implements FederationHandler {
          */
         List<TenantRole> tenantRoles = generateRolesForRacker(request.getUser().getUsername());
 
-        Racker user = processUserForRequest(request);
-        RackerScopeAccess token = createToken(user, request.getRequestedTokenExpirationDate());
+        if (identityConfig.getReloadableConfig().shouldPersistRacker()) {
+            persistRackerForRequest(request);
+        }
 
-        return new SamlAuthResponse(user, tenantRoles, Collections.EMPTY_LIST, token);
+        RackerScopeAccess token = createToken(request.getUser(), request.getRequestedTokenExpirationDate());
+
+        return new SamlAuthResponse(request.getUser(), tenantRoles, Collections.EMPTY_LIST, token);
+    }
+
+    private void persistRackerForRequest(FederatedRackerRequest request) {
+        Racker userToCreate = request.getUser();
+        Racker resultUser = federatedRackerDao.getUserById(userToCreate.getId());
+        if (resultUser == null) {
+            federatedRackerDao.addUser(request.getIdentityProvider(), userToCreate);
+            tenantService.addTenantRoleToUser(userToCreate, tenantService.getEphemeralRackerTenantRole());
+        } else {
+            //Clean up tokens underneath existing racker
+            scopeAccessService.deleteExpiredTokensQuietly(resultUser);
+        }
     }
 
     private FederatedRackerRequest parseSaml(SamlResponseDecorator samlResponseDecorator, IdentityProvider provider) {
@@ -77,10 +90,9 @@ public class RackerSourceFederationHandler implements FederationHandler {
 
         //validate assertion
         //set racker
-        Racker federatedRacker = new Racker();
         String rackerUserName = samlResponseDecorator.checkAndGetUsername();
-        federatedRacker.setId(Racker.asFederatedRackerId(rackerUserName, provider.getUri()));
-        federatedRacker.setEnabled(true);
+        String rackerId = Racker.asFederatedRackerId(rackerUserName, provider.getUri());
+        Racker federatedRacker = userService.getRackerByRackerId(rackerId);
 
         request.setIdentityProvider(provider);
         request.setUser(federatedRacker);
@@ -90,56 +102,15 @@ public class RackerSourceFederationHandler implements FederationHandler {
     }
 
     /**
-     * If the user already exists, will return a _new_ user object representing the stored user. If the user does not exist, a new user is created in the backend, but the provided
-     * user object in request is altered (updated with ID).
-     * <p/>
-     * Will also delete expired tokens if the user already existed
-     *
-     * @param request
-     * @return
-     */
-    private Racker processUserForRequest(FederatedRackerRequest request) {
-        Racker resultUser = federatedRackerDao.getUserById(request.getUser().getId());
-        if (resultUser == null) {
-            resultUser = createUserForRequest(request);
-        } else {
-            //Clean up tokens underneath existing racker
-            scopeAccessService.deleteExpiredTokensQuietly(resultUser);
-        }
-        return resultUser;
-    }
-
-    private Racker createUserForRequest(FederatedRackerRequest request) {
-        Racker userToCreate = request.getUser();
-
-        federatedRackerDao.addUser(request.getIdentityProvider(), userToCreate);
-        tenantService.addTenantRoleToUser(userToCreate, createRackerTenantRole());
-
-        return userToCreate;
-    }
-
-    private TenantRole createRackerTenantRole() {
-        TenantRole rackerTenantRole = new TenantRole();
-        rackerTenantRole.setRoleRsId(identityConfig.getStaticConfig().getRackerRoleId());
-        rackerTenantRole.setClientId(identityConfig.getStaticConfig().getFoundationClientId());
-        rackerTenantRole.setName(GlobalConstants.ROLE_NAME_RACKER);
-
-        return rackerTenantRole;
-    }
-
-    /**
      * Determine the roles that the new federated user should receive. Roles are pulled from eDir (plus additional
      * "racker" role automatically added).
      *
      * @return
      */
     private List<TenantRole> generateRolesForRacker(String rackerUsername) {
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-
-        //Add Racker eDir Roles
-        List<String> rackerRoles = null;
+        List<TenantRole> roles;
         try {
-            rackerRoles = userService.getRackerRoles(rackerUsername);
+            roles = tenantService.getEphemeralRackerTenantRoles(rackerUsername);
         } catch (NotFoundException e) {
             //the racker does not exist. log and translate
             log.debug("Requested racker does not exist", e);
@@ -147,16 +118,6 @@ public class RackerSourceFederationHandler implements FederationHandler {
                     ErrorCodes.ERROR_CODE_FEDERATION_RACKER_NON_EXISTANT_RACKER
                     , String.format(ErrorCodes.ERROR_MESSAGE_FORMAT_FEDERATION_RACKER_NON_EXISTANT_RACKER, rackerUsername)));
         }
-
-        if (rackerRoles != null) {
-            for (String r : rackerRoles) {
-                TenantRole t = new TenantRole();
-                t.setName(r);
-                roles.add(t);
-            }
-        }
-
-        roles.add(createRackerTenantRole());
 
         return roles;
     }

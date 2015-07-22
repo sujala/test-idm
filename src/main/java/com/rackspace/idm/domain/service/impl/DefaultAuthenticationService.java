@@ -1,8 +1,10 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.RackerDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -50,6 +52,10 @@ public class DefaultAuthenticationService implements AuthenticationService {
     private IdentityUserService identityUserService;
     @Autowired
     private IdentityConfig identityConfig;
+    @Autowired
+    private AuthorizationService authorizationService;
+    @Autowired
+    private RackerDao rackerDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -568,30 +574,22 @@ public class DefaultAuthenticationService implements AuthenticationService {
             throw new NotAuthorizedException("Unable to authenticate user with credentials provided.");
         }
 
+        /*
+        create the racker. The id is the same as the username when authentication is performed against EDir
+         */
         Racker racker = userService.getRackerByRackerId(username);
-        if (racker == null) {
-            racker = new Racker();
-            racker.setRackerId(username);
-            if(identityConfig.getReloadableConfig().getFeatureRackerUsernameOnAuthEnabled()) {
-                racker.setUsername(username); //set username on class
+
+        if (identityConfig.getReloadableConfig().shouldPersistRacker()) {
+            //using the racker dao temporarily while requiring mixed mode deployment support with 2.x
+            Racker persistedRacker = rackerDao.getRackerByRackerId(username);
+            if (persistedRacker == null) {
+                userService.addRacker(racker);
+                TenantRole rackerTenantRole = tenantService.getEphemeralRackerTenantRole();
+                tenantService.addTenantRoleToUser(racker, rackerTenantRole);
             }
-            this.userService.addRacker(racker);
-            TenantRole rackerTenantRole = new TenantRole();
-            rackerTenantRole.setRoleRsId(getRackerRoleRsId());
-            rackerTenantRole.setClientId(getFoundationClientId());
-            rackerTenantRole.setName("Racker");
-            tenantService.addTenantRoleToUser(racker, rackerTenantRole);
         }
 
         return new UserAuthenticationResult(racker, authenticated);
-    }
-
-    private String getRackerRoleRsId() {
-        return config.getString("cloudAuth.rackerRoleRsId");
-    }
-
-    private String getFoundationClientId() {
-        return config.getString("idm.clientId");
     }
 
     void validateCredentials(final Credentials trParam) {

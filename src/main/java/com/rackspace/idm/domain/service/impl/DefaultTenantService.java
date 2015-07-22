@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
+import com.rackspace.idm.api.security.ImmutableClientRole;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
@@ -22,10 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Component
 public class DefaultTenantService implements TenantService {
@@ -56,6 +55,12 @@ public class DefaultTenantService implements TenantService {
 
     @Autowired
     private TenantRoleDao tenantRoleDao;
+
+    @Autowired
+    private AuthorizationService authorizationService;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Lazy
     @Autowired
@@ -157,8 +162,15 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public boolean doesUserContainTenantRole(BaseUser user, String roleId) {
-        TenantRole tenantRole = tenantRoleDao.getTenantRoleForUser(user, roleId);
-        return tenantRole != null;
+        if (user instanceof Racker) {
+            //rackers are assumed to have the "RACKER" role
+            return identityConfig.getStaticConfig().getRackerRoleId().equals(roleId);
+        } else if (user instanceof EndUser){
+            EndUser eu = (EndUser) user;
+            TenantRole tenantRole = tenantRoleDao.getTenantRoleForUser(eu, roleId);
+            return tenantRole != null;
+        }
+        return false;
     }
 
     @Override
@@ -178,7 +190,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<Tenant> getTenantsForUserByTenantRoles(BaseUser user) {
+    public List<Tenant> getTenantsForUserByTenantRoles(EndUser user) {
         if (user == null) {
             throw new IllegalStateException();
         }
@@ -193,7 +205,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public boolean allTenantsDisabledForUser(BaseUser user) {
+    public boolean allTenantsDisabledForUser(EndUser user) {
         if (user == null) {
             throw new IllegalStateException();
         }
@@ -530,8 +542,35 @@ public class DefaultTenantService implements TenantService {
                     "User cannot be null.");
         }
         logger.debug("Getting Global Roles for user {}", user.getUniqueId());
-        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
+        Iterable<TenantRole> roles = getTenantRolesForUserNoDetail(user);
         return getGlobalRoles(roles);
+    }
+
+    @Override
+    public List<TenantRole> getEphemeralRackerTenantRoles(String rackerId) {
+        List<TenantRole> rackerTenantRoles = new ArrayList<TenantRole>();
+
+        rackerTenantRoles.add(getEphemeralRackerTenantRole());
+        List<String> rackerEdirGroups = userService.getRackerEDirRoles(rackerId);
+        if (CollectionUtils.isNotEmpty(rackerEdirGroups)) {
+            for (String r : rackerEdirGroups) {
+                TenantRole t = new TenantRole();
+                t.setName(r);
+                rackerTenantRoles.add(t);
+            }
+        }
+        return rackerTenantRoles;
+    }
+
+    @Override
+    public TenantRole getEphemeralRackerTenantRole() {
+        ImmutableClientRole rackerClientRole = authorizationService.getCachedIdentityRoleById(identityConfig.getStaticConfig().getRackerRoleId());
+        TenantRole rackerTenantRole = new TenantRole();
+        rackerTenantRole.setRoleRsId(rackerClientRole.getId());
+        rackerTenantRole.setClientId(rackerClientRole.getClientId());
+        rackerTenantRole.setName(rackerClientRole.getName());
+
+        return rackerTenantRole;
     }
 
     @Override
@@ -614,14 +653,21 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public List<TenantRole> getTenantRolesForUser(BaseUser user) {
-        logger.debug(GETTING_TENANT_ROLES);
-        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
+        Iterable<TenantRole> roles = getTenantRolesForUserNoDetail(user);
         return getRoleDetails(roles);
     }
 
     public Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user) {
         logger.debug(GETTING_TENANT_ROLES);
-        return this.tenantRoleDao.getTenantRolesForUser(user);
+
+        Iterable<TenantRole> result = Collections.EMPTY_LIST;
+        if (user instanceof Racker) {
+            result = Arrays.asList(getEphemeralRackerTenantRole());
+        } else if (user instanceof EndUser) {
+            EndUser eu = (EndUser) user;
+            result = tenantRoleDao.getTenantRolesForUser(eu);
+        }
+        return result;
     }
 
     @Override

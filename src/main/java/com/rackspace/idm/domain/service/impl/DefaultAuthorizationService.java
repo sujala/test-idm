@@ -402,15 +402,26 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public void verifyRackerOrIdentityAdminAccess(ScopeAccess scopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
-        verifyUserAccess(user);
-        verifyRoleAccess(user, scopeAccess, Arrays.asList(rackerRole, cloudIdentityAdminRole));
+    public void verifyCallerCanImpersonate(BaseUser caller, ScopeAccess callerToken) {
+        if (caller instanceof Racker) {
+            //rackers must have impersonate group in edir
+            Racker racker = (Racker) caller;
+            List<String> rackerRoles = userService.getRackerEDirRoles(racker.getRackerId());
+            if(rackerRoles.isEmpty() || !rackerRoles.contains(identityConfig.getStaticConfig().getRackerImpersonateRoleName())) {
+                throw new ForbiddenException("Missing RackImpersonation role needed for this operation.");
+            }
+        } else {
+            verifyIdentityAdminLevelAccess(caller, callerToken);
+        }
     }
 
     @Override
     public void verifyIdentityAdminLevelAccess(ScopeAccess scopeAccess) {
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        verifyIdentityAdminLevelAccess(user, scopeAccess);
+    }
+
+    private void verifyIdentityAdminLevelAccess(BaseUser user, ScopeAccess scopeAccess) {
         verifyUserAccess(user);
         verifyRoleAccess(user, scopeAccess, Arrays.asList(cloudServiceAdminRole, cloudIdentityAdminRole));
     }
@@ -592,11 +603,19 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return containsRole(user, clientRoles);
     }
 
+    /**
+     * Whether the user has at least one of the specified roles
+     * @param user
+     * @param clientRoles
+     * @return
+     */
     private boolean containsRole(BaseUser user, List<ClientRole> clientRoles) {
         HashSet<String> clientRoleIds = new HashSet<String>();
         for (ClientRole role : clientRoles) {
             clientRoleIds.add(role.getId());
         }
+
+        tenantService.getTenantRolesForUser(user);
 
         for (String roleId : clientRoleIds) {
             if (tenantService.doesUserContainTenantRole(user, roleId)) {
