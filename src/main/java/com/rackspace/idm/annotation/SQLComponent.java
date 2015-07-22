@@ -13,4 +13,5 @@ import java.lang.annotation.Target;
 @Profile("SQL")
 @Component
 public @interface SQLComponent {
+    String value() default "";
 }
