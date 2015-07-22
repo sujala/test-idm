@@ -200,14 +200,6 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         result == null
     }
 
-    def "authenticate passes control to the Dao level"() {
-        when:
-        service.authenticate("clientId", "Secret")
-
-        then:
-        1 * applicationDao.authenticate("clientId", "Secret")
-    }
-
     def "calling getRoleWithLowestWeight returns clientRole with lowers weight"() {
         given:
 

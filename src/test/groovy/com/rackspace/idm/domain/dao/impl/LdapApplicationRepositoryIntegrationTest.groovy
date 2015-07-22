@@ -53,30 +53,6 @@ class LdapApplicationRepositoryIntegrationTest extends Specification {
         namedApp == retrievedApp
     }
 
-    def "can soft delete and unsoftdelete app"() {
-        given:
-        def app = getApp(random)
-
-        when:
-        applicationDao.addApplication(app)
-        Application retrievedApp = applicationDao.getApplicationByClientId(random)
-        applicationDao.softDeleteApplication(app)
-
-        Application notFoundApp = applicationDao.getApplicationByClientId(random)
-        Application softDeletedById = applicationDao.getSoftDeletedApplicationById(random)
-        Application softDeletedByName = applicationDao.getSoftDeletedClientByName(name)
-
-        Application unsoftDeletingApp = applicationDao.getSoftDeletedApplicationById(random)
-        applicationDao.unSoftDeleteApplication(unsoftDeletingApp)
-        Application foundApp = applicationDao.getApplicationByClientId(random)
-        applicationDao.deleteApplication(app)
-
-        then:
-        notFoundApp == null
-        softDeletedById == softDeletedByName
-        foundApp == retrievedApp
-    }
-
     def getApp(id) {
         new Application(id, name).with {
             it.description = "description"

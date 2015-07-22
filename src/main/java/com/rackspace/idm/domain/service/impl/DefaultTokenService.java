@@ -114,25 +114,6 @@ public class DefaultTokenService implements TokenService {
         logger.debug("Deleted all access tokens for client {}.", clientId);
     }
 
-    
-    @Override
-    public void revokeAllTokensForCustomer(final String customerId) throws IOException, JAXBException {
-        logger.debug("Revoking all access tokens for customer: {}.", customerId);
-
-        for (final User user : getAllUsersForCustomerId(customerId)) {
-            this.scopeAccessService.expireAllTokensForUser(user.getUsername());
-        }
-
-        final List<Application> clientsList = getAllClientsForCustomerId(customerId);
-        for (final Application client : clientsList) {
-            this.scopeAccessService.expireAllTokensForClient(client
-                .getClientId());
-        }
-
-        logger.debug("Deleted all access tokens for customer {}.", customerId);
-    }
-
-    
     @Override
     public void revokeAllTokensForUser(final String username) throws IOException, JAXBException {
         logger.debug("Deleting all access tokens for user {}.", username);
@@ -168,30 +149,5 @@ public class DefaultTokenService implements TokenService {
     @Override
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
-    }
-
-    List<Application> getAllClientsForCustomerId(final String customerId) {
-        logger.debug("Finding Clients from CustomerId: {}", customerId);
-        final List<Application> clientsList = new ArrayList<Application>();
-        int total = 1; // This gets overwritten, just needs to be greater than
-        // offset right now.
-        for (int offset = 0; offset < total; offset += getPagingLimit()) {
-            final Applications clientsObj = clientService.getByCustomerId(
-                customerId, offset, getPagingLimit());
-            clientsList.addAll(clientsObj.getClients());
-            total = clientsObj.getTotalRecords();
-        }
-        logger.debug("Found {} Client(s) from CustomerId: {}",
-            clientsList.size(), customerId);
-        return clientsList;
-    }
-
-    Iterable<User> getAllUsersForCustomerId(final String customerId) {
-        logger.debug("Finding Users for CustomerId: {}", customerId);
-        return userService.getUsersByRCN(customerId);
-    }
-
-    int getPagingLimit() {
-        return config.getInt("ldap.paging.limit.max");
     }
 }

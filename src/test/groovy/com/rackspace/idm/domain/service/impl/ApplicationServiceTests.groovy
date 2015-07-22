@@ -87,22 +87,6 @@ public class ApplicationServiceTests {
     }
 
     @Test
-    public void shouldGetClientByCustomerIdAndClientId() {
-
-        Application client = getFakeClient();
-        EasyMock.expect(
-            applicationDao
-                .getApplicationByCustomerIdAndClientId(customerId, clientId))
-            .andReturn(client);
-        EasyMock.replay(applicationDao);
-
-        Application retrievedClient = service.getClient(customerId, clientId);
-
-        Assert.assertTrue(retrievedClient.getName().equals(name));
-        EasyMock.verify(applicationDao);
-    }
-
-    @Test
     public void shouldReturnNullForNonExistentClientByName() {
         EasyMock.expect(applicationDao.getApplicationByName(name)).andReturn(
             null);
@@ -164,41 +148,6 @@ public class ApplicationServiceTests {
 
         service.save(client);
 
-        EasyMock.verify(applicationDao);
-    }
-
-    @Test
-    public void shouldSoftDeleteClient() {
-        Application client = getFakeClient();
-
-        applicationDao.softDeleteApplication(client);
-        EasyMock.replay(applicationDao);
-
-        service.softDeleteApplication(client);
-
-        EasyMock.verify(applicationDao);
-    }
-
-    @Test
-    public void shouldGetClientByCustomerId() {
-        List<Application> clientList = new ArrayList<Application>();
-        clientList.add(getFakeClient());
-        clientList.add(getFakeClient());
-
-        Applications clients = new Applications();
-        clients.setClients(clientList);
-        clients.setLimit(100);
-        clients.setOffset(0);
-        clients.setTotalRecords(2);
-
-        EasyMock.expect(
-            applicationDao.getApplicationsByCustomerId(customerId, 0, 100))
-            .andReturn(clients);
-        EasyMock.replay(applicationDao);
-
-        Applications returned = service.getByCustomerId(customerId, 0, 100);
-
-        Assert.assertTrue(returned.getClients().size() == 2);
         EasyMock.verify(applicationDao);
     }
 

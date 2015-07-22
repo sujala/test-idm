@@ -146,10 +146,4 @@ public class DefaultTokenServiceTestOld {
         when(authorizationService.authorizeAsRequestorOrOwner(scopeAccess,scopeAccess)).thenReturn(true);
         defaultTokenService.revokeAccessToken(null,null);
     }
-
-    @Test
-    public void getPagingLimit_returnsInt() throws Exception {
-        when(config.getInt("ldap.paging.limit.max")).thenReturn(7);
-        assertThat("int",defaultTokenService.getPagingLimit(),equalTo(7));
-    }
 }

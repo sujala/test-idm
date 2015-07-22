@@ -46,18 +46,6 @@ public class DefaultApplicationServiceTestOld {
     private TenantService tenantService;
 
     @Test
-    public void getAllApplications_callsClientDao_getAllClients() throws Exception {
-        defaultApplicationService.getAllApplications(null, 0, 0);
-        verify(applicationDao).getAllApplications(null, 0, 0);
-    }
-
-    @Test
-    public void getClientByScope_callsClientDao_getClientByScope() throws Exception {
-        defaultApplicationService.getClientByScope(null);
-        verify(applicationDao).getApplicationByScope(null);
-    }
-
-    @Test
     public void updateClientRole_callsClientDao_updateClientRole() throws Exception {
         defaultApplicationService.updateClientRole(null);
         verify(applicationRoleDao).updateClientRole(null);

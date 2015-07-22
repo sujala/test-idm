@@ -15,8 +15,6 @@ public interface TokenService {
     
     void revokeAllTokensForClient(String clientId);
     
-    void revokeAllTokensForCustomer(String customerId) throws IOException, JAXBException;
-
     void revokeAllTokensForUser(String username) throws IOException, JAXBException;
 
     void setAuthorizationService(AuthorizationService authorizationService);
