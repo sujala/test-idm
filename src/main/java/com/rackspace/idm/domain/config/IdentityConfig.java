@@ -53,7 +53,7 @@ public class IdentityConfig {
     public static final String PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME = "reloadable.properties.ttl.seconds";
     public static final String GROUP_DOMAINID_DEFAULT = "group.domainId.default";
     public static final String TENANT_DOMAINID_DEFAULT = "tenant.domainId.default";
-
+    public static final String IDENTITY_ROLE_TENANT_DEFAULT = "identity.role.tenant.default";
 
     // left as static var to support external reference
     public static final int PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE = 30;
@@ -310,6 +310,7 @@ public class IdentityConfig {
 
         verifyAndLogReloadableProperty(AE_NODE_NAME_FOR_SIGNOFF_PROP, REQUIRED);
         verifyAndLogReloadableProperty(FEATURE_PERSIST_RACKERS_PROP, OPTIONAL);
+        verifyAndLogReloadableProperty(IDENTITY_ROLE_TENANT_DEFAULT, REQUIRED);
     }
 
     private void verifyAndLogStaticProperty(String property, boolean required) {
@@ -929,6 +930,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP, description = "Whether entities that can be switched to read-only should be switched", versionAdded = "3.0.0")
         public boolean migrationReadOnlyEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP);
+        }
+
+        @IdmProp(key = IDENTITY_ROLE_TENANT_DEFAULT, description = "Identity role default tenant", versionAdded = "3.0.0")
+        public String getIdentityRoleDefaultTenant() {
+            return getStringSafely(reloadableConfiguration, IDENTITY_ROLE_TENANT_DEFAULT);
         }
     }
 

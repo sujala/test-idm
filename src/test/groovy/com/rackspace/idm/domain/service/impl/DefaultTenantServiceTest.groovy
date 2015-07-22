@@ -82,51 +82,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         1 * tenantRoleDao.deleteTenantRoleForUser(user, role)
     }
 
-    def "add TenantRole To Client throws NotFoundException if clientRole is Null"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole("role")
-        def application = entityFactory.createApplication()
-
-        applicationService.getById(clientId) >> application
-        applicationService.getClientRoleByClientIdAndRoleName(clientId, "role") >> null
-
-        when:
-        service.addTenantRoleToClient(application, tenantRole)
-
-        then:
-        thrown(NotFoundException)
-    }
-
-    def "add TenantRole To Client throws NotFoundException if owner Is Null"() {
-        given:
-        def app = entityFactory.createApplication()
-        def tenantRole = entityFactory.createTenantRole("role")
-
-        applicationService.getById(clientId) >> null
-
-        when:
-        service.addTenantRoleToClient(app,tenantRole);
-
-        then:
-        thrown(NotFoundException)
-    }
-
-    def "add TenantRole To Client does Not Call ScopeAccessService Method if scopeAccess Is Not Null"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole("role").with { it.clientId = clientId; return it }
-        def application = entityFactory.createApplication()
-        applicationService.getById(_) >> application
-        applicationService.getClientRoleByClientIdAndRoleName(_, _) >> new ClientRole()
-        scopeAccessService.getMostRecentDirectScopeAccessForParentByClientId(_, _) >> new ScopeAccess()
-        service.addTenantRoleToClient(application, tenantRole) >> void
-
-        when:
-        service.addTenantRoleToClient(application,tenantRole);
-
-        then:
-        0 * scopeAccessService.addDirectScopeAccess(_, _)
-    }
-
     def "calling getTenantsForUserByTenantRoles returns tenants"() {
         given:
         def user = entityFactory.createUser()
@@ -193,9 +148,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         given:
         def caller = entityFactory.createUser()
         def user = entityFactory.createUser()
-        def tenantRoleList = [ entityFactory.createTenantRole() ].asList()
 
-        tenantDao.getTenantRolesForUser(caller) >> tenantRoleList
         tenantRoleDao.getTenantRolesForUser(_) >> [].asList()
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
         applicationService.getById(_) >> entityFactory.createApplication()
@@ -225,28 +178,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
     def "if scope access for tenant roles for scopeAccess with null scopeAccess returns IllegalState" () {
         when:
         service.getTenantRolesForScopeAccess(null)
-
-        then:
-        thrown(IllegalStateException)
-    }
-
-    def "delete Tenant role For Application with null user returns IllegalState" () {
-        given:
-        def application = entityFactory.createApplication()
-
-        when:
-        service.deleteTenantRoleForApplication(application, null)
-
-        then:
-        thrown(IllegalStateException)
-    }
-
-    def "delete Tenant role For Application with null application returns IllegalState" () {
-        given:
-        def tenantRole = entityFactory.createTenantRole()
-
-        when:
-        service.deleteTenantRoleForApplication(null, tenantRole)
 
         then:
         thrown(IllegalStateException)

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
@@ -10,13 +11,12 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Component
+@LDAPComponent
 public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> implements TenantRoleDao {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -37,43 +37,18 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public void addTenantRoleToApplication(Application application, TenantRole tenantRole) {
-        addOrUpdateTenantRole(application.getUniqueId(), tenantRole);
-    }
-
-    @Override
     public void addTenantRoleToUser(BaseUser user, TenantRole tenantRole) {
         addOrUpdateTenantRole(user.getUniqueId(), tenantRole);
     }
 
     @Override
-    public Iterable<TenantRole> getTenantRolesForApplication(Application application) {
-        return getObjects(searchFilterGetTenantRoles(), application.getUniqueId());
-    }
-
-    @Override
-    public Iterable<TenantRole> getTenantRolesForApplication(Application application, String applicationId) {
-        return getObjects(searchFilterGetTenantRolesByApplication(applicationId), application.getUniqueId());
-    }
-
-    @Override
-    public Iterable<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId) {
-        return getObjects(searchFilterGetTenantRolesByApplicationAndTenantId(applicationId, tenantId), application.getUniqueId());
-    }
-
-    @Override
-    public Iterable<TenantRole> getTenantRolesForUser(EndUser user) {
+    public Iterable<TenantRole> getTenantRolesForUser(BaseUser user) {
         return getObjects(searchFilterGetTenantRoles(), user.getUniqueId());
     }
 
     @Override
-    public Iterable<TenantRole> getTenantRolesForUser(EndUser user, String applicationId) {
+    public Iterable<TenantRole> getTenantRolesForUser(BaseUser user, String applicationId) {
         return getObjects(searchFilterGetTenantRolesByApplication(applicationId), user.getUniqueId());
-    }
-
-    @Override
-    public Iterable<TenantRole> getTenantRolesForUser(EndUser user, String applicationId, String tenantId) {
-        return getObjects(searchFilterGetTenantRolesByApplicationAndTenantId(applicationId, tenantId), user.getUniqueId());
     }
 
     @Override
@@ -107,28 +82,8 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public void deleteTenantRoleForApplication(Application application, TenantRole tenantRole) {
-        deleteOrUpdateTenantRole(tenantRole, application.getUniqueId());
-    }
-
-    @Override
     public void deleteTenantRole(TenantRole tenantRole) {
         deleteObject(tenantRole);
-    }
-
-    @Override
-    public List<String> getIdsForUsersWithTenantRole(String roleId) {
-        List<String> userIds = new ArrayList<String>();
-
-        for (TenantRole tenantRole : getObjects(searchFilterGetTenantRolesByRoleId(roleId))) {
-            try {
-                userIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
-            } catch (LDAPException e) {
-                throw new IllegalStateException();
-            }
-        }
-
-        return userIds;
     }
 
     @Override
@@ -247,12 +202,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public TenantRole getTenantRoleForApplication(Application application, String roleId) {
-        return getObject(searchFilterGetTenantRoleByRoleId(roleId), application.getUniqueId(), SearchScope.SUB);
-    }
-
-    @Override
-    public TenantRole getTenantRoleForUser(EndUser user, String roleId) {
+    public TenantRole getTenantRoleForUser(BaseUser user, String roleId) {
         return getTenantRole(user.getUniqueId(), roleId);
     }
 
