@@ -53,7 +53,7 @@ public class SqlGroupRepository implements GroupDao {
     public void addGroup(Group group) {
         SqlGroup sqlGroup = mapper.toSQL(group);
         //TODO: Keystone requires domain_id to be specified
-        sqlGroup.setDomainId(config.getStaticConfig().getGroupDefaultDomainId());
+        sqlGroup.setDomainId(config.getReloadableConfig().getGroupDefaultDomainId());
         groupRepository.save(sqlGroup);
     }
 
