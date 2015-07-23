@@ -1,5 +1,6 @@
 package com.rackspace.idm.exception;
 
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import org.apache.commons.lang.NotImplementedException;
 import org.openstack.docs.identity.api.v2.*;
@@ -111,10 +112,21 @@ public class ExceptionHandler {
             return conflictExceptionResponse(ex.getMessage());
         } else if (ex instanceof NotImplementedException) {
             return notImplementedExceptionResponse();
+        } else if (ex instanceof MigrationReadOnlyIdmException) {
+            return exceptionMigrationReadOnlyEnabledResponse((MigrationReadOnlyIdmException) ex);
         } else {
             LOGGER.error("Unexpected exception:", ex);
             return serviceExceptionResponse();
         }
+    }
+
+    public Response.ResponseBuilder exceptionMigrationReadOnlyEnabledResponse(MigrationReadOnlyIdmException ex) {
+        IdentityFault fault = objFactories.getOpenStackIdentityV2Factory().createIdentityFault();
+        fault.setCode(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+        fault.setMessage(ex.getMessage());
+
+        return Response.status(HttpServletResponse.SC_SERVICE_UNAVAILABLE).entity(
+                objFactories.getOpenStackIdentityV2Factory().createIdentityFault(fault).getValue());
     }
 
     public void setObjFactories(JAXBObjectFactories objFactories) {
