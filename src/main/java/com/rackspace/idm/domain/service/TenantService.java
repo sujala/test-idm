@@ -20,7 +20,6 @@ public interface TenantService {
     void addTenantRoleToUser(BaseUser user, TenantRole role);
     void addTenantRolesToUser(BaseUser user, List<TenantRole> tenantRoles);
     void addCallerTenantRolesToUser(User caller, User user);
-    void addTenantRoleToClient(Application client, TenantRole role);
 
     /**
      * Deletes the TenantRole from the user. This will delete the role from the
@@ -45,33 +44,27 @@ public interface TenantService {
      * @param tenant
      */
     void deleteTenantOnRoleForUser(EndUser user, TenantRole role, Tenant tenant);
-    void deleteTenantRoleForApplication(Application application, TenantRole role);
     void deleteGlobalRole(TenantRole role);
     void updateTenant(Tenant tenant);
 
     void deleteRbacRolesForUser(EndUser user);
     
-    TenantRole getTenantRoleForUserById(EndUser user, String roleId);
+    TenantRole getTenantRoleForUserById(BaseUser user, String roleId);
     boolean doesUserContainTenantRole(BaseUser user, String roleId);
     TenantRole checkAndGetTenantRoleForUserById(EndUser user, String roleId);
 
-    TenantRole getTenantRoleForApplicationById(Application application, String id);
     @Deprecated
     List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
     List<TenantRole> getGlobalRolesForUser(BaseUser user);
     List<TenantRole> getRbacRolesForUser(EndUser user);
-    List<TenantRole> getGlobalRolesForApplication(Application application);
-    List<TenantRole> getGlobalRolesForApplication(Application user, String applicationId);
     List<TenantRole> getGlobalRolesForUser(EndUser user, String applicationId);
     List<TenantRole> getTenantRolesForUserOnTenant(EndUser user, Tenant tenant);
     List<TenantRole> getTenantRolesForUser(BaseUser user);
     Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user);
-    List<TenantRole> getTenantRolesForUser(EndUser user, String applicationId, String tenantId);
-    List<TenantRole> getTenantRolesForApplication(Application application, String applicationId, String tenantId);
 
     @Deprecated
     List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa);
-    List<Tenant> getTenantsForUserByTenantRoles(EndUser user);
+    List<Tenant> getTenantsForUserByTenantRoles(BaseUser user);
 
     /**
      * Returns TRUE if the user matches the following criteria:

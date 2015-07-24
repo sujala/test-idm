@@ -90,11 +90,6 @@ public class DefaultTenantServiceTestOld {
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void addTenantRole_roleIsNull_throwsIllegalArgumentException() throws Exception {
-        defaultTenantService.addTenantRoleToClient(null, null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
     public void deleteTenantRole_nullRole_throwsIllegalArgumentException() throws Exception {
         defaultTenantService.deleteTenantRoleForUser(getUser(), null);
     }
@@ -150,43 +145,8 @@ public class DefaultTenantServiceTestOld {
     }
 
     @Test (expected = IllegalArgumentException.class)
-    public void addTenantRoleToClient_clientIsNullAndRoleIsNull_throwsIllegalArgumentException() throws Exception {
-        defaultTenantService.addTenantRoleToClient(null,null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void addTenantRoleToClient_clientIsNullAndRoleExists_throwsIllegalArgumentException() throws Exception {
-        TenantRole tenantRole = new TenantRole();
-        defaultTenantService.addTenantRoleToClient(null,tenantRole);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void addTenantRoleToClient_clientIdIsBlankAndRoleIsNull_throwsIllegalArgumentException() throws Exception {
-        Application application = new Application();
-        defaultTenantService.addTenantRoleToClient(application,null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void addTenantRoleToClient_clientIdIsBlankAndRoleExists_throwsIllegalArgumentException() throws Exception {
-        TenantRole tenantRole = new TenantRole();
-        Application application = new Application();
-        defaultTenantService.addTenantRoleToClient(application,tenantRole);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void addTenantRoleToClient_clientIdIsNotBlankAndRoleIsNull_throwsIllegalArgumentException() throws Exception {
-        Application application = new Application();
-        defaultTenantService.addTenantRoleToClient(application,null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
     public void getGlobalRolesForUser_nullUser_throwsIllegalArgumentException() throws Exception {
         defaultTenantService.getGlobalRolesForUser(null);
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void getGlobalRolesForApplication_nullApplication_throwsIllegalArgumentException() throws Exception {
-        defaultTenantService.getGlobalRolesForApplication(null, null);
     }
 
     @Test

@@ -156,7 +156,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public TenantRole getTenantRoleForUserById(EndUser user, String roleId) {
+    public TenantRole getTenantRoleForUserById(BaseUser user, String roleId) {
         return tenantRoleDao.getTenantRoleForUser(user, roleId);
     }
 
@@ -185,12 +185,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public TenantRole getTenantRoleForApplicationById(Application application, String id) {
-        return tenantRoleDao.getTenantRoleForApplication(application, id);
-    }
-
-    @Override
-    public List<Tenant> getTenantsForUserByTenantRoles(EndUser user) {
+    public List<Tenant> getTenantsForUserByTenantRoles(BaseUser user) {
         if (user == null) {
             throw new IllegalStateException();
         }
@@ -398,20 +393,6 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void addTenantRoleToClient(Application client, TenantRole role) {
-        if (client == null || StringUtils.isBlank(client.getUniqueId()) || role == null) {
-            throw new IllegalArgumentException(
-                "Client cannot be null and must have uniqueID; role cannot be null");
-        }
-
-        validateTenantRole(role);
-
-        tenantRoleDao.addTenantRoleToApplication(client, role);
-
-        logger.info("Added tenantRole {} to client {}", role, client);
-    }
-
-    @Override
     public void addTenantRolesToUser(BaseUser user, List<TenantRole> tenantRoles) {
         for (TenantRole tenantRole : tenantRoles) {
              addTenantRoleToUser(user, tenantRole);
@@ -528,14 +509,6 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void deleteTenantRoleForApplication(Application application, TenantRole role) {
-        if (application == null || role == null) {
-            throw new IllegalStateException();
-        }
-        tenantRoleDao.deleteTenantRoleForApplication(application, role);
-    }
-
-    @Override
     public List<TenantRole> getGlobalRolesForUser(BaseUser user) {
         if (user == null) {
             throw new IllegalArgumentException(
@@ -607,28 +580,6 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getGlobalRolesForApplication(Application application) {
-        if (application == null) {
-            throw new IllegalArgumentException(
-                    "Application cannot be null.");
-        }
-        logger.debug("Getting Global Roles for application {}", application.getName());
-        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForApplication(application);
-        return getGlobalRoles(roles);
-    }
-
-    @Override
-    public List<TenantRole> getGlobalRolesForApplication(Application application, String applicationId) {
-        if (application == null) {
-            throw new IllegalArgumentException(
-                    "Application cannot be null.");
-        }
-        logger.debug("Getting Global Roles for application {}", application.getName());
-        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForApplication(application, applicationId);
-        return getGlobalRoles(roles);
-    }
-
-    @Override
     public List<TenantRole> getTenantRolesForUserOnTenant(EndUser user, Tenant tenant) {
         if (tenant == null) {
             throw new IllegalArgumentException(
@@ -670,13 +621,6 @@ public class DefaultTenantService implements TenantService {
         return result;
     }
 
-    @Override
-    public List<TenantRole> getTenantRolesForUser(EndUser user, String applicationId, String tenantId) {
-        logger.debug(GETTING_TENANT_ROLES);
-        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId, tenantId);
-        return getRoleDetails(roles);
-    }
-
     private List<TenantRole> getRoleDetails(Iterable<TenantRole> roles) {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
@@ -689,15 +633,6 @@ public class DefaultTenantService implements TenantService {
             }
         }
         return tenantRoles;
-    }
-
-    @Override
-    public List<TenantRole> getTenantRolesForApplication(
-            Application application, String applicationId, String tenantId) {
-        logger.debug(GETTING_TENANT_ROLES);
-        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForApplication(application, applicationId, tenantId);
-
-        return getTenantOnlyRoles(roles);
     }
 
     @Override
