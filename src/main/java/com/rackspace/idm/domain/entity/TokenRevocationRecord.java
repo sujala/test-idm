@@ -6,6 +6,8 @@ import java.util.*;
 
 public interface TokenRevocationRecord {
     public static final String AUTHENTICATED_BY_WILDCARD_VALUE = "*";
+    public static final String AUTHENTICATED_BY_EMPTY_LIST_SUBSTITUTE = "<empty>";
+    public static final String AUTHENTICATED_BY_ALL_SUBSTITUTE = "*";
 
     String getId();
 

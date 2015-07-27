@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
@@ -18,8 +19,8 @@ import java.util.List;
 /**
  * Responsible for storing and retrieving TRRs to/from CA LDAP repository
  */
-@Component("tokenRevocationRecordPersistenceStrategy")
-public class TokenRevocationRecordRepository extends LdapGenericRepository<LdapTokenRevocationRecord> implements TokenRevocationRecordPersistenceStrategy {
+@LDAPComponent("tokenRevocationRecordPersistenceStrategy")
+public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<LdapTokenRevocationRecord> implements TokenRevocationRecordPersistenceStrategy {
 
     @Override
     public Iterable<LdapTokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(Token token) {

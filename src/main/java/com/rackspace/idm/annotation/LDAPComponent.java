@@ -13,4 +13,7 @@ import java.lang.annotation.Target;
 @Profile({"LDAP", "default"})
 @Component
 public @interface LDAPComponent {
+
+    String value() default "";
+
 }

@@ -190,7 +190,7 @@ DROP TABLE IF EXISTS `domain_rax`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `domain_rax` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` varchar(64) NOT NULL,
   `mfa_enforcement_level` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -763,6 +763,40 @@ CREATE TABLE `revocation_event` (
   `audit_chain_id` varchar(32) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `ix_revocation_event_revoked_at` (`revoked_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `revocation_event_authenticated_by_rax`
+--
+
+DROP TABLE IF EXISTS `revocation_event_authenticated_by_rax`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `revocation_event_authenticated_by_rax` (
+  `id` varchar(64) NOT NULL,
+  `revocation_event_id` varchar(64) NOT NULL,
+  `authenticated_by` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `revocation_event_id` (`revocation_event_id`),
+  CONSTRAINT `revocation_event_authenticated_by_rax_ibfk_1` FOREIGN KEY (`revocation_event_id`) REFERENCES `revocation_event` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `revocation_event_token_rax`
+--
+
+DROP TABLE IF EXISTS `revocation_event_token_rax`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `revocation_event_token_rax` (
+  `id` varchar(64) NOT NULL,
+  `access_token` varchar(512) NOT NULL,
+  `revocation_event_id` varchar(64) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `revocation_event_id` (`revocation_event_id`),
+  CONSTRAINT `revocation_event_token_rax_ibfk_1` FOREIGN KEY (`revocation_event_id`) REFERENCES `revocation_event` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

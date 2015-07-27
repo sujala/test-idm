@@ -6,8 +6,6 @@ import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 
@@ -15,10 +13,7 @@ import java.util.*;
 @Getter
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_TOKEN_REVOCATION_RECORD,
         postEncodeMethod="doPostEncode")
-public class LdapTokenRevocationRecord implements Auditable, UniqueId, TokenRevocationRecord {
-
-    public static final String AUTHENTICATED_BY_EMPTY_LIST_SUBSTITUTE = "<empty>";
-    public static final String AUTHENTICATED_BY_ALL_SUBSTITUTE = "*";
+public class LdapTokenRevocationRecord implements Auditable, UniqueId, TokenRevocationRecord  {
 
     // This field must me mapped on every subclass (UnboundID LDAP SDK v2.3.6 limitation)
     @Setter
@@ -68,38 +63,12 @@ public class LdapTokenRevocationRecord implements Auditable, UniqueId, TokenRevo
 
     @Override
     public List<AuthenticatedByMethodGroup> getTargetAuthenticatedByMethodGroups() {
-        List<AuthenticatedByMethodGroup> authBy = new ArrayList<AuthenticatedByMethodGroup>();
-
-        for (String flattenedAuthBySet : getInternalTargetAuthenticatedBy()) {
-            if (AUTHENTICATED_BY_EMPTY_LIST_SUBSTITUTE.equals(flattenedAuthBySet)) {
-                authBy.add(AuthenticatedByMethodGroup.NULL);
-            } else if (AUTHENTICATED_BY_ALL_SUBSTITUTE.equals(flattenedAuthBySet)){
-                authBy.add(AuthenticatedByMethodGroup.ALL);
-            } else {
-                String[] authByValues = StringUtils.splitPreserveAllTokens(flattenedAuthBySet, ",");
-                authBy.add(AuthenticatedByMethodGroup.getGroup(Arrays.asList(authByValues)));
-            }
-        }
-        return authBy;
+        return TokenRevocationRecordUtil.getAuthdByGroupsFromAuthByStrings(internalTargetAuthenticatedBy);
     }
 
     @Override
     public void setTargetAuthenticatedByMethodGroups(List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
-        List<String> flattenedAuthBy = new ArrayList<String>();
-        for (AuthenticatedByMethodGroup authBySet : authenticatedByMethodGroups) {
-            String flattenedSet;
-            if (authBySet.matches(AuthenticatedByMethodGroup.NULL)) {
-                //substitute for the empty set since ldap can't handle null/blanks
-                flattenedSet = AUTHENTICATED_BY_EMPTY_LIST_SUBSTITUTE;
-            } else if (authBySet.matches(AuthenticatedByMethodGroup.ALL)) {
-                //substitute for the empty set since ldap can't handle null/blanks
-                flattenedSet = AUTHENTICATED_BY_ALL_SUBSTITUTE;
-            } else {
-                flattenedSet = StringUtils.join(authBySet.getAuthenticatedByMethodsAsValues(), ",");
-            }
-            flattenedAuthBy.add(flattenedSet);
-        }
-        internalTargetAuthenticatedBy = flattenedAuthBy;
+        internalTargetAuthenticatedBy = TokenRevocationRecordUtil.getAuthByStringsFromAuthByGroups(authenticatedByMethodGroups);
     }
 
     @Override
