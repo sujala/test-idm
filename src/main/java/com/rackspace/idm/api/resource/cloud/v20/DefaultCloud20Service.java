@@ -1470,19 +1470,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId) {
-        try {
-            authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-
-            User user = checkAndGetSoftDeletedUser(userId);
-            userService.deleteUser(user);
-            return Response.noContent();
-        } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    @Override
     public ResponseBuilder deleteUserCredential(HttpHeaders httpHeaders, String authToken, String userId, String credentialType) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
@@ -3840,18 +3827,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         return sa;
     }
 
-    User checkAndGetSoftDeletedUser(String id) {
-        User user = this.userService.getSoftDeletedUser(id);
-
-        if (user == null) {
-            String errMsg = String.format("User %s not found", id);
-            logger.warn(errMsg);
-            throw new NotFoundException("User not found");
-        }
-
-        return user;
-    }
-
     void checkForMultipleIdentityAccessRoles(User user, ClientRole roleToAdd) {
         user.setRoles(tenantService.getGlobalRolesForUser(user));
         if (user.getRoles() == null ||
@@ -3908,10 +3883,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     private String getCloudAuthIdentityAdminRole() {
         return config.getString("cloudAuth.adminRole");
-    }
-
-    private String getRackspaceCustomerId() {
-        return config.getString("rackspace.customerId");
     }
 
     private String getRackerImpersonateRole(){

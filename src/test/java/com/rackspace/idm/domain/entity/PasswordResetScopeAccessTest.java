@@ -38,12 +38,6 @@ public class PasswordResetScopeAccessTest {
     }
 
     @Test
-    public void getUserRCN() throws Exception {
-        passwordResetScopeAccess.setUserRCN("userRCN");
-        assertThat("returns user rcn",passwordResetScopeAccess.getUserRCN(),equalTo("userRCN"));
-    }
-
-    @Test
     public void setAccessTokenExpired_setsDateToCurrentTimeMinusOneDay() throws Exception {
         passwordResetScopeAccess.setAccessTokenExpired();
         assertThat("access token is expired",passwordResetScopeAccess.getAccessTokenExp(),lessThan(new DateTime().minusDays(1).plusSeconds(1).toDate()));

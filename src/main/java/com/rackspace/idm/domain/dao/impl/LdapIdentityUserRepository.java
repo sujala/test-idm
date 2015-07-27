@@ -303,7 +303,7 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
-    public void updateObject(BaseUser object) {
+    public void updateIdentityUser(BaseUser object) {
         if (object instanceof User) {
             userDao.updateUser((User) object);
         }

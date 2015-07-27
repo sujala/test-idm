@@ -66,7 +66,6 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
             it.userRsId = hardCodedProvisionedUser.id
-            it.userRCN = "RCN-000-000-001" //take from sample data
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.clientRCN = "RACKSPACE"
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)

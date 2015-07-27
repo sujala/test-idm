@@ -1039,21 +1039,6 @@ public class Cloud20VersionResource {
         return cloud20Service.removeUserFromGroup(httpHeaders, authToken, groupId, userId).build();
     }
 
-
-    @DELETE
-    @Path("softDeleted/users/{userId}")
-    public Response deleteSoftDeletedUser(
-            @Context HttpHeaders httpHeaders,
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("userId") String userId) {
-        if(config.getBoolean("allowSoftDeleteDeletion")){
-            return cloud20Service.deleteUserFromSoftDeleted(httpHeaders, authToken, userId).build();
-        }
-        else{
-            throw new NotFoundException("Not Found");
-        }
-    }
-
     @POST
     @Path("RAX-AUTH/regions")
     public Response createRegion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Region region) {

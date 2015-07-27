@@ -29,6 +29,7 @@ import org.springframework.util.CollectionUtils;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 @Component
@@ -222,7 +223,7 @@ public class UserConverterCloudV20 {
                 }
 
                 if (!CollectionUtils.isEmpty(user.getRsGroupId())) {
-                    jaxbUser.setGroups(this.groupConverterCloudV20.toGroupListJaxb(user.getRsGroupId()));
+                    jaxbUser.setGroups(this.groupConverterCloudV20.toGroupListJaxb(new HashSet<String>(user.getRsGroupId())));
                 }
 
             }

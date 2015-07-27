@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.6.19, for osx10.9 (x86_64)
+-- MySQL dump 10.13  Distrib 5.6.24, for osx10.10 (x86_64)
 --
 -- Host: 127.0.0.1    Database: keystone
 -- ------------------------------------------------------
@@ -63,6 +63,7 @@ CREATE TABLE `assignment` (
   `role_id` varchar(64) NOT NULL,
   `inherited` tinyint(1) NOT NULL,
   PRIMARY KEY (`type`,`actor_id`,`target_id`,`role_id`),
+  KEY `assignment_role_id_fkey` (`role_id`),
   KEY `ix_actor_id` (`actor_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -355,6 +356,7 @@ CREATE TABLE `identity_provider` (
   `id` varchar(64) NOT NULL,
   `enabled` tinyint(1) NOT NULL,
   `description` text,
+  `remote_id` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -372,22 +374,6 @@ CREATE TABLE `identity_provider_rax` (
   `description` text,
   `public_certificate` text,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `idp_remote_ids`
---
-
-DROP TABLE IF EXISTS `idp_remote_ids`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `idp_remote_ids` (
-  `idp_id` varchar(64) DEFAULT NULL,
-  `remote_id` varchar(255) NOT NULL,
-  PRIMARY KEY (`remote_id`),
-  KEY `idp_id` (`idp_id`),
-  CONSTRAINT `idp_remote_ids_ibfk_1` FOREIGN KEY (`idp_id`) REFERENCES `identity_provider` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -445,7 +431,7 @@ DROP TABLE IF EXISTS `migrate_version`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `migrate_version` (
   `repository_id` varchar(250) NOT NULL,
-  `repository_path` mediumtext,
+  `repository_path` text,
   `version` int(11) DEFAULT NULL,
   PRIMARY KEY (`repository_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -674,19 +660,6 @@ CREATE TABLE `question_rax` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `racker_rax`
---
-
-DROP TABLE IF EXISTS `racker_rax`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `racker_rax` (
-  `id` varchar(64) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `region`
 --
 
@@ -878,7 +851,6 @@ CREATE TABLE `service_provider` (
   `enabled` tinyint(1) NOT NULL,
   `description` text,
   `sp_url` varchar(256) NOT NULL,
-  `relay_state_prefix` varchar(256) NOT NULL DEFAULT 'ss:mem:',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1072,4 +1044,4 @@ CREATE TABLE `whitelisted_config` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-07-16 16:24:09
+-- Dump completed on 2015-07-28 13:36:31

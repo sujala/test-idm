@@ -195,7 +195,6 @@ public class TokenServiceTests {
         usa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         usa.setRefreshTokenString(refreshTokenVal);
         usa.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
-        usa.setUserRCN(customerId);
         usa.setClientId(clientId);
         usa.setClientRCN(customerId);
         return usa;

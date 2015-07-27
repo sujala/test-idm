@@ -151,11 +151,6 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(PASSWORD_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
     }
 
-    def hardDeleteUser(String token, String userId) {
-        initOnUse()
-        resource.path(path20).path("softDeleted").path(USERS).path(userId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
-    }
-
     def deleteTenant(String token, String tenantId) {
         initOnUse()
         resource.path(path20).path(TENANTS).path(tenantId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).delete(ClientResponse)
@@ -802,7 +797,6 @@ class Cloud20Methods {
     def destroyUser(String token, String userId) {
         initOnUse()
         deleteUser(token, userId)
-        hardDeleteUser(token, userId)
     }
 
     def pageParams(String offset, String limit) {

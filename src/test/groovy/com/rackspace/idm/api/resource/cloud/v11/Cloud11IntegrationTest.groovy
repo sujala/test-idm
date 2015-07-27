@@ -81,7 +81,6 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud11.deleteUser(username)
-        cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
     }
 
     def "user authenticate success"() {
@@ -103,7 +102,6 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud11.deleteUser(username)
-        cloud20.hardDeleteUser(serviceAdminToken, userId)
     }
 
     def "CRUD user v1.1"() {
@@ -145,7 +143,6 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud11.deleteUser(username)
-        cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
         cloud20.deleteTenant(serviceAdminToken, String.valueOf(randomMosso))
     }
 
@@ -174,7 +171,6 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud11.deleteUser(username)
-        cloud20.hardDeleteUser(serviceAdminToken, userEntity.id)
         cloud20.deleteTenant(serviceAdminToken, String.valueOf(randomMosso))
     }
 
@@ -231,7 +227,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         expThree >= range.get("min")
 
         cleanup:
-        cloud20.hardDeleteUser(serviceAdminToken, userId)
+        cloud20.deleteUser(serviceAdminToken, userId)
     }
 
     def "Allow baseUrls to be assigned to negative tenants" () {
@@ -720,7 +716,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         createdUser.nastId != nastId
 
         cleanup:
-        cloud20.destroyUser(serviceAdminToken, userEntity.id)
+        try { cloud20.destroyUser(serviceAdminToken, userEntity.id) } catch (Exception e) {}
 
         where:
         nastId | status

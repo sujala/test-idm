@@ -1,7 +1,7 @@
 package com.rackspace.idm.domain.entity;
 
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents a non-racker end user
@@ -12,7 +12,7 @@ public interface EndUser extends BaseUser {
     String getUsername();
     String getDomainId();
     List<TenantRole> getRoles();
-    HashSet<String> getRsGroupId();
+    Set<String> getRsGroupId();
 
     /*
     These were added to allow conversion for userById service

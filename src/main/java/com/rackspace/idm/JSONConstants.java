@@ -22,7 +22,6 @@ public final class JSONConstants {
     public static final String CREATED = "created";
     public static final String CREDENTIAL = "credential";
     public static final String CREDENTIALS = "credentials";
-    public static final String CUSTOMER_ID = "customerId";
     public static final String DESCRIPTION = "description";
     public static final String DEFAULT_REGION = "defaultRegion";
     public static final String DOMAIN = "domain";

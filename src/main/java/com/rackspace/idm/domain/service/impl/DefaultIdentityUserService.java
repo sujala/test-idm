@@ -158,7 +158,7 @@ public class DefaultIdentityUserService implements IdentityUserService {
         if (user != null && !user.getRsGroupId().contains(groupId)) {
             logger.debug("Adding groupId {} to user {}", groupId, endUserId);
             user.getRsGroupId().add(groupId);
-            identityUserRepository.updateObject(user);
+            identityUserRepository.updateIdentityUser(user);
             logger.debug("Added groupId {} to user {}", groupId, endUserId);
         }
     }
@@ -175,7 +175,7 @@ public class DefaultIdentityUserService implements IdentityUserService {
         if (user != null && user.getRsGroupId().contains(groupId)) {
             logger.debug("Removing groupId {} from user {}", groupId, endUserId);
             user.getRsGroupId().remove(groupId);
-            identityUserRepository.updateObject(user);
+            identityUserRepository.updateIdentityUser(user);
             logger.debug("Removed groupId {} from user {}", groupId, endUserId);
         }
     }

@@ -66,7 +66,6 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         retrievedUser.getUserPassword() != null
         retrievedUser.isPasswordWasSelfUpdated() == false
         retrievedUser.getPasswordFailureDate() == null
-        retrievedUser.getRsGroupDN() == null
 
         when: "delete object already deleted when using recursion delete algorithm"
         ldapUserRepository.deleteUser(retrievedUser2);

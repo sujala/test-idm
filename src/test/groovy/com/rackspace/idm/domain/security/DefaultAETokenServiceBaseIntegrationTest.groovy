@@ -125,7 +125,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.userRsId = user.id
-            it.userRCN = "userRCN"
             it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.clientRCN = "clientRCN"
             it.getAuthenticatedBy().addAll(authBy)

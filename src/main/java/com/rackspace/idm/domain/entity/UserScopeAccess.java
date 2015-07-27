@@ -27,9 +27,6 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken, Bas
     @LDAPField(attribute=LdapRepository.ATTR_USER_RS_ID, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private String userRsId;
 
-    @LDAPField(attribute=LdapRepository.ATTR_USER_RCN, objectClass=LdapRepository.OBJECTCLASS_USERSCOPEACCESS, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private String userRCN;
-
     @Override
     @LDAPGetter(attribute=LdapRepository.ATTR_ACCESS_TOKEN, inRDN=true, filterUsage=FilterUsage.ALWAYS_ALLOWED)
     public String getAccessTokenString() {
@@ -59,8 +56,8 @@ public class UserScopeAccess extends ScopeAccess implements HasRefreshToken, Bas
 
     @Override
     public String getAuditContext() {
-        final String format = "User(userRsId=%s,customerId=%s)";
-        return String.format(format, this.getUserRsId(), this.getUserRCN());
+        final String format = "User(userRsId=%s)";
+        return String.format(format, this.getUserRsId());
     }
 
     @Override

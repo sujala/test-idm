@@ -141,14 +141,12 @@ public class UserServiceTests {
         UserScopeAccess usa = new UserScopeAccess();
         usa.setClientId(clientId);
         usa.setClientRCN(clientRCN);
-        usa.setUserRCN(userRCN);
         usa.setUserRsId(userRsId);
         return usa;
     }
     
     String clientId = "clientId";
     String clientRCN = "clientRCN";
-    String userRCN = "userRCN";
     String userRsId = "userRsId";
 
     private List<Application> getFakeClients() {

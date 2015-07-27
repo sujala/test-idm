@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.service.EncryptionService;
 import com.rackspace.idm.domain.service.PropertiesService;
 import com.rackspace.idm.util.CryptHelper;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,7 +181,7 @@ public class DefaultEncryptionService implements EncryptionService {
     }
 
     private String getDecryptionVersionId(User user) {
-        if (user.getEncryptionVersion() == null) {
+        if (StringUtils.isEmpty(user.getEncryptionVersion())) {
             return "0";
         } else {
             return user.getEncryptionVersion();
@@ -188,7 +189,7 @@ public class DefaultEncryptionService implements EncryptionService {
     }
 
     private String getDecryptionSalt(User user) {
-        if (user.getSalt() == null) {
+        if (StringUtils.isEmpty(user.getSalt())) {
             return config.getString("crypto.salt");
         } else {
             return user.getSalt();
