@@ -52,7 +52,9 @@ public class SqlTenantRepository implements TenantDao {
 
     @Override
     public PaginatorContext<Tenant> getTenantsPaged(int offset, int limit) {
-        return mapper.fromSQL(projectRepository.findAll(mapper.getPageRequest(offset, limit)), offset, limit);
+        PaginatorContext<Tenant> page = mapper.getPageRequest(offset, limit);
+        while (mapper.fromSQL(projectRepository.findAll(page.getPageRequest()), page)) {}
+        return page;
     }
 
     @Override

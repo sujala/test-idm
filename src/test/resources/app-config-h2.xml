@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+
+       xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+			http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+			http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.1.xsd
+			http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa.xsd
+            http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd">
+
+    <!-- ========================= COMPONENT DEFINITIONS ========================= -->
+
+    <!--
+         Activates various annotations to be detected in bean classes: Spring's
+         @Required and @Autowired, as well as JSR 250's @PostConstruct,
+         @PreDestroy and @Resource (if available) and JPA's @PersistenceContext
+         and @PersistenceUnit (if available).
+     -->
+    <context:annotation-config/>
+
+    <aop:aspectj-autoproxy />
+
+    <bean id="bootstrapOpenSaml" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetClass"><value>org.opensaml.DefaultBootstrap</value></property>
+        <property name="targetMethod"><value>bootstrap</value></property>
+    </bean>
+
+    <!-- Scans within the base package of the application for @Components to configure as beans. -->
+    <context:component-scan base-package="com.rackspace.idm, testHelpers">
+        <context:exclude-filter type="annotation" expression="com.rackspace.test.SingleTestConfiguration" />
+        <context:exclude-filter type="regex" expression="com\.rackspace\.idm\.domain\.config\.PropertyFileConfiguration" />
+    </context:component-scan>
+
+    <!--
+         Instruct Spring to perform automatic transaction management on annotated classes.
+         The SpringJdbcIntro class uses @Transactional annotations.
+     <tx:annotation-driven/>
+     -->
+
+    <!-- set the crypter to load the keys from the classpath location -->
+    <bean id="classpathLoadingAETokenCrypter" class="com.rackspace.idm.domain.security.ClasspathKeyCzarCrypterLocator" primary="true">
+        <property name="keysClassPathLocation" value="/com/rackspace/idm/api/resource/cloud/v20/keys"/>
+    </bean>
+
+    <import resource="namespaces.xml"/>
+
+    <jpa:repositories base-package="com.rackspace.idm.domain.sql.mapper.test" />
+
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="org.h2.Driver"/>
+        <property name="url" value="jdbc:h2:mem:."/>
+        <property name="username" value="sa"/>
+        <property name="password" value=""/>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory"/>
+        <property name="jpaDialect">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaDialect"/>
+        </property>
+    </bean>
+
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="packagesToScan" value="com.rackspace.idm.domain.sql.mapper.test"/>
+        <property name="jpaVendorAdapter">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+                <property name="generateDdl" value="false"/>
+                <property name="showSql" value="true"/>
+                <property name="database" value="H2"/>
+                <property name="databasePlatform" value="org.hibernate.dialect.H2Dialect"/>
+            </bean>
+        </property>
+        <property name="jpaProperties">
+            <props>
+                <prop key="hibernate.hbm2ddl.auto">create</prop>
+            </props>
+        </property>
+    </bean>
+
+</beans>

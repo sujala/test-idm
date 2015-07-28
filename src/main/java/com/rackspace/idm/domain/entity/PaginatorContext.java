@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.entity;
 
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import lombok.Data;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.List;
 public class PaginatorContext<T> {
     private List<SearchResultEntry> searchResultEntryList;
     private List<T> valueList;
+    private PageRequest pageRequest;
 
     private int offset;
     private int limit;
