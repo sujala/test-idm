@@ -147,16 +147,18 @@ public class SamlResponseDecorator {
     }
 
 
-    public AuthnContextClassRef checkAndGetAuthContextClassRef() {
+    public SAMLAuthContext checkAndGetAuthContextClassRef() {
         AuthnContextClassRef ref = getAuthContextClassRef();
         if (ref == null || StringUtils.isBlank(ref.getAuthnContextClassRef())) {
             throw new BadRequestException(ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_FEDERATION_MISSING_AUTH_CONTEXT_CLASSREF, "AuthnContextClassRef is not specified"));
         }
-        if (!SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS.equals(ref.getAuthnContextClassRef())) {
+
+        SAMLAuthContext samlAuthContext = SAMLAuthContext.fromSAMLAuthnContextClassRef(ref.getAuthnContextClassRef());
+        if (samlAuthContext == null) {
             throw new BadRequestException(ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_FEDERATION_INVALID_AUTH_CONTEXT_CLASSREF, "Invalid AuthnContext value"));
         }
 
-        return ref;
+        return samlAuthContext;
     }
 
     public AuthnContextClassRef getAuthContextClassRef() {
