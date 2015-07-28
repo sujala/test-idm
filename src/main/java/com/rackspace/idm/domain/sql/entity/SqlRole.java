@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @Entity
 @Table(name = "role")
+@NamedEntityGraph(name = "SqlRole.rax", attributeNodes = @NamedAttributeNode("rax"))
 public class SqlRole {
 
     @Id
@@ -21,7 +22,7 @@ public class SqlRole {
     @Column(name = "extra")
     private String extra;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "id", referencedColumnName = "id", nullable = false)
     private SqlRoleRax rax;
 

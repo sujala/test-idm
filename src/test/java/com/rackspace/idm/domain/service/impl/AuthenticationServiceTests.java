@@ -33,7 +33,6 @@ public class AuthenticationServiceTests {
     AuthDao mockAuthDao;
     List<TenantRole> tenantRoles;
 
-    String customerId = "RACKSPACE";
     String clientId = "DELETE_My_ClientId";
     String clientSecret = "DELETE_My_Client_Secret";
     String username = "someuser";
@@ -86,9 +85,7 @@ public class AuthenticationServiceTests {
         usa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         usa.setRefreshTokenString(refreshTokenVal);
         usa.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
-        usa.setUserRCN(customerId);
         usa.setClientId(clientId);
-        usa.setClientRCN(customerId);
         usa.setUserRsId(uniqueId);
         usa.setUniqueId("accessToken=12345,cn=TOKENS,o=org");
         return usa;
@@ -99,7 +96,6 @@ public class AuthenticationServiceTests {
         csa.setAccessTokenString(tokenVal);
         csa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         csa.setClientId(clientId);
-        csa.setClientRCN(customerId);
         return csa;
     }
 
@@ -110,7 +106,6 @@ public class AuthenticationServiceTests {
         csa.setRefreshTokenString(refreshTokenVal);
         csa.setRefreshTokenExp(new DateTime().plusDays(1).toDate());
         csa.setClientId(clientId);
-        csa.setClientRCN(customerId);
         csa.setRackerId(rackerId);
         return csa;
     }
@@ -120,9 +115,7 @@ public class AuthenticationServiceTests {
         csa.setAccessTokenString(tokenVal);
         csa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
         csa.setClientId(clientId);
-        csa.setClientRCN(customerId);
         csa.setUsername(username);
-        csa.setUserRCN(customerId);
         return csa;
     }
 

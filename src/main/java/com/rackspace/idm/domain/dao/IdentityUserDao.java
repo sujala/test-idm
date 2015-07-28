@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.*;
 
-public interface IdentityUserDao  extends GenericDao<BaseUser> {
+public interface IdentityUserDao {
 
     /**
      * Search for an base user with the specified id. The user identified by the userId must represent an BaseUser
@@ -114,4 +114,11 @@ public interface IdentityUserDao  extends GenericDao<BaseUser> {
      * @return
      */
     Iterable<EndUser> getEnabledEndUsersByGroupId(String groupId);
+
+    /**
+     * Updates the user
+     *
+     * @param baseUser
+     */
+    void updateIdentityUser(BaseUser baseUser);
 }

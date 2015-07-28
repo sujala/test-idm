@@ -106,7 +106,6 @@ public abstract class LdapRepository {
     public static final String ATTR_INTERNAL_URL = "internalUrl";
     public static final String ATTR_LANG = "preferredLanguage";
     public static final String ATTR_MAIL = "mail";
-    public static final String ATTR_MEMBER_OF = "rsGroupDN";
     public static final String ATTR_MIDDLE_NAME = "middleName";
     public static final String ATTR_MOSSO_ID = "rsMossoId";
     public static final String ATTR_NAME = "cn";
@@ -138,7 +137,6 @@ public abstract class LdapRepository {
     public static final String ATTR_TITLE = "title";
     public static final String ATTR_TOKEN_SCOPE = "tokenScope";
     public static final String ATTR_UID = "uid";
-    public static final String ATTR_USER_RCN = "userRCN";
     public static final String ATTR_USE_FOR_DEFAULT_REGION = "useForDefaultRegion";
     public static final String ATTR_UPDATED_DATE = "modifyTimestamp";
     public static final String ATTR_SOFT_DELETED_DATE = "softDeletedTimestamp";
@@ -409,10 +407,6 @@ public abstract class LdapRepository {
 
     protected String getRackspaceInumPrefix() {
         return config.getString("rackspace.inum.prefix");
-    }
-
-    protected String getRackspaceCustomerId() {
-        return config.getString("rackspace.customerId");
     }
 
     protected static final String NEXT_ROLE_ID = "nextRoleId";

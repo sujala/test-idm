@@ -137,19 +137,15 @@ public class AuthorizationServiceTests {
 
         authorizedUserToken = new UserScopeAccess();
         authorizedUserToken.setAccessTokenString(tokenString);
-        authorizedUserToken.setUserRCN(customerId);
 
         otherCompanyUserToken = new UserScopeAccess();
         otherCompanyUserToken.setAccessTokenString(tokenString);
-        otherCompanyUserToken.setUserRCN(otherCustomerId);
 
         authorizedAdminToken = new UserScopeAccess();
         authorizedAdminToken.setAccessTokenString(tokenString);
-        authorizedAdminToken.setUserRCN(customerId);
 
         otherCompanyAdminToken = new UserScopeAccess();
         otherCompanyAdminToken.setAccessTokenString(tokenString);
-        otherCompanyAdminToken.setUserRCN(otherCustomerId);
 
         customerIdmToken = new ClientScopeAccess();
         customerIdmToken.setAccessTokenString(tokenString);

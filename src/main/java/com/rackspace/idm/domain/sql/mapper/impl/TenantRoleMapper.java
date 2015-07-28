@@ -42,7 +42,11 @@ public class TenantRoleMapper extends SqlMapper<TenantRole, SqlTenantRole> {
 
     public SqlTenantRole toSQL(TenantRole tenantRole){
         SqlTenantRole sqlTenantRole = super.toSQL(tenantRole);
-        sqlTenantRole.setTargetId(tenantRole.getTenantIds().iterator().next());
+        if (tenantRole.getTenantIds() == null || tenantRole.getTenantIds().size() == 0) {
+            sqlTenantRole.setTargetId(config.getReloadableConfig().getIdentityRoleDefaultTenant());
+        } else {
+            sqlTenantRole.setTargetId(tenantRole.getTenantIds().iterator().next());
+        }
         return sqlTenantRole;
     }
 

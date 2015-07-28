@@ -418,19 +418,6 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User loadUser(String customerId, String username) {
-        User user = this.getUser(customerId, username);
-        if (user == null) {
-            String errorMsg = String.format("User not found: %s - %s",
-                    customerId, username);
-            logger.warn(errorMsg);
-            throw new NotFoundException(errorMsg);
-        }
-
-        return user;
-    }
-
-    @Override
     public User loadUser(String userId) {
         User user = this.getUserById(userId);
         if (user == null) {
@@ -468,13 +455,6 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public Iterable<User> getUsersByRCN(String RCN) {
-        logger.debug("Getting All Users");
-
-        return this.userDao.getUsersByRCN(RCN);
-    }
-
-    @Override
     public Iterable<User> getUsersByUsername(String username) {
         logger.debug("Getting All Users");
 
@@ -483,7 +463,7 @@ public class DefaultUserService implements UserService {
 
     @Override
     public List<User> getAllUsers() {
-        //TODO Paginiation
+        //TODO: Pagination
         logger.debug("Getting All Users");
 
         PaginatorContext<User> users = this.userDao.getUsers(getLdapPagingOffsetDefault(), getLdapPagingLimitDefault());
@@ -613,14 +593,6 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public User getUser(String customerId, String username) {
-        logger.debug("Getting User: {} - {}", customerId, username);
-        User user = userDao.getUserByCustomerIdAndUsername(customerId, username);
-        logger.debug(GOT_USER, user);
-        return user;
-    }
-
-    @Override
     public Iterable<User> getUsersByTenantId(String tenantId) {
         logger.debug("Get list of users with tenant", tenantId);
         List<TenantRole> tenantRoles = tenantService.getTenantRolesForTenant(tenantId);
@@ -651,14 +623,6 @@ public class DefaultUserService implements UserService {
         }
 
         return result;
-    }
-
-    @Override
-    public User getSoftDeletedUser(String id) {
-        logger.debug(GETTING_USER, id);
-        User user = userDao.getSoftDeletedUserById(id);
-        logger.debug(GOT_USER, user);
-        return user;
     }
 
     @Override
@@ -984,14 +948,6 @@ public class DefaultUserService implements UserService {
         }
 
         return user;
-    }
-
-    @Override
-    public void softDeleteUser(User user) throws IOException, JAXBException {
-        logger.debug("SoftDeleting User: {}", user);
-        scopeAccessService.expireAllTokensForUserById(user.getId());
-        userDao.softDeleteUser(user);
-        logger.debug("SoftDeleted User: {}", user);
     }
 
     @Override

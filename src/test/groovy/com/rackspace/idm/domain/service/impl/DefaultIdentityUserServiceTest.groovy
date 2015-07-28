@@ -34,7 +34,7 @@ class DefaultIdentityUserServiceTest extends Specification {
 
         then:
         1 * identityUserRepository.getEndUserById(user.id) >> user
-        1 * identityUserRepository.updateObject(user)
+        1 * identityUserRepository.updateIdentityUser(user)
         user.getRsGroupId().contains(groupid)
     }
 
@@ -47,7 +47,7 @@ class DefaultIdentityUserServiceTest extends Specification {
 
         then:
         1 * identityUserRepository.getEndUserById(user.id) >> user
-        0 * identityUserRepository.updateObject(user)
+        0 * identityUserRepository.updateIdentityUser(user)
         user.getRsGroupId().contains(groupid)
     }
 
@@ -61,7 +61,7 @@ class DefaultIdentityUserServiceTest extends Specification {
 
         then:
         1 * identityUserRepository.getEndUserById(user.id) >> user
-        1 * identityUserRepository.updateObject(user)
+        1 * identityUserRepository.updateIdentityUser(user)
         !user.getRsGroupId().contains(groupid)
     }
 
@@ -75,7 +75,7 @@ class DefaultIdentityUserServiceTest extends Specification {
 
         then:
         1 * identityUserRepository.getEndUserById(user.id) >> user
-        0 * identityUserRepository.updateObject(user)
+        0 * identityUserRepository.updateIdentityUser(user)
         !user.getRsGroupId().contains(groupid)
     }
 

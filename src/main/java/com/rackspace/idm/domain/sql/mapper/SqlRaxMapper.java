@@ -25,8 +25,8 @@ public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlM
     }
 
     @Override
-    public SQLEntity toSQL(Entity entity, SQLEntity sqlEntity) {
-        final SQLEntity finalEntity = super.toSQL(entity, sqlEntity);
+    public SQLEntity toSQL(Entity entity, SQLEntity sqlEntity, boolean ignoreNulls) {
+        final SQLEntity finalEntity = super.toSQL(entity, sqlEntity, ignoreNulls);
 
         final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
         SQLRaxEntity sqlRaxEntity;
@@ -41,10 +41,10 @@ public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlM
             }
         }
 
-        return modifyRaxToSQL(entity, finalEntity, sqlRaxEntity);
+        return modifyRaxToSQL(entity, finalEntity, sqlRaxEntity, ignoreNulls);
     }
 
-    private SQLEntity modifyRaxToSQL(Entity entity, SQLEntity sqlEntity, SQLRaxEntity sqlRaxEntity) {
+    private SQLEntity modifyRaxToSQL(Entity entity, SQLEntity sqlEntity, SQLRaxEntity sqlRaxEntity, boolean ignoreNulls) {
         if (entity == null || sqlRaxEntity == null) {
             return sqlEntity;
         }
@@ -55,20 +55,21 @@ public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlM
 
         final Map<String, String> declaredRaxFields = getDeclaredFields(sqlRaxEntityClass);
         overrideRaxFields(declaredRaxFields);
-        setToSQL(declaredRaxFields, entityWrapper, sqlRaxEntityWrapper, sqlRaxEntityClass);
+        setToSQL(declaredRaxFields, entityWrapper, sqlRaxEntityWrapper, sqlRaxEntityClass, ignoreNulls);
 
         sqlEntityWrapper.setPropertyValue(RAX_FIELD, sqlRaxEntity);
         return sqlEntity;
     }
 
-    public Entity fromSQL(SQLEntity sqlEntity) {
+    @Override
+    public Entity fromSQL(SQLEntity sqlEntity, boolean ignoreNulls) {
         if (sqlEntity == null) {
             return null;
         }
 
         Entity entity = null;
         SQLRaxEntity sqlRaxEntity = null;
-        entity = super.fromSQL(sqlEntity);
+        entity = super.fromSQL(sqlEntity, ignoreNulls);
 
         final BeanWrapperImpl entityWrapper = new BeanWrapperImpl(entity);
         final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
@@ -79,7 +80,7 @@ public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlM
 
             final Map<String, String> declaredRaxFields = getDeclaredFields(sqlRaxEntityClass);
             overrideRaxFields(declaredRaxFields);
-            setFromSQL(declaredRaxFields, entityWrapper, sqlRaxEntityWrapper, entityClass);
+            setFromSQL(declaredRaxFields, entityWrapper, sqlRaxEntityWrapper, entityClass, ignoreNulls);
         }
 
         return entity;

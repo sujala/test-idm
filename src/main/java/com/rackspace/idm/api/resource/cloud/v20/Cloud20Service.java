@@ -71,9 +71,7 @@ public interface Cloud20Service {
 
 	ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user);
 
-	ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId) ;
-
-    ResponseBuilder deleteUserFromSoftDeleted(HttpHeaders httpHeaders, String authToken, String userId);
+	ResponseBuilder deleteUser(HttpHeaders httpHeaders, String authToken, String userId);
 
 	ResponseBuilder setUserEnabled(HttpHeaders httpHeaders, String authToken, String userId, User user);
 

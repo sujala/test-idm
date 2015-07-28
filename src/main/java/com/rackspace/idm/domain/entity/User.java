@@ -17,10 +17,7 @@ import org.hibernate.validator.constraints.Length;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACEPERSON)
@@ -167,12 +164,7 @@ public class User implements EndUser {
                objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
                filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
     )
-    private HashSet<String> rsGroupId;
-
-    @LDAPField(attribute=LdapRepository.ATTR_MEMBER_OF,
-            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private String rsGroupDN;
+    private Set<String> rsGroupId;
 
     @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_MOBILE_PHONE_RSID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     private String multiFactorMobilePhoneRsId;
@@ -293,7 +285,7 @@ public class User implements EndUser {
         return String.format(format, getUsername());
     }
 
-    public HashSet<String> getRsGroupId() {
+    public Set<String> getRsGroupId() {
         if (rsGroupId == null) {
             rsGroupId = new HashSet<String>();
         }
@@ -309,6 +301,6 @@ public class User implements EndUser {
     }
 
     public String getUserMultiFactorEnforcementLevelIfNullWillReturnDefault() {
-        return userMultiFactorEnforcementLevel == null ? GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT : userMultiFactorEnforcementLevel;
+        return StringUtils.isEmpty(userMultiFactorEnforcementLevel) ? GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT : userMultiFactorEnforcementLevel;
     }
 }

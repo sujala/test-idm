@@ -78,12 +78,6 @@ public class LdapEndpointRepositoryDepTest extends InMemoryLdapIntegrationTest {
     }
 
     @Test
-    public void getRackspaceCustomerId_callsConfigMethod() throws Exception {
-        ldapEndpointRepository.getRackspaceCustomerId();
-        verify(config).getString("rackspace.customerId");
-    }
-
-    @Test
     public void queryPairConstructor_attributeIsBlank_throwsIllegalArgumentException() throws Exception {
         try {
             new LdapRepository.QueryPair("", "comparer", "value");

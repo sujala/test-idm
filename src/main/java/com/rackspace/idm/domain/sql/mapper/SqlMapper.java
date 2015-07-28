@@ -1,10 +1,10 @@
 package com.rackspace.idm.domain.sql.mapper;
 
+import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapperImpl;
@@ -44,6 +44,10 @@ public abstract class SqlMapper<Entity, SQLEntity> {
     }
 
     public SQLEntity toSQL(Entity entity, SQLEntity sqlEntity) {
+        return toSQL(entity, sqlEntity, true);
+    }
+
+    public SQLEntity toSQL(Entity entity, SQLEntity sqlEntity, boolean ignoreNulls) {
         if (entity == null || sqlEntity == null) {
             return sqlEntity;
         }
@@ -53,7 +57,7 @@ public abstract class SqlMapper<Entity, SQLEntity> {
 
         final Map<String, String> declaredFields = getDeclaredFields(sqlEntityClass);
         overrideFields(declaredFields);
-        setToSQL(declaredFields, entityWrapper, sqlEntityWrapper, sqlEntityClass);
+        setToSQL(declaredFields, entityWrapper, sqlEntityWrapper, sqlEntityClass, ignoreNulls);
 
         if (declaredFields.keySet().contains(EXTRA_FIELD)) {
             setExtraToSQL(entityWrapper, sqlEntityWrapper);
@@ -62,14 +66,18 @@ public abstract class SqlMapper<Entity, SQLEntity> {
         return sqlEntity;
     }
 
-    protected final void setToSQL(Map<String, String> declaredFields, BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper, Class<?> entityClass) {
+    protected final void setToSQL(Map<String, String> declaredFields, BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper, Class<?> entityClass, boolean ignoreNulls) {
         final Set<String> ignored = getIgnoredSetFields();
         for (String field : declaredFields.keySet()) {
             if (!ignored.contains(field) && sqlEntityWrapper.isWritableProperty(field)) {
                 try {
-                    Object value = entityWrapper.getPropertyValue(declaredFields.get(field));
-                    value = convertBase64(value, field, entityClass);
-                    sqlEntityWrapper.setPropertyValue(field, value);
+                    final String propertyName = declaredFields.get(field);
+                    Object value = entityWrapper.getPropertyValue(propertyName);
+                    final boolean deleteNullValues = entityWrapper.getPropertyTypeDescriptor(propertyName).hasAnnotation(DeleteNullValues.class);
+                    if (value != null || !ignoreNulls || deleteNullValues) {
+                        value = convertBase64(value, field, entityClass);
+                        sqlEntityWrapper.setPropertyValue(field, value);
+                    }
                 } catch (BeansException e) {
                     LOGGER.debug("Error mapping field '" + field + "'.", e);
                 }
@@ -113,6 +121,10 @@ public abstract class SqlMapper<Entity, SQLEntity> {
     }
 
     public Entity fromSQL(SQLEntity sqlEntity) {
+        return fromSQL(sqlEntity, true);
+    }
+
+    public Entity fromSQL(SQLEntity sqlEntity, boolean ignoreNulls) {
         if (sqlEntity == null) {
             return null;
         }
@@ -126,7 +138,7 @@ public abstract class SqlMapper<Entity, SQLEntity> {
 
             final Map<String, String> declaredFields = getDeclaredFields(sqlEntityClass);
             overrideFields(declaredFields);
-            setFromSQL(declaredFields, entityWrapper, sqlEntityWrapper, entityClass);
+            setFromSQL(declaredFields, entityWrapper, sqlEntityWrapper, entityClass, ignoreNulls);
 
             if (declaredFields.keySet().contains(EXTRA_FIELD)) {
                 setExtraFromSQL(entityWrapper, sqlEntityWrapper);
@@ -138,14 +150,16 @@ public abstract class SqlMapper<Entity, SQLEntity> {
         return entity;
     }
 
-    protected final void setFromSQL(Map<String, String> declaredFields, BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper, Class<?> entityType) {
+    protected final void setFromSQL(Map<String, String> declaredFields, BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper, Class<?> entityType, boolean ignoreNulls) {
         final Set<String> ignored = getIgnoredSetFields();
         for (String field : declaredFields.keySet()) {
             if (!ignored.contains(field) && entityWrapper.isWritableProperty(declaredFields.get(field))) {
                 try {
                     Object value = sqlEntityWrapper.getPropertyValue(field);
-                    value = convertBase64(value, field, entityType);
-                    entityWrapper.setPropertyValue(declaredFields.get(field), value);
+                    if (value != null || !ignoreNulls) {
+                        value = convertBase64(value, field, entityType);
+                        entityWrapper.setPropertyValue(declaredFields.get(field), value);
+                    }
                 } catch (BeansException e) {
                     LOGGER.debug("Error mapping field '" + field + "'.", e);
                 }

@@ -48,8 +48,6 @@ public interface UserService {
     
     void deleteUser(String username);
 
-    Iterable<User> getUsersByRCN(String RCN);
-
     Iterable<User> getUsersByUsername(String username);
 
     List<User> getAllUsers();
@@ -95,13 +93,7 @@ public interface UserService {
 
     User getUserByTenantId(String tenantId);
 
-    User getUser(String customerId, String username);
-
-    User getSoftDeletedUser(String id);
-
     Applications getUserApplications(User user);
-    
-    User loadUser(String customerId, String username);
     
     User loadUser(String userId);
 
@@ -123,8 +115,6 @@ public interface UserService {
     void updateUserForMultiFactor(User user);
 
     Password resetUserPassword(User user);
-
-    void softDeleteUser(User user) throws IOException, JAXBException;
 
     void addBaseUrlToUser(String baseUrlId, User user);
 

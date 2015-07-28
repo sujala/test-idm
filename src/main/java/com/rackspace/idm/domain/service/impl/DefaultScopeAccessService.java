@@ -909,7 +909,6 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         UserScopeAccess scopeAccessToAdd = new UserScopeAccess();
         scopeAccessToAdd.setClientId(scopeAccess.getClientId());
         scopeAccessToAdd.setClientRCN(scopeAccess.getClientRCN());
-        scopeAccessToAdd.setUserRCN(scopeAccess.getUserRCN());
         scopeAccessToAdd.setUserRsId(scopeAccess.getUserRsId());
         scopeAccessToAdd.setAuthenticatedBy(scopeAccess.getAuthenticatedBy());
 

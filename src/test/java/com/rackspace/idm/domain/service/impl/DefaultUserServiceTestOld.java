@@ -107,33 +107,6 @@ public class DefaultUserServiceTestOld {
         assertThat("User has subusers", hasUsers, equalTo(false));
     }
 
-    @Test
-    public void getUser_callsUserDao_getUserByCustomerIdAndUsername() throws Exception {
-        defaultUserService.getUser("customerId", "username");
-        verify(userDao).getUserByCustomerIdAndUsername("customerId", "username");
-    }
-
-    @Test
-    public void getUser_foundUser_returnsUser() throws Exception {
-        User user = new User();
-        when(userDao.getUserByCustomerIdAndUsername("customerId", "username")).thenReturn(user);
-        User result = defaultUserService.getUser("customerId", "username");
-        assertThat("user", result, equalTo(user));
-    }
-
-    @Test (expected = NotFoundException.class)
-    public void loadUser_withIdAndUsername_throwsNotFound() throws Exception {
-        defaultUserService.loadUser("userId", "username");
-    }
-
-    @Test
-    public void loadUser_foundUser_returnsUser() throws Exception {
-        User user = new User();
-        when(userDao.getUserByCustomerIdAndUsername("userId", "username")).thenReturn(user);
-        User result = defaultUserService.loadUser("userId", "username");
-        assertThat("user", result, equalTo(user));
-    }
-
     @Test (expected = NotFoundException.class)
     public void loadUser_userIsNull_throwsNotFound() throws Exception {
         defaultUserService.loadUser("userId");
@@ -204,37 +177,6 @@ public class DefaultUserServiceTestOld {
         when(scopeAccessService.getScopeAccessByAccessToken("authToken")).thenReturn(null);
         User result = defaultUserService.getUserByAuthToken("authToken");
         assertThat("user", result, equalTo(null));
-    }
-
-    @Test
-    public void softDeleteUser_callsScopeAccessService_expireAllTokensForUser() throws Exception {
-        User user = new User();
-        user.setUsername("username");
-        user.setId("1");
-        defaultUserService.softDeleteUser(user);
-        verify(scopeAccessService).expireAllTokensForUserById("1");
-    }
-
-    @Test
-    public void softDeleteUser_callsUserDao_softDeleteUser() throws Exception {
-        User user = new User();
-        user.setUsername("username");
-        defaultUserService.softDeleteUser(user);
-        verify(userDao).softDeleteUser(user);
-    }
-
-    @Test
-    public void getSoftDeletedUser_callsUserDao_getSoftDeletedUserById() throws Exception {
-        defaultUserService.getSoftDeletedUser("id");
-        verify(userDao).getSoftDeletedUserById("id");
-    }
-
-    @Test
-    public void getSoftDeletedUser_returnsUser() throws Exception {
-        User user = new User();
-        when(userDao.getSoftDeletedUserById("id")).thenReturn(user);
-        User result = defaultUserService.getSoftDeletedUser("id");
-        assertThat("user", result, equalTo(user));
     }
 
     @Test (expected = IllegalArgumentException.class)

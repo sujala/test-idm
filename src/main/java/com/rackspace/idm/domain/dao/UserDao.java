@@ -26,11 +26,7 @@ public interface UserDao {
 
     PaginatorContext<User> getUsersByDomain(String domainId, int offset, int limit);
 
-    Iterable<User> getUsersByRCN(String RCN);
-
     Iterable<User> getUsersByUsername(String username);
-
-    User getUserByCustomerIdAndUsername(String customerId, String username);
 
     User getUserById(String id);
 
@@ -63,10 +59,6 @@ public interface UserDao {
     void updateUserEncryption(String userId);
 
     String getNextUserId();
-
-    void softDeleteUser(User user);
-
-    User getSoftDeletedUserById(String id);
 
     Iterable<User> getUsersByDomainAndEnabledFlag(String domainId, boolean enabled);
 

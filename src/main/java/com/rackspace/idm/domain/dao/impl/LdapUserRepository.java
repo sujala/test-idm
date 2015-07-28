@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.UserDao;
@@ -15,13 +16,12 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Component
+@LDAPComponent
 public class LdapUserRepository extends LdapGenericRepository<User> implements UserDao {
 
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
@@ -48,11 +48,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     @Override
     public String getLdapEntityClass() {
         return OBJECTCLASS_RACKSPACEPERSON;
-    }
-
-    @Override
-    public String getSoftDeletedBaseDn() {
-        return SOFT_DELETED_USERS_BASE_DN;
     }
 
     public String[] getSearchAttributes(){
@@ -130,11 +125,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public User getUserByCustomerIdAndUsername(String customerId, String username) {
-        return getObject(searchFilterGetUserByCustomerIdAndUsername(customerId, username));
-    }
-
-    @Override
     public User getUserById(String id) {
         return getObject(searchFilterGetUserById(id));
     }
@@ -183,11 +173,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     @Override
     public PaginatorContext<User> getUsersByDomain(String domainId, int offset, int limit) {
         return getObjectsPaged(searchFilterGetUserByDomainId(domainId), offset, limit);
-    }
-
-    @Override
-    public Iterable<User> getUsersByRCN(String RCN) {
-        return getObjects(searchFilterGetUserByRCN(RCN));
     }
 
     @Override
@@ -317,16 +302,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public void softDeleteUser(User user) {
-        softDeleteObject(user);
-    }
-
-    @Override
-    public User getSoftDeletedUserById(String id) {
-        return getObject(searchFilterGetUserById(id), getSoftDeletedBaseDn());
-    }
-
-    @Override
     public Iterable<User> getUsers() {
         return getObjects(searchFilterGetUser());
     }
@@ -404,14 +379,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
                 .build();
     }
 
-    private Filter searchFilterGetUserByCustomerIdAndUsername(String customerId, String username) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_UID, username)
-                .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, customerId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-                .build();
-    }
-
     private Filter searchFilterGetUserById(String id) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, id)
@@ -422,20 +389,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     private Filter searchFilterGetUserByDomainId(String domainId) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-                .build();
-    }
-
-    private Filter searchFilterGetUserByRPN(String rpn) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_RACKSPACE_PERSON_NUMBER, rpn)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-                .build();
-    }
-
-    private Filter searchFilterGetUserBySecureId(String secureId) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_SECURE_ID, secureId)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
                 .build();
     }
@@ -455,13 +408,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
                 .build();
     }
 
-    private Filter searchFilterGetUserByGroupDn(ClientGroup group) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_MEMBER_OF, group.getUniqueId())
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
-                .build();
-    }
-
     private Filter searchFilterGetUserById(List<String> idList) {
         List<Filter> idFilter = new ArrayList<Filter>();
         for(String id : idList){
@@ -471,13 +417,6 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
                 .addOrAttributes(idFilter)
-                .build();
-    }
-
-    private Filter searchFilterGetUserByRCN(String rcn) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_RACKSPACE_CUSTOMER_NUMBER, rcn)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON)
                 .build();
     }
 

@@ -2571,16 +2571,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 409
     }
 
-     def "deleteUserFromSoftDeleted checks if caller is service admin"() {
-        when:
-        def result = service.deleteUserFromSoftDeleted(headers, authToken, "userId")
-
-        then:
-        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess()
-        1 * authorizationService.verifyServiceAdminLevelAccess(_) >> { throw new ForbiddenException() }
-        result.status == 403
-    }
-
     def "listTenants gets user from scopeAccess and tenants from user"() {
         given:
         allowUserAccess()

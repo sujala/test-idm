@@ -197,7 +197,7 @@ public class Validator {
         }
     }
 
-    private void validateGroups(HashSet<String> groupIds) {
+    private void validateGroups(Set<String> groupIds) {
         if (groupIds != null && !groupIds.isEmpty()) {
             for (Iterator<String> i = groupIds.iterator(); i.hasNext();) {
                 String groupId = i.next();

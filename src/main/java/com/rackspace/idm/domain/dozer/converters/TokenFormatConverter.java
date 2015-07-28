@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dozer.converters;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
+import org.apache.commons.lang.StringUtils;
 import org.dozer.DozerConverter;
 
 public class TokenFormatConverter extends DozerConverter<String, TokenFormatEnum> {
@@ -11,7 +12,7 @@ public class TokenFormatConverter extends DozerConverter<String, TokenFormatEnum
 
     @Override
     public TokenFormatEnum convertTo(String source, TokenFormatEnum destination) {
-        if(source == null) {
+        if(StringUtils.isEmpty(source)) {
             return null;
         }
         try {
