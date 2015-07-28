@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedRackerRequest;
@@ -66,7 +67,13 @@ public class RackerSourceFederationHandler implements FederationHandler {
         List<TenantRole> tenantRoles = generateRolesForRacker(request.getUser().getUsername());
 
         Racker user = processUserForRequest(request);
-        RackerScopeAccess token = createToken(user, request.getRequestedTokenExpirationDate());
+
+        //get the auth by values
+        List<AuthenticatedByMethodEnum> authByList = new ArrayList<AuthenticatedByMethodEnum>(2);
+        authByList.add(AuthenticatedByMethodEnum.FEDERATION);
+        authByList.add(samlResponseDecorator.checkAndGetAuthContextClassRef().getIdmAuthBy());
+
+        RackerScopeAccess token = createToken(user, request.getRequestedTokenExpirationDate(), authByList);
 
         return new SamlAuthResponse(user, tenantRoles, Collections.EMPTY_LIST, token);
     }
@@ -166,15 +173,20 @@ public class RackerSourceFederationHandler implements FederationHandler {
      *
      * @param user
      * @param requestedExpirationDate
+     * @param authBy
+     *
      * @return
      */
-    private RackerScopeAccess createToken(Racker user, DateTime requestedExpirationDate) {
+    private RackerScopeAccess createToken(Racker user, DateTime requestedExpirationDate, List<AuthenticatedByMethodEnum> authBy) {
         RackerScopeAccess token = new RackerScopeAccess();
         token.setRackerId(user.getId());
         token.setAccessTokenString(scopeAccessService.generateToken());
         token.setAccessTokenExp(requestedExpirationDate.toDate());
         token.setClientId(identityConfig.getStaticConfig().getCloudAuthClientId());
-        token.getAuthenticatedBy().add(AuthenticatedByMethodEnum.FEDERATION.getValue());
+
+        for (AuthenticatedByMethodEnum authMethod : authBy) {
+            token.getAuthenticatedBy().add(authMethod.getValue());
+        }
 
         scopeAccessService.addUserScopeAccess(user, token);
 
