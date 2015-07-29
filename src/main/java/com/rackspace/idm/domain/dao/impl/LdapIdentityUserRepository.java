@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.unboundid.ldap.sdk.Attribute;
@@ -14,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Component
+@LDAPComponent
 public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> implements IdentityUserDao, DaoGetEntityType {
     private static Filter PROVISIONED_USER_CLASS_FILTER = Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEPERSON);
     private static Filter FEDERATED_USER_CLASS_FILTER = Filter.createEqualityFilter(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACE_FEDERATED_PERSON);
