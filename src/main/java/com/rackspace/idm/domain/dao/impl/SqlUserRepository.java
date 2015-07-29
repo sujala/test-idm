@@ -247,20 +247,23 @@ public class SqlUserRepository implements UserDao {
 
     @Override
     public PaginatorContext<User> getUsersByDomain(String domainId, int offset, int limit) {
-        final PageRequest pageRequest = userMapper.getPageRequest(offset, limit);
-        return userMapper.fromSQL(userRepository.findByDomainId(domainId, pageRequest), offset, limit);
+        final PaginatorContext<User> page = userMapper.getPageRequest(offset, limit);
+        while (userMapper.fromSQL(userRepository.findByDomainId(domainId, page.getPageRequest()), page)) {}
+        return page;
     }
 
     @Override
     public PaginatorContext<User> getUsers(int offset, int limit) {
-        final PageRequest pageRequest = userMapper.getPageRequest(offset, limit);
-        return userMapper.fromSQL(userRepository.findAll(pageRequest), offset, limit);
+        final PaginatorContext<User> page = userMapper.getPageRequest(offset, limit);
+        while (userMapper.fromSQL(userRepository.findAll(page.getPageRequest()), page)) {}
+        return page;
     }
 
     @Override
     public PaginatorContext<User> getEnabledUsers(int offset, int limit) {
-        final PageRequest pageRequest = userMapper.getPageRequest(offset, limit);
-        return userMapper.fromSQL(userRepository.findByEnabledTrue(pageRequest), offset, limit);
+        final PaginatorContext<User> page = userMapper.getPageRequest(offset, limit);
+        while (userMapper.fromSQL(userRepository.findByEnabledTrue(page.getPageRequest()), page)) {}
+        return page;
     }
 
     @Override
@@ -320,8 +323,9 @@ public class SqlUserRepository implements UserDao {
 
     @Override
     public PaginatorContext<User> getEnabledUsersByGroupId(String groupId, int offset, int limit) {
-        final PageRequest pageRequest = userMapper.getPageRequest(offset, limit);
-        return userMapper.fromSQL(userRepository.findByEnabledAndRsGroupIdIn(true, Collections.singleton(groupId), pageRequest), offset, limit);
+        final PaginatorContext<User> page = userMapper.getPageRequest(offset, limit);
+        while (userMapper.fromSQL(userRepository.findByEnabledAndRsGroupIdIn(true, Collections.singleton(groupId), page.getPageRequest()), page)) {}
+        return page;
     }
 
     @Override

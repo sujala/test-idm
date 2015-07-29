@@ -36,7 +36,9 @@ public class SqlDomainRepository implements DomainDao {
 
     @Override
     public PaginatorContext<Domain> getAllDomainsPaged(int offset, int limit) {
-        return mapper.fromSQL(domainRepository.findAll(mapper.getPageRequest(offset, limit)), offset, limit);
+        PaginatorContext<Domain> page = mapper.getPageRequest(offset, limit);
+        while (mapper.fromSQL(domainRepository.findAll(page.getPageRequest()), page)) {}
+        return page;
     }
 
     @Override

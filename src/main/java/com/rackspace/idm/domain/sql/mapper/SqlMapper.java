@@ -22,6 +22,7 @@ public abstract class SqlMapper<Entity, SQLEntity> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlMapper.class);
 
     protected static final String EXTRA_FIELD = "extra";
+    protected static final Integer PAGE_SIZE = 10;
 
     final private Class<Entity> entityClass = (Class<Entity>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
     final private Class<SQLEntity> sqlEntityClass = (Class<SQLEntity>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[1];
@@ -223,21 +224,38 @@ public abstract class SqlMapper<Entity, SQLEntity> {
         return newValue;
     }
 
-    public PageRequest getPageRequest(int offset, int limit) {
-        final int page = limit == 0? 0 : offset / limit;
-        final int size = limit == 0? offset : limit + offset % limit;
-        return new PageRequest(page, size);
-    }
-
-    public PaginatorContext<Entity> fromSQL(Page<SQLEntity> sqlEntities, int offset, int limit) {
-        final List<Entity> entities = fromSQL(sqlEntities);
+    public PaginatorContext<Entity> getPageRequest(int offset, int limit) {
+        final int page = offset / PAGE_SIZE;
+        final int size = PAGE_SIZE;
 
         final PaginatorContext<Entity> context = new PaginatorContext<Entity>();
         context.setOffset(offset);
         context.setLimit(limit);
-        context.setValueList(entities.subList(limit == 0 ? 0 : offset % limit, entities.size()));
+        context.setPageRequest(new PageRequest(page, size));
 
         return context;
     }
 
+    public boolean fromSQL(Page<SQLEntity> sqlEntities, PaginatorContext<Entity> context) {
+        final List<Entity> entities = fromSQL(sqlEntities);
+
+        if (context.getValueList().size() == 0) {
+            context.setValueList(entities.subList(context.getOffset() % PAGE_SIZE, entities.size()));
+        } else {
+            context.getValueList().addAll(entities);
+        }
+
+        context.setPageRequest((PageRequest) context.getPageRequest().next());
+
+        if (context.getValueList().size() > context.getLimit()) {
+            context.setValueList(context.getValueList().subList(0, context.getLimit()));
+            return false;
+        }
+
+        if (context.getPageRequest() == null) {
+            return false;
+        }
+
+        return true;
+    }
 }
