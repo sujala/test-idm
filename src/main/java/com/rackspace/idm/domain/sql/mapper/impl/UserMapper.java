@@ -26,6 +26,10 @@ public class UserMapper extends SqlRaxMapper<User, SqlUser, SqlUserRax> {
 
     @Override
     public User fromSQL(SqlUser sqlUser) {
+        if (sqlUser == null) {
+            return null;
+        }
+
         final User user = super.fromSQL(sqlUser);
         if (user.getUniqueId() == null) {
             user.setUniqueId(fromSqlUserToUniqueId(sqlUser));
@@ -36,6 +40,10 @@ public class UserMapper extends SqlRaxMapper<User, SqlUser, SqlUserRax> {
 
     @Override
     public SqlUser toSQL(User user) {
+        if (user == null) {
+            return null;
+        }
+
         encryptionService.decryptUser(user);
         final SqlUser sqlUser = super.toSQL(user);
         if (user.getUniqueId() == null) {
