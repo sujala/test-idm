@@ -92,7 +92,7 @@ DROP TABLE IF EXISTS `bypass_device_rax`;
 CREATE TABLE `bypass_device_rax` (
   `id` varchar(64) NOT NULL,
   `user_id` varchar(64) DEFAULT NULL,
-  `multifactor_device_pin_expiration` date DEFAULT NULL,
+  `multifactor_device_pin_expiration` datetime(6) DEFAULT NULL,
   `salt` varchar(64) DEFAULT NULL,
   `iterations` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
@@ -285,8 +285,8 @@ CREATE TABLE `federated_user_rax` (
   `username` varchar(64) DEFAULT NULL,
   `email` varchar(64) DEFAULT NULL,
   `region` varchar(64) DEFAULT NULL,
-  `created` date DEFAULT NULL,
-  `updated` date DEFAULT NULL,
+  `created` datetime(6) DEFAULT NULL,
+  `updated` datetime(6) DEFAULT NULL,
   `domain_id` varchar(64) DEFAULT NULL,
   `federated_idp_uri` text,
   PRIMARY KEY (`id`)
@@ -386,7 +386,7 @@ DROP TABLE IF EXISTS `keyczar_metadata_rax`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `keyczar_metadata_rax` (
   `id` varchar(64) NOT NULL,
-  `created` date DEFAULT NULL,
+  `created` datetime(6) DEFAULT NULL,
   `data` text,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -402,7 +402,7 @@ DROP TABLE IF EXISTS `keyczar_version_rax`;
 CREATE TABLE `keyczar_version_rax` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `metadata_id` varchar(64) NOT NULL,
-  `created` date DEFAULT NULL,
+  `created` datetime(6) DEFAULT NULL,
   `data` text,
   PRIMARY KEY (`id`,`metadata_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
@@ -989,7 +989,7 @@ CREATE TABLE `user_rax` (
   `id` varchar(64) NOT NULL,
   `client_id` varchar(64) DEFAULT NULL,
   `contact_id` varchar(64) DEFAULT NULL,
-  `password_last_updated` date DEFAULT NULL,
+  `password_last_updated` datetime(6) DEFAULT NULL,
   `password_self_updated` tinyint(1) DEFAULT NULL,
   `encryption_version` text,
   `secret_question` text,
@@ -999,21 +999,21 @@ CREATE TABLE `user_rax` (
   `api_key` varchar(64) DEFAULT NULL,
   `nast_id` varchar(64) DEFAULT NULL,
   `region` varchar(64) DEFAULT NULL,
-  `created` date DEFAULT NULL,
-  `updated` date DEFAULT NULL,
-  `password_failure_date` date DEFAULT NULL,
+  `created` datetime(6) DEFAULT NULL,
+  `updated` datetime(6) DEFAULT NULL,
+  `password_failure_date` datetime(6) DEFAULT NULL,
   `salt` varchar(64) DEFAULT NULL,
   `token_format` varchar(7) DEFAULT NULL,
   `mfa_mobile_phone_id` varchar(64) DEFAULT NULL,
   `mfa_device_pin` varchar(64) DEFAULT NULL,
-  `mfa_device_pin_expiration` date DEFAULT NULL,
+  `mfa_device_pin_expiration` datetime(6) DEFAULT NULL,
   `mfa_device_verified` tinyint(1) DEFAULT NULL,
   `mfa_enabled` tinyint(1) DEFAULT NULL,
   `mfa_external_user_id` varchar(64) DEFAULT NULL,
   `mfa_state` varchar(64) DEFAULT NULL,
   `mfa_enforcement_level` varchar(64) DEFAULT NULL,
   `mfa_type` varchar(31) DEFAULT NULL,
-  `mfa_last_failed_attempt` date DEFAULT NULL,
+  `mfa_last_failed_attempt` datetime(6) DEFAULT NULL,
   `mfa_failed_attempt_count` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
