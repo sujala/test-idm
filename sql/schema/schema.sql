@@ -386,7 +386,7 @@ DROP TABLE IF EXISTS `keyczar_metadata_rax`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `keyczar_metadata_rax` (
   `id` varchar(64) NOT NULL,
-  `created` date DEFAULT NULL,
+  `created` datetime(6) DEFAULT NULL,
   `data` text,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

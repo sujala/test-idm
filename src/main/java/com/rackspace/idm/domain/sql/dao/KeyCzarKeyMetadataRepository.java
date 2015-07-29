@@ -9,5 +9,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 @SQLRepository
 public interface KeyCzarKeyMetadataRepository extends JpaSpecificationExecutor<SqlKeyMetadata>, JpaRepository<SqlKeyMetadata, String> {
-    public KeyMetadata getByName(String name);
+    KeyMetadata getByName(String name);
 }

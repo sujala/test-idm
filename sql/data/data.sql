@@ -219,7 +219,7 @@ INSERT INTO `identity_provider_rax` VALUES ('test','http://test.rackspace.com','
 -- Dumping data for table `keyczar_metadata_rax`
 --
 
-INSERT INTO `keyczar_metadata_rax` VALUES ('meta','2014-11-13','{\"name\":\"sessionId\",\"purpose\":\"DECRYPT_AND_ENCRYPT\",\"type\":\"AES\",\"versions\":[{\"exportable\":false,\"status\":\"PRIMARY\",\"versionNumber\":1},{\"exportable\":false,\"status\":\"ACTIVE\",\"versionNumber\":2}],\"encrypted\":false}');
+INSERT INTO `keyczar_metadata_rax` VALUES ('meta','2014-11-13 19:55:19.000000','{\"name\":\"sessionId\",\"purpose\":\"DECRYPT_AND_ENCRYPT\",\"type\":\"AES\",\"versions\":[{\"exportable\":false,\"status\":\"PRIMARY\",\"versionNumber\":1},{\"exportable\":false,\"status\":\"ACTIVE\",\"versionNumber\":2}],\"encrypted\":false}');
 
 --
 -- Dumping data for table `keyczar_version_rax`
