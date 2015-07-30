@@ -16,9 +16,8 @@ public class SqlKeyMetadata implements KeyMetadata {
     @Column(name = "id", length = 64)
     private String name;
 
-    @Column(name = "created", updatable = false)
-    @Temporal(TemporalType.DATE)
-    @DateTimeFormat(style = "M-")
+    @Column(name = "created")
+    @Temporal(TemporalType.TIMESTAMP)
     private Date created = new Date();
 
     @Column(name = "data")
