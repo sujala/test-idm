@@ -61,12 +61,12 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
 
     @Override
     public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName) {
-        return (Iterable) getObjects(searchFilterGetUserByDomainId(domainId, FEDERATED_USER_CLASS_FILTERS), getBaseDnWithIdpName(idpName));
+        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderName(domainId, idpName);
     }
 
     @Override
     public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String idpName) {
-        return countObjects(searchFilterGetUserByDomainId(domainId, FEDERATED_USER_CLASS_FILTERS), getBaseDnWithIdpName(idpName));
+        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderNameCount(domainId, idpName);
     }
 
     @Override

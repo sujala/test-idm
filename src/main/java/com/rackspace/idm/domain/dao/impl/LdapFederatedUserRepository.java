@@ -1,20 +1,17 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.FederatedUserDao;
-import com.rackspace.idm.domain.entity.BaseUserToken;
 import com.rackspace.idm.domain.entity.FederatedUser;
-import com.rackspace.idm.domain.entity.IdentityProvider;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
 /**
  * Repository operations for external providers that go against provisioned users.
  */
 @Component
 public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<FederatedUser> implements FederatedUserDao {
+
     @Override
     public String getLdapEntityClass() {
         return OBJECTCLASS_RACKSPACE_FEDERATED_PERSON;
@@ -33,6 +30,16 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
     @Override
     public FederatedUser getUserByUsernameForIdentityProviderName(String username, String identityProviderName) {
         return getObject(searchFilterGetUserByUsername(username), getBaseDnWithIdpName(identityProviderName), SearchScope.ONE);
+    }
+
+    @Override
+    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String identityProviderName) {
+        return (Iterable) getObjects(searchFilterGetUsersByDomainId(domainId), getBaseDnWithIdpName(identityProviderName));
+    }
+
+    @Override
+    public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String identityProviderName) {
+        return countObjects(searchFilterGetUsersByDomainId(domainId), getBaseDnWithIdpName(identityProviderName));
     }
 
     @Override
@@ -55,4 +62,5 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
                 .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, getLdapEntityClass()).build();
     }
+
 }

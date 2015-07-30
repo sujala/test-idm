@@ -60,6 +60,16 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
     }
 
     @Override
+    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName) {
+        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderName(domainId, idpName);
+    }
+
+    @Override
+    public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String idpName) {
+        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderNameCount(domainId, idpName);
+    }
+
+    @Override
     public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
         final HashSet<EndUser> endUsers = new HashSet<EndUser>();
 
@@ -92,7 +102,7 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
         }
     }
 
-    /*** ----- ***/
+    /*** ----- Union MUST-FIX ----- ***/
 
     @Override
     public Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
@@ -112,7 +122,14 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
 
     @Override
     public Iterable<Group> getGroupsForEndUser(String userId) {
-        Iterable<Group> groups = userDao.getGroupsForUser(userId);
+        final HashSet<Group> groups = new HashSet<Group>();
+
+        Iterable<Group> userGroups = userDao.getGroupsForUser(userId);
+        if (userGroups != null) {
+            for (Group group : userGroups) {
+                groups.add(group);
+            }
+        }
 
         // FIXME: logic on FederatedDao
 
@@ -135,7 +152,7 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
         return endUsers;
     }
 
-    /*** ----- **/
+    /*** ----- Pagination MUST-FIX ----- **/
 
     @Override
     public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit) {
@@ -177,20 +194,6 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
 
         endUsers.setValueList(endUserList);
         return endUsers;
-    }
-
-    /*** ----- **/
-
-    @Override
-    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName) {
-        // FIXME: Move to FederatedDao
-        return Collections.EMPTY_SET;
-    }
-
-    @Override
-    public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String idpName) {
-        // FIXME: Move to FederatedDao
-        return 0;
     }
 
 }
