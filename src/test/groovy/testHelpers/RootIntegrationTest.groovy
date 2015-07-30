@@ -7,10 +7,14 @@ import com.rackspace.idm.helpers.CloudTestUtils
 import com.sun.jersey.api.client.WebResource
 import org.apache.commons.lang.math.RandomUtils
 import org.joda.time.DateTime
+import org.junit.Assume
+import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.env.Environment
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
+import testHelpers.junit.ConditionalIgnoreRule
 
 import javax.ws.rs.core.MediaType
 
@@ -51,6 +55,9 @@ class RootIntegrationTest extends Specification {
     @Shared SingletonMockMobilePhoneVerification mockMobilePhoneVerification = SingletonMockMobilePhoneVerification.getInstance()
     @Shared SingletonMockMultiFactorAuthenticationService mockMultiFactorAuthenticationService = SingletonMockMultiFactorAuthenticationService.getInstance()
     @Shared SingletonMockUserManagement mockUserManagement = SingletonMockUserManagement.getInstance()
+
+    @Rule
+    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     def mediaTypeContext
 

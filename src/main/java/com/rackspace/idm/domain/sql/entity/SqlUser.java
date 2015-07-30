@@ -22,7 +22,7 @@ public class SqlUser {
     private String id;
 
     @NotNull
-    @Length(min = 1, max = 32)
+    @Length(min = 1, max = 100)
     @Pattern(regexp = RegexPatterns.USERNAME, message = MessageTexts.USERNAME)
     @Column(name = "name")
     private String username;
