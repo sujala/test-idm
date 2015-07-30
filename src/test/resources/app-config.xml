@@ -68,7 +68,7 @@
 
         <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
             <property name="dataSource" ref="dataSource"/>
-            <property name="packagesToScan" value="com.rackspace.idm.domain.sql.entity"/>
+            <property name="packagesToScan" value="com.rackspace.idm.domain.sql.entity,com.rackspace.idm.domain.sql.mapper.test"/>
             <property name="jpaVendorAdapter">
                 <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
                     <property name="generateDdl" value="false"/>
