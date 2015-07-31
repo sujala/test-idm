@@ -2,13 +2,12 @@ package com.rackspace.idm.domain.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.dao.impl.LdapGenericRepository
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator
-import com.rackspace.idm.domain.security.encrypters.LDAPKeyCzarCrypterLocator
 import com.rackspace.idm.domain.dao.KeyCzarKeyMetadataDao
 import com.rackspace.idm.domain.dao.KeyCzarKeyVersionDao
 import com.rackspace.idm.domain.entity.LdapKeyMetadata
-import com.rackspace.idm.domain.security.signoff.KeyCzarAPINodeSignoffDao
+import com.rackspace.idm.domain.security.encrypters.RepositoryKeyCzarCrypterLocator
+import com.rackspace.idm.domain.dao.KeyCzarAPINodeSignoffDao
 import com.rackspace.idm.domain.sql.dao.KeyCzarKeyMetadataRepository
 import org.joda.time.DateTime
 import org.keyczar.Crypter
@@ -318,7 +317,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
             it
         }
 
-        def signoffObj = apiNodeSignoffDao.getByNodeAndMetaName(LDAPKeyCzarCrypterLocator.DN_META, identityConfig.getReloadableConfig().getAENodeNameForSignoff())
+        def signoffObj = apiNodeSignoffDao.getByNodeAndMetaName(RepositoryKeyCzarCrypterLocator.DN_META, identityConfig.getReloadableConfig().getAENodeNameForSignoff())
         assert signoffObj != null
         metaForUpdate.data = two_keys_first_primary
         metaForUpdate.created = new DateTime(metadata.created).plusMillis(1).toDate()
@@ -345,7 +344,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
     }
 
     def void verifyKeySignoff(metadata) {
-        def signoffObj = apiNodeSignoffDao.getByNodeAndMetaName(LDAPKeyCzarCrypterLocator.DN_META, identityConfig.getReloadableConfig().getAENodeNameForSignoff())
+        def signoffObj = apiNodeSignoffDao.getByNodeAndMetaName(RepositoryKeyCzarCrypterLocator.DN_META, identityConfig.getReloadableConfig().getAENodeNameForSignoff())
         assert signoffObj != null
         assert signoffObj.cachedMetaCreatedDate != null
         assert new DateTime(signoffObj.cachedMetaCreatedDate).equals(new DateTime(metadata.created))
