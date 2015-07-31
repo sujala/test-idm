@@ -5,6 +5,8 @@ import com.rackspace.idm.domain.sql.entity.SqlService;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -16,5 +18,8 @@ public interface ServiceRepository extends JpaSpecificationExecutor<SqlService>,
     List<SqlService> findAll();
 
     @EntityGraph(value = "SqlService.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public List<SqlService> findByOpenStackType(String type);
+    List<SqlService> findByOpenStackType(String type);
+
+    @Query(value = "select * from service where extra rlike  ?1", nativeQuery = true)
+    List<SqlService> findByServiceNameRegex(String nameRegex);
 }

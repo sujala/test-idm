@@ -491,10 +491,10 @@ INSERT INTO `role_rax` VALUES ('9','Defines a user as being a Racker',100,0,'18e
 -- Dumping data for table `service`
 --
 
-INSERT INTO `service` VALUES ('6047d506862b81d6d99273b4853adfe81e0478c1','object-store',1,'{}');
-INSERT INTO `service` VALUES ('6ae999552a0d2dca14d62e2bc8b764d377b1dd6c','identity',0,'{}');
-INSERT INTO `service` VALUES ('a45b14e394a57e3fd4e45d59ff3693ead204998b','compute',1,'{}');
-INSERT INTO `service` VALUES ('bde1268ebabeeabb70a0e702a4626977c331d5c4','identity',1,'{}');
+INSERT INTO `service` VALUES ('6047d506862b81d6d99273b4853adfe81e0478c1','object-store',1,'{\"name\": \"cloudFiles\"}');
+INSERT INTO `service` VALUES ('6ae999552a0d2dca14d62e2bc8b764d377b1dd6c','identity',0,'{\"name\": \"Identity Global Roles\"}');
+INSERT INTO `service` VALUES ('a45b14e394a57e3fd4e45d59ff3693ead204998b','compute',1,'{\"name\": \"cloudServers\"}');
+INSERT INTO `service` VALUES ('bde1268ebabeeabb70a0e702a4626977c331d5c4','identity',1,'{\"name\": \"Cloud Auth Service\"}');
 
 --
 -- Dumping data for table `service_provider`
