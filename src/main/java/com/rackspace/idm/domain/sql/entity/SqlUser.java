@@ -45,7 +45,7 @@ public class SqlUser {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id", referencedColumnName = "id", nullable = true)
-    private SqlUserRax rax;
+    private SqlUserRax rax = new SqlUserRax();
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name="user_group_membership",
