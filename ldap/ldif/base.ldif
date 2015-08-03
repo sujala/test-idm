@@ -1,28 +1,4162 @@
-# Root domain
+version: 1
 
 dn: dc=rackspace,dc=com
+objectClass: cosineDomain
 objectClass: top
-objectClass: domain
 dc: rackspace
 
-# Internal organizational unit
+dn: o=configuration,dc=rackspace,dc=com
+objectClass: organization
+objectClass: top
+o: configuration
 
-dn: ou=internal,dc=rackspace,dc=com
+dn: ou=keystore,o=configuration,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
+ou: keystore
+description: Defines container for AE key store
+
+dn: cn=meta,ou=keystore,o=configuration,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsKeyMetadata
+cn: meta
+rsKeyData: {"name":"sessionId","purpose":"DECRYPT_AND_ENCRYPT","type":"AES",
+ "versions":[{"exportable":false,"status":"PRIMARY","versionNumber":1},{"exp
+ ortable":false,"status":"ACTIVE","versionNumber":2}],"encrypted":false}
+rsKeyCreated: 20141113195519.548Z
+
+dn: rsKeyVersion=1,cn=meta,ou=keystore,o=configuration,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsKeyDescriptor
+rsKeyVersion: 1
+rsKeyData: {"aesKeyString":"NSPi6IekAxLHlJpmT7SXsg","hmacKey":{"hmacKeyStrin
+ g":"NeVqkm1_ojpaOEm5zmi9X29tOHCXUtcHOOGE9puOapA","size":256},"mode":"CBC","
+ size":128}
+
+dn: rsKeyVersion=2,cn=meta,ou=keystore,o=configuration,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsKeyDescriptor
+rsKeyVersion: 2
+rsKeyData: {"aesKeyString":"WwIWqM26_FKKhK8rqcjH1Q","hmacKey":{"hmacKeyStrin
+ g":"tMrQg7WmCD4SFESMe7JibSelESrhRXZb0Ua3k_WBV-A","size":256},"mode":"CBC","
+ size":128}
+
+dn: ou=keydistribution,ou=keystore,o=configuration,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: keydistribution
+ou: keystore
+description: Defines container for encryption keys and meta
+
+dn: o=externalProviders,dc=rackspace,dc=com
+objectClass: organization
+objectClass: top
+o: externalProviders
+description: Defines container of all external providers
+
+dn: ou=dedicated,o=externalProviders,dc=rackspace,dc=com
+objectClass: rsExternalProvider
+objectClass: organizationalUnit
+objectClass: top
+ou: dedicated
+labeledUri: http://my.rackspace.com
+description: Identity provider for dedicated
+nisPublicKey:: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUI5VENDQVorZ0F3SUJBZ
+ 0lKQU1wdUw4cjNwZUNiTUEwR0NTcUdTSWIzRFFFQkJRVUFNRll4Q3pBSkJnTlYKQkFZVEFsVlRN
+ UTR3REFZRFZRUUlEQVZVWlhoaGN6RVVNQklHQTFVRUJ3d0xVMkZ1SUVGdWRHOXVhVzh4SVRBZgp
+ CZ05WQkFvTUdFbHVkR1Z5Ym1WMElGZHBaR2RwZEhNZ1VIUjVJRXgwWkRBZUZ3MHhNekEzTURreU
+ 1qSTNORGxhCkZ3MHhOREEzTURreU1qSTNORGxhTUZZeEN6QUpCZ05WQkFZVEFsVlRNUTR3REFZR
+ FZRUUlEQVZVWlhoaGN6RVUKTUJJR0ExVUVCd3dMVTJGdUlFRnVkRzl1YVc4eElUQWZCZ05WQkFv
+ TUdFbHVkR1Z5Ym1WMElGZHBaR2RwZEhNZwpVSFI1SUV4MFpEQmNNQTBHQ1NxR1NJYjNEUUVCQVF
+ VQUEwc0FNRWdDUVFDMHRMM1B5bFB4UGoxYXVNTjJDTldJCmFDc3FQY3k0TEs5T3VranhTZlVrZX
+ dPaTZrS292OWFTMnBlMEFzQzh1d2toUGo3UGwrdzBsVll5R1NyQWg1OFAKQWdNQkFBR2pVREJPT
+ UIwR0ExVWREZ1FXQkJRSThFemc5TTh2blhvN2l0MjhuVVc2eFk5NzRqQWZCZ05WSFNNRQpHREFX
+ Z0JRSThFemc5TTh2blhvN2l0MjhuVVc2eFk5NzRqQU1CZ05WSFJNRUJUQURBUUgvTUEwR0NTcUd
+ TSWIzCkRRRUJCUVVBQTBFQU9vOFVwQStsRm1Gbi9EWDRsRWdTaFlwY29tMTFPK0tTM21mOE5KaG
+ wyLzM0d0x3MElKMHQKMUJwNitVS2VFTFVWWFVhOGVwdGFRdUpuc2o2eE1iYXl4dz09Ci0tLS0tR
+ U5EIENFUlRJRklDQVRFLS0tLS0K
+userCertificate:: MIIB9TCCAZ+gAwIBAgIJAMpuL8r3peCbMA0GCSqGSIb3DQEBBQUAMFYxCz
+ AJBgNVBAYTAlVTMQ4wDAYDVQQIDAVUZXhhczEUMBIGA1UEBwwLU2FuIEFudG9uaW8xITAfBgNVB
+ AoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0xMzA3MDkyMjI3NDlaFw0xNDA3MDkyMjI3
+ NDlaMFYxCzAJBgNVBAYTAlVTMQ4wDAYDVQQIDAVUZXhhczEUMBIGA1UEBwwLU2FuIEFudG9uaW8
+ xITAfBgNVBAoMGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDBcMA0GCSqGSIb3DQEBAQUAA0sAME
+ gCQQC0tL3PylPxPj1auMN2CNWIaCsqPcy4LK9OukjxSfUkewOi6kKov9aS2pe0AsC8uwkhPj7Pl
+ +w0lVYyGSrAh58PAgMBAAGjUDBOMB0GA1UdDgQWBBQI8Ezg9M8vnXo7it28nUW6xY974jAfBgNV
+ HSMEGDAWgBQI8Ezg9M8vnXo7it28nUW6xY974jAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBBQU
+ AA0EAOo8UpA+lFmFn/DX4lEgShYpcom11O+KS3mf8NJhl2/34wLw0IJ0t1Bp6+UKeELUVXUa8ep
+ taQuJnsj6xMbayxw==
+
+dn: ou=users,ou=dedicated,o=externalProviders,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+description: Container for users
+
+dn: ou=identityqe,o=externalProviders,dc=rackspace,dc=com
+objectClass: rsExternalProvider
+objectClass: organizationalUnit
+objectClass: top
+ou: identityqe
+labeledUri: http://identityqe.rackspace.com
+description: Identity provider for testing
+nisPublicKey:: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURrRENDQXZtZ0F3SUJBZ
+ 0lKQU9KUDhyTDd3UjRvTUEwR0NTcUdTSWIzRFFFQkJRVUFNSUdOTVFzd0NRWUQKVlFRR0V3SjFj
+ ekVPTUF3R0ExVUVDQk1GZEdWNFlYTXhGREFTQmdOVkJBY1RDM05oYmlCaGJuUnZibWx2TVJJdwp
+ FQVlEVlFRS0V3bHlZV05yYzNCaFkyVXhEakFNQmdOVkJBc1RCV05zYjNWa01Rc3dDUVlEVlFRRE
+ V3SnhaVEVuCk1DVUdDU3FHU0liM0RRRUpBUllZYzJoaGJuUm9hUzUyWldSMWJHRkFaMjFoYVd3d
+ VkyOXRNQjRYRFRFME1EY3gKTkRJeE16ZzFNRm9YRFRJME1EY3hNekl4TXpnMU1Gb3dnWTB4Q3pB
+ SkJnTlZCQVlUQW5Wek1RNHdEQVlEVlFRSQpFd1YwWlhoaGN6RVVNQklHQTFVRUJ4TUxjMkZ1SUd
+ GdWRHOXVhVzh4RWpBUUJnTlZCQW9UQ1hKaFkydHpjR0ZqClpURU9NQXdHQTFVRUN4TUZZMnh2ZF
+ dReEN6QUpCZ05WQkFNVEFuRmxNU2N3SlFZSktvWklodmNOQVFrQkZoaHoKYUdGdWRHaHBMblpsW
+ khWc1lVQm5iV0ZwYkM1amIyMHdnWjh3RFFZSktvWklodmNOQVFFQkJRQURnWTBBTUlHSgpBb0dC
+ QUt6WVRCZkU3Um1mbmpHZHlHWVo1cHRPc05mbDhBOGFVdjN3NEtUWk1vdGJiYUZYSzFsUXdZemZ
+ KK3p5CmtLenJGZEF1QVUxdWt5UkxnNzRyQndOT0k4TUVxWk9GNnRiUDNWTXJKaU1UZjNHTkZ0M2
+ 5pL2hTRWxVY1FkTWoKb3VnYVBzdDFwems0ZGk5Tjd6SGVKUnN5aktJRlZOTUR5SXBDai9OMFN5V
+ GlXMENuQWdNQkFBR2pnZlV3Z2ZJdwpIUVlEVlIwT0JCWUVGSmlzaVpYQTI0VUIrM241STdmWlZV
+ R3pKbU1KTUlIQ0JnTlZIU01FZ2Jvd2diZUFGSmlzCmlaWEEyNFVCKzNuNUk3ZlpWVUd6Sm1NSm9
+ ZR1RwSUdRTUlHTk1Rc3dDUVlEVlFRR0V3SjFjekVPTUF3R0ExVUUKQ0JNRmRHVjRZWE14RkRBU0
+ JnTlZCQWNUQzNOaGJpQmhiblJ2Ym1sdk1SSXdFQVlEVlFRS0V3bHlZV05yYzNCaApZMlV4RGpBT
+ UJnTlZCQXNUQldOc2IzVmtNUXN3Q1FZRFZRUURFd0p4WlRFbk1DVUdDU3FHU0liM0RRRUpBUllZ
+ CmMyaGhiblJvYVM1MlpXUjFiR0ZBWjIxaGFXd3VZMjl0Z2drQTRrL3lzdnZCSGlnd0RBWURWUjB
+ UQkFVd0F3RUIKL3pBTkJna3Foa2lHOXcwQkFRVUZBQU9CZ1FCOE9iQ1o2TndRQWkraHFHaHAycT
+ FPVFV1TmRXejRic2pJZlpPNgpGUXFLUEV3UTM4a2RSc0RZOHNkN0hSKzFKMnltd0FVRkVWSWM5N
+ jVhdlRMdDg3SHhSdE50Q0ozOFlrYlR3SVVGCkZGbS93M0N3b3dhMHgvSnFSQlI1c1UwRFdIUk9G
+ TlFPKzc4eThhb0Z4Tk91TlRTcS91c1Y3MktaNWlZYi92SS8KUHozcGN3PT0KLS0tLS1FTkQgQ0V
+ SVElGSUNBVEUtLS0tLQo=
+userCertificate:: MIIDkDCCAvmgAwIBAgIJAOJP8rL7wR4oMA0GCSqGSIb3DQEBBQUAMIGNMQ
+ swCQYDVQQGEwJ1czEOMAwGA1UECBMFdGV4YXMxFDASBgNVBAcTC3NhbiBhbnRvbmlvMRIwEAYDV
+ QQKEwlyYWNrc3BhY2UxDjAMBgNVBAsTBWNsb3VkMQswCQYDVQQDEwJxZTEnMCUGCSqGSIb3DQEJ
+ ARYYc2hhbnRoaS52ZWR1bGFAZ21haWwuY29tMB4XDTE0MDcxNDIxMzg1MFoXDTI0MDcxMzIxMzg
+ 1MFowgY0xCzAJBgNVBAYTAnVzMQ4wDAYDVQQIEwV0ZXhhczEUMBIGA1UEBxMLc2FuIGFudG9uaW
+ 8xEjAQBgNVBAoTCXJhY2tzcGFjZTEOMAwGA1UECxMFY2xvdWQxCzAJBgNVBAMTAnFlMScwJQYJK
+ oZIhvcNAQkBFhhzaGFudGhpLnZlZHVsYUBnbWFpbC5jb20wgZ8wDQYJKoZIhvcNAQEBBQADgY0A
+ MIGJAoGBAKzYTBfE7RmfnjGdyGYZ5ptOsNfl8A8aUv3w4KTZMotbbaFXK1lQwYzfJ+zykKzrFdA
+ uAU1ukyRLg74rBwNOI8MEqZOF6tbP3VMrJiMTf3GNFt3ni/hSElUcQdMjougaPst1pzk4di9N7z
+ HeJRsyjKIFVNMDyIpCj/N0SyTiW0CnAgMBAAGjgfUwgfIwHQYDVR0OBBYEFJisiZXA24UB+3n5I
+ 7fZVUGzJmMJMIHCBgNVHSMEgbowgbeAFJisiZXA24UB+3n5I7fZVUGzJmMJoYGTpIGQMIGNMQsw
+ CQYDVQQGEwJ1czEOMAwGA1UECBMFdGV4YXMxFDASBgNVBAcTC3NhbiBhbnRvbmlvMRIwEAYDVQQ
+ KEwlyYWNrc3BhY2UxDjAMBgNVBAsTBWNsb3VkMQswCQYDVQQDEwJxZTEnMCUGCSqGSIb3DQEJAR
+ YYc2hhbnRoaS52ZWR1bGFAZ21haWwuY29tggkA4k/ysvvBHigwDAYDVR0TBAUwAwEB/zANBgkqh
+ kiG9w0BAQUFAAOBgQB8ObCZ6NwQAi+hqGhp2q1OTUuNdWz4bsjIfZO6FQqKPEwQ38kdRsDY8sd7
+ HR+1J2ymwAUFEVIc965avTLt87HxRtNtCJ38YkbTwIUFFFm/w3Cwowa0x/JqRBR5sU0DWHROFNQ
+ O+78y8aoFxNOuNTSq/usV72KZ5iYb/vI/Pz3pcw==
+userCertificate:: MIIDnzCCAwigAwIBAgIJAPgDaO0XpgR6MA0GCSqGSIb3DQEBBQUAMIGSMQ
+ swCQYDVQQGEwJ1czEOMAwGA1UECBMFdGV4YXMxFDASBgNVBAcTC3NhbiBhbnRvbmlvMRIwEAYDV
+ QQKEwlyYWNrc3BhY2UxDjAMBgNVBAsTBWNsb3VkMQwwCgYDVQQDEwNxZTQxKzApBgkqhkiG9w0B
+ CQEWHHNoYW50aGkudmVkdWxhQHJhY2tzcGFjZS5jb20wHhcNMTQwODA3MTYzMjU3WhcNMjQwODA
+ 2MTYzMjU3WjCBkjELMAkGA1UEBhMCdXMxDjAMBgNVBAgTBXRleGFzMRQwEgYDVQQHEwtzYW4gYW
+ 50b25pbzESMBAGA1UEChMJcmFja3NwYWNlMQ4wDAYDVQQLEwVjbG91ZDEMMAoGA1UEAxMDcWU0M
+ SswKQYJKoZIhvcNAQkBFhxzaGFudGhpLnZlZHVsYUByYWNrc3BhY2UuY29tMIGfMA0GCSqGSIb3
+ DQEBAQUAA4GNADCBiQKBgQC4IFBpE/L/spgYLfvPBhGujtAMWjK0TqigHGrveYHxm3R2Lqyh1Dd
+ 9owCCsJFO6klmWjXLrRRCnEGJTZqJ2vhmkQh5rP+iqGUKmF4mDavN5HpJYnS2ZCcsQv8JyS7G7m
+ sFhTjX0utJp97GzBixjJWlibQOVnYo6x6oH0LPIZVQVwIDAQABo4H6MIH3MB0GA1UdDgQWBBQ37
+ ISh/A3zRkoc/wt28f/MCxUZmDCBxwYDVR0jBIG/MIG8gBQ37ISh/A3zRkoc/wt28f/MCxUZmKGB
+ mKSBlTCBkjELMAkGA1UEBhMCdXMxDjAMBgNVBAgTBXRleGFzMRQwEgYDVQQHEwtzYW4gYW50b25
+ pbzESMBAGA1UEChMJcmFja3NwYWNlMQ4wDAYDVQQLEwVjbG91ZDEMMAoGA1UEAxMDcWU0MSswKQ
+ YJKoZIhvcNAQkBFhxzaGFudGhpLnZlZHVsYUByYWNrc3BhY2UuY29tggkA+ANo7RemBHowDAYDV
+ R0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOBgQB6PFjhyGOYXrEXOBA+Ylly1ymLHM1WeppFiyoP
+ xFOD4D5FOOyTnnTM+tJwp11wthUMn3RExomS+M6LTgj3Wq4Ng5CQvdScfJwJdT2C2GSnoojLpnp
+ MMRZvgvDtFr+/6XG4HyzcFvf1v4UV4+7v+vKlnRthnlAQP/RujxHcJz5Lxw==
+userCertificate:: MIIDnzCCAwigAwIBAgIJAJ1drdIiQg7EMA0GCSqGSIb3DQEBBQUAMIGSMQ
+ swCQYDVQQGEwJ1czEOMAwGA1UECBMFdGV4YXMxFDASBgNVBAcTC3NhbiBhbnRvbmlvMRIwEAYDV
+ QQKEwlyYWNrc3BhY2UxDjAMBgNVBAsTBWNsb3VkMQwwCgYDVQQDEwNxZTMxKzApBgkqhkiG9w0B
+ CQEWHHNoYW50aGkudmVkdWxhQHJhY2tzcGFjZS5jb20wHhcNMTQwODA3MTYzMjA4WhcNMjQwODA
+ 2MTYzMjA4WjCBkjELMAkGA1UEBhMCdXMxDjAMBgNVBAgTBXRleGFzMRQwEgYDVQQHEwtzYW4gYW
+ 50b25pbzESMBAGA1UEChMJcmFja3NwYWNlMQ4wDAYDVQQLEwVjbG91ZDEMMAoGA1UEAxMDcWUzM
+ SswKQYJKoZIhvcNAQkBFhxzaGFudGhpLnZlZHVsYUByYWNrc3BhY2UuY29tMIGfMA0GCSqGSIb3
+ DQEBAQUAA4GNADCBiQKBgQCrKbpxSWXUhSI+5QM0jHgjayAhSzCNMOwDbzvkulQ33fmuXERB55M
+ WxvH7xjjOU0pOSPnkkv8PesL1rWjiHQk1XphUE0m8TJxbEdKYP0xK4yPWh/ZWI8zEAm0feWRMpG
+ 5FiKhsNwncMC5qyOb72pnA/zIcBCBGUOAmXlpEjusxTQIDAQABo4H6MIH3MB0GA1UdDgQWBBTwa
+ 7zsFYHZ14VRzpLM7MhEIgnRYTCBxwYDVR0jBIG/MIG8gBTwa7zsFYHZ14VRzpLM7MhEIgnRYaGB
+ mKSBlTCBkjELMAkGA1UEBhMCdXMxDjAMBgNVBAgTBXRleGFzMRQwEgYDVQQHEwtzYW4gYW50b25
+ pbzESMBAGA1UEChMJcmFja3NwYWNlMQ4wDAYDVQQLEwVjbG91ZDEMMAoGA1UEAxMDcWUzMSswKQ
+ YJKoZIhvcNAQkBFhxzaGFudGhpLnZlZHVsYUByYWNrc3BhY2UuY29tggkAnV2t0iJCDsQwDAYDV
+ R0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOBgQA58BVf1Cl3Ff9/M/IYMGi9l40zChVNyfngf6r0
+ i65MvdJKpNTyEbZIIvUSgc5aFwYgH1+0Ki7dTCGPfobvQsfPEkIo1h14S89f9BAsdAgrmJiA3Og
+ jcnw13qpy1hMWPZYM5ELLBNeAZEdZRJ3dyuE7w/gJ5GVIuDNxSn9MyRFDCg==
+userCertificate:: MIIDnzCCAwigAwIBAgIJAN24lAssmlV/MA0GCSqGSIb3DQEBBQUAMIGSMQ
+ swCQYDVQQGEwJ1czEOMAwGA1UECBMFdGV4YXMxFDASBgNVBAcTC3NhbiBhbnRvbmlvMRIwEAYDV
+ QQKEwlyYWNrc3BhY2UxDjAMBgNVBAsTBWNsb3VkMQwwCgYDVQQDEwNxZTIxKzApBgkqhkiG9w0B
+ CQEWHHNoYW50aGkudmVkdWxhQHJhY2tzcGFjZS5jb20wHhcNMTQwODA3MTYzMTM3WhcNMjQwODA
+ 2MTYzMTM3WjCBkjELMAkGA1UEBhMCdXMxDjAMBgNVBAgTBXRleGFzMRQwEgYDVQQHEwtzYW4gYW
+ 50b25pbzESMBAGA1UEChMJcmFja3NwYWNlMQ4wDAYDVQQLEwVjbG91ZDEMMAoGA1UEAxMDcWUyM
+ SswKQYJKoZIhvcNAQkBFhxzaGFudGhpLnZlZHVsYUByYWNrc3BhY2UuY29tMIGfMA0GCSqGSIb3
+ DQEBAQUAA4GNADCBiQKBgQDXwQEdNmGNQPtO9HasGSWihzTV8Mu+8qp6U1ucKq6UDpH3e+Hv5GM
+ 6t2NxK+QzmytZf/oAJpjW63XJewBXZXRkeL1K4XufaunNNSuVioFtgrKxBrmGHSugQfZFfcgHjC
+ s76zUBTP22gXN9cc0ni9DB+7eYsmG9PBk4l4ZdYRQ1QQIDAQABo4H6MIH3MB0GA1UdDgQWBBRjV
+ /J2UOCGtVgDwdXdqoj/voS0lTCBxwYDVR0jBIG/MIG8gBRjV/J2UOCGtVgDwdXdqoj/voS0laGB
+ mKSBlTCBkjELMAkGA1UEBhMCdXMxDjAMBgNVBAgTBXRleGFzMRQwEgYDVQQHEwtzYW4gYW50b25
+ pbzESMBAGA1UEChMJcmFja3NwYWNlMQ4wDAYDVQQLEwVjbG91ZDEMMAoGA1UEAxMDcWUyMSswKQ
+ YJKoZIhvcNAQkBFhxzaGFudGhpLnZlZHVsYUByYWNrc3BhY2UuY29tggkA3biUCyyaVX8wDAYDV
+ R0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOBgQCUlKUgkc87bJx8PSKc6lrSUr+Y+9/VsxubYxAH
+ x+lgJtSuXqM5+fpB6Htt/SDhEDOfIU/IvYEhow7qXRnK/N9Nu3o7h7GHBgxsueBdSvTdF4gfxCs
+ xVF0ORmr0Y2V0pMwtLrmNcQjuvaAYE/jaMoQ2vKAzkkomLcN/urMsw9lUeA==
+
+dn: ou=users,ou=identityqe,o=externalProviders,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+description: Container for users
+
+dn: ou=rackertest,o=externalProviders,dc=rackspace,dc=com
+objectClass: rsExternalProvider
+objectClass: organizationalUnit
+objectClass: top
+ou: rackertest
+labeledUri: http://racker.rackspace.com
+rsTargetUserSource: RACKER
+description: Identity provider for racker testing
+nisPublicKey:: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tDQpNSUlDc0RDQ0FobWdBd0lCQ
+ WdJSkFQRExJbEJ6a2VDdk1BMEdDU3FHU0liM0RRRUJCUVVBTUVVeEN6QUpCZ05WDQpCQVlUQWtG
+ Vk1STXdFUVlEVlFRSUV3cFRiMjFsTFZOMFlYUmxNU0V3SHdZRFZRUUtFeGhKYm5SbGNtNWxkQ0J
+ YDQphV1JuYVhSeklGQjBlU0JNZEdRd0hoY05NVFF3TlRBeU1qRXpNVE00V2hjTk1qUXdOVEF4TW
+ pFek1UTTRXakJGDQpNUXN3Q1FZRFZRUUdFd0pCVlRFVE1CRUdBMVVFQ0JNS1UyOXRaUzFUZEdGM
+ FpURWhNQjhHQTFVRUNoTVlTVzUwDQpaWEp1WlhRZ1YybGtaMmwwY3lCUWRIa2dUSFJrTUlHZk1B
+ MEdDU3FHU0liM0RRRUJBUVVBQTRHTkFEQ0JpUUtCDQpnUUMwQklCcCtwRmhkd1FvNWovODA5eTk
+ rbWxNNkdDbXM5dTNyWEgvcy8zUyswYmdCODFTdmU2VE9mbEUxQ3N0DQpmTnhmZmZwWDhMQzQ5Yn
+ NqcHV1OHlZNGpkbDNmZFNOQnN2eWlXVjd3U1ZscDNkcmxjdjBkZDRqWHIxVlRVZ2I0DQpQVFU3S
+ 3E3RjQ5d3J5M3VKZmI5bU9NVE5UdDRETUZRRjRZY3pEaHREN0dNQ1RRSURBUUFCbzRHbk1JR2tN
+ QjBHDQpBMVVkRGdRV0JCVGVRUkg5c05OdXVCRmc3RVN2QXlWYVRyZjVRVEIxQmdOVkhTTUViakJ
+ zZ0JUZVFSSDlzTk51DQp1QkZnN0VTdkF5VmFUcmY1UWFGSnBFY3dSVEVMTUFrR0ExVUVCaE1DUV
+ ZVeEV6QVJCZ05WQkFnVENsTnZiV1V0DQpVM1JoZEdVeElUQWZCZ05WQkFvVEdFbHVkR1Z5Ym1WM
+ ElGZHBaR2RwZEhNZ1VIUjVJRXgwWklJSkFQRExJbEJ6DQprZUN2TUF3R0ExVWRFd1FGTUFNQkFm
+ OHdEUVlKS29aSWh2Y05BUUVGQlFBRGdZRUFyc1lRd3FXNXFiK0xZM3RWDQpuajhrWnVnNDFsQ29
+ nVzlPc2pkWkxvNnYyaUxxRFVRYXcyOE5GN3RKeWtOSG0wYXJLRUc1ZGkvSFhudE1iRzlBDQpHYT
+ FVS0VuT0ZXcEhIZk50WDhkeHpDTzFDdnBEVXF3blZOS2MrQW43SHJSQjBDY3M4R2l1UlF1STJST
+ 2hpWjJ0DQozL2pZR2ZBS1hHbkM0V1pDdnl6MVNIcGNLcEk9DQotLS0tLUVORCBDRVJUSUZJQ0FU
+ RS0tLS0t
+userCertificate:: MIICsDCCAhmgAwIBAgIJAPDLIlBzkeCvMA0GCSqGSIb3DQEBBQUAMEUxCz
+ AJBgNVBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYDVQQKExhJbnRlcm5ldCBXaWRna
+ XRzIFB0eSBMdGQwHhcNMTQwNTAyMjEzMTM4WhcNMjQwNTAxMjEzMTM4WjBFMQswCQYDVQQGEwJB
+ VTETMBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHR
+ kMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC0BIBp+pFhdwQo5j/809y9+mlM6GCms9u3rX
+ H/s/3S+0bgB81Sve6TOflE1CstfNxfffpX8LC49bsjpuu8yY4jdl3fdSNBsvyiWV7wSVlp3drlc
+ v0dd4jXr1VTUgb4PTU7Kq7F49wry3uJfb9mOMTNTt4DMFQF4YczDhtD7GMCTQIDAQABo4GnMIGk
+ MB0GA1UdDgQWBBTeQRH9sNNuuBFg7ESvAyVaTrf5QTB1BgNVHSMEbjBsgBTeQRH9sNNuuBFg7ES
+ vAyVaTrf5QaFJpEcwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgTClNvbWUtU3RhdGUxITAfBgNVBA
+ oTGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZIIJAPDLIlBzkeCvMAwGA1UdEwQFMAMBAf8wDQYJK
+ oZIhvcNAQEFBQADgYEArsYQwqW5qb+LY3tVnj8kZug41lCogW9OsjdZLo6v2iLqDUQaw28NF7tJ
+ ykNHm0arKEG5di/HXntMbG9AGa1UKEnOFWpHHfNtX8dxzCO1CvpDUqwnVNKc+An7HrRB0Ccs8Gi
+ uRQuI2ROhiZ2t3/jYGfAKXGnC4WZCvyz1SHpcKpI=
+userCertificate:: MIIDkDCCAvmgAwIBAgIJAOJP8rL7wR4oMA0GCSqGSIb3DQEBBQUAMIGNMQ
+ swCQYDVQQGEwJ1czEOMAwGA1UECBMFdGV4YXMxFDASBgNVBAcTC3NhbiBhbnRvbmlvMRIwEAYDV
+ QQKEwlyYWNrc3BhY2UxDjAMBgNVBAsTBWNsb3VkMQswCQYDVQQDEwJxZTEnMCUGCSqGSIb3DQEJ
+ ARYYc2hhbnRoaS52ZWR1bGFAZ21haWwuY29tMB4XDTE0MDcxNDIxMzg1MFoXDTI0MDcxMzIxMzg
+ 1MFowgY0xCzAJBgNVBAYTAnVzMQ4wDAYDVQQIEwV0ZXhhczEUMBIGA1UEBxMLc2FuIGFudG9uaW
+ 8xEjAQBgNVBAoTCXJhY2tzcGFjZTEOMAwGA1UECxMFY2xvdWQxCzAJBgNVBAMTAnFlMScwJQYJK
+ oZIhvcNAQkBFhhzaGFudGhpLnZlZHVsYUBnbWFpbC5jb20wgZ8wDQYJKoZIhvcNAQEBBQADgY0A
+ MIGJAoGBAKzYTBfE7RmfnjGdyGYZ5ptOsNfl8A8aUv3w4KTZMotbbaFXK1lQwYzfJ+zykKzrFdA
+ uAU1ukyRLg74rBwNOI8MEqZOF6tbP3VMrJiMTf3GNFt3ni/hSElUcQdMjougaPst1pzk4di9N7z
+ HeJRsyjKIFVNMDyIpCj/N0SyTiW0CnAgMBAAGjgfUwgfIwHQYDVR0OBBYEFJisiZXA24UB+3n5I
+ 7fZVUGzJmMJMIHCBgNVHSMEgbowgbeAFJisiZXA24UB+3n5I7fZVUGzJmMJoYGTpIGQMIGNMQsw
+ CQYDVQQGEwJ1czEOMAwGA1UECBMFdGV4YXMxFDASBgNVBAcTC3NhbiBhbnRvbmlvMRIwEAYDVQQ
+ KEwlyYWNrc3BhY2UxDjAMBgNVBAsTBWNsb3VkMQswCQYDVQQDEwJxZTEnMCUGCSqGSIb3DQEJAR
+ YYc2hhbnRoaS52ZWR1bGFAZ21haWwuY29tggkA4k/ysvvBHigwDAYDVR0TBAUwAwEB/zANBgkqh
+ kiG9w0BAQUFAAOBgQB8ObCZ6NwQAi+hqGhp2q1OTUuNdWz4bsjIfZO6FQqKPEwQ38kdRsDY8sd7
+ HR+1J2ymwAUFEVIc965avTLt87HxRtNtCJ38YkbTwIUFFFm/w3Cwowa0x/JqRBR5sU0DWHROFNQ
+ O+78y8aoFxNOuNTSq/usV72KZ5iYb/vI/Pz3pcw==
+
+dn: ou=users,ou=rackertest,o=externalProviders,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+description: Container for users
+
+dn: ou=test,o=externalProviders,dc=rackspace,dc=com
+objectClass: rsExternalProvider
+objectClass: organizationalUnit
+objectClass: top
+ou: test
+labeledUri: http://test.rackspace.com
+description: Identity provider for testing
+nisPublicKey:: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tDQpNSUlDc0RDQ0FobWdBd0lCQ
+ WdJSkFQRExJbEJ6a2VDdk1BMEdDU3FHU0liM0RRRUJCUVVBTUVVeEN6QUpCZ05WDQpCQVlUQWtG
+ Vk1STXdFUVlEVlFRSUV3cFRiMjFsTFZOMFlYUmxNU0V3SHdZRFZRUUtFeGhKYm5SbGNtNWxkQ0J
+ YDQphV1JuYVhSeklGQjBlU0JNZEdRd0hoY05NVFF3TlRBeU1qRXpNVE00V2hjTk1qUXdOVEF4TW
+ pFek1UTTRXakJGDQpNUXN3Q1FZRFZRUUdFd0pCVlRFVE1CRUdBMVVFQ0JNS1UyOXRaUzFUZEdGM
+ FpURWhNQjhHQTFVRUNoTVlTVzUwDQpaWEp1WlhRZ1YybGtaMmwwY3lCUWRIa2dUSFJrTUlHZk1B
+ MEdDU3FHU0liM0RRRUJBUVVBQTRHTkFEQ0JpUUtCDQpnUUMwQklCcCtwRmhkd1FvNWovODA5eTk
+ rbWxNNkdDbXM5dTNyWEgvcy8zUyswYmdCODFTdmU2VE9mbEUxQ3N0DQpmTnhmZmZwWDhMQzQ5Yn
+ NqcHV1OHlZNGpkbDNmZFNOQnN2eWlXVjd3U1ZscDNkcmxjdjBkZDRqWHIxVlRVZ2I0DQpQVFU3S
+ 3E3RjQ5d3J5M3VKZmI5bU9NVE5UdDRETUZRRjRZY3pEaHREN0dNQ1RRSURBUUFCbzRHbk1JR2tN
+ QjBHDQpBMVVkRGdRV0JCVGVRUkg5c05OdXVCRmc3RVN2QXlWYVRyZjVRVEIxQmdOVkhTTUViakJ
+ zZ0JUZVFSSDlzTk51DQp1QkZnN0VTdkF5VmFUcmY1UWFGSnBFY3dSVEVMTUFrR0ExVUVCaE1DUV
+ ZVeEV6QVJCZ05WQkFnVENsTnZiV1V0DQpVM1JoZEdVeElUQWZCZ05WQkFvVEdFbHVkR1Z5Ym1WM
+ ElGZHBaR2RwZEhNZ1VIUjVJRXgwWklJSkFQRExJbEJ6DQprZUN2TUF3R0ExVWRFd1FGTUFNQkFm
+ OHdEUVlKS29aSWh2Y05BUUVGQlFBRGdZRUFyc1lRd3FXNXFiK0xZM3RWDQpuajhrWnVnNDFsQ29
+ nVzlPc2pkWkxvNnYyaUxxRFVRYXcyOE5GN3RKeWtOSG0wYXJLRUc1ZGkvSFhudE1iRzlBDQpHYT
+ FVS0VuT0ZXcEhIZk50WDhkeHpDTzFDdnBEVXF3blZOS2MrQW43SHJSQjBDY3M4R2l1UlF1STJST
+ 2hpWjJ0DQozL2pZR2ZBS1hHbkM0V1pDdnl6MVNIcGNLcEk9DQotLS0tLUVORCBDRVJUSUZJQ0FU
+ RS0tLS0t
+userCertificate:: MIICsDCCAhmgAwIBAgIJAPDLIlBzkeCvMA0GCSqGSIb3DQEBBQUAMEUxCz
+ AJBgNVBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYDVQQKExhJbnRlcm5ldCBXaWRna
+ XRzIFB0eSBMdGQwHhcNMTQwNTAyMjEzMTM4WhcNMjQwNTAxMjEzMTM4WjBFMQswCQYDVQQGEwJB
+ VTETMBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHR
+ kMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC0BIBp+pFhdwQo5j/809y9+mlM6GCms9u3rX
+ H/s/3S+0bgB81Sve6TOflE1CstfNxfffpX8LC49bsjpuu8yY4jdl3fdSNBsvyiWV7wSVlp3drlc
+ v0dd4jXr1VTUgb4PTU7Kq7F49wry3uJfb9mOMTNTt4DMFQF4YczDhtD7GMCTQIDAQABo4GnMIGk
+ MB0GA1UdDgQWBBTeQRH9sNNuuBFg7ESvAyVaTrf5QTB1BgNVHSMEbjBsgBTeQRH9sNNuuBFg7ES
+ vAyVaTrf5QaFJpEcwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgTClNvbWUtU3RhdGUxITAfBgNVBA
+ oTGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZIIJAPDLIlBzkeCvMAwGA1UdEwQFMAMBAf8wDQYJK
+ oZIhvcNAQEFBQADgYEArsYQwqW5qb+LY3tVnj8kZug41lCogW9OsjdZLo6v2iLqDUQaw28NF7tJ
+ ykNHm0arKEG5di/HXntMbG9AGa1UKEnOFWpHHfNtX8dxzCO1CvpDUqwnVNKc+An7HrRB0Ccs8Gi
+ uRQuI2ROhiZ2t3/jYGfAKXGnC4WZCvyz1SHpcKpI=
+
+dn: ou=users,ou=test,o=externalProviders,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+description: Container for users
+
+dn: o=rackspace,dc=rackspace,dc=com
+objectClass: organization
+objectClass: top
+o: rackspace
+
+dn: ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: applications
+
+dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+cn: Customer Idm
+userPassword: {SSHA512}aQr5QrRtAjq96eSVFl7t0aZomWAsFhI74scZxVdiRMrDbOYJWeiLG
+ VGaAfsOrsWqnU1SFDo69tfURAmQIvA1skuYfcM=
+description: Our description here ...
+enabled: TRUE
+RCN: RACKSPACE
+title: Rackspace User Management
+tokenScope: user_mgmt
+
+dn: cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=ap
+ plications,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+objectClass: top
+cn: CLIENT ROLES
+
+dn: rsId=10,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d2
+ 21,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 10
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+cn: Super Admin
+description: A role that allows a user/application full access to Global Aut
+ h
+rsWeight: 0
+
+dn: rsId=11,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d2
+ 21,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+objectClass: top
+rsId: 11
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+cn: Customer Admin
+description: A Role that allows a user to Admin other users in his customer
+rsWeight: 1000
+
+dn: rsId=9,cn=CLIENT ROLES,clientId=18e7a7032733486cd32f472d7bd58f709ac0d22
+ 1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 9
+clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+cn: Racker
+description: Defines a user as being a Racker
+rsWeight: 100
+
+dn: cn=TOKENS,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applicat
+ ions,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=applications,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: rsApplication
+objectClass: top
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+cn: cloudFiles
+userPassword: {SSHA512}cuqBAPOwV3oRq6R8Fzn88OBWzxfb4CMOK9oOF1eQCatLT0AP/PJTz
+ oTC2ZfvXXbFUZNuofyUsYva1QXTUosixU+2/Rg=
+enabled: TRUE
+openStackType: object-store
+RCN: RACKSPACE
+useForDefaultRegion: FALSE
+
+dn: cn=CLIENT ROLES,clientId=6047d506862b81d6d99273b4853adfe81e0478c1,ou=ap
+ plications,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+objectClass: top
+cn: CLIENT ROLES
+
+dn: rsId=5,cn=CLIENT ROLES,clientId=6047d506862b81d6d99273b4853adfe81e0478c
+ 1,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+cn: object-store:default
+description: A Role that allows a user access to keystone Service methods
+rsWeight: 500
+rsPropagate: TRUE
+
+dn: clientId=6ae999552a0d2dca14d62e2bc8b764d377b1dd6c,ou=applications,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+clientId: 6ae999552a0d2dca14d62e2bc8b764d377b1dd6c
+cn: Identity Global Roles
+userPassword: {SSHA512}fncRKMEkxBzEg3ut+v8CDaXEOf2qLGq3GVmniBKLdXcf+t/Tcyrg7
+ X7gQBsDlfFescjqqylmxzqFOC1Hw/Vj39VPxow=
+description: Identity Global Roles
+openStackType: identity
+RCN: RACKSPACE
+useForDefaultRegion: FALSE
+
+dn: cn=CLIENT ROLES,clientId=6ae999552a0d2dca14d62e2bc8b764d377b1dd6c,ou=ap
+ plications,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: CLIENT ROLES
+
+dn: clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=applications,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+cn: cloudServers
+userPassword: {SSHA512}8CxYNkD5Ud/BoTO7GHSx7tSoWLFNXuV8mG/EpEPIBpoHF0LCIgFEl
+ MT40XAvJ3SWPRIo9LA76RKNy18e8nx/y1t/lL4=
+enabled: TRUE
+openStackType: compute
+RCN: RACKSPACE
+useForDefaultRegion: FALSE
+
+dn: cn=CLIENT ROLES,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998b,ou=ap
+ plications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: CLIENT ROLES
+
+dn: rsId=6,cn=CLIENT ROLES,clientId=a45b14e394a57e3fd4e45d59ff3693ead204998
+ b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+objectClass: top
+rsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+cn: compute:default
+description: A Role that allows a user access to keystone Service methods
+rsWeight: 500
+rsPropagate: TRUE
+
+dn: clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applications,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsApplication
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: Cloud Auth Service
+userPassword: {SSHA512}9kSiRKMd5k7ZNO0C6g8jxbBQyEk2RUQdlFCzL7vRvrHWtIEe+4JZk
+ wvt9R2MHT1ZqQc1wDUhp/z0KU62m3qbxnT+uC0=
+enabled: TRUE
+openStackType: identity
+RCN: RACKSPACE
+useForDefaultRegion: FALSE
+
+dn: cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=ap
+ plications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsContainer
+cn: CLIENT ROLES
+
+dn: rsId=1,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 1
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:admin
+description: Admin Role.
+rsWeight: 100
+
+dn: rsId=10010175,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 10010175
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: nova:observer
+description: Nova Observer Role for Account User
+rsWeight: 1000
+
+dn: rsId=10010176,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 10010176
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: nova:creator
+description: Nova Creator Role for Account User
+rsWeight: 1000
+
+dn: rsId=10053953,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 10053953
+cn: Role 100
+description: Role for testing
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsWeight: 100
+
+dn: rsId=10053954,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 10053954
+cn: Role 500
+description: Role for testing
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsWeight: 500
+
+dn: rsId=10053955,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 10053955
+cn: Role 1000
+description: Role for testing
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsWeight: 1000
+
+dn: rsId=10053956,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977
+ c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 10053956
+cn: Role 2000
+description: Role for testing
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsWeight: 2000
+
+dn: rsId=12,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5
+ c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 12
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:validate-token-global
+description: Role to allow validation of any token
+rsWeight: 50
+
+dn: rsId=122776,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c3
+ 31d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 122776
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: rbacRole2
+description: A random rbac role part II
+rsWeight: 1000
+
+dn: rsId=13,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5
+ c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 13
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:get-token-endpoint-global
+description: Role to allow a user to get the endpoints related to any token
+rsWeight: 50
+
+dn: rsId=14,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5
+ c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 14
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:get-user-roles-global
+description: Role to allow a user to get the roles of any other user
+rsWeight: 50
+
+dn: rsId=15,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5
+ c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 15
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:get-user-groups-global
+description: Role to allow a user to get the groups of any other user
+rsWeight: 50
+
+dn: rsId=16,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5
+ c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 16
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:repose-standard
+description: Role for repose users that allows them to use the standard repo
+ se required calls within identity
+rsWeight: 50
+
+dn: rsId=2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:default
+description: Default Role.
+rsWeight: 2000
+
+dn: rsId=22776,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c33
+ 1d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 22776
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: rbacRole1
+description: A random rbac role
+rsWeight: 1000
+
+dn: rsId=249,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d
+ 5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: clientRole
+rsId: 249
+cn: rax_managed
+description: Rackspace Managed Cloud Customer
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsPropagate: TRUE
+rsWeight: 500
+
+dn: rsId=250,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d
+ 5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 250
+cn: rack_connect
+description: Rackspace RackConnect Customer
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+rsPropagate: TRUE
+rsWeight: 500
+
+dn: rsId=3,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 3
+rsWeight: 750
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:user-admin
+description: User Admin Role.
+
+dn: rsId=4,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 4
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:service-admin
+description: Super Admin Role.
+rsWeight: 0
+
+dn: rsId=7,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 7
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:user-manage
+description: User manage role
+rsWeight: 900
+
+dn: rsId=8,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 8
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:multifactor_beta
+description: Multi-Factor BETA
+rsWeight: 500
+
+dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicati
+ ons,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: cn=TOKENS,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicat
+ ions,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: cloud
+
+dn: ou=adminUsers,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: adminUsers
+
+dn: ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: baseUrls
+
+dn: rsId=1,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1
+publicUrl: https://storage101.dfw1.stg.swift.racklabs.com/v1/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage101.dfw1.stg.swift.racklabs.com/v1/v1
+openStackType: object-store
+policyId: 3043
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=10,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 10
+publicUrl: https://cdn.stg.clouddrive.com/v1
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFilesCDN
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=1000,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1000
+publicUrl: https://otherstorage.clouddrive.com/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+internalUrl: https://otherstorage-snet.clouddrive.com/v1
+openStackType: cloudServers
+policyId: 1041
+policyId: 1039
+rsRegion: ORD
+service: TestService
+
+dn: rsId=100000000,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 100000000
+publicUrl: test
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: cloudServers
+policyId: 100000000
+rsGlobal: FALSE
+service: test
+
+dn: rsId=100001,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 100001
+publicUrl: http://public.url
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+
+dn: rsId=1001,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 1001
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage101.dfw1.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFiles
+
+dn: rsId=1002,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 1002
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+
+dn: rsId=1003,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1003
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFiles
+
+dn: rsId=1004,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1004
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage4.stg.swift.racklabs.com
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+
+dn: rsId=1005,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1005
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage5.stg.swift.racklabs.com
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+
+dn: rsId=1006,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1006
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudFiles
+
+dn: rsId=1007,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1007
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage101.dfw1.stg.swift.racklabs.com
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFiles
+
+dn: rsId=1008,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 1008
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudFiles
+
+dn: rsId=1009,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 1009
+publicUrl: https://cdn.stg.clouddrive.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFilesCDN
+
+dn: rsId=1010,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1010
+publicUrl: https://cdn.stg.clouddrive.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFilesCDN
+
+dn: rsId=1010110110,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1010110110
+publicUrl: test
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: cloudServers
+policyId: 100000000
+rsGlobal: FALSE
+service: test
+
+dn: rsId=1011,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 1011
+publicUrl: https://cdn.stg.clouddrive.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFilesCDN
+
+dn: rsId=1012,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1012
+publicUrl: https://cdn.stg.clouddrive.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudFilesCDN
+
+dn: rsId=1013,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1013
+publicUrl: https://cdn.stg.clouddrive.com/v1
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudFilesCDN
+
+dn: rsId=1014,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1014
+publicUrl: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: cloudServers
+versionId: 1.0
+versionInfo: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+versionList: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+
+dn: rsId=1015,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1015
+publicUrl: https://servers.staging.ord1.uk.ccp.rackspace.net/v1.0
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServers
+
+dn: rsId=1016,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1016
+publicUrl: https://ord.servers.api.rackspacecloud.com/v1.0/
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServers
+
+dn: rsId=1019,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1019
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-only/
+rsGlobal: FALSE
+service: admin-Only
+
+dn: rsId=1020,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1020
+publicUrl: https://public/
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-mix/
+rsGlobal: FALSE
+service: admin-Mix
+
+dn: rsId=1021,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1021
+publicUrl: https://public-all-urls/
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+internalUrl: https://internal-all-urls/
+openStackType: undefined
+rsAdminUrl: https://admin-all-urls/
+rsGlobal: FALSE
+service: all-urls
+
+dn: rsId=1026,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 1026
+publicUrl: https://dfw.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersOpenStack
+versionId: 2
+versionInfo: https://dfw.servers.api.rackspacecloud.com/v2
+versionList: https://dfw.servers.api.rackspacecloud.com/
+
+dn: rsId=1027,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 1027
+publicUrl: https://ord.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersOpenStack
+versionId: 2
+versionInfo: https://ord.servers.api.rackspacecloud.com/v2
+versionList: https://ord.servers.api.rackspacecloud.com/
+
+dn: rsId=1028,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1028
+publicUrl: https://lon.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServersOpenStack
+versionId: 2
+versionInfo: https://lon.servers.api.rackspacecloud.com/v2
+versionList: https://lon.servers.api.rackspacecloud.com/
+
+dn: rsId=1029,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 1029
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImages
+
+dn: rsId=103,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 103
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFiles
+
+dn: rsId=1030,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1030
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://ord.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudImages
+
+dn: rsId=1031,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1031
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://lon.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudImages
+
+dn: rsId=1032,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1032
+publicUrl: https://preprod.dfw.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersPreprod
+
+dn: rsId=1033,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1033
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://preprod.dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesPreprod
+
+dn: rsId=1034,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1034
+publicUrl: https://ord.loadbalancers.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudLoadBalancers
+
+dn: rsId=1035,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1035
+publicUrl: https://dfw.loadbalancers.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudLoadBalancers
+
+dn: rsId=1036,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1036
+publicUrl: https://lon.loadbalancers.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudLoadBalancers
+
+dn: rsId=1037,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1037
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:customer
+rsAdminUrl: https://customer.api.rackspacecloud.com/v1/customer_accounts
+rsGlobal: FALSE
+service: CustomerService
+
+dn: rsId=1038,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1038
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:biling
+rsAdminUrl: https://billing.api.rackspacecloud.com/v1/accounts
+rsGlobal: FALSE
+service: BillingService
+
+dn: rsId=1039,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1039
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:usage
+rsAdminUrl: https://usage.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+service: UsageService
+
+dn: rsId=104,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 104
+publicUrl: https://api.staging.ord1.clouddb.rackspace.net/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+openStackType: rax:database
+rsAdminUrl: https://api.staging.ord1.clouddb.rackspace.net/v1.0
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudDatabases
+
+dn: rsId=1040,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 1040
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:incident
+rsAdminUrl: https://incident.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+service: IncidentService
+
+dn: rsId=1041,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 1041
+publicUrl: https://staging.lon3.loadbalancers.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudLoadBalancers
+
+dn: rsId=1042,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 1042
+publicUrl: https://staging.monitoring.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:monitor
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudMonitoring
+
+dn: rsId=105,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 105
+publicUrl: https://api.staging.ord1.clouddb.rackspace.net/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+openStackType: rax:database
+rsAdminUrl: https://api.staging.ord1.clouddb.rackspace.net/v1.0
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudDatabases
+
+dn: rsId=106,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 106
+publicUrl: https://monitoring.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:monitor
+rsGlobal: FALSE
+service: cloudMonitoring
+
+dn: rsId=107,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 107
+publicUrl: http://api.cbsbeta.ord1.ohthree.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: CBSPreview-ORD
+service: cloudServersCBSPreview
+
+dn: rsId=108,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 108
+publicUrl: http://volume-api.cbsbeta.ord1.ohthree.com/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: CBSPreview-ORD
+service: cloudVolumeCBSPreview
+
+dn: rsId=109,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 109
+publicUrl: https://api.staging.ord1.clouddb.rackspace.net/v1.0
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:database
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudDatabases
+
+dn: rsId=11,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 11
+publicUrl: https://cdn.stg.clouddrive.com/v1
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFilesCDN
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=110,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 110
+publicUrl: http://api:8774/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: CBSDev-ORD
+service: openstackHuddle48
+
+dn: rsId=111,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 111
+publicUrl: https://cdn.stg.clouddrive.com/v1
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsAdminUrl: http://image:9292/v1
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFilesCDN
+
+dn: rsId=112,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 112
+publicUrl: http://volume-api:8774/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: CBSDev-ORD
+service: cloudBlockStorageHuddle48
+
+dn: rsId=113,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 113
+publicUrl: https://cmstaging.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:monitor
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudMonitoring
+
+dn: rsId=114,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 114
+publicUrl: https://ord.servers.preview.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: Preview-ORD
+service: cloudServersPreview
+
+dn: rsId=115,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 115
+publicUrl: https://ord.cbs.preview.api.rackspacecloud.com/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: Preview-ORD
+service: cloudBlockStoragePreview
+
+dn: rsId=116,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 116
+publicUrl: https://preview-ord.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: Preview-ORD
+service: cloudServersOpenStackPreview
+
+dn: rsId=117,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 117
+publicUrl: https://preview-ord.blockstorage.api.rackspacecloud.com/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: Preview-ORD
+service: cloudBlockStoragePreview
+
+dn: rsId=118,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 118
+publicUrl: https://admin.dfw.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: cloudServersPreprodAdmin
+
+dn: rsId=12,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 12
+publicUrl: https://cdn.stg.clouddrive.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudFilesCDN
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=120,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 120
+publicUrl: https://preprod.ord.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersPreprod
+
+dn: rsId=122,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 122
+publicUrl: https://preprod.ord.blockstorage.api.rackspacecloud.com/v1
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudBlockStoragePreprod
+
+dn: rsId=1221,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 1221
+publicUrl: https://otherstorage.clouddrive.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://otherstorage-snet.clouddrive.com/v1
+openStackType: cloudFiles
+rsRegion: ORD
+service: cloudFiles
+
+dn: rsId=124,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 124
+publicUrl: https://dfw.blockstorage.api.rackspacecloud.com/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudBlockStorage
+
+dn: rsId=125,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 125
+publicUrl: http://nova-api1.a0001.h48.ohthree.com:8774/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: openstackHuddle48
+
+dn: rsId=126,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 126
+publicUrl: http://volume-api1.a0001.h48.ohthree.com:8774/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudBlockStorageHuddle48
+
+dn: rsId=127,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 127
+publicUrl: http://nova-api1.a0001.h48.ohthree.com:8774/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: openstackHuddle48
+
+dn: rsId=13,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 13
+publicUrl: https://cdn.stg.clouddrive.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudFilesCDN
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=130,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 130
+publicUrl: https://admin.ord.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersOpenStack
+
+dn: rsId=131,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 131
+publicUrl: https://admin.lon.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServersOpenStack
+
+dn: rsId=132,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 132
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: http://10.24.31.26:9292/v1/images
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesPublicPreprod
+
+dn: rsId=133,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 133
+publicUrl: https://preprod.ord.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersOpenStack
+
+dn: rsId=134,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 134
+publicUrl: https://preprod.dfw.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersOpenStack
+
+dn: rsId=135,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 135
+publicUrl: https://staging.monitoring.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:monitor
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudMonitoring
+
+dn: rsId=136,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 136
+publicUrl: http://api-n01.qe.ord1.us.cloudcompute.rackspace.net:8080/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD-Test
+service: cloudServers
+versionId: 1.0
+versionInfo: http://api-n01.qe.ord1.us.cloudcompute.rackspace.net:8080/v1.0
+versionList: http://api-n01.qe.ord1.us.cloudcompute.rackspace.net:8080/v1.0
+
+dn: rsId=137,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 137
+publicUrl: https://qe.ord.lunr.racklabs.com/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudBlockStorageQE
+
+dn: rsId=138,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 138
+publicUrl: http://qe.ord.lunr.racklabs.com/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudBlockStorageQE
+
+dn: rsId=14,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 14
+publicUrl: https://cdn.stg.clouddrive.com
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudFilesCDN
+
+dn: rsId=140,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 140
+publicUrl: http://10.127.7.19/pods/
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+internalUrl: http://10.127.7.19/pods/
+openStackType: rax:whales
+rsGlobal: FALSE
+rsRegion: CASTLE
+service: rax:whales
+versionId: 1
+versionInfo:: IA==
+versionList:: IA==
+
+dn: rsId=15,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 15
+publicUrl: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: cloudServers
+versionId: 1.0
+versionInfo: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+versionList: https://servers.api.staging.us.ccp.rackspace.net/v1.0
+
+dn: rsId=16,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 16
+publicUrl: https://ord.servers.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServers
+
+dn: rsId=17,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 17
+publicUrl: https://staging.dnsaas.rackspace.net/v1.0
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:dns
+rsGlobal: FALSE
+service: cloudDNS
+
+dn: rsId=18,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 18
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-only/
+rsGlobal: FALSE
+service: admin-Only
+
+dn: rsId=19,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 19
+publicUrl: https://public/
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-mix/
+rsGlobal: FALSE
+service: admin-Mix
+
+dn: rsId=2,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 2
+publicUrl: https://storage.clouddrive.com/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage.clouddrive.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=20,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 20
+publicUrl: https://public-all-urls/
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+internalUrl: https://internal-all-urls/
+openStackType: undefined
+rsAdminUrl: https://admin-all-urls/
+rsGlobal: FALSE
+service: all-urls
+
+dn: rsId=2000,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 2000
+publicUrl: https://otherstorage.clouddrive.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://otherstorage-snet.clouddrive.com/v1
+openStackType: object-store
+policyId: 1039
+policyId: 1041
+rsAdminUrl: http://someadmin.com/v1
+rsGlobal: FALSE
+rsRegion: ORD
+service: TestService
+
+dn: rsId=21,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 21
+publicUrl: https://dfw.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersOpenStack
+
+dn: rsId=22,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 22
+publicUrl: https://ord.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersOpenStack
+
+dn: rsId=23,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 23
+publicUrl: https://lon.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServersOpenStack
+
+dn: rsId=24,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 24
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImages
+
+dn: rsId=25,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 25
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://ord.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudImages
+
+dn: rsId=26,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 26
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://lon.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudImages
+
+dn: rsId=27,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 27
+publicUrl: https://preprod.dfw.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersPreprod
+
+dn: rsId=28,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 28
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://preprod.dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesPreprod
+
+dn: rsId=3,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 3
+publicUrl: https://storage.stg.swift.racklabs.com/v1
+baseUrlType: NAST
+def: TRUE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=31,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 31
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+openStackType: rax:load-balancer
+rsAdminUrl: https://staging.ord.loadbalancers.api.rackspacecloud.com/v1.0
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudLoadBalancers
+
+dn: rsId=32,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 32
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+openStackType: rax:load-balancer
+rsAdminUrl: https://staging.ord.loadbalancers.api.rackspacecloud.com/v1.0
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudLoadBalancers
+
+dn: rsId=33,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 33
+publicUrl: https://lon.loadbalancers.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudLoadBalancers
+
+dn: rsId=34,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 34
+publicUrl: http://alpha.ord.servers.api.rackspacecloud.com:8774/v1.1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudServersOpenStack
+
+dn: rsId=35,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 35
+publicUrl: http://alpha-test.ord.servers.api.rackspacecloud.com:8774/v1.1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsAdminUrl: https://billing.api.rackspacecloud.com/v1/accounts
+rsGlobal: FALSE
+rsRegion: ORD-Test
+service: cloudServersOpenStack
+
+dn: rsId=36,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 36
+publicUrl: http://alpha.lon.servers.api.rackspacecloud.com:8774/v1.1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsAdminUrl: https://usage.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServersOpenStack
+
+dn: rsId=37,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 37
+publicUrl: http://alpha-test.lon.servers.api.rackspacecloud.com:8774/v1.1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsAdminUrl: https://incident.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: LON-Test
+service: cloudServersOpenStack
+
+dn: rsId=38,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 38
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:customer
+rsAdminUrl: https://staging.customer.api.rackspacecloud.com/v1/customer_acco
+ unts
+rsGlobal: FALSE
+rsRegion: STAGING
+service: CustomerService
+
+dn: rsId=39,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 39
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:biling
+rsAdminUrl: https://staging.billing.api.rackspacecloud.com/v1/accounts
+rsGlobal: FALSE
+rsRegion: STAGING
+service: BillingService
+
+dn: rsId=4,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 4
+publicUrl: https://storage4.clouddrive.com/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage4.clouddrive.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=40,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 40
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:usage
+rsAdminUrl: https://staging.usage.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: STAGING
+service: UsageService
+
+dn: rsId=41,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 41
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:incident
+rsAdminUrl: https://staging.incident.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: STAGING
+service: IncidentService
+
+dn: rsId=42,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 42
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:customer
+rsAdminUrl: https://customer.api.rackspacecloud.com/v1/customer_accounts
+rsGlobal: FALSE
+service: CustomerService
+
+dn: rsId=43,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 43
+publicUrl: http://api:8774/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: openstackHuddle48
+
+dn: rsId=44,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 44
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: http://image:9292/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesHuddle48
+
+dn: rsId=45,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 45
+publicUrl: https://staging.dnsaas.rackspace.net/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:dns
+rsGlobal: FALSE
+service: cloudDNS
+
+dn: rsId=46,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 46
+publicUrl: https://ord.loadbalancers.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudLoadBalancers
+
+dn: rsId=47,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 47
+publicUrl: https://dfw.loadbalancers.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudLoadBalancers
+
+dn: rsId=5,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 5
+publicUrl: https://storage5.clouddrive.com/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: FALSE
+internalUrl: https://snet-storage5.clouddrive.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: INACTIVE
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=54,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 54
+publicUrl: https://dfw.databases.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:database
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudDatabases
+
+dn: rsId=55,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 55
+publicUrl: https://ord.databases.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:database
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudDatabases
+
+dn: rsId=56,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 56
+publicUrl: https://monitoring.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:monitor
+rsGlobal: FALSE
+service: cloudMonitoring
+
+dn: rsId=58,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 58
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-only/
+rsGlobal: FALSE
+service: admin-Only
+
+dn: rsId=59,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 59
+publicUrl: https://public/
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: undefined
+rsAdminUrl: https://admin-mix/
+rsGlobal: FALSE
+service: admin-Mix
+
+dn: rsId=6,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 6
+publicUrl: https://storage.stg.swift.racklabs.com/v1/
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=62,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 62
+publicUrl: https://lon.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudServersOpenStack
+versionId: 2
+versionInfo: https://lon.servers.api.rackspacecloud.com/v2
+versionList: https://lon.servers.api.rackspacecloud.com/
+
+dn: rsId=63,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 63
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImages
+
+dn: rsId=64,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 64
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://ord.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudImages
+
+dn: rsId=65,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 65
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://lon.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudImages
+
+dn: rsId=66,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 66
+publicUrl: https://preprod.dfw.servers.api.rackspacecloud.com/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudServersPreprod
+
+dn: rsId=67,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 67
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: https://staging.preprod.dfw.images.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesPreprod
+
+dn: rsId=74,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 74
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:customer
+rsAdminUrl: https://staging.customer.api.rackspacecloud.com/v1/customer_acco
+ unts/CLOUD
+rsGlobal: FALSE
+service: CustomerService
+
+dn: rsId=75,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 75
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:biling
+rsAdminUrl: https://staging.billing.api.rackspacecloud.com/v1/accounts
+rsGlobal: FALSE
+service: BillingService
+
+dn: rsId=76,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 76
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:usage
+rsAdminUrl: https://staging.usage.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+service: UsageService
+
+dn: rsId=77,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 77
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: rax:incident
+rsAdminUrl: https://staging.incident.api.rackspacecloud.com/v1
+rsGlobal: FALSE
+service: IncidentService
+
+dn: rsId=78,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 78
+publicUrl: http://api:8774/v2
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: compute
+rsGlobal: FALSE
+service: openstackHuddle48
+
+dn: rsId=79,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 79
+publicUrl: https://
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsAdminUrl: http://image:9292/v1
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesHuddle48
+
+dn: rsId=8,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 8
+publicUrl: https://storage.stg.swift.racklabs.com/v1/
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
+openStackType: object-store
+rsGlobal: FALSE
+rsRegion: LON
+service: cloudFiles
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: rsId=82,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 82
+publicUrl: http://volume-api:8774/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: volume
+rsGlobal: FALSE
+rsRegion: ORD
+service: cloudBlockStorageHuddle48
+
+dn: rsId=83,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 83
+publicUrl: https://staging.ord.loadbalancers.api.rackspacecloud.com/v1.0
+baseUrlType: MOSSO
+def: TRUE
+enabled: TRUE
+openStackType: rax:load-balancer
+rsGlobal: FALSE
+rsRegion: STAGING
+service: cloudLoadBalancers
+
+dn: rsId=85,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 85
+publicUrl: https://preprod.dfw.images.api.rackspacecloud.com/v1
+baseUrlType: MOSSO
+def: FALSE
+enabled: TRUE
+openStackType: image
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudImagesPublicPreprod
+
+dn: rsId=887,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 887
+publicUrl: https://service-public.com/v1 
+enabled: FALSE
+internalUrl: https://service-internal.com/v1 
+openStackType: compute
+rsAdminUrl: https://service-admin.com/v1
+rsGlobal: FALSE
+rsRegion: North
+service: Compute
+versionId: 1
+versionInfo: https://compute.north.public.com/v1/ 
+versionList: https://compute.north.public.com/
+
+dn: rsId=888,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: baseUrl
+objectClass: top
+rsId: 888
+publicUrl: https://service-public.com/v1 
+enabled: TRUE
+internalUrl: https://service-internal.com/v1 
+openStackType: compute
+rsAdminUrl: https://service-admin.com/v1
+rsGlobal: FALSE
+rsRegion: North
+service: Compute
+versionId: 1
+versionInfo: https://compute.north.public.com/v1/ 
+versionList: https://compute.north.public.com/
+
+dn: rsId=9,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: baseUrl
+rsId: 9
+publicUrl: https://cdn.stg.clouddrive.com/v1
+baseUrlType: NAST
+def: FALSE
+enabled: TRUE
+openStackType: rax:object-cdn
+rsGlobal: FALSE
+rsRegion: DFW
+service: cloudFilesCDN
+versionId: 1
+versionInfo: https://api.info.uri.com/v1/
+versionList: https://api.list.uri.com/v1/
+
+dn: ou=capabilities,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: capabilities
+
+dn: ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: configuration
+
+dn: ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: patterns
+
+dn: rsId=1,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,d
+ c=com
+objectClass: rsPattern
+rsId: 1
+cn: username
+errMsg: Username must begin with an alphanumeric character, have no spaces, 
+ and only contain the following valid special characters: - _ . @
+pattern: ^[A-Za-z0-9][a-zA-Z0-9-_.@]*
+description: AlphaNumeric w/ some special characters (- | _ | @ | .)
+
+dn: rsId=2,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,d
+ c=com
+objectClass: rsPattern
+rsId: 2
+cn: phone
+errMsg: Phone number has invalid characters.
+pattern: [0-9]*
+description: Checks for invalid characters on a phone number.
+
+dn: rsId=3,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,d
+ c=com
+objectClass: rsPattern
+rsId: 3
+cn: password
+errMsg: Password must be at least 8 characters in length, must contain at le
+ ast one uppercase letter, one lowercase letter, and one numeric character.
+pattern:: Xig/PS4qXGQpKD89LipbYS16XSkoPz0uKltBLVpdKVthLXpBLVpcZD0rYHxcKCl7fV
+ xbXF06OyInPD4sLj8vXFxcXMKjfiFAIyVeJiQqXyAtXXs4LH0k
+description: Checks for invalid characters on a phone number.
+
+dn: rsId=4,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,d
+ c=com
+objectClass: rsPattern
+rsId: 4
+cn: token
+errMsg: Invalid token
+pattern: ^[A-Za-z0-9-]+$
+description: Checks for invalid characters on a token.
+
+dn: rsId=5,ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,d
+ c=com
+objectClass: rsPattern
+objectClass: top
+rsId: 5
+cn: email
+errMsg: Expecting valid email address
+pattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]+
+
+dn: ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: properties
+
+dn: cn=encryptionVersionId,ou=properties,ou=configuration,ou=cloud,o=racksp
+ ace,dc=rackspace,dc=com
+objectClass: rsProperty
+objectClass: top
+cn: encryptionVersionId
+value: 0
+
+dn: ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: domains
+
+dn: rsId=78543985,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+rsId: 78543985
+cn: 78543985
+enabled: TRUE
+description: Default Domain
+tenantRsId: 78543985
+tenantRsId: MossoCloudFS_78543985
+
+dn: rsId=78543987,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+rsId: 78543987
+cn: 78543987
+enabled: TRUE
+description: Default Domain
+tenantRsId: 78543987
+tenantRsId: MossoCloudFS_78543987
+
+dn: rsId=78543988,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+rsId: 78543988
+cn: 78543988
+enabled: TRUE
+description: Default Domain
+tenantRsId: 78543988
+tenantRsId: MossoCloudFS_78543988
+
+dn: rsId=78543990,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+rsId: 78543990
+cn: 78543990
+enabled: TRUE
+description: Default Domain
+tenantRsId: 78543990
+tenantRsId: MossoCloudFS_78543990
+
+dn: rsId=78543995,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+rsId: 78543995
+cn: 78543995
+description: Default Domain
+enabled: TRUE
+tenantRsId: 78543995
+tenantRsId: MossoCloudFS_78543995
+
+dn: rsId=983452,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+rsId: 983452
+cn: 983452
+enabled: TRUE
+description: Default Domain
+tenantRsId: 983452
+tenantRsId: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+
+dn: ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+
+dn: rsId=0,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsGroup
+objectClass: top
+rsId: 0
+name: Default
+description: Default Limits
+
+dn: rsId=1,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsGroup
+objectClass: top
+rsId: 1
+name: rax_status_restricted
+description: Terminator Rate Limit Group
+
+dn: ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: policies
+
+dn: rsId=100000000,ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPolicy
+rsId: 100000000
+blob: blob
+cn: name
+enabled: TRUE
+policyType: type
+rsGlobal: TRUE
+description: description
+
+dn: ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: questions
+
+dn: rsId=1,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 1
+question: What is the location of a dream vacation?
+
+dn: rsId=2,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 2
+question: Where is the best place to live?
+
+dn: rsId=3,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 3
+question: What is your favorite book?
+
+dn: rsId=4,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 4
+question: What is your favorite color?
+
+dn: rsId=5,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 5
+question: Who let the dogs out?
+
+dn: rsId=6,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsQuestion
+rsId: 6
+question: What is your pass phrase?
+
+dn: ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: regions
+
+dn: cn=DFW,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCloudRegion
+cn: DFW
+enabled: TRUE
+rsCloud: US
+useForDefaultRegion: FALSE
+
+dn: cn=IAD,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCloudRegion
+cn: IAD
+enabled: TRUE
+rsCloud: US
+useForDefaultRegion: FALSE
+
+dn: cn=LON,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCloudRegion
+cn: LON
+enabled: TRUE
+rsCloud: UK
+useForDefaultRegion: TRUE
+
+dn: cn=ORD,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCloudRegion
+cn: ORD
+enabled: TRUE
+rsCloud: US
+useForDefaultRegion: TRUE
+
+dn: ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: tenants
+
+dn: rsId=78543985,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+rsId: 78543985
+cn: 78543985
+enabled: TRUE
+baseUrlId: 135
+baseUrlId: 120
+baseUrlId: 15
+baseUrlId: 83
+baseUrlId: 17
+baseUrlId: 47
+baseUrlId: 56
+baseUrlId: 1042
+baseUrlId: 109
+baseUrlId: 122
+baseUrlId: 1041
+rsDomainId: 78543985
+tenantDisplayName: 78543985
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=78543987,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+rsId: 78543987
+cn: 78543987
+enabled: TRUE
+baseUrlId: 135
+baseUrlId: 120
+baseUrlId: 15
+baseUrlId: 83
+baseUrlId: 17
+baseUrlId: 47
+baseUrlId: 56
+baseUrlId: 1042
+baseUrlId: 109
+baseUrlId: 122
+baseUrlId: 1041
+rsDomainId: 78543987
+tenantDisplayName: 78543987
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=78543988,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+rsId: 78543988
+cn: 78543988
+enabled: TRUE
+baseUrlId: 135
+baseUrlId: 120
+baseUrlId: 15
+baseUrlId: 83
+baseUrlId: 17
+baseUrlId: 47
+baseUrlId: 56
+baseUrlId: 1042
+baseUrlId: 109
+baseUrlId: 122
+baseUrlId: 1041
+rsDomainId: 78543988
+tenantDisplayName: 78543988
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=78543990,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+rsId: 78543990
+cn: 78543990
+enabled: TRUE
+baseUrlId: 135
+baseUrlId: 120
+baseUrlId: 15
+baseUrlId: 83
+baseUrlId: 17
+baseUrlId: 47
+baseUrlId: 56
+baseUrlId: 1042
+baseUrlId: 109
+baseUrlId: 122
+baseUrlId: 1041
+rsDomainId: 78543990
+tenantDisplayName: 78543990
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=78543995,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+rsId: 78543995
+cn: 78543995
+baseUrlId: 135
+baseUrlId: 120
+baseUrlId: 15
+baseUrlId: 83
+baseUrlId: 17
+baseUrlId: 47
+baseUrlId: 56
+baseUrlId: 1042
+baseUrlId: 109
+baseUrlId: 122
+baseUrlId: 1041
+enabled: TRUE
+rsDomainId: 78543995
+tenantDisplayName: 78543995
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=983452,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+rsId: 983452
+cn: 983452
+enabled: TRUE
+baseUrlId: 135
+baseUrlId: 120
+baseUrlId: 15
+baseUrlId: 83
+baseUrlId: 17
+baseUrlId: 47
+baseUrlId: 56
+baseUrlId: 109
+baseUrlId: 122
+tenantDisplayName: 983452
+vOneDefault: 15
+vOneDefault: 120
+
+dn: rsId=MossoCloudFS_78543985,ou=tenants,ou=cloud,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: tenant
+rsId: MossoCloudFS_78543985
+cn: MossoCloudFS_78543985
+enabled: TRUE
+baseUrlId: 3
+baseUrlId: 11
+baseUrlId: 1013
+baseUrlId: 103
+baseUrlId: 111
+baseUrlId: 10
+rsDomainId: 78543985
+tenantDisplayName: MossoCloudFS_78543985
+vOneDefault: 111
+vOneDefault: 103
+
+dn: rsId=MossoCloudFS_78543987,ou=tenants,ou=cloud,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: tenant
+rsId: MossoCloudFS_78543987
+cn: MossoCloudFS_78543987
+enabled: TRUE
+baseUrlId: 3
+baseUrlId: 11
+baseUrlId: 1013
+baseUrlId: 103
+baseUrlId: 111
+baseUrlId: 10
+rsDomainId: 78543987
+tenantDisplayName: MossoCloudFS_78543987
+vOneDefault: 111
+vOneDefault: 103
+
+dn: rsId=MossoCloudFS_78543988,ou=tenants,ou=cloud,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: tenant
+rsId: MossoCloudFS_78543988
+cn: MossoCloudFS_78543988
+enabled: TRUE
+baseUrlId: 3
+baseUrlId: 11
+baseUrlId: 1013
+baseUrlId: 103
+baseUrlId: 111
+baseUrlId: 10
+rsDomainId: 78543988
+tenantDisplayName: MossoCloudFS_78543988
+vOneDefault: 111
+vOneDefault: 103
+
+dn: rsId=MossoCloudFS_78543990,ou=tenants,ou=cloud,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: tenant
+rsId: MossoCloudFS_78543990
+cn: MossoCloudFS_78543990
+enabled: TRUE
+baseUrlId: 3
+baseUrlId: 11
+baseUrlId: 1013
+baseUrlId: 103
+baseUrlId: 111
+baseUrlId: 10
+rsDomainId: 78543990
+tenantDisplayName: MossoCloudFS_78543990
+vOneDefault: 111
+vOneDefault: 103
+
+dn: rsId=MossoCloudFS_78543995,ou=tenants,ou=cloud,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: tenant
+rsId: MossoCloudFS_78543995
+cn: MossoCloudFS_78543995
+baseUrlId: 3
+baseUrlId: 11
+baseUrlId: 1013
+baseUrlId: 103
+baseUrlId: 111
+baseUrlId: 10
+enabled: TRUE
+rsDomainId: 78543995
+tenantDisplayName: MossoCloudFS_78543995
+vOneDefault: 111
+vOneDefault: 103
+
+dn: rsId=StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09,ou=tenants,ou=cloud
+ ,o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+rsId: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+cn: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+enabled: TRUE
+baseUrlId: 3
+baseUrlId: 11
+baseUrlId: 103
+baseUrlId: 111
+baseUrlId: 10
+tenantDisplayName: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+vOneDefault: 111
+vOneDefault: 103
+
+dn: ou=customers,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: customers
+
+dn: ou=multiFactorDevices,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: multiFactorDevices
+description: Defines container for multifactor devices
+
+dn: ou=mobilePhones,ou=multiFactorDevices,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: mobilePhones
+description: Defines container for mobile phones used for multifactor
+
+dn: telephoneNumber=\+1 201-555-0104,ou=mobilePhones,ou=multiFactorDevices,
+ o=rackspace,dc=rackspace,dc=com
+objectClass: rsMultiFactorMobilePhone
+objectClass: groupOfNames
+objectClass: top
+telephoneNumber: +1 201-555-0104
+cn: +1 201-555-0104
+member: rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc=racksp
+ ace,dc=com
+rsExternalMultiFactorPhoneId: DP1GRI1GJU52GWCOI2N6
+rsId: fb6c00852e404263b745419dd761d968
+
+dn: ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: nextIds
+
+dn: cn=nextCapabilityId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsNextId
+cn: nextCapabilityId
+rsId: 1712
+
+dn: cn=nextCustomerId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: rsNextId
+objectClass: top
+cn: nextCustomerId
+rsId: 10001024
+
+dn: cn=nextGroupId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: rsNextId
+objectClass: top
+cn: nextGroupId
+rsId: 11947
+
+dn: cn=nextPolicyId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsNextId
+cn: nextPolicyId
+rsId: 4120
+
+dn: cn=nextQuestionId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsNextId
+cn: nextQuestionId
+rsId: 1328
+
+dn: cn=nextRoleId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: rsNextId
+objectClass: top
+cn: nextRoleId
+rsId: 10019855
+
+dn: cn=nextTenantId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: rsNextId
+objectClass: top
+cn: nextTenantId
+rsId: 10020
+
+dn: cn=nextUserId,ou=nextIds,o=rackspace,dc=rackspace,dc=com
+objectClass: rsNextId
+objectClass: top
+cn: nextUserId
+rsId: 10052898
+
+dn: ou=rackers,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: rackers
+
+dn: ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: softDeleted
+
+dn: ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: applications
+
+dn: ou=customers,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: customers
+
+dn: ou=policies,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: policies
+
+dn: ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+
+dn: ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+
+dn: rsId=10022623,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 10022623
+enabled: TRUE
+mail: k@example.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120627230933.121Z
+rsApiKey:: 0p5Hq3v9YYI4c2yPHmegVg==
+rsNastId: asdfgh1234
+rsRegion: US
+uid: kurtDefaultUser
+userPassword: {SSHA512}ej+i+M1f4fEQQMwSF/iz32ppvp7z2Wg8rnRhpt+M0iuJU+dO2flSx
+ Z9BmP080rlcyD3Mud9/U1Ad8FIIRb3c2LkOe4s=
+
+dn: cn=ROLES,rsId=10022623,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=2,cn=ROLES,rsId=10022623,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+roleRsId: 2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: cn=TOKENS,rsId=10022623,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 10022837
+enabled: TRUE
+mail: john.smith@example.org
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120628153616.334Z
+uid: hectorUserAdmin
+userPassword: {SSHA512}p3hYI8bUm4ciUEZ0iuFvt/4HVFUbbxSMfHEjbvKG+vB0kRHvvvDKu
+ WRtnY/YP+ltOS675dVHjypV1Nnnw+N3aGP0avo=
+
+dn: cn=ROLES,rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+roleRsId: 3
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: cn=TOKENS,rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=10043250,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 10043250
+enabled: TRUE
+mail: testEmail@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120914232353.407Z
+uid: testServiceAdmin_doNotDelete
+userPassword: {SSHA512}XnKfwm1hiQbTNxTObpm7mI21caR2T9vK/6KRmgb+io6Pt2HT4Jts0
+ 1ZFv8qnx2ch3BHSwk42NSqQhj88mvJ1e3fCAtE=
+
+dn: cn=ROLES,rsId=10043250,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=10043250,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+objectClass: top
+roleRsId: 4
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: cn=TOKENS,rsId=10043250,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=10043490,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 10043490
+enabled: FALSE
+mail: testEmail@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120918154508.749Z
+uid: testDisabledUser_doNotDelete
+userPassword: {SSHA512}0L3YXuC3aluPyPjEWEYDU0scnUb+5VW7kdlf5lMlR44ka4ZrhCKqL
+ 0xhiBX0uExYYc9mPcGqKLqQvAYC7lchs7f80vE=
+
+dn: cn=ROLES,rsId=10043490,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=10043490,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+objectClass: top
+roleRsId: 4
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: rsId=10044477,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 10044477
+enabled: TRUE
+mail: testEmail@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120920181026.587Z
+uid: testIdentityAdmin_doNotDelete
+userPassword: {SSHA512}09y37gXSy8nv4CuIRw8oqB/x+zcDs944ytOvVOWYeh1GkTTgLf/T8
+ 3x6MrjwXsuwi+pHpoTzrnfYEjUJNHply8keUq4=
+
+dn: cn=ROLES,rsId=10044477,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=1,cn=ROLES,rsId=10044477,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+roleRsId: 1
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: cn=TOKENS,rsId=10044477,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 10044550
+enabled: TRUE
+mail: testuser@example.org
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120924211954.976Z
+rsDomainId: 135792468
+uid: testUserAdmin_doNotDelete
+userPassword: {SSHA512}aE2fQnQ5jCMcPy6CKs7Zbq2jRFN1NDkbyeAC0BTtqWds60d/aRz6w
+ 7iUwmMKOTwvybGs8KlSJnzYF26UfZ8EOSQ1cMM=
+
+dn: cn=ROLES,rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+roleRsId: 3
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: cn=TOKENS,rsId=10044550,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=10044551,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 10044551
+enabled: TRUE
+mail: testEmail@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120924211957.825Z
+rsDomainId: 135792468
+uid: testUserNoRoles_doNotDelete
+userPassword: {SSHA512}JskKc+Ud0q8FAuPLlb9ylGE+N2pNBehjMu7mZV5LUg2zMHlKWPLcj
+ N9MEmgtRp7c5YXhbMYGnu2ehDDvBFCZzNIyolM=
+
+dn: cn=ROLES,rsId=10044551,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=10044551,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+roleRsId: 3
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: rsId=10046995,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 10046995
+enabled: TRUE
+mail: testEmail@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20121012202521.754Z
+rsDomainId: 135792468
+uid: testDefaultUser_doNotDelete
+userPassword: {SSHA512}QRtJi12bue/ZTNzZUieelqacz3sNF3nZD7PxpbgvsmN622blGqGEo
+ DfazK1rhnBwXRt9noW3EAwNIjQoGb0QUdISaOw=
+
+dn: cn=ROLES,rsId=10046995,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=2,cn=ROLES,rsId=10046995,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+roleRsId: 2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: cn=TOKENS,rsId=10046995,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 10071819
+enabled: TRUE
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20130322145056.559Z
+rsApiKey:: Is2/L0NNUM3svnnjOcEqVg==
+rsDomainId: -543569094
+rsNastId: StagingUS_e99825fd-b069-4987-bf46-42766bf79fd3
+rsRegion: ORD
+uid: cloud10User_DoNotDelete
+userPassword: {SSHA512}CucSTNtrNnFlAJcnAiLS3Hl9Z+Wmc9RJGKYzcv26hS8L+jBHcEFhE
+ tAcoaZ/+2gcbeCYapHo9Nq40juE/WTy9ZfEpIE=
+
+dn: cn=ROLES,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+roleRsId: 3
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=5,cn=ROLES,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: StagingUS_e99825fd-b069-4987-bf46-42766bf79fd3
+userRsId: 10071819
+
+dn: roleRsId=6,cn=ROLES,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=
+ com
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: -543569094
+userRsId: 10071819
+
+dn: cn=TOKENS,rsId=10071819,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 173189
+enabled: TRUE
+mail: auth@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120919153931.472Z
+preferredLanguage: en-us
+RCN: RACKSPACE
+rsApiKey:: cBoF/yUr7bFU8DrFOGNiEw==
+rsDisplayName:: F/J7NK9Jv2H4w2Xg2xuJjQ==
+rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou
+ =applications,o=rackspace,dc=rackspace,dc=com
+rsNastId: MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3
+rsRegion: ORD
+secretAnswer:: L0EuPN+S7sRR739Wqqhv6g==
+secretQuestion:: C5WykLHFtUz6bdFvapQ3pw==
+timeZone: America/Chicago
+uid: auth
+userPassword: {SSHA512}gXOGDl/oKt+IB9NYUdMHoga0hoI/ml7Yl8KZ+WAjN3qiotYsXPSlM
+ LbFXlUDa8hjnSzV5vGpzmGpGr4Mzh0vBRUaRjk=
+
+dn: cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=1,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: tenantRole
+objectClass: top
+roleRsId: 1
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=5,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: 983452
+userRsId: 173189
+
+dn: cn=TOKENS,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: rsPerson
+rsId: 173190
+enabled: TRUE
+mail: auth@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120312182051.512Z
+preferredLanguage: en-us
+RCN: RACKSPACE
+rsDisplayName:: F/J7NK9Jv2H4w2Xg2xuJjQ==
+rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou
+ =applications,o=rackspace,dc=rackspace,dc=com
+rsNastId: MossoCloudFS_6eee84c5-54a4-4217-a895-8308da81feb3
+rsRegion: ORD
+secretAnswer:: L0EuPN+S7sRR739Wqqhv6g==
+secretQuestion:: C5WykLHFtUz6bdFvapQ3pw==
+timeZone: America/Chicago
+uid: authQE
+userPassword: {SSHA512}iFi1s2vu+kZ/91dxtC6DAU9IVDAQ6uktuaIyjCQDbE18eWv2EzGRb
+ I1fGF1cRATu73zpTUHY6L5rL+WUk+BoECDjd/I=
+
+dn: cn=ROLES,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: top
+objectClass: tenantRole
+roleRsId: 4
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: cn=TOKENS,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPerson
+objectClass: top
+rsId: 173195
+enabled: TRUE
+mail: auth@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20120312182051.512Z
+preferredLanguage: en-us
+RCN: RACKSPACE
+rsDisplayName:: F/J7NK9Jv2H4w2Xg2xuJjQ==
+rsGroupDN: cn=Idm Admin,clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou
+ =applications,o=rackspace,dc=rackspace,dc=com
+rsRegion: ORD
+secretAnswer:: L0EuPN+S7sRR739Wqqhv6g==
+secretQuestion:: C5WykLHFtUz6bdFvapQ3pw==
+timeZone: America/Chicago
+uid: authQE2
+userPassword: {SSHA512}FanKfppz11U5LJeUGrMKUEx0Qda/MckZT7WigVMZ8kB6xw2m+aoH6
+ EyPmOjcV/PNSqhWX0eowQ3b+GzL/4N7+w0zuC0=
+rsApiKey:: Is2/L0NNUM3svnnjOcEqVg==
+
+dn: cn=ROLES,rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=10053955,cn=ROLES,rsId=173195,ou=users,o=rackspace,dc=rackspac
+ e,dc=com
+objectClass: tenantRole
+objectClass: top
+roleRsId: 10053955
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=4,cn=ROLES,rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: tenantRole
+objectClass: top
+roleRsId: 4
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: cn=TOKENS,rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: rsPerson
+rsId: 1c5a89a8d99b4e34998f7143d76d99e2
+enabled: TRUE
+encryptionSalt: 17 bc e2 ff 90 b1 1f 8c 88 13 b8 90 44 4d 92 9e
+encryptionVersionId: 0
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141020193554.387Z
+preferredLanguage: en_US
+rsApiKey:: 322AoChiP+yo//bTIBmi+tdj9VhLdbjnEJRLBngf33AqB4z4DkFozRNcNZ6rvYwt
+rsDomainId: 78543990
+rsExternalMultiFactorUserId: DUKT752N0LU37VBIZUBV
+rsMossoId: 78543990
+rsMultiFactorDeviceVerified: TRUE
+rsMultiFactorEnabled: TRUE
+rsMultiFactorMobilePhoneRsId: 791d2b1521224f329f98b7910c63508c
+rsMultiFactorState: ACTIVE
+rsNastId: MossoCloudFS_78543990
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_mfa_enabled_user_admin
+userPassword: {SSHA512}xzscjAWtRx8WvXpueBodCAQyL3hEli1XnUZWi3UhF02n2x5p+2OLD
+ +tuf/eYI2FSwZBQSvCTTawtGjEASeGwHZZJ5f4=
+
+dn: cn=ROLES,rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 3
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 1c5a89a8d99b4e34998f7143d76d99e2
+
+dn: roleRsId=5,cn=ROLES,rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: MossoCloudFS_78543990
+userRsId: 1c5a89a8d99b4e34998f7143d76d99e2
+
+dn: roleRsId=6,cn=ROLES,rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: 78543990
+userRsId: 1c5a89a8d99b4e34998f7143d76d99e2
+
+dn: cn=TOKENS,rsId=1c5a89a8d99b4e34998f7143d76d99e2,ou=users,o=rackspace,dc
+ =rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: rsPerson
+rsId: 3a4407a6b3e349998478409c5b7eda14
+enabled: TRUE
+encryptionSalt: e3 1b 06 4c 50 3f 7e ed 91 2f f7 91 47 ae 93
+encryptionVersionId: 0
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20131107011325.242Z
+preferredLanguage: en_US
+rsApiKey:: 2/DFjhASk0f9SBMdaW457jLCoO7nxvvwDjiSmHDSbUkymcryUT6U0yWGOJVGB6Kw
+rsDomainId: 983452
+rsMossoId: 983452
+rsNastId: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+rsRegion: ORD
+secretAnswer:: Uv1LGk0mZpLhrbYoASrOeg==
+secretQuestion:: KqVIjuJ4KSJdTahVxy+yw0lcP4kzcwuizjYfX7ciwOy+QKjv9heiA+bVF7j
+ 7EvzZdFjU9Bdmh3S+qHUWGp1hEw==
+secretQuestionId:: gOtvzwQZ4QhZIQ/PnebrYg==
+timeZone: America/Chicago
+uid: cloudCafeUserAdmin
+userPassword: {SSHA512}aV7cSVt0C2Es2efBtEI7U7gVhlN+zS6APHlaKh2rGJqgb1J7jgcLl
+ mEqm8Cc5ffWzmDYjUxnEbejNwfA5CCvNQOBPU0=
+
+dn: cn=ROLES,rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 3
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=5,cn=ROLES,rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09
+userRsId: 3a4407a6b3e349998478409c5b7eda14
+
+dn: roleRsId=6,cn=ROLES,rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: 983452
+userRsId: 3a4407a6b3e349998478409c5b7eda14
+
+dn: cn=TOKENS,rsId=3a4407a6b3e349998478409c5b7eda14,ou=users,o=rackspace,dc
+ =rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: accessToken=35b9cffd47d444a396d3d6b7ee7abe2b,cn=TOKENS,rsId=3a4407a6b3e
+ 349998478409c5b7eda14,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: userScopeAccess
+objectClass: scopeAccess
+accessToken: 35b9cffd47d444a396d3d6b7ee7abe2b
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 3a4407a6b3e349998478409c5b7eda14
+accessTokenExp: 20131109035948.813Z
+clientRCN: RACKSPACE
+rsType: APIKEY
+uid: cloudCafeUserAdmin
+
+dn: rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: rsPerson
+rsId: 4e997592aad24e2183e51bd013f223c5
+enabled: TRUE
+encryptionSalt: 10 4a 89 d2 7d 47 b7 bc 42 82 79 5b 22 3d 14 7a
+encryptionVersionId: 0
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141006191119.345Z
+preferredLanguage: en_US
+rsApiKey:: iG9M5xFRpttxIeTvbx1aiwI95c5/IYJ8I4ZKShvIwXqPN+D7dhoNzdkm2KTbZ6VH
+rsDomainId: 78543988
+rsMossoId: 78543988
+rsNastId: MossoCloudFS_78543988
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_user_admin
+userPassword: {SSHA512}0d2ldlhL6wuErFZYqazvZnAbyN87geeZO8+DBTBz/MivZnK5xUt0E
+ Z1s4Z/9FpPk95yinR9KBYzJzH8uLjkUcHL5R30=
+
+dn: cn=ROLES,rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 3
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 4e997592aad24e2183e51bd013f223c5
+
+dn: roleRsId=5,cn=ROLES,rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: MossoCloudFS_78543988
+userRsId: 4e997592aad24e2183e51bd013f223c5
+
+dn: roleRsId=6,cn=ROLES,rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: 78543988
+userRsId: 4e997592aad24e2183e51bd013f223c5
+
+dn: cn=TOKENS,rsId=4e997592aad24e2183e51bd013f223c5,ou=users,o=rackspace,dc
+ =rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: rsPerson
+rsId: 6ffe3875d15b44d5b8b2d285790c89ec
+enabled: TRUE
+encryptionSalt: a1 90 22 b4 67 49 62 1e ef 49 62 48 f3 d3 3a
+encryptionVersionId: 0
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141002165900.717Z
+preferredLanguage: en_US
+rsApiKey:: kPO7i3QqskNkFNFhMPBLeDl84XZXkhD4vkSVAcUOxPeW7DWYRgx1Iy4qqH57/KFh
+rsDomainId: 78543987
+rsMossoId: 78543987
+rsNastId: MossoCloudFS_78543987
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_service_admin
+userPassword: {SSHA512}e3tFeg+IBMSSyH2tl8YKf4LoqqaNdVD0YC5eZSbfa/oWAapukBGJx
+ +SOLtcS91oMY3K2QQcp1M7x7XTU4EgtS3DPI5U=
+
+dn: cn=ROLES,rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 4
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 6ffe3875d15b44d5b8b2d285790c89ec
+
+dn: roleRsId=5,cn=ROLES,rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: MossoCloudFS_78543987
+userRsId: 6ffe3875d15b44d5b8b2d285790c89ec
+
+dn: roleRsId=6,cn=ROLES,rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: 78543987
+userRsId: 6ffe3875d15b44d5b8b2d285790c89ec
+
+dn: cn=TOKENS,rsId=6ffe3875d15b44d5b8b2d285790c89ec,ou=users,o=rackspace,dc
+ =rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: rsPerson
+rsId: 868dea5a32934749a3fb9a47e80f12a4
+enabled: TRUE
+encryptionSalt: 85 90 24 30 b6 ce 1d e6 22 de 3d d3 88 1a 9a
+encryptionVersionId: 0
+mail: shanthi.vedula@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141006203142.479Z
+preferredLanguage: en_US
+rsApiKey:: WZQcH4Ja3+pEIosicAivbmOPVDMgp/P0CtXUKPZOL0VZzkiKRvtUmJ1hdB/0j0mb
+rsDisplayName:: 7W0S88I70MmHUFYaVGf6cjfZxDx4Lp6/STUSCjBaLWk=
+rsDomainId: 78543988
+rsMossoId: 78543988
+rsNastId: MossoCloudFS_78543988
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_default_user
+userPassword: {SSHA512}Lj7hm59v2o28pGmgXNjqhQHGzn0FL/SYi5Ofyrzsgu0Vgw4TiHuMz
+ IyEdd0W2e98to0AAUmaD50bUsTMu6mAz49fQxk=
+
+dn: cn=ROLES,rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=2,cn=ROLES,rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: 868dea5a32934749a3fb9a47e80f12a4
+
+dn: roleRsId=5,cn=ROLES,rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: MossoCloudFS_78543988
+userRsId: 868dea5a32934749a3fb9a47e80f12a4
+
+dn: roleRsId=6,cn=ROLES,rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: 78543988
+userRsId: 868dea5a32934749a3fb9a47e80f12a4
+
+dn: cn=TOKENS,rsId=868dea5a32934749a3fb9a47e80f12a4,ou=users,o=rackspace,dc
+ =rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=d14b1195cbe045d9905c25317dd1f924,ou=users,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: rsPerson
+rsId: d14b1195cbe045d9905c25317dd1f924
+enabled: TRUE
+encryptionSalt: e7 2d 3f 76 ec 8a c9 21 5e 99 15 40 83 76 f9
+encryptionVersionId: 0
+mail: new_email_1_614979@test.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20131213200323.063Z
+preferredLanguage: en_US
+rsApiKey:: QTCMTLYLBEn2lBMluNU+cjRqk3NFT4l3k1Gk9Fx6B+xFe2lC0fzPyvINLufUhOQO
+rsDisplayName:: jKeMVeagD/fCkftKqz3iJq9mfnk3JxxXYwHNmcY8dPY=
+rsRegion: ORD
+timeZone: America/Chicago
+uid: cloudIdentitySA1
+userPassword: {SSHA512}3ezkZfEsxKeRKztpWvSuEU/1MKEv1D0nNVnccGSQyYLTJ/5btnOZf
+ 4bM1R5eQeWYOxIg2joiKSlE4mUI2tsREy0cPCY=
+
+dn: cn=ROLES,rsId=d14b1195cbe045d9905c25317dd1f924,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=d14b1195cbe045d9905c25317dd1f924,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 4
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: cn=TOKENS,rsId=d14b1195cbe045d9905c25317dd1f924,ou=users,o=rackspace,dc
+ =rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: accessToken=62a97ef53dd44b4c9e7b5b9cfe8ef8ff,cn=TOKENS,rsId=d14b1195cbe
+ 045d9905c25317dd1f924,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: userScopeAccess
+objectClass: scopeAccess
+accessToken: 62a97ef53dd44b4c9e7b5b9cfe8ef8ff
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: d14b1195cbe045d9905c25317dd1f924
+accessTokenExp: 20131214200929.234Z
+clientRCN: RACKSPACE
+rsType: PASSWORD
+uid: cloudIdentitySA1
+
+dn: rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: rsPerson
+rsId: d2d1adee553144ada948e03d1f5503f1
+enabled: TRUE
+encryptionSalt: 85 46 6c 08 a9 9b a6 3a 73 3c 47 c6 ef 17 2c
+encryptionVersionId: 0
+mail: shanthi.vedula@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141006203050.917Z
+preferredLanguage: en_US
+rsApiKey:: lRVNgcgFGskESwVCF0RiFgCcZXQZytOq2GANbl/qEoyrD5jVZmTu/6xeW4i+E8qf
+rsDisplayName:: HItxR/uGYss2gV4KqM5NvESduI1Bz/4EpSANOLu68Cc=
+rsDomainId: 78543988
+rsMossoId: 78543988
+rsNastId: MossoCloudFS_78543988
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_user_manage
+userPassword: {SSHA512}yVlg6itAMPH2IuT+ILigihCVPJpADt9Y5zbanGwV0Hi8ueFLKGyh1
+ gJoZqsUqkmwemG8Gt6MpxEKCM3ck8LSSnOW8Y4=
+
+dn: cn=ROLES,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=2,cn=ROLES,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: d2d1adee553144ada948e03d1f5503f1
+
+dn: roleRsId=5,cn=ROLES,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: MossoCloudFS_78543988
+userRsId: d2d1adee553144ada948e03d1f5503f1
+
+dn: roleRsId=6,cn=ROLES,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: 78543988
+userRsId: d2d1adee553144ada948e03d1f5503f1
+
+dn: roleRsId=7,cn=ROLES,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 7
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: cn=TOKENS,rsId=d2d1adee553144ada948e03d1f5503f1,ou=users,o=rackspace,dc
+ =rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: rsPerson
+rsId: d8f1b8df14c844d9919aee4e19a2f6f9
+preferredLanguage: en_US
+uid: keystone_mfa_user_admin
+userPassword: {SSHA512}6NmWxePZPI101gxL3FuyoEDE95yAWvHPQOodY9/EYmx5L3MO1BOAA
+ 8hxTC59kvOMgIm3MmBylzFxoxhNHvXN8ATq9+g=
+enabled: TRUE
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20150115221701.943Z
+rsApiKey:: cBoF/yUr7bFU8DrFOGNiEw==
+rsDomainId: 78543995
+rsExternalMultiFactorUserId: DUMEPCV67EA3I30G0TBM
+rsMossoId: 78543995
+rsMultiFactorDeviceVerified: TRUE
+rsMultiFactorEnabled: TRUE
+rsMultiFactorMobilePhoneRsId: fb6c00852e404263b745419dd761d968
+rsMultiFactorState: ACTIVE
+rsNastId: MossoCloudFS_78543995
+rsRegion: ORD
+timeZone: America/Chicago
+
+dn: cn=ROLES,rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 3
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: d8f1b8df14c844d9919aee4e19a2f6f9
+
+dn: roleRsId=5,cn=ROLES,rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: MossoCloudFS_78543995
+userRsId: d8f1b8df14c844d9919aee4e19a2f6f9
+
+dn: roleRsId=6,cn=ROLES,rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: 78543995
+userRsId: d8f1b8df14c844d9919aee4e19a2f6f9
+
+dn: cn=TOKENS,rsId=d8f1b8df14c844d9919aee4e19a2f6f9,ou=users,o=rackspace,dc
+ =rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: rsId=e2655b97cfe848b796097c2073b174e7,ou=users,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: rsPerson
+rsId: e2655b97cfe848b796097c2073b174e7
+enabled: TRUE
+encryptionSalt: 1a 0b 8c 92 88 dd df 7c 4c 68 e8 00 77 7e 07 6d
+encryptionVersionId: 0
+mail: new_email_2_814159@example.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20131213200325.170Z
+preferredLanguage: en_US
+rsApiKey:: s8GwNbai8iFtjP7M7K8LcBt4Tbl3ZtVd8Dj7YSffflHsMR74vx4uEfm2A2F+L9JM
+rsDisplayName:: F1z2ahKSquHcDr3Zid+LnULuVb50Z1o/+BSeTvrf/wo=
+rsRegion: ORD
+timeZone: America/Chicago
+uid: cloudIdentitySA2
+userPassword: {SSHA512}k1xmvdFrf5WRgmZobev5WZXuF3uGRx15hE5ZKYCX3HTEluP2JfHQF
+ mdSIq1wuAfgd1PE8FZ+X+pcgIHI5KrwtFuzrwQ=
+
+dn: cn=ROLES,rsId=e2655b97cfe848b796097c2073b174e7,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=4,cn=ROLES,rsId=e2655b97cfe848b796097c2073b174e7,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 4
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: cn=TOKENS,rsId=e2655b97cfe848b796097c2073b174e7,ou=users,o=rackspace,dc
+ =rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: accessToken=bd837608d10f412296e3c954734764a4,cn=TOKENS,rsId=e2655b97cfe
+ 848b796097c2073b174e7,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: userScopeAccess
+objectClass: scopeAccess
+accessToken: bd837608d10f412296e3c954734764a4
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: e2655b97cfe848b796097c2073b174e7
+accessTokenExp: 20131214200510.338Z
+clientRCN: RACKSPACE
+rsType: PASSWORD
+uid: cloudIdentitySA2
+
+dn: rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: rsPerson
+rsId: fa9ddbf7cc904a75b8bd40c26bc738cd
+enabled: TRUE
+encryptionSalt: 30 b4 4c 3b 26 62 9a c3 09 9b 71 33 32 4b 93 d4
+encryptionVersionId: 0
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20141006191216.550Z
+preferredLanguage: en_US
+rsApiKey:: YApdWaAiVN4NUS5tcSxS1Zn3jG9QI2yWA+RHI4XeR4ld0acdWFvaiTby2f9hTlZV
+rsDomainId: 78543985
+rsMossoId: 78543985
+rsNastId: MossoCloudFS_78543985
+rsRegion: ORD
+timeZone: America/Chicago
+uid: keystone_identity_admin
+userPassword: {SSHA512}orFD4KiiB2w6X+iC/iEkS/DWetQL1wGtcQDd+tjrV1sqNRvqCnOYa
+ tbzj+FJyEVS/nTfoIaesRpxfAXWuFace3akz9k=
+
+dn: cn=ROLES,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=1,cn=ROLES,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 1
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
+
+dn: roleRsId=5,cn=ROLES,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 5
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+tenantRsId: MossoCloudFS_78543985
+userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
+
+dn: roleRsId=6,cn=ROLES,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=ra
+ ckspace,dc=rackspace,dc=com
+objectClass: tenantRole
+roleRsId: 6
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+tenantRsId: 78543985
+userRsId: fa9ddbf7cc904a75b8bd40c26bc738cd
+
+dn: cn=TOKENS,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc
+ =rackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: o=tokens,dc=rackspace,dc=com
+objectClass: top
+objectClass: organization
+o: tokens
+
+dn: ou=TRRs,o=tokens,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: TRRs
+description: Defines container for token revocation records
+
+dn: ou=internal,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
 ou: internal
 
 dn: cn=admin,ou=internal,dc=rackspace,dc=com
-objectClass: top
 objectClass: inetOrgPerson
+objectClass: top
 cn: admin
 sn: admin
 uid: admin
-userPassword: qwerty
-
-# Internal roles
+userPassword: {SSHA512}wjfK++XNHjYXtWR2M1HWThxYDp8AQjzrZ+65tGD24utY3bTw7azHW
+ FBN9+YS+3PZ8nBECveN2EfmFomZ36llGFmg8pk=
 
 dn: ou=roles,ou=internal,dc=rackspace,dc=com
-objectClass: top
 objectClass: organizationalUnit
+objectClass: top
 ou: roles
+
