@@ -1,14 +1,15 @@
-package com.rackspace.idm.domain.security.signoff;
+package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.dao.impl.LdapGenericRepository;
+import com.rackspace.idm.domain.dao.APINodeSignoff;
+import com.rackspace.idm.domain.dao.KeyCzarAPINodeSignoffDao;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-@Component
-public class KeyCzarAPINodeSignoffRepository extends LdapGenericRepository<LdapAPINodeSignoff> implements KeyCzarAPINodeSignoffDao {
+@LDAPComponent
+public class LdapKeyCzarAPINodeSignoffRepository extends LdapGenericRepository<LdapAPINodeSignoff> implements KeyCzarAPINodeSignoffDao {
 
     @Autowired
     private IdentityConfig config;
@@ -44,13 +45,25 @@ public class KeyCzarAPINodeSignoffRepository extends LdapGenericRepository<LdapA
     }
 
     @Override
-    public void addOrUpdateObject(LdapAPINodeSignoff ldapAPINodeSignoff) {
+    public void addOrUpdateObject(APINodeSignoff apiNodeSignoff) {
+        LdapAPINodeSignoff ldapAPINodeSignoff = (LdapAPINodeSignoff) apiNodeSignoff;
+
         if (ldapAPINodeSignoff.getId() == null) {
             ldapAPINodeSignoff.setId(getNextId());
             addObject(ldapAPINodeSignoff);
         } else {
             updateObject(ldapAPINodeSignoff);
         }
+    }
+
+    @Override
+    public void deleteApiNodeSignoff(APINodeSignoff apiNodeSignoff) {
+        deleteObject((LdapAPINodeSignoff)apiNodeSignoff);
+    }
+
+    @Override
+    public APINodeSignoff createApiNodeSignoff() {
+        return new LdapAPINodeSignoff();
     }
 
     @Override

@@ -3,13 +3,13 @@ package com.rackspace.idm.domain.security.encrypters;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.dao.APINodeSignoff;
 import com.rackspace.idm.domain.dao.KeyCzarKeyMetadataDao;
 import com.rackspace.idm.domain.dao.KeyCzarKeyVersionDao;
-import com.rackspace.idm.domain.security.signoff.KeyCzarAPINodeSignoffRepository;
-import com.rackspace.idm.domain.security.signoff.LdapAPINodeSignoff;
 import com.rackspace.idm.domain.security.encrypters.keyczar.*;
 import com.rackspace.idm.domain.entity.KeyMetadata;
 import com.rackspace.idm.domain.entity.KeyVersion;
+import com.rackspace.idm.domain.dao.KeyCzarAPINodeSignoffDao;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.PostConstruct;
 import java.util.List;
 
-public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator {
+public class RepositoryKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
@@ -37,7 +37,7 @@ public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator
     private KeyCzarKeyVersionDao keyCzarKeyVersionDao;
 
     @Autowired
-    private KeyCzarAPINodeSignoffRepository keyCzarAPINodeSignoffDao;
+    private KeyCzarAPINodeSignoffDao keyCzarAPINodeSignoffDao;
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -165,7 +165,7 @@ public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator
         CrypterCache cache = memoizedCrypterCache.get();
 
         //retrieve the registered signoff entry for this node
-        LdapAPINodeSignoff signoff = keyCzarAPINodeSignoffDao.getByNodeAndMetaName(DN_META, nodeName);
+        APINodeSignoff signoff = keyCzarAPINodeSignoffDao.getByNodeAndMetaName(DN_META, nodeName);
 
         DateTime currentSignOffDate = signoff != null && signoff.getCachedMetaCreatedDate() != null ? new DateTime(signoff.getCachedMetaCreatedDate()) : null;
         String prettyCurrentSignoffDate = currentSignOffDate == null ? null : dateLoggerFormat.print(currentSignOffDate);
@@ -191,7 +191,7 @@ public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator
 
                 if (signoff == null) {
                     //create new if needed
-                    signoff = new LdapAPINodeSignoff();
+                    signoff = keyCzarAPINodeSignoffDao.createApiNodeSignoff();
                 }
 
                 signoff.setCachedMetaCreatedDate(cachedMetaCreationDate.toDate());
@@ -207,7 +207,7 @@ public class LDAPKeyCzarCrypterLocator implements CacheableKeyCzarCrypterLocator
         } else if (signoff != null) {
             //delete the signoff object because the cache is empty (e.g. - AE tokens have become disabled)
             logger.warn(String.format("Node '%s' has an empty AE Key Cache, but associated signoff record shows a sign off for version '%s' . Removing AE Signoff Record.", nodeName, prettyCurrentSignoffDate));
-            keyCzarAPINodeSignoffDao.deleteObject(signoff);
+            keyCzarAPINodeSignoffDao.deleteApiNodeSignoff(signoff);
         } else {
             //signup and cache are null so this is a no-op
             logger.debug(String.format("There is no AE Token Signoff record for node '%s'", nodeName));

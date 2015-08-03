@@ -1,5 +1,6 @@
-package com.rackspace.idm.domain.security.signoff;
+package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.domain.dao.APINodeSignoff;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Auditable;
