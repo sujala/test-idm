@@ -27,6 +27,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     @Override
     public void addTenantRoleToUser(BaseUser user, TenantRole tenantRole) {
         List<SqlTenantRole> sqlTenantRoles  = tenantRoleRepository.findByActorIdAndRoleId(user.getId(), tenantRole.getRoleRsId());
+        tenantRole.setUserId(user.getId());
 
         if(containsTenantRole(sqlTenantRoles, mapper.toSQL(tenantRole))){
             throw new ClientConflictException();
