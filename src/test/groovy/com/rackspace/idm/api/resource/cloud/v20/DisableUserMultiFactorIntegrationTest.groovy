@@ -7,11 +7,13 @@ import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
+import com.rackspace.idm.domain.sql.dao.MobilePhoneRepository
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,7 +33,7 @@ class DisableUserMultiFactorIntegrationTest extends RootConcurrentIntegrationTes
 
     @Autowired BasicMultiFactorService multiFactorService;
 
-    @Autowired LdapMobilePhoneRepository mobilePhoneRepository;
+    @Autowired MobilePhoneDao mobilePhoneRepository;
 
     @Autowired ScopeAccessService scopeAccessService
 
@@ -77,7 +79,7 @@ class DisableUserMultiFactorIntegrationTest extends RootConcurrentIntegrationTes
 
         cleanup:
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.id))
+        mobilePhoneRepository.deleteMobilePhone(mobilePhoneRepository.getById(responsePhone.id))
     }
 
     def "when a MFA user is disabled, they must enable MFA again in order to use MFA"() {
@@ -160,7 +162,7 @@ class DisableUserMultiFactorIntegrationTest extends RootConcurrentIntegrationTes
 
         cleanup:
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.id))
+        mobilePhoneRepository.deleteMobilePhone(mobilePhoneRepository.getById(responsePhone.id))
 
     }
 

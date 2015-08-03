@@ -302,6 +302,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deletePolicy(serviceAdminToken, policyId)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticating where total access tokens remains unchanged"() {
         when:
         def scopeAccessOne = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
@@ -314,6 +315,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         allUsersScopeAccessAfter.entryCount <= 2
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticating where token is within refresh window adds new token"() {
         when:
         def scopeAccessOne = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
@@ -341,6 +343,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         scopeAccessOne.token.id.equals(scopeAccessTwo.token.id)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticate with two valid tokens"() {
         when:
         def firstScopeAccess = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
