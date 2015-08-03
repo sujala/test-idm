@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import org.dozer.Mapping;
 
 import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @EqualsAndHashCode(exclude={"uniqueId"})
@@ -24,7 +25,7 @@ public class TenantRole implements Auditable, UniqueId {
     private String roleRsId;
 
     @LDAPField(attribute = LdapRepository.ATTR_TENANT_RS_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private HashSet<String> tenantIds;
+    private Set<String> tenantIds;
 
     @Mapping("serviceId")
     @LDAPField(attribute = LdapRepository.ATTR_CLIENT_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)
@@ -48,7 +49,7 @@ public class TenantRole implements Auditable, UniqueId {
         return String.format(format, getRoleRsId(), getClientId(), getTenantIds());
     }
 
-    public HashSet<String> getTenantIds() {
+    public Set<String> getTenantIds() {
         if (tenantIds == null) {
             tenantIds = new HashSet<String>();
         }

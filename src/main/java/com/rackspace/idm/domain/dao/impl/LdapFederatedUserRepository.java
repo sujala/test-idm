@@ -1,15 +1,15 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
-import org.springframework.stereotype.Component;
 
 /**
  * Repository operations for external providers that go against provisioned users.
  */
-@Component
+@LDAPComponent
 public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<FederatedUser> implements FederatedUserDao {
 
     @Override
