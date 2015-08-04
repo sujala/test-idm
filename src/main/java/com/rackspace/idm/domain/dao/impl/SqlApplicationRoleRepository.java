@@ -68,14 +68,14 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
     }
 
     @Override
-    public PaginatorContext<ClientRole> getAvailableClientRolesPaged(int limit, int offset, int maxWeightAvailable) {
+    public PaginatorContext<ClientRole> getAvailableClientRolesPaged(int offset, int limit, int maxWeightAvailable) {
         PaginatorContext<ClientRole> page = mapper.getPageRequest(offset, limit);
         while (mapper.fromSQL(repository.findByRaxRsWeightGreaterThan(maxWeightAvailable, page.getPageRequest()), page)) {}
         return page;
     }
 
     @Override
-    public PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int limit, int offset, int maxWeightAvailable) {
+    public PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int offset, int limit, int maxWeightAvailable) {
         PaginatorContext<ClientRole> page = mapper.getPageRequest(offset, limit);
         while (mapper.fromSQL(repository.findByRaxClientIdAndRaxRsWeightGreaterThan(applicationId, maxWeightAvailable, page.getPageRequest()), page)) {}
         return page;

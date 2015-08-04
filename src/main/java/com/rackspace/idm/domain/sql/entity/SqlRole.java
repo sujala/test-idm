@@ -24,6 +24,6 @@ public class SqlRole {
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "id", referencedColumnName = "id", nullable = false)
-    private SqlRoleRax rax;
+    private SqlRoleRax rax = new SqlRoleRax();
 
 }

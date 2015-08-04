@@ -237,6 +237,8 @@ public abstract class SqlMapper<Entity, SQLEntity> {
     }
 
     public boolean fromSQL(Page<SQLEntity> sqlEntities, PaginatorContext<Entity> context) {
+        if (sqlEntities.getTotalPages() < sqlEntities.getNumber()) return false;
+
         final List<Entity> entities = fromSQL(sqlEntities);
 
         if (context.getValueList().size() == 0) {
