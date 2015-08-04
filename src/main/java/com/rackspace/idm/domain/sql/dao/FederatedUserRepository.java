@@ -5,6 +5,8 @@ import com.rackspace.idm.domain.sql.entity.SqlFederatedUserRax;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.Collection;
+
 @SQLRepository
 public interface FederatedUserRepository extends JpaSpecificationExecutor<SqlFederatedUserRax>, JpaRepository<SqlFederatedUserRax, String> {
 
@@ -15,5 +17,7 @@ public interface FederatedUserRepository extends JpaSpecificationExecutor<SqlFed
     int countByDomainIdAndFederatedIdpUri(String domainId, String federatedIdpUri);
 
     SqlFederatedUserRax findOneByUsernameAndFederatedIdpUri(String username, String federatedIdpUri);
+
+    Iterable<SqlFederatedUserRax> findByRsGroupIdIn(Collection<String> rsGroupId);
 
 }

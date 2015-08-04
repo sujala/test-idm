@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.entity.FederatedUser;
+import com.rackspace.idm.domain.entity.Group;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 
@@ -40,6 +41,18 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
     @Override
     public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String identityProviderName) {
         return countObjects(searchFilterGetUsersByDomainId(domainId), getBaseDnWithIdpName(identityProviderName));
+    }
+
+    @Override
+    public Iterable<Group> getGroupsForFederatedUser(String userId) {
+        // Just need to be implemented in the SQL profile.
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Iterable<FederatedUser> getFederatedUsersByGroupId(String groupId) {
+        // Just need to be implemented in the SQL profile.
+        throw new UnsupportedOperationException();
     }
 
     @Override

@@ -4,14 +4,18 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.entity.BaseUserToken;
 import com.rackspace.idm.domain.entity.FederatedUser;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository;
+import com.rackspace.idm.domain.sql.dao.GroupRepository;
 import com.rackspace.idm.domain.sql.entity.SqlFederatedUserRax;
 import com.rackspace.idm.domain.sql.mapper.impl.FederatedUserRaxMapper;
+import com.rackspace.idm.domain.sql.mapper.impl.GroupMapper;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
+import java.util.Collections;
 import java.util.UUID;
 
 @SQLComponent
@@ -22,6 +26,12 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
 
     @Autowired
     private FederatedUserRepository federatedUserRepository;
+
+    @Autowired
+    private GroupMapper groupMapper;
+
+    @Autowired
+    private GroupRepository groupRepository;
 
     @Override
     public void addUser(IdentityProvider provider, FederatedUser user) {
@@ -57,6 +67,23 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
     @Override
     public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String identityProviderName) {
         return federatedUserRepository.countByDomainIdAndFederatedIdpUri(domainId, identityProviderName);
+    }
+
+    @Override
+    public Iterable<Group> getGroupsForFederatedUser(String userId) {
+        try {
+            final SqlFederatedUserRax federatedUserRax = federatedUserRepository.findOne(userId);
+            if (federatedUserRax != null) {
+                return groupMapper.fromSQL(groupRepository.findAll(federatedUserRax.getRsGroupId()));
+            }
+        } catch (Exception ignored) {
+        }
+        return Collections.EMPTY_SET;
+    }
+
+    @Override
+    public Iterable<FederatedUser> getFederatedUsersByGroupId(String groupId) {
+        return federatedUserRaxMapper.fromSQL(federatedUserRepository.findByRsGroupIdIn(Collections.singleton(groupId)));
     }
 
     @Override

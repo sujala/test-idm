@@ -6,14 +6,12 @@ import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.dao.RackerDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.sql.dao.IdentityUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Set;
 
-// FIXME: Improve the query logic here to make a merge between types of users (Federated and User).
 @SQLComponent
 public class SqlIdentityUserRepository implements IdentityUserDao {
 
@@ -25,6 +23,9 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
 
     @Autowired
     private RackerDao rackerDao;
+
+    @Autowired
+    private IdentityUserRepository identityUserRepository;
 
     @Override
     public BaseUser getBaseUserById(String userId) {
@@ -71,7 +72,7 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
 
     @Override
     public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
-        final HashSet<EndUser> endUsers = new HashSet<EndUser>();
+        final Set<EndUser> endUsers = new HashSet<EndUser>();
 
         final Iterable<User> users = userDao.getUsersByDomain(domainId);
         if (users != null) {
@@ -102,11 +103,9 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
         }
     }
 
-    /*** ----- Union MUST-FIX ----- ***/
-
     @Override
     public Iterable<EndUser> getEndUsersByDomainIdAndEnabledFlag(String domainId, boolean enabled) {
-        final HashSet<EndUser> endUsers = new HashSet<EndUser>();
+        final Set<EndUser> endUsers = new HashSet<EndUser>();
 
         final Iterable<User> users = userDao.getUsersByDomainAndEnabledFlag(domainId, enabled);
         if (users != null) {
@@ -115,30 +114,42 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
             }
         }
 
-         // FIXME: logic on FederatedDao
+        final Iterable<FederatedUser> federatedUsers = fedUserDao.getUsersByDomainId(domainId);
+        if (federatedUsers != null) {
+            for (FederatedUser federatedUser : federatedUsers) {
+                endUsers.add(federatedUser);
+            }
+        }
 
         return endUsers;
     }
 
     @Override
     public Iterable<Group> getGroupsForEndUser(String userId) {
-        final HashSet<Group> groups = new HashSet<Group>();
+        final Set<Group> groups = new HashSet<Group>();
 
-        Iterable<Group> userGroups = userDao.getGroupsForUser(userId);
+        final Iterable<Group> userGroups = userDao.getGroupsForUser(userId);
         if (userGroups != null) {
             for (Group group : userGroups) {
                 groups.add(group);
             }
         }
 
-        // FIXME: logic on FederatedDao
+        if (groups.size() == 0) {
+            final Iterable<Group> federatedGroups = fedUserDao.getGroupsForFederatedUser(userId);
+            if (federatedGroups != null) {
+                for (Group group : federatedGroups) {
+                    groups.add(group);
+                }
+            }
+        }
 
         return groups;
     }
 
     @Override
     public Iterable<EndUser> getEnabledEndUsersByGroupId(String groupId) {
-        final HashSet<EndUser> endUsers = new HashSet<EndUser>();
+        final Set<EndUser> endUsers = new HashSet<EndUser>();
 
         final Iterable<User> users = userDao.getEnabledUsersByGroupId(groupId);
         if (users != null) {
@@ -147,53 +158,24 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
             }
         }
 
-        // FIXME: logic on FederatedDao
+        final Iterable<FederatedUser> federatedUsers = fedUserDao.getFederatedUsersByGroupId(groupId);
+        if (federatedUsers != null) {
+            for (EndUser endUser : federatedUsers) {
+                endUsers.add(endUser);
+            }
+        }
 
         return endUsers;
     }
 
-    /*** ----- Pagination MUST-FIX ----- **/
-
     @Override
     public PaginatorContext<EndUser> getEndUsersByDomainIdPaged(String domainId, int offset, int limit) {
-        final PaginatorContext<EndUser> endUsers = new PaginatorContext<EndUser>();
-        final List<EndUser> endUserList = new ArrayList<EndUser>();
-
-        final PaginatorContext<User> users = userDao.getUsersByDomain(domainId, offset, limit);
-        if (users != null) {
-            endUsers.setLimit(users.getLimit());
-            endUsers.setOffset(users.getOffset());
-            endUsers.setTotalRecords(users.getTotalRecords());
-            for (EndUser endUser : users.getValueList()) {
-                endUserList.add(endUser);
-            }
-        }
-
-        // FIXME: logic on FederatedDao
-
-        endUsers.setValueList(endUserList);
-        return endUsers;
+        return identityUserRepository.getEndUsersByDomainIdPaged(domainId, offset, limit);
     }
 
     @Override
     public PaginatorContext<EndUser> getEnabledEndUsersPaged(int offset, int limit) {
-        final PaginatorContext<EndUser> endUsers = new PaginatorContext<EndUser>();
-        final List<EndUser> endUserList = new ArrayList<EndUser>();
-
-        final PaginatorContext<User> users = userDao.getEnabledUsers(offset, limit);
-        if (users != null) {
-            endUsers.setLimit(users.getLimit());
-            endUsers.setOffset(users.getOffset());
-            endUsers.setTotalRecords(users.getTotalRecords());
-            for (EndUser endUser : users.getValueList()) {
-                endUserList.add(endUser);
-            }
-        }
-
-        // FIXME: logic on FederatedDao
-
-        endUsers.setValueList(endUserList);
-        return endUsers;
+        return identityUserRepository.getEnabledEndUsersPaged(offset, limit);
     }
 
 }

@@ -296,20 +296,24 @@ public class SqlUserRepository implements UserDao {
     public Iterable<Group> getGroupsForUser(String userId) {
         try {
             final SqlUser sqlUser = userRepository.findOne(userId);
-            return groupMapper.fromSQL(groupRepository.findAll(sqlUser.getRsGroupId()));
-        } catch (Exception e) {
-            return Collections.EMPTY_SET;
+            if (sqlUser != null) {
+                return groupMapper.fromSQL(groupRepository.findAll(sqlUser.getRsGroupId()));
+            }
+        } catch (Exception ignored) {
         }
+        return Collections.EMPTY_SET;
     }
 
     @Override
     public void addGroupToUser(String userId, String groupId) {
         final SqlUser sqlUser = userRepository.findOne(userId);
-        if (sqlUser.getRsGroupId() == null) {
-            sqlUser.setRsGroupId(new ArrayList<String>());
+        if (sqlUser != null) {
+            if (sqlUser.getRsGroupId() == null) {
+                sqlUser.setRsGroupId(new ArrayList<String>());
+            }
+            sqlUser.getRsGroupId().add(groupId);
+            userRepository.save(sqlUser);
         }
-        sqlUser.getRsGroupId().add(groupId);
-        userRepository.save(sqlUser);
     }
 
     @Override
