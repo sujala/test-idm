@@ -26,8 +26,8 @@ public interface ApplicationRoleDao {
 
     Iterable<ClientRole> getClientRolesForApplication(Application application);
 
-    PaginatorContext<ClientRole> getAvailableClientRolesPaged(int limit, int offset, int maxWeightAvailable);
-    PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int limit, int offset, int maxWeightAvailable);
+    PaginatorContext<ClientRole> getAvailableClientRolesPaged(int offset, int limit, int maxWeightAvailable);
+    PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int offset, int limit, int maxWeightAvailable);
 
     String getNextRoleId();
 
