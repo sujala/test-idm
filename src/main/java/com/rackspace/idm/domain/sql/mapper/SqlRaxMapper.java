@@ -29,15 +29,16 @@ public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlM
         final SQLEntity finalEntity = super.toSQL(entity, sqlEntity, ignoreNulls);
 
         final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
-        SQLRaxEntity sqlRaxEntity;
+        SQLRaxEntity sqlRaxEntity = null;
         try {
             sqlRaxEntity = (SQLRaxEntity) sqlEntityWrapper.getPropertyValue(RAX_FIELD);
         } catch (Exception ignored) {
+        }
+        if (sqlRaxEntity == null) {
             try {
                 sqlRaxEntity = sqlRaxEntityClass.newInstance();
             } catch (ReflectiveOperationException e) {
                 LOGGER.error("Cannot create RAX entity.", e);
-                sqlRaxEntity = null;
             }
         }
 

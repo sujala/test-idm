@@ -50,6 +50,23 @@ CREATE TABLE `alembic_version` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `api_node_signoff_rax`
+--
+
+DROP TABLE IF EXISTS `api_node_signoff_rax`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `api_node_signoff_rax` (
+  `id` varchar(64) NOT NULL,
+  `name` varchar(64) NOT NULL,
+  `key_metadata_id` varchar(64) NOT NULL,
+  `key_created` datetime(6) DEFAULT NULL,
+  `loaded_date` datetime(6) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `assignment`
 --
 
@@ -260,6 +277,43 @@ CREATE TABLE `endpoint_rax` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `federated_role_rax`
+--
+
+DROP TABLE IF EXISTS `federated_role_rax`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `federated_role_rax` (
+  `id` varchar(64) NOT NULL,
+  `role_id` varchar(64) DEFAULT NULL,
+  `federated_user_rax_id` varchar(64) DEFAULT NULL,
+  `service_id` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_frr` (`role_id`,`federated_user_rax_id`),
+  KEY `fk_frr_federated_user_rax_id` (`federated_user_rax_id`),
+  KEY `fk_frr_service_id` (`service_id`),
+  CONSTRAINT `fk_frr_federated_user_rax_id` FOREIGN KEY (`federated_user_rax_id`) REFERENCES `federated_user_rax` (`id`),
+  CONSTRAINT `fk_frr_role_id` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`),
+  CONSTRAINT `fk_frr_service_id` FOREIGN KEY (`service_id`) REFERENCES `service` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `federated_role_tenant_membership_rax`
+--
+
+DROP TABLE IF EXISTS `federated_role_tenant_membership_rax`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `federated_role_tenant_membership_rax` (
+  `federated_role_rax_id` varchar(64) NOT NULL,
+  `tenant_id` varchar(64) NOT NULL,
+  PRIMARY KEY (`federated_role_rax_id`,`tenant_id`),
+  CONSTRAINT `fk_frtmr_federated_role_rax_id` FOREIGN KEY (`federated_role_rax_id`) REFERENCES `federated_role_rax` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `federated_user_group_membership_rax`
 --
 
@@ -268,8 +322,11 @@ DROP TABLE IF EXISTS `federated_user_group_membership_rax`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `federated_user_group_membership_rax` (
   `group_id` varchar(64) NOT NULL,
-  `federated_user_id` varchar(64) NOT NULL,
-  PRIMARY KEY (`group_id`,`federated_user_id`)
+  `federated_user_rax_id` varchar(64) NOT NULL,
+  PRIMARY KEY (`group_id`,`federated_user_rax_id`),
+  KEY `fk_fugmr_federated_user_rax_id` (`federated_user_rax_id`),
+  CONSTRAINT `fk_fugmr_federated_user_rax_id` FOREIGN KEY (`federated_user_rax_id`) REFERENCES `federated_user_rax` (`id`),
+  CONSTRAINT `fk_fugmr_group_id` FOREIGN KEY (`group_id`) REFERENCES `group` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -284,12 +341,16 @@ CREATE TABLE `federated_user_rax` (
   `id` varchar(64) NOT NULL,
   `username` varchar(64) DEFAULT NULL,
   `email` varchar(64) DEFAULT NULL,
-  `region` varchar(64) DEFAULT NULL,
+  `region_id` varchar(64) DEFAULT NULL,
   `created` datetime(6) DEFAULT NULL,
   `updated` datetime(6) DEFAULT NULL,
   `domain_id` varchar(64) DEFAULT NULL,
   `federated_idp_uri` text,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `fk_fur_region_id` (`region_id`),
+  KEY `fk_fur_domain_id` (`domain_id`),
+  CONSTRAINT `fk_fur_domain_id` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`id`),
+  CONSTRAINT `fk_fur_region_id` FOREIGN KEY (`region_id`) REFERENCES `region` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1044,4 +1105,4 @@ CREATE TABLE `whitelisted_config` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-07-28 13:36:31
+-- Dump completed on 2015-08-03 15:05:40
