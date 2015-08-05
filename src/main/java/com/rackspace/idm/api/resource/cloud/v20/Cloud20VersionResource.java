@@ -875,7 +875,11 @@ public class Cloud20VersionResource {
             @PathParam("type") String type,
             @PathParam("version") String version,
             Capabilities capabilities){
-        return cloud20Service.updateCapabilities(authToken, capabilities, type, version).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.updateCapabilities(authToken, capabilities, type, version).build();
+        }
     }
 
     @DELETE
@@ -884,7 +888,11 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("type") String type,
             @PathParam("version") String version){
-        return cloud20Service.removeCapabilities(authToken, type, version).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.removeCapabilities(authToken, type, version).build();
+        }
     }
 
     @GET

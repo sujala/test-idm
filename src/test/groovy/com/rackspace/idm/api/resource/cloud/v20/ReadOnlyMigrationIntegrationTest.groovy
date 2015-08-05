@@ -46,4 +46,14 @@ class ReadOnlyMigrationIntegrationTest extends RootIntegrationTest {
         "delete application" | cloud20.deleteService(specificationServiceAdminToken, "1234")
     }
 
+    @Unroll
+    def "Capabilities :: Can not #operation during migration"() {
+        expect: "not allowed"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
+
+        where:
+        operation | response
+        "update capabilities" | cloud20.updateCapabilities(specificationServiceAdminToken, "1", "2", v1Factory.createCapabilities())
+        "delete capabilities" | cloud20.deleteCapabilities(specificationServiceAdminToken, "1", "2")
+    }
 }
