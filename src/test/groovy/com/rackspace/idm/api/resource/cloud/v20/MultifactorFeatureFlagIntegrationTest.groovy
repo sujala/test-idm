@@ -1,10 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
-import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
@@ -12,7 +11,6 @@ import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 
 import javax.ws.rs.core.MediaType
@@ -40,8 +38,6 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
     def static BETA_SETTINGS_FILE = "classpath:com/rackspace/idm/multifactor/config/MultifactorFeatureFlagBeta.xml"
 
     @Autowired BasicMultiFactorService multiFactorService;
-
-    @Autowired LdapMobilePhoneRepository mobilePhoneRepository;
 
     @Autowired Configuration config
 

@@ -3,6 +3,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.dao.MobilePhoneDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
@@ -29,11 +31,12 @@ import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 @ContextConfiguration(locations = ["classpath:app-config.xml"
         , "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest extends RootConcurrentIntegrationTest {
-    @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository
 
     @Autowired
-    private LdapUserRepository userRepository
+    MobilePhoneDao mobilePhoneRepository
+
+    @Autowired
+    UserDao userRepository
 
     org.openstack.docs.identity.api.v2.User userAdmin
     String userAdminToken
@@ -74,7 +77,7 @@ class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest exte
         deleteUserQuietly(userAdmin)
         if (responsePhone != null) {
             MobilePhone ldapPhone = mobilePhoneRepository.getById(responsePhone.getId())
-            mobilePhoneRepository.deleteObject(ldapPhone)
+            mobilePhoneRepository.deleteMobilePhone(ldapPhone)
         }
     }
 

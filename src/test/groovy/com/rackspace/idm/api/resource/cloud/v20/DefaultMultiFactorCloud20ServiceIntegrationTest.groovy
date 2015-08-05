@@ -8,8 +8,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDevices
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevices
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.MobilePhoneDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.util.OTPHelper
 import com.unboundid.util.Base32
 import org.apache.http.HttpStatus
@@ -33,10 +33,10 @@ import static com.rackspace.idm.domain.service.IdentityUserTypeEnum.*
 class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
-    LdapMobilePhoneRepository mobilePhoneRepository
+    MobilePhoneDao mobilePhoneRepository
 
     @Autowired
-    LdapUserRepository userRepository
+    UserDao userRepository
 
     @Autowired
     OTPHelper otpHelper
@@ -95,7 +95,7 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(phone.id))
+        mobilePhoneRepository.deleteMobilePhone(mobilePhoneRepository.getById(phone.id))
 
         where:
         [ accept, contentType ] << contentTypePermutations()
@@ -727,7 +727,7 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         cleanup:
         try { utils.deleteUsers(users) } catch (Exception e) {}
         try { utils.deleteDomain(domainId) } catch (Exception e) {}
-        try { mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(phone.id)) } catch (Exception e) {}
+        try { mobilePhoneRepository.deleteMobilePhone(mobilePhoneRepository.getById(phone.id)) } catch (Exception e) {}
     }
 
     private delay() {

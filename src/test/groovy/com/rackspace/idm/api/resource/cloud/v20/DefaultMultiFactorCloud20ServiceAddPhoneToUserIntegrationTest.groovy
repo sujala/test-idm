@@ -1,16 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.MobilePhoneDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault
-import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 
 import javax.ws.rs.core.MediaType
@@ -22,10 +20,10 @@ import static testHelpers.IdmAssert.*
  */
 class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
+    MobilePhoneDao mobilePhoneRepository;
 
     @Autowired
-    private LdapUserRepository userRepository;
+    UserDao userRepository;
 
     @Autowired
     private Configuration globalConfig;
@@ -247,7 +245,7 @@ class DefaultMultiFactorCloud20ServiceAddPhoneToUserIntegrationTest extends Root
 
     def deletePhoneQuietly(MobilePhone mobilePhone) {
         if (mobilePhone != null && mobilePhone.id != null) {
-            mobilePhoneRepository.deleteObject(mobilePhone)
+            mobilePhoneRepository.deleteMobilePhone(mobilePhone)
         }
     }
 }

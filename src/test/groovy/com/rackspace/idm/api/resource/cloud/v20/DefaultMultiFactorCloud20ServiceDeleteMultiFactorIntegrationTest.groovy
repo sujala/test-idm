@@ -2,9 +2,9 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -14,7 +14,6 @@ import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 
 import javax.ws.rs.core.MediaType
@@ -24,10 +23,10 @@ import javax.ws.rs.core.MediaType
  */
 class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
+    MobilePhoneDao mobilePhoneRepository;
 
     @Autowired
-    private LdapUserRepository userRepository;
+    UserDao userRepository;
 
     @Autowired
     private BasicMultiFactorService multiFactorService;

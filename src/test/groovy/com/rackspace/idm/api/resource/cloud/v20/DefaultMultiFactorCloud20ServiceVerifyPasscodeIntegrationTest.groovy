@@ -15,7 +15,6 @@ import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdRe
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.security.TokenFormat
@@ -56,9 +55,6 @@ import static org.mockito.Mockito.*;
 @ContextConfiguration(locations = ["classpath:app-config.xml"
 , "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends RootConcurrentIntegrationTest {
-
-    @Autowired
-    private LdapUserRepository userRepository
 
     @Autowired
     private BasicMultiFactorService multiFactorService
@@ -385,9 +381,9 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
 
         //disable the user
-        User user = userRepository.getUserById(userAdmin.getId())
+        User user = userDao.getUserById(userAdmin.getId())
         user.setEnabled(false);
-        userRepository.updateUserAsIs(user)
+        userDao.updateUserAsIs(user)
 
         when:
         def mfaServiceResponse = new GenericMfaAuthenticationResponse(mfaDecision, mfaDecisionReason, null, null)

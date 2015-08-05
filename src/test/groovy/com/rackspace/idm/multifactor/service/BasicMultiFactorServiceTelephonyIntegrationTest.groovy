@@ -4,14 +4,12 @@ import com.google.i18n.phonenumbers.Phonenumber
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
-import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.identity.multifactor.providers.duo.config.apache.ApacheConfigDuoSecurityConfig
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.MobilePhoneDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
-import com.rackspace.idm.helpers.ApacheTestConfigLoader
 import com.rackspace.idm.helpers.ApacheTestConfigurationWrapper
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.identity.multifactor.domain.BasicPin
@@ -19,9 +17,7 @@ import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.util.Assert
-import spock.lang.Shared
 import spock.lang.Unroll
 
 import javax.ws.rs.core.MediaType
@@ -41,10 +37,10 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
     private BasicMultiFactorService multiFactorService;
 
     @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
+    MobilePhoneDao mobilePhoneRepository;
 
     @Autowired
-    private LdapUserRepository userRepository;
+    UserDao userRepository;
 
     @Autowired
     private Configuration globalConfig;
@@ -122,8 +118,8 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
         !finalUserAdmin.getMultifactorEnabled()
 
         cleanup:
-        if (finalUserAdmin != null) userRepository.deleteObject(finalUserAdmin)
-        if (finalPhone != null) mobilePhoneRepository.deleteObject(finalPhone)
+        if (finalUserAdmin != null) userRepository.deleteUser(finalUserAdmin)
+        if (finalPhone != null) mobilePhoneRepository.deleteMobilePhone(finalPhone)
     }
 
     /**
@@ -158,8 +154,8 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
     }
 
     def bypassTearDown(User finalUserAdmin, MobilePhone finalPhone) {
-        if (finalUserAdmin != null) userRepository.deleteObject(finalUserAdmin)
-        if (finalPhone != null) mobilePhoneRepository.deleteObject(finalPhone)
+        if (finalUserAdmin != null) userRepository.deleteUser(finalUserAdmin)
+        if (finalPhone != null) mobilePhoneRepository.deleteMobilePhone(finalPhone)
     }
 
     def createBypassRequest(seconds, mediaType) {
@@ -310,7 +306,7 @@ class BasicMultiFactorServiceTelephonyIntegrationTest extends RootConcurrentInte
         notThrown(Exception)
 
         cleanup:
-        if (finalUserAdmin != null) userRepository.deleteObject(finalUserAdmin)
-        if (finalPhone != null) mobilePhoneRepository.deleteObject(finalPhone)
+        if (finalUserAdmin != null) userRepository.deleteUser(finalUserAdmin)
+        if (finalPhone != null) mobilePhoneRepository.deleteMobilePhone(finalPhone)
     }
 }

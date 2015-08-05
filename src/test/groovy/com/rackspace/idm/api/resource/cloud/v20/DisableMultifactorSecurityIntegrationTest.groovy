@@ -2,9 +2,9 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.UserDao
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Unroll
@@ -15,10 +15,10 @@ import static com.rackspace.idm.Constants.*
 class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
 
     @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
+    private MobilePhoneDao mobilePhoneRepository;
 
     @Autowired
-    private LdapUserRepository userRepository;
+    private UserDao userRepository;
 
     @Autowired
     @Qualifier("scopeAccessDao")
@@ -274,7 +274,7 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
         if(user.multiFactorEnabled) {
             def phoneId = utils.listDevices(user, token).mobilePhone.id[0]
             utils.deleteMultiFactor(token, user.id)
-            mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(phoneId))
+            mobilePhoneRepository.deleteMobilePhone(mobilePhoneRepository.getById(phoneId))
         }
     }
     

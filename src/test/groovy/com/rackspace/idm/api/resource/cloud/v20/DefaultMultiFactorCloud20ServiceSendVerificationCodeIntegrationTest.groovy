@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import org.apache.http.HttpStatus
@@ -20,7 +20,7 @@ import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 class DefaultMultiFactorCloud20ServiceSendVerificationCodeIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired
-    private LdapUserRepository userRepository;
+    UserDao userRepository;
 
     org.openstack.docs.identity.api.v2.User userAdmin;
     String userAdminToken;

@@ -6,16 +6,14 @@ import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationRespons
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse
-import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.MobilePhoneDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.exception.MultiFactorNotEnabledException
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
-import org.apache.commons.configuration.Configuration
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
@@ -35,10 +33,10 @@ class BasicMultiFactorServiceAuthenticationIntegrationTest extends RootConcurren
     private BasicMultiFactorService multiFactorService;
 
     @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
+    MobilePhoneDao mobilePhoneRepository;
 
     @Autowired
-    private LdapUserRepository userRepository;
+    UserDao userRepository;
 
     BasicPin simulatorConstantPin = new BasicPin(Constants.MFA_DEFAULT_PIN)
 
