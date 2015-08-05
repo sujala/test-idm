@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.ApplicationDao
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ClientSecret
@@ -14,7 +16,7 @@ import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
+class ApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
 
     @Shared randomness = UUID.randomUUID()
     @Shared sharedRandom
@@ -24,59 +26,14 @@ class LdapApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
     private IdentityConfig identityConfig
 
     @Autowired
-    LdapApplicationRepository applicationDao
+    ApplicationDao applicationDao
 
     @Autowired
-    LdapApplicationRoleRepository applicationRoleDao
+    ApplicationRoleDao applicationRoleDao
 
 
     def setupSpec() {
         sharedRandom = ("$randomness").replace("-", "")
-    }
-
-    def "getNextId returns UUID"() {
-        given:
-        def success = false
-        applicationRoleDao.config = config
-        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
-        config.setProperty("rsid.uuid.enabled",true)
-
-        when:
-        def id = applicationRoleDao.getNextId(LdapRepository.NEXT_ROLE_ID)
-        try {
-            Long.parseLong(id)
-        } catch (Exception) {
-            success = true
-        }
-
-        then:
-        success == true
-
-        cleanup:
-        config.setProperty("rsid.uuid.enabled",originalVal)
-    }
-
-    def "getNextId returns Long"() {
-        given:
-        def success = false
-        applicationRoleDao.config = config
-        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
-        config.setProperty("rsid.uuid.enabled",false)
-
-        when:
-        def id = applicationRoleDao.getNextId(LdapRepository.NEXT_ROLE_ID)
-        try {
-            Long.parseLong(id)
-            success = true
-        } catch (Exception) {
-            //no-op
-        }
-
-        then:
-        success == true
-
-        cleanup:
-        config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
     @Unroll

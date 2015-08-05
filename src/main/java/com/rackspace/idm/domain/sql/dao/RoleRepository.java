@@ -37,4 +37,6 @@ public interface RoleRepository extends JpaSpecificationExecutor<SqlRole>, JpaRe
     @EntityGraph(value = "SqlRole.rax", type = EntityGraph.EntityGraphType.FETCH)
     List<SqlRole> findAll();
 
+    @EntityGraph(value = "SqlRole.rax", type = EntityGraph.EntityGraphType.FETCH)
+    List<SqlRole> findByNameStartsWith(String name);
 }
