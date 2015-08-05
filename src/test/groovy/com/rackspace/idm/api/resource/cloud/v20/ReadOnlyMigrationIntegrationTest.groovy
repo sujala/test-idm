@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.IdentityFault
 import spock.lang.Shared
@@ -22,11 +23,27 @@ class ReadOnlyMigrationIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Client Role :: Can not #operation during migration"() {
         expect: "not allowed"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
 
         where:
         operation | response
         "add client role" | cloud20.createRole(specificationServiceAdminToken, v2Factory.createRole())
         "delete client role" | cloud20.deleteRole(specificationServiceAdminToken, "1234")
     }
+
+    /**
+     * Application means same thing as Service
+     * @return
+     */
+    @Unroll
+    def "Application :: Can not #operation during migration"() {
+        expect: "not allowed"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
+
+        where:
+        operation | response
+        "add application" | cloud20.createService(specificationServiceAdminToken, v1Factory.createService(null, "newService"))
+        "delete application" | cloud20.deleteService(specificationServiceAdminToken, "1234")
+    }
+
 }

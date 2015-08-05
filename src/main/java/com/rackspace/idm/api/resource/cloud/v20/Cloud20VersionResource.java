@@ -741,7 +741,11 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken, Service service) {
-        return cloud20Service.addService(httpHeaders, uriInfo, authToken, service).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.addService(httpHeaders, uriInfo, authToken, service).build();
+        }
     }
 
     @GET
@@ -759,7 +763,11 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("serviceId") String serviceId) {
-        return cloud20Service.deleteService(httpHeaders, authToken, serviceId).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.deleteService(httpHeaders, authToken, serviceId).build();
+        }
     }
 
     @GET
