@@ -84,4 +84,15 @@ class ReadOnlyMigrationIntegrationTest extends RootIntegrationTest {
         "updates policies on endpoint" | cloud20.updatePoliciesForEndpointTemplate(specificationServiceAdminToken, "1", v1Factory.createPolicies())
     }
 
+    @Unroll
+    def "Secret Question :: Can not #operation during migration"() {
+        expect: "not allowed"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
+
+        where:
+        operation | response
+        "add question" | cloud20.createQuestion(specificationServiceAdminToken, v1Factory.createQuestion())
+        "update question" | cloud20.updateQuestion(specificationServiceAdminToken, "1", v1Factory.createQuestion())
+        "delete question" | cloud20.deleteQuestion(specificationServiceAdminToken, "1")
+    }
 }

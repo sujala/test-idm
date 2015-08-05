@@ -1124,7 +1124,11 @@ public class Cloud20VersionResource {
     @POST
     @Path("RAX-AUTH/secretqa/questions")
     public Response createQuestion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Question question) {
-        return cloud20Service.addQuestion(uriInfo, authToken, question).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.addQuestion(uriInfo, authToken, question).build();
+        }
     }
 
     @GET
@@ -1142,13 +1146,21 @@ public class Cloud20VersionResource {
     @PUT
     @Path("RAX-AUTH/secretqa/questions/{name}")
     public Response updateQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Question question) {
-        return cloud20Service.updateQuestion(authToken, name, question).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.updateQuestion(authToken, name, question).build();
+        }
     }
 
     @DELETE
     @Path("RAX-AUTH/secretqa/questions/{questionId}")
     public Response deleteQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("questionId") String questionId) {
-        return cloud20Service.deleteQuestion(authToken, questionId).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.deleteQuestion(authToken, questionId).build();
+        }
     }
 
     @Path("users/{userId}/RAX-AUTH/multi-factor")
