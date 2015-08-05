@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientSecret
 import org.springframework.beans.factory.annotation.Autowired
@@ -8,9 +9,9 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapApplicationRepositoryIntegrationTest extends Specification {
+class ApplicationRepositoryIntegrationTest extends Specification {
     @Autowired
-    LdapApplicationRepository applicationDao
+    ApplicationDao applicationDao
 
     @Shared def random
 
