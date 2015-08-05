@@ -44,6 +44,7 @@ class ReadOnlyMigrationIntegrationTest extends RootIntegrationTest {
         operation | response
         "add application" | cloud20.createService(specificationServiceAdminToken, v1Factory.createService(null, "newService"))
         "delete application" | cloud20.deleteService(specificationServiceAdminToken, "1234")
+        "set default region services" | cloud20.updateDefaultRegionServices(specificationServiceAdminToken, v1Factory.createDefaultRegionServices(Collections.EMPTY_LIST))
     }
 
     @Unroll
@@ -94,5 +95,17 @@ class ReadOnlyMigrationIntegrationTest extends RootIntegrationTest {
         "add question" | cloud20.createQuestion(specificationServiceAdminToken, v1Factory.createQuestion())
         "update question" | cloud20.updateQuestion(specificationServiceAdminToken, "1", v1Factory.createQuestion())
         "delete question" | cloud20.deleteQuestion(specificationServiceAdminToken, "1")
+    }
+
+    @Unroll
+    def "Region :: Can not #operation during migration"() {
+        expect: "not allowed"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
+
+        where:
+        operation | response
+        "add region" | cloud20.createRegion(specificationServiceAdminToken, v1Factory.createRegion())
+        "update region" | cloud20.updateRegion(specificationServiceAdminToken, "1", v1Factory.createRegion())
+        "delete region" | cloud20.deleteRegion(specificationServiceAdminToken, "1")
     }
 }

@@ -151,7 +151,11 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/default-region/services")
     public Response setDefaultRegionServices(@HeaderParam(X_AUTH_TOKEN) String authToken,
                                              DefaultRegionServices defaultRegionServices){
-        return cloud20Service.setDefaultRegionServices(authToken, defaultRegionServices).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.setDefaultRegionServices(authToken, defaultRegionServices).build();
+        }
     }
 
     @POST
@@ -1094,7 +1098,11 @@ public class Cloud20VersionResource {
     @POST
     @Path("RAX-AUTH/regions")
     public Response createRegion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Region region) {
-        return cloud20Service.addRegion(uriInfo, authToken, region).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.addRegion(uriInfo, authToken, region).build();
+        }
     }
 
     @GET
@@ -1112,13 +1120,21 @@ public class Cloud20VersionResource {
     @PUT
     @Path("RAX-AUTH/regions/{name}")
     public Response updateRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Region region) {
-        return cloud20Service.updateRegion(authToken, name, region).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.updateRegion(authToken, name, region).build();
+        }
     }
 
     @DELETE
     @Path("RAX-AUTH/regions/{name}")
     public Response deleteRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name) {
-        return cloud20Service.deleteRegion(authToken, name).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.deleteRegion(authToken, name).build();
+        }
     }
 
     @POST
@@ -1212,6 +1228,10 @@ public class Cloud20VersionResource {
 
     private boolean isSamlEnabled(){
        return config.getBoolean("saml.enabled");
+    }
+
+    public void setIdentityConfig(IdentityConfig identityConfig) {
+        this.identityConfig = identityConfig;
     }
 }
 
