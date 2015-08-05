@@ -79,8 +79,7 @@ CREATE TABLE `assignment` (
   `target_id` varchar(64) NOT NULL,
   `role_id` varchar(64) NOT NULL,
   `inherited` tinyint(1) NOT NULL,
-  PRIMARY KEY (`type`,`actor_id`,`target_id`,`role_id`),
-  KEY `assignment_role_id_fkey` (`role_id`),
+  PRIMARY KEY (`type`,`actor_id`,`target_id`,`role_id`,`inherited`),
   KEY `ix_actor_id` (`actor_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -417,7 +416,6 @@ CREATE TABLE `identity_provider` (
   `id` varchar(64) NOT NULL,
   `enabled` tinyint(1) NOT NULL,
   `description` text,
-  `remote_id` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -435,6 +433,22 @@ CREATE TABLE `identity_provider_rax` (
   `description` text,
   `public_certificate` text,
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `idp_remote_ids`
+--
+
+DROP TABLE IF EXISTS `idp_remote_ids`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `idp_remote_ids` (
+  `idp_id` varchar(64) DEFAULT NULL,
+  `remote_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`remote_id`),
+  KEY `idp_id` (`idp_id`),
+  CONSTRAINT `idp_remote_ids_ibfk_1` FOREIGN KEY (`idp_id`) REFERENCES `identity_provider` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -492,7 +506,7 @@ DROP TABLE IF EXISTS `migrate_version`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `migrate_version` (
   `repository_id` varchar(250) NOT NULL,
-  `repository_path` text,
+  `repository_path` mediumtext,
   `version` int(11) DEFAULT NULL,
   PRIMARY KEY (`repository_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -912,6 +926,7 @@ CREATE TABLE `service_provider` (
   `enabled` tinyint(1) NOT NULL,
   `description` text,
   `sp_url` varchar(256) NOT NULL,
+  `relay_state_prefix` varchar(256) NOT NULL DEFAULT 'ss:mem:',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
