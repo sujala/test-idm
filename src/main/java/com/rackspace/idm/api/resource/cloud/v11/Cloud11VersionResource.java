@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v11;
 
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.exception.ExceptionHandler;
+import com.rackspace.idm.exception.MigrationReadOnlyIdmException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspacecloud.docs.auth.api.v1.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,9 @@ public class Cloud11VersionResource {
 
     @Autowired
     private IdentityConfig identityConfig;
+
+    @Autowired
+    private ExceptionHandler exceptionHandler;
 
     @Context
     private UriInfo uriInfo;
@@ -121,7 +126,11 @@ public class Cloud11VersionResource {
     public Response addBaseURL(@Context HttpServletRequest request, @Context HttpHeaders httpHeaders, BaseURL baseUrl)
             throws IOException, JAXBException {
         if(identityConfig.getV11AddBaseUrlExposed()) {
-            return cloud11Service.addBaseURL(request, httpHeaders, baseUrl).build();
+            if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+                return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+            } else {
+                return cloud11Service.addBaseURL(request, httpHeaders, baseUrl).build();
+            }
         } else {
             throw new NotFoundException("Resource Not Found");
         }

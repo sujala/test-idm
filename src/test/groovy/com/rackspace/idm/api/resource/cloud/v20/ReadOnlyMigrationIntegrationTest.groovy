@@ -108,4 +108,20 @@ class ReadOnlyMigrationIntegrationTest extends RootIntegrationTest {
         "update region" | cloud20.updateRegion(specificationServiceAdminToken, "1", v1Factory.createRegion())
         "delete region" | cloud20.deleteRegion(specificationServiceAdminToken, "1")
     }
+
+    @Unroll
+    def "Endpoint Template/CloudBaseUrl :: Can not #operation during migration"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.EXPOSE_V11_ADD_BASE_URL_PROP, true)
+
+        expect: "not allowed"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
+
+        where:
+        operation | response
+        "add v2.0 endpoint template" | cloud20.addEndpointTemplate(specificationServiceAdminToken, v1Factory.createEndpointTemplate())
+        "update v2.0 endpoint template" | cloud20.updateRegion(specificationServiceAdminToken, "1", v1Factory.createEndpointTemplate())
+        "delete v2.0 endpoint template" | cloud20.deleteRegion(specificationServiceAdminToken, "1")
+        "add v1.1 cloudbaseurl" | cloud11.addBaseUrl(v1Factory.createBaseUrl())
+    }
 }

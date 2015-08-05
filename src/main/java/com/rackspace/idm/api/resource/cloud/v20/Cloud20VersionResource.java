@@ -801,7 +801,11 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken, EndpointTemplate endpoint) {
-        return cloud20Service.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint).build();
+        }
     }
 
     @PUT
@@ -811,7 +815,11 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @PathParam("endpointTemplateId") String endpointTemplateId,
             @HeaderParam(X_AUTH_TOKEN) String authToken, EndpointTemplate endpoint) {
-        return cloud20Service.updateEndpointTemplate(httpHeaders, uriInfo, authToken, endpointTemplateId, endpoint).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.updateEndpointTemplate(httpHeaders, uriInfo, authToken, endpointTemplateId, endpoint).build();
+        }
     }
 
     @GET
@@ -829,7 +837,11 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String enpdointTemplateId) {
-        return cloud20Service.deleteEndpointTemplate(httpHeaders, authToken, enpdointTemplateId).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.deleteEndpointTemplate(httpHeaders, authToken, enpdointTemplateId).build();
+        }
     }
 
     @GET
