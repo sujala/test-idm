@@ -58,6 +58,8 @@ public final class GlobalConstants {
     public static final String TENANT_ALIAS_PATTERN = "{tenant}";
 
     public static final String MULTIFACTOR_CONSISTENCY_LOG_NAME = "multifactorConsistencyLogger";
+    public static final String MIGRATION_CHANGE_EVENT_LOG_NAME = "migrationChangeEventLogger";
+
     public static final String MOSSO = "MOSSO";
     public static final String NAST = "NAST";
 

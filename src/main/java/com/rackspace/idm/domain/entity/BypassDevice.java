@@ -55,5 +55,4 @@ public class BypassDevice implements UniqueId, Auditable {
     public String getAuditContext() {
         return "id=" + id;
     }
-
 }
