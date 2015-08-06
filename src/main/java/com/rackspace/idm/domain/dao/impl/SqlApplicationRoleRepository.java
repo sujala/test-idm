@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
@@ -98,7 +99,7 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
 
     @Override
     public Iterable<ClientRole> getAllIdentityRoles() {
-        return mapper.fromSQL(repository.findAll());
+        return mapper.fromSQL(repository.findByNameStartsWith(GlobalConstants.IDENTITY_ROLE_PREFIX));
     }
 
 }
