@@ -151,7 +151,11 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/default-region/services")
     public Response setDefaultRegionServices(@HeaderParam(X_AUTH_TOKEN) String authToken,
                                              DefaultRegionServices defaultRegionServices){
-        return cloud20Service.setDefaultRegionServices(authToken, defaultRegionServices).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.setDefaultRegionServices(authToken, defaultRegionServices).build();
+        }
     }
 
     @POST
@@ -264,7 +268,11 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @Context UriInfo uriInfo,
             Policy policy) {
-        return cloud20Service.addPolicy(uriInfo, authToken, policy).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.addPolicy(uriInfo, authToken, policy).build();
+        }
     }
 
     @GET
@@ -281,7 +289,11 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("policyId") String policyId,
             Policy policy) {
-        return cloud20Service.updatePolicy(authToken, policyId, policy).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.updatePolicy(authToken, policyId, policy).build();
+        }
     }
 
     @DELETE
@@ -289,7 +301,11 @@ public class Cloud20VersionResource {
     public Response deletePolicy(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("policyId") String policyId) {
-        return cloud20Service.deletePolicy(authToken, policyId).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.deletePolicy(authToken, policyId).build();
+        }
     }
 
     @GET
@@ -785,7 +801,11 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken, EndpointTemplate endpoint) {
-        return cloud20Service.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint).build();
+        }
     }
 
     @PUT
@@ -795,7 +815,11 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @PathParam("endpointTemplateId") String endpointTemplateId,
             @HeaderParam(X_AUTH_TOKEN) String authToken, EndpointTemplate endpoint) {
-        return cloud20Service.updateEndpointTemplate(httpHeaders, uriInfo, authToken, endpointTemplateId, endpoint).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.updateEndpointTemplate(httpHeaders, uriInfo, authToken, endpointTemplateId, endpoint).build();
+        }
     }
 
     @GET
@@ -813,7 +837,11 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String enpdointTemplateId) {
-        return cloud20Service.deleteEndpointTemplate(httpHeaders, authToken, enpdointTemplateId).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.deleteEndpointTemplate(httpHeaders, authToken, enpdointTemplateId).build();
+        }
     }
 
     @GET
@@ -831,7 +859,11 @@ public class Cloud20VersionResource {
             @PathParam("endpointTemplateId") String endpointTemplateId,
             Policies policies
             ) {
-        return cloud20Service.updatePoliciesForEndpointTemplate(authToken, endpointTemplateId, policies).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.updatePoliciesForEndpointTemplate(authToken, endpointTemplateId, policies).build();
+        }
     }
 
     @PUT
@@ -840,7 +872,11 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId,
             @PathParam("policyId") String policyId){
-        return cloud20Service.addPolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.addPolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
+        }
     }
 
     @DELETE
@@ -849,7 +885,11 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String endpointTemplateId,
             @PathParam("policyId") String policyId){
-        return cloud20Service.deletePolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.deletePolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
+        }
     }
 
     @GET
@@ -1070,7 +1110,11 @@ public class Cloud20VersionResource {
     @POST
     @Path("RAX-AUTH/regions")
     public Response createRegion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Region region) {
-        return cloud20Service.addRegion(uriInfo, authToken, region).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.addRegion(uriInfo, authToken, region).build();
+        }
     }
 
     @GET
@@ -1088,19 +1132,31 @@ public class Cloud20VersionResource {
     @PUT
     @Path("RAX-AUTH/regions/{name}")
     public Response updateRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Region region) {
-        return cloud20Service.updateRegion(authToken, name, region).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.updateRegion(authToken, name, region).build();
+        }
     }
 
     @DELETE
     @Path("RAX-AUTH/regions/{name}")
     public Response deleteRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name) {
-        return cloud20Service.deleteRegion(authToken, name).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.deleteRegion(authToken, name).build();
+        }
     }
 
     @POST
     @Path("RAX-AUTH/secretqa/questions")
     public Response createQuestion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Question question) {
-        return cloud20Service.addQuestion(uriInfo, authToken, question).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.addQuestion(uriInfo, authToken, question).build();
+        }
     }
 
     @GET
@@ -1118,13 +1174,21 @@ public class Cloud20VersionResource {
     @PUT
     @Path("RAX-AUTH/secretqa/questions/{name}")
     public Response updateQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Question question) {
-        return cloud20Service.updateQuestion(authToken, name, question).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.updateQuestion(authToken, name, question).build();
+        }
     }
 
     @DELETE
     @Path("RAX-AUTH/secretqa/questions/{questionId}")
     public Response deleteQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("questionId") String questionId) {
-        return cloud20Service.deleteQuestion(authToken, questionId).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.deleteQuestion(authToken, questionId).build();
+        }
     }
 
     @Path("users/{userId}/RAX-AUTH/multi-factor")
@@ -1176,6 +1240,10 @@ public class Cloud20VersionResource {
 
     private boolean isSamlEnabled(){
        return config.getBoolean("saml.enabled");
+    }
+
+    public void setIdentityConfig(IdentityConfig identityConfig) {
+        this.identityConfig = identityConfig;
     }
 }
 

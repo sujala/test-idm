@@ -44,6 +44,7 @@ class ReadOnlyMigrationIntegrationTest extends RootIntegrationTest {
         operation | response
         "add application" | cloud20.createService(specificationServiceAdminToken, v1Factory.createService(null, "newService"))
         "delete application" | cloud20.deleteService(specificationServiceAdminToken, "1234")
+        "set default region services" | cloud20.updateDefaultRegionServices(specificationServiceAdminToken, v1Factory.createDefaultRegionServices(Collections.EMPTY_LIST))
     }
 
     @Unroll
@@ -67,5 +68,60 @@ class ReadOnlyMigrationIntegrationTest extends RootIntegrationTest {
         "add group" | cloud20.createGroup(specificationServiceAdminToken, v2Factory.createGroup("blah"))
         "update group" | cloud20.updateGroup(specificationServiceAdminToken, "1", v2Factory.createGroup("blah"))
         "delete group" | cloud20.deleteGroup(specificationServiceAdminToken, "1")
+    }
+
+    @Unroll
+    def "Policy :: Can not #operation during migration"() {
+        expect: "not allowed"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
+
+        where:
+        operation | response
+        "add policy" | cloud20.addPolicy(specificationServiceAdminToken, v1Factory.createPolicy())
+        "update policy" | cloud20.updatePolicy(specificationServiceAdminToken, "1", v1Factory.createPolicy())
+        "delete policy" | cloud20.deletePolicy(specificationServiceAdminToken, "1")
+        "add policy to endpoint" | cloud20.addPolicyToEndpointTemplate(specificationServiceAdminToken, "1", "1")
+        "delete policy from endpoint" | cloud20.deletePolicyToEndpointTemplate(specificationServiceAdminToken, "1", "1")
+        "updates policies on endpoint" | cloud20.updatePoliciesForEndpointTemplate(specificationServiceAdminToken, "1", v1Factory.createPolicies())
+    }
+
+    @Unroll
+    def "Secret Question :: Can not #operation during migration"() {
+        expect: "not allowed"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
+
+        where:
+        operation | response
+        "add question" | cloud20.createQuestion(specificationServiceAdminToken, v1Factory.createQuestion())
+        "update question" | cloud20.updateQuestion(specificationServiceAdminToken, "1", v1Factory.createQuestion())
+        "delete question" | cloud20.deleteQuestion(specificationServiceAdminToken, "1")
+    }
+
+    @Unroll
+    def "Region :: Can not #operation during migration"() {
+        expect: "not allowed"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
+
+        where:
+        operation | response
+        "add region" | cloud20.createRegion(specificationServiceAdminToken, v1Factory.createRegion())
+        "update region" | cloud20.updateRegion(specificationServiceAdminToken, "1", v1Factory.createRegion())
+        "delete region" | cloud20.deleteRegion(specificationServiceAdminToken, "1")
+    }
+
+    @Unroll
+    def "Endpoint Template/CloudBaseUrl :: Can not #operation during migration"() {
+        given:
+        staticIdmConfiguration.setProperty(IdentityConfig.EXPOSE_V11_ADD_BASE_URL_PROP, true)
+
+        expect: "not allowed"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
+
+        where:
+        operation | response
+        "add v2.0 endpoint template" | cloud20.addEndpointTemplate(specificationServiceAdminToken, v1Factory.createEndpointTemplate())
+        "update v2.0 endpoint template" | cloud20.updateRegion(specificationServiceAdminToken, "1", v1Factory.createEndpointTemplate())
+        "delete v2.0 endpoint template" | cloud20.deleteRegion(specificationServiceAdminToken, "1")
+        "add v1.1 cloudbaseurl" | cloud11.addBaseUrl(v1Factory.createBaseUrl())
     }
 }

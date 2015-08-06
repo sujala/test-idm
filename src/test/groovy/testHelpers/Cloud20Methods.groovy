@@ -1,6 +1,7 @@
 package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
@@ -807,6 +808,11 @@ class Cloud20Methods {
     def deleteCapabilities(String token, type, version) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path("service-apis").path(type).path(version).path("capabilities").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def updateDefaultRegionServices(String token, defaultRegionServices) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path("default-region").path("services").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(defaultRegionServices).put(ClientResponse)
     }
 
     def pageParams(String offset, String limit) {

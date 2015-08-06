@@ -55,8 +55,11 @@ public class Cloud20VersionResourceTestOld {
         defaultCloud20Service = mock(DefaultCloud20Service.class);
         uriInfo = mock(UriInfo.class);
 
+        IdentityConfig identityConfig = new IdentityConfig(mock(Configuration.class), mock(Configuration.class))
+
         // setter
         cloud20VersionResource.setCloud20Service(defaultCloud20Service);
+        cloud20VersionResource.setIdentityConfig(identityConfig)
     }
 
     @Test
