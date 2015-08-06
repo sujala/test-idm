@@ -349,6 +349,7 @@ dn: clientId=18e7a7032733486cd32f472d7bd58f709ac0d221,ou=applications,o=rac
 objectClass: rsApplication
 objectClass: top
 clientId: 18e7a7032733486cd32f472d7bd58f709ac0d221
+openStackType: identity
 cn: Customer Idm
 userPassword: {SSHA512}aQr5QrRtAjq96eSVFl7t0aZomWAsFhI74scZxVdiRMrDbOYJWeiLG
  VGaAfsOrsWqnU1SFDo69tfURAmQIvA1skuYfcM=
@@ -1226,6 +1227,7 @@ objectClass: top
 rsId: 100000000
 publicUrl: test
 baseUrlType: NAST
+rsRegion: ORD
 def: FALSE
 enabled: TRUE
 openStackType: cloudServers
@@ -1244,7 +1246,10 @@ rsId: 100001
 publicUrl: http://public.url
 enabled: TRUE
 openStackType: compute
+baseUrlType: MOSSO
 rsGlobal: FALSE
+rsRegion: ORD
+service: openstackHuddle48
 rsPublicUrlId: 43ed6e5f7be74fd6b6e8288a3cec7825
 rsAdminUrlId: bbd2b04ea75c48488872808401a5253b
 rsInternalUrlId: 7e3e7a75a5a44ad183b70b205ef5437b
@@ -1279,7 +1284,7 @@ enabled: FALSE
 internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
 openStackType: object-store
 rsGlobal: FALSE
-rsRegion: INACTIVE
+rsRegion: ORD
 service: cloudFiles
 rsPublicUrlId: a75de98821d2499f83e6c19ba6f73f47
 rsInternalUrlId: 9b63a382f7c04e279142afd89d8959bb
@@ -1315,7 +1320,7 @@ enabled: FALSE
 internalUrl: https://snet-storage4.stg.swift.racklabs.com
 openStackType: object-store
 rsGlobal: FALSE
-rsRegion: INACTIVE
+rsRegion: ORD
 service: cloudFiles
 rsPublicUrlId: 593336e4c5fc47fa94655d38513cd1ed
 rsInternalUrlId: 92a870334644495b8027606e4edd340b
@@ -1333,7 +1338,7 @@ enabled: FALSE
 internalUrl: https://snet-storage5.stg.swift.racklabs.com
 openStackType: object-store
 rsGlobal: FALSE
-rsRegion: INACTIVE
+rsRegion: ORD
 service: cloudFiles
 rsPublicUrlId: 3fcf5db17d1e4d3d993bd865881090cb
 rsInternalUrlId: 1bc8160c8a4c403fbb1f229d53128e5e
@@ -1351,7 +1356,7 @@ enabled: TRUE
 internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
 openStackType: object-store
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: cloudFiles
 rsPublicUrlId: e08c0c298c8945c5a12049766f080279
 rsInternalUrlId: d0630dccce7b4194a7c771113892c9ad
@@ -1437,6 +1442,7 @@ baseUrlType: MOSSO
 def: FALSE
 enabled: TRUE
 openStackType: cloudServers
+rsRegion: ORD
 policyId: 100000000
 rsGlobal: FALSE
 service: test
@@ -1489,7 +1495,7 @@ def: TRUE
 enabled: TRUE
 openStackType: rax:object-cdn
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: cloudFilesCDN
 rsPublicUrlId: cbafd23257d5468abf339ebf2b53d4c5
 rsInternalUrlId: 096846fcbad44fe695aed8ba8b8793b1
@@ -1505,6 +1511,7 @@ baseUrlType: MOSSO
 def: FALSE
 enabled: TRUE
 openStackType: compute
+rsRegion: ORD
 rsGlobal: FALSE
 service: cloudServers
 versionId: 1.0
@@ -1556,6 +1563,7 @@ rsId: 1019
 publicUrl: https://
 baseUrlType: MOSSO
 def: FALSE
+rsRegion: ORD
 enabled: TRUE
 openStackType: undefined
 rsAdminUrl: https://admin-only/
@@ -1578,6 +1586,7 @@ openStackType: undefined
 rsAdminUrl: https://admin-mix/
 rsGlobal: FALSE
 service: admin-Mix
+rsRegion: ORD
 rsPublicUrlId: 66b536bf76444b66a017af07ff5a305b
 rsInternalUrlId: 194cf0ac1135409e966fe75567bcf4b7
 rsAdminUrlId: 950e2665575d497a9feeb060989cef0d
@@ -1596,6 +1605,7 @@ openStackType: undefined
 rsAdminUrl: https://admin-all-urls/
 rsGlobal: FALSE
 service: all-urls
+rsRegion: ORD
 rsPublicUrlId: 219ba29ea2664560bc89da7123655ea7
 rsInternalUrlId: 5971bce10ed045cdadc45ed5985e41d9
 rsAdminUrlId: ebf0b747e3f14f6f8814f00c1b211d2a
@@ -1831,6 +1841,7 @@ openStackType: rax:customer
 rsAdminUrl: https://customer.api.rackspacecloud.com/v1/customer_accounts
 rsGlobal: FALSE
 service: CustomerService
+rsRegion: ORD
 rsPublicUrlId: bab00899b56940b0b09d40d6d644cea8
 rsInternalUrlId: 9ebcfd03d3de4a2cad2d737cf5a8b858
 rsAdminUrlId: dcb7bed2272f49ef957bd2951b1aef64
@@ -1848,6 +1859,7 @@ openStackType: rax:biling
 rsAdminUrl: https://billing.api.rackspacecloud.com/v1/accounts
 rsGlobal: FALSE
 service: BillingService
+rsRegion: ORD
 rsPublicUrlId: 420f921fbdcf41f79a62d32c1e1386b4
 rsInternalUrlId: 105516a4c69a4c8eb33c5df1f6bd4780
 rsAdminUrlId: d5e31752d9874842a72c92b7f151a164
@@ -1865,6 +1877,7 @@ openStackType: rax:usage
 rsAdminUrl: https://usage.api.rackspacecloud.com/v1
 rsGlobal: FALSE
 service: UsageService
+rsRegion: ORD
 rsPublicUrlId: a3374993031546f9b3205725e60113f8
 rsInternalUrlId: aa988566c0654defa7451618eecff8ee
 rsAdminUrlId: 17d621258d154e3a8141cad447fb6b10
@@ -1900,6 +1913,7 @@ openStackType: rax:incident
 rsAdminUrl: https://incident.api.rackspacecloud.com/v1
 rsGlobal: FALSE
 service: IncidentService
+rsRegion: ORD
 rsPublicUrlId: 0b1b17f2ae8d496f80168c05cd53c34a
 rsInternalUrlId: 4f544dab841f4dac980a586113d48d60
 rsAdminUrlId: 32cc924547a648d3a2688345a92e5347
@@ -1915,7 +1929,7 @@ def: TRUE
 enabled: TRUE
 openStackType: rax:load-balancer
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: cloudLoadBalancers
 rsPublicUrlId: a88fdebfdc414597b500e0864a18b722
 rsInternalUrlId: 4c1f4de835354598b2e407fa918ec462
@@ -1932,7 +1946,7 @@ def: TRUE
 enabled: TRUE
 openStackType: rax:monitor
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: cloudMonitoring
 rsPublicUrlId: 29c8b540a3664c63be7b72c74c9ad553
 rsInternalUrlId: 52d92004a6924b3e8509ff02ad318a26
@@ -1968,6 +1982,7 @@ enabled: TRUE
 openStackType: rax:monitor
 rsGlobal: FALSE
 service: cloudMonitoring
+rsRegion: ORD
 rsPublicUrlId: f733052a932e41d2b0fe07de1fb14ae5
 rsInternalUrlId: e8a9e0a3dbf14a2ca157881ec057d1f6
 rsAdminUrlId: a275518e5426432fa3854923fc2a60e9
@@ -1983,7 +1998,7 @@ def: FALSE
 enabled: TRUE
 openStackType: compute
 rsGlobal: FALSE
-rsRegion: CBSPreview-ORD
+rsRegion: ORD
 service: cloudServersCBSPreview
 rsPublicUrlId: 54e99c0d105044bf888672140b07bc17
 rsInternalUrlId: d2e36a7af18f41d69e3c9181f23673ac
@@ -2000,7 +2015,7 @@ def: FALSE
 enabled: TRUE
 openStackType: volume
 rsGlobal: FALSE
-rsRegion: CBSPreview-ORD
+rsRegion: ORD
 service: cloudVolumeCBSPreview
 rsPublicUrlId: 95f7ab80590449aa9ffff68bbb238f91
 rsInternalUrlId: 3ec62f6b369c43639b6376a67ceb49da
@@ -2017,7 +2032,7 @@ def: TRUE
 enabled: TRUE
 openStackType: rax:database
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: cloudDatabases
 rsPublicUrlId: e06042d8a48845afbd38f61d436466fa
 rsInternalUrlId: b04e6b1b4ff34f869ed5758195a2099d
@@ -2054,7 +2069,7 @@ def: FALSE
 enabled: TRUE
 openStackType: compute
 rsGlobal: FALSE
-rsRegion: CBSDev-ORD
+rsRegion: ORD
 service: openstackHuddle48
 rsPublicUrlId: 94453aa03d3b46c291089077010213ad
 rsInternalUrlId: 6a108ab649e6472e83cba9704deeb0ca
@@ -2089,7 +2104,7 @@ def: FALSE
 enabled: TRUE
 openStackType: volume
 rsGlobal: FALSE
-rsRegion: CBSDev-ORD
+rsRegion: ORD
 service: cloudBlockStorageHuddle48
 rsPublicUrlId: 209b1f3b1265402981a871576025a97b
 rsInternalUrlId: 561899d3a5984bd9a3a576fae6a49174
@@ -2106,7 +2121,7 @@ def: FALSE
 enabled: TRUE
 openStackType: rax:monitor
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: cloudMonitoring
 rsPublicUrlId: 048ae13e61f048e28c7bd1495b906f7d
 rsInternalUrlId: 5469dda93c2e4460bc1e9abffdca7ca5
@@ -2123,7 +2138,7 @@ def: FALSE
 enabled: TRUE
 openStackType: compute
 rsGlobal: FALSE
-rsRegion: Preview-ORD
+rsRegion: ORD
 service: cloudServersPreview
 rsPublicUrlId: 5e728418dc7a49379a9c1b1245460220
 rsInternalUrlId: ca9351952f8748caafa001093f641f44
@@ -2140,7 +2155,7 @@ def: FALSE
 enabled: TRUE
 openStackType: volume
 rsGlobal: FALSE
-rsRegion: Preview-ORD
+rsRegion: ORD
 service: cloudBlockStoragePreview
 rsPublicUrlId: 42ba1172ad464cb184c51f75e6186c80
 rsInternalUrlId: 53663a6587604cd9be04ffe0c050eb4a
@@ -2157,7 +2172,7 @@ def: FALSE
 enabled: TRUE
 openStackType: compute
 rsGlobal: FALSE
-rsRegion: Preview-ORD
+rsRegion: ORD
 service: cloudServersOpenStackPreview
 rsPublicUrlId: b4674493aca04b8bbeb544252ba56d0b
 rsInternalUrlId: bb14f01fd1914be8b3653439aec3f90f
@@ -2174,7 +2189,7 @@ def: FALSE
 enabled: TRUE
 openStackType: volume
 rsGlobal: FALSE
-rsRegion: Preview-ORD
+rsRegion: ORD
 service: cloudBlockStoragePreview
 rsPublicUrlId: d094881670c44d8c872ba21d0926417b
 rsInternalUrlId: 6ce37fb2041043859f230cf2959daa1d
@@ -2192,6 +2207,7 @@ enabled: TRUE
 openStackType: compute
 rsGlobal: FALSE
 service: cloudServersPreprodAdmin
+rsRegion: ORD
 rsPublicUrlId: 404f093d07294c48993eb73c3acbeeb1
 rsInternalUrlId: 2f735ecd91674fc68c8b4d3a5f366c12
 rsAdminUrlId: ac574cd5805740758aee63f12b0a787d
@@ -2296,6 +2312,7 @@ enabled: TRUE
 openStackType: compute
 rsGlobal: FALSE
 service: openstackHuddle48
+rsRegion: ORD
 rsPublicUrlId: f8a818bc9ef145949ad88fc04a4f3678
 rsInternalUrlId: 76053b642ced4e0ca682c4a1649a1b4d
 rsAdminUrlId: 87c6fa204b6d4ca1992210624f9a23b3
@@ -2345,7 +2362,7 @@ def: FALSE
 enabled: TRUE
 openStackType: rax:object-cdn
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: cloudFilesCDN
 versionId: 1
 versionInfo: https://api.info.uri.com/v1/
@@ -2451,7 +2468,7 @@ def: TRUE
 enabled: TRUE
 openStackType: rax:monitor
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: cloudMonitoring
 rsPublicUrlId: 3f70e9b0d9e64045b301727ef6b41e64
 rsInternalUrlId: bbe02c88b5a44438a3b7381ef1c39e81
@@ -2468,7 +2485,7 @@ def: FALSE
 enabled: TRUE
 openStackType: compute
 rsGlobal: FALSE
-rsRegion: ORD-Test
+rsRegion: ORD
 service: cloudServers
 versionId: 1.0
 versionInfo: http://api-n01.qe.ord1.us.cloudcompute.rackspace.net:8080/v1.0
@@ -2522,7 +2539,7 @@ def: FALSE
 enabled: TRUE
 openStackType: rax:object-cdn
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: cloudFilesCDN
 rsPublicUrlId: 77285842bdf54034a8caa3d4e049bbfb
 rsInternalUrlId: 7d29ca69855343df9815ee12011ed7df
@@ -2540,7 +2557,7 @@ enabled: TRUE
 internalUrl: http://10.127.7.19/pods/
 openStackType: rax:whales
 rsGlobal: FALSE
-rsRegion: CASTLE
+rsRegion: ORD
 service: rax:whales
 versionId: 1
 versionInfo:: IA==
@@ -2562,6 +2579,7 @@ openStackType: compute
 rsGlobal: FALSE
 service: cloudServers
 versionId: 1.0
+rsRegion: ORD
 versionInfo: https://servers.api.staging.us.ccp.rackspace.net/v1.0
 versionList: https://servers.api.staging.us.ccp.rackspace.net/v1.0
 rsPublicUrlId: 5a9cfa60a41f4744add68e53ef042b3a
@@ -2597,6 +2615,7 @@ enabled: TRUE
 openStackType: rax:dns
 rsGlobal: FALSE
 service: cloudDNS
+rsRegion: ORD
 rsPublicUrlId: f1a128d4238945b78a14556f1d503153
 rsInternalUrlId: 95b96464381248b3b2c1b6fd1ead067f
 rsAdminUrlId: 9d0a7d2b06ed470494c9b5e5bb4006d0
@@ -2614,6 +2633,7 @@ openStackType: undefined
 rsAdminUrl: https://admin-only/
 rsGlobal: FALSE
 service: admin-Only
+rsRegion: ORD
 rsPublicUrlId: 36f945dffd4e46f6b295e5fd06ed1cd1
 rsInternalUrlId: e4223cc6431f4e64a4913ea3e7b074dc
 rsAdminUrlId: 891e8567854244ec8c56d1e3d14f3b85
@@ -2631,6 +2651,7 @@ openStackType: undefined
 rsAdminUrl: https://admin-mix/
 rsGlobal: FALSE
 service: admin-Mix
+rsRegion: ORD
 rsPublicUrlId: 1557e86fe4f74e758a1bd65a0a1bbb65
 rsInternalUrlId: 36ff360cf7bc47b4bb6588c59afa2d0a
 rsAdminUrlId: 5df2ae50c5b24c0e876bb0792380823e
@@ -2647,7 +2668,7 @@ enabled: FALSE
 internalUrl: https://snet-storage.clouddrive.com/v1
 openStackType: object-store
 rsGlobal: FALSE
-rsRegion: INACTIVE
+rsRegion: ORD
 service: cloudFiles
 versionId: 1
 versionInfo: https://api.info.uri.com/v1/
@@ -2670,6 +2691,7 @@ openStackType: undefined
 rsAdminUrl: https://admin-all-urls/
 rsGlobal: FALSE
 service: all-urls
+rsRegion: ORD
 rsPublicUrlId: 3a632bae6ce74c219bb1580b1d502801
 rsInternalUrlId: 44bd386d54e547cab7254d7f5d5a7605
 rsAdminUrlId: d180494f4bff4bc48b9b361ebb15f799
@@ -2938,7 +2960,7 @@ enabled: TRUE
 openStackType: compute
 rsAdminUrl: https://billing.api.rackspacecloud.com/v1/accounts
 rsGlobal: FALSE
-rsRegion: ORD-Test
+rsRegion: ORD
 service: cloudServersOpenStack
 rsPublicUrlId: a6392cd91c794edeb1fdd7e3b2c5263f
 rsInternalUrlId: 2175f2f4235b4cfdae6be760a68be09e
@@ -2974,7 +2996,7 @@ enabled: TRUE
 openStackType: compute
 rsAdminUrl: https://incident.api.rackspacecloud.com/v1
 rsGlobal: FALSE
-rsRegion: LON-Test
+rsRegion: ORD
 service: cloudServersOpenStack
 rsPublicUrlId: ae4b4bca664e4cacbe29f574e174f330
 rsInternalUrlId: e1d72a0a90764125b15d89fc3b79013f
@@ -2993,7 +3015,7 @@ openStackType: rax:customer
 rsAdminUrl: https://staging.customer.api.rackspacecloud.com/v1/customer_acco
  unts
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: CustomerService
 rsPublicUrlId: 7814faf2f29b4d9d9422c26c754d3d24
 rsInternalUrlId: 836d19dc412d4c388fe0d9bdf0e93039
@@ -3011,7 +3033,7 @@ enabled: TRUE
 openStackType: rax:biling
 rsAdminUrl: https://staging.billing.api.rackspacecloud.com/v1/accounts
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: BillingService
 rsPublicUrlId: 4856ab4eb1e64508b5df8c67efb4efb9
 rsInternalUrlId: 7fec467dc6af4233bfaee3478d80df9d
@@ -3029,7 +3051,7 @@ enabled: FALSE
 internalUrl: https://snet-storage4.clouddrive.com/v1
 openStackType: object-store
 rsGlobal: FALSE
-rsRegion: INACTIVE
+rsRegion: ORD
 service: cloudFiles
 versionId: 1
 versionInfo: https://api.info.uri.com/v1/
@@ -3050,7 +3072,7 @@ enabled: TRUE
 openStackType: rax:usage
 rsAdminUrl: https://staging.usage.api.rackspacecloud.com/v1
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: UsageService
 rsPublicUrlId: 83b7875b3bde4a958e6f7e01d1373c98
 rsInternalUrlId: 7926197ff4c941ad9676586df7ed46bc
@@ -3068,7 +3090,7 @@ enabled: TRUE
 openStackType: rax:incident
 rsAdminUrl: https://staging.incident.api.rackspacecloud.com/v1
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: IncidentService
 rsPublicUrlId: 2688a685db584972915a5d9df61dd0ba
 rsInternalUrlId: 04f946e8c2b947dcaeacb607f39e22b9
@@ -3087,6 +3109,7 @@ openStackType: rax:customer
 rsAdminUrl: https://customer.api.rackspacecloud.com/v1/customer_accounts
 rsGlobal: FALSE
 service: CustomerService
+rsRegion: ORD
 rsPublicUrlId: 574a2c97118a4ab4a1b9554f731ca32c
 rsInternalUrlId: b19821b52e8149818303b7bfa9985d88
 rsAdminUrlId: 91a9452ecd434af388fd20dbd703a4ea
@@ -3103,6 +3126,7 @@ enabled: TRUE
 openStackType: compute
 rsGlobal: FALSE
 service: openstackHuddle48
+rsRegion: ORD
 rsPublicUrlId: 162374335854430db9a52dd172434001
 rsInternalUrlId: 0a45f1c76bb441b7ad7b6f656d795d19
 rsAdminUrlId: ea972ffd5a47439e9498afd3b6a9f9a9
@@ -3137,6 +3161,7 @@ enabled: TRUE
 openStackType: rax:dns
 rsGlobal: FALSE
 service: cloudDNS
+rsRegion: ORD
 rsPublicUrlId: 635f8366a55b40538d2f2bfb45a437d9
 rsInternalUrlId: d3b1a2b8792b432b914bb72b10d9d505
 rsAdminUrlId: 6aa7176ed389484ba0654844787edbb1
@@ -3187,7 +3212,7 @@ enabled: FALSE
 internalUrl: https://snet-storage5.clouddrive.com/v1
 openStackType: object-store
 rsGlobal: FALSE
-rsRegion: INACTIVE
+rsRegion: ORD
 service: cloudFiles
 versionId: 1
 versionInfo: https://api.info.uri.com/v1/
@@ -3242,6 +3267,7 @@ enabled: TRUE
 openStackType: rax:monitor
 rsGlobal: FALSE
 service: cloudMonitoring
+rsRegion: ORD
 rsPublicUrlId: 5041efbc8b484cfca580bd46f6159f7b
 rsInternalUrlId: 97cf4d46f3a04e26b2e919cd8f5203a3
 rsAdminUrlId: fee23333343e40fcb51b32bc9f03ff0b
@@ -3259,6 +3285,7 @@ openStackType: undefined
 rsAdminUrl: https://admin-only/
 rsGlobal: FALSE
 service: admin-Only
+rsRegion: ORD
 rsPublicUrlId: df1418a9eeba4002b6e4d39d54b59d5c
 rsInternalUrlId: adaa81b220724997b91714dbfa7a79f5
 rsAdminUrlId: 13217f94b3d3475588a870ecb93687fa
@@ -3276,6 +3303,7 @@ openStackType: undefined
 rsAdminUrl: https://admin-mix/
 rsGlobal: FALSE
 service: admin-Mix
+rsRegion: ORD
 rsPublicUrlId: 779a0c304c22440087a31898469b2b16
 rsInternalUrlId: 9b71a1fd6a4e4084a609d1c797798cbb
 rsAdminUrlId: b24192b38e244d7dbdd6343a59e318ff
@@ -3292,7 +3320,7 @@ enabled: TRUE
 internalUrl: https://snet-storage.stg.swift.racklabs.com/v1
 openStackType: object-store
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: cloudFiles
 versionId: 1
 versionInfo: https://api.info.uri.com/v1/
@@ -3424,6 +3452,7 @@ rsAdminUrl: https://staging.customer.api.rackspacecloud.com/v1/customer_acco
  unts/CLOUD
 rsGlobal: FALSE
 service: CustomerService
+rsRegion: ORD
 rsPublicUrlId: 7c05d0f4d48b4c8587e5da9f254c7342
 rsInternalUrlId: f9c900b780c048dbac83e0beb0b7db54
 rsAdminUrlId: e2bbcf1c4b52402ca150f9c81f85e6ed
@@ -3441,6 +3470,7 @@ openStackType: rax:biling
 rsAdminUrl: https://staging.billing.api.rackspacecloud.com/v1/accounts
 rsGlobal: FALSE
 service: BillingService
+rsRegion: ORD
 rsPublicUrlId: 6dd51e3d250940cd8da6a04fe4298345
 rsInternalUrlId: 6bb9a4762b4e4792a8acf2237162591a
 rsAdminUrlId: ac271a1631c2481a966a26da425ebf42
@@ -3458,6 +3488,7 @@ openStackType: rax:usage
 rsAdminUrl: https://staging.usage.api.rackspacecloud.com/v1
 rsGlobal: FALSE
 service: UsageService
+rsRegion: ORD
 rsPublicUrlId: c9590666315247f8acab5a0794f1bbe4
 rsInternalUrlId: 4e16a8f3c7754d4c9f089c22fdbdfc3c
 rsAdminUrlId: c63b32a69c5b4d7ba256ac1c361fc5d9
@@ -3475,6 +3506,7 @@ openStackType: rax:incident
 rsAdminUrl: https://staging.incident.api.rackspacecloud.com/v1
 rsGlobal: FALSE
 service: IncidentService
+rsRegion: ORD
 rsPublicUrlId: 8e449d136dc64affa05b37fcb38d8828
 rsInternalUrlId: 348a6204ef8f4eeeb0f8a628823cbb62
 rsAdminUrlId: 2dc8c0e040a8437ba5e06690e6c7f70d
@@ -3491,6 +3523,7 @@ enabled: TRUE
 openStackType: compute
 rsGlobal: FALSE
 service: openstackHuddle48
+rsRegion: ORD
 rsPublicUrlId: 5640a65f850d492cad35b8dc78a5dccd
 rsInternalUrlId: 8f877215b62347c3924977568c1922f5
 rsAdminUrlId: 4d6f83978ddf4bfaa0cf68c2606cf819
@@ -3562,7 +3595,7 @@ def: TRUE
 enabled: TRUE
 openStackType: rax:load-balancer
 rsGlobal: FALSE
-rsRegion: STAGING
+rsRegion: ORD
 service: cloudLoadBalancers
 rsPublicUrlId: ef02ed30fc1540f8b3f45371863b57e0
 rsInternalUrlId: 557e1408f0bf4f9aa720ff6a6fd56329
@@ -3596,9 +3629,10 @@ internalUrl: https://service-internal.com/v1
 openStackType: compute
 rsAdminUrl: https://service-admin.com/v1
 rsGlobal: FALSE
-rsRegion: North
+rsRegion: ORD
 service: Compute
 versionId: 1
+baseUrlType: MOSSO
 versionInfo: https://compute.north.public.com/v1/ 
 versionList: https://compute.north.public.com/
 rsPublicUrlId: 81b7b0a77ef148949e590d62c8d07485
@@ -3614,9 +3648,10 @@ publicUrl: https://service-public.com/v1
 enabled: TRUE
 internalUrl: https://service-internal.com/v1 
 openStackType: compute
+baseUrlType: MOSSO
 rsAdminUrl: https://service-admin.com/v1
 rsGlobal: FALSE
-rsRegion: North
+rsRegion: ORD
 service: Compute
 versionId: 1
 versionInfo: https://compute.north.public.com/v1/ 
@@ -3757,6 +3792,15 @@ enabled: TRUE
 description: Default Domain
 tenantRsId: 78543987
 tenantRsId: MossoCloudFS_78543987
+
+dn: rsId=32035123,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+rsId: 32035123
+cn: 32035123
+enabled: TRUE
+description: Test Domain
+tenantRsId: 32035123
+tenantRsId: MossoCloudFS_32035123
 
 dn: rsId=78543988,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsDomain
@@ -3985,6 +4029,27 @@ tenantDisplayName: 78543987
 vOneDefault: 15
 vOneDefault: 120
 
+dn: rsId=32035123,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+rsId: 32035123
+cn: 32035123
+enabled: TRUE
+baseUrlId: 135
+baseUrlId: 1041
+baseUrlId: 122
+baseUrlId: 109
+baseUrlId: 1042
+baseUrlId: 56
+baseUrlId: 47
+baseUrlId: 17
+baseUrlId: 83
+baseUrlId: 15
+baseUrlId: 120
+rsDomainId: 32035123
+tenantDisplayName: 32035123
+vOneDefault: 15
+vOneDefault: 120
+
 dn: rsId=78543988,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: tenant
 rsId: 78543988
@@ -4098,6 +4163,23 @@ baseUrlId: 1013
 baseUrlId: 11
 rsDomainId: 78543987
 tenantDisplayName: MossoCloudFS_78543987
+vOneDefault: 111
+vOneDefault: 103
+
+dn: rsId=MossoCloudFS_32035123,ou=tenants,ou=cloud,o=rackspace,dc=rackspace
+ ,dc=com
+objectClass: tenant
+rsId: MossoCloudFS_32035123
+cn: MossoCloudFS_32035123
+enabled: TRUE
+baseUrlId: 3
+baseUrlId: 10
+baseUrlId: 111
+baseUrlId: 103
+baseUrlId: 1013
+baseUrlId: 11
+rsDomainId: 32035123
+tenantDisplayName: MossoCloudFS_32035123
 vOneDefault: 111
 vOneDefault: 103
 
@@ -4289,6 +4371,7 @@ dn: rsId=10022623,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
 objectClass: top
 rsId: 10022623
+rsDomainId: 32035123
 enabled: TRUE
 mail: k@example.com
 passwordSelfUpdated: FALSE
@@ -4318,6 +4401,7 @@ dn: rsId=10022837,ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPerson
 objectClass: top
 rsId: 10022837
+rsDomainId: 32035123
 enabled: TRUE
 mail: john.smith@example.org
 passwordSelfUpdated: FALSE
