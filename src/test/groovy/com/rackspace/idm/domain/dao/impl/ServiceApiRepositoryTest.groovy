@@ -1,10 +1,7 @@
-package com.rackspace.idm.domain.dao.impl;
+package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.domain.dao.ServiceApiDao;
 import org.springframework.beans.factory.annotation.Autowired
-import com.rackspace.idm.domain.entity.CloudBaseUrl
-import com.unboundid.ldap.sdk.*
-import com.unboundid.ldap.sdk.migrate.ldapjdk.LDAPSearchResults
-import com.rackspace.idm.domain.dao.impl.LdapRepository.LdapSearchBuilder
 import spock.lang.Specification
 import org.springframework.test.context.ContextConfiguration
 import com.rackspace.idm.domain.entity.ServiceApi
@@ -17,14 +14,14 @@ import com.rackspace.idm.domain.entity.ServiceApi
  * To change this template use File | Settings | File Templates.
  */
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapServiceApiRepositoryTest extends Specification{
+class ServiceApiRepositoryTest extends Specification {
 
     @Autowired
-    private LdapServiceApiRepository serviceApiRepository
+    private ServiceApiDao serviceApiDao
 
     def "list serviceApis"(){
         when:
-        List<ServiceApi> baseUrlList = serviceApiRepository.getServiceApis().collect()
+        List<ServiceApi> baseUrlList = serviceApiDao.getServiceApis().collect()
 
         then:
         baseUrlList != null
