@@ -91,7 +91,7 @@ public class SqlRegionRepository implements RegionDao {
     @Override
     public Region getDefaultRegion(String cloud) {
         try {
-            return mapper.fromSQL(regionRepository.findByRaxCloudAndRaxIsDefault(cloud, true));
+            return mapper.fromSQL(regionRepository.findByRaxCloudAndRaxIsDefaultAndRaxIsEnabledTrue(cloud, true));
         } catch (Exception e) {
             LOGGER.error("Cannot retrieve default region for cloud:" + cloud, e);
         }

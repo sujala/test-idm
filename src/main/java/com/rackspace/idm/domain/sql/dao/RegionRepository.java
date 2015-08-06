@@ -15,6 +15,6 @@ public interface RegionRepository extends JpaSpecificationExecutor<SqlRegion>, J
     List<SqlRegion> findByRaxCloud(String cloud);
 
     @EntityGraph(value = "SqlRegion.rax", type = EntityGraph.EntityGraphType.FETCH)
-    SqlRegion findByRaxCloudAndRaxIsDefault(String cloud, Boolean defaultRegion);
+    SqlRegion findByRaxCloudAndRaxIsDefaultAndRaxIsEnabledTrue(String cloud, Boolean defaultRegion);
 
 }

@@ -9,7 +9,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapRegionRepositoryIntegrationTest extends Specification {
+class RegionRepositoryIntegrationTest extends Specification {
 
     @Shared def randomness = UUID.randomUUID()
     @Shared def random
