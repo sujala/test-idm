@@ -60,7 +60,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Qualifier("scopeAccessDao")
     private ScopeAccessDao scopeAccessDao;
 
-    @Autowired
+    @Autowired(required = false)
     @Qualifier("uuidScopeAccessDao")
     private ScopeAccessDao uuidScopeAccessDao;
 
@@ -492,7 +492,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return;
         }
 
-        tokenRevocationService.revokeAllTokensForBaseUser(user);
+        tokenRevocationService.revokeAllTokensForEndUser(user);
 
         logger.debug("Done expiring all tokens for user {}", username);
     }
@@ -505,7 +505,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             return;
         }
 
-        tokenRevocationService.revokeAllTokensForBaseUser(user);
+        tokenRevocationService.revokeAllTokensForEndUser(user);
 
         logger.debug("Done expiring all tokens for user {}", userId);
     }

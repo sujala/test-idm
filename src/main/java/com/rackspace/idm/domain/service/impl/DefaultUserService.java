@@ -68,7 +68,7 @@ public class DefaultUserService implements UserService {
     @Autowired
     private UserDao userDao;
 
-    @Autowired
+    @Autowired(required = false)
     private RackerDao rackerDao;
 
     @Autowired
@@ -106,9 +106,6 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private IdentityUserService identityUserService;
-
-    @Autowired
-    private FederatedRackerDao federatedRackerDao;
 
     @Override
     public void addRacker(Racker racker) {

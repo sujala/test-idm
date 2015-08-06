@@ -109,6 +109,7 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
 
     def "Revoke user's tokens by id when set to AE will also revoke all UUID" () {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, true)
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.UUID.name())
         def identityAdmin = utils.createIdentityAdmin()
         def uuidToken = utils.getToken(identityAdmin.username)
@@ -118,18 +119,20 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
         def serviceAdminToken = utils.getServiceAdminToken()
 
         when: "revoke all tokens by userid"
-        tokenRevocationService.revokeAllTokensForBaseUser(identityAdmin.id)
+        tokenRevocationService.revokeAllTokensForEndUser(identityAdmin.id)
 
         then:
         cloud20.validateToken(serviceAdminToken, aeToken).status == SC_NOT_FOUND
         cloud20.validateToken(serviceAdminToken, uuidToken).status == SC_NOT_FOUND
 
         cleanup:
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, false)
         utils.deleteUsers(identityAdmin)
     }
 
     def "Revoke user's tokens by user when set to AE will also revoke all UUID" () {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, true)
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.UUID.name())
         def identityAdmin = utils.createIdentityAdmin()
         def uuidToken = utils.getToken(identityAdmin.username)
@@ -141,13 +144,14 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
         def user = identityUserService.getProvisionedUserById(identityAdmin.id)
 
         when: "revoke all tokens by user"
-        tokenRevocationService.revokeAllTokensForBaseUser(user)
+        tokenRevocationService.revokeAllTokensForEndUser(user)
 
         then:
         cloud20.validateToken(serviceAdminToken, aeToken).status == SC_NOT_FOUND
         cloud20.validateToken(serviceAdminToken, uuidToken).status == SC_NOT_FOUND
 
         cleanup:
+        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, false)
         utils.deleteUsers(identityAdmin)
     }
 
@@ -162,7 +166,7 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
 
         when: "revoke all tokens by userid"
         cloud11.revokeToken(aeToken)
-        tokenRevocationService.revokeAllTokensForBaseUser(identityAdmin.id)
+        tokenRevocationService.revokeAllTokensForEndUser(identityAdmin.id)
 
         then:
         cloud20.validateToken(serviceAdminToken, aeToken).status == SC_NOT_FOUND

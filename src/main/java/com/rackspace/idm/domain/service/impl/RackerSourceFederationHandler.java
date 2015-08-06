@@ -30,7 +30,7 @@ import java.util.List;
 public class RackerSourceFederationHandler implements FederationHandler {
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
 
-    @Autowired
+    @Autowired(required = false)
     FederatedRackerDao federatedRackerDao;
 
     @Autowired

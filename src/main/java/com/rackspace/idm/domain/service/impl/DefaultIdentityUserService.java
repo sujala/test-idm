@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.*;
@@ -26,11 +24,6 @@ public class DefaultIdentityUserService implements IdentityUserService {
     private IdentityProviderDao identityProviderDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
-    @Override
-    public BaseUser getBaseUserById(String userId) {
-        return identityUserRepository.getBaseUserById(userId);
-    }
 
     @Override
     public EndUser getEndUserById(String userId) {

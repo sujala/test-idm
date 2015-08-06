@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 
 import java.security.GeneralSecurityException;
 
@@ -18,6 +19,7 @@ import java.security.GeneralSecurityException;
  * @author john.eo <br/>
  *         Automatic Spring configuration for LDAP to be consumed by Spring.
  */
+@Profile({"LDAP", "default"})
 @org.springframework.context.annotation.Configuration
 public class LdapConfiguration {
     public static final int SERVER_POOL_SIZE_INIT = 1;

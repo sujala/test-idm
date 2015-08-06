@@ -1,6 +1,7 @@
 	package com.rackspace.idm.util;
 
-    import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
+    import com.rackspace.idm.annotation.LDAPComponent;
+	import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
     import com.unboundid.ldap.sdk.LDAPConnection;
     import com.unboundid.ldap.sdk.LDAPException;
     import org.apache.commons.lang.StringUtils;
@@ -16,7 +17,7 @@
     import java.util.regex.Pattern;
 
 @ManagedResource
-@Component
+@LDAPComponent
 public class LdapRouterMBean {
 
     @Autowired

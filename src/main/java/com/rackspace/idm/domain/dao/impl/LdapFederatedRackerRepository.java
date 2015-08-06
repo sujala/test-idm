@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.FederatedRackerDao;
 import com.rackspace.idm.domain.entity.Racker;
 import com.unboundid.ldap.sdk.Filter;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Component;
 /**
  * Persistence methods for racker based identity providers.
  */
-@Component
+@LDAPComponent
 public class LdapFederatedRackerRepository extends LdapFederatedGenericRepository<Racker> implements FederatedRackerDao {
     @Override
     public String getLdapEntityClass() {

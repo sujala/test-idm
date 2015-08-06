@@ -5,13 +5,10 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.dao.DomainDao
-import com.rackspace.idm.domain.dao.FederatedTokenDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedRackerRepository
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.security.ConfigurableTokenFormatSelector
-import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import org.apache.log4j.Logger

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UUIDScopeAccessDao;
@@ -29,7 +30,7 @@ import java.util.List;
  *
  * When revoking tokens, updates the expiration date on all applicable tokens to immediately expire
  */
-@Component
+@LDAPComponent
 public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationService {
     private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 
@@ -126,14 +127,13 @@ public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationServ
     }
 
     @Override
-    public void revokeTokensForBaseUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
-        //TODO: exapnd this to support rackers. Original implementation only supported EndUsers
+    public void revokeTokensForEndUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
         EndUser user = identityUserService.getEndUserById(userId);
-        revokeTokensForBaseUser(user, authenticatedByMethodGroups);
+        revokeTokensForEndUser(user, authenticatedByMethodGroups);
     }
 
     @Override
-    public void revokeTokensForBaseUser(BaseUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+    public void revokeTokensForEndUser(EndUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
         if (user == null) return;
 
         //first determine in need to revoke all
@@ -171,14 +171,13 @@ public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationServ
     }
 
     @Override
-    public void revokeAllTokensForBaseUser(String userId) {
-        //TODO: expand this to support rackers. Original implementation only supported EndUsers
+    public void revokeAllTokensForEndUser(String userId) {
         EndUser user = identityUserService.getEndUserById(userId);
-        revokeAllTokensForBaseUser(user);
+        revokeAllTokensForEndUser(user);
     }
 
     @Override
-    public void revokeAllTokensForBaseUser(BaseUser user) {
+    public void revokeAllTokensForEndUser(EndUser user) {
         if (user == null) return;
 
         for (final ScopeAccess sa : this.scopeAccessDao.getScopeAccesses(user)) {

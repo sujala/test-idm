@@ -60,7 +60,7 @@ class SimpleUUIDRevokeTokenServiceTest extends RootServiceTest {
         uuidScopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
-        service.revokeAllTokensForBaseUser(user.id)
+        service.revokeAllTokensForEndUser(user.id)
 
         then:
         2 * atomHopperClient.asyncTokenPost(_,_)
@@ -78,7 +78,7 @@ class SimpleUUIDRevokeTokenServiceTest extends RootServiceTest {
         uuidScopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
-        service.revokeAllTokensForBaseUser(user.id)
+        service.revokeAllTokensForEndUser(user.id)
 
         then:
         0 * atomHopperClient.asyncTokenPost(_,_)
@@ -99,7 +99,7 @@ class SimpleUUIDRevokeTokenServiceTest extends RootServiceTest {
         uuidScopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
-        service.revokeAllTokensForBaseUser(user)
+        service.revokeAllTokensForEndUser(user)
 
         then:
         2 * atomHopperClient.asyncTokenPost(_,_)
@@ -117,7 +117,7 @@ class SimpleUUIDRevokeTokenServiceTest extends RootServiceTest {
         uuidScopeAccessDao.getScopeAccesses(_) >> [scopeAccessOne, scopeAccessTwo].asList()
 
         when:
-        service.revokeAllTokensForBaseUser(user)
+        service.revokeAllTokensForEndUser(user)
 
         then:
         0 * atomHopperClient.asyncTokenPost(_,_)
@@ -153,7 +153,7 @@ class SimpleUUIDRevokeTokenServiceTest extends RootServiceTest {
         uuidScopeAccessDao.getScopeAccesses(_) >> scopeAccessList
 
         when:
-        service.revokeTokensForBaseUser(user, authenticatedBy)
+        service.revokeTokensForEndUser(user, authenticatedBy)
 
         then:
         /*

@@ -8,43 +8,43 @@ import java.util.List;
 
 public interface TokenRevocationService {
     /**
-     * Static constant defining NULL tokens that can be passed to the {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} and
-     * {@link #revokeTokensForBaseUser(String, java.util.List)} methods
+     * Static constant defining NULL tokens that can be passed to the {@link #revokeTokensForEndUser(com.rackspace.idm.domain.entity.EndUser, java.util.List)} and
+     * {@link #revokeTokensForEndUser(String, java.util.List)} methods
      */
     public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_NULL_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.NULL));
 
     /**
-     * Static constant defining ALL tokens (except "impersonation" user tokens) that can be passed to the {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} and
-     * {@link #revokeTokensForBaseUser(String, java.util.List)} methods
+     * Static constant defining ALL tokens (except "impersonation" user tokens) that can be passed to the {@link #revokeTokensForEndUser(com.rackspace.idm.domain.entity.EndUser, java.util.List)} and
+     * {@link #revokeTokensForEndUser(String, java.util.List)} methods
      */
     public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_ALL_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.ALL));
 
     /**
-     * Static constant defining APIKEY tokens that can be passed to the {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} and
-     * {@link #revokeTokensForBaseUser(String, java.util.List)} methods
+     * Static constant defining APIKEY tokens that can be passed to the {@link #revokeTokensForEndUser(com.rackspace.idm.domain.entity.EndUser, java.util.List)} and
+     * {@link #revokeTokensForEndUser(String, java.util.List)} methods
      */
     public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_API_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.APIKEY));
 
     /**
-     * Static constant defining PASSWORD tokens that can be passed to the {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} and
-     * {@link #revokeTokensForBaseUser(String, java.util.List)} methods
+     * Static constant defining PASSWORD tokens that can be passed to the {@link #revokeTokensForEndUser(com.rackspace.idm.domain.entity.EndUser, java.util.List)} and
+     * {@link #revokeTokensForEndUser(String, java.util.List)} methods
      */
     public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_PASSWORD_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.PASSWORD));
     /**
-     * Static constant defining FEDERATION tokens that can be passed to the {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} and
-     * {@link #revokeTokensForBaseUser(String, java.util.List)} methods
+     * Static constant defining FEDERATION tokens that can be passed to the {@link #revokeTokensForEndUser(com.rackspace.idm.domain.entity.EndUser, java.util.List)} and
+     * {@link #revokeTokensForEndUser(String, java.util.List)} methods
      */
     public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_FEDERATION_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.FEDERATION));
 
     /**
-     * Static constant defining IMPERSONATION tokens that can be passed to the {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} and
-     * {@link #revokeTokensForBaseUser(String, java.util.List)} methods
+     * Static constant defining IMPERSONATION tokens that can be passed to the {@link #revokeTokensForEndUser(com.rackspace.idm.domain.entity.EndUser, java.util.List)} and
+     * {@link #revokeTokensForEndUser(String, java.util.List)} methods
      */
     public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_IMPERSONATION_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.IMPERSONATION));
 
     /**
-     * Static constant defining MFA tokens that can be passed to the {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} and
-     * {@link #revokeTokensForBaseUser(String, java.util.List)} methods
+     * Static constant defining MFA tokens that can be passed to the {@link #revokeTokensForEndUser(com.rackspace.idm.domain.entity.EndUser, java.util.List)} and
+     * {@link #revokeTokensForEndUser(String, java.util.List)} methods
      */
     public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_MFA_TOKENS = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.PASSWORD_PASSCODE, AuthenticatedByMethodGroup.PASSWORD_OTPPASSCODE));
 
@@ -107,7 +107,7 @@ public interface TokenRevocationService {
      * @param userId
      * @param authenticatedByMethodGroups
      */
-    void revokeTokensForBaseUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups);
+    void revokeTokensForEndUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups);
 
     /**
      * Revoke all tokens for the specified EndUser (Provisioned or Federated), which used the specified authentication methods.
@@ -127,30 +127,30 @@ public interface TokenRevocationService {
      * @param user
      * @param authenticatedByMethodGroups
      */
-    void revokeTokensForBaseUser(BaseUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups);
+    void revokeTokensForEndUser(EndUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups);
 
     /**
      * Revoke all tokens for the specified EndUser (Provisioned or Federated). This is a convenience method for passing
-     * {@link #AUTH_BY_LIST_ALL_TOKENS} to {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} or
-     * {@link #revokeTokensForBaseUser(String, java.util.List)}
+     * {@link #AUTH_BY_LIST_ALL_TOKENS} to {@link #revokeTokensForEndUser(com.rackspace.idm.domain.entity.EndUser, java.util.List)} or
+     * {@link #revokeTokensForEndUser(String, java.util.List)}
      * <p>
      *     An atom hopper feed event must be sent, as appropriate, to represent the tokens being revoked.
      * </p>
      *
      * @param userId
      */
-    void revokeAllTokensForBaseUser(String userId);
+    void revokeAllTokensForEndUser(String userId);
 
     /**
      * Revoke all tokens for the specified EndUser (Provisioned or Federated). This is a convenience method for passing
-     * {@link #AUTH_BY_LIST_ALL_TOKENS} to {@link #revokeTokensForBaseUser(com.rackspace.idm.domain.entity.BaseUser, java.util.List)} or
-     * {@link #revokeTokensForBaseUser(String, java.util.List)}
+     * {@link #AUTH_BY_LIST_ALL_TOKENS} to {@link #revokeTokensForEndUser(com.rackspace.idm.domain.entity.EndUser, java.util.List)} or
+     * {@link #revokeTokensForEndUser(String, java.util.List)}
      * <p>
      *     An atom hopper feed event must be sent, as appropriate, to represent the tokens being revoked.
      * </p>
      * @param user
      */
-    void revokeAllTokensForBaseUser(BaseUser user);
+    void revokeAllTokensForEndUser(EndUser user);
 
     /**
      * Whether the specified token has been revoked.

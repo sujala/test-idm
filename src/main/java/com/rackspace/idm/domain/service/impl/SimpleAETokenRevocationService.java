@@ -40,7 +40,7 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     @Autowired
     private AETokenService aeTokenService;
 
-    @Autowired
+    @Autowired(required = false)
     private UUIDTokenRevocationService uuidTokenRevocationService;
 
     @Autowired
@@ -139,34 +139,34 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     }
 
     @Override
-    public void revokeTokensForBaseUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
-        BaseUser user = identityUserService.getBaseUserById(userId);
-        revokeTokensForBaseUser(user, authenticatedByMethodGroups);
+    public void revokeTokensForEndUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+        EndUser user = identityUserService.getEndUserById(userId);
+        revokeTokensForEndUser(user, authenticatedByMethodGroups);
     }
 
     @Override
-    public void revokeTokensForBaseUser(BaseUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+    public void revokeTokensForEndUser(EndUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
         TokenRevocationRecord trr = tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), authenticatedByMethodGroups);
         sendUserTrrFeedEventIfNecessary(user, trr);
 
         if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
-            uuidTokenRevocationService.revokeTokensForBaseUser(user, authenticatedByMethodGroups);
+            uuidTokenRevocationService.revokeTokensForEndUser(user, authenticatedByMethodGroups);
         }
     }
 
     @Override
-    public void revokeAllTokensForBaseUser(String userId) {
-        BaseUser user = identityUserService.getBaseUserById(userId);
-        revokeAllTokensForBaseUser(user);
+    public void revokeAllTokensForEndUser(String userId) {
+        EndUser user = identityUserService.getEndUserById(userId);
+        revokeAllTokensForEndUser(user);
     }
 
     @Override
-    public void revokeAllTokensForBaseUser(BaseUser user) {
+    public void revokeAllTokensForEndUser(EndUser user) {
         TokenRevocationRecord trr = tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), Arrays.asList(AuthenticatedByMethodGroup.ALL));
         sendUserTrrFeedEventIfNecessary(user, trr);
 
         if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
-            uuidTokenRevocationService.revokeAllTokensForBaseUser(user);
+            uuidTokenRevocationService.revokeAllTokensForEndUser(user);
         }
     }
 
