@@ -875,7 +875,11 @@ public class Cloud20VersionResource {
             @PathParam("type") String type,
             @PathParam("version") String version,
             Capabilities capabilities){
-        return cloud20Service.updateCapabilities(authToken, capabilities, type, version).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.updateCapabilities(authToken, capabilities, type, version).build();
+        }
     }
 
     @DELETE
@@ -884,7 +888,11 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("type") String type,
             @PathParam("version") String version){
-        return cloud20Service.removeCapabilities(authToken, type, version).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.removeCapabilities(authToken, type, version).build();
+        }
     }
 
     @GET
@@ -971,7 +979,11 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             Group group) {
-        return cloud20Service.addGroup(httpHeaders, uriInfo, authToken, group).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.addGroup(httpHeaders, uriInfo, authToken, group).build();
+        }
     }
 
     @GET
@@ -1004,7 +1016,11 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
             Group group) {
-        return cloud20Service.updateGroup(httpHeaders, authToken, groupId, group).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.updateGroup(httpHeaders, authToken, groupId, group).build();
+        }
     }
 
     @DELETE
@@ -1013,7 +1029,11 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId) {
-        return cloud20Service.deleteGroup(httpHeaders, authToken, groupId).build();
+        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
+            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
+        } else {
+            return cloud20Service.deleteGroup(httpHeaders, authToken, groupId).build();
+        }
     }
 
     @GET
