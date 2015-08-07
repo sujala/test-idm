@@ -46,5 +46,4 @@ public class OTPDevice implements UniqueId, Auditable, MultiFactorDevice {
     public String getAuditContext() {
         return "otpDevice=" + id;
     }
-
 }

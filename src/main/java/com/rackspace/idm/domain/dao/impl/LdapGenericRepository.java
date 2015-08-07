@@ -10,6 +10,10 @@ import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.StalePasswordException;
+import com.rackspace.idm.util.migration.*;
+import com.rackspace.idm.util.migration.ChangeType;
+import com.rackspace.idm.util.migration.ldap.LDAPMigrationChangeApplicationEvent;
+import com.rackspace.idm.util.migration.ldap.LdapMigrationChangeEvent;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
@@ -22,10 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class LdapGenericRepository<T extends UniqueId> extends LdapRepository implements GenericDao<T> {
     public static final String ERROR_GETTING_OBJECT = "Error getting object";
@@ -170,8 +171,12 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         try {
             final LDAPPersister<T> persister = (LDAPPersister<T>) LDAPPersister.getInstance(object.getClass());
             doPreEncode(object);
-            persister.add(object, getAppInterface(), dn);
+
+            //this is an approximation of the date this occurred
+            Date timeStamp = new Date();
+            LDAPResult result = persister.add(object, getAppInterface(), dn);
             audit.succeed();
+            emitMigrationAddEventIfNecessary(object, timeStamp);
             getLogger().info("Added: {}", object);
         } catch (final LDAPException e) {
             getLogger().error("Error adding object", e);
@@ -182,6 +187,18 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
                 default:
                     throw new IllegalStateException(e);
             }
+        }
+    }
+
+    private void emitMigrationAddEventIfNecessary(T object, Date timeStamp) {
+        if (shouldEmitEventForDN(object.getUniqueId())) {
+            applicationEventPublisher.publishEvent(new LDAPMigrationChangeApplicationEvent(this, timeStamp, ChangeType.ADD, object.getUniqueId()));
+        }
+    }
+
+    private void emitMigrationModifyEventIfNecessary(T object, Date timeStamp) {
+        if (shouldEmitEventForDN(object.getUniqueId())) {
+            applicationEventPublisher.publishEvent(new LDAPMigrationChangeApplicationEvent(this, timeStamp, ChangeType.MODIFY, object.getUniqueId()));
         }
     }
 
@@ -312,9 +329,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         String loggerMsg = String.format("Updating object %s with id %s", entityType.toString(), object.getUniqueId());
         getLogger().debug(loggerMsg);
         Audit audit = Audit.log((Auditable)object).modify();
+        Date timeStamp;
 
         try {
             doPreEncode(object);
+            timeStamp = new Date();
             applyModificationsForAttributes(object, true);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating {} - {}", object, ldapEx);
@@ -323,6 +342,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
         audit.succeed();
+        emitMigrationModifyEventIfNecessary(object, timeStamp);
         getLogger().info("Updated - {}", object);
     }
 
@@ -336,12 +356,12 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         String loggerMsg = String.format("Updating object %s with id %s", entityType.toString(), object.getUniqueId());
         getLogger().debug(loggerMsg);
         Audit audit = Audit.log((Auditable)object).modify();
-
+        Date timeStamp;
         try {
             doPreEncode(object);
+            timeStamp = new Date();
             applyModifications(object, false);
             applyModifications(object, true);
-
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating {} - {}", object, ldapEx);
             audit.fail("Error updating");
@@ -349,6 +369,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
         audit.succeed();
+        emitMigrationModifyEventIfNecessary(object, timeStamp);
         getLogger().info("Updated - {}", object);
     }
 
@@ -495,6 +516,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().debug("Deleting: {}", object);
         final String dn = object.getUniqueId();
         final Audit audit = Audit.log((Auditable)object).delete();
+
         deleteEntryAndSubtree(dn, audit);
         audit.succeed();
         getLogger().debug("Deleted: {}", object);

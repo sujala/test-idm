@@ -3,8 +3,11 @@ package com.rackspace.idm.domain.config;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.security.TokenFormat;
+import com.rackspace.idm.util.migration.ChangeType;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -167,10 +170,6 @@ public class IdentityConfig {
      * Required static prop
      */
     public static final String ROLE_ID_RACKER_PROP = "cloudAuth.rackerRoleRsId";
-
-    /**
-     * Required static prop
-     */
     public static final String CLIENT_ID_FOUNDATION_PROP = "idm.clientId";
 
     /**
@@ -181,14 +180,31 @@ public class IdentityConfig {
     private static final String SQL_USERNAME_PROP = "sql.username";
     private static final String SQL_PASSWORD_PROP = "sql.password";
 
+    /* ************************
+     * MIGRATION PROPS
+     **************************/
+    public static final String FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP = "feature.migration.read.only.mode.enabled";
+    public static final Boolean FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_DEFAULT = false;
+
+    public static final String MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP = "handle.migration.change.events.default";
+    public static final Boolean MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_DEFAULT = false;
+    public static final String MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP = "ignore.migration.change.events.of.type.default";
+    public static final List MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_DEFAULT = Collections.EMPTY_LIST;
+
+    public static final String MIGRATION_LISTENER_HANDLES_CHANGE_EVENTS_PROP_PREFIX = "handle.migration.change.events.for.listener";
+    public static final String MIGRATION_LISTENER_HANDLES_MIGRATION_CHANGE_EVENTS_PROP_REG = MIGRATION_LISTENER_HANDLES_CHANGE_EVENTS_PROP_PREFIX + ".%s";
+    public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX = "ignore.migration.change.events.of.type.for.listener";
+    public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_REG = MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX + ".%s";
+
+
+    /* ************************
+     **************************/
+
     /**
      * SQL debug property
      */
     private static final String SQL_SHOW_SQL_PROP = "sql.showSql";
     private static final Boolean SQL_SHOW_DEFAULT = Boolean.FALSE;
-
-    public static final String FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP = "feature.migration.read.only.mode.enabled";
-    public static final Boolean FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_DEFAULT = false;
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -265,6 +281,8 @@ public class IdentityConfig {
         defaults.put(SQL_SHOW_SQL_PROP, SQL_SHOW_DEFAULT);
         defaults.put(FEATURE_PERSIST_RACKERS_PROP, FEATURE_PERSIST_RACKERS_DEFAULT);
         defaults.put(FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP, FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_DEFAULT);
+        defaults.put(MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP, MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_DEFAULT);
+        defaults.put(MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP, MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_DEFAULT);
 
         return defaults;
     }
@@ -428,6 +446,61 @@ public class IdentityConfig {
         return result;
     }
 
+    private String[] getStringArraySafely(Configuration config, String prop) {
+        String[] defaultValue = (String[]) propertyDefaults.get(prop);
+        String[] setVal;
+        try {
+            if (defaultValue == null) {
+                setVal = config.getStringArray(prop);
+            } else {
+                setVal = config.getStringArray(prop);
+                /*
+                An empty array is returned when the property is not defined OR if the property exists but does not contain
+                any values. Want to use the default ONLY if the property does not exist.
+                 */
+                if (ArrayUtils.isEmpty(setVal) && !config.containsKey(prop)) {
+                    setVal = defaultValue;
+                }
+            }
+            return setVal;
+        } catch (ConversionException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Guaranteed to return a non-null value. Will return an empty list if the parameter is not defined.
+     *
+     * @param config
+     * @param prop
+     * @return
+     */
+    private List getListSafely(Configuration config, String prop) {
+        List defaultValue = (List) propertyDefaults.get(prop);
+        List setVal;
+        try {
+            setVal = config.getList(prop);
+
+            if (defaultValue != null && CollectionUtils.isEmpty(setVal) && !config.containsKey(prop)) {
+               /*
+                An empty list is returned when the property is not defined OR if the property exists but does not contain
+                any values. Want to use the default ONLY if the property does not exist.
+                 */
+               setVal = defaultValue;
+            }
+            return setVal;
+        } catch (ConversionException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+            return defaultValue;
+        }
+    }
+
+    private Set getSetSafely(Configuration config, String prop) {
+        List asList = getListSafely(config, prop);
+        return new HashSet(asList);
+    }
+
     private TokenFormat convertToTokenFormat(String strFormat) {
         for (TokenFormat tokenFormat : TokenFormat.values()) {
             if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
@@ -435,6 +508,26 @@ public class IdentityConfig {
             }
         }
         return TokenFormat.UUID;
+    }
+
+    private ChangeType convertToChangeType(String strFormat) {
+        for (ChangeType tokenFormat : ChangeType.values()) {
+            if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
+                return tokenFormat;
+            }
+        }
+        return null;
+    }
+
+    private Set<ChangeType> convertToChangeType(Set<String> strFormats) {
+        Set<ChangeType> result = new HashSet<ChangeType>(strFormats.size());
+        for (String changeTypeStr : strFormats) {
+            ChangeType converted = convertToChangeType(changeTypeStr);
+            if (converted != null) {
+                result.add(converted);
+            }
+        }
+        return result;
     }
 
     /**
@@ -888,7 +981,7 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP);
         }
 
-        @IdmProp(key = AE_NODE_NAME_FOR_SIGNOFF_PROP, description = "The unique name for this API Node used for signoff on the AE keys loaded by this node", versionAdded = "2.16.0")
+        @IdmProp(key = AE_NODE_NAME_FOR_SIGNOFF_PROP, description = "The unique name for this API Node. This is used for both signoff on the AE keys loaded into cache by this node, and to record the node making changes", versionAdded = "2.16.0")
         public String getAENodeNameForSignoff() {
             return reloadableConfiguration.getString(AE_NODE_NAME_FOR_SIGNOFF_PROP); //required property so no default
         }
@@ -896,6 +989,10 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, description = "Whether or not to keep the signoff object in sync with the loaded AE Key cache", versionAdded = "2.16.0")
         public boolean getAESyncSignOffEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP);
+        }
+
+        public String getNodeName() {
+            return getAENodeNameForSignoff();
         }
 
         @IdmProp(key = FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP, description = "Whether or not terminator is active for authentication requests where a tenant is provided", versionAdded = "2.16.0")
@@ -935,6 +1032,29 @@ public class IdentityConfig {
         @IdmProp(key = IDENTITY_ROLE_TENANT_DEFAULT, description = "Identity role default tenant", versionAdded = "3.0.0")
         public String getIdentityRoleDefaultTenant() {
             return getStringSafely(reloadableConfiguration, IDENTITY_ROLE_TENANT_DEFAULT);
+        }
+
+        public boolean isMigrationListenerEnabled(String listenerName) {
+            return reloadableConfiguration.getBoolean(String.format(MIGRATION_LISTENER_HANDLES_MIGRATION_CHANGE_EVENTS_PROP_REG, listenerName), areMigrationListenersEnabledByDefault());
+        }
+
+        public Set<ChangeType> getIgnoredChangeTypesForMigrationListener(String listenerName) {
+            String dynamicPropName = String.format(MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_REG, listenerName);
+            Set configuredVal = getSetSafely(reloadableConfiguration, dynamicPropName);
+            if (CollectionUtils.isEmpty(configuredVal) && !reloadableConfiguration.containsKey(dynamicPropName)) {
+                configuredVal = getDefaultMigrationListenerIgnoredChangeTypes();
+            }
+            return convertToChangeType(configuredVal);
+        }
+
+        @IdmProp(key = MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP, description = "Whether a migration listener is enabled by default", versionAdded = "3.0.0")
+        public boolean areMigrationListenersEnabledByDefault() {
+            return getBooleanSafely(reloadableConfiguration, MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP);
+        }
+
+        @IdmProp(key = MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP, description = "What change types types migration listeners should ignore by default", versionAdded = "3.0.0")
+        public Set<ChangeType> getDefaultMigrationListenerIgnoredChangeTypes() {
+            return getSetSafely(reloadableConfiguration, MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP);
         }
     }
 

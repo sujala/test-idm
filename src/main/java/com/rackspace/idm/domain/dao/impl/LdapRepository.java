@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.util.migration.*;
+import com.rackspace.idm.util.migration.ldap.LDAPMigrationChangeApplicationEvent;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
@@ -10,9 +12,11 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -239,6 +243,16 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_SCOPE_ACCESS_ATTRIBUTES = {"*", ATTR_CREATED_DATE};
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
+    //LDAP Change Event
+    public static final String OBJECTCLASS_CHANGE_EVENT = "rsChangeEvent";
+    public static final String ATTR_CHANGE_OCCURRED_DATE = "rsChangeOccurredDate";
+    public static final String ATTR_CHANGE_TYPE = "rsChangeType";
+    public static final String ATTR_ENTITY_TYPE = "rsEntityType";
+    public static final String ATTR_ENTITY_ID = "rsEntityId";
+    public static final String ATTR_HOST_NAME = "rsHostName";
+    public static final String CHANGE_EVENT_BASE_DN = "ou=changeevent,dc=rackspace,dc=com";
+
+
     public static final String FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME = "feature.use.subtree.delete.control.for.subtree.deletion.enabled";
     public static final boolean FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_DEFAULT_VALUE = false;
 
@@ -247,6 +261,9 @@ public abstract class LdapRepository {
 
     @Autowired
     protected Configuration config;
+
+    @Autowired
+    protected ApplicationEventPublisher applicationEventPublisher;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -290,7 +307,9 @@ public abstract class LdapRepository {
             DeleteRequest deleteRequest = new DeleteRequest(dn);
             deleteRequest.addControl(new SubtreeDeleteRequestControl(true));
             LDAPInterface inter = getAppInterface();
+            Date timeStamp = new Date();
             inter.delete(deleteRequest);
+            emitMigrationDeleteEventIfNecessary(dn, timeStamp);
         } catch (LDAPException e) {
             audit.fail();
             getLogger().error(LDAP_SEARCH_ERROR, e.getMessage());
@@ -308,8 +327,9 @@ public abstract class LdapRepository {
                 deleteEntryAndSubtree(entry.getDN(), audit);
             }
 
+            Date timeStamp = new Date();
             getAppInterface().delete(dn);
-
+            emitMigrationDeleteEventIfNecessary(dn, timeStamp);
         } catch (LDAPException e) {
             audit.fail();
             getLogger().error(LDAP_SEARCH_ERROR, e.getMessage());
@@ -317,6 +337,19 @@ public abstract class LdapRepository {
         }
     }
 
+    private void emitMigrationDeleteEventIfNecessary(String dn, Date timeStamp) {
+        if (shouldEmitEventForDN(dn)) {
+            applicationEventPublisher.publishEvent(new LDAPMigrationChangeApplicationEvent(this, timeStamp, com.rackspace.idm.util.migration.ChangeType.DELETE, dn));
+        }
+    }
+
+    protected boolean shouldEmitEventForDN(String dn) {
+        if (dn.endsWith(CHANGE_EVENT_BASE_DN) || dn.contains("cn=" + CONTAINER_TOKENS)) {
+            //don't record tokens or change events
+            return false;
+        }
+        return true;
+    }
 
     protected List<SearchResultEntry> getMultipleEntries(String baseDN, SearchScope scope, Filter searchFilter, String... attributes) {
         SearchResult searchResult;
