@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.UserService
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
@@ -23,6 +24,7 @@ import testHelpers.EntityFactory
 class SimpleAETokenRevocationServiceMemIntegrationTest extends Specification {
 
     @Autowired
+    @Qualifier("simpleAETokenRevocationService")
     SimpleAETokenRevocationService revocationService;
 
     @Shared AETokenService aeTokenService
@@ -90,47 +92,48 @@ class SimpleAETokenRevocationServiceMemIntegrationTest extends Specification {
         String token = sa.accessTokenString
 
         aeTokenService.unmarshallToken(token) >> sa
-        identityUserService.getBaseUserById(_) >> entityFactory.createUser().with {it.id = sa.getIssuedToUserId(); return it;}
+        identityUserService.getEndUserById(_) >> entityFactory.createUser().with {it.id = sa.getIssuedToUserId(); return it;}
 
         expect:
         !revocationService.isTokenRevoked(token)
         !revocationService.isTokenRevoked(sa)
 
         when:
-        revocationService.revokeAllTokensForBaseUser(sa.userRsId)
+        revocationService.revokeAllTokensForEndUser(sa.userRsId)
 
         then:
         revocationService.isTokenRevoked(token)
         revocationService.isTokenRevoked(sa)
     }
 
-    def "revokeAllTokensForUser(BaseUser) - user based revocation"() {
+    def "revokeAllTokensForUser(EndUser) - user based revocation"() {
         def sa = entityFactory.createUserToken().with {
             it.createTimestamp = new DateTime().minusHours(1).toDate()
             return it
         }
         def user = entityFactory.createUser().with {
             it.id = sa.userRsId
+            it
         }
 
         String token = sa.accessTokenString
 
         aeTokenService.unmarshallToken(token) >> sa
-        identityUserService.getBaseUserById(_) >> entityFactory.createUser().with {it.id = sa.getIssuedToUserId(); return it;}
+        identityUserService.getEndUserById(_) >> entityFactory.createUser().with {it.id = sa.getIssuedToUserId(); return it;}
 
         expect:
         !revocationService.isTokenRevoked(token)
         !revocationService.isTokenRevoked(sa)
 
         when:
-        revocationService.revokeAllTokensForBaseUser(user)
+        revocationService.revokeAllTokensForEndUser(user)
 
         then:
         revocationService.isTokenRevoked(token)
         revocationService.isTokenRevoked(sa)
     }
 
-    def "revokeTokensForBaseUser(userId) - when revoke password tokens, password tokens are revoked"() {
+    def "revokeTokensForEndUser(userId) - when revoke password tokens, password tokens are revoked"() {
         def sa = entityFactory.createUserToken().with {
             it.createTimestamp = new DateTime().minusHours(1).toDate()
             it.authenticatedBy = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
@@ -139,21 +142,21 @@ class SimpleAETokenRevocationServiceMemIntegrationTest extends Specification {
         String token = sa.accessTokenString
 
         aeTokenService.unmarshallToken(token) >> sa
-        identityUserService.getBaseUserById(_) >> entityFactory.createUser().with {it.id = sa.getIssuedToUserId(); return it;}
+        identityUserService.getEndUserById(_) >> entityFactory.createUser().with {it.id = sa.getIssuedToUserId(); return it;}
 
         expect:
         !revocationService.isTokenRevoked(token)
         !revocationService.isTokenRevoked(sa)
 
         when: "expire all api tokens"
-        revocationService.revokeTokensForBaseUser(sa.userRsId, TokenRevocationService.AUTH_BY_LIST_API_TOKENS)
+        revocationService.revokeTokensForEndUser(sa.userRsId, TokenRevocationService.AUTH_BY_LIST_API_TOKENS)
 
         then: "password token is not revoked"
         !revocationService.isTokenRevoked(token)
         !revocationService.isTokenRevoked(sa)
 
         when: "expire all password tokens"
-        revocationService.revokeTokensForBaseUser(sa.userRsId, TokenRevocationService.AUTH_BY_LIST_PASSWORD_TOKENS)
+        revocationService.revokeTokensForEndUser(sa.userRsId, TokenRevocationService.AUTH_BY_LIST_PASSWORD_TOKENS)
 
         then: "password token is expired"
         revocationService.isTokenRevoked(token)

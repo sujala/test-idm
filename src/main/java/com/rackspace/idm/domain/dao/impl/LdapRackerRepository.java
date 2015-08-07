@@ -1,11 +1,12 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.RackerDao;
 import com.rackspace.idm.domain.entity.Racker;
 import com.unboundid.ldap.sdk.Filter;
 import org.springframework.stereotype.Component;
 
-@Component
+@LDAPComponent
 public class LdapRackerRepository extends LdapGenericRepository<Racker> implements RackerDao {
 
     @Override

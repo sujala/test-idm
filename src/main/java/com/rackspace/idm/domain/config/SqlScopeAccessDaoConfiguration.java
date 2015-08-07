@@ -12,28 +12,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-@Profile({"LDAP", "default"})
+@Profile("SQL")
 @Configuration
-public class MultiDAOConfiguration {
+public class SqlScopeAccessDaoConfiguration {
 
     @Bean(name = "scopeAccessDao")
-    @Autowired
-    public ScopeAccessDao getScopeAccessDao(
-            @Qualifier("aeScopeAccessDao") AEScopeAccessDao aeScopeAccessDao,
-            @Qualifier("uuidScopeAccessDao") UUIDScopeAccessDao uuidScopeAccessDao) {
-        return new RouterScopeAccessRepository(aeScopeAccessDao, uuidScopeAccessDao);
-    }
-
-    @Bean(name = "aeScopeAccessDao")
-    @Autowired
     public AEScopeAccessDao getAEScopeAccessDao() {
         return new AEScopeAccessRepository();
-    }
-
-    @Bean(name = "uuidScopeAccessDao")
-    @Autowired
-    public UUIDScopeAccessDao getUUIDScopeAccessDao() {
-        return new LdapScopeAccessRepository();
     }
 
 }

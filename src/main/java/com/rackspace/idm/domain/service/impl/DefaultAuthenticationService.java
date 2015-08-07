@@ -52,7 +52,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
     private IdentityConfig identityConfig;
     @Autowired
     private AuthorizationService authorizationService;
-    @Autowired
+    @Autowired(required = false)
     private RackerDao rackerDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());

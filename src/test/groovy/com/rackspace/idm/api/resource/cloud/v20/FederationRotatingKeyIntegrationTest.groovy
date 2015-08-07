@@ -1,47 +1,29 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.dao.DomainDao
-import com.rackspace.idm.domain.dao.FederatedTokenDao
-import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.dao.impl.LdapIdentityProviderRepository
-import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
-import com.rackspace.idm.domain.entity.TenantRole
-import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
-import com.unboundid.ldap.sdk.SearchResultEntry
-import org.apache.commons.lang.BooleanUtils
 import org.apache.log4j.Logger
 import org.opensaml.xml.security.credential.Credential
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
-import spock.lang.Shared
-import spock.lang.Unroll
 import testHelpers.EntityFactory
-import testHelpers.RootIntegrationTest
 import testHelpers.saml.CredentialSamlAssertionFactory
-import testHelpers.saml.SamlAssertionFactory
 import testHelpers.saml.SamlCredentialUtils
 
 import javax.servlet.http.HttpServletResponse
 import java.security.cert.X509Certificate
 
 import static com.rackspace.idm.Constants.DEFAULT_IDP_NAME
-import static com.rackspace.idm.Constants.DEFAULT_IDP_URI
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest {
     private static final Logger LOG = Logger.getLogger(FederationRotatingKeyIntegrationTest.class)
-
-    @Autowired
-    FederatedTokenDao federatedTokenDao
 
     @Autowired
     LdapFederatedUserRepository ldapFederatedUserRepository

@@ -24,7 +24,7 @@ import java.util.List;
  * To change this template use File | Settings | File Templates.
  */
 @Component
-public class DefaultCapabilityService extends LdapRepository implements CapabilityService {
+public class DefaultCapabilityService implements CapabilityService {
 
     @Autowired
     private CapabilityDao capabilityDao;

@@ -6,7 +6,6 @@ import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.DomainDao
-import com.rackspace.idm.domain.dao.FederatedTokenDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.FederatedUser
@@ -40,9 +39,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class FederatedUserIntegrationTest extends RootIntegrationTest {
     private static final Logger LOG = Logger.getLogger(FederatedUserIntegrationTest.class)
-
-    @Autowired
-    FederatedTokenDao federatedTokenDao
 
     @Autowired
     LdapFederatedUserRepository ldapFederatedUserRepository

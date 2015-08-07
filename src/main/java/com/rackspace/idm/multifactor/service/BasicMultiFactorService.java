@@ -1034,7 +1034,7 @@ public class BasicMultiFactorService implements MultiFactorService {
      */
     private void revokeAllMFAProtectedTokensForUser(User user) {
         //only revoke password tokens
-        tokenRevocationService.revokeTokensForBaseUser(user, TokenRevocationService.AUTH_BY_LIST_PASSWORD_TOKENS);
+        tokenRevocationService.revokeTokensForEndUser(user, TokenRevocationService.AUTH_BY_LIST_PASSWORD_TOKENS);
     }
 
     private void disableMultiFactorForUser(User user) {

@@ -87,73 +87,58 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
         given:
         User user = new User()
         user.id = "1"
-        identityUserService.getBaseUserById(_) >> user
+        identityUserService.getEndUserById(_) >> user
 
         List<AuthenticatedByMethodGroup> authenticatedByMethodGroups =  Arrays.asList(AuthenticatedByMethodGroup.ALL)
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> true
-        service.revokeTokensForBaseUser(user.id, authenticatedByMethodGroups)
+        service.revokeTokensForEndUser(user.id, authenticatedByMethodGroups)
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        1 * uuidTokenRevocationService.revokeTokensForBaseUser(user, _)
+        1 * uuidTokenRevocationService.revokeTokensForEndUser(user, _)
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> true
-        service.revokeTokensForBaseUser(user, Collections.EMPTY_LIST)
+        service.revokeTokensForEndUser(user, Collections.EMPTY_LIST)
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        1 * uuidTokenRevocationService.revokeTokensForBaseUser(user, _)
+        1 * uuidTokenRevocationService.revokeTokensForEndUser(user, _)
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> false
-        service.revokeTokensForBaseUser(user.id, authenticatedByMethodGroups)
+        service.revokeTokensForEndUser(user.id, authenticatedByMethodGroups)
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        0 * uuidTokenRevocationService.revokeTokensForBaseUser(user, _)
+        0 * uuidTokenRevocationService.revokeTokensForEndUser(user, _)
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> false
-        service.revokeTokensForBaseUser(user, Collections.EMPTY_LIST)
+        service.revokeTokensForEndUser(user, Collections.EMPTY_LIST)
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        0 * uuidTokenRevocationService.revokeTokensForBaseUser(user, _)
+        0 * uuidTokenRevocationService.revokeTokensForEndUser(user, _)
     }
 
-    def "revokeTokensForBaseUser - atom hopper trr event sent appropriately based on user type" () {
+    def "revokeTokensForEndUser - atom hopper trr event sent appropriately based on user type" () {
         given:
         List<AuthenticatedByMethodGroup> authenticatedByMethodGroups =  Arrays.asList(AuthenticatedByMethodGroup.ALL)
 
         when:
-        Racker racker = new Racker()
-        racker.rackerId = "1"
-        service.revokeTokensForBaseUser(racker, authenticatedByMethodGroups)
-
-        then:
-        0 * atomHopperClient.asyncPostUserTrr(_,_)
-
-        when:
-        identityUserService.getBaseUserById(racker.rackerId) >> racker
-        service.revokeTokensForBaseUser(racker.rackerId, authenticatedByMethodGroups)
-
-        then:
-        0 * atomHopperClient.asyncPostUserTrr(_,_)
-
-        when:
         User user = new User()
         user.id = "1"
-        service.revokeTokensForBaseUser(user, authenticatedByMethodGroups)
+        service.revokeTokensForEndUser(user, authenticatedByMethodGroups)
 
         then:
         1 * atomHopperClient.asyncPostUserTrr(_,_)
 
         when:
-        identityUserService.getBaseUserById(user.id) >> user
-        service.revokeTokensForBaseUser(user.id, authenticatedByMethodGroups)
+        identityUserService.getEndUserById(user.id) >> user
+        service.revokeTokensForEndUser(user.id, authenticatedByMethodGroups)
 
         then:
         1 * atomHopperClient.asyncPostUserTrr(_,_)
@@ -161,56 +146,56 @@ class SimpleAeRevokeTokenServiceTest extends RootServiceTest {
         when:
         FederatedUser federatedUser = new FederatedUser()
         federatedUser.id = "1"
-        service.revokeTokensForBaseUser(federatedUser, authenticatedByMethodGroups)
+        service.revokeTokensForEndUser(federatedUser, authenticatedByMethodGroups)
 
         then:
         0 * atomHopperClient.asyncPostUserTrr(_,_)
 
         when:
-        identityUserService.getBaseUserById(federatedUser.id) >> federatedUser
-        service.revokeTokensForBaseUser(federatedUser.id, authenticatedByMethodGroups)
+        identityUserService.getEndUserById(federatedUser.id) >> federatedUser
+        service.revokeTokensForEndUser(federatedUser.id, authenticatedByMethodGroups)
 
         then:
         0 * atomHopperClient.asyncPostUserTrr(_,_)
     }
 
-    def "revokeAllTokensForBaseUser - analagous UUID revoke called as appropriate" () {
+    def "revokeAllTokensForEndUser - analagous UUID revoke called as appropriate" () {
         given:
         User user = new User()
         user.id = "1"
-        identityUserService.getBaseUserById(_) >> user
+        identityUserService.getEndUserById(_) >> user
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> true
-        service.revokeAllTokensForBaseUser(user.id)
+        service.revokeAllTokensForEndUser(user.id)
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        1 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user)
+        1 * uuidTokenRevocationService.revokeAllTokensForEndUser(user)
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> true
-        service.revokeAllTokensForBaseUser(user)
+        service.revokeAllTokensForEndUser(user)
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        1 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user)
+        1 * uuidTokenRevocationService.revokeAllTokensForEndUser(user)
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> false
-        service.revokeAllTokensForBaseUser(user.id)
+        service.revokeAllTokensForEndUser(user.id)
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        0 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user)
+        0 * uuidTokenRevocationService.revokeAllTokensForEndUser(user)
 
         when:
         identityConfig.getFeatureAeTokenCleanupUuidOnRevokes() >> false
-        service.revokeAllTokensForBaseUser(user)
+        service.revokeAllTokensForEndUser(user)
 
         then:
         1 * tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.id, _)
-        0 * uuidTokenRevocationService.revokeAllTokensForBaseUser(user)
+        0 * uuidTokenRevocationService.revokeAllTokensForEndUser(user)
     }
 
 }

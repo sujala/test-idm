@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
-import com.rackspace.idm.domain.dao.RackerDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.sql.dao.IdentityUserRepository;
@@ -22,19 +21,7 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
     private FederatedUserDao fedUserDao;
 
     @Autowired
-    private RackerDao rackerDao;
-
-    @Autowired
     private IdentityUserRepository identityUserRepository;
-
-    @Override
-    public BaseUser getBaseUserById(String userId) {
-        BaseUser baseUser = getEndUserById(userId);
-        if (baseUser == null) {
-            baseUser = rackerDao.getRackerByRackerId(userId);
-        }
-        return baseUser;
-    }
 
     @Override
     public EndUser getEndUserById(String userId) {

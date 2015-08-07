@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.security.TokenFormatSelector;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Component(value = "tokenRevocationService")
+@LDAPComponent(value = "tokenRevocationService")
 public class RouterTokenRevocationService implements TokenRevocationService {
     private final AETokenRevocationService aeTokenRevocationService;
     private final UUIDTokenRevocationService uuidRevokeTokenService;
@@ -87,27 +88,27 @@ public class RouterTokenRevocationService implements TokenRevocationService {
     }
 
     @Override
-    public void revokeTokensForBaseUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+    public void revokeTokensForEndUser(String userId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
         //TODO: expand this to support rackers. Original UUID implementation only supported EndUsers
         EndUser user = identityUserService.getEndUserById(userId);
-        revokeTokensForBaseUser(user, authenticatedByMethodGroups);
+        revokeTokensForEndUser(user, authenticatedByMethodGroups);
     }
 
     @Override
-    public void revokeTokensForBaseUser(BaseUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
-        getRouteByBaseUser(user).revokeTokensForBaseUser(user, authenticatedByMethodGroups);
+    public void revokeTokensForEndUser(EndUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+        getRouteByBaseUser(user).revokeTokensForEndUser(user, authenticatedByMethodGroups);
     }
 
     @Override
-    public void revokeAllTokensForBaseUser(String userId) {
+    public void revokeAllTokensForEndUser(String userId) {
         //TODO: expand this to support rackers. Original UUID implementation only supported EndUsers
         EndUser user = identityUserService.getEndUserById(userId);
-        revokeAllTokensForBaseUser(user);
+        revokeAllTokensForEndUser(user);
     }
 
     @Override
-    public void revokeAllTokensForBaseUser(BaseUser user) {
-        getRouteByBaseUser(user).revokeAllTokensForBaseUser(user);
+    public void revokeAllTokensForEndUser(EndUser user) {
+        getRouteByBaseUser(user).revokeAllTokensForEndUser(user);
     }
 
     @Override

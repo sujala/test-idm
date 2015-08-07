@@ -5,15 +5,6 @@ import com.rackspace.idm.domain.entity.*;
 public interface IdentityUserDao {
 
     /**
-     * Search for an base user with the specified id. The user identified by the userId must represent an BaseUser
-     * (e.g. - racker, provisioned, or federated).
-     *
-     * @param userId
-     * @return
-     */
-    BaseUser getBaseUserById(String userId);
-
-    /**
      * Search for an end user with the specified id. The user identified by the userId must represent an EndUser (e.g. - provisioned or federated).
      *
      * @param userId
