@@ -49,7 +49,7 @@ public class UserMapper extends SqlRaxMapper<User, SqlUser, SqlUserRax> {
         if (user.getUniqueId() == null) {
             user.setUniqueId(fromSqlUserToUniqueId(sqlUser));
         }
-        if (user.getPassword() != null) {
+        if (user.getPassword() != null && !user.getPassword().equals(user.getUserPassword())) {
             sqlUser.setUserPassword(Crypt.crypt(user.getPassword()));
         }
         return sqlUser;

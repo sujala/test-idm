@@ -473,11 +473,15 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
     }
 
     def void resetTokenExpiration(tokenString) {
-        Date now = new Date()
-        Date future = new Date(now.year + 1, now.month, now.day)
-        def userScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenString)
-        userScopeAccess.setAccessTokenExp(future)
-        scopeAccessRepository.updateScopeAccess(userScopeAccess)
+        try {
+            Date now = new Date()
+            Date future = new Date(now.year + 1, now.month, now.day)
+            def userScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenString)
+            userScopeAccess.setAccessTokenExp(future)
+            scopeAccessRepository.updateScopeAccess(userScopeAccess)
+        } catch (Exception e) {
+            // FIXME: Remove this for AE tokens?
+        }
     }
 
     def void verifyMfaStateForUser(user, mediaType, expectedResult) {
