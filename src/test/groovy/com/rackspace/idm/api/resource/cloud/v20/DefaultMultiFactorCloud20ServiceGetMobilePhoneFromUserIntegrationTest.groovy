@@ -1,8 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
@@ -10,11 +8,6 @@ import spock.lang.Unroll
 import javax.ws.rs.core.MediaType
 
 class DefaultMultiFactorCloud20ServiceGetMobilePhoneFromUserIntegrationTest extends RootConcurrentIntegrationTest {
-    @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
-
-    @Autowired
-    private LdapUserRepository userRepository;
 
     @Autowired
     private IdentityConfig identityConfig;

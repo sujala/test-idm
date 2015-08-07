@@ -3,8 +3,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,7 +21,7 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
 class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
+    MobilePhoneDao mobilePhoneRepository;
 
     @Autowired
     @Qualifier("scopeAccessDao")

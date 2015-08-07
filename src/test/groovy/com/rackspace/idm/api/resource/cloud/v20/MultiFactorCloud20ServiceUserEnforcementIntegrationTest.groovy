@@ -4,8 +4,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.v20.json.writers.JSONWriterForRaxAuthMultiFactor
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
@@ -25,11 +23,6 @@ import static org.apache.http.HttpStatus.SC_NO_CONTENT
  */
 @ContextConfiguration(locations = ["classpath:app-config.xml"])
 class MultiFactorCloud20ServiceUserEnforcementIntegrationTest extends RootConcurrentIntegrationTest {
-    @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
-
-    @Autowired
-    private LdapUserRepository userRepository;
 
     @Autowired
     private Configuration globalConfig;

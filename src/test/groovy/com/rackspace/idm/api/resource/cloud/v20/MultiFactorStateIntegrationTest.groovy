@@ -6,7 +6,6 @@ import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UserDao
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
@@ -16,7 +15,6 @@ import org.openstack.docs.identity.api.v2.User
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 
 import javax.ws.rs.core.MediaType
@@ -28,8 +26,6 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
 class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired BasicMultiFactorService multiFactorService;
-
-    @Autowired LdapMobilePhoneRepository mobilePhoneRepository;
 
     @Autowired Configuration config
 

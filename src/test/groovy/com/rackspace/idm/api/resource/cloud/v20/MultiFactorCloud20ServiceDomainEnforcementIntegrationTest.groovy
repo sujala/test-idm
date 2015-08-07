@@ -13,7 +13,7 @@ import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.idm.Constants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.v20.json.writers.JSONWriterForRaxAuthMultiFactorDomain
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import groovy.json.JsonBuilder
@@ -41,7 +41,7 @@ import static org.apache.http.HttpStatus.*
 class MultiFactorCloud20ServiceDomainEnforcementIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired
-    private LdapUserRepository userRepository;
+    UserDao userRepository;
 
     /**
      * Override the grizzly start because we want to add additional context file.

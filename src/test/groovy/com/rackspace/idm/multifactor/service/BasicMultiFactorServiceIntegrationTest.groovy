@@ -4,7 +4,9 @@ import com.google.i18n.phonenumbers.Phonenumber
 import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.OTPDeviceDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
@@ -39,10 +41,10 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
     private BasicMultiFactorService multiFactorService;
 
     @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
+    MobilePhoneDao mobilePhoneRepository;
 
     @Autowired
-    private LdapUserRepository userRepository;
+    UserDao userRepository;
 
     @Autowired
     private UserManagement duoUserManagement
@@ -78,8 +80,8 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         finalUserAdmin.getMultiFactorMobilePhoneRsId() == phone.getId()
 
         cleanup:
-        userRepository.deleteObject(finalUserAdmin)
-        mobilePhoneRepository.deleteObject(retrievedPhone)
+        userRepository.deleteUser(finalUserAdmin)
+        mobilePhoneRepository.deleteMobilePhone(retrievedPhone)
     }
 
     /**
@@ -116,10 +118,10 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
 
         cleanup:
         if (finalUserAdmin != null) {
-            userRepository.deleteObject(finalUserAdmin)
+            userRepository.deleteUser(finalUserAdmin)
         }
         if (phone != null) {
-            mobilePhoneRepository.deleteObject(phone)
+            mobilePhoneRepository.deleteMobilePhone(phone)
         }
     }
 
@@ -151,8 +153,8 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         !userAdmin.getMultifactorEnabled()
 
         cleanup:
-        userRepository.deleteObject(userAdmin)
-        mobilePhoneRepository.deleteObject(phone)
+        userRepository.deleteUser(userAdmin)
+        mobilePhoneRepository.deleteMobilePhone(phone)
     }
 
     /**
@@ -194,8 +196,8 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
 
         cleanup:
         mockMobilePhoneVerification.reset()
-        userRepository.deleteObject(userAdmin)
-        mobilePhoneRepository.deleteObject(phone)
+        userRepository.deleteUser(userAdmin)
+        mobilePhoneRepository.deleteMobilePhone(phone)
     }
 
     /**
@@ -217,7 +219,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
 
         userAdmin.setMultiFactorDevicePin(pin);
         userAdmin.setMultiFactorDevicePinExpiration(new DateTime().plusDays(1).toDate()) //set the expiration to tomorrow
-        userRepository.updateObject(userAdmin)
+        userRepository.updateUser(userAdmin)
 
         when:
         multiFactorService.verifyPhoneForUser(userAdmin.getId(), retrievedPhone.getId(), new BasicPin(pin))
@@ -230,8 +232,8 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         userAdmin.getMultiFactorDeviceVerified()
 
         cleanup:
-        userRepository.deleteObject(userAdmin)
-        mobilePhoneRepository.deleteObject(phone)
+        userRepository.deleteUser(userAdmin)
+        mobilePhoneRepository.deleteMobilePhone(phone)
     }
 
     /**
@@ -268,7 +270,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         cleanup:
         if (userAdmin != null) {
             multiFactorService.removeMultiFactorForUser(userAdmin.id)  //remove duo profile
-            userRepository.deleteObject(userAdmin)
+            userRepository.deleteUser(userAdmin)
         }
     }
 
@@ -307,7 +309,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         cleanup:
         if (userAdmin != null) {
             multiFactorService.removeMultiFactorForUser(userAdmin.id)  //remove duo profile
-            userRepository.deleteObject(userAdmin)
+            userRepository.deleteUser(userAdmin)
         }
     }
 
@@ -346,7 +348,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         cleanup:
         if (userAdmin != null) {
             multiFactorService.removeMultiFactorForUser(userAdmin.id)  //remove duo profile
-            userRepository.deleteObject(userAdmin)
+            userRepository.deleteUser(userAdmin)
         }
     }
 
@@ -457,7 +459,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         retrieved.getName() == name
 
         cleanup:
-        userRepository.deleteObject(finalUserAdmin)
+        userRepository.deleteUser(finalUserAdmin)
     }
 
     /**
@@ -500,7 +502,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         multiFactorService.checkAndGetOTPDeviceFromUserById(finalUserAdmin.id, otpDevice3.id) != null
 
         cleanup:
-        userRepository.deleteObject(finalUserAdmin)
+        userRepository.deleteUser(finalUserAdmin)
         reloadableConfiguration.reset()
     }
 
@@ -518,7 +520,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         multiFactorService.getOTPDeviceFromUserById(finalUserAdmin.id, otpDevice.id) == null
 
         cleanup:
-        userRepository.deleteObject(finalUserAdmin)
+        userRepository.deleteUser(finalUserAdmin)
     }
 
     def "Get a list of OTP devices on a user-admin"() {
@@ -550,9 +552,9 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         multipleDevices.find() {it.name == otp2Name} != null
 
         cleanup:
-        otpDeviceDao.deleteObject(otpDevice1)
-        otpDeviceDao.deleteObject(otpDevice2)
-        userRepository.deleteObject(finalUserAdmin)
+        otpDeviceDao.deleteOTPDevice(otpDevice1)
+        otpDeviceDao.deleteOTPDevice(otpDevice2)
+        userRepository.deleteUser(finalUserAdmin)
     }
 
 }

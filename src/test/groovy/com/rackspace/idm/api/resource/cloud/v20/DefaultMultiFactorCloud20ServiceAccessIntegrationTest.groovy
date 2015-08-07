@@ -11,7 +11,6 @@ import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.http.HttpStatus
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
@@ -24,12 +23,6 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
 
     @Autowired
     Cloud20Utils utils
-
-    @Autowired
-    LdapMobilePhoneRepository mobilePhoneRepository
-
-    @Autowired
-    LdapUserRepository userRepository
 
     @Autowired
     BasicMultiFactorService multiFactorService

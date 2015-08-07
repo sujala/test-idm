@@ -3,7 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
@@ -31,7 +31,7 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
 class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired
-    private LdapUserRepository userRepository
+    UserDao userRepository
 
     @Autowired
     private BasicMultiFactorService multiFactorService

@@ -4,9 +4,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapDomainRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.RoleService
@@ -34,8 +34,8 @@ class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
     @Qualifier("scopeAccessDao")
     ScopeAccessDao scopeAccessRepository
 
-    @Autowired LdapUserRepository userRepository
-    @Autowired LdapDomainRepository domainRepository
+    @Autowired UserDao userRepository
+    @Autowired DomainDao domainRepository
     @Autowired RoleService roleService
     @Autowired Configuration config
 

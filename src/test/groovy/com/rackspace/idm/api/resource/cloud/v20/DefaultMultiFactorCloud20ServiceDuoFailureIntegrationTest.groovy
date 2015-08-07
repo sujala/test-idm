@@ -6,8 +6,8 @@ import com.rackspace.identity.multifactor.providers.duo.exception.DuoLockedOutEx
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
 import com.rackspace.idm.api.security.RequestContextHolder
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.MobilePhoneDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
@@ -15,10 +15,8 @@ import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
 import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
-import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
 
 import javax.ws.rs.core.Response
 
@@ -36,11 +34,12 @@ import javax.ws.rs.core.Response
  * </p>
  */
 class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConcurrentIntegrationTest {
-    @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
 
     @Autowired
-    private LdapUserRepository userRepository;
+    MobilePhoneDao mobilePhoneRepository;
+
+    @Autowired
+    UserDao userRepository;
 
     @Autowired
     private BasicMultiFactorService multiFactorService;
@@ -84,7 +83,7 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         if (userAdmin != null) {
             deleteUserQuietly(userAdmin)
         }
-        if (responsePhone != null) mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.getId()))
+        if (responsePhone != null) mobilePhoneRepository.deleteMobilePhone(mobilePhoneRepository.getById(responsePhone.getId()))
     }
 
     def "enableMultiFactor: Fail with 500 when unexpected exception"() {

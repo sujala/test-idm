@@ -1,9 +1,9 @@
 package com.rackspace.idm.multifactor.service
 
 import com.google.i18n.phonenumbers.Phonenumber
+import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.UniqueId
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
@@ -21,10 +21,10 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
     private BasicMultiFactorService multiFactorService;
 
     @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
+    MobilePhoneDao mobilePhoneRepository;
 
     @Autowired
-    private LdapUserRepository userRepository;
+    UserDao userRepository;
 
     /**
      * This tests when feature is disabled
@@ -155,8 +155,8 @@ class BasicMultiFactorServicePhoneMembershipFeatureIntegrationTest extends RootC
         for (obj in objToDelete) {
             try {
                 if (obj != null) {
-                    if (obj instanceof User) userRepository.deleteObject(obj)
-                    else if (obj instanceof MobilePhone) mobilePhoneRepository.deleteObject(obj)
+                    if (obj instanceof User) userRepository.deleteUser(obj)
+                    else if (obj instanceof MobilePhone) mobilePhoneRepository.deleteMobilePhone(obj)
                 }
             }
             catch (Exception ex) {

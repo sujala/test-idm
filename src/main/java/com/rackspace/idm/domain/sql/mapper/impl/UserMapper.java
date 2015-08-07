@@ -25,27 +25,27 @@ public class UserMapper extends SqlRaxMapper<User, SqlUser, SqlUserRax> {
     private GroupRepository groupRepository;
 
     @Override
-    public User fromSQL(SqlUser sqlUser) {
+    public User fromSQL(SqlUser sqlUser, boolean ignoreNulls) {
         if (sqlUser == null) {
             return null;
         }
 
-        final User user = super.fromSQL(sqlUser);
+        final User user = super.fromSQL(sqlUser, ignoreNulls);
         if (user.getUniqueId() == null) {
             user.setUniqueId(fromSqlUserToUniqueId(sqlUser));
         }
-        encryptionService.encryptUser(user);
+        encryptionService.decryptUser(user);
         return user;
     }
 
     @Override
-    public SqlUser toSQL(User user) {
+    public SqlUser toSQL(User user, SqlUser sqlUser, boolean ignoreNulls) {
         if (user == null) {
             return null;
         }
 
-        encryptionService.decryptUser(user);
-        final SqlUser sqlUser = super.toSQL(user);
+        encryptionService.encryptUser(user);
+        sqlUser = super.toSQL(user, sqlUser, ignoreNulls);
         if (user.getUniqueId() == null) {
             user.setUniqueId(fromSqlUserToUniqueId(sqlUser));
         }
