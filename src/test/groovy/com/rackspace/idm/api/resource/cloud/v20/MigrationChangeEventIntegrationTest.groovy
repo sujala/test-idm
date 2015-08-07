@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.OTPDeviceDao
 import com.rackspace.idm.domain.dao.UniqueId
 import com.rackspace.idm.domain.dao.UserDao
@@ -22,7 +23,6 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.junit.IgnoreByRepositoryProfile
-import testHelpers.junit.SpringRepositoryProfileEnum
 
 class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
     @Autowired

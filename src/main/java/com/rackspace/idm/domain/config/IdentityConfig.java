@@ -52,7 +52,9 @@ public class IdentityConfig {
     public static final String IDENTITY_USER_MANAGE_ROLE_NAME_PROP = "cloudAuth.userManagedRole";
     public static final String IDENTITY_DEFAULT_USER_ROLE_NAME_PROP = "cloudAuth.userRole";
     public static final String IDENTITY_PROVISIONED_TOKEN_FORMAT = "feature.provisioned.defaultTokenFormat";
+    public static final TokenFormat IDENTITY_PROVISIONED_TOKEN_SQL_OVERRIDE = TokenFormat.AE;
     private static final String FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME = "feature.aetoken.cleanup.uuid.on.revokes";
+    private static final boolean FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_SQL_OVERRIDE = false;
     public static final String PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME = "reloadable.properties.ttl.seconds";
     public static final String GROUP_DOMAINID_DEFAULT = "group.domainId.default";
     public static final String TENANT_DOMAINID_DEFAULT = "tenant.domainId.default";
@@ -66,6 +68,7 @@ public class IdentityConfig {
      * override property {@link #IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG}
      */
     public static final String IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP = "feature.federated.provider.defaultTokenFormat";
+    public static final String IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_SQL_OVERRIDE = "feature.federated.provider.defaultTokenFormat";
 
     /**
      * The format of the property name to set the token format for a specific IDP. The '%s' is replaced by the IDP's labeledUri. This
@@ -73,12 +76,16 @@ public class IdentityConfig {
      * is used.
      */
     public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX = "federated.provider.tokenFormat";
+    public static final TokenFormat IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE = TokenFormat.AE;
     public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG = IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX + ".%s";
     private static final String IDENTITY_RACKER_TOKEN_FORMAT =  "feature.racker.defaultTokenFormat";
+    private static final TokenFormat IDENTITY_RACKER_TOKEN_SQL_OVERRIDE =  TokenFormat.AE;
     private static final String IDENTITY_RACKER_AE_TOKEN_ROLE = "racker.ae.tokens.role";
     private static final String KEYCZAR_DN_CONFIG = "feature.KeyCzarCrypterLocator.ldap.dn";
     public static final String FEATURE_AE_TOKENS_ENCRYPT = "feature.ae.tokens.encrypt";
+    public static final boolean FEATURE_AE_TOKENS_ENCRYPT_SQL_OVERRIDE = true;
     public static final String FEATURE_AE_TOKENS_DECRYPT = "feature.ae.tokens.decrypt";
+    public static final boolean FEATURE_AE_TOKENS_DECRYPT_SQL_OVERRIDE = true;
 
     //OPTIONAL PROPERTIES
     private static final boolean REQUIRED = true;
@@ -164,6 +171,7 @@ public class IdentityConfig {
     public static final String RACKER_IMPERSONATE_ROLE_NAME_DEFAULT = "cloud-identity-impersonate";
 
     public static final String FEATURE_PERSIST_RACKERS_PROP = "feature.persist.rackers.enabled";
+    public static final boolean FEATURE_PERSIST_RACKERS_SQL_OVERRIDE = false;
     public static final boolean FEATURE_PERSIST_RACKERS_DEFAULT = true;
 
     /**
@@ -213,6 +221,9 @@ public class IdentityConfig {
     @Qualifier("reloadableConfiguration")
     @Autowired
     private Configuration reloadableConfiguration;
+
+    @Autowired
+    private RepositoryProfileResolver profileResolver;
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityConfig.class);
     private final Map<String,Object> propertyDefaults;
@@ -507,7 +518,11 @@ public class IdentityConfig {
                 return tokenFormat;
             }
         }
-        return TokenFormat.UUID;
+        if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+            return TokenFormat.AE;
+        } else {
+            return TokenFormat.UUID;
+        }
     }
 
     private ChangeType convertToChangeType(String strFormat) {
@@ -692,11 +707,17 @@ public class IdentityConfig {
 
         @IdmProp(key = IDENTITY_PROVISIONED_TOKEN_FORMAT, description = "Defines the default token format for provisioned users tokens.", versionAdded = "2.12.0")
         public TokenFormat getIdentityProvisionedTokenFormat() {
+            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                return IDENTITY_PROVISIONED_TOKEN_SQL_OVERRIDE;
+            }
             return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_PROVISIONED_TOKEN_FORMAT));
         }
 
         @IdmProp(key = IDENTITY_RACKER_TOKEN_FORMAT, description = "Defines the default token format for eDir Racker tokens. If racker persistence is disable, is AE", versionAdded = "2.12.0")
         public TokenFormat getIdentityRackerTokenFormat() {
+            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                return IDENTITY_RACKER_TOKEN_SQL_OVERRIDE;
+            }
             if (!reloadableConfig.shouldPersistRacker()) {
                 //if we're not persisting rackers, the only viable format is AE
                 return TokenFormat.AE;
@@ -711,6 +732,9 @@ public class IdentityConfig {
 
         @IdmProp(key = FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME)
         public boolean getFeatureAeTokenCleanupUuidOnRevokes() {
+            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                return FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_SQL_OVERRIDE;
+            }
             return getBooleanSafely(staticConfiguration, FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME);
         }
 
@@ -721,11 +745,17 @@ public class IdentityConfig {
 
         @IdmProp(key = FEATURE_AE_TOKENS_ENCRYPT)
         public boolean getFeatureAETokensEncrypt() {
+            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                return FEATURE_AE_TOKENS_ENCRYPT_SQL_OVERRIDE;
+            }
             return getBooleanSafely(staticConfiguration, FEATURE_AE_TOKENS_ENCRYPT);
         }
 
         @IdmProp(key = FEATURE_AE_TOKENS_DECRYPT)
         public boolean getFeatureAETokensDecrypt() {
+            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                return FEATURE_AE_TOKENS_DECRYPT_SQL_OVERRIDE;
+            }
             return getFeatureAETokensEncrypt() || staticConfiguration.getBoolean(FEATURE_AE_TOKENS_DECRYPT);
         }
 
@@ -1001,16 +1031,25 @@ public class IdentityConfig {
         }
 
         public TokenFormat getIdentityFederationRequestTokenFormatForIdp(String idpLabeledUri) {
+            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                return IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE;
+            }
             return convertToTokenFormat(reloadableConfiguration.getString(String.format(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, idpLabeledUri), "${" + IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP + "}"));
         }
 
         @IdmProp(key = IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, description = "When an override property does not exist for a given federated provider, this determines the token format to use for that provide's federated users. AE | UUID", versionAdded = "2.13.0")
         public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
+            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                return IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE;
+            }
             return convertToTokenFormat(getStringSafely(reloadableConfiguration, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP));
         }
 
         @IdmProp(key = FEATURE_PERSIST_RACKERS_PROP, description = "Whether shell Racker users are persisted within Identity", versionAdded = "3.0.0")
         public boolean shouldPersistRacker() {
+            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                return FEATURE_PERSIST_RACKERS_SQL_OVERRIDE;
+            }
             return getBooleanSafely(reloadableConfiguration, FEATURE_PERSIST_RACKERS_PROP);
         }
 
