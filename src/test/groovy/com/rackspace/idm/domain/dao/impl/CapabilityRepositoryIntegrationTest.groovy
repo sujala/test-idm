@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.domain.dao.CapabilityDao
 import com.rackspace.idm.domain.entity.Capability
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.service.EndpointService
@@ -10,15 +11,13 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapCapabilityRepositoryIntegrationTest extends Specification {
+class CapabilityRepositoryIntegrationTest extends Specification {
     @Shared def randomness = UUID.randomUUID()
     @Shared def random
     @Shared CloudBaseUrl cloudBaseUrl
 
     @Autowired
-    private LdapCapabilityRepository ldapCapabilityRepository;
-
-    @Autowired Configuration config
+    private CapabilityDao capabilityDao
 
     @Autowired
     private EndpointService endpointService;
@@ -27,60 +26,15 @@ class LdapCapabilityRepositoryIntegrationTest extends Specification {
         random = ("$randomness").replace('-', "")
     }
 
-    def "getNextId returns UUID"() {
-        given:
-        def success = false
-        ldapCapabilityRepository.config = config
-        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
-        config.setProperty("rsid.uuid.enabled",true)
-
-        when:
-        def id = ldapCapabilityRepository.getNextId(LdapRepository.NEXT_CAPABILITY_ID)
-        try {
-            Long.parseLong(id)
-        } catch (Exception) {
-            success = true
-        }
-
-        then:
-        success == true
-
-        cleanup:
-        config.setProperty("rsid.uuid.enabled",originalVal)
-    }
-
-    def "getNextId returns Long"() {
-        given:
-        def success = false
-        ldapCapabilityRepository.config = config
-        def originalVal = config.getBoolean("rsid.uuid.enabled", false)
-        config.setProperty("rsid.uuid.enabled",false)
-
-        when:
-        def id = ldapCapabilityRepository.getNextId(LdapRepository.NEXT_CAPABILITY_ID)
-        try {
-            Long.parseLong(id)
-            success = true
-        } catch (Exception) {
-            //no-op
-        }
-
-        then:
-        success == true
-
-        cleanup:
-        config.setProperty("rsid.uuid.enabled",originalVal)
-    }
-
     def "CRUD capabilities"() {
         when:
         def baseUrlId = "10003321"
         cloudBaseUrl = getCloudBaseUrl(baseUrlId, "NAST", "test", "test", false, true, false, "cloudServers")
         endpointService.addBaseUrl(cloudBaseUrl)
-        ldapCapabilityRepository.addObject(getCapability("100123321","GET", "get_server", "get_server", "description", "http://someUrl","compute","1", null))
-        Capability capability1 = ldapCapabilityRepository.getCapability("get_server","compute","1")
-        ldapCapabilityRepository.deleteCapability("get_server","compute","1")
-        Capability capability2 = ldapCapabilityRepository.getCapability("get_server","compute", "1")
+        capabilityDao.addCapability(getCapability("100123321","GET", "get_server", "get_server", "description", "http://someUrl","compute","1", null))
+        Capability capability1 = capabilityDao.getCapability("get_server","compute","1")
+        capabilityDao.deleteCapability("get_server","compute","1")
+        Capability capability2 = capabilityDao.getCapability("get_server","compute", "1")
         endpointService.deleteBaseUrl(baseUrlId)
 
         then:
@@ -90,13 +44,6 @@ class LdapCapabilityRepositoryIntegrationTest extends Specification {
         capability2 == null
 
     }
-
-    def "IllegalStateException getCapabilities"() {
-        when: ldapCapabilityRepository.getObject(null)
-        then: thrown(IllegalStateException)
-    }
-
-
 
     //Helper Methods
     def getCloudBaseUrl(String id, String type, String serviceName, String publicUrl, Boolean defaultValue, Boolean enabled, Boolean global, String OSType) {
@@ -109,7 +56,12 @@ class LdapCapabilityRepositoryIntegrationTest extends Specification {
             it.setEnabled(enabled);
             it.setGlobal(global);
             it.setOpenstackType(OSType);
+            it.adminUrlId = UUID.randomUUID().toString().replace("-", "");
+            it.internalUrlId = UUID.randomUUID().toString().replace("-", "");
+            it.publicUrlId = UUID.randomUUID().toString().replace("-", "");
+            it.region = "ORD"
             it.def = false
+            it.clientId = "18e7a7032733486cd32f472d7bd58f709ac0d221"
             return it
         }
     }
