@@ -5,6 +5,11 @@ objectClass: top
 objectClass: cosineDomain
 dc: rackspace
 
+dn: ou=changeevent,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+description: Defines container for change events
+
 dn: o=configuration,dc=rackspace,dc=com
 objectClass: top
 objectClass: organization
