@@ -50,11 +50,6 @@ public class CloudBaseUrl implements Auditable, UniqueId {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String baseUrlType;
 
-    @LDAPField(attribute=LdapRepository.ATTR_NAME,
-            objectClass=LdapRepository.OBJECTCLASS_BASEURL,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private String cn;
-
     @LDAPField(attribute=LdapRepository.ATTR_DEF,
             objectClass=LdapRepository.OBJECTCLASS_BASEURL,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)

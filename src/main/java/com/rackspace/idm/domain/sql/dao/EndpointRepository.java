@@ -43,5 +43,5 @@ public interface EndpointRepository extends JpaSpecificationExecutor<SqlEndpoint
     public List<SqlEndpoint> findByRaxBaseUrlTypeAndEnabledAndRaxDefTrue(String baseUrlType, boolean enabled);
 
     @EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public List<SqlEndpoint> findByRaxSqlPolicyEndpointRaxPolicyId(String policyId);
+    public List<SqlEndpoint> findByRaxSqlPolicyPolicyId(String policyId);
 }

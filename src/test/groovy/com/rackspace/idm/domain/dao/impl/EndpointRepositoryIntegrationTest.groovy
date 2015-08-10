@@ -10,7 +10,7 @@ import spock.lang.Specification
 import static com.rackspace.idm.GlobalConstants.*
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapEndpointRepositoryIntegrationTest extends Specification {
+class EndpointRepositoryIntegrationTest extends Specification {
 
     @Autowired
     private EndpointDao endpointDao
@@ -18,11 +18,15 @@ class LdapEndpointRepositoryIntegrationTest extends Specification {
     @Autowired
     private CloudTestUtils testUtils
 
+
     def "endpoint crud"() {
         given:
         def baseUrlId = testUtils.getRandomUUID("baseUrlId")
-        def baseUrlToCreate = getCreateBaseUrl(baseUrlId)
-        def baseUrlToUpdate = getUpdateBaseUrl(baseUrlId)
+        def adminUrlId = testUtils.getRandomUUID()
+        def internalUrlId = testUtils.getRandomUUID()
+        def publicUrlId = testUtils.getRandomUUID()
+        def baseUrlToCreate = getCreateBaseUrl(baseUrlId, adminUrlId, internalUrlId, publicUrlId)
+        def baseUrlToUpdate = getUpdateBaseUrl(baseUrlId, adminUrlId, internalUrlId, publicUrlId)
 
         when:
         endpointDao.addBaseUrl(baseUrlToCreate)
@@ -75,7 +79,7 @@ class LdapEndpointRepositoryIntegrationTest extends Specification {
         then:
         for (CloudBaseUrl baseUrl : usGlobalMossoBaseUrls) {
             assert (baseUrl.baseUrlType == "MOSSO")
-            assert (baseUrl.region == "ORD")
+            assert (baseUrl.region == "ORD" || baseUrl.region == "DFW")
         }
         for (CloudBaseUrl baseUrl : ukGlobalMossoBaseUrls) {
             assert (baseUrl.baseUrlType == "MOSSO")
@@ -108,48 +112,58 @@ class LdapEndpointRepositoryIntegrationTest extends Specification {
         endpointDao.deleteBaseUrl(baseUrlId)
     }
 
-    def getCreateBaseUrl(baseUrlId) {
+    def getCreateBaseUrl(
+            baseUrlId,
+            adminUrlId = testUtils.getRandomUUID(),
+            internalUrlId = testUtils.getRandomUUID(),
+            publicUrlId = testUtils.getRandomUUID()) {
         return new CloudBaseUrl().with {
             it.baseUrlId = baseUrlId
             it.publicUrl = "publicUrl"
             it.baseUrlType = "baseUrlType"
-            it.cn = "name"
             it.def = true
             it.enabled = true
             it.internalUrl = "internalUrl"
             it.openstackType = "openstackType"
-            it.policyList = ["1"].asList()
+            it.policyList = ["100000000"].asList()
             it.adminUrl = "adminUrl"
             it.global = true
-            it.region = "region"
+            it.region = "ORD"
             it.serviceName = "serviceName"
             it.versionId = "versionId"
             it.versionInfo = "versionInfo"
             it.versionList = "versionList"
             it.tenantAlias = "prefix${TENANT_ALIAS_PATTERN}"
+            it.adminUrlId =  adminUrlId
+            it.internalUrlId = internalUrlId
+            it.publicUrlId = publicUrlId
+            it.clientId = "18e7a7032733486cd32f472d7bd58f709ac0d221"
             return it
         }
     }
 
-    def getUpdateBaseUrl(baseUrlId) {
+    def getUpdateBaseUrl(baseUrlId, adminUrlId, internalUrlId, publicUrlId) {
         return new CloudBaseUrl().with {
             it.baseUrlId = baseUrlId
             it.publicUrl = "publicUrl2"
             it.baseUrlType = "baseUrlType2"
-            it.cn = "name2"
             it.def = false
             it.enabled = false
             it.internalUrl = "internalUrl2"
             it.openstackType = "openstackType2"
-            it.policyList = ["1", "2"].asList()
+            it.policyList = [].asList()
             it.adminUrl = "adminUrl2"
             it.global = false
-            it.region = "region2"
+            it.region = "DFW"
             it.serviceName = "serviceName2"
             it.versionId = "versionId2"
             it.versionInfo = "versionInfo2"
             it.versionList = "versionList2"
             it.tenantAlias = TENANT_ALIAS_PATTERN
+            it.adminUrlId =  adminUrlId
+            it.internalUrlId = internalUrlId
+            it.publicUrlId = publicUrlId
+            it.clientId = "18e7a7032733486cd32f472d7bd58f709ac0d221"
             return it
         }
     }

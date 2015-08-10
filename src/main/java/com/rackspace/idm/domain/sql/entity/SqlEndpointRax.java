@@ -3,7 +3,7 @@ package com.rackspace.idm.domain.sql.entity;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -45,7 +45,8 @@ public class SqlEndpointRax {
     @Column(name =  "version_list")
     private String versionList;
 
-    @OneToMany(cascade = CascadeType.DETACH)
-    @JoinColumn(name = "endpoint_id", nullable = true, insertable = false, updatable = false)
-    private Set<SqlPolicyEndpointRax> sqlPolicyEndpointRax;
+    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @JoinTable(name="policy_endpoint_rax",
+    joinColumns={@JoinColumn(name="endpoint_id", referencedColumnName="id")}, inverseJoinColumns={@JoinColumn(name="policy_id", referencedColumnName="id")})
+    private Set<SqlPolicy> sqlPolicy = new HashSet<SqlPolicy>();
 }

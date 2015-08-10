@@ -99,7 +99,7 @@ public class SqlEndpointRepository implements EndpointDao {
 
     @Override
     public Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
-        List<SqlEndpoint> endpoints = endpointRepository.findByRaxSqlPolicyEndpointRaxPolicyId(policyId);
+        List<SqlEndpoint> endpoints = endpointRepository.findByRaxSqlPolicyPolicyId(policyId);
 
         return getCloudBaseUrls(endpoints);
     }

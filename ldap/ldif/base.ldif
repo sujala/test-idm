@@ -3904,6 +3904,36 @@ objectClass: top
 objectClass: organizationalUnit
 ou: policies
 
+dn: rsId=1039,ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPolicy
+rsId: 1039
+blob: blob
+cn: name
+enabled: TRUE
+policyType: type
+rsGlobal: TRUE
+description: description
+
+dn: rsId=1041,ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPolicy
+rsId: 1041
+blob: blob
+cn: name
+enabled: TRUE
+policyType: type
+rsGlobal: TRUE
+description: description
+
+dn: rsId=3043,ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsPolicy
+rsId: 3043
+blob: blob
+cn: name
+enabled: TRUE
+policyType: type
+rsGlobal: TRUE
+description: description
+
 dn: rsId=100000000,ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsPolicy
 rsId: 100000000
