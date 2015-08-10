@@ -532,7 +532,7 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         String otp1Name = getNormalizedRandomString()
         OTPDevice otpDevice1 = multiFactorService.addOTPDeviceToUser(finalUserAdmin.id, otp1Name)
         otpDevice1.multiFactorDeviceVerified = true
-        otpDeviceDao.updateObjectAsIs(otpDevice1)
+        otpDeviceDao.updateOTPDevice(otpDevice1)
 
         when: "list devices"
         def devices = multiFactorService.getOTPDevicesForUser(finalUserAdmin)
@@ -552,9 +552,9 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         multipleDevices.find() {it.name == otp2Name} != null
 
         cleanup:
-        otpDeviceDao.deleteOTPDevice(otpDevice1)
-        otpDeviceDao.deleteOTPDevice(otpDevice2)
-        userRepository.deleteUser(finalUserAdmin)
+        try { otpDeviceDao.deleteOTPDevice(otpDevice1) } catch (Exception e) {}
+        try { otpDeviceDao.deleteOTPDevice(otpDevice2) } catch (Exception e) {}
+        try { userRepository.deleteUser(finalUserAdmin) } catch (Exception e) {}
     }
 
 }

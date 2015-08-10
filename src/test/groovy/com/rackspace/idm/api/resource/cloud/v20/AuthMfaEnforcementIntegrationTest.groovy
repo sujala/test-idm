@@ -1,14 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapDomainRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
 
 import static com.rackspace.idm.Constants.*
@@ -25,8 +24,8 @@ class AuthMfaEnforcementIntegrationTest extends RootIntegrationTest {
     @Qualifier("scopeAccessDao")
     ScopeAccessDao scopeAccessRepository
 
-    @Autowired LdapUserRepository userRepository
-    @Autowired LdapDomainRepository domainRepository
+    @Autowired UserDao userRepository
+    @Autowired DomainDao domainRepository
 
     def "If Mulit-Factor is not enabled for a user then normal auth is allowed"() {
         given:
@@ -77,7 +76,7 @@ class AuthMfaEnforcementIntegrationTest extends RootIntegrationTest {
         userRepository.updateUserAsIs(initialUserAdmin)
         Domain domain = domainRepository.getDomain(domainId)
         domain.domainMultiFactorEnforcementLevel = GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL
-        domainRepository.updateObjectAsIs(domain)
+        domainRepository.updateDomain(domain)
 
         when:
         def response = cloud20.authenticatePassword(userAdmin.username, DEFAULT_PASSWORD)
@@ -120,7 +119,7 @@ class AuthMfaEnforcementIntegrationTest extends RootIntegrationTest {
         userRepository.updateUserAsIs(initialUserAdmin)
         Domain domain = domainRepository.getDomain(domainId)
         domain.domainMultiFactorEnforcementLevel = GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED
-        domainRepository.updateObjectAsIs(domain)
+        domainRepository.updateDomain(domain)
 
         when:
         def response = cloud20.authenticatePassword(userAdmin.username, DEFAULT_PASSWORD)
