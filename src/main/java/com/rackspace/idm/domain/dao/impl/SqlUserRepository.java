@@ -14,17 +14,14 @@ import com.rackspace.idm.domain.sql.dao.UserRepository;
 import com.rackspace.idm.domain.sql.entity.SqlUser;
 import com.rackspace.idm.domain.sql.mapper.impl.GroupMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.UserMapper;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.digest.Crypt;
+import com.rackspace.idm.util.CryptHelper;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 
-import java.security.MessageDigest;
 import java.util.*;
 
 @SQLComponent
@@ -35,9 +32,6 @@ public class SqlUserRepository implements UserDao {
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
     private static final List<String> AUTH_BY_PASSWORD_LIST = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD);
     private static final List<String> AUTH_BY_API_KEY_LIST = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY);
-
-    private static final String SSHA512 = "{SSHA512}";
-    private static final int SHA512_SIZE = 64;
 
     @Autowired
     private UserMapper userMapper;
@@ -56,6 +50,9 @@ public class SqlUserRepository implements UserDao {
 
     @Autowired
     private EncryptionService encryptionService;
+
+    @Autowired
+    private CryptHelper cryptHelper;
 
     @Override
     public void addUser(User user) {
@@ -125,58 +122,13 @@ public class SqlUserRepository implements UserDao {
             return new UserAuthenticationResult(null, false);
         }
 
-        boolean isAuthenticated = checkPassword(user, password);
+        boolean isAuthenticated = cryptHelper.checkPassword(user.getUserPassword(), password);
         final UserAuthenticationResult authResult = new UserAuthenticationResult(user, isAuthenticated, AUTH_BY_PASSWORD_LIST);
         LOGGER.debug("Authenticated User by password");
 
         addAuditLogForAuthentication(user, isAuthenticated);
 
         return authResult;
-    }
-
-    private boolean checkPassword(User user, String password) {
-        final String userPassword = user.getPassword();
-        if (userPassword.startsWith(SSHA512)) {
-            return verifyLegacySHA(password, userPassword);
-        } else {
-            return verifyCrypt(password, userPassword);
-        }
-    }
-
-    private boolean verifyLegacySHA(String password, String userPassword) {
-        try {
-            final String sha = userPassword.substring(SSHA512.length());
-            final byte[] bytes = Base64.decodeBase64(sha);
-
-            final byte[] salt = new byte[bytes.length - SHA512_SIZE];
-            System.arraycopy(bytes, SHA512_SIZE, salt, 0, salt.length);
-
-            final byte[] hash = new byte[SHA512_SIZE];
-            System.arraycopy(bytes, 0, hash, 0, SHA512_SIZE);
-
-            final MessageDigest digest = MessageDigest.getInstance("SHA-512");
-            digest.update(password.getBytes());
-            digest.update(salt);
-            final byte[] newHash = digest.digest();
-
-            return Arrays.equals(hash, newHash);
-        } catch (Exception e) {
-            LOGGER.debug("Cannot verify legacy SHA", e);
-            return false;
-        }
-    }
-
-    private boolean verifyCrypt(String password, String userPassword) {
-        try {
-            final String[] split = userPassword.split("\\$");
-            final String hash = split[split.length - 1];
-            final String salt = userPassword.replace(hash, "").replaceFirst("\\$$", "");
-            final String newCalc = Crypt.crypt(password, salt);
-            return userPassword.equalsIgnoreCase(newCalc);
-        } catch (Exception e) {
-            LOGGER.debug("Cannot verify crypt", e);
-            return false;
-        }
     }
 
     private void addAuditLogForAuthentication(User user, boolean authenticated) {
