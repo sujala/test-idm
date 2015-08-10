@@ -7,7 +7,7 @@ import com.rackspace.idm.domain.sql.dao.GroupRepository;
 import com.rackspace.idm.domain.sql.entity.SqlUser;
 import com.rackspace.idm.domain.sql.entity.SqlUserRax;
 import com.rackspace.idm.domain.sql.mapper.SqlRaxMapper;
-import org.apache.commons.codec.digest.Crypt;
+import com.rackspace.idm.util.CryptHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
@@ -24,6 +24,9 @@ public class UserMapper extends SqlRaxMapper<User, SqlUser, SqlUserRax> {
     @Autowired
     private GroupRepository groupRepository;
 
+    @Autowired
+    private CryptHelper cryptHelper;
+
     @Override
     public User fromSQL(SqlUser sqlUser, boolean ignoreNulls) {
         if (sqlUser == null) {
@@ -34,6 +37,8 @@ public class UserMapper extends SqlRaxMapper<User, SqlUser, SqlUserRax> {
         if (user.getUniqueId() == null) {
             user.setUniqueId(fromSqlUserToUniqueId(sqlUser));
         }
+
+        user.setPasswordIsNew(false);
         encryptionService.decryptUser(user);
         return user;
     }
@@ -49,8 +54,11 @@ public class UserMapper extends SqlRaxMapper<User, SqlUser, SqlUserRax> {
         if (user.getUniqueId() == null) {
             user.setUniqueId(fromSqlUserToUniqueId(sqlUser));
         }
-        if (user.getPassword() != null && !user.getPassword().equals(user.getUserPassword())) {
-            sqlUser.setUserPassword(Crypt.crypt(user.getPassword()));
+        if (user.getPassword() != null && (
+                !user.getPassword().equals(user.getUserPassword()) ||
+                !cryptHelper.isPasswordEncrypted(user.getPassword()))) {
+            // TODO: sqlUser.setUserPassword(Crypt.crypt(user.getPassword()));
+            sqlUser.setUserPassword(cryptHelper.createLegacySHA(user.getPassword()));
         }
         return sqlUser;
     }

@@ -1,6 +1,8 @@
 package com.rackspace.idm.util;
 
 import com.rackspace.idm.exception.IdmException;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.Crypt;
 import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
@@ -13,20 +15,24 @@ import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.paddings.PKCS7Padding;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.security.InvalidParameterException;
-import java.security.SecureRandom;
-import java.security.Security;
+import java.security.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class CryptHelper {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CryptHelper.class);
 
     @Autowired
     private EncryptionPasswordSource encryptionPasswordSource;
@@ -40,6 +46,12 @@ public class CryptHelper {
     private SecureRandom secureRandom = new SecureRandom();
 
     private static final PBEParametersGenerator keyGenerator;
+
+    private static final String SSHA512 = "{SSHA512}";
+    private static final int SHA512_SIZE = 64;
+    private static final int SALT_SIZE = 4;
+
+    private static final Pattern CRYPT_PATTERN = Pattern.compile("(\\$[a-z0-9]+\\$(.*\\$){0,1})(.*)");
 
     static {
         Security.addProvider(new BouncyCastleProvider());
@@ -142,6 +154,83 @@ public class CryptHelper {
 
     public void setEncryptionPasswordSource(EncryptionPasswordSource encryptionPasswordSource) {
         this.encryptionPasswordSource = encryptionPasswordSource;
+    }
+
+    public boolean verifyLegacySHA(String password, String userPassword) {
+        try {
+            final String sha = userPassword.substring(SSHA512.length());
+            final byte[] bytes = Base64.decodeBase64(sha);
+
+            final byte[] salt = new byte[bytes.length - SHA512_SIZE];
+            System.arraycopy(bytes, SHA512_SIZE, salt, 0, salt.length);
+
+            final byte[] hash = new byte[SHA512_SIZE];
+            System.arraycopy(bytes, 0, hash, 0, SHA512_SIZE);
+
+            final byte[] newHash = createLegacySHA(salt, password);
+            return Arrays.equals(hash, newHash);
+        } catch (Exception e) {
+            LOGGER.debug("Cannot verify legacy SHA", e);
+            return false;
+        }
+    }
+
+    public boolean isPasswordEncrypted(String userPassword) {
+        return userPassword != null && isPasswordLegacySHA(userPassword) || isPasswordCrypt(userPassword);
+    }
+
+    public boolean isPasswordLegacySHA(String userPassword) {
+        return userPassword != null && userPassword.startsWith(SSHA512);
+    }
+
+    public boolean isPasswordCrypt(String userPassword) {
+        return userPassword != null && CRYPT_PATTERN.matcher(userPassword).matches();
+    }
+
+    public boolean checkPassword(String userPassword, String password) {
+        if (isPasswordLegacySHA(userPassword)) {
+            return verifyLegacySHA(password, userPassword);
+        } else {
+            return verifyCrypt(password, userPassword);
+        }
+    }
+
+    public boolean verifyCrypt(String password, String userPassword) {
+        try {
+            final Matcher matcher = CRYPT_PATTERN.matcher(userPassword);
+            if (matcher.matches()) {
+                final String salt = matcher.group(1);
+                final String newCalc = Crypt.crypt(password, salt);
+                return userPassword.equalsIgnoreCase(newCalc);
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Cannot verify crypt", e);
+        }
+        return false;
+    }
+
+    public String createLegacySHA(String password) {
+        byte salt[] = new byte[SALT_SIZE];
+        secureRandom.nextBytes(salt);
+        byte hash[] = createLegacySHA(salt, password);
+
+        byte newPassword[] = new byte[SHA512_SIZE + SALT_SIZE];
+        System.arraycopy(hash, 0, newPassword, 0, SHA512_SIZE);
+        System.arraycopy(salt, 0, newPassword, SHA512_SIZE, SALT_SIZE);
+
+        return SSHA512 + Base64.encodeBase64String(newPassword);
+    }
+
+    private byte[] createLegacySHA(byte[] salt, String password) {
+        try {
+            final MessageDigest digest = MessageDigest.getInstance("SHA-512");
+            digest.update(password.getBytes());
+            digest.update(salt);
+            return digest.digest();
+        } catch (Exception e) {
+            LOGGER.debug("Cannot create legacy SHA", e);
+        }
+        return new byte[0];
     }
 
 }
