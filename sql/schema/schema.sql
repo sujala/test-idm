@@ -529,20 +529,6 @@ CREATE TABLE `mobile_phone_rax` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `mobile_phone_user_membership_rax`
---
-
-DROP TABLE IF EXISTS `mobile_phone_user_membership_rax`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `mobile_phone_user_membership_rax` (
-  `user_id` varchar(64) NOT NULL,
-  `mobile_phone_id` varchar(64) NOT NULL,
-  PRIMARY KEY (`user_id`,`mobile_phone_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `otp_device_rax`
 --
 
