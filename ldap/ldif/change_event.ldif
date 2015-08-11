@@ -1,7 +1,0 @@
-version: 1
-
-dn: ou=changeevent,dc=rackspace,dc=com
-objectClass: top
-objectClass: organizationalUnit
-description: Defines container for change events
-
