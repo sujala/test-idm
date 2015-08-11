@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.sql.dao.ProjectRepository;
+import com.rackspace.idm.domain.sql.entity.SqlProject;
 import com.rackspace.idm.domain.sql.mapper.impl.ProjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -59,6 +60,7 @@ public class SqlTenantRepository implements TenantDao {
 
     @Override
     public void updateTenant(Tenant tenant) {
-        projectRepository.save(mapper.toSQL(tenant));
+        SqlProject sqlProject = projectRepository.findOne(tenant.getTenantId());
+        projectRepository.save(mapper.toSQL(tenant, sqlProject));
     }
 }

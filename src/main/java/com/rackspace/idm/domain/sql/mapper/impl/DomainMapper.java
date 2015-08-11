@@ -42,7 +42,12 @@ public class DomainMapper extends SqlRaxMapper<Domain, SqlDomain, SqlDomainRax> 
 
         Set<SqlProject> sqlProjects = new HashSet<SqlProject>();
 
-        for (String tenantId : entity.getTenantIds()){
+        List<String> tenantIds = new ArrayList<String>();
+        if(entity.getTenantIds() != null) {
+            tenantIds.addAll(Arrays.asList(entity.getTenantIds()));
+        }
+
+        for (String tenantId : tenantIds) {
             SqlProject sqlProject = new SqlProject();
             sqlProject.setTenantId(tenantId);
             sqlProjects.add(sqlProject);
