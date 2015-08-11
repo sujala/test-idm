@@ -682,6 +682,9 @@ INSERT INTO `pattern_rax` VALUES ('username','^[A-Za-z0-9][a-zA-Z0-9-_.@]*','Use
 -- Dumping data for table `policy`
 --
 
+INSERT INTO `policy` VALUES ('1039','type','blob','{}');
+INSERT INTO `policy` VALUES ('1041','type','blob','{}');
+INSERT INTO `policy` VALUES ('3043','type','blob','{}');
 INSERT INTO `policy` VALUES ('100000000','type','blob','{}');
 
 --
@@ -712,6 +715,9 @@ INSERT INTO `policy_endpoint_rax` VALUES ('f0a40ead88be4e4abccc13e58dae1288','10
 -- Dumping data for table `policy_rax`
 --
 
+INSERT INTO `policy_rax` VALUES ('1039','name',0,0,'description');
+INSERT INTO `policy_rax` VALUES ('1041','name',0,0,'description');
+INSERT INTO `policy_rax` VALUES ('3043','name',0,0,'description');
 INSERT INTO `policy_rax` VALUES ('100000000','name',0,0,'description');
 
 --
