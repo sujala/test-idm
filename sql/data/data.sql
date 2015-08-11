@@ -659,11 +659,6 @@ INSERT INTO `migrate_version` VALUES ('revoke','/Users/timo6944/.pyenv/versions/
 INSERT INTO `mobile_phone_rax` VALUES ('fb6c00852e404263b745419dd761d968','+1 201-555-0104','+1 201-555-0104','DP1GRI1GJU52GWCOI2N6');
 
 --
--- Dumping data for table `mobile_phone_user_membership_rax`
---
-
-
---
 -- Dumping data for table `otp_device_rax`
 --
 
