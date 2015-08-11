@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.6.24, for osx10.10 (x86_64)
+-- MySQL dump 10.13  Distrib 5.6.19, for osx10.9 (x86_64)
 --
 -- Host: 127.0.0.1    Database: keystone
 -- ------------------------------------------------------
@@ -79,7 +79,7 @@ CREATE TABLE `assignment` (
   `target_id` varchar(64) NOT NULL,
   `role_id` varchar(64) NOT NULL,
   `inherited` tinyint(1) NOT NULL,
-  PRIMARY KEY (`type`,`actor_id`,`target_id`,`role_id`,`inherited`),
+  PRIMARY KEY (`type`,`actor_id`,`target_id`,`role_id`),
   KEY `ix_actor_id` (`actor_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -650,6 +650,20 @@ CREATE TABLE `project` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `project_domain_rax`
+--
+
+DROP TABLE IF EXISTS `project_domain_rax`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `project_domain_rax` (
+  `domain_id` varchar(64) NOT NULL,
+  `project_id` varchar(64) NOT NULL,
+  PRIMARY KEY (`domain_id`,`project_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `project_endpoint`
 --
 
@@ -1106,4 +1120,4 @@ CREATE TABLE `whitelisted_config` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-08-03 15:05:40
+-- Dump completed on 2015-08-11 12:46:49
