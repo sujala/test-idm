@@ -1,10 +1,13 @@
 package testHelpers.junit
 
+import com.rackspace.idm.domain.config.RepositoryProfileResolver
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import org.junit.rules.TestRule
 import org.junit.runner.Description;
 
 import org.junit.Assume;
-import org.junit.runners.model.Statement;
+import org.junit.runners.model.Statement
+
 
 public class ConditionalIgnoreRule implements TestRule {
 
