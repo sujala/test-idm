@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.sql.mapper.impl.RegionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 
@@ -24,6 +25,7 @@ public class SqlRegionRepository implements RegionDao {
     RegionRepository regionRepository;
 
     @Override
+    @Transactional
     public void addRegion(Region region) {
         try {
             SqlRegion sqlRegion = mapper.toSQL(region);
@@ -37,9 +39,11 @@ public class SqlRegionRepository implements RegionDao {
     }
 
     @Override
+    @Transactional
     public void updateRegion(com.rackspace.idm.domain.entity.Region region) {
         try {
-            SqlRegion sqlRegion = mapper.toSQL(region);
+            SqlRegion sqlRegion = regionRepository.findOne(region.getName());
+            sqlRegion = mapper.toSQL(region, sqlRegion);
             if (sqlRegion.getDescription() == null) {
                 sqlRegion.setDescription("");
             }
@@ -50,6 +54,7 @@ public class SqlRegionRepository implements RegionDao {
     }
 
     @Override
+    @Transactional
     public void deleteRegion(String name) {
         try {
             regionRepository.delete(name);

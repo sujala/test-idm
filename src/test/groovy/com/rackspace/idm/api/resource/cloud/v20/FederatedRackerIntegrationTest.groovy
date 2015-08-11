@@ -31,7 +31,7 @@ import static com.rackspace.idm.Constants.RACKER_IDP_URI
 class FederatedRackerIntegrationTest extends RootIntegrationTest {
     private static final Logger LOG = Logger.getLogger(FederatedRackerIntegrationTest.class)
 
-    @Autowired
+    @Autowired(required = false)
     LdapFederatedRackerRepository ldapFederatedRackerRepository
 
     @Autowired
@@ -73,7 +73,7 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         verifyResponseFromSamlRequest(authResponse, username)
 
         and: "if persisted, the persisted object is valid"
-        if (persistRacker) {
+        if (persistRacker && ldapFederatedRackerRepository != null) {
             Racker fedUser = ldapFederatedRackerRepository.getUserByUsernameForIdentityProviderUri(authResponse.user.id, authResponse.user.federatedIdp)
             fedUser.federatedUserName == authResponse.user.id
             fedUser.federatedUserName == authResponse.user.name
@@ -81,7 +81,7 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         }
 
         cleanup:
-        if (persistRacker) {
+        if (persistRacker && ldapFederatedRackerRepository != null) {
             deleteFederatedRackerQuietly(String.format("%s@%s", username, RACKER_IDP_URI))
         }
 
@@ -109,7 +109,7 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         verifyResponseFromSamlRequest(authResponse, username, [identityConfig.getStaticConfig().getRackerImpersonateRoleName()])
 
         and: "if persisted, the persisted object is valid"
-        if (persistRacker) {
+        if (persistRacker && ldapFederatedRackerRepository != null) {
             Racker fedUser = ldapFederatedRackerRepository.getUserByUsernameForIdentityProviderUri(authResponse.user.id, authResponse.user.federatedIdp)
             fedUser.federatedUserName == authResponse.user.id
             fedUser.federatedUserName == authResponse.user.name

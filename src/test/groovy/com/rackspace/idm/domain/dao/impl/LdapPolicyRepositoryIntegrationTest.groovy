@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+import com.rackspace.idm.domain.dao.PolicyDao
 import com.rackspace.idm.domain.entity.Policies
 import com.rackspace.idm.domain.entity.Policy
 import com.rackspace.idm.exception.NotFoundException
@@ -8,11 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import testHelpers.RootServiceTest
+import testHelpers.junit.IgnoreByRepositoryProfile
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
     @Autowired
-    LdapPolicyRepository repo
+    PolicyDao repo
 
     @Shared def randomness = UUID.randomUUID()
     @Shared random
@@ -24,6 +27,7 @@ class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
         random = ("$randomness").replace('-', "")
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "getNextId returns UUID"() {
         given:
         def success = false
@@ -46,6 +50,7 @@ class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
         config.setProperty("rsid.uuid.enabled",originalVal)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "getNextId returns Long"() {
         given:
         def success = false
@@ -98,11 +103,13 @@ class LdapPolicyRepositoryIntegrationTest extends RootServiceTest {
 
         when:
         repo.addPolicy(policy)
-        Policy getPolicy = repo.getPolicy(policy.name)
-        repo.deletePolicy(policy.policyId)
+        Policy getPolicy = repo.getPolicyByName(policy.name)
 
         then:
         getPolicy.equals(policy)
+
+        cleanup:
+        repo.deletePolicy(policy.policyId)
     }
 
     def "Get policy with bad name returns null" () {

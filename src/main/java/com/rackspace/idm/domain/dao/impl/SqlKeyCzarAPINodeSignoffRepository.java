@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.dao.KeyCzarAPINodeSignoffDao;
 import com.rackspace.idm.domain.sql.dao.KeyCzarAPINodeSignoffRepository;
 import com.rackspace.idm.domain.sql.entity.SqlAPINodeSignoff;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ public class SqlKeyCzarAPINodeSignoffRepository implements KeyCzarAPINodeSignoff
     }
 
     @Override
+    @Transactional
     public void addOrUpdateObject(APINodeSignoff apiNodeSignoff) {
         SqlAPINodeSignoff sqlAPINodeSignoff = (SqlAPINodeSignoff) apiNodeSignoff;
 
@@ -33,6 +35,7 @@ public class SqlKeyCzarAPINodeSignoffRepository implements KeyCzarAPINodeSignoff
     }
 
     @Override
+    @Transactional
     public void deleteApiNodeSignoff(APINodeSignoff apiNodeSignoff) {
         repository.delete((SqlAPINodeSignoff) apiNodeSignoff);
     }

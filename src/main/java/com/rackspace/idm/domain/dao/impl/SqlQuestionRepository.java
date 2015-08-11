@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.Question;
 import com.rackspace.idm.domain.sql.dao.QuestionRepository;
 import com.rackspace.idm.domain.sql.mapper.impl.QuestionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -20,16 +21,19 @@ public class SqlQuestionRepository implements QuestionDao {
 
 
     @Override
+    @Transactional
     public void addQuestion(Question question) {
         questionRepository.save(mapper.toSQL(question));
     }
 
     @Override
+    @Transactional
     public void updateQuestion(Question question) {
-        questionRepository.save(mapper.toSQL(question));
+        questionRepository.save(mapper.toSQL(question, questionRepository.findOne(question.getId())));
     }
 
     @Override
+    @Transactional
     public void deleteQuestion(String questionId) {
         questionRepository.delete(questionId);
     }

@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -14,10 +16,10 @@ import spock.lang.Specification
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapFederatedUserRepositoryIntegrationTest extends Specification {
     @Autowired
-    LdapFederatedUserRepository ldapFederatedUserRepository
+    FederatedUserDao ldapFederatedUserRepository
 
     @Autowired
-    LdapIdentityProviderRepository ldapIdentityProviderRepository
+    IdentityProviderDao ldapIdentityProviderRepository
 
     @Autowired
     ScopeAccessService scopeAccessService

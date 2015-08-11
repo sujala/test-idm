@@ -2,7 +2,12 @@ package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.dao.ApplicationDao
+import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
+import com.rackspace.idm.domain.dao.TenantRoleDao
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.exception.ClientConflictException
 import org.joda.time.DateTime
@@ -16,23 +21,23 @@ import testHelpers.RootIntegrationTest
 class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
 
     @Autowired
-    private LdapTenantRoleRepository roleRepository
+    private TenantRoleDao roleRepository
 
     @Autowired
-    private LdapApplicationRepository applicationRepository
+    private ApplicationDao applicationRepository
 
     @Autowired
-    private LdapUserRepository userRepository
+    private UserDao userRepository
 
     @Autowired
     @Qualifier("scopeAccessDao")
     ScopeAccessDao scopeAccessRepository
 
     @Autowired
-    private LdapFederatedUserRepository federatedUserRepository
+    private FederatedUserDao federatedUserRepository
 
     @Autowired
-    LdapIdentityProviderRepository ldapIdentityProviderRepository
+    IdentityProviderDao ldapIdentityProviderRepository
 
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom

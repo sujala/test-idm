@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.sql.dao.DomainRepository;
 import com.rackspace.idm.domain.sql.mapper.impl.DomainMapper;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,6 +23,7 @@ public class SqlDomainRepository implements DomainDao {
     DomainRepository domainRepository;
 
     @Override
+    @Transactional
     public void addDomain(Domain domain) {
         domainRepository.save(mapper.toSQL(domain));
     }
@@ -42,11 +44,13 @@ public class SqlDomainRepository implements DomainDao {
     }
 
     @Override
+    @Transactional
     public void updateDomain(Domain domain) {
-        domainRepository.save(mapper.toSQL(domain));
+        domainRepository.save(mapper.toSQL(domain, domainRepository.findOne(domain.getDomainId())));
     }
 
     @Override
+    @Transactional
     public void deleteDomain(String domainId) {
         domainRepository.delete(domainId);
     }

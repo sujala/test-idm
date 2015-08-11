@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.sql.dao.IdentityUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -79,6 +80,7 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
     }
 
     @Override
+    @Transactional
     public void updateIdentityUser(BaseUser baseUser) {
         if (baseUser instanceof User) {
             userDao.updateUser((User) baseUser);

@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.sql.dao.OTPDeviceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlOTPDevice;
 import com.rackspace.idm.domain.sql.mapper.impl.OTPDeviceMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +24,7 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
     OTPDeviceRepository repository;
 
     @Override
+    @Transactional
     public void addOTPDevice(UniqueId parent, OTPDevice otpDevice) {
         if (parent instanceof BaseUser) {
             final String userId = ((BaseUser) parent).getId();
@@ -84,6 +86,7 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
     }
 
     @Override
+    @Transactional
     public void deleteAllOTPDevicesFromParent(UniqueId parent) {
         if (parent instanceof BaseUser) {
             final String userId = ((BaseUser) parent).getId();
@@ -92,14 +95,15 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
     }
 
     @Override
+    @Transactional
     public void deleteOTPDevice(OTPDevice object) {
         repository.delete(object.getId());
     }
 
     @Override
+    @Transactional
     public void updateOTPDevice(OTPDevice object) {
-        final SqlOTPDevice changed = mapper.toSQL(object);
-        repository.save(changed);
+        repository.save(mapper.toSQL(object, repository.findOne(object.getId())));
     }
 
 }

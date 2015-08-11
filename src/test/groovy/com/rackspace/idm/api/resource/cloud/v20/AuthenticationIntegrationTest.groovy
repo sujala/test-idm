@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.dao.EndpointDao
+import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.service.IdentityUserService
@@ -16,7 +17,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
     @Autowired
     ScopeAccessDao scopeAccessDao
 
-    @Autowired
+    @Autowired(required = false)
     LdapFederatedUserRepository ldapFederatedUserRepository
 
     @Autowired
@@ -117,8 +118,10 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
     }
 
     def deleteFederatedUser(username) {
-        def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
-        ldapFederatedUserRepository.deleteObject(federatedUser)
+        if (ldapFederatedUserRepository != null) {
+            def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            ldapFederatedUserRepository.deleteObject(federatedUser)
+        }
     }
 
     def void expireToken(scopeAccessToExpire) {

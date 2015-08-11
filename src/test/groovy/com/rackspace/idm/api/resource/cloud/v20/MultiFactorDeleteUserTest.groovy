@@ -4,8 +4,8 @@ import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
@@ -23,7 +23,7 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
 
     @Autowired BasicMultiFactorService multiFactorService;
 
-    @Autowired LdapMobilePhoneRepository mobilePhoneRepository;
+    @Autowired MobilePhoneDao mobilePhoneRepository;
 
     @Autowired Configuration config
 

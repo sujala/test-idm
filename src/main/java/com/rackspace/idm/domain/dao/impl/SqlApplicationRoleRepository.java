@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.sql.dao.RoleRepository;
 import com.rackspace.idm.domain.sql.mapper.impl.RoleMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,17 +24,20 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
     RoleRepository repository;
 
     @Override
+    @Transactional
     public void addClientRole(Application application, ClientRole role) {
         role.setClientId(application.getClientId());
         repository.save(mapper.toSQL(role));
     }
 
     @Override
+    @Transactional
     public void updateClientRole(ClientRole role) {
-        repository.save(mapper.toSQL(role));
+        repository.save(mapper.toSQL(role, repository.findOne(role.getId())));
     }
 
     @Override
+    @Transactional
     public void deleteClientRole(ClientRole role) {
         repository.delete(mapper.toSQL(role));
     }

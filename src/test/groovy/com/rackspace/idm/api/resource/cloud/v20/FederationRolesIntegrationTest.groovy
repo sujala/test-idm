@@ -1,8 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.dao.DomainDao
+import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
-import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.TenantRole
@@ -16,7 +16,8 @@ import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlAssertionFactory
 
-import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.Constants.DEFAULT_IDP_NAME
+import static com.rackspace.idm.Constants.DEFAULT_IDP_URI
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class FederationRolesIntegrationTest extends RootIntegrationTest {
@@ -26,7 +27,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
     TenantRoleDao tenantRoleDao
 
     @Autowired
-    LdapFederatedUserRepository ldapFederatedUserRepository
+    FederatedUserDao ldapFederatedUserRepository
 
     @Autowired
     DefaultUserService userService

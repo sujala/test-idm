@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.TenantRole
@@ -25,7 +26,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
     @Autowired UserService userService
     @Autowired TenantService tenantService
     @Autowired TenantRoleDao tenantRoleDao
-    @Autowired LdapFederatedUserRepository ldapFederatedUserRepository
+    @Autowired FederatedUserDao ldapFederatedUserRepository
 
     @Unroll
     def "test provisioned user authentication when all tenants on user are disabled: userType = #tokenType, featureEnabled = #featureEnabled"() {

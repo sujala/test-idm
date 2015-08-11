@@ -1,4 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
+
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.EncryptionService
 import com.rackspace.idm.helpers.CloudTestUtils
@@ -13,7 +15,7 @@ import spock.lang.Specification
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapUserRepositoryIntegrationTest extends Specification{
     @Autowired
-    LdapUserRepository ldapUserRepository;
+    UserDao ldapUserRepository;
 
     @Autowired
     EncryptionService encryptionService;
