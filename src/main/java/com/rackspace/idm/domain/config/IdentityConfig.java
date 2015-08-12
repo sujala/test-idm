@@ -187,6 +187,12 @@ public class IdentityConfig {
     private static final String SQL_URL_PROP = "sql.url";
     private static final String SQL_USERNAME_PROP = "sql.username";
     private static final String SQL_PASSWORD_PROP = "sql.password";
+    private static final String SQL_INITIAL_SIZE_PROP = "sql.initialSize";
+    private static final int SQL_INITIAL_SIZE_DEFAULT = 2;
+    private static final String SQL_MAX_ACTIVE_PROP = "sql.maxActive";
+    private static final int SQL_MAX_ACTIVE_DEFAULT = 10;
+    private static final String SQL_MAX_IDLE_PROP = "sql.maxIdle";
+    private static final int SQL_MAX_IDLE_DEFAULT = 5;
 
     /* ************************
      * MIGRATION PROPS
@@ -294,6 +300,9 @@ public class IdentityConfig {
         defaults.put(FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP, FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_DEFAULT);
         defaults.put(MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP, MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_DEFAULT);
         defaults.put(MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP, MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_DEFAULT);
+        defaults.put(SQL_INITIAL_SIZE_PROP, SQL_INITIAL_SIZE_DEFAULT);
+        defaults.put(SQL_MAX_ACTIVE_PROP, SQL_MAX_ACTIVE_DEFAULT);
+        defaults.put(SQL_MAX_IDLE_PROP, SQL_MAX_IDLE_DEFAULT);
 
         return defaults;
     }
@@ -893,6 +902,21 @@ public class IdentityConfig {
         @IdmProp(key = SQL_SHOW_SQL_PROP, versionAdded = "3.0.0")
         public Boolean getSqlShowSql() {
             return getBooleanSafely(staticConfiguration, SQL_SHOW_SQL_PROP);
+        }
+
+        @IdmProp(key = SQL_INITIAL_SIZE_PROP, versionAdded = "3.0.0")
+        public int getSqlInitialSize() {
+            return getIntSafely(staticConfiguration, SQL_INITIAL_SIZE_PROP);
+        }
+
+        @IdmProp(key = SQL_MAX_ACTIVE_PROP, versionAdded = "3.0.0")
+        public int getSqlMaxActive() {
+            return getIntSafely(staticConfiguration, SQL_MAX_ACTIVE_PROP);
+        }
+
+        @IdmProp(key = SQL_MAX_IDLE_PROP, versionAdded = "3.0.0")
+        public int getSqlMaxIdle() {
+            return getIntSafely(staticConfiguration, SQL_MAX_IDLE_PROP);
         }
     }
 
