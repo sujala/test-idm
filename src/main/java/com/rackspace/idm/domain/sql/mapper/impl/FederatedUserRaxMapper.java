@@ -15,6 +15,8 @@ import java.util.UUID;
 @SQLComponent
 public class FederatedUserRaxMapper extends SqlMapper<FederatedUser, SqlFederatedUserRax> {
 
+    public static final String UNIQUE_ID_PLACEHOLDER = "<NotUsedForSql>";
+
     @Autowired
     private FederatedRoleRaxMapper federatedRoleRaxMapper;
 
@@ -28,6 +30,7 @@ public class FederatedUserRaxMapper extends SqlMapper<FederatedUser, SqlFederate
             for (SqlFederatedRoleRax sqlFederatedRoleRax : sqlFederatedUserRax.getFederatedRoles()) {
                 federatedUser.getRoles().add(federatedRoleRaxMapper.fromSQL(sqlFederatedRoleRax));
             }
+            federatedUser.setUniqueId(UNIQUE_ID_PLACEHOLDER);
         }
         return federatedUser;
     }

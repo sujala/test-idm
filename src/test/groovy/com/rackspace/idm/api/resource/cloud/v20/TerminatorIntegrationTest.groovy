@@ -3,6 +3,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.RepositoryProfileResolver
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
@@ -11,6 +13,7 @@ import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.rackspacecloud.docs.auth.api.v1.ForbiddenFault
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,7 +29,13 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
     @Autowired UserService userService
     @Autowired TenantService tenantService
     @Autowired TenantRoleDao tenantRoleDao
-    @Autowired FederatedUserDao ldapFederatedUserRepository
+    @Autowired FederatedUserDao federatedUserRepository
+
+    @Autowired(required = false)
+    LdapFederatedUserRepository ldapFederatedUserRepository
+
+    @Autowired(required = false)
+    FederatedUserRepository sqlFederatedUserRepository
 
     @Unroll
     def "test provisioned user authentication when all tenants on user are disabled: userType = #tokenType, featureEnabled = #featureEnabled"() {
@@ -423,8 +432,12 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
     }
 
     def deleteFederatedUser(username) {
-        def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
-        ldapFederatedUserRepository.deleteObject(federatedUser)
+        def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+        if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+            sqlFederatedUserRepository.delete(federatedUser)
+        } else {
+            ldapFederatedUserRepository.deleteObject(federatedUser)
+        }
     }
 
 }

@@ -2,7 +2,9 @@ package com.rackspace.idm.domain.sql.mapper.impl;
 
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.dao.impl.SqlDomainRepository;
 import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.sql.dao.DomainRepository;
 import com.rackspace.idm.domain.sql.dao.EndpointRepository;
 import com.rackspace.idm.domain.sql.entity.SqlEndpoint;
 import com.rackspace.idm.domain.sql.entity.SqlProject;
@@ -20,6 +22,9 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
 
     @Autowired
     IdentityConfig config;
+
+    @Autowired
+    DomainRepository domainRepository;
 
     @Autowired
     EndpointRepository endpointRepository;
@@ -44,6 +49,8 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
             }
         }
 
+        tenant.setDomainId(entity.getDomain().getDomainId());
+
         return tenant;
     }
 
@@ -58,7 +65,7 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
         endpointIds.addAll(tenant.getBaseUrlIds());
         endpointIds.addAll(tenant.getV1Defaults());
 
-
+        sqlProject.setDomain(domainRepository.findOne(tenant.getDomainId()));
 
         HashMap<String, List<SqlEndpoint>> endpointMap = new HashMap<String, List<SqlEndpoint>>();
         for(SqlEndpoint endpoint : endpointRepository.findByLegacyEndpointIdIn(endpointIds)){

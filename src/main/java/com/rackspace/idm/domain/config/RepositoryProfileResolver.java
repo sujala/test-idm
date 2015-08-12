@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 
 @Component
-class RepositoryProfileResolver implements EnvironmentAware {
+public class RepositoryProfileResolver implements EnvironmentAware {
 
     private static Environment environment;
 

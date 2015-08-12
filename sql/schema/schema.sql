@@ -650,20 +650,6 @@ CREATE TABLE `project` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `project_domain_rax`
---
-
-DROP TABLE IF EXISTS `project_domain_rax`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `project_domain_rax` (
-  `domain_id` varchar(64) NOT NULL,
-  `project_id` varchar(64) NOT NULL,
-  PRIMARY KEY (`domain_id`,`project_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `project_endpoint`
 --
 
