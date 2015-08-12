@@ -57,6 +57,10 @@
             <property name="url" value="#{identityConfig.staticConfig.sqlUrl}"/>
             <property name="username" value="#{identityConfig.staticConfig.sqlUsername}"/>
             <property name="password" value="#{identityConfig.staticConfig.sqlPassword}"/>
+            <property name="initialSize" value="1"/>
+            <property name="maxActive" value="2"/>
+            <property name="maxIdle" value="2"/>
+            <property name="removeAbandoned" value="true"/>
         </bean>
 
         <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
