@@ -249,7 +249,7 @@ public abstract class SqlMapper<Entity, SQLEntity> {
 
         context.setPageRequest((PageRequest) context.getPageRequest().next());
 
-        if (context.getValueList().size() > context.getLimit()) {
+        if (context.getValueList().size() >= context.getLimit()) {
             context.setValueList(context.getValueList().subList(0, context.getLimit()));
             return false;
         }

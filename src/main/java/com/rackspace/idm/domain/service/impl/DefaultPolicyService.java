@@ -121,6 +121,7 @@ public class DefaultPolicyService implements PolicyService {
         }
         policy.setUniqueId(policyDao.getPolicy(policyId).getUniqueId());
         logger.info("Updating Policy: {}", policy);
+        policy.setPolicyId(policyId);
         policyDao.updatePolicy(policy);
     }
 
