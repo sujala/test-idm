@@ -8,7 +8,6 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapFederatedRackerRepository
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.Racker
-import com.rackspace.idm.domain.security.ConfigurableTokenFormatSelector
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import org.apache.log4j.Logger
@@ -42,17 +41,6 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     IdentityConfig identityConfig
-
-    @Autowired
-    ConfigurableTokenFormatSelector configurableTokenFormatSelector
-
-    private static final String EDIR_ROLE_NAME = "team-cloud-identity"
-
-    def setup() {
-    }
-
-    def cleanup() {
-    }
 
     @Unroll
     def "racker populated appropriately from saml and edir w/ no EDIR groups. Persist Racker: #persistRacker"() {
