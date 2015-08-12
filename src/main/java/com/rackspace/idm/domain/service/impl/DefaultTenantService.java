@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
@@ -91,6 +92,12 @@ public class DefaultTenantService implements TenantService {
     public void deleteTenant(String tenantId) {
         logger.info("Deleting Tenant {}", tenantId);
 
+        String defaultTenant =  identityConfig.getReloadableConfig().getIdentityRoleDefaultTenant();
+        if (tenantId.equalsIgnoreCase(defaultTenant)) {
+            String msg = String.format("Deleting '%s' tenant is not allowed.", defaultTenant);
+            throw new BadRequestException(msg);
+        }
+
         // Delete all tenant roles for this tenant
         for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenant(tenantId)) {
             if (role.getTenantIds().size() == 1) {
@@ -100,9 +107,9 @@ public class DefaultTenantService implements TenantService {
                 this.tenantRoleDao.updateTenantRole(role);
             }
         }
-        
+
         this.tenantDao.deleteTenant(tenantId);
-        
+
         logger.info("Added Tenant {}", tenantId);
     }
 
@@ -151,6 +158,11 @@ public class DefaultTenantService implements TenantService {
     @Override
     public void updateTenant(Tenant tenant) {
         logger.info("Updating Tenant {}", tenant);
+        String defaultTenant =  identityConfig.getReloadableConfig().getIdentityRoleDefaultTenant();
+        if (tenant.getTenantId().equalsIgnoreCase(defaultTenant)) {
+            String msg = String.format("Updating '%s' tenant is not allowed.", defaultTenant);
+            throw new BadRequestException(msg);
+        }
         this.tenantDao.updateTenant(tenant);
         logger.info("Updated Tenant {}", tenant);
     }
@@ -315,7 +327,7 @@ public class DefaultTenantService implements TenantService {
     public void addTenantRoleToUser(BaseUser user, TenantRole role) {
         if (user == null || StringUtils.isBlank(user.getUniqueId()) || role == null) {
             throw new IllegalArgumentException(
-                "User cannot be null and must have uniqueID; role cannot be null");
+                    "User cannot be null and must have uniqueID; role cannot be null");
         }
 
         validateTenantRole(role);
@@ -395,7 +407,7 @@ public class DefaultTenantService implements TenantService {
     @Override
     public void addTenantRolesToUser(BaseUser user, List<TenantRole> tenantRoles) {
         for (TenantRole tenantRole : tenantRoles) {
-             addTenantRoleToUser(user, tenantRole);
+            addTenantRoleToUser(user, tenantRole);
         }
 
         logger.info("Added tenantRoles {} to user {}", tenantRoles, user);
@@ -624,12 +636,12 @@ public class DefaultTenantService implements TenantService {
     private List<TenantRole> getRoleDetails(Iterable<TenantRole> roles) {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
-        if (role != null) {
-            ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
-            role.setName(cRole.getName());
-            role.setDescription(cRole.getDescription());
-            role.setPropagate(cRole.getPropagate());
-            tenantRoles.add(role);
+            if (role != null) {
+                ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
+                role.setName(cRole.getName());
+                role.setDescription(cRole.getDescription());
+                role.setPropagate(cRole.getPropagate());
+                tenantRoles.add(role);
             }
         }
         return tenantRoles;
@@ -709,9 +721,9 @@ public class DefaultTenantService implements TenantService {
         List<TenantRole> globalRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
             if (role != null
-                && (role.getTenantIds() == null || role.getTenantIds().size() == 0)) {
+                    && (role.getTenantIds() == null || role.getTenantIds().size() == 0)) {
                 ClientRole cRole = this.applicationService.getClientRoleById(role
-                    .getRoleRsId());
+                        .getRoleRsId());
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
                 globalRoles.add(role);
@@ -760,7 +772,7 @@ public class DefaultTenantService implements TenantService {
         }
 
         logger.debug("Got {} Users for Tenant {}", users.size(),
-            tenant.getTenantId());
+                tenant.getTenantId());
         PaginatorContext<User> pageContext = new PaginatorContext<User>();
         pageContext.update(users, offset, limit);
         return pageContext;
@@ -832,10 +844,10 @@ public class DefaultTenantService implements TenantService {
         this.config = config;
     }
 
-	@Override
-	public void setTenantDao(TenantDao tenantDao) {
-		this.tenantDao = tenantDao;
-	}
+    @Override
+    public void setTenantDao(TenantDao tenantDao) {
+        this.tenantDao = tenantDao;
+    }
 
     @Override
     public void setTenantRoleDao(TenantRoleDao tenantRoleDao) {
@@ -884,7 +896,7 @@ public class DefaultTenantService implements TenantService {
     private static class TenantEnabledPredicate implements Predicate<Tenant> {
         @Override
         public boolean evaluate(Tenant tenant) {
-                return tenant != null && tenant.getEnabled();
+            return tenant != null && tenant.getEnabled();
         }
     }
 

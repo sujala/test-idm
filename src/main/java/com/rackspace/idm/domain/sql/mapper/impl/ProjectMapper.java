@@ -29,10 +29,11 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
     @Autowired
     EndpointRepository endpointRepository;
 
+    @Override
     public Tenant fromSQL(SqlProject entity) {
         Tenant tenant = super.fromSQL(entity);
 
-        if (tenant == null || entity.getTenantId().equalsIgnoreCase(config.getReloadableConfig().getIdentityRoleDefaultTenant())) {
+        if (tenant == null) {
             return null;
         }
 
@@ -54,18 +55,34 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
         return tenant;
     }
 
-    public SqlProject toSQL(Tenant tenant) {
-        SqlProject sqlProject = super.toSQL(tenant);
+    @Override
+    public SqlProject toSQL(Tenant entity) {
+        SqlProject sqlProject = super.toSQL(entity);
 
-        if (sqlProject == null || sqlProject.getTenantId().equalsIgnoreCase(config.getReloadableConfig().getIdentityRoleDefaultTenant())) {
+        if (sqlProject == null) {
             return null;
         }
 
-        LinkedHashSet<String> endpointIds = new LinkedHashSet<String>();
-        endpointIds.addAll(tenant.getBaseUrlIds());
-        endpointIds.addAll(tenant.getV1Defaults());
+        return mapEndpointIdsToProject(entity, sqlProject);
+    }
 
-        sqlProject.setDomain(domainRepository.findOne(tenant.getDomainId()));
+    @Override
+    public SqlProject toSQL(Tenant entity, SqlProject sqlEntity) {
+        SqlProject sqlProject = super.toSQL(entity, sqlEntity);
+
+        if (sqlProject == null) {
+            return null;
+        }
+
+        return mapEndpointIdsToProject(entity, sqlEntity);
+    }
+
+    private SqlProject mapEndpointIdsToProject(Tenant entity, SqlProject sqlEntity) {
+        LinkedHashSet<String> endpointIds = new LinkedHashSet<String>();
+        endpointIds.addAll(entity.getBaseUrlIds());
+        endpointIds.addAll(entity.getV1Defaults());
+
+        sqlEntity.setDomain(domainRepository.findOne(entity.getDomainId()));
 
         HashMap<String, List<SqlEndpoint>> endpointMap = new HashMap<String, List<SqlEndpoint>>();
         for(SqlEndpoint endpoint : endpointRepository.findByLegacyEndpointIdIn(endpointIds)){
@@ -79,14 +96,14 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
             }
         }
 
-        for (String endpointId : tenant.getBaseUrlIds()) {
-            sqlProject.getBaseUrlIds().addAll(endpointMap.get(endpointId));
+        for (String endpointId : entity.getBaseUrlIds()) {
+            sqlEntity.getBaseUrlIds().addAll(endpointMap.get(endpointId));
         }
 
-        for (String endpointId : tenant.getV1Defaults()) {
-            sqlProject.getV1Defaults().addAll(endpointMap.get(endpointId));
+        for (String endpointId : entity.getV1Defaults()) {
+            sqlEntity.getV1Defaults().addAll(endpointMap.get(endpointId));
         }
 
-        return sqlProject;
+        return sqlEntity;
     }
 }
