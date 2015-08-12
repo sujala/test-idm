@@ -1,15 +1,20 @@
 package com.rackspace.idm.util
 import com.rackspace.idm.domain.config.LdapConfiguration
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.StringUtils
+import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
+import testHelpers.junit.ConditionalIgnoreRule
+import testHelpers.junit.IgnoreByRepositoryProfile
 
 import static org.hamcrest.CoreMatchers.equalTo
 import static org.junit.Assert.assertThat
 
+@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapRouterMBeanIntegrationTest extends Specification {
     @Autowired
@@ -20,6 +25,9 @@ class LdapRouterMBeanIntegrationTest extends Specification {
 
     @Shared def initPoolSize
     @Shared def maxPoolSize
+
+    @Rule
+    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     def setup() {
         initPoolSize = config.getInt("ldap.server.pool.size.init", LdapConfiguration.SERVER_POOL_SIZE_INIT);

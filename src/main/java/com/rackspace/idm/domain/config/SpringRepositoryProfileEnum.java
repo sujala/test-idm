@@ -14,6 +14,10 @@ public enum SpringRepositoryProfileEnum {
         this.profileStrings = Arrays.asList(profileStrings);
     }
 
+    public List<String> getProfileStrings() {
+        return this.profileStrings;
+    }
+
     public static SpringRepositoryProfileEnum getProfileEnumFromProfileString(String profileString) {
         for(SpringRepositoryProfileEnum profileEnum : values()) {
             if(profileEnum.matchesProfileString(profileString)) {
