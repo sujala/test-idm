@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.sql.dao.DomainRepository;
+import com.rackspace.idm.domain.sql.entity.SqlDomain;
 import com.rackspace.idm.domain.sql.mapper.impl.DomainMapper;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;

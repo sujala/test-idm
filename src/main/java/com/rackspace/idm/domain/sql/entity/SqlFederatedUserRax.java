@@ -20,7 +20,7 @@ public class SqlFederatedUserRax {
     private String id;
 
     @NotNull
-    @Length(min = 1, max = 32)
+    @Length(min = 1, max = 100)
     @Column(name = "username")
     private String username;
 

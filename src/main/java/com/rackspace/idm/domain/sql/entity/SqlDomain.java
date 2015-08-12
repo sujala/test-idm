@@ -1,14 +1,19 @@
 package com.rackspace.idm.domain.sql.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.HashSet;
 import java.util.Set;
 
 @Data
 @Entity
 @Table(name = "domain")
+@EqualsAndHashCode(exclude = "sqlProject")
+@ToString(exclude = "sqlProject")
 public class SqlDomain {
 
     @Id
@@ -26,11 +31,8 @@ public class SqlDomain {
     @Column(name = "extra")
     private String extra;
 
-    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
-    @JoinTable(name = "project_domain_rax",
-            joinColumns={@JoinColumn(name="domain_id", referencedColumnName="id")},
-            inverseJoinColumns={@JoinColumn(name="project_id", referencedColumnName="id")})
-    private Set<SqlProject> sqlProject;
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "domain")
+    private Set<SqlProject> sqlProject = new HashSet<SqlProject>();
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id", referencedColumnName = "id", nullable = false)

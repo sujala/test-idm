@@ -1,10 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.RepositoryProfileResolver
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.service.IdentityUserService
+import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
 import testHelpers.RootIntegrationTest
@@ -21,10 +24,16 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
     LdapFederatedUserRepository ldapFederatedUserRepository
 
     @Autowired
+    FederatedUserDao federatedUserRepository
+
+    @Autowired
     IdentityUserService identityUserService
 
     @Autowired
     EndpointDao endpointDao
+
+    @Autowired(required = false)
+    FederatedUserRepository sqlFederatedUserRepository
 
     def "authenticate with federated user's token does not modify a federated user's tokens"() {
         given:
@@ -118,9 +127,13 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
     }
 
     def deleteFederatedUser(username) {
-        if (ldapFederatedUserRepository != null) {
-            def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
-            ldapFederatedUserRepository.deleteObject(federatedUser)
+        def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+        if(federatedUser != null) {
+            if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                sqlFederatedUserRepository.delete(federatedUser)
+            } else {
+                ldapFederatedUserRepository.deleteObject(federatedUser)
+            }
         }
     }
 

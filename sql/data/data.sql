@@ -735,25 +735,6 @@ INSERT INTO `project` VALUES ('MossoCloudFS_78543995','MossoCloudFS_78543995','{
 INSERT INTO `project` VALUES ('StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09','{}',NULL,1,'983452',NULL);
 
 --
--- Dumping data for table `project_domain_rax`
---
-
-INSERT INTO `project_domain_rax` VALUES ('32035123','32035123');
-INSERT INTO `project_domain_rax` VALUES ('32035123','MossoCloudFS_32035123');
-INSERT INTO `project_domain_rax` VALUES ('78543985','78543985');
-INSERT INTO `project_domain_rax` VALUES ('78543985','MossoCloudFS_78543985');
-INSERT INTO `project_domain_rax` VALUES ('78543987','78543987');
-INSERT INTO `project_domain_rax` VALUES ('78543987','MossoCloudFS_78543987');
-INSERT INTO `project_domain_rax` VALUES ('78543988','78543988');
-INSERT INTO `project_domain_rax` VALUES ('78543988','MossoCloudFS_78543988');
-INSERT INTO `project_domain_rax` VALUES ('78543990','78543990');
-INSERT INTO `project_domain_rax` VALUES ('78543990','MossoCloudFS_78543990');
-INSERT INTO `project_domain_rax` VALUES ('78543995','78543995');
-INSERT INTO `project_domain_rax` VALUES ('78543995','MossoCloudFS_78543995');
-INSERT INTO `project_domain_rax` VALUES ('983452','983452');
-INSERT INTO `project_domain_rax` VALUES ('983452','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
-
---
 -- Dumping data for table `project_endpoint`
 --
 

@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.sql.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -10,6 +11,7 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name = "project")
+@EqualsAndHashCode(exclude = {"baseUrlIds", "v1Defaults"})
 public class SqlProject {
 
     @Id
@@ -29,8 +31,9 @@ public class SqlProject {
     @Column(name = "enabled")
     private Boolean enabled;
 
-    @Column(name = "domain_id", nullable = false)
-    private String domainId;
+    @JoinColumn(name = "domain_id", nullable = false)
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
+    private SqlDomain domain;
 
     @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinTable(name="project_endpoint", joinColumns={@JoinColumn(name="project_id", referencedColumnName="id")}, inverseJoinColumns={@JoinColumn(name="endpoint_id", referencedColumnName="id")})

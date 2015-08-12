@@ -38,7 +38,7 @@ public class User implements EndUser {
     private String id;
 
     @NotNull
-    @Length(min = 1, max = 32)
+    @Length(min = 1, max = 100)
     @Pattern(regexp = RegexPatterns.USERNAME, message = MessageTexts.USERNAME)
     @LDAPField(attribute=LdapRepository.ATTR_UID,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,

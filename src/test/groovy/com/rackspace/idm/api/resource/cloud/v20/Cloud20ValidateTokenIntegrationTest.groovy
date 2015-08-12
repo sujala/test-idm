@@ -3,14 +3,18 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.RepositoryProfileResolver
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
+import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
+import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
@@ -37,7 +41,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     ScopeAccessService scopeAccessService
 
     @Autowired
-    FederatedUserDao ldapFederatedUserRepository
+    FederatedUserDao federatedUserRepository
 
     @Autowired
     ScopeAccessDao scopeAccessDao
@@ -47,6 +51,12 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     @Autowired
     TokenFormatSelector tokenFormatSelector
+
+    @Autowired(required = false)
+    LdapFederatedUserRepository ldapFederatedUserRepository
+
+    @Autowired(required = false)
+    FederatedUserRepository sqlFederatedUserRepository
 
     def "Validate user token" () {
         def expirationTimeInSeconds = 86400
@@ -628,9 +638,13 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     def deleteFederatedUserQuietly(username) {
         try {
-            def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
             if (federatedUser != null) {
-                ldapFederatedUserRepository.deleteObject(federatedUser)
+                if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                    sqlFederatedUserRepository.delete(federatedUser)
+                } else {
+                    ldapFederatedUserRepository.deleteObject(federatedUser)
+                }
             }
         } catch (Exception e) {
             //eat but log

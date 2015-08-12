@@ -42,6 +42,7 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
             user.setId(getNextId());
         }
         federatedUserRepository.save(federatedUserRaxMapper.toSQL(user));
+        user.setUniqueId(FederatedUserRaxMapper.UNIQUE_ID_PLACEHOLDER);
     }
 
     @Override
