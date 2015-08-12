@@ -1,6 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
+import com.rackspace.idm.domain.dao.FederatedUserDao
 import groovy.json.JsonSlurper
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.UserList
@@ -17,7 +17,7 @@ import static com.rackspace.idm.Constants.*
 class ListUsersIntegrationTest extends RootIntegrationTest {
 
     @Autowired
-    LdapFederatedUserRepository ldapFederatedUserRepository
+    FederatedUserDao ldapFederatedUserRepository
 
     def "federated user can call list users"() {
         given:

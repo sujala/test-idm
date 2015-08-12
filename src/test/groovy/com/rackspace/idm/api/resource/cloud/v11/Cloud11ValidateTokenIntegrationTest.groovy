@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
-import com.rackspace.idm.domain.entity.UserScopeAccess
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspacecloud.docs.auth.api.v1.AuthData
 import com.rackspacecloud.docs.auth.api.v1.Token
@@ -19,7 +18,7 @@ class Cloud11ValidateTokenIntegrationTest extends RootIntegrationTest {
     ScopeAccessService scopeAccessService
 
     @Autowired
-    LdapScopeAccessRepository scopeAccessDao
+    ScopeAccessDao scopeAccessDao
 
     @Shared def defaultUser, users
 

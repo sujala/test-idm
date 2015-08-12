@@ -4,9 +4,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -79,16 +78,13 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     ScopeAccessDao scopeAccessRepository
 
     @Autowired
-    LdapFederatedUserRepository ldapFederatedUserRepository
+    FederatedUserDao ldapFederatedUserRepository
 
     @Autowired
     AETokenService aeTokenService;
 
     @Autowired
     TokenFormatSelector tokenFormatSelector;
-
-    @Autowired
-    LdapScopeAccessRepository scopeAccessDao
 
     @Autowired
     Configuration config
@@ -1265,7 +1261,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         //expire the underlying user token
         actualUserTokenUsed.accessTokenExp = new DateTime().minusHours(1).toDate()
-        scopeAccessDao.updateObjectAsIs(actualUserTokenUsed)
+        scopeAccessRepository.updateScopeAccess(actualUserTokenUsed)
 
         when: "validate in v2.0"
         def v20Response = cloud20.validateToken(specificationIdentityAdminToken, impersonatedScopeAccess.accessTokenString)

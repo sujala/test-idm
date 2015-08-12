@@ -6,7 +6,7 @@ import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.DomainDao
-import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
+import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.TenantRole
@@ -41,7 +41,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     private static final Logger LOG = Logger.getLogger(FederatedUserIntegrationTest.class)
 
     @Autowired
-    LdapFederatedUserRepository ldapFederatedUserRepository
+    FederatedUserDao ldapFederatedUserRepository
 
     @Autowired
     TenantService tenantService

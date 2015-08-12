@@ -28,7 +28,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     @Shared def identityAdmin, userAdmin, userManage, defaultUser, users
     @Shared def domainId
 
-    @Autowired
+    @Autowired(required = false)
     LdapScopeAccessRepository ldapScopeAccessRepository
 
     @Autowired

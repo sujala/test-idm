@@ -40,7 +40,7 @@ import javax.servlet.http.HttpServletResponse
 class Cloud20IntegrationTest extends RootIntegrationTest {
     Logger LOG = Logger.getLogger(Cloud20IntegrationTest.class)
 
-    @Autowired LdapConnectionPools connPools
+    @Autowired(required = false) LdapConnectionPools connPools
     @Autowired Configuration config
     @Autowired DefaultApplicationService applicationService
 

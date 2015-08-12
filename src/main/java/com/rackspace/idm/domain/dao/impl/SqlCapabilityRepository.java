@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.Capability;
 import com.rackspace.idm.domain.sql.dao.CapabilityRepository;
 import com.rackspace.idm.domain.sql.mapper.impl.CapabilityMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -24,6 +25,7 @@ public class SqlCapabilityRepository implements CapabilityDao {
     }
 
     @Override
+    @Transactional
     public void addCapability(Capability capability) {
         repository.save(mapper.toSQL(capability));
     }
@@ -39,6 +41,7 @@ public class SqlCapabilityRepository implements CapabilityDao {
     }
 
     @Override
+    @Transactional
     public void deleteCapability(String id, String type, String version) {
         repository.delete(id);
     }

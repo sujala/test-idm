@@ -39,7 +39,7 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired def Configuration config
     @Autowired def EndpointService endpointService
 
-    @Autowired
+    @Autowired(required = false)
     LdapFederatedUserRepository ldapFederatedUserRepository
 
     @Autowired

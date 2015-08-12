@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.domain.dao.EndpointDao;
+import com.rackspace.idm.domain.dao.PolicyDao;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,11 +31,9 @@ import static org.junit.Assert.assertThat;
 public class LdapEndpointRepositoryIntegrationTestOld extends InMemoryLdapIntegrationTest {
 
     @Autowired
-    private LdapEndpointRepository endpointRepository;
+    private EndpointDao endpointRepository;
     @Autowired
-    private LdapPolicyRepository policyRepository;
-    @Autowired
-    private LdapConnectionPools connectionPools;
+    private PolicyDao policyRepository;
 
     private String baseUrlId1 = "100000000";
     private String baseUrlId2 = "1010110110";

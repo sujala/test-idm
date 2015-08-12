@@ -1,8 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.dao.DomainDao
-import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
-import com.rackspace.idm.domain.dao.impl.LdapIdentityProviderRepository
+import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
@@ -26,7 +26,7 @@ class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest
     private static final Logger LOG = Logger.getLogger(FederationRotatingKeyIntegrationTest.class)
 
     @Autowired
-    LdapFederatedUserRepository ldapFederatedUserRepository
+    FederatedUserDao ldapFederatedUserRepository
 
     @Autowired
     TenantService tenantService
@@ -41,7 +41,7 @@ class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest
     DomainDao domainDao
 
     @Autowired
-    LdapIdentityProviderRepository ldapIdentityProviderRepository
+    IdentityProviderDao ldapIdentityProviderRepository
 
     EntityFactory entityFactory = new EntityFactory()
 

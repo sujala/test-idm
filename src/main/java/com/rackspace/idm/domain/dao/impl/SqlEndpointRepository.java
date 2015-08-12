@@ -10,8 +10,11 @@ import com.rackspace.idm.domain.sql.mapper.impl.InternalEndpointMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.PublicEndpointMapper;
 import org.apache.cxf.common.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 @SQLComponent
 public class SqlEndpointRepository implements EndpointDao {
@@ -34,6 +37,7 @@ public class SqlEndpointRepository implements EndpointDao {
     EndpointRepository endpointRepository;
 
     @Override
+    @Transactional
     public void addBaseUrl(CloudBaseUrl baseUrl) {
         SqlEndpoint publicEndpoint = publicEndpointMapper.toSQL(baseUrl);
         if(publicEndpoint.getUrl() != null){
@@ -55,6 +59,7 @@ public class SqlEndpointRepository implements EndpointDao {
     }
 
     @Override
+    @Transactional
     public void deleteBaseUrl(String baseUrlId) {
         List<SqlEndpoint> endpoints = endpointRepository.findByLegacyEndpointId(baseUrlId);
 
@@ -121,6 +126,7 @@ public class SqlEndpointRepository implements EndpointDao {
     }
 
     @Override
+    @Transactional
     public void updateCloudBaseUrl(CloudBaseUrl cloudBaseUrl) {
         SqlEndpoint publicEndpoint = publicEndpointMapper.toSQL(cloudBaseUrl);
         publicEndpoint.setInterface1(PUBLIC_INTERFACE);

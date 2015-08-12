@@ -1,11 +1,13 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.entity.Tenant
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.annotation.DirtiesContext
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
+import testHelpers.junit.IgnoreByRepositoryProfile
 
 /**
  * Created with IntelliJ IDEA
@@ -20,7 +22,7 @@ class GetObjectsPagingIntegrationTest extends RootIntegrationTest{
     @Shared def defaultUser, users
     @Shared def domainId
 
-    @Autowired
+    @Autowired(required = false)
     LdapTenantRepository repo;
 
     @Autowired
@@ -30,6 +32,7 @@ class GetObjectsPagingIntegrationTest extends RootIntegrationTest{
         config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_DEFAULT_VALUE)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "Get paged or unpaged as appropriate" () {
         given:
         def startCount = getNumberOfPreExistingTenants()

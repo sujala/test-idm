@@ -11,6 +11,7 @@ import com.rackspace.idm.exception.ClientConflictException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     TenantRoleMapper mapper;
 
     @Override
+    @Transactional
     public void addTenantRoleToUser(BaseUser user, TenantRole tenantRole) {
         List<SqlTenantRole> sqlTenantRoles  = tenantRoleRepository.findByActorIdAndRoleId(user.getId(), tenantRole.getRoleRsId());
         tenantRole.setUserId(user.getId());
@@ -75,6 +77,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     }
 
     @Override
+    @Transactional
     public void updateTenantRole(TenantRole tenantRole) {
         List<SqlTenantRole> sqlTenantRoles = mapper.toSQLList(tenantRole);
         List<SqlTenantRole> existingSqlTenantRoles = tenantRoleRepository.findByActorIdAndRoleId(tenantRole.getUserId(), tenantRole.getRoleRsId());
@@ -93,6 +96,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     }
 
     @Override
+    @Transactional
     public void deleteTenantRoleForUser(EndUser user, TenantRole tenantRole) {
         for(SqlTenantRole sqlTenantRole : mapper.toSQLList(tenantRole)){
             sqlTenantRole.setActorId(user.getId());
@@ -101,6 +105,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     }
 
     @Override
+    @Transactional
     public void deleteTenantRole(TenantRole tenantRole) {
         tenantRoleRepository.delete(mapper.toSQLList(tenantRole));
     }

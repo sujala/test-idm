@@ -21,6 +21,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -55,6 +56,7 @@ public class SqlUserRepository implements UserDao {
     private CryptHelper cryptHelper;
 
     @Override
+    @Transactional
     public void addUser(User user) {
         if (StringUtils.isBlank(user.getId())) {
             user.setId(getNextUserId());
@@ -69,11 +71,13 @@ public class SqlUserRepository implements UserDao {
     }
 
     @Override
+    @Transactional
     public void deleteUser(User user) {
         userRepository.delete(user.getId());
     }
 
     @Override
+    @Transactional
     public void deleteUser(String username) {
         userRepository.deleteByUsername(username);
     }
@@ -224,19 +228,19 @@ public class SqlUserRepository implements UserDao {
     }
 
     @Override
+    @Transactional
     public void updateUser(User user) {
         updateUser(user, true);
     }
 
     @Override
+    @Transactional
     public void updateUserAsIs(User user) {
         updateUser(user, false);
     }
 
     private void updateUser(User user, boolean ignoreNulls) {
-        final SqlUser sqlUser = userRepository.findOne(user.getId());
-        userMapper.toSQL(user, sqlUser, ignoreNulls);
-        userRepository.save(sqlUser);
+        userRepository.save(userMapper.toSQL(user, userRepository.findOne(user.getId()), ignoreNulls));
     }
 
     @Override
@@ -257,6 +261,7 @@ public class SqlUserRepository implements UserDao {
     }
 
     @Override
+    @Transactional
     public void addGroupToUser(String userId, String groupId) {
         final SqlUser sqlUser = userRepository.findOne(userId);
         if (sqlUser != null) {
@@ -269,6 +274,7 @@ public class SqlUserRepository implements UserDao {
     }
 
     @Override
+    @Transactional
     public void deleteGroupFromUser(String groupId, String userId) {
         final SqlUser sqlUser = userRepository.findOne(userId);
         if (sqlUser.getRsGroupId() != null) {

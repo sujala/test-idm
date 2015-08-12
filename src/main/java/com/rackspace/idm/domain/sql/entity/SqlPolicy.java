@@ -25,7 +25,7 @@ public class SqlPolicy {
     @Column(name = "extra")
     private String extra;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "id", referencedColumnName = "id", nullable = false)
     private SqlPolicyRax rax;
 

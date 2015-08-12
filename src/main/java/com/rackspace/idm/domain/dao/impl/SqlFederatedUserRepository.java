@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.sql.mapper.impl.FederatedUserRaxMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.GroupMapper;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
@@ -34,6 +35,7 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
     private GroupRepository groupRepository;
 
     @Override
+    @Transactional
     public void addUser(IdentityProvider provider, FederatedUser user) {
         Assert.isTrue(user.getFederatedIdpUri().equals(provider.getUri()), "The user must have the same federated uri as the provider!");
         if (StringUtils.isBlank(user.getId())) {
@@ -43,10 +45,9 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
     }
 
     @Override
+    @Transactional
     public void updateUser(FederatedUser user) {
-        SqlFederatedUserRax sqlFederatedUserRax = federatedUserRepository.findOne(user.getId());
-        sqlFederatedUserRax = federatedUserRaxMapper.toSQL(user, sqlFederatedUserRax);
-        federatedUserRepository.save(sqlFederatedUserRax);
+        federatedUserRepository.save(federatedUserRaxMapper.toSQL(user, federatedUserRepository.findOne(user.getId())));
     }
 
     @Override

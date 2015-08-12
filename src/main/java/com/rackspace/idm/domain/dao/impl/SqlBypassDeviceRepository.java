@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.sql.mapper.impl.BypassDeviceMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 
@@ -26,6 +27,7 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
     private BypassDeviceRepository repository;
 
     @Override
+    @Transactional
     public void addBypassDevice(UniqueId parent, BypassDevice bypassDevice) {
         if (parent instanceof BaseUser) {
             final String userId = ((BaseUser) parent).getId();
@@ -39,6 +41,7 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
     }
 
     @Override
+    @Transactional
     public void deleteAllBypassDevices(UniqueId parent) {
         try {
             if (parent instanceof BaseUser) {
@@ -51,6 +54,7 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
     }
 
     @Override
+    @Transactional
     public boolean deleteBypassDevice(BypassDevice bypassDevice) {
         try {
             repository.delete(bypassDevice.getId());
@@ -62,10 +66,10 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
     }
 
     @Override
+    @Transactional
     public void updateBypassDevice(BypassDevice bypassDevice) {
         try {
-            final SqlBypassDevice device = mapper.toSQL(bypassDevice);
-            repository.save(device);
+            repository.save(mapper.toSQL(bypassDevice, repository.findOne(bypassDevice.getId())));
         } catch (Exception e) {
             LOGGER.error("Cannot update bypass device: " + bypassDevice.getId(), e);
         }

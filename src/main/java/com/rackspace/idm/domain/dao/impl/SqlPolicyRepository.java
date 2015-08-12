@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.Policy;
 import com.rackspace.idm.domain.sql.dao.PolicyRepository;
 import com.rackspace.idm.domain.sql.mapper.impl.PolicyMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -20,6 +21,7 @@ public class SqlPolicyRepository implements PolicyDao {
     PolicyRepository policyRepository;
 
     @Override
+    @Transactional
     public void addPolicy(Policy policy) {
         policyRepository.save(mapper.toSQL(policy));
     }
@@ -35,11 +37,13 @@ public class SqlPolicyRepository implements PolicyDao {
     }
 
     @Override
+    @Transactional
     public void updatePolicy(Policy policy) {
         policyRepository.save(mapper.toSQL(policy));
     }
 
     @Override
+    @Transactional
     public void deletePolicy(String policyId) {
         policyRepository.delete(policyId);
     }
@@ -59,6 +63,7 @@ public class SqlPolicyRepository implements PolicyDao {
     }
 
     @Override
+    @Transactional
     public void softDeletePolicy(Policy policy) {
         policyRepository.delete(mapper.toSQL(policy));
     }

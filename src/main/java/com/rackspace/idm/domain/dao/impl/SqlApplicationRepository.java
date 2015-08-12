@@ -2,12 +2,13 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.ApplicationDao;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.sql.dao.ServiceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlService;
 import com.rackspace.idm.domain.sql.mapper.impl.ServiceMapper;
 import com.rackspace.idm.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -25,12 +26,14 @@ public class SqlApplicationRepository implements ApplicationDao {
     public static final String APPLICATION_NAME_REGEX_NAME_PARAM = ":service_name";
 
     @Override
+    @Transactional
     public void addApplication(Application client) {
         SqlService sqlService = mapper.toSQL(client);
         serviceRepository.save(sqlService);
     }
 
     @Override
+    @Transactional
     public void deleteApplication(Application client) {
         serviceRepository.delete(client.getClientId());
     }
@@ -61,8 +64,9 @@ public class SqlApplicationRepository implements ApplicationDao {
     }
 
     @Override
+    @Transactional
     public void updateApplication(Application client) {
-        serviceRepository.save(mapper.toSQL(client));
+        serviceRepository.save(mapper.toSQL(client, serviceRepository.findOne(client.getClientId())));
     }
 
     @Override

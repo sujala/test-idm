@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.sql.dao.ProjectRepository;
 import com.rackspace.idm.domain.sql.entity.SqlProject;
 import com.rackspace.idm.domain.sql.mapper.impl.ProjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 @SQLComponent
 public class SqlTenantRepository implements TenantDao {
@@ -23,6 +24,7 @@ public class SqlTenantRepository implements TenantDao {
     ProjectRepository projectRepository;
 
     @Override
+    @Transactional
     public void addTenant(Tenant tenant) {
         //TODO: Keystone requires domain_id to be specified
         if (tenant.getDomainId() == null) {
@@ -32,6 +34,7 @@ public class SqlTenantRepository implements TenantDao {
     }
 
     @Override
+    @Transactional
     public void deleteTenant(String tenantId) {
         projectRepository.delete(tenantId);
     }
@@ -59,6 +62,7 @@ public class SqlTenantRepository implements TenantDao {
     }
 
     @Override
+    @Transactional
     public void updateTenant(Tenant tenant) {
         SqlProject sqlProject = projectRepository.findOne(tenant.getTenantId());
         projectRepository.save(mapper.toSQL(tenant, sqlProject));

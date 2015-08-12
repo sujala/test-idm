@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.sql.dao.GroupRepository;
 import com.rackspace.idm.domain.sql.entity.SqlGroup;
 import com.rackspace.idm.domain.sql.mapper.impl.GroupMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -45,11 +46,13 @@ public class SqlGroupRepository implements GroupDao {
     }
 
     @Override
+    @Transactional
     public void deleteGroup(String groupId) {
         groupRepository.delete(groupId);
     }
 
     @Override
+    @Transactional
     public void addGroup(Group group) {
         SqlGroup sqlGroup = mapper.toSQL(group);
         //TODO: Keystone requires domain_id to be specified
@@ -58,6 +61,7 @@ public class SqlGroupRepository implements GroupDao {
     }
 
     @Override
+    @Transactional
     public void updateGroup(Group group) {
         groupRepository.save(mapper.toSQL(group, groupRepository.findOne(group.getGroupId())));
     }

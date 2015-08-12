@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.sql.dao.MobilePhoneRepository;
 import com.rackspace.idm.domain.sql.mapper.impl.MobilePhoneMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -34,16 +35,19 @@ public class SqlMobilePhoneRepository implements MobilePhoneDao {
     }
 
     @Override
+    @Transactional
     public void addMobilePhone(MobilePhone mobilePhone) {
         repository.save(mapper.toSQL(mobilePhone));
     }
 
     @Override
+    @Transactional
     public void updateMobilePhone(MobilePhone mobilePhone) {
-        repository.save(mapper.toSQL(mobilePhone));
+        repository.save(mapper.toSQL(mobilePhone, repository.findOne(mobilePhone.getId())));
     }
 
     @Override
+    @Transactional
     public void deleteMobilePhone(MobilePhone mobilePhone) {
         repository.delete(mapper.toSQL(mobilePhone));
     }

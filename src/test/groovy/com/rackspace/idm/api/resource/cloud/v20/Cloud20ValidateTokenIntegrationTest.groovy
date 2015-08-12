@@ -3,8 +3,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
-import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
+import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
@@ -18,8 +18,6 @@ import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ClassPathResource
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -28,8 +26,6 @@ import testHelpers.saml.SamlAssertionFactory
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static org.apache.http.HttpStatus.*
 
 class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
@@ -41,10 +37,10 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     ScopeAccessService scopeAccessService
 
     @Autowired
-    LdapFederatedUserRepository ldapFederatedUserRepository
+    FederatedUserDao ldapFederatedUserRepository
 
     @Autowired
-    LdapScopeAccessRepository scopeAccessDao
+    ScopeAccessDao scopeAccessDao
 
     @Autowired
     AuthorizationService authorizationService

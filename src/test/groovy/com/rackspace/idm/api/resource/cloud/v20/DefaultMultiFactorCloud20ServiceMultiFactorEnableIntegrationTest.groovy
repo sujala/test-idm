@@ -1,17 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
-import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
-import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
+import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -20,14 +14,11 @@ import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
-import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
-import org.mockito.Mockito
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.test.context.ContextConfiguration
 import org.springframework.util.StringUtils
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -40,10 +31,10 @@ import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
 class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends RootConcurrentIntegrationTest {
     @Autowired
-    private LdapMobilePhoneRepository mobilePhoneRepository;
+    private MobilePhoneDao mobilePhoneRepository;
 
     @Autowired
-    private LdapUserRepository userRepository;
+    private UserDao userRepository;
 
     @Autowired
     private BasicMultiFactorService multiFactorService;
@@ -421,11 +412,11 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         User userEntity = userRepository.getUserById(userAdmin.id)
         userEntity.setMultifactorEnabled(false)
         userEntity.setExternalMultiFactorUserId(null)
-        userRepository.updateObjectAsIs(userEntity)
+        userRepository.updateUserAsIs(userEntity)
 
         MobilePhone phoneEntity = mobilePhoneRepository.getById(responsePhone.id)
         phoneEntity.setExternalMultiFactorPhoneId(null)
-        mobilePhoneRepository.updateObjectAsIs(phoneEntity)
+        mobilePhoneRepository.updateMobilePhone(phoneEntity)
 
         when:
         def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
