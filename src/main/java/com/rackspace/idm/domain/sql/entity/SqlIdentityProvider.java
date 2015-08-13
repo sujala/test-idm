@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.sql.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.util.List;
@@ -8,6 +10,8 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "identity_provider_rax")
+@EqualsAndHashCode(exclude = "userCertificates")
+@ToString(exclude = "userCertificates")
 public class SqlIdentityProvider {
 
     @Id
@@ -23,7 +27,10 @@ public class SqlIdentityProvider {
     @Column(name = "public_certificate")
     private String publicCertificate;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "id")
+    @Column(name = "target_user_source")
+    private String targetUserSource;
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "identityProvider")
     private List<SqlUserCertificate> userCertificates;
 
 }

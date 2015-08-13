@@ -714,6 +714,7 @@ INSERT INTO `policy_rax` VALUES ('3043','name',0,0,'description');
 -- Dumping data for table `project`
 --
 
+INSERT INTO `project` VALUES ('identity','identity','{}',NULL,1,'983452',NULL);
 INSERT INTO `project` VALUES ('32035123','32035123','{}',NULL,1,'32035123',NULL);
 INSERT INTO `project` VALUES ('78543985','78543985','{}',NULL,1,'78543985',NULL);
 INSERT INTO `project` VALUES ('78543987','78543987','{}',NULL,1,'78543987',NULL);
