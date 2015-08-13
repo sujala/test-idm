@@ -37,7 +37,7 @@ public class SqlKeyCzarAPINodeSignoffRepository implements KeyCzarAPINodeSignoff
     @Override
     @Transactional
     public void deleteApiNodeSignoff(APINodeSignoff apiNodeSignoff) {
-        repository.delete((SqlAPINodeSignoff) apiNodeSignoff);
+        repository.delete(apiNodeSignoff.getId());
     }
 
     @Override
