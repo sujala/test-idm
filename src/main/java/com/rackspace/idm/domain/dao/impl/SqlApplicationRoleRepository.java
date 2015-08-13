@@ -39,7 +39,7 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
     @Override
     @Transactional
     public void deleteClientRole(ClientRole role) {
-        repository.delete(mapper.toSQL(role));
+        repository.delete(role.getId());
     }
 
     @Override

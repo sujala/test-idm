@@ -53,9 +53,9 @@
             <property name="url" value="#{identityConfig.staticConfig.sqlUrl}"/>
             <property name="username" value="#{identityConfig.staticConfig.sqlUsername}"/>
             <property name="password" value="#{identityConfig.staticConfig.sqlPassword}"/>
-            <property name="initialSize" value="#{identityConfig.staticConfig.initialSize}"/>
-            <property name="maxActive" value="#{identityConfig.staticConfig.maxActive}"/>
-            <property name="maxIdle" value="#{identityConfig.staticConfig.maxIdle}"/>
+            <property name="initialSize" value="#{identityConfig.staticConfig.sqlInitialSize}"/>
+            <property name="maxActive" value="#{identityConfig.staticConfig.sqlMaxActive}"/>
+            <property name="maxIdle" value="#{identityConfig.staticConfig.sqlMaxIdle}"/>
             <property name="removeAbandoned" value="true"/>
         </bean>
 
@@ -84,7 +84,7 @@
             </property>
         </bean>
 
-        <tx:annotation-driven transaction-manager="transactionManager" />
+        <tx:annotation-driven transaction-manager="transactionManager" order="2"/>
     </beans>
 
 </beans>

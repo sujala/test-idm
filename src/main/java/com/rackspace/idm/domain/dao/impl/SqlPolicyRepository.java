@@ -65,7 +65,7 @@ public class SqlPolicyRepository implements PolicyDao {
     @Override
     @Transactional
     public void softDeletePolicy(Policy policy) {
-        policyRepository.delete(mapper.toSQL(policy));
+        policyRepository.delete(policy.getPolicyId());
     }
 
 }

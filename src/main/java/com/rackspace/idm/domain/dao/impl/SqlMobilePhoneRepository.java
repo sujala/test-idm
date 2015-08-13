@@ -49,7 +49,7 @@ public class SqlMobilePhoneRepository implements MobilePhoneDao {
     @Override
     @Transactional
     public void deleteMobilePhone(MobilePhone mobilePhone) {
-        repository.delete(mapper.toSQL(mobilePhone));
+        repository.delete(mobilePhone.getId());
     }
 
     @Override
