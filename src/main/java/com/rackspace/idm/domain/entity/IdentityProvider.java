@@ -96,7 +96,7 @@ public class IdentityProvider implements Auditable, UniqueId {
 
         byte[] toRemove = certificate.getEncoded();
         for (int i=0; i<userCertificates.size(); i++) {
-            if (Arrays.equals(userCertificates.get(0), toRemove)) {
+            if (Arrays.equals(userCertificates.get(i), toRemove)) {
                 userCertificates.remove(i);
             }
         }
