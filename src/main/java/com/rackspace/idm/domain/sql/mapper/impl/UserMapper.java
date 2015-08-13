@@ -38,8 +38,9 @@ public class UserMapper extends SqlRaxMapper<User, SqlUser, SqlUserRax> {
             user.setUniqueId(fromSqlUserToUniqueId(sqlUser));
         }
 
-        user.setPasswordIsNew(false);
         encryptionService.decryptUser(user);
+        user.setPasswordIsNew(false);
+        user.setPassword(null);
         return user;
     }
 

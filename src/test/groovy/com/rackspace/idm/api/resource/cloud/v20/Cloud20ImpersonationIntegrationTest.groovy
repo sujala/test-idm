@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
@@ -32,6 +33,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
+import testHelpers.junit.IgnoreByRepositoryProfile
 import testHelpers.saml.SamlAssertionFactory
 
 import javax.ws.rs.core.MediaType
@@ -78,7 +80,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     ScopeAccessDao scopeAccessRepository
 
     @Autowired
-    FederatedUserDao ldapFederatedUserRepository
+    FederatedUserDao federatedUserRepository
 
     @Autowired
     AETokenService aeTokenService;
@@ -114,6 +116,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonating a disabled user should be possible with token format: #tokenFormat"() {
         given:
         def localDefaultUser = utils.createUser(userAdminToken)
@@ -167,6 +170,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonate federated user as identity admin; tokenFormat = #tokenFormat, request=#requestContentType, accept=#acceptContentType"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
@@ -362,6 +366,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
      * The token format of the user being impersonated is irrelevant.
      *
      */
+    @Unroll
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonating user with different token format than impersonator uses impersonator tokenFormat: #impersonatorFormat: #impersonatedFormat; #impersonatedFormat"() {
         given:
         def iAdmin = utils.createUser(specificationServiceAdminToken)
@@ -409,6 +415,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     /* *******************
     AE only tests
     ************************* */
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonate user using ae tokens"() {
         given:
         def iAdmin = utils.createUser(specificationServiceAdminToken)
@@ -449,6 +456,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     UUID only tests
     ************************* */
     @Unroll
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "ability to impersonate federated user depends on feature flag : featureFlagAllows=#federatedImpersonationAllowed"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, federatedImpersonationAllowed)
@@ -481,6 +489,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with existing user token lifetime later than impersonation request"() {
         given:
         def now = new DateTime()
@@ -511,6 +520,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with existing user token lifetime less than impersonation request"() {
         given:
         def now = new DateTime()
@@ -552,6 +562,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with only expired user tokens"() {
         given:
         def now = new DateTime()
@@ -589,6 +600,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with no user tokens - uuid tokens"() {
         given:
         def now = new DateTime()
@@ -628,6 +640,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         disableUser << [false, true]
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID Only - impersonate federated user impersonates existing impersonated tokens if they are within the requested window"() {
         given:
         def domainId = utils.createDomain()
@@ -681,6 +694,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(users)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID Only - a federated user cannot get an impersonated token when authenticating with saml"() {
         given:
         def domainId = utils.createDomain()
@@ -717,6 +731,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(users)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID Only - authenticating as a federated user deletes expired federated tokens"() {
         given:
         def domainId = utils.createDomain()
@@ -774,6 +789,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(users)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - federated user impersonation - a new impersonation token is only created if one does not exist that expires on or after requested time"() {
         given:
         def domainId = utils.createDomain()
@@ -826,6 +842,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
      * even if the impersonatingUsername on the token matches the federated user's username. These tokens are tokens created before the
      * rsImpersonatingRsId attribute was added and should only be considered valid for provisioned users.
      */
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonating a federated user does not return impersonation tokens for provisioned users with the same username (even if the token does not have the rsImpersonatingRsId attribute)"() {
         given:
         def domainId = utils.createDomain()
@@ -883,6 +900,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(users)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonating a federated user only cleans up tokens for the federated user"() {
         given:
         staticIdmConfiguration.setProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, true)
@@ -986,6 +1004,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         impersonationResponse.status == 404
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonating a provisioned user only cleans up tokens for the provisioned user"() {
         given:
         staticIdmConfiguration.setProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, true)
@@ -1115,6 +1134,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonate - impersonation request greater than max racker user token lifetime throws exception"() {
         given:
         def now = new DateTime()
@@ -1159,6 +1179,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(localDefaultUser)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonated user gets new token with authBy set to impersonated if no 'impersonation' tokens exist for that user"() {
         given:
         //after this the user has a single token that doesn't expire till 23 hours from now, which is greater than the requested impersonation token
@@ -1187,6 +1208,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(localDefaultUser)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonation token re-uses existing 'impersonation' user token when possible"() {
         given:
         //after this the user has a single token that doesn't expire till 23 hours from now, which is greater than the requested impersonation token
@@ -1252,6 +1274,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     /**
      * Impersonation tokens whose linked user tokens are expired, should return a 404 on validation
      */
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "An impersonation token that links to an expired user token should return a 404"() {
         given:
         def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().plusHours(23))
@@ -1362,9 +1385,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
     def deleteFederatedUserQuietly(username) {
         try {
-            def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
             if (federatedUser != null) {
-                ldapFederatedUserRepository.deleteObject(federatedUser)
+                federatedUserRepository.deleteObject(federatedUser)
             }
         } catch (Exception e) {
             //eat but log
