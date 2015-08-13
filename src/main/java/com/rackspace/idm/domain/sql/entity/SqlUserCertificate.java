@@ -1,21 +1,23 @@
 package com.rackspace.idm.domain.sql.entity;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Data
 @Entity
 @Table(name = "user_certificate_rax")
+@EqualsAndHashCode(exclude = "identityProvider")
+@ToString(exclude = "identityProvider")
 public class SqlUserCertificate {
 
-    @Id
-    @Column(name = "identity_provider_id", length = 64)
-    private String id;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "identity_provider_id")
+    private SqlIdentityProvider identityProvider;
 
+    @Id
     @Column(name = "id", length = 64)
     private String uuid;
 
