@@ -1,12 +1,15 @@
-package com.rackspace.idm.domain.service.impl;
+package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.IdentityConfig.ReloadableConfig;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.Test
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +23,8 @@ public class TenantServiceTests {
     private ScopeAccessService scopeAccessService;
     private EndpointService endpointService;
     private TenantService tenantService;
+    private IdentityConfig identityConfig;
+    private ReloadableConfig reloadableConfig;
 
     private final String tenantName = "tenantName";
     private final String tenantId1 = "tenantId1";
@@ -33,6 +38,9 @@ public class TenantServiceTests {
     private final String id = "XXX";
     private final String id2 = "YYY";
 
+    @Autowired
+    IdentityConfig identityConfig;
+
     @Before
     public void setUp() throws Exception {
 
@@ -41,6 +49,9 @@ public class TenantServiceTests {
         userService = EasyMock.createMock(UserService.class);
         endpointService = EasyMock.createMock(EndpointService.class);
         scopeAccessService = EasyMock.createMock(ScopeAccessService.class);
+        identityConfig = EasyMock.createMock(IdentityConfig.class)
+        reloadableConfig = EasyMock.createMock(IdentityConfig.ReloadableConfig.class)
+
         tenantService = new DefaultTenantService();
         tenantService.tenantDao = tenantDao;
         tenantService.tenantRoleDao = tenantRoleDao;
@@ -48,6 +59,7 @@ public class TenantServiceTests {
         tenantService.applicationService = applicationService;
         tenantService.endpointService = endpointService;
         tenantService.scopeAccessService = scopeAccessService;
+        tenantService.identityConfig = identityConfig
     }
 
     @Test
@@ -86,6 +98,10 @@ public class TenantServiceTests {
     @Test
     public void shouldUpdateTenant() {
         Tenant tenant = getTestTenant();
+        EasyMock.expect(identityConfig.getReloadableConfig()).andReturn(reloadableConfig);
+        EasyMock.expect(reloadableConfig.getIdentityRoleDefaultTenant()).andReturn('identity');
+        EasyMock.replay(identityConfig)
+        EasyMock.replay(reloadableConfig)
         tenantDao.updateTenant(tenant);
         EasyMock.replay(tenantDao);
         tenantService.updateTenant(tenant);

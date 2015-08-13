@@ -4022,6 +4022,13 @@ objectClass: top
 objectClass: organizationalUnit
 ou: tenants
 
+dn: rsId=identity,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+cn: identity
+enabled: TRUE
+rsId: identity
+rsDomainId: 983452
+
 dn: rsId=78543985,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: tenant
 rsId: 78543985
