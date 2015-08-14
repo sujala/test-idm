@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -18,6 +19,7 @@ import org.apache.commons.collections4.IteratorUtils
 import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -48,7 +50,7 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
     }
 
     /**
-     * Test full integration through REST service add, modify, delete
+     * Test full integration through REST service add, modify, delete. Includes specifying the type of events to record.
      * @return
      */
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
@@ -114,6 +116,84 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
         [ChangeType.DELETE] | _
     }
 
+    /**
+     * Test full integration through REST service add, modify, delete
+     * @return
+     */
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
+    def "Record Change Event :: User"() {
+        given:
+        //set up properties to record event
+        enableListenerForAllChangeTypes(ldapChangeEventRecorderListener.getListenerName())
+        DateTime beforeStart = new DateTime();
+
+        User userAdmin
+        def users
+
+        when: "add User"
+        (userAdmin, users) = utils.createUserAdmin()
+        def entity = userDao.getUserById(userAdmin.id)
+
+        List<LdapMigrationChangeEvent> eventsAfterAdd = getEventsForEntity(entity)
+
+        then: "an add ldap entry is recorded if applicable"
+        assert eventsAfterAdd.size() == 1
+        verifyEvent(eventsAfterAdd.get(0), ChangeType.ADD, entity, beforeStart)
+
+        when: "modify User"
+        //verify will modify the OTP device by setting verified flag
+        userAdmin.setEmail("somethingnew@rackspace.com")
+        utils.updateUser(userAdmin)
+        List<LdapMigrationChangeEvent> eventsAfterModify = getEventsForEntity(entity)
+
+        then: "modify event recorded"
+        assert eventsAfterModify.size() == eventsAfterAdd.size() + 1
+        verifyEvent(eventsAfterModify.last(), ChangeType.MODIFY, entity, beforeStart)
+
+        when: "delete user"
+        utils.deleteUser(userAdmin)
+        List<LdapMigrationChangeEvent> eventsAfterDelete = getEventsForEntity(entity)
+
+        then: "delete event is recorded"
+        assert eventsAfterDelete.size() == eventsAfterModify.size() + 1
+        verifyEvent(eventsAfterDelete.last(), ChangeType.DELETE, entity, beforeStart)
+    }
+
+    /**
+     * Test MFA Changes cause modify event
+     * @return
+     */
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
+    def "Record Change Event :: User MFA modification"() {
+        given:
+        //set up properties to record event
+        enableListenerForAllChangeTypes(ldapChangeEventRecorderListener.getListenerName())
+
+        DateTime beforeStart = new DateTime();
+
+        User userAdmin
+        def users
+        (userAdmin, users) = utils.createUserAdmin()
+        def entity = userDao.getUserById(userAdmin.id)
+        List<LdapMigrationChangeEvent> eventsAfterAdd = getEventsForEntity(entity)
+
+        when: "Add Mobile Phone To User"
+        MobilePhone phone = utils.addMobilePhoneToUser(specificationServiceAdminToken, userAdmin)
+        List<LdapMigrationChangeEvent> eventsAfterAddingPhone = getEventsForEntity(entity)
+
+        then: "a modify ldap entry is recorded"
+        assert eventsAfterAddingPhone.size() == eventsAfterAdd.size() + 1
+        verifyEvent(eventsAfterAddingPhone.last(), ChangeType.MODIFY, entity, beforeStart)
+
+        when: "Send verification code To User"
+        utils.sendVerificationCodeToPhone(specificationServiceAdminToken, userAdmin.id, phone.id)
+        List<LdapMigrationChangeEvent> eventsAfterSendVerification = getEventsForEntity(entity)
+
+        then: "a modify ldap entry is recorded"
+        assert eventsAfterSendVerification.size() == eventsAfterAddingPhone.size() + 1
+        verifyEvent(eventsAfterSendVerification.last(), ChangeType.MODIFY, entity, beforeStart)
+
+    }
 
     def void verifyEvent(LdapMigrationChangeEvent event, ChangeType expectedChangeType, UniqueId expectedEntityRecorded, DateTime expectedOccurredOnOrAfter) {
         assert event.getChangeType() == expectedChangeType
