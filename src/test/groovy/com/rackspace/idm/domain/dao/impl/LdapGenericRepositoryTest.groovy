@@ -1,13 +1,22 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.UniqueId
 import com.unboundid.ldap.sdk.SearchResultEntry
+import org.junit.Rule
 import spock.lang.Shared
 import spock.lang.Specification
+import testHelpers.junit.ConditionalIgnoreRule
+import testHelpers.junit.IgnoreByRepositoryProfile
 
+@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 class LdapGenericRepositoryTest extends Specification {
 
     @Shared DummyRepository genericRepository
+
+    @Rule
+    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
+
 
     def "processSearchResults does not add null values"() {
         given:
