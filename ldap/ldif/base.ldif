@@ -5380,3 +5380,151 @@ objectClass: top
 objectClass: organizationalUnit
 ou: roles
 
+dn: rsId=132885,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsDomain
+cn: 132885
+enabled: TRUE
+rsId: 132885
+description: Default Domain
+tenantRsId: 132885
+tenantRsId: MossoCloudFS_132885
+
+dn: rsId=c90d35db77d14133b05fdc576a4f4ffb,ou=users,o=rackspace,dc=rackspace,
+ dc=com
+objectClass: rsPerson
+rsId: c90d35db77d14133b05fdc576a4f4ffb
+enabled: TRUE
+encryptionSalt: 1b f2 c3 ca 9b 85 e3 98 13 bc 6b ff 9a 44 ff 5c
+encryptionVersionId: 0
+mail: email@email.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20150728211548.166Z
+rsApiKey:: zFA8ZdrRlHMsLzCcvbi0wNEQ+vFHePDpVQ662HuftQ0i2t8AyqX48VOEiqD4Ojqg
+rsDisplayName:: hYrTb9t/w78h/X1Pwgdgxg==
+rsDomainId: 132885
+rsGroupId: 0
+rsMossoId: 132885
+rsNastId: MossoCloudFS_132885
+rsRegion: ORD
+secretAnswer:: Z/moR585HO4jj2N47AXj8Q==
+secretQuestion:: mkeJvR9UOkdMpiV+VNhEcA==
+uid: userAdmin80235dc928bf4854863193257a80da64
+userPassword:: e1NTSEE1MTJ9OWRNaytURU9IR3ZaOVh0NlpDUG5NUXVadlc1b2JkcWJhRHhjV
+ W56NmpRdStpOHdWOUFVZEZ3RFVxRm5RSGhMWXRTSld2OEdUT1JkMU1LOW8rV1RiTU1KVnNsTT0=
+
+dn: rsId=af455d1387ab4281873ceae5bc400e50,ou=users,o=rackspace,dc=rackspace,
+ dc=com
+objectClass: rsPerson
+rsId: af455d1387ab4281873ceae5bc400e50
+enabled: TRUE
+encryptionSalt: d1 1a e8 4b d2 7b 45 2c 53 75 32 c8 6a ba 99
+encryptionVersionId: 0
+mail: identityAdmin5ac28fdd56b14020965350b907c7dfb7@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20150728211547.735Z
+rsApiKey:: axqUKdYGvV47nHjpU1mBtBzmk/ev4snAjRo/8EEBdBqeY8keOlj6CKUV4l6Jbpli
+rsDisplayName:: rWmhCRNUYORgfnIPJ6ICcw==
+rsDomainId: 077d6644f58145cf831361bc08301a1e
+rsRegion: ORD
+uid: identityAdmin5ac28fdd56b14020965350b907c7dfb7
+userPassword:: e1NTSEE1MTJ9RCtsNVAwM3QxNWsycGF3YUVzY25XTkswSUduemdTN2V6Tlppb
+ UxXOEt2YVNUUElrWkdNaE5PSG9RS01kQldVclRwRm1wTjRZdkM2VC80bndZWExKZ2NEYjRZST0=
+
+dn: uid=samlUserac1acb2af04b43fb9e4674dea554d245,ou=users,ou=test,o=external
+ Providers,dc=rackspace,dc=com
+objectClass: rsFederatedPerson
+labeledUri: http://test.rackspace.com
+mail: federated@rackspace.com
+rsDomainId: 132885
+rsId: 41fb727456aa4d90a17d3067fa8d0bdf
+rsRegion: ORD
+uid: samlUserac1acb2af04b43fb9e4674dea554d245
+rsGroupId: 0
+
+dn: roleRsId=2,cn=ROLES,uid=samlUserac1acb2af04b43fb9e4674dea554d245,ou=user
+ s,ou=test,o=externalProviders,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 2
+
+dn: rsId=MossoCloudFS_132885,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc
+ =com
+objectClass: tenant
+cn: MossoCloudFS_132885
+enabled: TRUE
+rsId: MossoCloudFS_132885
+baseUrlId: 10
+baseUrlId: 1013
+baseUrlId: 103
+baseUrlId: 11
+baseUrlId: 111
+baseUrlId: 3
+rsDomainId: 132885
+tenantDisplayName: MossoCloudFS_132885
+vOneDefault: 103
+vOneDefault: 111
+
+dn: rsId=132885,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: tenant
+cn: 132885
+enabled: TRUE
+rsId: 132885
+baseUrlId: 1041
+baseUrlId: 1042
+baseUrlId: 109
+baseUrlId: 120
+baseUrlId: 122
+baseUrlId: 135
+baseUrlId: 15
+baseUrlId: 17
+baseUrlId: 47
+baseUrlId: 56
+baseUrlId: 83
+rsDomainId: 132885
+tenantDisplayName: 132885
+vOneDefault: 120
+vOneDefault: 15
+
+dn: roleRsId=5,cn=ROLES,uid=samlUserac1acb2af04b43fb9e4674dea554d245,ou=user
+ s,ou=test,o=externalProviders,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: MossoCloudFS_132885
+
+dn: roleRsId=6,cn=ROLES,uid=samlUserac1acb2af04b43fb9e4674dea554d245,ou=user
+ s,ou=test,o=externalProviders,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: 132885
+
+dn: roleRsId=3,cn=ROLES,rsId=c90d35db77d14133b05fdc576a4f4ffb,ou=users,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 3
+userRsId: c90d35db77d14133b05fdc576a4f4ffb
+
+dn: roleRsId=5,cn=ROLES,rsId=c90d35db77d14133b05fdc576a4f4ffb,ou=users,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: MossoCloudFS_132885
+userRsId: c90d35db77d14133b05fdc576a4f4ffb
+
+dn: roleRsId=6,cn=ROLES,rsId=c90d35db77d14133b05fdc576a4f4ffb,ou=users,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: 132885
+userRsId: c90d35db77d14133b05fdc576a4f4ffb
+
+dn: roleRsId=1,cn=ROLES,rsId=af455d1387ab4281873ceae5bc400e50,ou=users,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 1
+userRsId: af455d1387ab4281873ceae5bc400e50
