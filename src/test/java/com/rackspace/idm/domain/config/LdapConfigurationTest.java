@@ -3,15 +3,22 @@ package com.rackspace.idm.domain.config;
 import com.unboundid.util.LDAPSDKUsageException;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import testHelpers.junit.ConditionalIgnoreRule;
+import testHelpers.junit.IgnoreByRepositoryProfile;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 public class LdapConfigurationTest {
     Configuration configuration;
     LdapConfiguration ldapConfiguration;
+
+    @Rule
+    public ConditionalIgnoreRule role = new ConditionalIgnoreRule();
 
     @Before
     public void setUp() throws Exception {

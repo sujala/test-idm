@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.test.SingleTestConfiguration;
 import com.unboundid.ldap.sdk.*;
@@ -9,6 +10,7 @@ import junit.framework.Assert;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -16,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import testHelpers.junit.ConditionalIgnoreRule;
+import testHelpers.junit.IgnoreByRepositoryProfile;
 
 import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -40,7 +44,11 @@ import static org.mockito.Mockito.*;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration()
+@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 public class LdapRepositoryTest {
+
+    @Rule
+    public ConditionalIgnoreRule role = new ConditionalIgnoreRule();
 
     @Autowired
     LdapConnectionPools connPools;

@@ -1,11 +1,15 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import testHelpers.junit.ConditionalIgnoreRule;
+import testHelpers.junit.IgnoreByRepositoryProfile;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -23,10 +27,14 @@ import static org.powermock.api.mockito.PowerMockito.mock;
  */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(LDAPConnectionPool.class)  //Dont use power mock unless absolutely necessary it takes FOREVER to set up.
+@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 public class LdapConnectionPoolsTest {
     LdapConnectionPools ldapConnectionPools;
     LDAPConnectionPool appConnectionPool;
     LDAPConnectionPool bindConnectionPool;
+
+    @Rule
+    public ConditionalIgnoreRule role = new ConditionalIgnoreRule();
 
     @Before
     public void setUp() throws Exception {
