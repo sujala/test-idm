@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.sql.entity.SqlUserCertificate;
 import com.rackspace.idm.domain.sql.mapper.SqlMapper;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 @SQLComponent
 public class IdentityProviderMapper extends SqlMapper<IdentityProvider, SqlIdentityProvider> {
@@ -24,6 +25,29 @@ public class IdentityProviderMapper extends SqlMapper<IdentityProvider, SqlIdent
         }
 
         return identityProvider;
+    }
+
+    @Override
+    public SqlIdentityProvider toSQL(IdentityProvider identityProvider) {
+        if(identityProvider == null) {
+            return null;
+        }
+
+        SqlIdentityProvider sqlIdentityProvider = super.toSQL(identityProvider);
+
+        for(byte[] cert : identityProvider.getUserCertificates()) {
+            SqlUserCertificate sqlCert = new SqlUserCertificate();
+            sqlCert.setCertificate(cert);
+            sqlCert.setIdentityProvider(sqlIdentityProvider);
+            sqlCert.setUuid(getNextId());
+            sqlIdentityProvider.getUserCertificates().add(sqlCert);
+        }
+
+        return sqlIdentityProvider;
+    }
+
+    public static String getNextId() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
 }

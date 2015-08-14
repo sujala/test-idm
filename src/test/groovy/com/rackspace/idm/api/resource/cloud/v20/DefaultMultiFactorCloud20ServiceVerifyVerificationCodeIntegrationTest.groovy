@@ -5,8 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.UserDao
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest

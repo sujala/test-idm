@@ -1,12 +1,17 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.RepositoryProfileResolver
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
+import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.impl.DefaultUserService
+import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import org.apache.commons.collections.CollectionUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
@@ -27,13 +32,22 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
     TenantRoleDao tenantRoleDao
 
     @Autowired
-    FederatedUserDao ldapFederatedUserRepository
+    FederatedUserDao federatedUserRepository
 
     @Autowired
     DefaultUserService userService
 
     @Autowired
     DomainDao domainDao
+
+    @Autowired
+    IdentityConfig identityConfig
+
+    @Autowired(required = false)
+    LdapFederatedUserRepository ldapFederatedUserRepository
+
+    @Autowired(required = false)
+    FederatedUserRepository sqlFederatedUserRepository
 
     def "identity:default role is added to user as global role by default"() {
         given:
@@ -78,7 +92,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
 
-        def fedUser = ldapFederatedUserRepository.getUserById(samlResponse.user.id)
+        def fedUser = federatedUserRepository.getUserById(samlResponse.user.id)
         assert fedUser != null
 
         when: "adding global propagating role to user-admin"
@@ -115,7 +129,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
 
-        def fedUser = ldapFederatedUserRepository.getUserById(samlResponse.user.id)
+        def fedUser = federatedUserRepository.getUserById(samlResponse.user.id)
         assert fedUser != null
 
         when: "adding non-propagating role to user-admin with federated sub-users"
@@ -147,7 +161,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         utils.addRoleToUser(userAdmin, propagatingRole.id)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
 
-        def fedUser = ldapFederatedUserRepository.getUserById(samlResponse.user.id)
+        def fedUser = federatedUserRepository.getUserById(samlResponse.user.id)
         assert fedUser != null
 
         when: "adding role to user-admin with federated sub-users"
@@ -191,7 +205,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         samlResponse.user.roles.role.id.contains(propagatingRole.id)
 
         when: "loading the federated user's roles from the directory"
-        def fedUser = ldapFederatedUserRepository.getUserById(samlResponse.user.id)
+        def fedUser = federatedUserRepository.getUserById(samlResponse.user.id)
         assert fedUser != null
 
         then: "the propagating role is also added to the user in the directory"
@@ -226,7 +240,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         samlResponse.user.roles.role.id.contains(propagatingRole.id)
 
         when: "loading the federated user roles from the directory"
-        def fedUser = ldapFederatedUserRepository.getUserById(samlResponse.user.id)
+        def fedUser = federatedUserRepository.getUserById(samlResponse.user.id)
         assert fedUser != null
 
         then: "the propagating role is also added to the user in the directory"
@@ -261,7 +275,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         !samlResponse.user.roles.role.id.contains(propagatingRole.id)
 
         when: "loading the federated user roles from the directory"
-        def fedUser = ldapFederatedUserRepository.getUserById(samlResponse.user.id)
+        def fedUser = federatedUserRepository.getUserById(samlResponse.user.id)
         assert fedUser != null
 
         then: "the non-propagating role is not on the user in the directory"
@@ -297,7 +311,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
         when: "the propagating role is removed from the user-admin"
         cloud20.deleteApplicationRoleFromUser(utils.getServiceAdminToken(), propagatingRole.id, userAdmin.id)
-        def fedUser = ldapFederatedUserRepository.getUserById(samlResponse.user.id)
+        def fedUser = federatedUserRepository.getUserById(samlResponse.user.id)
 
         then: "the propagating role is also removed from the user in the directory"
         fedUser != null
@@ -329,7 +343,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
         when: "the propagating tenant role is removed from the user-admin"
         cloud20.deleteRoleFromUserOnTenant(utils.getServiceAdminToken(), domainId, userAdmin.id, propagatingRole.id)
-        def fedUser = ldapFederatedUserRepository.getUserById(samlResponse.user.id)
+        def fedUser = federatedUserRepository.getUserById(samlResponse.user.id)
 
         then: "the propagating role is also removed from the user in the directory"
         fedUser != null
@@ -361,7 +375,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
         //create the user
         def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
-        def fedUser = ldapFederatedUserRepository.getUserById(samlResponse.user.id)
+        def fedUser = federatedUserRepository.getUserById(samlResponse.user.id)
 
         assertFederatedUserHasRoleOnTenant(fedUser, propagatingRole, domainId)
         assertFederatedUserHasRoleOnTenant(fedUser, propagatingRole, nastTenantId)
@@ -480,7 +494,12 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
     def void assertFederatedUserHasGlobalRole(FederatedUser user, role) {
         TenantRole roleOnUser = tenantRoleDao.getTenantRoleForUser(user, role.id)
         assert roleOnUser != null
-        assert CollectionUtils.isEmpty(roleOnUser.tenantIds)
+        if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+            def identityTenant = identityConfig.getReloadableConfig().getIdentityRoleDefaultTenant()
+            assert roleOnUser.tenantIds.contains(identityTenant)
+        } else {
+            assert CollectionUtils.isEmpty(roleOnUser.tenantIds)
+        }
     }
 
     def void assertFederatedUserHasRoleOnTenant(FederatedUser user, role, tenantId) {
@@ -502,8 +521,13 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
 
     def deleteFederatedUser(username) {
-        def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
-        ldapFederatedUserRepository.deleteObject(federatedUser)
+        if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+            def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpName(username, DEFAULT_IDP_NAME)
+            if(federatedUser != null) sqlFederatedUserRepository.delete(federatedUser)
+        } else {
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            if(federatedUser != null) ldapFederatedUserRepository.deleteObject(federatedUser)
+        }
     }
 
 }
