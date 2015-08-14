@@ -11,8 +11,10 @@ import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.unboundid.ldap.sdk.Modification
@@ -28,6 +30,7 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -43,6 +46,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Autowired(required = false) LdapConnectionPools connPools
     @Autowired Configuration config
     @Autowired DefaultApplicationService applicationService
+
+    @Autowired
+    @Qualifier("tokenRevocationService")
+    TokenRevocationService tokenRevocationService;
 
     @Shared JAXBObjectFactories objFactories;
 
@@ -267,7 +274,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     def setup() {
-        expireTokens(USER_FOR_AUTH, 12)
+        tokenRevocationService.revokeAllTokensForEndUser(USER_FOR_AUTH_ID)
         setConfigValues()
         cloudAuthClientId = config.getString("cloudAuth.clientId")
         randomSuffix = UUID.randomUUID().toString().replace('-',"")
@@ -356,12 +363,13 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         secondScopeAccess.token.id.equals(thirdScopeAccess.token.id)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticating token in refresh window with 2 existing tokens deletes existing expired token"() {
         when:
         def firstScopeAccess = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         setTokenInRefreshWindow(USER_FOR_AUTH, firstScopeAccess.token.id)
         def secondScopeAccess = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
-        expireToken(USER_FOR_AUTH, firstScopeAccess.token.id, 12)
+        tokenRevocationService.revokeToken(firstScopeAccess.token.id)
         setTokenInRefreshWindow(USER_FOR_AUTH, secondScopeAccess.token.id)
         def thirdScopeAccess = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
@@ -3502,64 +3510,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         CLOUD_CLIENT_ID = config.getString("cloudAuth.clientId")
     }
 
-    def deleteUsersTokens(String uid) {
-        def result = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$uid))")
-        for (SearchResultEntry entry in result.getSearchEntries()) {
-            connPools.getAppConnPool().delete(entry.getDN())
-        }
-
-    }
-
-    def expireToken(String uid, String accessToken, int hoursOffset) {
-        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$USER_FOR_AUTH_ID)(clientId=$CLOUD_CLIENT_ID)(accessToken=$accessToken))","*")
-        for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
-            def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
-            if (!entity.isAccessTokenExpired(new DateTime())) {
-                entity.accessTokenExp = new DateTime().minusHours(hoursOffset).toDate()
-                List<Modification> mods = LDAPPersister.getInstance(ScopeAccess.class).getModifications(entity, true)
-                connPools.getAppConnPool().modify(entity.getUniqueId(), mods)
-            }
-        }
-    }
-
-    def expireTokens(String uid, int hoursOffset) {
-        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$USER_FOR_AUTH_ID))","*")
-        for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
-            def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
-            if (!entity.isAccessTokenExpired(new DateTime())) {
-                entity.accessTokenExp = new DateTime().minusHours(hoursOffset).toDate()
-                List<Modification> mods = LDAPPersister.getInstance(ScopeAccess.class).getModifications(entity, true)
-                connPools.getAppConnPool().modify(entity.getUniqueId(), mods)
-            }
-        }
-    }
-
-    def setTokenValid(String uid) {
-        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$USER_FOR_AUTH_ID)(clientId=$CLOUD_CLIENT_ID))","*")
-        for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
-            def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
-            if (!entity.isAccessTokenExpired(new DateTime())) {
-                entity.accessTokenExp = new DateTime().plusHours(24).toDate()
-                List<Modification> mods = LDAPPersister.getInstance(ScopeAccess.class).getModifications(entity, true)
-                connPools.getAppConnPool().modify(entity.getUniqueId(), mods)
-            }
-        }
-    }
-
     def setTokenInRefreshWindow(String uid, String accessToken) {
         def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$USER_FOR_AUTH_ID)(accessToken=$accessToken))","*")
-        for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
-            def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
-            if (!entity.isAccessTokenWithinRefreshWindow(config.getInt("token.refreshWindowHours"))) {
-                entity.accessTokenExp = new DateTime().plusHours(REFRESH_WINDOW_HOURS).minusHours(2).toDate()
-                List<Modification> mods = LDAPPersister.getInstance(ScopeAccess.class).getModifications(entity, true)
-                connPools.getAppConnPool().modify(entity.getUniqueId(), mods)
-            }
-        }
-    }
-
-    def setTokensInRefreshWindow(String uid) {
-        def resultCloudAuthScopeAccess = connPools.getAppConnPool().search(BASE_DN, SCOPE, "(&(objectClass=scopeAccess)(userRsId=$USER_FOR_AUTH_ID)(clientId=$CLOUD_CLIENT_ID))","*")
         for (SearchResultEntry entry in resultCloudAuthScopeAccess.getSearchEntries()) {
             def entity = LDAPPersister.getInstance(ScopeAccess.class)decode(entry)
             if (!entity.isAccessTokenWithinRefreshWindow(config.getInt("token.refreshWindowHours"))) {

@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.sql.dao.RoleRepository;
+import com.rackspace.idm.domain.sql.dao.TenantRoleRepository;
 import com.rackspace.idm.domain.sql.mapper.impl.RoleMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,9 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
 
     @Autowired
     RoleRepository repository;
+
+    @Autowired
+    TenantRoleRepository tenantRoleRepository;
 
     @Override
     @Transactional
@@ -39,6 +43,7 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
     @Override
     @Transactional
     public void deleteClientRole(ClientRole role) {
+        tenantRoleRepository.deleteBySqlRoleId(role.getId());
         repository.delete(role.getId());
     }
 

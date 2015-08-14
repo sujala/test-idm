@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.sql.dao;
 
 import com.rackspace.idm.domain.sql.entity.SqlAssignmentId;
+import com.rackspace.idm.domain.sql.entity.SqlRole;
 import com.rackspace.idm.domain.sql.entity.SqlTenantRole;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -33,6 +34,8 @@ public interface TenantRoleRepository extends JpaSpecificationExecutor<SqlTenant
 
     @EntityGraph(value = "SqlTenantRole.sqlRole", type = EntityGraph.EntityGraphType.FETCH)
     List<SqlTenantRole> findByActorIdAndSqlRoleRaxClientId(String actorId, String applicationId);
+
+    void deleteBySqlRoleId(String id);
 
     /*
      * Following code fails in Hibernate, due to bug:

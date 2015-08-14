@@ -39,7 +39,7 @@ public class SqlPolicyRepository implements PolicyDao {
     @Override
     @Transactional
     public void updatePolicy(Policy policy) {
-        policyRepository.save(mapper.toSQL(policy));
+        policyRepository.save(mapper.toSQL(policy, policyRepository.findOne(policy.getPolicyId())));
     }
 
     @Override
