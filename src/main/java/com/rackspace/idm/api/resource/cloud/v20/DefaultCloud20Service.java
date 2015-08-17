@@ -277,7 +277,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             final CloudBaseUrl baseUrl = this.endpointConverterCloudV20.toCloudBaseUrl(endpoint);
 
             // Keystone V3 compatibility
-            addEndpointTemplateKeystoneV3Data(baseUrl, endpoint);
+            addEndpointTemplateKeystoneV3Data(endpoint, baseUrl);
 
             // Save the baseUrl
             this.endpointService.addBaseUrl(baseUrl);
@@ -294,6 +294,27 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionHandler.conflictExceptionResponse(dex.getMessage());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void addEndpointTemplateKeystoneV3Data(EndpointTemplate endpointTemplate, CloudBaseUrl cloudBaseUrl) {
+        cloudBaseUrl.setPublicUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
+        if (!StringUtils.isEmpty(endpointTemplate.getInternalURL())) {
+            cloudBaseUrl.setInternalUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
+        }
+        if (!StringUtils.isEmpty(endpointTemplate.getAdminURL())) {
+            cloudBaseUrl.setAdminUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
+        }
+        String serviceName = endpointTemplate.getName();
+        if (serviceName != null) {
+            final Application application = applicationService.checkAndGetApplicationByName(serviceName);
+            if (!endpointTemplate.getType().equalsIgnoreCase(application.getOpenStackType())) {
+                String msg = String.format("Incorrect type for %s service", application.getName());
+                throw new BadRequestException(msg);
+            }
+            cloudBaseUrl.setClientId(application.getClientId());
+        } else {
+            throw new BadRequestException("Service name cannot be empty.");
         }
     }
 
@@ -328,35 +349,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(objFactories.getOpenStackIdentityExtKscatalogV1Factory().createEndpointTemplate(value).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    private void addEndpointTemplateKeystoneV3Data(CloudBaseUrl baseUrl, EndpointTemplate endpoint) {
-        try {
-            baseUrl.setInternalUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
-            baseUrl.setPublicUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
-            baseUrl.setAdminUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
-            if (endpoint.getType() != null) {
-                final Iterable<Application> applications = applicationService.getByType(endpoint.getType());
-                if (applications != null && applications.iterator().hasNext()) {
-                    final Iterator<Application> it = applications.iterator();
-                    final Application application = it.next();
-                    if (!it.hasNext()) {
-                        baseUrl.setClientId(application.getClientId());
-                    } else {
-                        throw new RuntimeException("[K3] There is more then one application with type '" + endpoint.getType() + "'.");
-                    }
-                } else {
-                    throw new RuntimeException("[K3] There is no application with type '" +  endpoint.getType() + "'.");
-                }
-            } else {
-                throw new RuntimeException("[K3] EndpointTemplate '" + endpoint.getName() + "' is not associated to a type.");
-            }
-        } catch (Exception e) {
-            logger.error("[K3] Impossible state.", e);
-            if (config.getBoolean("feature.DefaultCloud20Service.addEndpointTemplateKeystoneV3Data.throwError", false)) {
-                throw new RuntimeException(e);
-            }
         }
     }
 

@@ -37,6 +37,8 @@ class Cloud11BaseURLIntegrationTest extends RootIntegrationTest {
         baseURL.setId(baseUrlId)
         baseURL.setServiceName('cloudFiles')
         baseURL.setPublicURL('http://localhost')
+        baseURL.setInternalURL('http://localhost')
+        baseURL.setAdminURL('http://localhost')
         cloud11Service.addBaseURL(request, mock(HttpHeaders), baseURL)
 
         def data = endpointDao.getBaseUrlById(String.valueOf(baseUrlId))
@@ -51,7 +53,7 @@ class Cloud11BaseURLIntegrationTest extends RootIntegrationTest {
         try { endpointDao.deleteBaseUrl(String.valueOf(baseUrlId)) } catch (Exception e) {}
     }
 
-    void "Test if 'cloud11Service.addBaseURL(...)' adds V3 internal attributes even if the service lookup fails"() {
+    void "Test if 'cloud11Service.addBaseURL(...)' returns 404 with an invalid service name"() {
         given:
         def request = mock(HttpServletRequest)
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn('Basic YXV0aDphdXRoMTIz')
@@ -63,47 +65,9 @@ class Cloud11BaseURLIntegrationTest extends RootIntegrationTest {
         baseURL.setId(baseUrlId)
         baseURL.setServiceName(UUID.randomUUID().toString()) // Random serviceName
         baseURL.setPublicURL('http://localhost')
-        cloud11Service.addBaseURL(request, mock(HttpHeaders), baseURL)
-
-        def data = endpointDao.getBaseUrlById(String.valueOf(baseUrlId))
+        def response = cloud11Service.addBaseURL(request, mock(HttpHeaders), baseURL)
 
         then:
-        data.adminUrlId != null
-        data.publicUrlId != null
-        data.internalUrlId != null
-
-        cleanup:
-        try { endpointDao.deleteBaseUrl(String.valueOf(baseUrlId)) } catch (Exception e) {}
+        response.status == 404
     }
-
-    @Unroll
-    def "test setting unmapped base URL types and viewing them in v1.1, accept = #accept"() {
-        given:
-        def baseUrlType = "notValidBaseUrlType"
-        def endpointTemplateId = testUtils.getRandomInteger().toString()
-        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, baseUrlType, testUtils.getRandomUUID("http://public/"), "name", true, "ORD")
-        utils.createAndUpdateEndpointTemplate(endpointTemplate, endpointTemplateId)
-
-        when:
-        def response = cloud11.getBaseURLs(null, accept)
-
-        then:
-        response.status == 200
-        if(accept == MediaType.APPLICATION_XML_TYPE) {
-            def baseUrls = response.getEntity(BaseURLList)
-            assert baseUrls.baseURL.find({t -> t.id == Integer.valueOf(endpointTemplateId)}).userType == UserType.UNKNOWN
-        } else {
-            def baseUrls = new JsonSlurper().parseText(response.getEntity(String))
-            assert baseUrls.baseURLs.find({t -> t.id == Integer.valueOf(endpointTemplateId)}).userType == UserType.UNKNOWN.toString()
-        }
-
-        cleanup:
-        utils.deleteEndpointTemplate(endpointTemplate)
-
-        where:
-        accept                          | _
-        MediaType.APPLICATION_XML_TYPE  | _
-        MediaType.APPLICATION_JSON_TYPE | _
-    }
-
 }

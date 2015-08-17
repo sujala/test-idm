@@ -35,6 +35,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
     @Shared def randomMosso
     @Shared def adminUser = "auth"
     @Shared def adminPassword = "auth123"
+    @Shared def validServiceName = "cloudServers"
 
     def setupSpec(){
         sharedRandom = ("$randomness").replace('-',"")
@@ -236,7 +237,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def mossoId = -1 * getRandomNumber(1000000, 2000000);
         def baseURLId = getRandomNumber(1000000, 2000000)
         User user = v1Factory.createUser(username, "1234567890", mossoId, null, true)
-        def baseUrl = v1Factory.createBaseUrl(baseURLId, "service", "ORD", true, false, "http:publicUrl", null, null)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, validServiceName, "ORD", true, false, "http:publicUrl", null, null)
         def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
 
 
@@ -266,7 +267,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def mossoId = -1 * getRandomNumber(1000000, 2000000);
         def baseURLId = getRandomNumber(1000000, 2000000)
         User user = v1Factory.createUser(username, "1234567890", mossoId, null, true)
-        def baseUrl = v1Factory.createBaseUrl(baseURLId, "service", "ORD", true, false, "http:publicUrl", null, null)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, validServiceName, "ORD", true, false, "http:publicUrl", null, null)
         def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
 
 
@@ -298,7 +299,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.EXPOSE_V11_ADD_BASE_URL_PROP, exposeEndpoint)
         def baseURLId = testUtils.getRandomInteger()
-        def baseUrl = v1Factory.createBaseUrl(baseURLId, "service", "ORD", true, false, "http:publicUrl", null, null)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, validServiceName, "ORD", true, false, "http:publicUrl", null, null)
 
         when:
         def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
@@ -322,12 +323,11 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         given:
         String username = "adminBaseUrl$sharedRandom"
         String password = "Password1"
-        String service = "service"
         String adminUrl = "http://adminUrl"
         def baseURLId = getRandomNumber(1000000, 2000000)
         def mossoId = getRandomNumber(1000000, 2000000);
         User user = v1Factory.createUser(username, "1234567890", mossoId, null, true)
-        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, validServiceName, "ORD", true, false, "http:publicUrl", adminUrl, null)
         def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
 
         when:
@@ -345,7 +345,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         baseUrlResponse.status == 201
         addBaseUrlRefResponse.status == 201
         authData != null
-        Integer index = authData.serviceCatalog.service.name.indexOf(service)
+        Integer index = authData.serviceCatalog.service.name.indexOf(validServiceName)
         authData.serviceCatalog.service[index].endpoint.adminURL[0] == null
 
         cleanup:
@@ -399,12 +399,11 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         given:
         String username = "userAdminBaseUrlPwd$sharedRandom"
         String password = "Password1"
-        String service = "service"
         String adminUrl = "http://adminUrl"
         def baseURLId = getRandomNumber(1000000, 2000000)
         def mossoId = getRandomNumber(1000000, 2000000);
         User user = v1Factory.createUser(username, "1234567890", mossoId, null, true)
-        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, validServiceName, "ORD", true, false, "http:publicUrl", adminUrl, null)
         def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
 
         when:
@@ -433,13 +432,12 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
     def "auth call should not display admin urls in service catalog - userKeyCredentials" () {
         given:
         String username = "userAdminBaseUrlKey$sharedRandom"
-        String service = "service"
         String adminUrl = "http://adminUrl"
         def baseURLId = getRandomNumber(1000000, 2000000)
         def mossoId = getRandomNumber(1000000, 2000000);
         def key = "1234567890"
         User user = v1Factory.createUser(username, key, mossoId, null, true)
-        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, validServiceName, "ORD", true, false, "http:publicUrl", adminUrl, null)
         def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
 
         when:
@@ -454,7 +452,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         baseUrlResponse.status == 201
         addBaseUrlRefResponse.status == 201
         authData != null
-        Integer index = authData.serviceCatalog.service.name.indexOf(service)
+        Integer index = authData.serviceCatalog.service.name.indexOf(validServiceName)
         authData.serviceCatalog.service[index].endpoint.adminURL[0] == null
 
         cleanup:
@@ -467,13 +465,12 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
     def "auth call should not display admin urls in service catalog - mossoCredentials" () {
         given:
         String username = "userAdminBaseUrlMosso$sharedRandom"
-        String service = "service"
         String adminUrl = "http://adminUrl"
         def baseURLId = getRandomNumber(1000000, 2000000)
         def mossoId = getRandomNumber(1000000, 2000000);
         def key = "1234567890"
         User user = v1Factory.createUser(username, key, mossoId, null, true)
-        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, validServiceName, "ORD", true, false, "http:publicUrl", adminUrl, null)
         def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
 
         when:
@@ -499,13 +496,12 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
     def "auth call should not display admin urls in service catalog - nastCredentials" () {
         given:
         String username = "userAdminBaseUrlNast$sharedRandom"
-        String service = "service"
         String adminUrl = "http://adminUrl"
         def baseURLId = getRandomNumber(1000000, 2000000)
         def mossoId = getRandomNumber(1000000, 2000000);
         def key = "1234567890"
         User user = v1Factory.createUser(username, key, mossoId, null, true)
-        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, validServiceName, "ORD", true, false, "http:publicUrl", adminUrl, null)
         def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
 
         when:
@@ -530,12 +526,11 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
     def "auth call not should display admin urls in service catalog for admin user - userKeyCredentials" () {
         given:
-        String service = "service"
         String adminUrl = "http://adminUrl"
         String key = "1234567890"
         def mossoId = -1 * getRandomNumber(1000000, 2000000);
         def baseURLId = getRandomNumber(1000000, 2000000)
-        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, validServiceName, "ORD", true, false, "http:publicUrl", adminUrl, null)
         Tenant tenant = v2Factory.createTenant(mossoId.toString(), mossoId.toString())
         def role = v2Factory.createRole("listUsersByTenantRole$randomness")
 
@@ -557,7 +552,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         addKey.status == 200
         baseUrlResponse.status == 201
         authData != null
-        Integer index = authData.serviceCatalog.service.name.indexOf(service)
+        Integer index = authData.serviceCatalog.service.name.indexOf(validServiceName)
         authData.serviceCatalog.service[index].endpoint.adminURL[0] == null
 
         cleanup:
@@ -570,13 +565,12 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
     def "Get service catalog for user should not display the admin urls" () {
         given:
         String username = "userServiceCatalog$sharedRandom"
-        String service = "service"
         String adminUrl = "http://adminUrl"
         def baseURLId = getRandomNumber(1000000, 2000000)
         def mossoId = getRandomNumber(1000000, 2000000);
         def key = "1234567890"
         User user = v1Factory.createUser(username, key, mossoId, null, true)
-        def baseUrl = v1Factory.createBaseUrl(baseURLId, service, "ORD", true, false, "http:publicUrl", adminUrl, null)
+        def baseUrl = v1Factory.createBaseUrl(baseURLId, validServiceName, "ORD", true, false, "http:publicUrl", adminUrl, null)
         def baseUrlRef = v1Factory.createBaseUrlRef(baseURLId, null, false)
 
         when:

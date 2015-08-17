@@ -20,10 +20,12 @@ public interface ApplicationService {
 
     Application checkAndGetApplication(String applicationId);
 
+    Application checkAndGetApplicationByName(String name);
+
     Applications getClientServices(Application client);
 
     Application getApplicationByScopeAccess(ScopeAccess scopeAccess);
-    
+
     ClientSecret resetClientSecret(Application client);
 
     void save(Application client);

@@ -21,7 +21,7 @@ class Cloud20UpdateEndpointTemplateIntegrationTest extends RootIntegrationTest {
         given:
         def endpointTemplateId = testUtils.getRandomInteger().toString()
         def publicUrl = testUtils.getRandomUUID("http://public/")
-        cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD"))
+        cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "compute", publicUrl, "cloudServers", false, "ORD"))
         def endpointForUpdate = v1Factory.createEndpointTemplateForUpdate(true, false, true)
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(utils.createDomain())
@@ -68,7 +68,7 @@ class Cloud20UpdateEndpointTemplateIntegrationTest extends RootIntegrationTest {
         def endpointTemplateIdInt = testUtils.getRandomInteger()
         def endpointTemplateId = endpointTemplateIdInt.toString()
         def publicUrl = testUtils.getRandomUUID("http://public/")
-        cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD"))
+        cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "compute", publicUrl, "cloudServers", false, "ORD"))
         def endpointForUpdate = v1Factory.createEndpointTemplateForUpdate(true, false, true)
 
         when: "update the endpoint template with matching ID"
@@ -110,7 +110,7 @@ class Cloud20UpdateEndpointTemplateIntegrationTest extends RootIntegrationTest {
         given:
         def endpointTemplateId = testUtils.getRandomInteger().toString()
         def publicUrl = testUtils.getRandomUUID("http://public/")
-        cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD"))
+        cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "compute", publicUrl, "cloudServers", false, "ORD"))
 
         when: "update the endpoint template with new values"
         def endpointForUpdate = v1Factory.createEndpointTemplateForUpdate(enabled, global, _default)
@@ -150,7 +150,7 @@ class Cloud20UpdateEndpointTemplateIntegrationTest extends RootIntegrationTest {
         given:
         def endpointTemplateId = testUtils.getRandomInteger().toString()
         def publicUrl = testUtils.getRandomUUID("http://public/")
-        cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD"))
+        cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "compute", publicUrl, "cloudServers", false, "ORD"))
         def global = false
         def enabled = true
         def _default = true
@@ -191,7 +191,7 @@ class Cloud20UpdateEndpointTemplateIntegrationTest extends RootIntegrationTest {
         given:
         def endpointTemplateId = testUtils.getRandomInteger().toString()
         def publicUrl = testUtils.getRandomUUID("http://public/")
-        def endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD");
+        def endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute", publicUrl, "cloudServers", false, "ORD");
         endpointForCreate.enabled = true
         endpointForCreate.global = global
         endpointForCreate._default = _default
@@ -221,7 +221,7 @@ class Cloud20UpdateEndpointTemplateIntegrationTest extends RootIntegrationTest {
         given:
         def endpointTemplateId = testUtils.getRandomInteger().toString()
         def publicUrl = testUtils.getRandomUUID("http://public/")
-        def endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD");
+        def endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute", publicUrl, "cloudServers", false, "ORD");
 
         when:
         endpointForCreate.id = null
@@ -254,8 +254,8 @@ class Cloud20UpdateEndpointTemplateIntegrationTest extends RootIntegrationTest {
 
     def "test endpoint template type mappings"() {
         given:
-        def mossoType = testUtils.getRandomUUID("mosso")
-        def nastType = testUtils.getRandomUUID("nast")
+        def mossoType = "compute"
+        def nastType = "object-store"
         def mossoTypeMapping = testUtils.getRandomUUID() + "," + mossoType + "," + testUtils.getRandomUUID()
         def nastTypeMapping = testUtils.getRandomUUID() + "," + nastType + "," + testUtils.getRandomUUID()
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP, true)
@@ -267,7 +267,7 @@ class Cloud20UpdateEndpointTemplateIntegrationTest extends RootIntegrationTest {
         def publicUrl = testUtils.getRandomUUID("http://public/")
 
         when: "test MOSSO type mappings"
-        def endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateMossoId, mossoType, publicUrl, "name", false, "ORD");
+        def endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateMossoId, mossoType, publicUrl, "cloudServers", false, "ORD");
         def response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), endpointForCreate)
         def endpointEntity = endpointService.getBaseUrlById(endpointTemplateMossoId)
 
@@ -277,7 +277,7 @@ class Cloud20UpdateEndpointTemplateIntegrationTest extends RootIntegrationTest {
         endpointEntity.baseUrlType == "MOSSO"
 
         when: "test NAST type mappings"
-        endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateNastId, nastType, publicUrl, "name", false, "ORD");
+        endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateNastId, nastType, publicUrl, "cloudFiles", false, "ORD");
         response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), endpointForCreate)
         endpointEntity = endpointService.getBaseUrlById(endpointTemplateNastId)
 
@@ -287,19 +287,15 @@ class Cloud20UpdateEndpointTemplateIntegrationTest extends RootIntegrationTest {
         endpointEntity.baseUrlType == "NAST"
 
         when: "test the fallback type mapping"
-        endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateFallbackId, testUtils.getRandomUUID(), publicUrl, "name", false, "ORD");
+        endpointForCreate = v1Factory.createEndpointTemplate(endpointTemplateFallbackId, testUtils.getRandomUUID(), publicUrl, "cloudServers", false, "ORD");
         response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), endpointForCreate)
-        endpointEntity = endpointService.getBaseUrlById(endpointTemplateFallbackId)
 
         then:
-        response.status == 201
-        endpointEntity.openstackType == endpointForCreate.type
-        endpointEntity.baseUrlType == endpointForCreate.type
+        response.status == 400
 
         cleanup:
         endpointService.deleteBaseUrl(endpointTemplateMossoId)
         endpointService.deleteBaseUrl(endpointTemplateNastId)
-        endpointService.deleteBaseUrl(endpointTemplateFallbackId)
         staticIdmConfiguration.reset()
     }
 

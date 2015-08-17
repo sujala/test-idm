@@ -33,7 +33,7 @@ abstract class CreateUserRegionMappingStrategyBaseIntegrationTest extends RootIn
     def void "assertEndpointLogic"(int baseUrlID, String baseUrlrsRegion, boolean shouldBaseUrlHaveBeenAdded) {
         try {
             //add new endpoint template/base url (use 1.1 way in order to set def to true)
-            def addBaseUrlResponse = utils11.addBaseUrl(baseUrlID, "serviceName", baseUrlrsRegion, true, true, "http://public.com/v1", "http://adminURL.com/v1", "http://internalURL.com/v1", DefaultUserService.MOSSO_BASE_URL_TYPE)
+            def addBaseUrlResponse = utils11.addBaseUrl(baseUrlID, "cloudServers", baseUrlrsRegion, true, true, "http://public.com/v1", "http://adminURL.com/v1", "http://internalURL.com/v1", DefaultUserService.MOSSO_BASE_URL_TYPE)
             def baseUrlLocation = addBaseUrlResponse.getHeaders().get('Location')[0]
             def returnedBaseUrlId = utils11.baseUrlIdFromLocation(baseUrlLocation)
             assert Integer.parseInt(returnedBaseUrlId) == baseUrlID
