@@ -55,7 +55,7 @@ class BasicMultiFactorServiceAuthenticationIntegrationTest extends RootConcurren
     def cleanup() {
         if (userAdmin != null) {
             multiFactorService.removeMultiFactorForUser(userAdmin.id)  //remove duo profile
-            userRepository.deleteObject(userAdmin)
+            userRepository.deleteUser(userAdmin)
         }
     }
 

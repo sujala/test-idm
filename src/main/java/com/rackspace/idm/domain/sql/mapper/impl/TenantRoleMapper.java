@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.sql.entity.SqlRole;
 import com.rackspace.idm.domain.sql.entity.SqlRoleRax;
 import com.rackspace.idm.domain.sql.entity.SqlTenantRole;
 import com.rackspace.idm.domain.sql.mapper.SqlMapper;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -51,15 +52,15 @@ public class TenantRoleMapper extends SqlMapper<TenantRole, SqlTenantRole> {
     }
 
     public List<TenantRole> fromSQLList(List<SqlTenantRole> sqlTenantRoles){
-        HashMap<String, TenantRole> tenantRoleHashMap = new HashMap<String, TenantRole>();
+        HashMap<TenantRoleId, TenantRole> tenantRoleHashMap = new HashMap<TenantRoleId, TenantRole>();
         for(SqlTenantRole sqlTenantRole : sqlTenantRoles){
-            String roleId = sqlTenantRole.getRoleId();
-            if(tenantRoleHashMap.containsKey(roleId)){
-                TenantRole tenantRole = tenantRoleHashMap.get(roleId);
+            TenantRoleId roleIdUserId = new TenantRoleId(sqlTenantRole.getRoleId(), sqlTenantRole.getActorId());
+            if(tenantRoleHashMap.containsKey(roleIdUserId)){
+                TenantRole tenantRole = tenantRoleHashMap.get(roleIdUserId);
                 tenantRole.getTenantIds().add(sqlTenantRole.getTargetId());
             } else{
                 TenantRole tenantRole = getTenantRole(sqlTenantRole);
-                tenantRoleHashMap.put(roleId, tenantRole);
+                tenantRoleHashMap.put(roleIdUserId, tenantRole);
             }
         }
 
@@ -67,15 +68,18 @@ public class TenantRoleMapper extends SqlMapper<TenantRole, SqlTenantRole> {
     }
 
     public List<SqlTenantRole> toSQLList(TenantRole tenantRole){
+        List<String> tenantids = new ArrayList<String>();
+        if (tenantids.size() == 0) {
+            tenantids.add(config.getReloadableConfig().getIdentityRoleDefaultTenant());
+        } else {
+            tenantids.addAll(tenantRole.getTenantIds());
+        }
+
         List<SqlTenantRole> sqlTenantRoles = new ArrayList<SqlTenantRole>();
-        for(String tenantId : tenantRole.getTenantIds()){
+        for(String tenantId : tenantids){
             SqlTenantRole sqlTenantRole = new SqlTenantRole();
             sqlTenantRole.setActorId(tenantRole.getUserId());
-            if(tenantRole.getTenantIds().size() == 0){
-                sqlTenantRole.setTargetId(config.getReloadableConfig().getIdentityRoleDefaultTenant());
-            } else {
-                sqlTenantRole.setTargetId(tenantId);
-            }
+            sqlTenantRole.setTargetId(tenantId);
             sqlTenantRole.setRoleId(tenantRole.getRoleRsId());
             sqlTenantRole.setInherited(tenantRole.getPropagate());
 
@@ -110,5 +114,16 @@ public class TenantRoleMapper extends SqlMapper<TenantRole, SqlTenantRole> {
             tenantRole.setDescription(sqlRoleRax.getDescription());
         }
         return tenantRole;
+    }
+
+    @Data
+    private class TenantRoleId {
+        private String actorId;
+        private String roleId;
+
+        public TenantRoleId(String actorId, String roleId) {
+            this.actorId = actorId;
+            this.roleId = roleId;
+        }
     }
 }

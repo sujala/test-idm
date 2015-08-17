@@ -134,7 +134,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
              exception if no auth token is provided and it's required.
              //TODO: Move the no token error check up to this filter after verifying that all services except authenticate require an auth token to be provided
              */
-            if (authToken != null) {
+            if (!StringUtils.isEmpty(authToken)) {
                 ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken); //throws NotFoundException if not found
                 ScopeAccess effectiveToken = callerToken; //assume effective token will be same as caller.
 
