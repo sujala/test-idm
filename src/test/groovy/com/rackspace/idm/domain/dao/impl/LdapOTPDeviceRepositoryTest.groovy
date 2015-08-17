@@ -39,6 +39,6 @@ class LdapOTPDeviceRepositoryTest extends Specification {
         device.name == dev.name
 
         cleanup:
-        otpDeviceDao.deleteObject(device)
+        otpDeviceDao.deleteOTPDevice(device)
     }
 }

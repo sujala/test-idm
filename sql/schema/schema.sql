@@ -292,9 +292,9 @@ CREATE TABLE `federated_role_rax` (
   UNIQUE KEY `uq_frr` (`role_id`,`federated_user_rax_id`),
   KEY `fk_frr_federated_user_rax_id` (`federated_user_rax_id`),
   KEY `fk_frr_service_id` (`service_id`),
-  CONSTRAINT `fk_frr_federated_user_rax_id` FOREIGN KEY (`federated_user_rax_id`) REFERENCES `federated_user_rax` (`id`),
-  CONSTRAINT `fk_frr_role_id` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`),
-  CONSTRAINT `fk_frr_service_id` FOREIGN KEY (`service_id`) REFERENCES `service` (`id`)
+  CONSTRAINT `fk_frr_federated_user_rax_id` FOREIGN KEY (`federated_user_rax_id`) REFERENCES `federated_user_rax` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_frr_role_id` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_frr_service_id` FOREIGN KEY (`service_id`) REFERENCES `service` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -309,7 +309,7 @@ CREATE TABLE `federated_role_tenant_membership_rax` (
   `federated_role_rax_id` varchar(64) NOT NULL,
   `tenant_id` varchar(64) NOT NULL,
   PRIMARY KEY (`federated_role_rax_id`,`tenant_id`),
-  CONSTRAINT `fk_frtmr_federated_role_rax_id` FOREIGN KEY (`federated_role_rax_id`) REFERENCES `federated_role_rax` (`id`)
+  CONSTRAINT `fk_frtmr_federated_role_rax_id` FOREIGN KEY (`federated_role_rax_id`) REFERENCES `federated_role_rax` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -325,8 +325,8 @@ CREATE TABLE `federated_user_group_membership_rax` (
   `federated_user_rax_id` varchar(64) NOT NULL,
   PRIMARY KEY (`group_id`,`federated_user_rax_id`),
   KEY `fk_fugmr_federated_user_rax_id` (`federated_user_rax_id`),
-  CONSTRAINT `fk_fugmr_federated_user_rax_id` FOREIGN KEY (`federated_user_rax_id`) REFERENCES `federated_user_rax` (`id`),
-  CONSTRAINT `fk_fugmr_group_id` FOREIGN KEY (`group_id`) REFERENCES `group` (`id`)
+  CONSTRAINT `fk_fugmr_federated_user_rax_id` FOREIGN KEY (`federated_user_rax_id`) REFERENCES `federated_user_rax` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_fugmr_group_id` FOREIGN KEY (`group_id`) REFERENCES `group` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -349,8 +349,8 @@ CREATE TABLE `federated_user_rax` (
   PRIMARY KEY (`id`),
   KEY `fk_fur_region_id` (`region_id`),
   KEY `fk_fur_domain_id` (`domain_id`),
-  CONSTRAINT `fk_fur_domain_id` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`id`),
-  CONSTRAINT `fk_fur_region_id` FOREIGN KEY (`region_id`) REFERENCES `region` (`id`)
+  CONSTRAINT `fk_fur_domain_id` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_fur_region_id` FOREIGN KEY (`region_id`) REFERENCES `region` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1008,7 +1008,7 @@ CREATE TABLE `user_certificate_rax` (
   `certificate` blob NOT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_ucr_idp` (`identity_provider_id`),
-  CONSTRAINT `fk_ucr_idp` FOREIGN KEY (`identity_provider_id`) REFERENCES `identity_provider_rax` (`id`)
+  CONSTRAINT `fk_ucr_idp` FOREIGN KEY (`identity_provider_id`) REFERENCES `identity_provider_rax` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1095,4 +1095,4 @@ CREATE TABLE `whitelisted_config` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-08-13 12:50:12
+-- Dump completed on 2015-08-14 16:53:10

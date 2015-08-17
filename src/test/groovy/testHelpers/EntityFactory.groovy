@@ -6,6 +6,7 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspacecloud.docs.auth.api.v1.BaseURL
+import com.rsa.cryptoj.c.id
 import com.unboundid.ldap.sdk.Entry
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.collections.CollectionUtils
@@ -192,6 +193,7 @@ class EntityFactory extends Specification {
 
     def createDomain(String domainId) {
         new Domain().with {
+            it.name = domainId
             it.domainId = domainId
             it.enabled = true
             return it
@@ -400,7 +402,7 @@ class EntityFactory extends Specification {
         new FederatedUser().with {
             it.id = Cloud20Utils.createRandomString()
             it.username = username
-            it.domainId = "123"
+            it.domainId = "983452"
             it.region="ORD"
             it.email="test@rackspace.com"
             it.federatedIdpUri = federatedIdpUri

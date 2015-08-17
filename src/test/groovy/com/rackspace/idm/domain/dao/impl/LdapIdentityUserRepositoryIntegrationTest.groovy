@@ -1,8 +1,10 @@
 package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.GroupDao
+import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.dao.IdentityUserDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.Application
@@ -10,6 +12,8 @@ import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
+import com.rackspace.idm.domain.sql.dao.UserRepository
 import com.rackspace.idm.helpers.CloudTestUtils
 import com.unboundid.ldap.sdk.LDAPInterface
 import com.unboundid.ldap.sdk.persist.LDAPPersister
@@ -39,10 +43,13 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
     private GroupDao groupDao
 
     @Autowired
+    private DomainDao domainDao
+
+    @Autowired(required = false)
     LdapConnectionPools ldapConnectionPools
 
     @Autowired
-    LdapIdentityProviderRepository ldapIdentityProviderRepository
+    IdentityProviderDao ldapIdentityProviderRepository
 
     @Autowired
     CloudTestUtils utils
@@ -55,16 +62,24 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
 
     private IdentityProvider commonIdentityProvider;
 
+    @Autowired(required = false)
+    FederatedUserRepository federatedUserRepositorySQL;
+
+    @Autowired(required = false)
+    UserRepository userRepositorySQL;
+
     def setupSpec() {
     }
 
     def setup() {
         commonIdentityProvider = ldapIdentityProviderRepository.getIdentityProviderByName(Constants.DEFAULT_IDP_NAME)
 
-        con = ldapConnectionPools.getAppConnPoolInterface()
-        applicationPersister = LDAPPersister.getInstance(Application.class)
-        federatedUserLdapHelper = new LdapIntegrationTestSupport(con, FederatedUser.class)
-        provisionedUserLdapHelper = new LdapIntegrationTestSupport(con, User.class)
+        if (ldapConnectionPools != null) {
+            con = ldapConnectionPools.getAppConnPoolInterface()
+            applicationPersister = LDAPPersister.getInstance(Application.class)
+            federatedUserLdapHelper = new LdapIntegrationTestSupport(con, FederatedUser.class)
+            provisionedUserLdapHelper = new LdapIntegrationTestSupport(con, User.class)
+        }
     }
 
     def "Verify retrieving a federated user"() {
@@ -92,8 +107,14 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         retrievedProvisionedUser == null
 
         cleanup:
-        federatedUserLdapHelper.deleteDirect(expectedDn) //delete this in case the ldap entry is not set correctly
-        federatedUserLdapHelper.deleteDirect(retrievedEndUser) //delete this in case the uniqueId is NOT the expected one
+        if (ldapConnectionPools != null) {
+            federatedUserLdapHelper.deleteDirect(expectedDn) //delete this in case the ldap entry is not set correctly
+            federatedUserLdapHelper.deleteDirect(retrievedEndUser)
+            //delete this in case the uniqueId is NOT the expected one
+        }
+        if (federatedUserRepositorySQL != null) {
+            federatedUserRepositorySQL.delete(fedUser.id)
+        }
     }
 
     def "Verify retrieving a provisioned user"() {
@@ -126,13 +147,17 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
 
 
         cleanup:
-        provisionedUserLdapHelper.deleteDirect(expectedDn) //delete this in case the ldap entry is not set correctly
-        provisionedUserLdapHelper.deleteDirect(retrievedEndUser) //delete this in case the uniqueId is NOT the expected one
+        if (ldapConnectionPools != null) {
+            provisionedUserLdapHelper.deleteDirect(expectedDn) //delete this in case the ldap entry is not set correctly
+            provisionedUserLdapHelper.deleteDirect(retrievedEndUser)
+            //delete this in case the uniqueId is NOT the expected one
+        }
     }
 
     def "Verify retrieving a users by domain id"() {
         setup:
         def domainId = utils.getRandomUUID("domain")
+        domainDao.addDomain(entityFactory.createDomain(domainId))
         FederatedUser fedUser = entityFactory.createFederatedUser().with {
             it.domainId = domainId
             it
@@ -165,12 +190,20 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         verifyProvisionedUser(provisionedUser, retrievedProvisionedUser, expectedProvisionedUserDn)
 
         cleanup:
-        federatedUserLdapHelper.deleteDirect(expectedFederatedUserDn)
-        provisionedUserLdapHelper.deleteDirect(expectedProvisionedUserDn)
+        if (ldapConnectionPools != null) {
+            federatedUserLdapHelper.deleteDirect(expectedFederatedUserDn)
+            provisionedUserLdapHelper.deleteDirect(expectedProvisionedUserDn)
+        }
+        if (federatedUserRepositorySQL != null) {
+            federatedUserRepositorySQL.delete(fedUser.id)
+        }
+        domainDao.deleteDomain(domainId)
     }
 
     def "getEnabledEndUsersByGroupId - Verify retrieving only enabled users by group id"() {
         setup:
+        def domainId = utils.getRandomUUID("domain")
+        domainDao.addDomain(entityFactory.createDomain(domainId))
         def random = ((String) UUID.randomUUID()).replace("-", "")
         def group = entityFactory.createGroup(random, "group$random", "this is a group")
         groupDao.addGroup(group)
@@ -212,11 +245,26 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         endUserList.iterator().size() == 2
 
         cleanup:
-        provisionedUserLdapHelper.deleteDirect(provisionedDisabledUser)
+        if (ldapConnectionPools != null) {
+            provisionedUserLdapHelper.deleteDirect(provisionedDisabledUser)
+        }
+        if (userRepositorySQL != null) {
+            userRepositorySQL.delete(provisionedDisabledUser.id)
+        }
         endUserList.each {
-            federatedUserLdapHelper.deleteDirect(it)
+            if (ldapConnectionPools != null) {
+                federatedUserLdapHelper.deleteDirect(it)
+            }
+            if (federatedUserRepositorySQL != null) {
+                if (it instanceof FederatedUser) {
+                    federatedUserRepositorySQL.delete(it.id)
+                } else {
+                    userRepositorySQL.delete(it.id)
+                }
+            }
         }
         groupDao.deleteGroup(group.groupId)
+        domainDao.deleteDomain(domainId)
     }
 
     def "Verify searches returns null when id does not exist at all"() {
@@ -231,11 +279,17 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
     ############################################################################### */
 
     String getExpectedFederatedUserDn(IdentityProvider provider, FederatedUser fedUser) {
-        new LdapRepository.LdapDnBuilder(LdapRepository.EXTERNAL_PROVIDERS_BASE_DN).addAttribute(LdapRepository.ATTR_UID, fedUser.username).addAttribute(LdapRepository.ATTR_OU, LdapRepository.EXTERNAL_PROVIDERS_USER_CONTAINER_NAME).addAttribute(LdapRepository.ATTR_OU, provider.name).build()
+        if (ldapConnectionPools != null) {
+            return new LdapRepository.LdapDnBuilder(LdapRepository.EXTERNAL_PROVIDERS_BASE_DN).addAttribute(LdapRepository.ATTR_UID, fedUser.username).addAttribute(LdapRepository.ATTR_OU, LdapRepository.EXTERNAL_PROVIDERS_USER_CONTAINER_NAME).addAttribute(LdapRepository.ATTR_OU, provider.name).build()
+        }
+        return null;
     }
 
     String getExpectedProvisionedUserDn(User user) {
-        new LdapRepository.LdapDnBuilder(LdapRepository.USERS_BASE_DN).addAttribute(LdapRepository.ATTR_ID, user.id).build()
+        if (ldapConnectionPools != null) {
+            return new LdapRepository.LdapDnBuilder(LdapRepository.USERS_BASE_DN).addAttribute(LdapRepository.ATTR_ID, user.id).build()
+        }
+        return null;
     }
 
     void verifyFederatedUser(originalUser, retrievedUser, expectedDn) {
@@ -247,11 +301,12 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         assert CollectionUtils.isEqualCollection(retrievedUser.getRsGroupId(), originalUser.getRsGroupId())
         assert retrievedUser.email == originalUser.email
         assert retrievedUser.federatedIdpUri == originalUser.federatedIdpUri
-        assert retrievedUser.getUniqueId() != null
 
-        assert retrievedUser.getUniqueId() == expectedDn
-
-        assert federatedUserLdapHelper.entryExists(retrievedUser)
+        if (ldapConnectionPools != null) {
+            assert retrievedUser.getUniqueId() != null
+            assert retrievedUser.getUniqueId() == expectedDn
+            assert federatedUserLdapHelper.entryExists(retrievedUser)
+        }
     }
 
     void verifyProvisionedUser(originalUser, retrievedUser, expectedDn) {
@@ -261,11 +316,12 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         assert retrievedUser.region == originalUser.region
         assert retrievedUser.domainId == originalUser.domainId
         assert retrievedUser.email == originalUser.email
-        assert retrievedUser.getUniqueId() != null
 
-        assert retrievedUser.getUniqueId() == expectedDn
-
-        assert provisionedUserLdapHelper.entryExists(retrievedUser)
+        if (ldapConnectionPools != null) {
+            assert retrievedUser.getUniqueId() != null
+            assert retrievedUser.getUniqueId() == expectedDn
+            assert provisionedUserLdapHelper.entryExists(retrievedUser)
+        }
     }
 
 }

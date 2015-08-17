@@ -47,7 +47,7 @@ public class SqlFederatedUserRax {
     @CollectionTable(name="federated_user_group_membership_rax",
             joinColumns=@JoinColumn(name="federated_user_rax_id"))
     @Column(name="group_id")
-    private List<String> rsGroupId;
+    private Set<String> rsGroupId;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "userId")
     private Set<SqlFederatedRoleRax> federatedRoles;

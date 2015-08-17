@@ -61,6 +61,10 @@ INSERT INTO `assignment` VALUES ('UserProject','6ffe3875d15b44d5b8b2d285790c89ec
 INSERT INTO `assignment` VALUES ('UserProject','868dea5a32934749a3fb9a47e80f12a4','78543988','6',0);
 INSERT INTO `assignment` VALUES ('UserProject','868dea5a32934749a3fb9a47e80f12a4','identity','2',0);
 INSERT INTO `assignment` VALUES ('UserProject','868dea5a32934749a3fb9a47e80f12a4','MossoCloudFS_78543988','5',0);
+INSERT INTO `assignment` VALUES ('UserProject','af455d1387ab4281873ceae5bc400e50','identity','1',0);
+INSERT INTO `assignment` VALUES ('UserProject','c90d35db77d14133b05fdc576a4f4ffb','132885','6',0);
+INSERT INTO `assignment` VALUES ('UserProject','c90d35db77d14133b05fdc576a4f4ffb','identity','3',0);
+INSERT INTO `assignment` VALUES ('UserProject','c90d35db77d14133b05fdc576a4f4ffb','MossoCloudFS_132885','5',0);
 INSERT INTO `assignment` VALUES ('UserProject','d14b1195cbe045d9905c25317dd1f924','identity','4',0);
 INSERT INTO `assignment` VALUES ('UserProject','d2d1adee553144ada948e03d1f5503f1','78543988','6',0);
 INSERT INTO `assignment` VALUES ('UserProject','d2d1adee553144ada948e03d1f5503f1','identity','2',0);
@@ -108,6 +112,7 @@ INSERT INTO `assignment` VALUES ('UserProject','fa9ddbf7cc904a75b8bd40c26bc738cd
 -- Dumping data for table `domain`
 --
 
+INSERT INTO `domain` VALUES ('132885','132885',1,'{\"description\": \"Default Domain\"}');
 INSERT INTO `domain` VALUES ('15f080741fc24768bd235d696776afde','15f080741fc24768bd235d696776afde',1,'{}');
 INSERT INTO `domain` VALUES ('32035123','32035123',1,'{\"description\": \"Test Domain\"}');
 INSERT INTO `domain` VALUES ('41d4b4f276db4630b731e3477635d430','41d4b4f276db4630b731e3477635d430',1,'{}');
@@ -571,21 +576,28 @@ INSERT INTO `endpoint_rax` VALUES ('ff8d0846cdbf49418eb8be6d93eaf93f','MOSSO','c
 -- Dumping data for table `federated_role_rax`
 --
 
+INSERT INTO `federated_role_rax` VALUES ('4643da850cc44dcd88b6a0007261b6ec','6','41fb727456aa4d90a17d3067fa8d0bdf','a45b14e394a57e3fd4e45d59ff3693ead204998b');
+INSERT INTO `federated_role_rax` VALUES ('5f5ba245500e436fb5dcacb0d6020212','5','41fb727456aa4d90a17d3067fa8d0bdf','6047d506862b81d6d99273b4853adfe81e0478c1');
+INSERT INTO `federated_role_rax` VALUES ('e0f37a14909b49e3908207c2ecf4e032','2','41fb727456aa4d90a17d3067fa8d0bdf','bde1268ebabeeabb70a0e702a4626977c331d5c4');
 
 --
 -- Dumping data for table `federated_role_tenant_membership_rax`
 --
 
+INSERT INTO `federated_role_tenant_membership_rax` VALUES ('4643da850cc44dcd88b6a0007261b6ec','132885');
+INSERT INTO `federated_role_tenant_membership_rax` VALUES ('5f5ba245500e436fb5dcacb0d6020212','MossoCloudFS_132885');
 
 --
 -- Dumping data for table `federated_user_group_membership_rax`
 --
 
+INSERT INTO `federated_user_group_membership_rax` VALUES ('0','41fb727456aa4d90a17d3067fa8d0bdf');
 
 --
 -- Dumping data for table `federated_user_rax`
 --
 
+INSERT INTO `federated_user_rax` VALUES ('41fb727456aa4d90a17d3067fa8d0bdf','samlUserac1acb2af04b43fb9e4674dea554d245','federated@rackspace.com','ORD',NULL,NULL,'132885','http://test.rackspace.com');
 
 --
 -- Dumping data for table `federation_protocol`
@@ -714,7 +726,7 @@ INSERT INTO `policy_rax` VALUES ('3043','name',0,0,'description');
 -- Dumping data for table `project`
 --
 
-INSERT INTO `project` VALUES ('identity','identity','{}',NULL,1,'983452',NULL);
+INSERT INTO `project` VALUES ('132885','132885','{}',NULL,1,'132885',NULL);
 INSERT INTO `project` VALUES ('32035123','32035123','{}',NULL,1,'32035123',NULL);
 INSERT INTO `project` VALUES ('78543985','78543985','{}',NULL,1,'78543985',NULL);
 INSERT INTO `project` VALUES ('78543987','78543987','{}',NULL,1,'78543987',NULL);
@@ -723,6 +735,7 @@ INSERT INTO `project` VALUES ('78543990','78543990','{}',NULL,1,'78543990',NULL)
 INSERT INTO `project` VALUES ('78543995','78543995','{}',NULL,1,'78543995',NULL);
 INSERT INTO `project` VALUES ('983452','983452','{}',NULL,1,'983452',NULL);
 INSERT INTO `project` VALUES ('identity','identity','{}',NULL,1,'983452',NULL);
+INSERT INTO `project` VALUES ('MossoCloudFS_132885','MossoCloudFS_132885','{}',NULL,1,'132885',NULL);
 INSERT INTO `project` VALUES ('MossoCloudFS_32035123','MossoCloudFS_32035123','{}',NULL,1,'32035123',NULL);
 INSERT INTO `project` VALUES ('MossoCloudFS_78543985','MossoCloudFS_78543985','{}',NULL,1,'78543985',NULL);
 INSERT INTO `project` VALUES ('MossoCloudFS_78543987','MossoCloudFS_78543987','{}',NULL,1,'78543987',NULL);
@@ -735,6 +748,7 @@ INSERT INTO `project` VALUES ('StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09','
 -- Dumping data for table `project_endpoint`
 --
 
+INSERT INTO `project_endpoint` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','132885');
 INSERT INTO `project_endpoint` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','32035123');
 INSERT INTO `project_endpoint` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','78543985');
 INSERT INTO `project_endpoint` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','78543987');
@@ -742,12 +756,14 @@ INSERT INTO `project_endpoint` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','78543
 INSERT INTO `project_endpoint` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','78543990');
 INSERT INTO `project_endpoint` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','78543995');
 INSERT INTO `project_endpoint` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','983452');
+INSERT INTO `project_endpoint` VALUES ('096846fcbad44fe695aed8ba8b8793b1','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('096846fcbad44fe695aed8ba8b8793b1','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('096846fcbad44fe695aed8ba8b8793b1','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('096846fcbad44fe695aed8ba8b8793b1','MossoCloudFS_78543987');
 INSERT INTO `project_endpoint` VALUES ('096846fcbad44fe695aed8ba8b8793b1','MossoCloudFS_78543988');
 INSERT INTO `project_endpoint` VALUES ('096846fcbad44fe695aed8ba8b8793b1','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('096846fcbad44fe695aed8ba8b8793b1','MossoCloudFS_78543995');
+INSERT INTO `project_endpoint` VALUES ('1360d23777df45f08f9cbb11161be05f','132885');
 INSERT INTO `project_endpoint` VALUES ('1360d23777df45f08f9cbb11161be05f','32035123');
 INSERT INTO `project_endpoint` VALUES ('1360d23777df45f08f9cbb11161be05f','78543985');
 INSERT INTO `project_endpoint` VALUES ('1360d23777df45f08f9cbb11161be05f','78543987');
@@ -755,6 +771,7 @@ INSERT INTO `project_endpoint` VALUES ('1360d23777df45f08f9cbb11161be05f','78543
 INSERT INTO `project_endpoint` VALUES ('1360d23777df45f08f9cbb11161be05f','78543990');
 INSERT INTO `project_endpoint` VALUES ('1360d23777df45f08f9cbb11161be05f','78543995');
 INSERT INTO `project_endpoint` VALUES ('1360d23777df45f08f9cbb11161be05f','983452');
+INSERT INTO `project_endpoint` VALUES ('151473dd0f084f7ebc26097921377b81','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('151473dd0f084f7ebc26097921377b81','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('151473dd0f084f7ebc26097921377b81','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('151473dd0f084f7ebc26097921377b81','MossoCloudFS_78543987');
@@ -762,12 +779,14 @@ INSERT INTO `project_endpoint` VALUES ('151473dd0f084f7ebc26097921377b81','Mosso
 INSERT INTO `project_endpoint` VALUES ('151473dd0f084f7ebc26097921377b81','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('151473dd0f084f7ebc26097921377b81','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('151473dd0f084f7ebc26097921377b81','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('29c8b540a3664c63be7b72c74c9ad553','132885');
 INSERT INTO `project_endpoint` VALUES ('29c8b540a3664c63be7b72c74c9ad553','32035123');
 INSERT INTO `project_endpoint` VALUES ('29c8b540a3664c63be7b72c74c9ad553','78543985');
 INSERT INTO `project_endpoint` VALUES ('29c8b540a3664c63be7b72c74c9ad553','78543987');
 INSERT INTO `project_endpoint` VALUES ('29c8b540a3664c63be7b72c74c9ad553','78543988');
 INSERT INTO `project_endpoint` VALUES ('29c8b540a3664c63be7b72c74c9ad553','78543990');
 INSERT INTO `project_endpoint` VALUES ('29c8b540a3664c63be7b72c74c9ad553','78543995');
+INSERT INTO `project_endpoint` VALUES ('325d1052bcbe4b3ea2e6530476a7e87d','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('325d1052bcbe4b3ea2e6530476a7e87d','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('325d1052bcbe4b3ea2e6530476a7e87d','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('325d1052bcbe4b3ea2e6530476a7e87d','MossoCloudFS_78543987');
@@ -775,6 +794,7 @@ INSERT INTO `project_endpoint` VALUES ('325d1052bcbe4b3ea2e6530476a7e87d','Mosso
 INSERT INTO `project_endpoint` VALUES ('325d1052bcbe4b3ea2e6530476a7e87d','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('325d1052bcbe4b3ea2e6530476a7e87d','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('325d1052bcbe4b3ea2e6530476a7e87d','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_78543987');
@@ -782,6 +802,7 @@ INSERT INTO `project_endpoint` VALUES ('3ef8f99eac584af392ec8b1971e7c894','Mosso
 INSERT INTO `project_endpoint` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('3ef8f99eac584af392ec8b1971e7c894','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('3f70e9b0d9e64045b301727ef6b41e64','132885');
 INSERT INTO `project_endpoint` VALUES ('3f70e9b0d9e64045b301727ef6b41e64','32035123');
 INSERT INTO `project_endpoint` VALUES ('3f70e9b0d9e64045b301727ef6b41e64','78543985');
 INSERT INTO `project_endpoint` VALUES ('3f70e9b0d9e64045b301727ef6b41e64','78543987');
@@ -789,12 +810,14 @@ INSERT INTO `project_endpoint` VALUES ('3f70e9b0d9e64045b301727ef6b41e64','78543
 INSERT INTO `project_endpoint` VALUES ('3f70e9b0d9e64045b301727ef6b41e64','78543990');
 INSERT INTO `project_endpoint` VALUES ('3f70e9b0d9e64045b301727ef6b41e64','78543995');
 INSERT INTO `project_endpoint` VALUES ('3f70e9b0d9e64045b301727ef6b41e64','983452');
+INSERT INTO `project_endpoint` VALUES ('40fb2cab88dc404f8f7ec52a7687daf8','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('40fb2cab88dc404f8f7ec52a7687daf8','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('40fb2cab88dc404f8f7ec52a7687daf8','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('40fb2cab88dc404f8f7ec52a7687daf8','MossoCloudFS_78543987');
 INSERT INTO `project_endpoint` VALUES ('40fb2cab88dc404f8f7ec52a7687daf8','MossoCloudFS_78543988');
 INSERT INTO `project_endpoint` VALUES ('40fb2cab88dc404f8f7ec52a7687daf8','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('40fb2cab88dc404f8f7ec52a7687daf8','MossoCloudFS_78543995');
+INSERT INTO `project_endpoint` VALUES ('4444694e2ce7423a84e859c29a4d37f2','132885');
 INSERT INTO `project_endpoint` VALUES ('4444694e2ce7423a84e859c29a4d37f2','32035123');
 INSERT INTO `project_endpoint` VALUES ('4444694e2ce7423a84e859c29a4d37f2','78543985');
 INSERT INTO `project_endpoint` VALUES ('4444694e2ce7423a84e859c29a4d37f2','78543987');
@@ -802,6 +825,7 @@ INSERT INTO `project_endpoint` VALUES ('4444694e2ce7423a84e859c29a4d37f2','78543
 INSERT INTO `project_endpoint` VALUES ('4444694e2ce7423a84e859c29a4d37f2','78543990');
 INSERT INTO `project_endpoint` VALUES ('4444694e2ce7423a84e859c29a4d37f2','78543995');
 INSERT INTO `project_endpoint` VALUES ('4444694e2ce7423a84e859c29a4d37f2','983452');
+INSERT INTO `project_endpoint` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','132885');
 INSERT INTO `project_endpoint` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','32035123');
 INSERT INTO `project_endpoint` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','78543985');
 INSERT INTO `project_endpoint` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','78543987');
@@ -809,6 +833,7 @@ INSERT INTO `project_endpoint` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','78543
 INSERT INTO `project_endpoint` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','78543990');
 INSERT INTO `project_endpoint` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','78543995');
 INSERT INTO `project_endpoint` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','983452');
+INSERT INTO `project_endpoint` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_78543987');
@@ -816,12 +841,14 @@ INSERT INTO `project_endpoint` VALUES ('493afbe674f741c8aac56695a340194f','Mosso
 INSERT INTO `project_endpoint` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('493afbe674f741c8aac56695a340194f','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('4c1f4de835354598b2e407fa918ec462','132885');
 INSERT INTO `project_endpoint` VALUES ('4c1f4de835354598b2e407fa918ec462','32035123');
 INSERT INTO `project_endpoint` VALUES ('4c1f4de835354598b2e407fa918ec462','78543985');
 INSERT INTO `project_endpoint` VALUES ('4c1f4de835354598b2e407fa918ec462','78543987');
 INSERT INTO `project_endpoint` VALUES ('4c1f4de835354598b2e407fa918ec462','78543988');
 INSERT INTO `project_endpoint` VALUES ('4c1f4de835354598b2e407fa918ec462','78543990');
 INSERT INTO `project_endpoint` VALUES ('4c1f4de835354598b2e407fa918ec462','78543995');
+INSERT INTO `project_endpoint` VALUES ('5041efbc8b484cfca580bd46f6159f7b','132885');
 INSERT INTO `project_endpoint` VALUES ('5041efbc8b484cfca580bd46f6159f7b','32035123');
 INSERT INTO `project_endpoint` VALUES ('5041efbc8b484cfca580bd46f6159f7b','78543985');
 INSERT INTO `project_endpoint` VALUES ('5041efbc8b484cfca580bd46f6159f7b','78543987');
@@ -829,18 +856,21 @@ INSERT INTO `project_endpoint` VALUES ('5041efbc8b484cfca580bd46f6159f7b','78543
 INSERT INTO `project_endpoint` VALUES ('5041efbc8b484cfca580bd46f6159f7b','78543990');
 INSERT INTO `project_endpoint` VALUES ('5041efbc8b484cfca580bd46f6159f7b','78543995');
 INSERT INTO `project_endpoint` VALUES ('5041efbc8b484cfca580bd46f6159f7b','983452');
+INSERT INTO `project_endpoint` VALUES ('51f8d6346bc347b5ae88d611450386be','132885');
 INSERT INTO `project_endpoint` VALUES ('51f8d6346bc347b5ae88d611450386be','32035123');
 INSERT INTO `project_endpoint` VALUES ('51f8d6346bc347b5ae88d611450386be','78543985');
 INSERT INTO `project_endpoint` VALUES ('51f8d6346bc347b5ae88d611450386be','78543987');
 INSERT INTO `project_endpoint` VALUES ('51f8d6346bc347b5ae88d611450386be','78543988');
 INSERT INTO `project_endpoint` VALUES ('51f8d6346bc347b5ae88d611450386be','78543990');
 INSERT INTO `project_endpoint` VALUES ('51f8d6346bc347b5ae88d611450386be','78543995');
+INSERT INTO `project_endpoint` VALUES ('52d92004a6924b3e8509ff02ad318a26','132885');
 INSERT INTO `project_endpoint` VALUES ('52d92004a6924b3e8509ff02ad318a26','32035123');
 INSERT INTO `project_endpoint` VALUES ('52d92004a6924b3e8509ff02ad318a26','78543985');
 INSERT INTO `project_endpoint` VALUES ('52d92004a6924b3e8509ff02ad318a26','78543987');
 INSERT INTO `project_endpoint` VALUES ('52d92004a6924b3e8509ff02ad318a26','78543988');
 INSERT INTO `project_endpoint` VALUES ('52d92004a6924b3e8509ff02ad318a26','78543990');
 INSERT INTO `project_endpoint` VALUES ('52d92004a6924b3e8509ff02ad318a26','78543995');
+INSERT INTO `project_endpoint` VALUES ('5567e822e67e449d8c2643e0ae4693f1','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('5567e822e67e449d8c2643e0ae4693f1','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('5567e822e67e449d8c2643e0ae4693f1','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('5567e822e67e449d8c2643e0ae4693f1','MossoCloudFS_78543987');
@@ -848,6 +878,7 @@ INSERT INTO `project_endpoint` VALUES ('5567e822e67e449d8c2643e0ae4693f1','Mosso
 INSERT INTO `project_endpoint` VALUES ('5567e822e67e449d8c2643e0ae4693f1','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('5567e822e67e449d8c2643e0ae4693f1','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('5567e822e67e449d8c2643e0ae4693f1','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('557e1408f0bf4f9aa720ff6a6fd56329','132885');
 INSERT INTO `project_endpoint` VALUES ('557e1408f0bf4f9aa720ff6a6fd56329','32035123');
 INSERT INTO `project_endpoint` VALUES ('557e1408f0bf4f9aa720ff6a6fd56329','78543985');
 INSERT INTO `project_endpoint` VALUES ('557e1408f0bf4f9aa720ff6a6fd56329','78543987');
@@ -855,6 +886,7 @@ INSERT INTO `project_endpoint` VALUES ('557e1408f0bf4f9aa720ff6a6fd56329','78543
 INSERT INTO `project_endpoint` VALUES ('557e1408f0bf4f9aa720ff6a6fd56329','78543990');
 INSERT INTO `project_endpoint` VALUES ('557e1408f0bf4f9aa720ff6a6fd56329','78543995');
 INSERT INTO `project_endpoint` VALUES ('557e1408f0bf4f9aa720ff6a6fd56329','983452');
+INSERT INTO `project_endpoint` VALUES ('55ba30774451467980c09bdfbaee13c9','132885');
 INSERT INTO `project_endpoint` VALUES ('55ba30774451467980c09bdfbaee13c9','32035123');
 INSERT INTO `project_endpoint` VALUES ('55ba30774451467980c09bdfbaee13c9','78543985');
 INSERT INTO `project_endpoint` VALUES ('55ba30774451467980c09bdfbaee13c9','78543987');
@@ -862,6 +894,7 @@ INSERT INTO `project_endpoint` VALUES ('55ba30774451467980c09bdfbaee13c9','78543
 INSERT INTO `project_endpoint` VALUES ('55ba30774451467980c09bdfbaee13c9','78543990');
 INSERT INTO `project_endpoint` VALUES ('55ba30774451467980c09bdfbaee13c9','78543995');
 INSERT INTO `project_endpoint` VALUES ('55ba30774451467980c09bdfbaee13c9','983452');
+INSERT INTO `project_endpoint` VALUES ('57a29b9b15ef4054aaf98d96874acf50','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('57a29b9b15ef4054aaf98d96874acf50','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('57a29b9b15ef4054aaf98d96874acf50','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('57a29b9b15ef4054aaf98d96874acf50','MossoCloudFS_78543987');
@@ -869,12 +902,14 @@ INSERT INTO `project_endpoint` VALUES ('57a29b9b15ef4054aaf98d96874acf50','Mosso
 INSERT INTO `project_endpoint` VALUES ('57a29b9b15ef4054aaf98d96874acf50','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('57a29b9b15ef4054aaf98d96874acf50','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('57a29b9b15ef4054aaf98d96874acf50','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('57ea3e33aaec4f1ea33c658e0f7d6732','132885');
 INSERT INTO `project_endpoint` VALUES ('57ea3e33aaec4f1ea33c658e0f7d6732','32035123');
 INSERT INTO `project_endpoint` VALUES ('57ea3e33aaec4f1ea33c658e0f7d6732','78543985');
 INSERT INTO `project_endpoint` VALUES ('57ea3e33aaec4f1ea33c658e0f7d6732','78543987');
 INSERT INTO `project_endpoint` VALUES ('57ea3e33aaec4f1ea33c658e0f7d6732','78543988');
 INSERT INTO `project_endpoint` VALUES ('57ea3e33aaec4f1ea33c658e0f7d6732','78543990');
 INSERT INTO `project_endpoint` VALUES ('57ea3e33aaec4f1ea33c658e0f7d6732','78543995');
+INSERT INTO `project_endpoint` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_78543987');
@@ -882,6 +917,7 @@ INSERT INTO `project_endpoint` VALUES ('59d9242951584cb5a63522de001f5878','Mosso
 INSERT INTO `project_endpoint` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('59d9242951584cb5a63522de001f5878','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','132885');
 INSERT INTO `project_endpoint` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','32035123');
 INSERT INTO `project_endpoint` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','78543985');
 INSERT INTO `project_endpoint` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','78543987');
@@ -889,6 +925,7 @@ INSERT INTO `project_endpoint` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','78543
 INSERT INTO `project_endpoint` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','78543990');
 INSERT INTO `project_endpoint` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','78543995');
 INSERT INTO `project_endpoint` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','983452');
+INSERT INTO `project_endpoint` VALUES ('753d191352b1400c85ee5a972b6f2690','132885');
 INSERT INTO `project_endpoint` VALUES ('753d191352b1400c85ee5a972b6f2690','32035123');
 INSERT INTO `project_endpoint` VALUES ('753d191352b1400c85ee5a972b6f2690','78543985');
 INSERT INTO `project_endpoint` VALUES ('753d191352b1400c85ee5a972b6f2690','78543987');
@@ -896,6 +933,7 @@ INSERT INTO `project_endpoint` VALUES ('753d191352b1400c85ee5a972b6f2690','78543
 INSERT INTO `project_endpoint` VALUES ('753d191352b1400c85ee5a972b6f2690','78543990');
 INSERT INTO `project_endpoint` VALUES ('753d191352b1400c85ee5a972b6f2690','78543995');
 INSERT INTO `project_endpoint` VALUES ('753d191352b1400c85ee5a972b6f2690','983452');
+INSERT INTO `project_endpoint` VALUES ('7ca9341fb62947b4873acfe84622a136','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('7ca9341fb62947b4873acfe84622a136','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('7ca9341fb62947b4873acfe84622a136','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('7ca9341fb62947b4873acfe84622a136','MossoCloudFS_78543987');
@@ -903,6 +941,7 @@ INSERT INTO `project_endpoint` VALUES ('7ca9341fb62947b4873acfe84622a136','Mosso
 INSERT INTO `project_endpoint` VALUES ('7ca9341fb62947b4873acfe84622a136','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('7ca9341fb62947b4873acfe84622a136','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('7ca9341fb62947b4873acfe84622a136','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('8ea7e68720554f37987c4a2ad1d6ebf5','132885');
 INSERT INTO `project_endpoint` VALUES ('8ea7e68720554f37987c4a2ad1d6ebf5','32035123');
 INSERT INTO `project_endpoint` VALUES ('8ea7e68720554f37987c4a2ad1d6ebf5','78543985');
 INSERT INTO `project_endpoint` VALUES ('8ea7e68720554f37987c4a2ad1d6ebf5','78543987');
@@ -910,6 +949,7 @@ INSERT INTO `project_endpoint` VALUES ('8ea7e68720554f37987c4a2ad1d6ebf5','78543
 INSERT INTO `project_endpoint` VALUES ('8ea7e68720554f37987c4a2ad1d6ebf5','78543990');
 INSERT INTO `project_endpoint` VALUES ('8ea7e68720554f37987c4a2ad1d6ebf5','78543995');
 INSERT INTO `project_endpoint` VALUES ('8ea7e68720554f37987c4a2ad1d6ebf5','983452');
+INSERT INTO `project_endpoint` VALUES ('94ae635db83b403eb45bd135b555058f','132885');
 INSERT INTO `project_endpoint` VALUES ('94ae635db83b403eb45bd135b555058f','32035123');
 INSERT INTO `project_endpoint` VALUES ('94ae635db83b403eb45bd135b555058f','78543985');
 INSERT INTO `project_endpoint` VALUES ('94ae635db83b403eb45bd135b555058f','78543987');
@@ -917,6 +957,7 @@ INSERT INTO `project_endpoint` VALUES ('94ae635db83b403eb45bd135b555058f','78543
 INSERT INTO `project_endpoint` VALUES ('94ae635db83b403eb45bd135b555058f','78543990');
 INSERT INTO `project_endpoint` VALUES ('94ae635db83b403eb45bd135b555058f','78543995');
 INSERT INTO `project_endpoint` VALUES ('94ae635db83b403eb45bd135b555058f','983452');
+INSERT INTO `project_endpoint` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_78543987');
@@ -924,6 +965,7 @@ INSERT INTO `project_endpoint` VALUES ('956488b911ff44b19b617b0a1e763679','Mosso
 INSERT INTO `project_endpoint` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('956488b911ff44b19b617b0a1e763679','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('95b96464381248b3b2c1b6fd1ead067f','132885');
 INSERT INTO `project_endpoint` VALUES ('95b96464381248b3b2c1b6fd1ead067f','32035123');
 INSERT INTO `project_endpoint` VALUES ('95b96464381248b3b2c1b6fd1ead067f','78543985');
 INSERT INTO `project_endpoint` VALUES ('95b96464381248b3b2c1b6fd1ead067f','78543987');
@@ -931,6 +973,7 @@ INSERT INTO `project_endpoint` VALUES ('95b96464381248b3b2c1b6fd1ead067f','78543
 INSERT INTO `project_endpoint` VALUES ('95b96464381248b3b2c1b6fd1ead067f','78543990');
 INSERT INTO `project_endpoint` VALUES ('95b96464381248b3b2c1b6fd1ead067f','78543995');
 INSERT INTO `project_endpoint` VALUES ('95b96464381248b3b2c1b6fd1ead067f','983452');
+INSERT INTO `project_endpoint` VALUES ('97cf4d46f3a04e26b2e919cd8f5203a3','132885');
 INSERT INTO `project_endpoint` VALUES ('97cf4d46f3a04e26b2e919cd8f5203a3','32035123');
 INSERT INTO `project_endpoint` VALUES ('97cf4d46f3a04e26b2e919cd8f5203a3','78543985');
 INSERT INTO `project_endpoint` VALUES ('97cf4d46f3a04e26b2e919cd8f5203a3','78543987');
@@ -938,6 +981,7 @@ INSERT INTO `project_endpoint` VALUES ('97cf4d46f3a04e26b2e919cd8f5203a3','78543
 INSERT INTO `project_endpoint` VALUES ('97cf4d46f3a04e26b2e919cd8f5203a3','78543990');
 INSERT INTO `project_endpoint` VALUES ('97cf4d46f3a04e26b2e919cd8f5203a3','78543995');
 INSERT INTO `project_endpoint` VALUES ('97cf4d46f3a04e26b2e919cd8f5203a3','983452');
+INSERT INTO `project_endpoint` VALUES ('99aaec3ad0a54dba9925ed78fbbbb197','132885');
 INSERT INTO `project_endpoint` VALUES ('99aaec3ad0a54dba9925ed78fbbbb197','32035123');
 INSERT INTO `project_endpoint` VALUES ('99aaec3ad0a54dba9925ed78fbbbb197','78543985');
 INSERT INTO `project_endpoint` VALUES ('99aaec3ad0a54dba9925ed78fbbbb197','78543987');
@@ -945,6 +989,7 @@ INSERT INTO `project_endpoint` VALUES ('99aaec3ad0a54dba9925ed78fbbbb197','78543
 INSERT INTO `project_endpoint` VALUES ('99aaec3ad0a54dba9925ed78fbbbb197','78543990');
 INSERT INTO `project_endpoint` VALUES ('99aaec3ad0a54dba9925ed78fbbbb197','78543995');
 INSERT INTO `project_endpoint` VALUES ('99aaec3ad0a54dba9925ed78fbbbb197','983452');
+INSERT INTO `project_endpoint` VALUES ('9d0a7d2b06ed470494c9b5e5bb4006d0','132885');
 INSERT INTO `project_endpoint` VALUES ('9d0a7d2b06ed470494c9b5e5bb4006d0','32035123');
 INSERT INTO `project_endpoint` VALUES ('9d0a7d2b06ed470494c9b5e5bb4006d0','78543985');
 INSERT INTO `project_endpoint` VALUES ('9d0a7d2b06ed470494c9b5e5bb4006d0','78543987');
@@ -952,12 +997,14 @@ INSERT INTO `project_endpoint` VALUES ('9d0a7d2b06ed470494c9b5e5bb4006d0','78543
 INSERT INTO `project_endpoint` VALUES ('9d0a7d2b06ed470494c9b5e5bb4006d0','78543990');
 INSERT INTO `project_endpoint` VALUES ('9d0a7d2b06ed470494c9b5e5bb4006d0','78543995');
 INSERT INTO `project_endpoint` VALUES ('9d0a7d2b06ed470494c9b5e5bb4006d0','983452');
+INSERT INTO `project_endpoint` VALUES ('a88fdebfdc414597b500e0864a18b722','132885');
 INSERT INTO `project_endpoint` VALUES ('a88fdebfdc414597b500e0864a18b722','32035123');
 INSERT INTO `project_endpoint` VALUES ('a88fdebfdc414597b500e0864a18b722','78543985');
 INSERT INTO `project_endpoint` VALUES ('a88fdebfdc414597b500e0864a18b722','78543987');
 INSERT INTO `project_endpoint` VALUES ('a88fdebfdc414597b500e0864a18b722','78543988');
 INSERT INTO `project_endpoint` VALUES ('a88fdebfdc414597b500e0864a18b722','78543990');
 INSERT INTO `project_endpoint` VALUES ('a88fdebfdc414597b500e0864a18b722','78543995');
+INSERT INTO `project_endpoint` VALUES ('b03ebcdcaaba48bc85d406b8a587fdf2','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('b03ebcdcaaba48bc85d406b8a587fdf2','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('b03ebcdcaaba48bc85d406b8a587fdf2','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('b03ebcdcaaba48bc85d406b8a587fdf2','MossoCloudFS_78543987');
@@ -965,6 +1012,7 @@ INSERT INTO `project_endpoint` VALUES ('b03ebcdcaaba48bc85d406b8a587fdf2','Mosso
 INSERT INTO `project_endpoint` VALUES ('b03ebcdcaaba48bc85d406b8a587fdf2','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('b03ebcdcaaba48bc85d406b8a587fdf2','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('b03ebcdcaaba48bc85d406b8a587fdf2','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('b04e6b1b4ff34f869ed5758195a2099d','132885');
 INSERT INTO `project_endpoint` VALUES ('b04e6b1b4ff34f869ed5758195a2099d','32035123');
 INSERT INTO `project_endpoint` VALUES ('b04e6b1b4ff34f869ed5758195a2099d','78543985');
 INSERT INTO `project_endpoint` VALUES ('b04e6b1b4ff34f869ed5758195a2099d','78543987');
@@ -972,6 +1020,7 @@ INSERT INTO `project_endpoint` VALUES ('b04e6b1b4ff34f869ed5758195a2099d','78543
 INSERT INTO `project_endpoint` VALUES ('b04e6b1b4ff34f869ed5758195a2099d','78543990');
 INSERT INTO `project_endpoint` VALUES ('b04e6b1b4ff34f869ed5758195a2099d','78543995');
 INSERT INTO `project_endpoint` VALUES ('b04e6b1b4ff34f869ed5758195a2099d','983452');
+INSERT INTO `project_endpoint` VALUES ('bbe02c88b5a44438a3b7381ef1c39e81','132885');
 INSERT INTO `project_endpoint` VALUES ('bbe02c88b5a44438a3b7381ef1c39e81','32035123');
 INSERT INTO `project_endpoint` VALUES ('bbe02c88b5a44438a3b7381ef1c39e81','78543985');
 INSERT INTO `project_endpoint` VALUES ('bbe02c88b5a44438a3b7381ef1c39e81','78543987');
@@ -979,6 +1028,7 @@ INSERT INTO `project_endpoint` VALUES ('bbe02c88b5a44438a3b7381ef1c39e81','78543
 INSERT INTO `project_endpoint` VALUES ('bbe02c88b5a44438a3b7381ef1c39e81','78543990');
 INSERT INTO `project_endpoint` VALUES ('bbe02c88b5a44438a3b7381ef1c39e81','78543995');
 INSERT INTO `project_endpoint` VALUES ('bbe02c88b5a44438a3b7381ef1c39e81','983452');
+INSERT INTO `project_endpoint` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_78543987');
@@ -986,6 +1036,7 @@ INSERT INTO `project_endpoint` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','Mosso
 INSERT INTO `project_endpoint` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('c0c708a560d146368f88f868c63ce6c8','132885');
 INSERT INTO `project_endpoint` VALUES ('c0c708a560d146368f88f868c63ce6c8','32035123');
 INSERT INTO `project_endpoint` VALUES ('c0c708a560d146368f88f868c63ce6c8','78543985');
 INSERT INTO `project_endpoint` VALUES ('c0c708a560d146368f88f868c63ce6c8','78543987');
@@ -993,6 +1044,7 @@ INSERT INTO `project_endpoint` VALUES ('c0c708a560d146368f88f868c63ce6c8','78543
 INSERT INTO `project_endpoint` VALUES ('c0c708a560d146368f88f868c63ce6c8','78543990');
 INSERT INTO `project_endpoint` VALUES ('c0c708a560d146368f88f868c63ce6c8','78543995');
 INSERT INTO `project_endpoint` VALUES ('c0c708a560d146368f88f868c63ce6c8','983452');
+INSERT INTO `project_endpoint` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','132885');
 INSERT INTO `project_endpoint` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','32035123');
 INSERT INTO `project_endpoint` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','78543985');
 INSERT INTO `project_endpoint` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','78543987');
@@ -1000,6 +1052,7 @@ INSERT INTO `project_endpoint` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','78543
 INSERT INTO `project_endpoint` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','78543990');
 INSERT INTO `project_endpoint` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','78543995');
 INSERT INTO `project_endpoint` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','983452');
+INSERT INTO `project_endpoint` VALUES ('c6b9dd8f357e4d04a9358d39bed8f9d0','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('c6b9dd8f357e4d04a9358d39bed8f9d0','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('c6b9dd8f357e4d04a9358d39bed8f9d0','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('c6b9dd8f357e4d04a9358d39bed8f9d0','MossoCloudFS_78543987');
@@ -1007,12 +1060,14 @@ INSERT INTO `project_endpoint` VALUES ('c6b9dd8f357e4d04a9358d39bed8f9d0','Mosso
 INSERT INTO `project_endpoint` VALUES ('c6b9dd8f357e4d04a9358d39bed8f9d0','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('c6b9dd8f357e4d04a9358d39bed8f9d0','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('c6b9dd8f357e4d04a9358d39bed8f9d0','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('cbafd23257d5468abf339ebf2b53d4c5','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('cbafd23257d5468abf339ebf2b53d4c5','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('cbafd23257d5468abf339ebf2b53d4c5','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('cbafd23257d5468abf339ebf2b53d4c5','MossoCloudFS_78543987');
 INSERT INTO `project_endpoint` VALUES ('cbafd23257d5468abf339ebf2b53d4c5','MossoCloudFS_78543988');
 INSERT INTO `project_endpoint` VALUES ('cbafd23257d5468abf339ebf2b53d4c5','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('cbafd23257d5468abf339ebf2b53d4c5','MossoCloudFS_78543995');
+INSERT INTO `project_endpoint` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_78543987');
@@ -1020,6 +1075,7 @@ INSERT INTO `project_endpoint` VALUES ('d73f843222f94a49a1e58e0b39e317cc','Mosso
 INSERT INTO `project_endpoint` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('d73f843222f94a49a1e58e0b39e317cc','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('e06042d8a48845afbd38f61d436466fa','132885');
 INSERT INTO `project_endpoint` VALUES ('e06042d8a48845afbd38f61d436466fa','32035123');
 INSERT INTO `project_endpoint` VALUES ('e06042d8a48845afbd38f61d436466fa','78543985');
 INSERT INTO `project_endpoint` VALUES ('e06042d8a48845afbd38f61d436466fa','78543987');
@@ -1027,6 +1083,7 @@ INSERT INTO `project_endpoint` VALUES ('e06042d8a48845afbd38f61d436466fa','78543
 INSERT INTO `project_endpoint` VALUES ('e06042d8a48845afbd38f61d436466fa','78543990');
 INSERT INTO `project_endpoint` VALUES ('e06042d8a48845afbd38f61d436466fa','78543995');
 INSERT INTO `project_endpoint` VALUES ('e06042d8a48845afbd38f61d436466fa','983452');
+INSERT INTO `project_endpoint` VALUES ('e5d44b16ff6e4f5fbaf33ad6666dd765','132885');
 INSERT INTO `project_endpoint` VALUES ('e5d44b16ff6e4f5fbaf33ad6666dd765','32035123');
 INSERT INTO `project_endpoint` VALUES ('e5d44b16ff6e4f5fbaf33ad6666dd765','78543985');
 INSERT INTO `project_endpoint` VALUES ('e5d44b16ff6e4f5fbaf33ad6666dd765','78543987');
@@ -1034,6 +1091,7 @@ INSERT INTO `project_endpoint` VALUES ('e5d44b16ff6e4f5fbaf33ad6666dd765','78543
 INSERT INTO `project_endpoint` VALUES ('e5d44b16ff6e4f5fbaf33ad6666dd765','78543990');
 INSERT INTO `project_endpoint` VALUES ('e5d44b16ff6e4f5fbaf33ad6666dd765','78543995');
 INSERT INTO `project_endpoint` VALUES ('e5d44b16ff6e4f5fbaf33ad6666dd765','983452');
+INSERT INTO `project_endpoint` VALUES ('ec4e934c484849e496365a57e92f3a41','132885');
 INSERT INTO `project_endpoint` VALUES ('ec4e934c484849e496365a57e92f3a41','32035123');
 INSERT INTO `project_endpoint` VALUES ('ec4e934c484849e496365a57e92f3a41','78543985');
 INSERT INTO `project_endpoint` VALUES ('ec4e934c484849e496365a57e92f3a41','78543987');
@@ -1041,6 +1099,7 @@ INSERT INTO `project_endpoint` VALUES ('ec4e934c484849e496365a57e92f3a41','78543
 INSERT INTO `project_endpoint` VALUES ('ec4e934c484849e496365a57e92f3a41','78543990');
 INSERT INTO `project_endpoint` VALUES ('ec4e934c484849e496365a57e92f3a41','78543995');
 INSERT INTO `project_endpoint` VALUES ('ec4e934c484849e496365a57e92f3a41','983452');
+INSERT INTO `project_endpoint` VALUES ('ede61d72844d439987d34ba17f14511c','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('ede61d72844d439987d34ba17f14511c','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('ede61d72844d439987d34ba17f14511c','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('ede61d72844d439987d34ba17f14511c','MossoCloudFS_78543987');
@@ -1048,6 +1107,7 @@ INSERT INTO `project_endpoint` VALUES ('ede61d72844d439987d34ba17f14511c','Mosso
 INSERT INTO `project_endpoint` VALUES ('ede61d72844d439987d34ba17f14511c','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('ede61d72844d439987d34ba17f14511c','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('ede61d72844d439987d34ba17f14511c','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('ef02ed30fc1540f8b3f45371863b57e0','132885');
 INSERT INTO `project_endpoint` VALUES ('ef02ed30fc1540f8b3f45371863b57e0','32035123');
 INSERT INTO `project_endpoint` VALUES ('ef02ed30fc1540f8b3f45371863b57e0','78543985');
 INSERT INTO `project_endpoint` VALUES ('ef02ed30fc1540f8b3f45371863b57e0','78543987');
@@ -1055,6 +1115,7 @@ INSERT INTO `project_endpoint` VALUES ('ef02ed30fc1540f8b3f45371863b57e0','78543
 INSERT INTO `project_endpoint` VALUES ('ef02ed30fc1540f8b3f45371863b57e0','78543990');
 INSERT INTO `project_endpoint` VALUES ('ef02ed30fc1540f8b3f45371863b57e0','78543995');
 INSERT INTO `project_endpoint` VALUES ('ef02ed30fc1540f8b3f45371863b57e0','983452');
+INSERT INTO `project_endpoint` VALUES ('f1a128d4238945b78a14556f1d503153','132885');
 INSERT INTO `project_endpoint` VALUES ('f1a128d4238945b78a14556f1d503153','32035123');
 INSERT INTO `project_endpoint` VALUES ('f1a128d4238945b78a14556f1d503153','78543985');
 INSERT INTO `project_endpoint` VALUES ('f1a128d4238945b78a14556f1d503153','78543987');
@@ -1062,6 +1123,7 @@ INSERT INTO `project_endpoint` VALUES ('f1a128d4238945b78a14556f1d503153','78543
 INSERT INTO `project_endpoint` VALUES ('f1a128d4238945b78a14556f1d503153','78543990');
 INSERT INTO `project_endpoint` VALUES ('f1a128d4238945b78a14556f1d503153','78543995');
 INSERT INTO `project_endpoint` VALUES ('f1a128d4238945b78a14556f1d503153','983452');
+INSERT INTO `project_endpoint` VALUES ('f7a1e831f4bc4d8b8afb8ded473ea698','132885');
 INSERT INTO `project_endpoint` VALUES ('f7a1e831f4bc4d8b8afb8ded473ea698','32035123');
 INSERT INTO `project_endpoint` VALUES ('f7a1e831f4bc4d8b8afb8ded473ea698','78543985');
 INSERT INTO `project_endpoint` VALUES ('f7a1e831f4bc4d8b8afb8ded473ea698','78543987');
@@ -1069,6 +1131,7 @@ INSERT INTO `project_endpoint` VALUES ('f7a1e831f4bc4d8b8afb8ded473ea698','78543
 INSERT INTO `project_endpoint` VALUES ('f7a1e831f4bc4d8b8afb8ded473ea698','78543990');
 INSERT INTO `project_endpoint` VALUES ('f7a1e831f4bc4d8b8afb8ded473ea698','78543995');
 INSERT INTO `project_endpoint` VALUES ('f7a1e831f4bc4d8b8afb8ded473ea698','983452');
+INSERT INTO `project_endpoint` VALUES ('f81393ca160349e4b79865041880f73b','MossoCloudFS_132885');
 INSERT INTO `project_endpoint` VALUES ('f81393ca160349e4b79865041880f73b','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint` VALUES ('f81393ca160349e4b79865041880f73b','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint` VALUES ('f81393ca160349e4b79865041880f73b','MossoCloudFS_78543987');
@@ -1076,6 +1139,7 @@ INSERT INTO `project_endpoint` VALUES ('f81393ca160349e4b79865041880f73b','Mosso
 INSERT INTO `project_endpoint` VALUES ('f81393ca160349e4b79865041880f73b','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint` VALUES ('f81393ca160349e4b79865041880f73b','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint` VALUES ('f81393ca160349e4b79865041880f73b','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint` VALUES ('fee23333343e40fcb51b32bc9f03ff0b','132885');
 INSERT INTO `project_endpoint` VALUES ('fee23333343e40fcb51b32bc9f03ff0b','32035123');
 INSERT INTO `project_endpoint` VALUES ('fee23333343e40fcb51b32bc9f03ff0b','78543985');
 INSERT INTO `project_endpoint` VALUES ('fee23333343e40fcb51b32bc9f03ff0b','78543987');
@@ -1093,6 +1157,7 @@ INSERT INTO `project_endpoint` VALUES ('fee23333343e40fcb51b32bc9f03ff0b','98345
 -- Dumping data for table `project_endpoint_rax`
 --
 
+INSERT INTO `project_endpoint_rax` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','132885');
 INSERT INTO `project_endpoint_rax` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','78543987');
@@ -1100,6 +1165,7 @@ INSERT INTO `project_endpoint_rax` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','7
 INSERT INTO `project_endpoint_rax` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','78543990');
 INSERT INTO `project_endpoint_rax` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','78543995');
 INSERT INTO `project_endpoint_rax` VALUES ('00aa5feb3a5c4faab9bba932c0b122b6','983452');
+INSERT INTO `project_endpoint_rax` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_132885');
 INSERT INTO `project_endpoint_rax` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_78543987');
@@ -1107,6 +1173,7 @@ INSERT INTO `project_endpoint_rax` VALUES ('3ef8f99eac584af392ec8b1971e7c894','M
 INSERT INTO `project_endpoint_rax` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint_rax` VALUES ('3ef8f99eac584af392ec8b1971e7c894','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint_rax` VALUES ('3ef8f99eac584af392ec8b1971e7c894','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint_rax` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','132885');
 INSERT INTO `project_endpoint_rax` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','78543987');
@@ -1114,6 +1181,7 @@ INSERT INTO `project_endpoint_rax` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','7
 INSERT INTO `project_endpoint_rax` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','78543990');
 INSERT INTO `project_endpoint_rax` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','78543995');
 INSERT INTO `project_endpoint_rax` VALUES ('44ebe3e5e2d94d678d62d8e2e8633a9f','983452');
+INSERT INTO `project_endpoint_rax` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_132885');
 INSERT INTO `project_endpoint_rax` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_78543987');
@@ -1121,6 +1189,7 @@ INSERT INTO `project_endpoint_rax` VALUES ('493afbe674f741c8aac56695a340194f','M
 INSERT INTO `project_endpoint_rax` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint_rax` VALUES ('493afbe674f741c8aac56695a340194f','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint_rax` VALUES ('493afbe674f741c8aac56695a340194f','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint_rax` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_132885');
 INSERT INTO `project_endpoint_rax` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_78543987');
@@ -1128,6 +1197,7 @@ INSERT INTO `project_endpoint_rax` VALUES ('59d9242951584cb5a63522de001f5878','M
 INSERT INTO `project_endpoint_rax` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint_rax` VALUES ('59d9242951584cb5a63522de001f5878','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint_rax` VALUES ('59d9242951584cb5a63522de001f5878','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint_rax` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','132885');
 INSERT INTO `project_endpoint_rax` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','78543987');
@@ -1135,6 +1205,7 @@ INSERT INTO `project_endpoint_rax` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','7
 INSERT INTO `project_endpoint_rax` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','78543990');
 INSERT INTO `project_endpoint_rax` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','78543995');
 INSERT INTO `project_endpoint_rax` VALUES ('5a9cfa60a41f4744add68e53ef042b3a','983452');
+INSERT INTO `project_endpoint_rax` VALUES ('94ae635db83b403eb45bd135b555058f','132885');
 INSERT INTO `project_endpoint_rax` VALUES ('94ae635db83b403eb45bd135b555058f','32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('94ae635db83b403eb45bd135b555058f','78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('94ae635db83b403eb45bd135b555058f','78543987');
@@ -1142,6 +1213,7 @@ INSERT INTO `project_endpoint_rax` VALUES ('94ae635db83b403eb45bd135b555058f','7
 INSERT INTO `project_endpoint_rax` VALUES ('94ae635db83b403eb45bd135b555058f','78543990');
 INSERT INTO `project_endpoint_rax` VALUES ('94ae635db83b403eb45bd135b555058f','78543995');
 INSERT INTO `project_endpoint_rax` VALUES ('94ae635db83b403eb45bd135b555058f','983452');
+INSERT INTO `project_endpoint_rax` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_132885');
 INSERT INTO `project_endpoint_rax` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_78543987');
@@ -1149,6 +1221,7 @@ INSERT INTO `project_endpoint_rax` VALUES ('956488b911ff44b19b617b0a1e763679','M
 INSERT INTO `project_endpoint_rax` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint_rax` VALUES ('956488b911ff44b19b617b0a1e763679','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint_rax` VALUES ('956488b911ff44b19b617b0a1e763679','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint_rax` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_132885');
 INSERT INTO `project_endpoint_rax` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_78543987');
@@ -1156,6 +1229,7 @@ INSERT INTO `project_endpoint_rax` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','M
 INSERT INTO `project_endpoint_rax` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint_rax` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint_rax` VALUES ('bd69b7ef629c4ceb8ee96e4e0c49ab79','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint_rax` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','132885');
 INSERT INTO `project_endpoint_rax` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','78543987');
@@ -1163,6 +1237,7 @@ INSERT INTO `project_endpoint_rax` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','7
 INSERT INTO `project_endpoint_rax` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','78543990');
 INSERT INTO `project_endpoint_rax` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','78543995');
 INSERT INTO `project_endpoint_rax` VALUES ('c34305bd4d7d4f2b95998ff9cfb9aa5b','983452');
+INSERT INTO `project_endpoint_rax` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_132885');
 INSERT INTO `project_endpoint_rax` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_78543987');
@@ -1170,6 +1245,7 @@ INSERT INTO `project_endpoint_rax` VALUES ('d73f843222f94a49a1e58e0b39e317cc','M
 INSERT INTO `project_endpoint_rax` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_78543990');
 INSERT INTO `project_endpoint_rax` VALUES ('d73f843222f94a49a1e58e0b39e317cc','MossoCloudFS_78543995');
 INSERT INTO `project_endpoint_rax` VALUES ('d73f843222f94a49a1e58e0b39e317cc','StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09');
+INSERT INTO `project_endpoint_rax` VALUES ('ec4e934c484849e496365a57e92f3a41','132885');
 INSERT INTO `project_endpoint_rax` VALUES ('ec4e934c484849e496365a57e92f3a41','32035123');
 INSERT INTO `project_endpoint_rax` VALUES ('ec4e934c484849e496365a57e92f3a41','78543985');
 INSERT INTO `project_endpoint_rax` VALUES ('ec4e934c484849e496365a57e92f3a41','78543987');
@@ -1433,6 +1509,8 @@ INSERT INTO `user` VALUES ('3a4407a6b3e349998478409c5b7eda14','cloudCafeUserAdmi
 INSERT INTO `user` VALUES ('4e997592aad24e2183e51bd013f223c5','keystone_user_admin','{}','{SSHA512}0d2ldlhL6wuErFZYqazvZnAbyN87geeZO8+DBTBz/MivZnK5xUt0EZ1s4Z/9FpPk95yinR9KBYzJzH8uLjkUcHL5R30=',1,'78543988','78543988');
 INSERT INTO `user` VALUES ('6ffe3875d15b44d5b8b2d285790c89ec','keystone_service_admin','{}','{SSHA512}e3tFeg+IBMSSyH2tl8YKf4LoqqaNdVD0YC5eZSbfa/oWAapukBGJx+SOLtcS91oMY3K2QQcp1M7x7XTU4EgtS3DPI5U=',1,'78543987','78543987');
 INSERT INTO `user` VALUES ('868dea5a32934749a3fb9a47e80f12a4','keystone_default_user','{\"email\": \"shanthi.vedula@rackspace.com\"}','{SSHA512}Lj7hm59v2o28pGmgXNjqhQHGzn0FL/SYi5Ofyrzsgu0Vgw4TiHuMzIyEdd0W2e98to0AAUmaD50bUsTMu6mAz49fQxk=',1,'78543988','78543988');
+INSERT INTO `user` VALUES ('af455d1387ab4281873ceae5bc400e50','identityAdmin5ac28fdd56b14020965350b907c7dfb7','{\"email\": \"identityAdmin5ac28fdd56b14020965350b907c7dfb7@rackspace.com\"}','{SSHA512}D+l5P03t15k2pawaEscnWNK0IGnzgS7ezNZimLW8KvaSTPIkZGMhNOHoQKMdBWUrTpFmpN4YvC6T/4nwYXLJgcDb4YI=',1,'077d6644f58145cf831361bc08301a1e',NULL);
+INSERT INTO `user` VALUES ('c90d35db77d14133b05fdc576a4f4ffb','userAdmin80235dc928bf4854863193257a80da64','{\"email\": \"email@email.com\"}','{SSHA512}9dMk+TEOHGvZ9Xt6ZCPnMQuZvW5obdqbaDxcUnz6jQu+i8wV9AUdFwDUqFnQHhLYtSJWv8GTORd1MK9o+WTbMMJVslM=',1,'132885','132885');
 INSERT INTO `user` VALUES ('d14b1195cbe045d9905c25317dd1f924','cloudIdentitySA1','{\"email\": \"new_email_1_614979@test.com\"}','{SSHA512}3ezkZfEsxKeRKztpWvSuEU/1MKEv1D0nNVnccGSQyYLTJ/5btnOZf4bM1R5eQeWYOxIg2joiKSlE4mUI2tsREy0cPCY=',1,'ee6b1988a42e48469166260629f1326a',NULL);
 INSERT INTO `user` VALUES ('d2d1adee553144ada948e03d1f5503f1','keystone_user_manage','{\"email\": \"shanthi.vedula@rackspace.com\"}','{SSHA512}yVlg6itAMPH2IuT+ILigihCVPJpADt9Y5zbanGwV0Hi8ueFLKGyh1gJoZqsUqkmwemG8Gt6MpxEKCM3ck8LSSnOW8Y4=',1,'78543988','78543988');
 INSERT INTO `user` VALUES ('d8f1b8df14c844d9919aee4e19a2f6f9','keystone_mfa_user_admin','{}','{SSHA512}6NmWxePZPI101gxL3FuyoEDE95yAWvHPQOodY9/EYmx5L3MO1BOAA8hxTC59kvOMgIm3MmBylzFxoxhNHvXN8ATq9+g=',1,'78543995','78543995');
@@ -1443,19 +1521,20 @@ INSERT INTO `user` VALUES ('fa9ddbf7cc904a75b8bd40c26bc738cd','keystone_identity
 -- Dumping data for table `user_certificate_rax`
 --
 
-INSERT INTO `user_certificate_rax` VALUES ('61aea6c942ea4a66bf54b95248f51604','identityqe',0x30820390308202F9A003020102020900E24FF2B2FBC11E28300D06092A864886F70D010105050030818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D301E170D3134303731343231333835305A170D3234303731333231333835305A30818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D30819F300D06092A864886F70D010101050003818D0030818902818100ACD84C17C4ED199F9E319DC86619E69B4EB0D7E5F00F1A52FDF0E0A4D9328B5B6DA1572B5950C18CDF27ECF290ACEB15D02E014D6E93244B83BE2B07034E23C304A99385EAD6CFDD532B2623137F718D16DDE78BF85212551C41D323A2E81A3ECB75A73938762F4DEF31DE251B328CA20554D303C88A428FF3744B24E25B40A70203010001A381F53081F2301D0603551D0E0416041498AC8995C0DB8501FB79F923B7D95541B32663093081C20603551D230481BA3081B7801498AC8995C0DB8501FB79F923B7D95541B3266309A18193A4819030818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D820900E24FF2B2FBC11E28300C0603551D13040530030101FF300D06092A864886F70D0101050500038181007C39B099E8DC10022FA1A86869DAAD4E4D4B8D756CF86EC8C87D93BA150A8A3C4C10DFC91D46C0D8F2C77B1D1FB5276CA6C0050511521CF7AE5ABD32EDF3B1F146D36D089DFC6246D3C085051459BFC370B0A306B4C7F26A441479B14D0358744E14D40EFBBF32F1AA05C4D3AE3534AAFEEB15EF6299E6261BFEF23F3F3DE973);
-INSERT INTO `user_certificate_rax` VALUES ('85c5af4e1fac4eafbd8dd3c7949bcdbc','dedicated',0x308201F53082019FA003020102020900CA6E2FCAF7A5E09B300D06092A864886F70D01010505003056310B3009060355040613025553310E300C06035504080C0554657861733114301206035504070C0B53616E20416E746F6E696F3121301F060355040A0C18496E7465726E6574205769646769747320507479204C7464301E170D3133303730393232323734395A170D3134303730393232323734395A3056310B3009060355040613025553310E300C06035504080C0554657861733114301206035504070C0B53616E20416E746F6E696F3121301F060355040A0C18496E7465726E6574205769646769747320507479204C7464305C300D06092A864886F70D0101010500034B003048024100B4B4BDCFCA53F13E3D5AB8C37608D588682B2A3DCCB82CAF4EBA48F149F5247B03A2EA42A8BFD692DA97B402C0BCBB09213E3ECF97EC34955632192AC0879F0F0203010001A350304E301D0603551D0E0416041408F04CE0F4CF2F9D7A3B8ADDBC9D45BAC58F7BE2301F0603551D2304183016801408F04CE0F4CF2F9D7A3B8ADDBC9D45BAC58F7BE2300C0603551D13040530030101FF300D06092A864886F70D01010505000341003A8F14A40FA5166167FC35F8944812858A5CA26D753BE292DE67FC349865DBFDF8C0BC34209D2DD41A7AF9429E10B5155D46BC7A9B5A42E267B23EB131B6B2C7);
-INSERT INTO `user_certificate_rax` VALUES ('8a1456be67e84dff91b93a97f6c2bed9','identityqe',0x3082039F30820308A0030201020209009D5DADD222420EC4300D06092A864886F70D0101050500308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716533312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D301E170D3134303830373136333230385A170D3234303830363136333230385A308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716533312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D30819F300D06092A864886F70D010101050003818D0030818902818100AB29BA714965D485223EE503348C78236B20214B308D30EC036F3BE4BA5437DDF9AE5C4441E79316C6F1FBC638CE534A4E48F9E492FF0F7AC2F5AD68E21D09355E98541349BC4C9C5B11D2983F4C4AE323D687F65623CCC4026D1F79644CA46E4588A86C3709DC302E6AC8E6FBDA99C0FF321C04204650E0265E5A448EEB314D0203010001A381FA3081F7301D0603551D0E04160414F06BBCEC1581D9D78551CE92CCECC8442209D1613081C70603551D230481BF3081BC8014F06BBCEC1581D9D78551CE92CCECC8442209D161A18198A48195308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716533312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D8209009D5DADD222420EC4300C0603551D13040530030101FF300D06092A864886F70D01010505000381810039F0155FD4297715FF7F33F2183068BD978D330A154DC9F9E07FAAF48BAE4CBDD24AA4D4F211B64822F51281CE5A1706201F5FB42A2EDD4C218F7E86EF42C7CF124228D61D784BCF5FF4102C74082B989880DCE823727C35DEAA72D613163D960CE442CB04D780644759449DDDCAE13BC3F809E46548B833714A7F4CC911430A);
-INSERT INTO `user_certificate_rax` VALUES ('99bd0cc1ad7c4196a70ca4ffb0379fe7','rackertest',0x308202B030820219A003020102020900F0CB22507391E0AF300D06092A864886F70D01010505003045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C7464301E170D3134303530323231333133385A170D3234303530313231333133385A3045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C746430819F300D06092A864886F70D010101050003818D0030818902818100B4048069FA9161770428E63FFCD3DCBDFA694CE860A6B3DBB7AD71FFB3FDD2FB46E007CD52BDEE9339F944D42B2D7CDC5F7DFA57F0B0B8F5BB23A6EBBCC98E23765DDF752341B2FCA2595EF0495969DDDAE572FD1D7788D7AF55535206F83D353B2AAEC5E3DC2BCB7B897DBF6638C4CD4EDE03305405E187330E1B43EC63024D0203010001A381A73081A4301D0603551D0E04160414DE4111FDB0D36EB81160EC44AF03255A4EB7F94130750603551D23046E306C8014DE4111FDB0D36EB81160EC44AF03255A4EB7F941A149A4473045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C7464820900F0CB22507391E0AF300C0603551D13040530030101FF300D06092A864886F70D010105050003818100AEC610C2A5B9A9BF8B637B559E3F2466E838D650A8816F4EB237592E8EAFDA22EA0D441AC36F0D17BB49CA43479B46AB2841B9762FC75E7B4C6C6F4019AD542849CE156A471DF36D5FC771CC23B50AFA4352AC2754D29CF809FB1EB441D0272CF068AE450B88D913A1899DADDFF8D819F00A5C69C2E16642BF2CF5487A5C2A92);
-INSERT INTO `user_certificate_rax` VALUES ('9bbd831c0f6d4673944cfb2565e4289b','identityqe',0x3082039F30820308A003020102020900F80368ED17A6047A300D06092A864886F70D0101050500308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716534312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D301E170D3134303830373136333235375A170D3234303830363136333235375A308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716534312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D30819F300D06092A864886F70D010101050003818D0030818902818100B820506913F2FFB298182DFBCF0611AE8ED00C5A32B44EA8A01C6AEF7981F19B74762EACA1D4377DA30082B0914EEA49665A35CBAD14429C41894D9A89DAF866910879ACFFA2A8650A985E260DABCDE47A496274B664272C42FF09C92EC6EE6B058538D7D2EB49A7DEC6CC18B18C95A589B40E567628EB1EA81F42CF219550570203010001A381FA3081F7301D0603551D0E0416041437EC84A1FC0DF3464A1CFF0B76F1FFCC0B1519983081C70603551D230481BF3081BC801437EC84A1FC0DF3464A1CFF0B76F1FFCC0B151998A18198A48195308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716534312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D820900F80368ED17A6047A300C0603551D13040530030101FF300D06092A864886F70D0101050500038181007A3C58E1C863985EB11738103E625972D7298B1CCD567A9A458B2A0FC45383E03E4538EC939E74CCFAD270A75D70B6150C9F7444C68992F8CE8B4E08F75AAE0D839090BDD49C7C9C09753D82D864A7A288CBA67A4C31166F82F0ED16BFBFE971B81F2CDC16F7F5BF8515E3EEEFFAF2A59D1B619E50103FF46E8F11DC273E4BC7);
-INSERT INTO `user_certificate_rax` VALUES ('bcba119b68164f3ca11552d8a06bc2be','rackertest',0x30820390308202F9A003020102020900E24FF2B2FBC11E28300D06092A864886F70D010105050030818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D301E170D3134303731343231333835305A170D3234303731333231333835305A30818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D30819F300D06092A864886F70D010101050003818D0030818902818100ACD84C17C4ED199F9E319DC86619E69B4EB0D7E5F00F1A52FDF0E0A4D9328B5B6DA1572B5950C18CDF27ECF290ACEB15D02E014D6E93244B83BE2B07034E23C304A99385EAD6CFDD532B2623137F718D16DDE78BF85212551C41D323A2E81A3ECB75A73938762F4DEF31DE251B328CA20554D303C88A428FF3744B24E25B40A70203010001A381F53081F2301D0603551D0E0416041498AC8995C0DB8501FB79F923B7D95541B32663093081C20603551D230481BA3081B7801498AC8995C0DB8501FB79F923B7D95541B3266309A18193A4819030818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D820900E24FF2B2FBC11E28300C0603551D13040530030101FF300D06092A864886F70D0101050500038181007C39B099E8DC10022FA1A86869DAAD4E4D4B8D756CF86EC8C87D93BA150A8A3C4C10DFC91D46C0D8F2C77B1D1FB5276CA6C0050511521CF7AE5ABD32EDF3B1F146D36D089DFC6246D3C085051459BFC370B0A306B4C7F26A441479B14D0358744E14D40EFBBF32F1AA05C4D3AE3534AAFEEB15EF6299E6261BFEF23F3F3DE973);
-INSERT INTO `user_certificate_rax` VALUES ('c85a8bd778df427091e19878fd9246dd','test',0x308202B030820219A003020102020900F0CB22507391E0AF300D06092A864886F70D01010505003045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C7464301E170D3134303530323231333133385A170D3234303530313231333133385A3045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C746430819F300D06092A864886F70D010101050003818D0030818902818100B4048069FA9161770428E63FFCD3DCBDFA694CE860A6B3DBB7AD71FFB3FDD2FB46E007CD52BDEE9339F944D42B2D7CDC5F7DFA57F0B0B8F5BB23A6EBBCC98E23765DDF752341B2FCA2595EF0495969DDDAE572FD1D7788D7AF55535206F83D353B2AAEC5E3DC2BCB7B897DBF6638C4CD4EDE03305405E187330E1B43EC63024D0203010001A381A73081A4301D0603551D0E04160414DE4111FDB0D36EB81160EC44AF03255A4EB7F94130750603551D23046E306C8014DE4111FDB0D36EB81160EC44AF03255A4EB7F941A149A4473045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C7464820900F0CB22507391E0AF300C0603551D13040530030101FF300D06092A864886F70D010105050003818100AEC610C2A5B9A9BF8B637B559E3F2466E838D650A8816F4EB237592E8EAFDA22EA0D441AC36F0D17BB49CA43479B46AB2841B9762FC75E7B4C6C6F4019AD542849CE156A471DF36D5FC771CC23B50AFA4352AC2754D29CF809FB1EB441D0272CF068AE450B88D913A1899DADDFF8D819F00A5C69C2E16642BF2CF5487A5C2A92);
-INSERT INTO `user_certificate_rax` VALUES ('f96c09bf4db6474c820170f23e9e7578','identityqe',0x3082039F30820308A003020102020900DDB8940B2C9A557F300D06092A864886F70D0101050500308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716532312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D301E170D3134303830373136333133375A170D3234303830363136333133375A308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716532312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D30819F300D06092A864886F70D010101050003818D0030818902818100D7C1011D36618D40FB4EF476AC1925A28734D5F0CBBEF2AA7A535B9C2AAE940E91F77BE1EFE4633AB763712BE4339B2B597FFA002698D6EB75C97B005765746478BD4AE17B9F6AE9CD352B958A816D82B2B106B9861D2BA041F6457DC8078C2B3BEB35014CFDB681737D71CD278BD0C1FBB798B261BD3C193897865D611435410203010001A381FA3081F7301D0603551D0E041604146357F27650E086B55803C1D5DDAA88FFBE84B4953081C70603551D230481BF3081BC80146357F27650E086B55803C1D5DDAA88FFBE84B495A18198A48195308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716532312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D820900DDB8940B2C9A557F300C0603551D13040530030101FF300D06092A864886F70D0101050500038181009494A52091CF3B6C9C7C3D229CEA5AD252BF98FBDFD5B31B9B631007C7E96026D4AE5EA339F9FA41E87B6DFD20E110339F214FC8BD8121A30EEA5D19CAFCDF4DBB7A3B87B187060C6CB9E05D4AF4DD17881FC42B31545D0E466AF4636574A4CC2D2EB98D7108EEBDA01813F8DA328436BCA033924A262DC37FBAB32CC3D95478);
+INSERT INTO `user_certificate_rax` VALUES ('14f58a5da6fb492db697720b09db08c9','rackertest',0x30820390308202F9A003020102020900E24FF2B2FBC11E28300D06092A864886F70D010105050030818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D301E170D3134303731343231333835305A170D3234303731333231333835305A30818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D30819F300D06092A864886F70D010101050003818D0030818902818100ACD84C17C4ED199F9E319DC86619E69B4EB0D7E5F00F1A52FDF0E0A4D9328B5B6DA1572B5950C18CDF27ECF290ACEB15D02E014D6E93244B83BE2B07034E23C304A99385EAD6CFDD532B2623137F718D16DDE78BF85212551C41D323A2E81A3ECB75A73938762F4DEF31DE251B328CA20554D303C88A428FF3744B24E25B40A70203010001A381F53081F2301D0603551D0E0416041498AC8995C0DB8501FB79F923B7D95541B32663093081C20603551D230481BA3081B7801498AC8995C0DB8501FB79F923B7D95541B3266309A18193A4819030818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D820900E24FF2B2FBC11E28300C0603551D13040530030101FF300D06092A864886F70D0101050500038181007C39B099E8DC10022FA1A86869DAAD4E4D4B8D756CF86EC8C87D93BA150A8A3C4C10DFC91D46C0D8F2C77B1D1FB5276CA6C0050511521CF7AE5ABD32EDF3B1F146D36D089DFC6246D3C085051459BFC370B0A306B4C7F26A441479B14D0358744E14D40EFBBF32F1AA05C4D3AE3534AAFEEB15EF6299E6261BFEF23F3F3DE973);
+INSERT INTO `user_certificate_rax` VALUES ('15c09cc434b5488d96a82d75b8569ed7','rackertest',0x308202B030820219A003020102020900F0CB22507391E0AF300D06092A864886F70D01010505003045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C7464301E170D3134303530323231333133385A170D3234303530313231333133385A3045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C746430819F300D06092A864886F70D010101050003818D0030818902818100B4048069FA9161770428E63FFCD3DCBDFA694CE860A6B3DBB7AD71FFB3FDD2FB46E007CD52BDEE9339F944D42B2D7CDC5F7DFA57F0B0B8F5BB23A6EBBCC98E23765DDF752341B2FCA2595EF0495969DDDAE572FD1D7788D7AF55535206F83D353B2AAEC5E3DC2BCB7B897DBF6638C4CD4EDE03305405E187330E1B43EC63024D0203010001A381A73081A4301D0603551D0E04160414DE4111FDB0D36EB81160EC44AF03255A4EB7F94130750603551D23046E306C8014DE4111FDB0D36EB81160EC44AF03255A4EB7F941A149A4473045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C7464820900F0CB22507391E0AF300C0603551D13040530030101FF300D06092A864886F70D010105050003818100AEC610C2A5B9A9BF8B637B559E3F2466E838D650A8816F4EB237592E8EAFDA22EA0D441AC36F0D17BB49CA43479B46AB2841B9762FC75E7B4C6C6F4019AD542849CE156A471DF36D5FC771CC23B50AFA4352AC2754D29CF809FB1EB441D0272CF068AE450B88D913A1899DADDFF8D819F00A5C69C2E16642BF2CF5487A5C2A92);
+INSERT INTO `user_certificate_rax` VALUES ('199f3e87bf3848aa870663585a4e6d47','identityqe',0x3082039F30820308A003020102020900DDB8940B2C9A557F300D06092A864886F70D0101050500308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716532312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D301E170D3134303830373136333133375A170D3234303830363136333133375A308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716532312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D30819F300D06092A864886F70D010101050003818D0030818902818100D7C1011D36618D40FB4EF476AC1925A28734D5F0CBBEF2AA7A535B9C2AAE940E91F77BE1EFE4633AB763712BE4339B2B597FFA002698D6EB75C97B005765746478BD4AE17B9F6AE9CD352B958A816D82B2B106B9861D2BA041F6457DC8078C2B3BEB35014CFDB681737D71CD278BD0C1FBB798B261BD3C193897865D611435410203010001A381FA3081F7301D0603551D0E041604146357F27650E086B55803C1D5DDAA88FFBE84B4953081C70603551D230481BF3081BC80146357F27650E086B55803C1D5DDAA88FFBE84B495A18198A48195308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716532312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D820900DDB8940B2C9A557F300C0603551D13040530030101FF300D06092A864886F70D0101050500038181009494A52091CF3B6C9C7C3D229CEA5AD252BF98FBDFD5B31B9B631007C7E96026D4AE5EA339F9FA41E87B6DFD20E110339F214FC8BD8121A30EEA5D19CAFCDF4DBB7A3B87B187060C6CB9E05D4AF4DD17881FC42B31545D0E466AF4636574A4CC2D2EB98D7108EEBDA01813F8DA328436BCA033924A262DC37FBAB32CC3D95478);
+INSERT INTO `user_certificate_rax` VALUES ('1efd9055af924047a648c0aaafc427d6','test',0x308202B030820219A003020102020900F0CB22507391E0AF300D06092A864886F70D01010505003045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C7464301E170D3134303530323231333133385A170D3234303530313231333133385A3045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C746430819F300D06092A864886F70D010101050003818D0030818902818100B4048069FA9161770428E63FFCD3DCBDFA694CE860A6B3DBB7AD71FFB3FDD2FB46E007CD52BDEE9339F944D42B2D7CDC5F7DFA57F0B0B8F5BB23A6EBBCC98E23765DDF752341B2FCA2595EF0495969DDDAE572FD1D7788D7AF55535206F83D353B2AAEC5E3DC2BCB7B897DBF6638C4CD4EDE03305405E187330E1B43EC63024D0203010001A381A73081A4301D0603551D0E04160414DE4111FDB0D36EB81160EC44AF03255A4EB7F94130750603551D23046E306C8014DE4111FDB0D36EB81160EC44AF03255A4EB7F941A149A4473045310B3009060355040613024155311330110603550408130A536F6D652D53746174653121301F060355040A1318496E7465726E6574205769646769747320507479204C7464820900F0CB22507391E0AF300C0603551D13040530030101FF300D06092A864886F70D010105050003818100AEC610C2A5B9A9BF8B637B559E3F2466E838D650A8816F4EB237592E8EAFDA22EA0D441AC36F0D17BB49CA43479B46AB2841B9762FC75E7B4C6C6F4019AD542849CE156A471DF36D5FC771CC23B50AFA4352AC2754D29CF809FB1EB441D0272CF068AE450B88D913A1899DADDFF8D819F00A5C69C2E16642BF2CF5487A5C2A92);
+INSERT INTO `user_certificate_rax` VALUES ('a55fa560cd854669a9fc1456391eac22','identityqe',0x30820390308202F9A003020102020900E24FF2B2FBC11E28300D06092A864886F70D010105050030818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D301E170D3134303731343231333835305A170D3234303731333231333835305A30818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D30819F300D06092A864886F70D010101050003818D0030818902818100ACD84C17C4ED199F9E319DC86619E69B4EB0D7E5F00F1A52FDF0E0A4D9328B5B6DA1572B5950C18CDF27ECF290ACEB15D02E014D6E93244B83BE2B07034E23C304A99385EAD6CFDD532B2623137F718D16DDE78BF85212551C41D323A2E81A3ECB75A73938762F4DEF31DE251B328CA20554D303C88A428FF3744B24E25B40A70203010001A381F53081F2301D0603551D0E0416041498AC8995C0DB8501FB79F923B7D95541B32663093081C20603551D230481BA3081B7801498AC8995C0DB8501FB79F923B7D95541B3266309A18193A4819030818D310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310B30090603550403130271653127302506092A864886F70D01090116187368616E7468692E766564756C6140676D61696C2E636F6D820900E24FF2B2FBC11E28300C0603551D13040530030101FF300D06092A864886F70D0101050500038181007C39B099E8DC10022FA1A86869DAAD4E4D4B8D756CF86EC8C87D93BA150A8A3C4C10DFC91D46C0D8F2C77B1D1FB5276CA6C0050511521CF7AE5ABD32EDF3B1F146D36D089DFC6246D3C085051459BFC370B0A306B4C7F26A441479B14D0358744E14D40EFBBF32F1AA05C4D3AE3534AAFEEB15EF6299E6261BFEF23F3F3DE973);
+INSERT INTO `user_certificate_rax` VALUES ('a7362183ef284264b3ffbc55a54170de','identityqe',0x3082039F30820308A003020102020900F80368ED17A6047A300D06092A864886F70D0101050500308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716534312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D301E170D3134303830373136333235375A170D3234303830363136333235375A308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716534312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D30819F300D06092A864886F70D010101050003818D0030818902818100B820506913F2FFB298182DFBCF0611AE8ED00C5A32B44EA8A01C6AEF7981F19B74762EACA1D4377DA30082B0914EEA49665A35CBAD14429C41894D9A89DAF866910879ACFFA2A8650A985E260DABCDE47A496274B664272C42FF09C92EC6EE6B058538D7D2EB49A7DEC6CC18B18C95A589B40E567628EB1EA81F42CF219550570203010001A381FA3081F7301D0603551D0E0416041437EC84A1FC0DF3464A1CFF0B76F1FFCC0B1519983081C70603551D230481BF3081BC801437EC84A1FC0DF3464A1CFF0B76F1FFCC0B151998A18198A48195308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716534312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D820900F80368ED17A6047A300C0603551D13040530030101FF300D06092A864886F70D0101050500038181007A3C58E1C863985EB11738103E625972D7298B1CCD567A9A458B2A0FC45383E03E4538EC939E74CCFAD270A75D70B6150C9F7444C68992F8CE8B4E08F75AAE0D839090BDD49C7C9C09753D82D864A7A288CBA67A4C31166F82F0ED16BFBFE971B81F2CDC16F7F5BF8515E3EEEFFAF2A59D1B619E50103FF46E8F11DC273E4BC7);
+INSERT INTO `user_certificate_rax` VALUES ('b1511c0c1d6d4c16b49d7821b8299831','identityqe',0x3082039F30820308A0030201020209009D5DADD222420EC4300D06092A864886F70D0101050500308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716533312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D301E170D3134303830373136333230385A170D3234303830363136333230385A308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716533312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D30819F300D06092A864886F70D010101050003818D0030818902818100AB29BA714965D485223EE503348C78236B20214B308D30EC036F3BE4BA5437DDF9AE5C4441E79316C6F1FBC638CE534A4E48F9E492FF0F7AC2F5AD68E21D09355E98541349BC4C9C5B11D2983F4C4AE323D687F65623CCC4026D1F79644CA46E4588A86C3709DC302E6AC8E6FBDA99C0FF321C04204650E0265E5A448EEB314D0203010001A381FA3081F7301D0603551D0E04160414F06BBCEC1581D9D78551CE92CCECC8442209D1613081C70603551D230481BF3081BC8014F06BBCEC1581D9D78551CE92CCECC8442209D161A18198A48195308192310B3009060355040613027573310E300C060355040813057465786173311430120603550407130B73616E20616E746F6E696F31123010060355040A13097261636B7370616365310E300C060355040B1305636C6F7564310C300A06035504031303716533312B302906092A864886F70D010901161C7368616E7468692E766564756C61407261636B73706163652E636F6D8209009D5DADD222420EC4300C0603551D13040530030101FF300D06092A864886F70D01010505000381810039F0155FD4297715FF7F33F2183068BD978D330A154DC9F9E07FAAF48BAE4CBDD24AA4D4F211B64822F51281CE5A1706201F5FB42A2EDD4C218F7E86EF42C7CF124228D61D784BCF5FF4102C74082B989880DCE823727C35DEAA72D613163D960CE442CB04D780644759449DDDCAE13BC3F809E46548B833714A7F4CC911430A);
+INSERT INTO `user_certificate_rax` VALUES ('ba6952419045484c96b05a0fc71c2739','dedicated',0x308201F53082019FA003020102020900CA6E2FCAF7A5E09B300D06092A864886F70D01010505003056310B3009060355040613025553310E300C06035504080C0554657861733114301206035504070C0B53616E20416E746F6E696F3121301F060355040A0C18496E7465726E6574205769646769747320507479204C7464301E170D3133303730393232323734395A170D3134303730393232323734395A3056310B3009060355040613025553310E300C06035504080C0554657861733114301206035504070C0B53616E20416E746F6E696F3121301F060355040A0C18496E7465726E6574205769646769747320507479204C7464305C300D06092A864886F70D0101010500034B003048024100B4B4BDCFCA53F13E3D5AB8C37608D588682B2A3DCCB82CAF4EBA48F149F5247B03A2EA42A8BFD692DA97B402C0BCBB09213E3ECF97EC34955632192AC0879F0F0203010001A350304E301D0603551D0E0416041408F04CE0F4CF2F9D7A3B8ADDBC9D45BAC58F7BE2301F0603551D2304183016801408F04CE0F4CF2F9D7A3B8ADDBC9D45BAC58F7BE2300C0603551D13040530030101FF300D06092A864886F70D01010505000341003A8F14A40FA5166167FC35F8944812858A5CA26D753BE292DE67FC349865DBFDF8C0BC34209D2DD41A7AF9429E10B5155D46BC7A9B5A42E267B23EB131B6B2C7);
 
 --
 -- Dumping data for table `user_group_membership`
 --
 
+INSERT INTO `user_group_membership` VALUES ('c90d35db77d14133b05fdc576a4f4ffb','0');
 
 --
 -- Dumping data for table `user_rax`
@@ -1478,6 +1557,8 @@ INSERT INTO `user_rax` VALUES ('3a4407a6b3e349998478409c5b7eda14',NULL,NULL,'201
 INSERT INTO `user_rax` VALUES ('4e997592aad24e2183e51bd013f223c5',NULL,NULL,'2014-10-06 19:11:19.000000',0,'0',NULL,NULL,NULL,NULL,'iG9M5xFRpttxIeTvbx1aiwI95c5/IYJ8I4ZKShvIwXqPN+D7dhoNzdkm2KTbZ6VH','MossoCloudFS_78543988','ORD',NULL,NULL,NULL,'10 4a 89 d2 7d 47 b7 bc 42 82 79 5b 22 3d 14 7a',NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,NULL);
 INSERT INTO `user_rax` VALUES ('6ffe3875d15b44d5b8b2d285790c89ec',NULL,NULL,'2014-10-02 16:59:00.000000',0,'0',NULL,NULL,NULL,NULL,'kPO7i3QqskNkFNFhMPBLeDl84XZXkhD4vkSVAcUOxPeW7DWYRgx1Iy4qqH57/KFh','MossoCloudFS_78543987','ORD',NULL,NULL,NULL,'a1 90 22 b4 67 49 62 1e ef 49 62 48 f3 d3 3a',NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,NULL);
 INSERT INTO `user_rax` VALUES ('868dea5a32934749a3fb9a47e80f12a4',NULL,NULL,'2014-10-06 20:31:42.000000',0,'0',NULL,NULL,NULL,'7W0S88I70MmHUFYaVGf6cjfZxDx4Lp6/STUSCjBaLWk=','WZQcH4Ja3+pEIosicAivbmOPVDMgp/P0CtXUKPZOL0VZzkiKRvtUmJ1hdB/0j0mb','MossoCloudFS_78543988','ORD',NULL,NULL,NULL,'85 90 24 30 b6 ce 1d e6 22 de 3d d3 88 1a 9a',NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `user_rax` VALUES ('af455d1387ab4281873ceae5bc400e50',NULL,NULL,'2015-07-28 21:15:47.000000',0,'0',NULL,NULL,NULL,'rWmhCRNUYORgfnIPJ6ICcw==','axqUKdYGvV47nHjpU1mBtBzmk/ev4snAjRo/8EEBdBqeY8keOlj6CKUV4l6Jbpli',NULL,'ORD',NULL,NULL,NULL,'d1 1a e8 4b d2 7b 45 2c 53 75 32 c8 6a ba 99',NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `user_rax` VALUES ('c90d35db77d14133b05fdc576a4f4ffb',NULL,NULL,'2015-07-28 21:15:48.000000',0,'0','mkeJvR9UOkdMpiV+VNhEcA==','Z/moR585HO4jj2N47AXj8Q==',NULL,'hYrTb9t/w78h/X1Pwgdgxg==','zFA8ZdrRlHMsLzCcvbi0wNEQ+vFHePDpVQ662HuftQ0i2t8AyqX48VOEiqD4Ojqg','MossoCloudFS_132885','ORD',NULL,NULL,NULL,'1b f2 c3 ca 9b 85 e3 98 13 bc 6b ff 9a 44 ff 5c',NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,NULL);
 INSERT INTO `user_rax` VALUES ('d14b1195cbe045d9905c25317dd1f924',NULL,NULL,'2013-12-13 20:03:23.000000',0,'0',NULL,NULL,NULL,'jKeMVeagD/fCkftKqz3iJq9mfnk3JxxXYwHNmcY8dPY=','QTCMTLYLBEn2lBMluNU+cjRqk3NFT4l3k1Gk9Fx6B+xFe2lC0fzPyvINLufUhOQO',NULL,'ORD',NULL,NULL,NULL,'e7 2d 3f 76 ec 8a c9 21 5e 99 15 40 83 76 f9',NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,NULL);
 INSERT INTO `user_rax` VALUES ('d2d1adee553144ada948e03d1f5503f1',NULL,NULL,'2014-10-06 20:30:50.000000',0,'0',NULL,NULL,NULL,'HItxR/uGYss2gV4KqM5NvESduI1Bz/4EpSANOLu68Cc=','lRVNgcgFGskESwVCF0RiFgCcZXQZytOq2GANbl/qEoyrD5jVZmTu/6xeW4i+E8qf','MossoCloudFS_78543988','ORD',NULL,NULL,NULL,'85 46 6c 08 a9 9b a6 3a 73 3c 47 c6 ef 17 2c',NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,NULL);
 INSERT INTO `user_rax` VALUES ('d8f1b8df14c844d9919aee4e19a2f6f9',NULL,NULL,'2015-01-15 22:17:01.000000',0,NULL,NULL,NULL,NULL,NULL,'cBoF/yUr7bFU8DrFOGNiEw==','MossoCloudFS_78543995','ORD',NULL,NULL,NULL,NULL,NULL,'fb6c00852e404263b745419dd761d968',NULL,NULL,1,1,'DUMEPCV67EA3I30G0TBM','ACTIVE',NULL,NULL,NULL,NULL);
@@ -1495,4 +1576,4 @@ INSERT INTO `user_rax` VALUES ('fa9ddbf7cc904a75b8bd40c26bc738cd',NULL,NULL,'201
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-08-13 12:50:22
+-- Dump completed on 2015-08-14 16:53:13

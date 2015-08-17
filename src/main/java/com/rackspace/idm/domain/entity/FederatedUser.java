@@ -10,10 +10,7 @@ import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
 
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 @Data
 @LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON)
@@ -68,7 +65,7 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
     )
-    private HashSet<String> rsGroupId;
+    private Set<String> rsGroupId;
 
     /**
      * The issuer for this federated user
@@ -103,7 +100,7 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
         return String.format(format, getUsername());
     }
 
-    public HashSet<String> getRsGroupId() {
+    public Set<String> getRsGroupId() {
         if (rsGroupId == null) {
             rsGroupId = new HashSet<String>();
         }
