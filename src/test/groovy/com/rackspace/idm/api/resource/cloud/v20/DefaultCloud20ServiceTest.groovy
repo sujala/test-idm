@@ -92,8 +92,17 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         allowUserAccess()
         def endpointTemplate = entityFactory.createEndpointTemplate("name")
+        endpointTemplate.type = "type"
         def endpointConverter = Mock(EndpointConverterCloudV20)
         service.endpointConverterCloudV20 = endpointConverter
+        endpointConverter.toCloudBaseUrl(_) >> entityFactory.createCloudBaseUrl().with {
+            it.openstackType = "type"
+            return it
+        }
+        applicationService.checkAndGetApplicationByName(_) >> new Application().with {
+            it.openStackType = "type"
+            return it
+        }
         endpointService.addBaseUrl(_) >> {throw new DuplicateException()}
 
         when:

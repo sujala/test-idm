@@ -971,32 +971,19 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     private void addBaseURLKeystoneV3Data(BaseURL baseUrl, CloudBaseUrl cloudBaseUrl) {
-        try {
+        cloudBaseUrl.setPublicUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
+        if (!StringUtils.isEmpty(baseUrl.getInternalURL())) {
             cloudBaseUrl.setInternalUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
-            cloudBaseUrl.setPublicUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
+        }
+        if (!StringUtils.isEmpty(baseUrl.getAdminURL())) {
             cloudBaseUrl.setAdminUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
-            String serviceName = baseUrl.getServiceName();
-            if (serviceName != null) {
-                final Application application = applicationService.getByName(serviceName);
-                if (application != null) {
-                    cloudBaseUrl.setClientId(application.getClientId());
-                } else {
-                    /*
-                     *  Endpoints have `service_id` as a foreign key defined on the sql keystone schema. We will no
-                     *  longer allow v1.1 to create baseUrls without a valid serviceName.
-                     */
-                    String errMsg = String.format("Client %s not found", serviceName);
-                    logger.warn(errMsg);
-                    throw new NotFoundException(errMsg);
-                }
-            } else {
-                throw new RuntimeException("[K3] BaseURL '" + baseUrl.getAdminURL() + "' is not associated to a serviceName.");
-            }
-        } catch (Exception e) {
-            logger.error("[K3] Impossible state.", e);
-            if (config.getBoolean("feature.DefaultCloud11Service.addBaseURLKeystoneV3Data.throwError", false)) {
-                throw new RuntimeException(e);
-            }
+        }
+        String serviceName = baseUrl.getServiceName();
+        if (serviceName != null) {
+            final Application application = applicationService.checkAndGetApplicationByName(serviceName);
+            cloudBaseUrl.setClientId(application.getClientId());
+        } else {
+            throw new BadRequestException("Service name cannot be empty.");
         }
     }
 

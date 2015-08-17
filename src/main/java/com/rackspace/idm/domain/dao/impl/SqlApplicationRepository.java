@@ -52,9 +52,15 @@ public class SqlApplicationRepository implements ApplicationDao {
     public Application getApplicationByName(String clientName) {
         List<SqlService> services = serviceRepository.findByServiceNameRegex(
                 APPLICATION_NAME_REGEX_QUERY.replace(APPLICATION_NAME_REGEX_NAME_PARAM, clientName));
-        if(services.size() != 1) {
+
+        if (services.size() == 0) {
+            return null;
+        }
+
+        if(services.size() > 1) {
             throw new BadRequestException("More than one service exists for name " + clientName);
         }
+
         return mapper.fromSQL(services.get(0));
     }
 

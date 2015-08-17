@@ -105,6 +105,17 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
+    public Application checkAndGetApplicationByName(String name) {
+        Application application = getByName(name);
+        if (application == null) {
+            String errMsg = String.format("Service %s not found", name);
+            logger.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return application;
+    }
+
+    @Override
     public Application getByName(String clientName) {
         return applicationDao.getApplicationByName(clientName);
     }

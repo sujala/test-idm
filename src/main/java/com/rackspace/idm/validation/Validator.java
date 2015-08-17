@@ -227,5 +227,10 @@ public class Validator {
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
+        if (StringUtils.isBlank(baseUrl.getPublicURL())) {
+            String errMsg = "'publicURL' is a required attribute";
+            logger.warn(errMsg);
+            throw new BadRequestException(errMsg);
+        }
     }
 }

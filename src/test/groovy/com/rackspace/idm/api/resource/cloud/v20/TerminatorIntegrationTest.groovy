@@ -43,7 +43,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, featureEnabled)
         def domain = utils.createDomain()
         def endpointTemplateId = testUtils.getRandomInteger().toString()
-        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", testUtils.getRandomUUID("http://public/"), "name", true, "ORD")
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", testUtils.getRandomUUID("http://public/"), "cloudFiles", true, "ORD")
         utils.createAndUpdateEndpointTemplate(endpointTemplate, endpointTemplateId)
         def tenant = utils.createTenant()
         def role = utils.createRole()
@@ -158,7 +158,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         given:
         def domain = utils.createDomain()
         def endpointTemplateId = testUtils.getRandomInteger().toString()
-        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", testUtils.getRandomUUID("http://public/"), "name", true, "ORD")
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", testUtils.getRandomUUID("http://public/"), "cloudFiles", true, "ORD")
         utils.createAndUpdateEndpointTemplate(endpointTemplate, endpointTemplateId)
         def tenant1 = utils.createTenant()
         def tenant2 = utils.createTenant()

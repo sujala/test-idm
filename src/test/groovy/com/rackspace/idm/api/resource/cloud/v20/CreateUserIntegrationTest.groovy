@@ -180,7 +180,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         given:
         def endpointTemplateId = testUtils.getRandomInteger().toString()
         def publicUrl = testUtils.getRandomUUID("http://public/")
-        def endpointTemplateResp = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD")).getEntity(EndpointTemplate).value
+        def endpointTemplateResp = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "cloudFiles", false, "ORD")).getEntity(EndpointTemplate).value
         def endpointTemplateEntity = endpointService.getBaseUrlById(endpointTemplateId)
         endpointTemplateEntity.def = true
         endpointService.updateBaseUrl(endpointTemplateEntity)
@@ -213,7 +213,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, useEnabledFlag)
         def endpointTemplateId = testUtils.getRandomInteger().toString()
         def publicUrl = testUtils.getRandomUUID("http://public/")
-        def endpointTemplateResp = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "name", false, "ORD")).getEntity(EndpointTemplate).value
+        def endpointTemplateResp = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "cloudFiles", false, "ORD")).getEntity(EndpointTemplate).value
         def endpointTemplateEntity = endpointService.getBaseUrlById(endpointTemplateId)
         endpointTemplateEntity.def = true
         endpointService.updateBaseUrl(endpointTemplateEntity)

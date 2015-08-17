@@ -493,7 +493,7 @@ class Cloud20Utils {
         updateEndpointTemplate(endpointTemplate, endpointId)
     }
 
-    def createEndpointTemplate(global=false, tenantAlias=null, enabled=true, type="compute", region="ORD", id=testUtils.getRandomIntegerString(), publicUrl=testUtils.getRandomUUID("http://"), name=testUtils.getRandomUUID("name")) {
+    def createEndpointTemplate(global=false, tenantAlias=null, enabled=true, type="compute", region="ORD", id=testUtils.getRandomIntegerString(), publicUrl=testUtils.getRandomUUID("http://"), name="cloudServers") {
         def endpointTemplate =v1Factory.createEndpointTemplate(id, type, publicUrl, name).with {
             it.global = global
             it.region = region

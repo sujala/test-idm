@@ -207,7 +207,7 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         users = users.reverse()
         def endpointTemplateId = testUtils.getRandomInteger().toString()
-        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, "MOSSO", testUtils.getRandomUUID("http://public/"), "name", true, "ORD").with {
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute", testUtils.getRandomUUID("http://public/"), "cloudServers", true, "ORD").with {
             it.global = true
             it
         }

@@ -38,8 +38,10 @@ class Cloud20BaseURLIntegrationTest extends RootIntegrationTest {
         when:
         def EndpointTemplate template = new EndpointTemplate()
         template.setType(application.getOpenStackType())
-        template.setName(UUID.randomUUID().toString())
+        template.setName(application.getName())
         template.setPublicURL('http://localhost')
+        template.setInternalURL('http://localhost')
+        template.setAdminURL('http://localhost')
         template.setId(templateId)
         cloud20Service.addEndpointTemplate(mock(HttpHeaders), mockUriInfo, utils.getServiceAdminToken(), template)
 
@@ -47,15 +49,37 @@ class Cloud20BaseURLIntegrationTest extends RootIntegrationTest {
 
         then:
         data.clientId == application.clientId
-        data.adminUrlId != null
         data.publicUrlId != null
         data.internalUrlId != null
+        data.adminUrlId != null
 
         cleanup:
         try { endpointDao.deleteBaseUrl(String.valueOf(templateId)) } catch (Exception e) {}
     }
 
-    void "Test if 'cloud20Service.addEndpointTemplate(...)' adds V3 internal attributes even if the service lookup fails"() {
+    void "Test if 'cloud20Service.addEndpointTemplate(...)' returns 404 with invalid service name"() {
+        given:
+        def mockUriInfo = mock(UriInfo)
+        def mockUriBuilder = mock(UriBuilder)
+        when(mockUriInfo.getRequestUriBuilder()).thenReturn(mockUriBuilder)
+        when(mockUriBuilder.path(anyString())).thenReturn(mockUriBuilder)
+        when(mockUriBuilder.build()).thenReturn(new URI('http://localhost'))
+
+        def templateId = 500 + (int) (Math.random() * 10000000);
+
+        when:
+        def EndpointTemplate template = new EndpointTemplate()
+        template.setType(UUID.randomUUID().toString())
+        template.setName(UUID.randomUUID().toString())
+        template.setPublicURL('http://localhost')
+        template.setId(templateId)
+        def response = cloud20Service.addEndpointTemplate(mock(HttpHeaders), mockUriInfo, utils.getServiceAdminToken(), template)
+
+        then:
+        response.status == 404
+    }
+
+    void "Test if 'cloud20Service.addEndpointTemplate(...)' returns 400 for invalid type for service"() {
         given:
         def mockUriInfo = mock(UriInfo)
         def mockUriBuilder = mock(UriBuilder)
@@ -68,20 +92,13 @@ class Cloud20BaseURLIntegrationTest extends RootIntegrationTest {
         when:
         def EndpointTemplate template = new EndpointTemplate()
         template.setType(UUID.randomUUID().toString())  // Random type
-        template.setName(UUID.randomUUID().toString())
+        template.setName("cloudServers")
         template.setPublicURL('http://localhost')
         template.setId(templateId)
-        cloud20Service.addEndpointTemplate(mock(HttpHeaders), mockUriInfo, utils.getServiceAdminToken(), template)
-
-        def data = endpointDao.getBaseUrlById(String.valueOf(templateId))
+        def response = cloud20Service.addEndpointTemplate(mock(HttpHeaders), mockUriInfo, utils.getServiceAdminToken(), template)
 
         then:
-        data.adminUrlId != null
-        data.publicUrlId != null
-        data.internalUrlId != null
-
-        cleanup:
-        try { endpointDao.deleteBaseUrl(String.valueOf(templateId)) } catch (Exception e) {}
+        response.status == 400
     }
 
 }

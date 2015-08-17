@@ -147,7 +147,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         USER_FOR_AUTH_PWD = "Password1"
 
         endpointTemplateId = "100001"
-        cloud20.addEndpointTemplate(serviceAdminToken, v1Factory.createEndpointTemplate(endpointTemplateId, "compute", "http://public.url", "name"))
+        cloud20.addEndpointTemplate(serviceAdminToken, v1Factory.createEndpointTemplate(endpointTemplateId, "compute", "http://public.url", "cloudServers"))
         def addPolicyResponse = cloud20.addPolicy(serviceAdminToken, v1Factory.createPolicy("name", null, null))
         def getPolicyResponse = cloud20.getPolicy(serviceAdminToken, addPolicyResponse.location)
         policyId = getPolicyResponse.getEntity(Policy).id as String
@@ -2549,9 +2549,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def password = "Password1"
         def random = UUID.randomUUID().toString().replace("-", "")
         def username = "negativeTenantUser$random"
-        def tenant = v2Factory.createTenant("-754612", "-754612")
+        def tenant = v2Factory.createTenant("-754612$random", "-754612$random")
         def role = v2Factory.createRole("roleName$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
-        def endpointTemplate = v1Factory.createEndpointTemplate("1658468", "compute", "http://bananas.com", "name")
+        def endpointId = testUtils.getRandomInteger().toString()
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointId, "compute", "http://bananas.com", "cloudServers")
 
         when:
         def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "negtenDomain$random", password)).getEntity(User).value
@@ -2586,7 +2587,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def tenant = v2Factory.createTenant("754612$random", "754612$random")
         def role = v2Factory.createRole("dupeRole1$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
         def role2 = v2Factory.createRole("dupeRole2$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
-        def endpointTemplate = v1Factory.createEndpointTemplate("1658468", "compute", "http://bananas.com", "cloudServers")
+        def endpointId = testUtils.getRandomInteger().toString()
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointId, "compute", "http://bananas.com", "cloudServers")
 
         when:
         def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "deDupeDomain$random", password)).getEntity(User).value
