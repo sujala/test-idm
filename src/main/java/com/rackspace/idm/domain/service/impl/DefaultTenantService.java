@@ -148,14 +148,6 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public PaginatorContext<Tenant> getTenantsPaged(int offset, int limit) {
-        logger.info("Getting Tenants Paged - offset {}, limit {}", offset, limit);
-        PaginatorContext<Tenant> tenants = this.tenantDao.getTenantsPaged(offset, limit);
-        logger.info("Got {} Tenants Paged of {} total", tenants.getValueList().size(), tenants.getTotalRecords());
-        return tenants;
-    }
-
-    @Override
     public void updateTenant(Tenant tenant) {
         logger.info("Updating Tenant {}", tenant);
         String defaultTenant =  identityConfig.getReloadableConfig().getIdentityRoleDefaultTenant();
@@ -220,21 +212,6 @@ public class DefaultTenantService implements TenantService {
         List<Tenant> tenants = getTenants(this.tenantRoleDao.getTenantRolesForUser(user), new TenantNoOpPredicate());
 
         return !tenants.isEmpty() && CollectionUtils.find(tenants, new TenantEnabledPredicate()) == null;
-    }
-
-    @Override
-    public List<Tenant> getTenantsForScopeAccessByTenantRoles(ScopeAccess sa) {
-        if (sa == null) {
-            throw new IllegalStateException();
-        }
-
-        logger.info("Getting Tenants for Parent");
-
-        Iterable<TenantRole> tenantRoles = this.tenantRoleDao.getTenantRolesForScopeAccess(sa);
-        List<Tenant> tenants = getTenants(tenantRoles, new TenantEnabledPredicate());
-
-        logger.info("Got {} tenants", tenants.size());
-        return tenants;
     }
 
     /**
@@ -312,15 +289,6 @@ public class DefaultTenantService implements TenantService {
         }
 
         logger.info("Deleted Product Roles for {}", user);
-    }
-
-    @Override
-    public List<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess) {
-        if (scopeAccess == null) {
-            throw new IllegalStateException();
-        }
-        Iterable<TenantRole> tenantRole = tenantRoleDao.getTenantRolesForScopeAccess(scopeAccess);
-        return getRoleDetails(tenantRole);
     }
 
     @Override

@@ -52,11 +52,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public Iterable<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess) {
-        return getObjects(searchFilterGetTenantRoles(), getSearchDnForScopeAccess(scopeAccess));
-    }
-
-    @Override
     public Iterable<TenantRole> getAllTenantRolesForTenant(String tenantId) {
         return getObjects(searchFilterGetTenantRolesByTenantId(tenantId));
     }
@@ -154,37 +149,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return "";
     }
 
-    private String getSearchDnForScopeAccess(ScopeAccess scopeAccess) {
-        String userDn;
-        try {
-            userDn = getBaseDnForScopeAccess(new DN(scopeAccess.getUniqueId()).getParent()).toString();
-        } catch (Exception ex) {
-            throw new IllegalStateException();
-        }
-
-        if (userDn == null) {
-            throw new BadRequestException("scopeAccess is not tied to a user");
-        }
-
-        return userDn;
-    }
-
-    private DN getBaseDnForScopeAccess(DN dn) {
-        DN parentDN = dn.getParent();
-        List<RDN> rdns = new ArrayList<RDN>(Arrays.asList(dn.getRDNs()));
-        List<RDN> parentRDNs = new ArrayList<RDN>(Arrays.asList(parentDN.getRDNs()));
-        List<RDN> remainder = new ArrayList<RDN>(rdns);
-        remainder.removeAll(parentRDNs);
-        RDN rdn = remainder.get(0);
-        if (rdn.hasAttribute("rsId") || rdn.hasAttribute("rackerId") || rdn.hasAttribute("clientId") || rdn.hasAttribute("uid")) {
-            return dn;
-        } else if (parentDN.getParent() == null) {
-            return null;
-        } else {
-            return getBaseDnForScopeAccess(parentDN);
-        }
-    }
-
     protected DN getBaseDnForSearch(DN dn) {
         DN parentDN = dn.getParent();
         List<RDN> rdns = new ArrayList<RDN>(Arrays.asList(dn.getRDNs()));
@@ -227,10 +191,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return null;
     }
 
-    private TenantRole getTenantRole(String dn, Filter filter) {
-        return getObject(filter, dn, SearchScope.SUB);
-    }
-
     private TenantRole getTenantRole(String dn, String roleId) {
         return getObject(searchFilterGetTenantRoleByRoleId(roleId), dn, SearchScope.SUB);
     }
@@ -247,13 +207,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     private Filter searchFilterGetTenantRolesByApplication(String applicationId) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
-                .addEqualAttribute(ATTR_CLIENT_ID, applicationId).build();
-    }
-
-    private Filter searchFilterGetTenantRolesByApplicationAndTenantId(String applicationId, String tenantId) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
-                .addEqualAttribute(ATTR_TENANT_RS_ID, tenantId)
                 .addEqualAttribute(ATTR_CLIENT_ID, applicationId).build();
     }
 

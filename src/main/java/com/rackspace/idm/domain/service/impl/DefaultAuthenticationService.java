@@ -28,8 +28,6 @@ import java.util.UUID;
 @Component
 public class DefaultAuthenticationService implements AuthenticationService {
 
-    public static final int YEARS = 100;
-
     @Autowired
     private ApplicationService applicationService;
     @Autowired
@@ -108,108 +106,6 @@ public class DefaultAuthenticationService implements AuthenticationService {
     @Override
     public void setInputValidator(InputValidator inputValidator) {
         this.inputValidator = inputValidator;
-    }
-
-    /**
-     * Gets the auth data object from corresponding scope access object. Also
-     * appends the roles of the client that is authenticated.
-     *
-     * @param scopeAccess
-     * @return AuthData with roles
-     */
-    AuthData getAuthDataWithClientRoles(ScopeAccess scopeAccess) {
-        AuthData authData = getAuthData(scopeAccess);
-
-        if (authData.getUser() != null && (authData.getUser() instanceof User)) {
-            //only care if persistent user. This is foundation API which is no longer used and should be deleted soon. Even
-            //if it is used, it's not supported for federated users
-            EndUser user = authData.getUser();
-            List<TenantRole> roles = tenantService
-                    .getTenantRolesForScopeAccess(scopeAccess);
-            ((User)user).setRoles(roles);
-        } else if (authData.getApplication() != null) {
-            Application application = authData.getApplication();
-            List<TenantRole> roles = tenantService
-                    .getTenantRolesForScopeAccess(scopeAccess);
-            application.setRoles(roles);
-        } else if (authData.getRacker() != null) {
-            Racker racker = authData.getRacker();
-            racker.setRackerRoles(authDao.getRackerRoles(racker.getRackerId()));
-        }
-
-        return authData;
-    }
-
-    /**
-     * Gets the auth data object from corresponding scope access object
-     *
-     * @param scopeAccess
-     * @return AuthData
-     */
-    AuthData getAuthData(ScopeAccess scopeAccess) {
-        AuthData authData = new AuthData();
-
-        if (scopeAccess != null) {
-            authData.setToken(scopeAccess);
-            authData.setAccessToken(scopeAccess.getAccessTokenString());
-            authData.setAccessTokenExpiration(scopeAccess.getAccessTokenExp());
-        }
-
-        if (scopeAccess instanceof HasRefreshToken) {
-            HasRefreshToken tokenScopeAccessObject = (HasRefreshToken) scopeAccess;
-            authData.setRefreshToken(tokenScopeAccessObject
-                    .getRefreshTokenString());
-        }
-
-        if (scopeAccess instanceof PasswordResetScopeAccess) {
-            PasswordResetScopeAccess prsca = (PasswordResetScopeAccess) scopeAccess;
-            DateTime passwordExpirationDate = prsca.getUserPasswordExpirationDate();
-
-            authData.setPasswordResetOnlyToken(true);
-            authData.setPasswordExpirationDate(passwordExpirationDate);
-        }
-
-        setClient(scopeAccess, authData);
-
-        return authData;
-    }
-
-    /**
-     * All auth data must have exactly one client that is attached to it, a
-     * user, an application, or a racker. This method determines what that
-     * client is based on the type of scope access and set the client
-     * accordingly.
-     *
-     * @param scopeAccess
-     * @param authData
-     */
-    void setClient(ScopeAccess scopeAccess, AuthData authData) {
-        if (scopeAccess instanceof ClientScopeAccess) {
-            // TODO: consider getting from client dao, so can retrieve more info
-            // about client
-            Application application = new Application();
-            application.setClientId(scopeAccess.getClientId());
-            authData.setApplication(application);
-        }
-
-        if (scopeAccess instanceof UserScopeAccess) {
-            UserScopeAccess userScopeAccess = (UserScopeAccess) scopeAccess;
-            DateTime passwordExpirationDate = userScopeAccess
-                    .getUserPasswordExpirationDate();
-
-            EndUser userEntity = identityUserService.getEndUserById(userScopeAccess.getUserRsId());
-            authData.setUser(userEntity);
-            authData.setPasswordExpirationDate(passwordExpirationDate);
-        }
-
-        if (scopeAccess instanceof RackerScopeAccess) {
-            RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) scopeAccess;
-
-            Racker racker = new Racker();
-            racker.setRackerId(rackerScopeAccess.getRackerId());
-            racker.setRackerRoles(authDao.getRackerRoles(racker.getRackerId()));
-            authData.setRacker(racker);
-        }
     }
 
     UserAuthenticationResult authenticateRacker(String username, String password, boolean usesRSAAuth) {

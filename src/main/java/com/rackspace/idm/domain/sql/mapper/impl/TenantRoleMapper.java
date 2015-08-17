@@ -81,7 +81,9 @@ public class TenantRoleMapper extends SqlMapper<TenantRole, SqlTenantRole> {
             sqlTenantRole.setActorId(tenantRole.getUserId());
             sqlTenantRole.setTargetId(tenantId);
             sqlTenantRole.setRoleId(tenantRole.getRoleRsId());
-            sqlTenantRole.setInherited(tenantRole.getPropagate());
+            if(tenantRole.getPropagate() != null) {
+                sqlTenantRole.setInherited(tenantRole.getPropagate());
+            }
 
             sqlTenantRoles.add(sqlTenantRole);
         }

@@ -8,7 +8,6 @@ public interface TenantRoleDao {
     void addTenantRoleToUser(BaseUser user, TenantRole tenantRole);
     Iterable<TenantRole> getTenantRolesForUser(BaseUser user, String applicationId);
     Iterable<TenantRole> getTenantRolesForUser(BaseUser user);
-    Iterable<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess);
     Iterable<TenantRole> getAllTenantRolesForTenant(String tenantId);
     Iterable<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId);
     Iterable<TenantRole> getAllTenantRolesForClientRole(ClientRole role);

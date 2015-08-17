@@ -9,8 +9,6 @@ import java.io.IOException;
 public interface TokenService {
     ScopeAccess getAccessTokenByAuthHeader(String authHeader);
 
-    boolean doesTokenHaveApplicationRole(String token, String applicationId, String roleId);
-    
     void revokeAccessToken(String tokenStringRequestingDelete, String tokenToDelete);
     
     void revokeAllTokensForClient(String clientId);

@@ -4,10 +4,14 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.sql.dao.FederatedRoleRepository;
 import com.rackspace.idm.domain.sql.dao.TenantRoleRepository;
+import com.rackspace.idm.domain.sql.entity.SqlFederatedRoleRax;
 import com.rackspace.idm.domain.sql.entity.SqlTenantRole;
+import com.rackspace.idm.domain.sql.mapper.impl.FederatedRoleRaxMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.TenantRoleMapper;
 import com.rackspace.idm.exception.ClientConflictException;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,107 +27,161 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     TenantRoleRepository tenantRoleRepository;
 
     @Autowired
+    FederatedRoleRepository federatedRoleRepository;
+
+    @Autowired
+    FederatedRoleRaxMapper federatedRoleRaxMapper;
+
+    @Autowired
     TenantRoleMapper mapper;
 
     @Override
     @Transactional
     public void addTenantRoleToUser(BaseUser user, TenantRole tenantRole) {
-        List<SqlTenantRole> sqlTenantRoles  = tenantRoleRepository.findByActorIdAndRoleId(user.getId(), tenantRole.getRoleRsId());
         tenantRole.setUserId(user.getId());
-
-        if(containsTenantRole(sqlTenantRoles, mapper.toSQL(tenantRole))){
-            throw new ClientConflictException();
+        if(user instanceof FederatedUser) {
+            SqlFederatedRoleRax federatedRoleRax = federatedRoleRepository.findOneByRoleRsIdAndUserId(tenantRole.getRoleRsId(), user.getId());
+            if(federatedRoleRax != null) {
+                if(!CollectionUtils.intersection(federatedRoleRax.getTenantIds(), tenantRole.getTenantIds()).isEmpty()) {
+                    throw new ClientConflictException();
+                }
+                federatedRoleRax.getTenantIds().addAll(tenantRole.getTenantIds());
+                federatedRoleRepository.save(federatedRoleRax);
+            } else {
+                federatedRoleRepository.save(federatedRoleRaxMapper.toSQL(tenantRole));
+            }
+        } else {
+            List<SqlTenantRole> sqlTenantRoles = tenantRoleRepository.findByActorIdAndRoleId(user.getId(), tenantRole.getRoleRsId());
+            if (containsTenantRole(sqlTenantRoles, mapper.toSQL(tenantRole))) {
+                throw new ClientConflictException();
+            }
+            tenantRoleRepository.save(mapper.toSQL(tenantRole));
         }
-
-        tenantRoleRepository.save(mapper.toSQL(tenantRole));
     }
 
     @Override
     public Iterable<TenantRole> getTenantRolesForUser(BaseUser user) {
-        return mapper.fromSQLList(tenantRoleRepository.findByActorId(user.getId()));
+        if(user instanceof FederatedUser) {
+            return federatedRoleRaxMapper.fromSQL(federatedRoleRepository.findByUserId(user.getId()));
+        } else {
+            return mapper.fromSQLList(tenantRoleRepository.findByActorId(user.getId()));
+        }
     }
 
     @Override
     public Iterable<TenantRole> getTenantRolesForUser(BaseUser user, String applicationId) {
-        return mapper.fromSQLList(tenantRoleRepository.findByActorIdAndSqlRoleRaxClientId(user.getId(), applicationId));
-    }
-
-    @Override
-    public Iterable<TenantRole> getTenantRolesForScopeAccess(ScopeAccess scopeAccess) {
-        if(scopeAccess instanceof UserScopeAccess){
-            return mapper.fromSQLList(tenantRoleRepository.findByActorId(((UserScopeAccess) scopeAccess).getUserRsId()));
+        if(user instanceof FederatedUser) {
+            return federatedRoleRaxMapper.fromSQL(federatedRoleRepository.findByUserIdAndClientId(user.getId(), applicationId));
+        } else {
+            return mapper.fromSQLList(tenantRoleRepository.findByActorIdAndSqlRoleRaxClientId(user.getId(), applicationId));
         }
-        return new ArrayList<TenantRole>();
     }
 
     @Override
     public Iterable<TenantRole> getAllTenantRolesForTenant(String tenantId) {
-        return mapper.fromSQLList(tenantRoleRepository.findByTargetId(tenantId));
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        tenantRoles.addAll(mapper.fromSQLList(tenantRoleRepository.findByTargetId(tenantId)));
+        tenantRoles.addAll(federatedRoleRaxMapper.fromSQL(federatedRoleRepository.findByTenantId(tenantId)));
+        return tenantRoles;
     }
 
     @Override
     public Iterable<TenantRole> getAllTenantRolesForTenantAndRole(String tenantId, String roleId) {
-        return mapper.fromSQLList(tenantRoleRepository.findByTargetIdAndRoleId(tenantId, roleId));
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        tenantRoles.addAll(mapper.fromSQLList(tenantRoleRepository.findByTargetIdAndRoleId(tenantId, roleId)));
+        tenantRoles.addAll(federatedRoleRaxMapper.fromSQL(federatedRoleRepository.findByTenantIdAndRoleRsId(tenantId, roleId)));
+        return tenantRoles;
     }
 
     @Override
     public Iterable<TenantRole> getAllTenantRolesForClientRole(ClientRole role) {
-        return mapper.fromSQLList(tenantRoleRepository.findByRoleId(role.getId()));
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        tenantRoles.addAll(mapper.fromSQLList(tenantRoleRepository.findByRoleId(role.getId())));
+        tenantRoles.addAll(federatedRoleRaxMapper.fromSQL(federatedRoleRepository.findByRoleRsId(role.getId())));
+        return tenantRoles;
     }
 
     @Override
     public TenantRole getTenantRoleForUser(BaseUser user, String roleId) {
-        return mapper.fromSQL(tenantRoleRepository.findByActorIdAndRoleId(user.getId(), roleId));
+        if(user instanceof FederatedUser) {
+            return federatedRoleRaxMapper.fromSQL(federatedRoleRepository.findOneByRoleRsIdAndUserId(roleId, user.getId()));
+        } else {
+            return mapper.fromSQL(tenantRoleRepository.findByActorIdAndRoleId(user.getId(), roleId));
+        }
     }
 
     @Override
     @Transactional
     public void updateTenantRole(TenantRole tenantRole) {
-        List<SqlTenantRole> sqlTenantRoles = mapper.toSQLList(tenantRole);
+        //check the assignments table to see if this tenant role is for a provisioned user
         List<SqlTenantRole> existingSqlTenantRoles = tenantRoleRepository.findByActorIdAndRoleId(tenantRole.getUserId(), tenantRole.getRoleRsId());
+        if(!CollectionUtils.isEmpty(existingSqlTenantRoles)) {
+            List<SqlTenantRole> sqlTenantRoles = mapper.toSQLList(tenantRole);
 
-        for(SqlTenantRole sqlTenantRole : existingSqlTenantRoles){
-            if(!containsTenantRole(sqlTenantRoles, sqlTenantRole)){
-                tenantRoleRepository.delete(sqlTenantRole);
+            for (SqlTenantRole sqlTenantRole : existingSqlTenantRoles) {
+                if (!containsTenantRole(sqlTenantRoles, sqlTenantRole)) {
+                    tenantRoleRepository.delete(sqlTenantRole);
+                }
             }
+
+            for (SqlTenantRole sqlTenantRole : sqlTenantRoles) {
+                if (!containsTenantRole(existingSqlTenantRoles, sqlTenantRole)) {
+                    tenantRoleRepository.save(sqlTenantRole);
+                }
+            }
+            return;
         }
 
-        for(SqlTenantRole sqlTenantRole : sqlTenantRoles){
-            if(!containsTenantRole(existingSqlTenantRoles, sqlTenantRole)){
-                tenantRoleRepository.save(sqlTenantRole);
-            }
+        //if we get here, then the role was not found for a provisioned user. Now check to see if this is for a federated user
+        SqlFederatedRoleRax federatedRoleRax = federatedRoleRepository.findOneByRoleRsIdAndUserId(tenantRole.getRoleRsId(), tenantRole.getUserId());
+        if(federatedRoleRax != null) {
+            federatedRoleRepository.save(federatedRoleRaxMapper.toSQL(tenantRole, federatedRoleRax));
         }
     }
 
     @Override
     @Transactional
     public void deleteTenantRoleForUser(EndUser user, TenantRole tenantRole) {
-        for(SqlTenantRole sqlTenantRole : mapper.toSQLList(tenantRole)){
-            sqlTenantRole.setActorId(user.getId());
-            tenantRoleRepository.delete(sqlTenantRole);
+        if(user instanceof FederatedUser) {
+            federatedRoleRepository.deleteByUserIdAndRoleRsId(user.getId(), tenantRole.getRoleRsId());
+        } else {
+            for (SqlTenantRole sqlTenantRole : mapper.toSQLList(tenantRole)) {
+                sqlTenantRole.setActorId(user.getId());
+                tenantRoleRepository.delete(sqlTenantRole);
+            }
         }
     }
 
     @Override
     @Transactional
     public void deleteTenantRole(TenantRole tenantRole) {
-        tenantRoleRepository.delete(mapper.toSQLList(tenantRole));
+        if(federatedRoleRepository.findOneByRoleRsIdAndUserId(tenantRole.getRoleRsId(), tenantRole.getUserId()) != null) {
+            federatedRoleRepository.deleteByUserIdAndRoleRsId(tenantRole.getUserId(), tenantRole.getRoleRsId());
+        } else {
+            tenantRoleRepository.delete(mapper.toSQLList(tenantRole));
+        }
     }
 
     @Override
     public List<String> getIdsForUsersWithTenantRole(String roleId, int maxResult) {
+        //TODO: update to work with federated user roles
         Pageable resultsSize = new PageRequest(0, maxResult);
         return getUserIds(tenantRoleRepository.findByRoleId(roleId, resultsSize));
     }
 
     @Override
     public Iterable<TenantRole> getTenantRoleForUser(EndUser user, List<ClientRole> clientRoles) {
+        //TODO: update to work with federated user roles
         List<String> sqlRoles = new ArrayList<String>();
         for( ClientRole clientRole : clientRoles){
             sqlRoles.add(clientRole.getId());
         }
 
-        return mapper.fromSQLList(tenantRoleRepository.findByActorIdAndRoleIdIn(user.getId(), sqlRoles));
+        if(user instanceof FederatedUser) {
+            return federatedRoleRaxMapper.fromSQL(federatedRoleRepository.findByRoleRsIds(sqlRoles));
+        } else {
+            return mapper.fromSQLList(tenantRoleRepository.findByActorIdAndRoleIdIn(user.getId(), sqlRoles));
+        }
     }
 
     /*
