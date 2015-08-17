@@ -2721,7 +2721,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def random = UUID.randomUUID().toString().replace("-", "")
         def username = "listUserByTenant$random"
         def subUsername = "subListUserByTenant$random"
-        def tenant = v2Factory.createTenant("7546143", "7546143")
+        def tenantId = testUtils.getRandomUUID()
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
         def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
         role.propagate = true
 
@@ -2788,7 +2789,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def username = "listUserByTenant$random"
         def subUser1name = "sub1ListUserByTenant$random"
         def subUser2name = "sub2ListUserByTenant$random"
-        def tenant = v2Factory.createTenant("7546143", "7546143")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
         def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
         role.propagate = true
 

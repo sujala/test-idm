@@ -135,7 +135,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     @Override
     @Deprecated
     public String getUserIdForParent(TenantRole tenantRole) {
-        return null;
+        return tenantRole.getUserId();
     }
 
     private List<String> getUserIds(List<SqlTenantRole> sqlTenantRoles) {
