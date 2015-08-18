@@ -14,6 +14,7 @@ import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
+import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.collections4.CollectionUtils;
@@ -550,6 +551,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         logger.debug("Getting ScopeAccess by Access Token {}", accessToken);
         if (accessToken == null) {
             throw new NotFoundException("Invalid accessToken; Token cannot be null");
+        }
+        if (accessToken.length() < 1) {
+            throw new NotAuthorizedException("No valid token provided. Please use the 'X-Auth-Token' header with a valid token.");
         }
         final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(accessToken);
         logger.debug("Got ScopeAccess {} by Access Token {}", scopeAccess, accessToken);

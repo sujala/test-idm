@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+import testHelpers.junit.IgnoreByRepositoryProfile
 import testHelpers.saml.SamlAssertionFactory
 
 import javax.ws.rs.core.MediaType
@@ -235,6 +236,54 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
+    def "Previously created impersonation tokens are no longer valid once the impersonated user's domain is disabled - AE tokens only" () {
+        given:
+        def domainId = utils.createDomain()
+        def domainDisable = v1Factory.createDomain().with {
+            it.id = domainId
+            it.name = domainId
+            it.enabled = false
+            it
+        }
+        def domainEnable = v1Factory.createDomain().with {
+            it.id = domainId
+            it.name = domainId
+            it.enabled = true
+            it
+        }
+
+        (defaultUser, users) = utils.createDefaultUser(domainId)
+        def identityAdmin = users[2]
+
+        when: "Impersonate with Racker using AE impersonation tokens"
+        def response = utils.impersonateWithRacker(defaultUser)
+        def token = response.token.id
+        utils.updateDomain(domainId, domainDisable)
+        def resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
+
+        then:
+        token != null
+        resp.status == SC_OK
+
+        when: "Impersonate with provisioned user using AE impersonation tokens"
+        identityAdmin.tokenFormat = TokenFormatEnum.AE
+        utils.updateUser(identityAdmin)
+        utils.updateDomain(domainId, domainEnable)
+        response = utils.impersonateWithToken(utils.getToken(identityAdmin.username), defaultUser)
+        token = response.token.id
+        utils.updateDomain(domainId, domainDisable)
+        resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
+
+        then:
+        token != null
+        resp.status == SC_OK
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "Previously created impersonation tokens are no longer valid once the impersonated user's domain is disabled" () {
         given:
         def domainId = utils.createDomain()
@@ -327,6 +376,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
      *
      * @return
      */
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "trying to validate a UUID impersonation token with deleted provisioned user token returns 404"() {
         given:
         def domainId = utils.createDomain()
@@ -364,6 +414,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
      *
      * @return
      */
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "trying to validate a UUID impersonation token for deleted federated user token returns 404"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
@@ -407,6 +458,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         staticIdmConfiguration.reset()
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID impersonation tokens created before a federated user's domain is disabled are no longer valid"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)

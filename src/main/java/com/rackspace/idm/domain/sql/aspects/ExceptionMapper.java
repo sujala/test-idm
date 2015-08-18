@@ -35,7 +35,7 @@ public class ExceptionMapper implements Ordered {
     @AfterThrowing(pointcut = "save()", throwing = "e")
     public void afterSave(JoinPoint joinPoint, Throwable e) {
         if (e instanceof InvalidDataAccessApiUsageException) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(e);
         }
     }
 

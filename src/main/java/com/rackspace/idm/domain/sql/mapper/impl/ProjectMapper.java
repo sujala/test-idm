@@ -12,13 +12,13 @@ import com.rackspace.idm.domain.sql.mapper.SqlMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 @SQLComponent
 public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
+
+    private static final String V1_DEFAULTS_FIELD = "v1Defaults";
+    private static final String BASE_URL_IDS_FIELD = "baseUrlIds";
 
     @Autowired
     IdentityConfig config;
@@ -45,7 +45,7 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
         }
         for (SqlEndpoint sqlEndpoint: entity.getV1Defaults()) {
             String legacyId = sqlEndpoint.getLegacyEndpointId();
-            if (!tenant.getBaseUrlIds().contains(legacyId)) {
+            if (!tenant.getV1Defaults().contains(legacyId)) {
                 tenant.getV1Defaults().add(legacyId);
             }
         }
@@ -106,4 +106,10 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
 
         return sqlEntity;
     }
+
+    @Override
+    protected Set<String> getIgnoredSetFields() {
+        return new HashSet<String>(Arrays.asList(V1_DEFAULTS_FIELD, BASE_URL_IDS_FIELD));
+    }
+
 }

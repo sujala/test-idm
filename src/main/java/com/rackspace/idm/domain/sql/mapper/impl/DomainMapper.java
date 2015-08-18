@@ -38,8 +38,8 @@ public class DomainMapper extends SqlRaxMapper<Domain, SqlDomain, SqlDomainRax> 
     }
 
     @Override
-    public SqlDomain toSQL(Domain entity) {
-        SqlDomain sqlDomain = super.toSQL(entity);
+    public SqlDomain toSQL(Domain entity, SqlDomain sqlDomainOrig) {
+        SqlDomain sqlDomain = super.toSQL(entity, sqlDomainOrig);
 
         if (sqlDomain == null) {
             return null;
