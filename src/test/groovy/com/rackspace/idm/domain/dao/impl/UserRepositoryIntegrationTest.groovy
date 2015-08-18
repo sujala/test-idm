@@ -1,21 +1,31 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+import com.rackspace.idm.domain.dao.GroupDao
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.EncryptionService
 import com.rackspace.idm.helpers.CloudTestUtils
 import com.unboundid.ldap.sdk.LDAPException
 import org.apache.commons.collections4.IteratorUtils
 import org.apache.commons.configuration.Configuration
+import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
+import testHelpers.junit.ConditionalIgnoreRule
+import testHelpers.junit.IgnoreByRepositoryProfile
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapUserRepositoryIntegrationTest extends Specification{
+class UserRepositoryIntegrationTest extends Specification {
+
     @Autowired
-    UserDao ldapUserRepository;
+    UserDao userDao
+
+    @Autowired
+    GroupDao groupDao
 
     @Autowired
     EncryptionService encryptionService;
@@ -28,37 +38,32 @@ class LdapUserRepositoryIntegrationTest extends Specification{
     @Shared def random
     @Shared def username
 
+    @Rule
+    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
+
     def setup() {
         def randomness = UUID.randomUUID()
         random = ("$randomness").replace('-', "")
         username = "someName"+random
     }
 
-    def "getNextId returns UUID"() {
-        when:
-        def success = false
-        def id = ldapUserRepository.getNextId()
-        try {
-            Long.parseLong(id)
-        } catch (Exception) {
-            success = true
-        }
-
-        then:
-        success == true
-    }
-
     def "user crud"() {
         given:
         String rsId = random
-        User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
+        String groupId =  cloudTestUtils.getRandomUUID()
+        User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password").with {
+            it.rsGroupId = [groupId] as HashSet
+            it
+        }
 
         when:
-        ldapUserRepository.addUser(user)
-        def retrievedUser = ldapUserRepository.getUserByUsername(username)
-        def retrievedUser2 = ldapUserRepository.getUserByUsername(username)
-        ldapUserRepository.deleteUser(retrievedUser);
-        def deletedUser = ldapUserRepository.getUserByUsername(username)
+        groupDao.addGroup(createGroup(groupId))
+        userDao.addUser(user)
+        def retrievedUser = userDao.getUserByUsername(username)
+        def retrievedUser2 = userDao.getUserByUsername(username)
+        userDao.deleteUser(retrievedUser);
+        groupDao.deleteGroup(groupId)
+        def deletedUser = userDao.getUserByUsername(username)
 
         then:
         retrievedUser != null
@@ -70,11 +75,26 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         retrievedUser.getPasswordFailureDate() == null
 
         when: "delete object already deleted when using recursion delete algorithm"
-        ldapUserRepository.deleteUser(retrievedUser2);
+        userDao.deleteUser(retrievedUser2);
 
         then: "an illegal state exception is thrown"
         def e = thrown(IllegalStateException)
         e.message == "no such object"
+    }
+
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
+    def "getNextId returns UUID"() {
+        when:
+        def success = false
+        def id = userDao.getNextId()
+        try {
+            Long.parseLong(id)
+        } catch (Exception) {
+            success = true
+        }
+
+        then:
+        success == true
     }
 
     def "retrieving users in a domain returns all users within the domain"() {
@@ -88,15 +108,15 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         def user2 = createUser("2$random", username2, domain1, "email@email.com", false, "DFW", "Password1")
         def user3 = createUser("3$random", username3, domain2, "email@email.com", true, "DFW", "Password1")
 
-        ldapUserRepository.addUser(user1)
-        ldapUserRepository.addUser(user2)
-        ldapUserRepository.addUser(user3)
+        userDao.addUser(user1)
+        userDao.addUser(user2)
+        userDao.addUser(user3)
 
         when:
-        def userList = ldapUserRepository.getUsersByDomain(domain1).collect()
-        ldapUserRepository.deleteUser(username1)
-        ldapUserRepository.deleteUser(username2)
-        ldapUserRepository.deleteUser(username3)
+        def userList = userDao.getUsersByDomain(domain1).collect()
+        userDao.deleteUser(username1)
+        userDao.deleteUser(username2)
+        userDao.deleteUser(username3)
 
         then:
         userList != null
@@ -114,15 +134,15 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         def user2 = createUser("2$random", username2, domain1, "email@email.com", false, "DFW", "Password1")
         def user3 = createUser("3$random", username3, domain2, "email@email.com", true, "DFW", "Password1")
 
-        ldapUserRepository.addUser(user1)
-        ldapUserRepository.addUser(user2)
-        ldapUserRepository.addUser(user3)
+        userDao.addUser(user1)
+        userDao.addUser(user2)
+        userDao.addUser(user3)
 
         when:
-        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag(domain1, true).collect()
-        ldapUserRepository.deleteUser(username1)
-        ldapUserRepository.deleteUser(username2)
-        ldapUserRepository.deleteUser(username3)
+        def userList = userDao.getUsersByDomainAndEnabledFlag(domain1, true).collect()
+        userDao.deleteUser(username1)
+        userDao.deleteUser(username2)
+        userDao.deleteUser(username3)
 
         then:
         userList != null
@@ -142,15 +162,15 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         def user2 = createUser("2$random", username2, domain1, "email@email.com", false, "DFW", "Password1")
         def user3 = createUser("3$random", username3, domain2, "email@email.com", true, "DFW", "Password1")
 
-        ldapUserRepository.addUser(user1)
-        ldapUserRepository.addUser(user2)
-        ldapUserRepository.addUser(user3)
+        userDao.addUser(user1)
+        userDao.addUser(user2)
+        userDao.addUser(user3)
 
         when:
-        def userList = ldapUserRepository.getUsersByDomainAndEnabledFlag(domain1, false).collect()
-        ldapUserRepository.deleteUser(username1)
-        ldapUserRepository.deleteUser(username2)
-        ldapUserRepository.deleteUser(username3)
+        def userList = userDao.getUsersByDomainAndEnabledFlag(domain1, false).collect()
+        userDao.deleteUser(username1)
+        userDao.deleteUser(username2)
+        userDao.deleteUser(username3)
 
         then:
         userList != null
@@ -165,11 +185,11 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         def user1 = createUser("1$random", username1, "domain$random", "email@email.com", true, "DFW", "Password1")
         def user2 = createUser("2$random", username2, "domain$random", "email@email.com", false, "DFW", "Password1")
 
-        ldapUserRepository.addUser(user1)
-        ldapUserRepository.addUser(user2)
+        userDao.addUser(user1)
+        userDao.addUser(user2)
 
         when:
-        def userList = ldapUserRepository.getEnabledUsers(0, 1000).valueList.collect()
+        def userList = userDao.getEnabledUsers(0, 1000).valueList.collect()
 
         then:
         userList != null
@@ -177,8 +197,8 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         !userList.username.contains(username2)
 
         cleanup:
-        ldapUserRepository.deleteUser(username1)
-        ldapUserRepository.deleteUser(username2)
+        userDao.deleteUser(username1)
+        userDao.deleteUser(username2)
     }
 
     def "getEnabledUsersByGroupId pagination - retrieving enabled users by groupId does not retrieve disabled users"() {
@@ -195,11 +215,12 @@ class LdapUserRepositoryIntegrationTest extends Specification{
             it
         }
 
-        ldapUserRepository.addUser(user1)
-        ldapUserRepository.addUser(user2)
+        groupDao.addGroup(createGroup(groupId))
+        userDao.addUser(user1)
+        userDao.addUser(user2)
 
         when:
-        def userList = ldapUserRepository.getEnabledUsersByGroupId(groupId, 0, 1000).valueList
+        def userList = userDao.getEnabledUsersByGroupId(groupId, 0, 1000).valueList
 
         then:
         userList != null
@@ -207,8 +228,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         !userList.username.contains(disabledUsername)
 
         cleanup:
-        ldapUserRepository.deleteUser(enabledUserName)
-        ldapUserRepository.deleteUser(disabledUsername)
+        userDao.deleteUser(enabledUserName)
+        userDao.deleteUser(disabledUsername)
+        groupDao.deleteGroup(groupId)
     }
 
     def "getEnabledUsersByGroupId - retrieving enabled users by groupId does not retrieve disabled users"() {
@@ -225,11 +247,12 @@ class LdapUserRepositoryIntegrationTest extends Specification{
             it
         }
 
-        ldapUserRepository.addUser(user1)
-        ldapUserRepository.addUser(user2)
+        groupDao.addGroup(createGroup(groupId))
+        userDao.addUser(user1)
+        userDao.addUser(user2)
 
         when:
-        def userList = IteratorUtils.toList(ldapUserRepository.getEnabledUsersByGroupId(groupId).iterator())
+        def userList = IteratorUtils.toList(userDao.getEnabledUsersByGroupId(groupId).iterator())
 
         then:
         userList != null
@@ -237,8 +260,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         !userList.username.contains(disabledUsername)
 
         cleanup:
-        ldapUserRepository.deleteUser(enabledUserName)
-        ldapUserRepository.deleteUser(disabledUsername)
+        userDao.deleteUser(enabledUserName)
+        userDao.deleteUser(disabledUsername)
+        groupDao.deleteGroup(groupId)
     }
 
     def "getDisabledUsersByGroupId - retrieving disabled users by groupId does not retrieve enabled users"() {
@@ -255,11 +279,12 @@ class LdapUserRepositoryIntegrationTest extends Specification{
             it
         }
 
-        ldapUserRepository.addUser(user1)
-        ldapUserRepository.addUser(user2)
+        groupDao.addGroup(createGroup(groupId))
+        userDao.addUser(user1)
+        userDao.addUser(user2)
 
         when:
-        def userList = IteratorUtils.toList(ldapUserRepository.getDisabledUsersByGroupId(groupId).iterator())
+        def userList = IteratorUtils.toList(userDao.getDisabledUsersByGroupId(groupId).iterator())
 
         then:
         userList != null
@@ -267,8 +292,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         userList.username.contains(disabledUsername)
 
         cleanup:
-        ldapUserRepository.deleteUser(enabledUserName)
-        ldapUserRepository.deleteUser(disabledUsername)
+        userDao.deleteUser(enabledUserName)
+        userDao.deleteUser(disabledUsername)
+        groupDao.deleteGroup(groupId)
     }
 
     def "calling getUserByEmail returns the user"() {
@@ -277,9 +303,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         def user1 = createUser("1$random", "username$random", "1234567890", email, true, "DFW", "Password1")
 
         when:
-        ldapUserRepository.addUser(user1)
-        def user = ldapUserRepository.getUsersByEmail(email).collect()
-        ldapUserRepository.deleteUser(user.get(0))
+        userDao.addUser(user1)
+        def user = userDao.getUsersByEmail(email).collect()
+        userDao.deleteUser(user.get(0))
 
         then:
         user != null
@@ -296,9 +322,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         }
 
         when:
-        ldapUserRepository.addUser(user);
-        User retrievedUser = ldapUserRepository.getUserById(rsId)
-        ldapUserRepository.deleteUser(retrievedUser)
+        userDao.addUser(user);
+        User retrievedUser = userDao.getUserById(rsId)
+        userDao.deleteUser(retrievedUser)
 
         then:
         retrievedUser.salt == user.salt
@@ -315,9 +341,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         }
 
         when:
-        ldapUserRepository.addUser(user);
-        ldapUserRepository.updateUserEncryption(rsId);
-        User retrievedUser = ldapUserRepository.getUserById(rsId)
+        userDao.addUser(user);
+        userDao.updateUserEncryption(rsId);
+        User retrievedUser = userDao.getUserById(rsId)
 
         then:
         retrievedUser.displayName == user.displayName
@@ -334,9 +360,9 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
 
         when:
-        ldapUserRepository.addUser(user);
-        ldapUserRepository.updateUserEncryption(rsId);
-        User retrievedUser = ldapUserRepository.getUserById(rsId)
+        userDao.addUser(user);
+        userDao.updateUserEncryption(rsId);
+        User retrievedUser = userDao.getUserById(rsId)
 
         then:
         retrievedUser.displayName == user.displayName
@@ -349,7 +375,7 @@ class LdapUserRepositoryIntegrationTest extends Specification{
 
     def "calling getUsersToReEncrypt gets the users that need to be re-encrypted"() {
         when:
-        def users = ldapUserRepository.getUsersToReEncrypt(0, 50)
+        def users = userDao.getUsersToReEncrypt(0, 50)
 
         then:
         users != null
@@ -363,15 +389,15 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
 
         when:
-        ldapUserRepository.addUser(user)
+        userDao.addUser(user)
         def created = new Date().minus(1)
         user.created = created
         def updated = new Date().plus(1)
         user.updated = updated
         def email = "someOtherEmail@rackspace.com"
         user.email = email
-        ldapUserRepository.updateUser(user)
-        User getUser = ldapUserRepository.getUserByUsername(username)
+        userDao.updateUser(user)
+        User getUser = userDao.getUserByUsername(username)
 
         then:
         getUser.created != created
@@ -380,23 +406,23 @@ class LdapUserRepositoryIntegrationTest extends Specification{
         notThrown(LDAPException)
 
         cleanup:
-        ldapUserRepository.deleteUser(user)
+        userDao.deleteUser(user)
     }
 
     def "Password is not populated on get user call"() {
         given:
         def rsId = "testPassword$random"
         User user = createUser(rsId, username,"999999","someEmail@rackspace.com", true, "ORD", "password")
-        ldapUserRepository.addUser(user)
+        userDao.addUser(user)
 
         when:
-        User getUser = ldapUserRepository.getUserByUsername(username)
+        User getUser = userDao.getUserByUsername(username)
 
         then:
         getUser.password == null
 
         cleanup:
-        ldapUserRepository.deleteUser(user)
+        userDao.deleteUser(user)
     }
 
     def createUser(String id, String username, String domainId, String email, boolean enabled, String region, String password) {
@@ -417,6 +443,15 @@ class LdapUserRepositoryIntegrationTest extends Specification{
             it.region = region
             it.password = password
             it.userPassword = password
+            return it
+        }
+    }
+
+    def createGroup(id) {
+        new Group().with {
+            it.groupId = id
+            it.name = "name$id"
+            it.description = "description"
             return it
         }
     }

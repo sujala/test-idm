@@ -73,7 +73,11 @@ public class SqlUserRepository implements UserDao {
     @Override
     @Transactional
     public void deleteUser(User user) {
-        userRepository.delete(user.getId());
+        try {
+            userRepository.delete(user.getId());
+        } catch (Exception e) {
+            throw new IllegalStateException("no such object");
+        }
     }
 
     @Override
