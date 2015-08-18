@@ -1,14 +1,10 @@
 package com.rackspace.idm.domain.config
 
 import com.rackspace.idm.domain.security.TokenFormat
-import org.apache.commons.configuration.ConfigurationException
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy
-import org.apache.commons.io.FileUtils
-import org.apache.commons.io.IOUtils
 import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification

@@ -17,35 +17,35 @@ public interface UserRepository extends JpaSpecificationExecutor<SqlUser>, JpaRe
     void deleteByUsername(String username);
 
     @EntityGraph(value = "SqlUser.rax", type = EntityGraph.EntityGraphType.FETCH)
-    List<SqlUser> findByUsername(String username);
+    List<SqlUser> findDistinctByUsername(String username);
 
     @EntityGraph(value = "SqlUser.rax", type = EntityGraph.EntityGraphType.FETCH)
     SqlUser findOneByUsername(String username);
 
-    int countByUsername(String username);
+    int countDistinctByUsername(String username);
 
     @EntityGraph(value = "SqlUser.rax", type = EntityGraph.EntityGraphType.FETCH)
-    List<SqlUser> findByDomainId(String domainId);
+    List<SqlUser> findDistinctByDomainId(String domainId);
 
     @EntityGraph(value = "SqlUser.rax", type = EntityGraph.EntityGraphType.FETCH)
-    Page<SqlUser> findByDomainId(String domainId, Pageable pageable);
+    Page<SqlUser> findDistinctByDomainId(String domainId, Pageable pageable);
 
     @EntityGraph(value = "SqlUser.rax", type = EntityGraph.EntityGraphType.FETCH)
     Page<SqlUser> findAll(Pageable pageable);
 
     @EntityGraph(value = "SqlUser.rax", type = EntityGraph.EntityGraphType.FETCH)
-    Page<SqlUser> findByEnabledTrue(Pageable pageable);
+    Page<SqlUser> findDistinctByEnabledTrue(Pageable pageable);
 
     @EntityGraph(value = "SqlUser.rax", type = EntityGraph.EntityGraphType.FETCH)
-    List<SqlUser> findByDomainIdAndEnabled(String domainId, Boolean enabled);
+    List<SqlUser> findDistinctByDomainIdAndEnabled(String domainId, Boolean enabled);
 
     @EntityGraph(value = "SqlUser.rax", type = EntityGraph.EntityGraphType.FETCH)
-    List<SqlUser> findByEnabledAndRsGroupIdIn(Boolean enabled, Collection<String> rsGroupId);
+    List<SqlUser> findDistinctByEnabledAndRsGroupIdIn(Boolean enabled, Collection<String> rsGroupId);
 
     @EntityGraph(value = "SqlUser.rax", type = EntityGraph.EntityGraphType.FETCH)
-    Page<SqlUser> findByEnabledAndRsGroupIdIn(Boolean enabled, Collection<String> rsGroupId, Pageable pageable);
+    Page<SqlUser> findDistinctByEnabledAndRsGroupIdIn(Boolean enabled, Collection<String> rsGroupId, Pageable pageable);
 
     @EntityGraph(value = "SqlUser.rax", type = EntityGraph.EntityGraphType.FETCH)
-    List<SqlUser> findByExtraContains(String email);
+    List<SqlUser> findDistinctByExtraContains(String email);
 
 }

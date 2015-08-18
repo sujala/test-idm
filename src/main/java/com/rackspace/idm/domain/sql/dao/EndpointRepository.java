@@ -18,10 +18,10 @@ public interface EndpointRepository extends JpaSpecificationExecutor<SqlEndpoint
     List<SqlEndpoint> findAll();
 
     @EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public List<SqlEndpoint> findByLegacyEndpointId(String id);
+    List<SqlEndpoint> findByLegacyEndpointId(String id);
 
     @EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public List<SqlEndpoint> findByRaxServiceName(String name);
+    List<SqlEndpoint> findByRaxServiceName(String name);
 
     /*
      * Following code fails in Hibernate, due to bug:
@@ -31,17 +31,17 @@ public interface EndpointRepository extends JpaSpecificationExecutor<SqlEndpoint
      * performance.
     */
     //@EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public List<SqlEndpoint> findByLegacyEndpointIdIn(Collection<String> baseUrlIds);
+    List<SqlEndpoint> findByLegacyEndpointIdIn(Collection<String> baseUrlIds);
 
     @EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public List<SqlEndpoint> findByRegionNotAndRaxBaseUrlType(String region, String baseUrlType);
+    List<SqlEndpoint> findByRegionNotAndRaxBaseUrlTypeAndRaxGlobalTrueAndEnabledTrue(String region, String baseUrlType);
 
     @EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public List<SqlEndpoint> findByRegionAndRaxBaseUrlType(String region, String baseUrlType);
+    List<SqlEndpoint> findByRegionAndRaxBaseUrlType(String region, String baseUrlType);
 
     @EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public List<SqlEndpoint> findByRaxBaseUrlTypeAndEnabledAndRaxDefTrue(String baseUrlType, boolean enabled);
+    List<SqlEndpoint> findByRaxBaseUrlTypeAndEnabledAndRaxDefTrue(String baseUrlType, boolean enabled);
 
     @EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
-    public List<SqlEndpoint> findByRaxSqlPolicyPolicyId(String policyId);
+    List<SqlEndpoint> findByRaxSqlPolicyPolicyId(String policyId);
 }

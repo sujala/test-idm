@@ -18,8 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import testHelpers.junit.ConditionalIgnoreRule;
-import testHelpers.junit.IgnoreByRepositoryProfile;
+import testHelpers.junit.java.ConditionalIgnoreRule;
+import testHelpers.junit.java.IgnoreByRepositoryProfile;
 
 import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.MatcherAssert.assertThat;
