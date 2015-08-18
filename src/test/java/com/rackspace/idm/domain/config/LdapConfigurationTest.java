@@ -5,8 +5,8 @@ import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import testHelpers.junit.ConditionalIgnoreRule;
-import testHelpers.junit.IgnoreByRepositoryProfile;
+import testHelpers.junit.java.ConditionalIgnoreRule;
+import testHelpers.junit.java.IgnoreByRepositoryProfile;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.*;

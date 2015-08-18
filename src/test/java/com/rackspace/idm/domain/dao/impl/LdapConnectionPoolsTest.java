@@ -8,8 +8,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import testHelpers.junit.ConditionalIgnoreRule;
-import testHelpers.junit.IgnoreByRepositoryProfile;
+import testHelpers.junit.java.ConditionalIgnoreRule;
+import testHelpers.junit.java.IgnoreByRepositoryProfile;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;

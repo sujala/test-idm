@@ -94,7 +94,7 @@ public class SqlUserRepository implements UserDao {
 
     @Override
     public Iterable<User> getUsersByUsername(String username) {
-        return userMapper.fromSQL(userRepository.findByUsername(username));
+        return userMapper.fromSQL(userRepository.findDistinctByUsername(username));
     }
 
     @Override
@@ -105,7 +105,7 @@ public class SqlUserRepository implements UserDao {
 
     @Override
     public boolean isUsernameUnique(String username) {
-        return userRepository.countByUsername(username) == 0;
+        return userRepository.countDistinctByUsername(username) == 0;
     }
 
     @Override
@@ -198,13 +198,13 @@ public class SqlUserRepository implements UserDao {
 
     @Override
     public Iterable<User> getUsersByDomain(String domainId) {
-        return userMapper.fromSQL(userRepository.findByDomainId(domainId));
+        return userMapper.fromSQL(userRepository.findDistinctByDomainId(domainId));
     }
 
     @Override
     public PaginatorContext<User> getUsersByDomain(String domainId, int offset, int limit) {
         final PaginatorContext<User> page = userMapper.getPageRequest(offset, limit);
-        while (userMapper.fromSQL(userRepository.findByDomainId(domainId, page.getPageRequest()), page)) {}
+        while (userMapper.fromSQL(userRepository.findDistinctByDomainId(domainId, page.getPageRequest()), page)) {}
         return page;
     }
 
@@ -218,7 +218,7 @@ public class SqlUserRepository implements UserDao {
     @Override
     public PaginatorContext<User> getEnabledUsers(int offset, int limit) {
         final PaginatorContext<User> page = userMapper.getPageRequest(offset, limit);
-        while (userMapper.fromSQL(userRepository.findByEnabledTrue(page.getPageRequest()), page)) {}
+        while (userMapper.fromSQL(userRepository.findDistinctByEnabledTrue(page.getPageRequest()), page)) {}
         return page;
     }
 
@@ -245,7 +245,7 @@ public class SqlUserRepository implements UserDao {
 
     @Override
     public Iterable<User> getUsersByDomainAndEnabledFlag(String domainId, boolean enabled) {
-        return userMapper.fromSQL(userRepository.findByDomainIdAndEnabled(domainId, enabled));
+        return userMapper.fromSQL(userRepository.findDistinctByDomainIdAndEnabled(domainId, enabled));
     }
 
     @Override
@@ -286,24 +286,24 @@ public class SqlUserRepository implements UserDao {
     @Override
     public PaginatorContext<User> getEnabledUsersByGroupId(String groupId, int offset, int limit) {
         final PaginatorContext<User> page = userMapper.getPageRequest(offset, limit);
-        while (userMapper.fromSQL(userRepository.findByEnabledAndRsGroupIdIn(true, Collections.singleton(groupId), page.getPageRequest()), page)) {}
+        while (userMapper.fromSQL(userRepository.findDistinctByEnabledAndRsGroupIdIn(true, Collections.singleton(groupId), page.getPageRequest()), page)) {}
         return page;
     }
 
     @Override
     public Iterable<User> getEnabledUsersByGroupId(String groupId) {
-        return userMapper.fromSQL(userRepository.findByEnabledAndRsGroupIdIn(true, Collections.singleton(groupId)));
+        return userMapper.fromSQL(userRepository.findDistinctByEnabledAndRsGroupIdIn(true, Collections.singleton(groupId)));
     }
 
     @Override
     public Iterable<User> getDisabledUsersByGroupId(String groupId) {
-        return userMapper.fromSQL(userRepository.findByEnabledAndRsGroupIdIn(false, Collections.singleton(groupId)));
+        return userMapper.fromSQL(userRepository.findDistinctByEnabledAndRsGroupIdIn(false, Collections.singleton(groupId)));
     }
 
     @Override
     public Iterable<User> getUsersByEmail(String email) {
         // FIXME: Optimize this or somehow index the "extra" column
-        return userMapper.fromSQL(userRepository.findByExtraContains("\"" + email + "\""));
+        return userMapper.fromSQL(userRepository.findDistinctByExtraContains("\"" + email + "\""));
     }
 
     @Override

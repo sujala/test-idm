@@ -1,4 +1,4 @@
-package testHelpers.junit;
+package testHelpers.junit.java;
 
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum;
 

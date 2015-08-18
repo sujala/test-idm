@@ -7,7 +7,6 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
-import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.FederatedUser
@@ -27,10 +26,10 @@ import org.opensaml.xml.signature.Signature
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
+import testHelpers.junit.IgnoreByRepositoryProfile
 import testHelpers.saml.SamlAssertionFactory
 
 import javax.servlet.http.HttpServletResponse
@@ -39,8 +38,8 @@ import static com.rackspace.idm.Constants.*
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 
-@ContextConfiguration(locations = "classpath:app-config.xml")
 class FederatedUserIntegrationTest extends RootIntegrationTest {
+
     private static final Logger LOG = Logger.getLogger(FederatedUserIntegrationTest.class)
 
     @Autowired
@@ -55,13 +54,8 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     @Autowired
     UserService userService
 
-    @Autowired
-    DomainDao domainDao
-
     @Autowired(required = false)
     FederatedUserRepository sqlFederatedUserRepository
-
-    def SamlAssertionFactory samlAssertionFactory = new SamlAssertionFactory()
 
     @Autowired
     ConfigurableTokenFormatSelector configurableTokenFormatSelector
@@ -104,6 +98,43 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteEndpointTemplate(lonGlobalEndpointDisabled)
     }
 
+    def "initial user populated appropriately from saml no roles provided"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 5
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+
+        when:
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains appropriate content"
+        samlResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
+
+        when: "retrieve user from backend"
+        FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
+
+        then: "reflects current state"
+        fedUser.id == authResponse.user.id
+        fedUser.username == username
+        fedUser.domainId == domainId
+        fedUser.email == email
+        fedUser.region == userAdminEntity.region
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+    }
+
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "Token format based on property config"() {
         given:
         //ensure system will recognize AE tokens as AE tokens
@@ -154,41 +185,6 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
-    def "initial user populated appropriately from saml no roles provided"() {
-        given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
-        def email = "fedIntTest@invalid.rackspace.com"
-
-        //specify assertion with no roles
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def userAdminEntity = userService.getUserById(userAdmin.id)
-
-        when:
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-
-        then: "Response contains appropriate content"
-        samlResponse.status == HttpServletResponse.SC_OK
-        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
-
-        when: "retrieve user from backend"
-        FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
-
-        then: "reflects current state"
-        fedUser.id == authResponse.user.id
-        fedUser.username == username
-        fedUser.domainId == domainId
-        fedUser.email == email
-        fedUser.region == userAdminEntity.region
-
-        cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-    }
 
     def "initial user populated appropriately from saml - user admin group added to federated user"() {
         given:
@@ -798,6 +794,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
             if (federatedUser != null) {
                 if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                    federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpName(username, DEFAULT_IDP_NAME)
                     sqlFederatedUserRepository.delete(federatedUser)
                 } else {
                     federatedUserRepository.deleteObject(federatedUser)
