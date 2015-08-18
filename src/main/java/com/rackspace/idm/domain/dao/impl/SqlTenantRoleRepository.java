@@ -10,9 +10,13 @@ import com.rackspace.idm.domain.sql.entity.SqlFederatedRoleRax;
 import com.rackspace.idm.domain.sql.entity.SqlTenantRole;
 import com.rackspace.idm.domain.sql.mapper.impl.FederatedRoleRaxMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.TenantRoleMapper;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import org.apache.commons.collections.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +26,8 @@ import java.util.List;
 
 @SQLComponent
 public class SqlTenantRoleRepository implements TenantRoleDao {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
     TenantRoleRepository tenantRoleRepository;
@@ -166,7 +172,14 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     public List<String> getIdsForUsersWithTenantRole(String roleId, int maxResult) {
         //TODO: update to work with federated user roles
         Pageable resultsSize = new PageRequest(0, maxResult);
-        return getUserIds(tenantRoleRepository.findByRoleId(roleId, resultsSize));
+        Page<SqlTenantRole> page = tenantRoleRepository.findByRoleId(roleId, resultsSize);
+
+        if (page.getTotalElements() > maxResult) {
+            logger.debug("Aborting loading users with role. Result size of {} will exceed limit of {}", page.getTotalElements(), maxResult);
+            throw new BadRequestException("Result size exceeded. Results limited to " + maxResult + " users.");
+        }
+
+        return getUserIds(page);
     }
 
     @Override
@@ -196,7 +209,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
         return tenantRole.getUserId();
     }
 
-    private List<String> getUserIds(List<SqlTenantRole> sqlTenantRoles) {
+    private List<String> getUserIds(Page<SqlTenantRole> sqlTenantRoles) {
         List<String> userIds = new ArrayList<String>();
         for(SqlTenantRole sqlTenantRole : sqlTenantRoles){
             userIds.add(sqlTenantRole.getActorId());

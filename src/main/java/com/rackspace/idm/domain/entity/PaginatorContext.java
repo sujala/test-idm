@@ -22,7 +22,7 @@ public class PaginatorContext<T> {
 
     private int offset;
     private int limit;
-    private int totalRecords;
+    private long totalRecords;
 
 
     public List<SearchResultEntry> getSearchResultEntryList() {

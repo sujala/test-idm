@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.sql.dao;
 import com.rackspace.idm.domain.sql.entity.SqlAssignmentId;
 import com.rackspace.idm.domain.sql.entity.SqlRole;
 import com.rackspace.idm.domain.sql.entity.SqlTenantRole;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,7 +25,7 @@ public interface TenantRoleRepository extends JpaSpecificationExecutor<SqlTenant
     List<SqlTenantRole> findByRoleId(String roleId);
 
     @EntityGraph(value = "SqlTenantRole.sqlRole", type = EntityGraph.EntityGraphType.FETCH)
-    List<SqlTenantRole> findByRoleId(String roleId, Pageable pageable);
+    Page<SqlTenantRole> findByRoleId(String roleId, Pageable pageable);
 
     @EntityGraph(value = "SqlTenantRole.sqlRole", type = EntityGraph.EntityGraphType.FETCH)
     List<SqlTenantRole> findByActorIdAndRoleId(String actorId, String roleId);

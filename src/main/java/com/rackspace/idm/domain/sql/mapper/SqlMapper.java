@@ -251,7 +251,10 @@ public abstract class SqlMapper<Entity, SQLEntity> {
     }
 
     public boolean fromSQL(Page<SQLEntity> sqlEntities, PaginatorContext<Entity> context) {
-        if (sqlEntities.getTotalPages() < sqlEntities.getNumber()) return false;
+        if (sqlEntities.getTotalPages() < sqlEntities.getNumber()) {
+            return false;
+        }
+        context.setTotalRecords(sqlEntities.getTotalElements());
 
         final List<Entity> entities = fromSQL(sqlEntities);
 
