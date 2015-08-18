@@ -21,7 +21,7 @@ public class DefaultPaginator<T> implements Paginator<T> {
 
     @Override
     public String createLinkHeader(UriInfo uriInfo, PaginatorContext<T> context) {
-        int totalRecords = context.getTotalRecords();
+        long totalRecords = context.getTotalRecords();
         int offset = context.getOffset();
         int limit = context.getLimit();
 
@@ -38,7 +38,7 @@ public class DefaultPaginator<T> implements Paginator<T> {
             }
 
             if ((offset + limit) < totalRecords) {
-                int lastIndex = getLastIndex(totalRecords, limit, offset);
+                long lastIndex = getLastIndex(totalRecords, limit, offset);
                 addComma(linkHeader);
                 linkHeader.append(makeLink(pathString, String.format(PAGE_FORMAT_STRING, lastIndex, limit), "last"));
 
@@ -52,8 +52,8 @@ public class DefaultPaginator<T> implements Paginator<T> {
         }
     }
 
-    protected int getLastIndex(int totalRecords, int limit, int offset) {
-        int index = (limit * ((totalRecords - offset) / limit)) + offset;
+    protected long getLastIndex(long totalRecords, int limit, int offset) {
+        long index = (limit * ((totalRecords - offset) / limit)) + offset;
         if (index == totalRecords) {
             return totalRecords - limit;
         }
