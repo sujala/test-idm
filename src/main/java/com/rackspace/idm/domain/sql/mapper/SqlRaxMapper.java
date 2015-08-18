@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.sql.mapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 
 import java.lang.reflect.ParameterizedType;
@@ -28,7 +29,7 @@ public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlM
     public SQLEntity toSQL(Entity entity, SQLEntity sqlEntity, boolean ignoreNulls) {
         final SQLEntity finalEntity = super.toSQL(entity, sqlEntity, ignoreNulls);
 
-        final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
+        final BeanWrapper sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
         SQLRaxEntity sqlRaxEntity = null;
         try {
             sqlRaxEntity = (SQLRaxEntity) sqlEntityWrapper.getPropertyValue(RAX_FIELD);
@@ -50,9 +51,9 @@ public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlM
             return sqlEntity;
         }
 
-        final BeanWrapperImpl entityWrapper = new BeanWrapperImpl(entity);
-        final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
-        final BeanWrapperImpl sqlRaxEntityWrapper = new BeanWrapperImpl(sqlRaxEntity);
+        final BeanWrapper entityWrapper = new BeanWrapperImpl(entity);
+        final BeanWrapper sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
+        final BeanWrapper sqlRaxEntityWrapper = new BeanWrapperImpl(sqlRaxEntity);
 
         final Map<String, String> declaredRaxFields = getDeclaredFields(sqlRaxEntityClass);
         overrideRaxFields(declaredRaxFields);
@@ -72,12 +73,12 @@ public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlM
         SQLRaxEntity sqlRaxEntity = null;
         entity = super.fromSQL(sqlEntity, ignoreNulls);
 
-        final BeanWrapperImpl entityWrapper = new BeanWrapperImpl(entity);
-        final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
+        final BeanWrapper entityWrapper = new BeanWrapperImpl(entity);
+        final BeanWrapper sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
 
         sqlRaxEntity = (SQLRaxEntity) sqlEntityWrapper.getPropertyValue(RAX_FIELD);
         if (sqlRaxEntity != null) {
-            final BeanWrapperImpl sqlRaxEntityWrapper = new BeanWrapperImpl(sqlRaxEntity);
+            final BeanWrapper sqlRaxEntityWrapper = new BeanWrapperImpl(sqlRaxEntity);
 
             final Map<String, String> declaredRaxFields = getDeclaredFields(sqlRaxEntityClass);
             overrideRaxFields(declaredRaxFields);

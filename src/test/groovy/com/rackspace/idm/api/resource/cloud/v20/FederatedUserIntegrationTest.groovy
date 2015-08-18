@@ -5,6 +5,8 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.RepositoryProfileResolver
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
@@ -17,6 +19,7 @@ import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHandler
+import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import org.apache.commons.lang.BooleanUtils
 import org.apache.log4j.Logger
 import org.opensaml.saml2.core.Response
@@ -41,7 +44,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     private static final Logger LOG = Logger.getLogger(FederatedUserIntegrationTest.class)
 
     @Autowired
-    FederatedUserDao ldapFederatedUserRepository
+    FederatedUserDao federatedUserRepository
 
     @Autowired
     TenantService tenantService
@@ -54,6 +57,9 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     DomainDao domainDao
+
+    @Autowired(required = false)
+    FederatedUserRepository sqlFederatedUserRepository
 
     def SamlAssertionFactory samlAssertionFactory = new SamlAssertionFactory()
 
@@ -170,7 +176,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
 
         when: "retrieve user from backend"
-        FederatedUser fedUser = ldapFederatedUserRepository.getUserById(authResponse.user.id)
+        FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
 
         then: "reflects current state"
         fedUser.id == authResponse.user.id
@@ -210,7 +216,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
 
         when: "retrieve user from backend"
-        FederatedUser fedUser = ldapFederatedUserRepository.getUserById(authResponse.user.id)
+        FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
 
         then: "reflects current state including groups"
         fedUser.id == authResponse.user.id
@@ -256,7 +262,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         verifyResponseFromSamlRequest(authResponse, username, userAdminEntity, Arrays.asList(rbacRole1))
 
         when: "retrieve user from backend"
-        FederatedUser fedUser = ldapFederatedUserRepository.getUserById(authResponse.user.id)
+        FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
 
         then: "reflects current state"
         fedUser.id == authResponse.user.id
@@ -560,7 +566,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
      * @param notExpectedRbacRoles
      */
     def void verifyResponseFromSamlRequestAndBackendRoles(authResponse, expectedUserName, User userAdminEntity, List<ClientRole> expectedRbacRoles = Collections.EMPTY_LIST, List<ClientRole> notExpectedRbacRoles = Collections.EMPTY_LIST) {
-        FederatedUser fedUser = ldapFederatedUserRepository.getUserById(authResponse.user.id)
+        FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
         verifyResponseFromSamlRequest(authResponse, expectedUserName, userAdminEntity, expectedRbacRoles, notExpectedRbacRoles)
         verifyUserHasRbacRoles(fedUser, expectedRbacRoles, notExpectedRbacRoles)
     }
@@ -789,9 +795,13 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
     def deleteFederatedUserQuietly(username) {
         try {
-            def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
             if (federatedUser != null) {
-                ldapFederatedUserRepository.deleteObject(federatedUser)
+                if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                    sqlFederatedUserRepository.delete(federatedUser)
+                } else {
+                    federatedUserRepository.deleteObject(federatedUser)
+                }
             }
         } catch (Exception e) {
             //eat but log

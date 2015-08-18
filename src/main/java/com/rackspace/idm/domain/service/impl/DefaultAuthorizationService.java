@@ -491,7 +491,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
             return;
         }
 
-        List<Tenant> adminTenants = tenantService.getTenantsForScopeAccessByTenantRoles(authScopeAccess);
+        List<Tenant> adminTenants = tenantService.getTenantsForUserByTenantRoles(user);
 
         for (Tenant tenant : adminTenants) {
             if (tenant.getTenantId().equals(tenantId)) {

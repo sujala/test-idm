@@ -57,67 +57,6 @@ public class DefaultTokenServiceTestOld {
     }
 
     @Test
-    public void doesTokenHaveApplicationRole_rolesExistAndAllIdsMatch_returnsTrue() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        TenantRole role = new TenantRole();
-        role.setRoleRsId("123");
-        role.setClientId("456");
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(role);
-        when(scopeAccessService.loadScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        when(tenantService.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(roles);
-        assertThat("boolean",defaultTokenService.doesTokenHaveApplicationRole(null,"456","123"),equalTo(true));
-    }
-
-    @Test
-    public void doesTokenHaveApplicationRole_rolesExistAndRoleIdsMatchAndClientIdsDoNotMatch_returnsFalse() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        TenantRole role = new TenantRole();
-        role.setRoleRsId("123");
-        role.setClientId("4");
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(role);
-        when(scopeAccessService.loadScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        when(tenantService.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(roles);
-        assertThat("boolean",defaultTokenService.doesTokenHaveApplicationRole(null,"456","123"),equalTo(false));
-    }
-
-    @Test
-    public void doesTokenHaveApplicationRole_rolesExistAndRoleIdsDoNotMatchAndClientIdsMatch_returnsFalse() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        TenantRole role = new TenantRole();
-        role.setRoleRsId("1");
-        role.setClientId("456");
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(role);
-        when(scopeAccessService.loadScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        when(tenantService.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(roles);
-        assertThat("boolean",defaultTokenService.doesTokenHaveApplicationRole(null,"456","123"),equalTo(false));
-    }
-
-    @Test
-    public void doesTokenHaveApplicationRole_rolesExistAndRoleIdsDoNotMatchAndClientIdsDoNotMatch_returnsFalse() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        TenantRole role = new TenantRole();
-        role.setRoleRsId("1");
-        role.setClientId("4");
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(role);
-        when(scopeAccessService.loadScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        when(tenantService.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(roles);
-        assertThat("boolean",defaultTokenService.doesTokenHaveApplicationRole(null,"456","123"),equalTo(false));
-    }
-
-    @Test
-    public void doesTokenHaveApplicationRole_rolesExistAndRoleListEmpty_returnsFalse() throws Exception {
-        ScopeAccess scopeAccess = new ScopeAccess();
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        when(scopeAccessService.loadScopeAccessByAccessToken(null)).thenReturn(scopeAccess);
-        when(tenantService.getTenantRolesForScopeAccess(scopeAccess)).thenReturn(roles);
-        assertThat("boolean",defaultTokenService.doesTokenHaveApplicationRole(null,"456","123"),equalTo(false));
-    }
-
-    @Test
     public void revokeAccessToken_isGoodAsAdminAndAuthorized_doesNothing() throws Exception {
         ScopeAccess scopeAccess = new ScopeAccess();
         when(scopeAccessService.getScopeAccessByAccessToken(null)).thenReturn(scopeAccess);

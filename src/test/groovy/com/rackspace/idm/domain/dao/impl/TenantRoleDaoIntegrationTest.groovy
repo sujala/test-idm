@@ -2,13 +2,17 @@ package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.config.RepositoryProfileResolver
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.ApplicationDao
+import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.rackspace.idm.exception.ClientConflictException
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,7 +22,7 @@ import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
+class TenantRoleDaoIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     private TenantRoleDao roleRepository
@@ -39,6 +43,12 @@ class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
     @Autowired
     IdentityProviderDao ldapIdentityProviderRepository
 
+    @Autowired(required = false)
+    FederatedUserRepository sqlFederatedUserRepository
+
+    @Autowired
+    DomainDao domainDao
+
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared def sharedRandom
     @Shared User user;
@@ -51,6 +61,9 @@ class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
     def setup() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
 
+        if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+            domainDao.addDomain(getDomain("$sharedRandom"))
+        }
         userRepository.addUser(getUser("$sharedRandom"))
         user = userRepository.getUserById("$sharedRandom")
 
@@ -68,7 +81,13 @@ class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
     def cleanup() {
         userRepository.deleteUser(user)
         applicationRepository.deleteApplication(application)
-        federatedUserRepository.deleteObject(federatedUser)
+        if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+            def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpName(federatedUser.username, Constants.DEFAULT_IDP_NAME)
+            if(federatedUser != null) sqlFederatedUserRepository.delete(federatedUser)
+        } else {
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(federatedUser.username, Constants.DEFAULT_IDP_NAME)
+            if(federatedUser != null) federatedUserRepository.deleteObject(federatedUser)
+        }
     }
 
     def "tenant role crud for user"() {
@@ -149,6 +168,9 @@ class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
 
         then:
         thrown(ClientConflictException)
+
+        cleanup:
+        roleRepository.deleteTenantRole(tenantRole)
     }
 
     def "delete tenant deletes one at a time"() {
@@ -194,6 +216,7 @@ class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
             it.username = "username$id"
             it.email = "username@test.com"
             it.password = 'Password1'
+            it.domainId="domain$id"
             return it
         }
     }
@@ -203,7 +226,7 @@ class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
             it.id = id
             it.username = "username$id"
             it.email = "username@test.com"
-            it.domainId="12345"
+            it.domainId="domain$id"
             it.region="ORD"
             it.federatedIdpUri = Constants.DEFAULT_IDP_URI
             return it
@@ -217,6 +240,18 @@ class LdapTenantRoleRepositoryIntegrationTest extends RootIntegrationTest {
             it.clientSecretObj = new ClientSecret()
             it.clientSecretObj.value = "secret"
             return it;
+        }
+    }
+
+    def getDomain(id) {
+        new Domain().with {
+            it.domainId = "domain$id"
+            it.enabled = true
+            it.name = "domain$id"
+            if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                it.uniqueId = "domain$id"
+            }
+            it
         }
     }
 

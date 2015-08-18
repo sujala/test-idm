@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.Domain
@@ -30,6 +31,9 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     TenantRoleDao tenantRoleDao
+
+    @Autowired
+    TenantDao tenantDao
 
     @Autowired
     FederatedUserDao federatedUserRepository
@@ -440,8 +444,8 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         staticIdmConfiguration.reset()
-        utils.deleteDomain(domainId)
         utils.deleteTenant(tenant.id)
+        utils.deleteDomain(domainId)
     }
 
     def "identity access roles can not be provided in saml assertions"() {
@@ -494,12 +498,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
     def void assertFederatedUserHasGlobalRole(FederatedUser user, role) {
         TenantRole roleOnUser = tenantRoleDao.getTenantRoleForUser(user, role.id)
         assert roleOnUser != null
-        if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            def identityTenant = identityConfig.getReloadableConfig().getIdentityRoleDefaultTenant()
-            assert roleOnUser.tenantIds.contains(identityTenant)
-        } else {
-            assert CollectionUtils.isEmpty(roleOnUser.tenantIds)
-        }
+        assert CollectionUtils.isEmpty(roleOnUser.tenantIds)
     }
 
     def void assertFederatedUserHasRoleOnTenant(FederatedUser user, role, tenantId) {

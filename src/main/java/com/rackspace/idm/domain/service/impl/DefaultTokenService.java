@@ -45,22 +45,6 @@ public class DefaultTokenService implements TokenService {
         return this.scopeAccessService.getScopeAccessByAccessToken(token);
     }
 
-	@Override
-	public boolean doesTokenHaveApplicationRole(String token,String applicationId, String roleId) {
-		ScopeAccess scopeAccess = this.scopeAccessService
-				.loadScopeAccessByAccessToken(token);
-
-		List<TenantRole> roles = tenantService.getTenantRolesForScopeAccess(scopeAccess);
-		for (TenantRole role : roles) {
-			if (role.getRoleRsId().equals(roleId)
-					&& role.getClientId().equals(applicationId)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
     @Override
     public void revokeAccessToken(String tokenStringRequestingDelete,
         String tokenToDelete) {

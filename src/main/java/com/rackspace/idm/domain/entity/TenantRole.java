@@ -25,7 +25,7 @@ public class TenantRole implements Auditable, UniqueId {
     private String roleRsId;
 
     @LDAPField(attribute = LdapRepository.ATTR_TENANT_RS_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
-    private Set<String> tenantIds;
+    private Set<String> tenantIds = new HashSet<String>();
 
     @Mapping("serviceId")
     @LDAPField(attribute = LdapRepository.ATTR_CLIENT_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = true)

@@ -3,10 +3,12 @@ package com.rackspace.idm.domain.sql.mapper;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import org.apache.commons.codec.binary.Base64;
+import org.hibernate.collection.spi.PersistentCollection;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.BeansException;
 import org.springframework.data.domain.Page;
@@ -67,7 +69,7 @@ public abstract class SqlMapper<Entity, SQLEntity> {
         return sqlEntity;
     }
 
-    protected final void setToSQL(Map<String, String> declaredFields, BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper, Class<?> entityClass, boolean ignoreNulls) {
+    protected final void setToSQL(Map<String, String> declaredFields, BeanWrapper entityWrapper, BeanWrapper sqlEntityWrapper, Class<?> entityClass, boolean ignoreNulls) {
         final Set<String> ignored = getIgnoredSetFields();
         for (String field : declaredFields.keySet()) {
             if (!ignored.contains(field) && sqlEntityWrapper.isWritableProperty(field)) {
@@ -77,6 +79,7 @@ public abstract class SqlMapper<Entity, SQLEntity> {
                     final boolean deleteNullValues = entityWrapper.getPropertyTypeDescriptor(propertyName).hasAnnotation(DeleteNullValues.class);
                     if (value != null || !ignoreNulls || deleteNullValues) {
                         value = convertBase64(value, field, entityClass);
+                        value = convertPersistentCollection(value, field, sqlEntityWrapper);
                         sqlEntityWrapper.setPropertyValue(field, value);
                     }
                 } catch (BeansException e) {
@@ -84,6 +87,17 @@ public abstract class SqlMapper<Entity, SQLEntity> {
                 }
             }
         }
+    }
+
+    private Object convertPersistentCollection(Object value, String field, BeanWrapper sqlEntityWrapper) {
+        Object original = sqlEntityWrapper.getPropertyValue(field);
+        if(original instanceof PersistentCollection && original instanceof Collection && value instanceof Collection) {
+            Collection persistentSet = (Collection) original;
+            persistentSet.clear();
+            persistentSet.addAll((Collection) value);
+            return persistentSet;
+        }
+        return value;
     }
 
     private void setExtraToSQL(BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper) {
@@ -108,7 +122,7 @@ public abstract class SqlMapper<Entity, SQLEntity> {
         sqlEntityWrapper.setPropertyValue(EXTRA_FIELD, extra.toJSONString());
     }
 
-    private JSONObject getExtraObject(BeanWrapperImpl sqlEntityWrapper) {
+    private JSONObject getExtraObject(BeanWrapper sqlEntityWrapper) {
         try {
             final String jsonString = (String) sqlEntityWrapper.getPropertyValue(EXTRA_FIELD);
             if (jsonString != null) {
@@ -134,8 +148,8 @@ public abstract class SqlMapper<Entity, SQLEntity> {
         try {
             entity = entityClass.newInstance();
 
-            final BeanWrapperImpl entityWrapper = new BeanWrapperImpl(entity);
-            final BeanWrapperImpl sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
+            final BeanWrapper entityWrapper = new BeanWrapperImpl(entity);
+            final BeanWrapper sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
 
             final Map<String, String> declaredFields = getDeclaredFields(sqlEntityClass);
             overrideFields(declaredFields);
@@ -151,7 +165,7 @@ public abstract class SqlMapper<Entity, SQLEntity> {
         return entity;
     }
 
-    protected final void setFromSQL(Map<String, String> declaredFields, BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper, Class<?> entityType, boolean ignoreNulls) {
+    protected final void setFromSQL(Map<String, String> declaredFields, BeanWrapper entityWrapper, BeanWrapper sqlEntityWrapper, Class<?> entityType, boolean ignoreNulls) {
         final Set<String> ignored = getIgnoredSetFields();
         for (String field : declaredFields.keySet()) {
             if (!ignored.contains(field) && entityWrapper.isWritableProperty(declaredFields.get(field))) {
@@ -168,7 +182,7 @@ public abstract class SqlMapper<Entity, SQLEntity> {
         }
     }
 
-    private void setExtraFromSQL(BeanWrapperImpl entityWrapper, BeanWrapperImpl sqlEntityWrapper) {
+    private void setExtraFromSQL(BeanWrapper entityWrapper, BeanWrapper sqlEntityWrapper) {
         final List<String> extraAttributes = getExtraAttributes();
         if (extraAttributes.size() > 0) {
             final JSONObject jsonObject = getExtraObject(sqlEntityWrapper);

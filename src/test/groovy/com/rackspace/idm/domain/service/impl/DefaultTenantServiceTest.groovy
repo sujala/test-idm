@@ -175,14 +175,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
     }
 
-    def "if scope access for tenant roles for scopeAccess with null scopeAccess returns IllegalState" () {
-        when:
-        service.getTenantRolesForScopeAccess(null)
-
-        then:
-        thrown(IllegalStateException)
-    }
-
     def "getTenantRolesForClientRole uses DAO to get all TenantRoles for ClientRole"() {
         given:
         def role = entityFactory.createClientRole()
