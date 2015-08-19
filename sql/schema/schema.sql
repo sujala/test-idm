@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.6.24, for osx10.10 (x86_64)
+-- MySQL dump 10.13  Distrib 5.5.44, for debian-linux-gnu (x86_64)
 --
 -- Host: 127.0.0.1    Database: keystone
 -- ------------------------------------------------------
@@ -493,7 +493,7 @@ DROP TABLE IF EXISTS `migrate_version`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `migrate_version` (
   `repository_id` varchar(250) NOT NULL,
-  `repository_path` text,
+  `repository_path` mediumtext,
   `version` int(11) DEFAULT NULL,
   PRIMARY KEY (`repository_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -994,6 +994,24 @@ CREATE TABLE `user` (
   UNIQUE KEY `ixu_user_name_domain_id` (`domain_id`,`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = latin1 */ ;
+/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET collation_connection  = latin1_swedish_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`keystone`@`%`*/ /*!50003 TRIGGER 
+user_updated_timestamp BEFORE UPDATE ON user
+FOR EACH ROW
+UPDATE user_rax set updated = NOW() where id = OLD.id */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `user_certificate_rax`
@@ -1050,8 +1068,8 @@ CREATE TABLE `user_rax` (
   `api_key` varchar(64) DEFAULT NULL,
   `nast_id` varchar(64) DEFAULT NULL,
   `region` varchar(64) DEFAULT NULL,
-  `created` datetime(6) DEFAULT NULL,
-  `updated` datetime(6) DEFAULT NULL,
+  `created` datetime(6) DEFAULT CURRENT_TIMESTAMP(6),
+  `updated` datetime(6) DEFAULT CURRENT_TIMESTAMP(6),
   `password_failure_date` datetime(6) DEFAULT NULL,
   `salt` varchar(64) DEFAULT NULL,
   `token_format` varchar(7) DEFAULT NULL,
@@ -1069,6 +1087,24 @@ CREATE TABLE `user_rax` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = latin1 */ ;
+/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET collation_connection  = latin1_swedish_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = '' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`keystone`@`%`*/ /*!50003 TRIGGER 
+user_rax_updated_timestamp BEFORE UPDATE ON user_rax
+FOR EACH ROW
+SET NEW.updated = NOW() */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `whitelisted_config`
@@ -1095,4 +1131,4 @@ CREATE TABLE `whitelisted_config` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-08-14 16:53:10
+-- Dump completed on 2015-08-19 17:05:05
