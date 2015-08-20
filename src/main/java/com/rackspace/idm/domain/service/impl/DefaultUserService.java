@@ -1239,6 +1239,7 @@ public class DefaultUserService implements UserService {
         tenant.setName(tenantId);
         tenant.setDisplayName(tenantId);
         tenant.setEnabled(true);
+        tenant.setDomainId(domainId);
         attachEndpointsToTenant(tenant, endpointService.getBaseUrlsByBaseUrlType(baseUrlType));
 
         tenantService.addTenant(tenant);
