@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.sql.mapper;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.cxf.common.util.StringUtils;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -77,7 +78,7 @@ public abstract class SqlMapper<Entity, SQLEntity> {
                     final String propertyName = declaredFields.get(field);
                     Object value = entityWrapper.getPropertyValue(propertyName);
                     final boolean deleteNullValues = entityWrapper.getPropertyTypeDescriptor(propertyName).hasAnnotation(DeleteNullValues.class);
-                    if (value != null || !ignoreNulls || deleteNullValues) {
+                    if (isValid(value) || !ignoreNulls || deleteNullValues) {
                         value = convertBase64(value, field, entityClass);
                         value = convertPersistentCollection(value, field, sqlEntityWrapper);
                         sqlEntityWrapper.setPropertyValue(field, value);
@@ -87,6 +88,13 @@ public abstract class SqlMapper<Entity, SQLEntity> {
                 }
             }
         }
+    }
+
+    private boolean isValid(Object value){
+        if(value == null){
+           return false;
+        }
+        return !(value instanceof String) || !StringUtils.isEmpty((String) value);
     }
 
     private Object convertPersistentCollection(Object value, String field, BeanWrapper sqlEntityWrapper) {
