@@ -46,10 +46,10 @@ public class SqlUserRax {
     @Column(name = "region")
     private String region;
 
-    @Column(name = "created")
+    @Column(name = "created", updatable = false, insertable = false)
     private Date created;
 
-    @Column(name = "updated")
+    @Column(name = "updated", updatable = false, insertable = false)
     private Date updated;
 
     @Column(name = "salt")
