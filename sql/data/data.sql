@@ -1516,24 +1516,6 @@ INSERT INTO `user` VALUES ('d2d1adee553144ada948e03d1f5503f1','keystone_user_man
 INSERT INTO `user` VALUES ('d8f1b8df14c844d9919aee4e19a2f6f9','keystone_mfa_user_admin','{}','{SSHA512}6NmWxePZPI101gxL3FuyoEDE95yAWvHPQOodY9/EYmx5L3MO1BOAA8hxTC59kvOMgIm3MmBylzFxoxhNHvXN8ATq9+g=',1,'78543995','78543995');
 INSERT INTO `user` VALUES ('e2655b97cfe848b796097c2073b174e7','cloudIdentitySA2','{\"email\": \"new_email_2_814159@example.com\"}','{SSHA512}k1xmvdFrf5WRgmZobev5WZXuF3uGRx15hE5ZKYCX3HTEluP2JfHQFmdSIq1wuAfgd1PE8FZ+X+pcgIHI5KrwtFuzrwQ=',1,'f7c212c05efc44a9957bc8b48d0a071a',NULL);
 INSERT INTO `user` VALUES ('fa9ddbf7cc904a75b8bd40c26bc738cd','keystone_identity_admin','{}','{SSHA512}orFD4KiiB2w6X+iC/iEkS/DWetQL1wGtcQDd+tjrV1sqNRvqCnOYatbzj+FJyEVS/nTfoIaesRpxfAXWuFace3akz9k=',1,'78543985','78543985');
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
-/*!50003 SET collation_connection  = latin1_swedish_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`keystone`@`%`*/ /*!50003 TRIGGER 
-user_updated_timestamp BEFORE UPDATE ON user
-FOR EACH ROW
-UPDATE user_rax set updated = NOW() where id = OLD.id */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Dumping data for table `user_certificate_rax`
@@ -1582,24 +1564,6 @@ INSERT INTO `user_rax` VALUES ('d2d1adee553144ada948e03d1f5503f1',NULL,NULL,'201
 INSERT INTO `user_rax` VALUES ('d8f1b8df14c844d9919aee4e19a2f6f9',NULL,NULL,'2015-01-15 22:17:01.000000',0,NULL,NULL,NULL,NULL,NULL,'cBoF/yUr7bFU8DrFOGNiEw==','MossoCloudFS_78543995','ORD',NULL,NULL,NULL,NULL,NULL,'fb6c00852e404263b745419dd761d968',NULL,NULL,1,1,'DUMEPCV67EA3I30G0TBM','ACTIVE',NULL,NULL,NULL,NULL);
 INSERT INTO `user_rax` VALUES ('e2655b97cfe848b796097c2073b174e7',NULL,NULL,'2013-12-13 20:03:25.000000',0,'0',NULL,NULL,NULL,'F1z2ahKSquHcDr3Zid+LnULuVb50Z1o/+BSeTvrf/wo=','s8GwNbai8iFtjP7M7K8LcBt4Tbl3ZtVd8Dj7YSffflHsMR74vx4uEfm2A2F+L9JM',NULL,'ORD',NULL,NULL,NULL,'1a 0b 8c 92 88 dd df 7c 4c 68 e8 00 77 7e 07 6d',NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,NULL);
 INSERT INTO `user_rax` VALUES ('fa9ddbf7cc904a75b8bd40c26bc738cd',NULL,NULL,'2014-10-06 19:12:16.000000',0,'0',NULL,NULL,NULL,NULL,'YApdWaAiVN4NUS5tcSxS1Zn3jG9QI2yWA+RHI4XeR4ld0acdWFvaiTby2f9hTlZV','MossoCloudFS_78543985','ORD',NULL,NULL,NULL,'30 b4 4c 3b 26 62 9a c3 09 9b 71 33 32 4b 93 d4',NULL,NULL,NULL,NULL,0,0,NULL,NULL,NULL,NULL,NULL,NULL);
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
-/*!50003 SET collation_connection  = latin1_swedish_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`keystone`@`%`*/ /*!50003 TRIGGER 
-user_rax_updated_timestamp BEFORE UPDATE ON user_rax
-FOR EACH ROW
-SET NEW.updated = NOW() */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Dumping data for table `whitelisted_config`
@@ -1612,4 +1576,4 @@ DELIMITER ;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-08-19 17:05:06
+-- Dump completed on 2015-08-20 13:34:49
