@@ -31,11 +31,10 @@ public class SqlDomain {
     @Column(name = "extra")
     private String extra;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "domain")
+    @OneToMany(cascade = {CascadeType.DETACH, CascadeType.REFRESH, CascadeType.MERGE}, fetch = FetchType.EAGER, mappedBy = "domain")
     private Set<SqlProject> sqlProject = new HashSet<SqlProject>();
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "id", referencedColumnName = "id", nullable = false)
     private SqlDomainRax rax;
-
 }
