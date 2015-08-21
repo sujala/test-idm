@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import org.junit.Rule
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.slf4j.Logger
@@ -7,6 +8,7 @@ import org.slf4j.LoggerFactory
 import spock.lang.Shared
 import testHelpers.ConcurrentStageTaskRunner
 import testHelpers.RootIntegrationTest
+import testHelpers.junit.ConditionalIgnoreRule
 
 /**
  */
@@ -21,6 +23,8 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
     public static final String DEFAULT_USER_USERNAME_PREFIX = "defaultUser"
 
     public static final String DEFAULT_PASSWORD = "Password1"
+    public static final String DEFAULT_APIKEY = "0123456789"
+
 
     /**
      * Random string generated for entire test class. Same for all feature methods.
@@ -43,6 +47,10 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
 
     @Shared
     def ConcurrentStageTaskRunner concurrentStageTaskRunner = new ConcurrentStageTaskRunner()
+
+    @Rule
+    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
+
 
     /**
      * Like most other tests, this test class depends on a pre-existing service admin (authQE)
@@ -92,6 +100,11 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
         return token;
     }
 
+    def authenticateApiKey(String userName, String apiKey = DEFAULT_APIKEY) {
+        def token = cloud20.authenticateApiKey(userName, apiKey).getEntity(AuthenticateResponse).value.token.id
+        return token;
+    }
+
     def deleteUserQuietly(user) {
         if (user != null) {
             try {
@@ -105,6 +118,7 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
     def createUserAdmin(String callerToken = specificationIdentityAdminToken, String adminUsername = USER_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
         cloud20.createUser(callerToken, v2Factory.createUserForCreate(adminUsername, "display", adminUsername + "@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
         def userAdmin = cloud20.getUserByName(callerToken, adminUsername).getEntity(org.openstack.docs.identity.api.v2.User).value
+        def createApiKey = cloud20.addApiKeyToUser(callerToken, userAdmin.id, v2Factory.createApiKeyCredentials(userAdmin.username, DEFAULT_APIKEY))
         return userAdmin;
     }
 

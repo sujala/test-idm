@@ -13,7 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ResourceUtils;
 
+import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Locale;
 
@@ -111,6 +113,10 @@ public class EncryptedSessionIdReaderWriter implements SessionIdReaderWriter {
     private Crypter initCrypter() {
         try {
             String keyLocation = config.getString(MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT);
+            try {
+                keyLocation = ResourceUtils.getURL(keyLocation).getPath();
+            } catch (FileNotFoundException e) {
+            }
             return new Crypter(keyLocation);
         } catch (KeyczarException e) {
             LOG.error("An error occurred creating crypter to encrypt/decrypt session ids for multifactor authentication", e);
