@@ -18,10 +18,11 @@ public class BypassDeviceMapper extends SqlMapper<BypassDevice, SqlBypassDevice>
     private static final Pattern REGEXP = Pattern.compile(String.format(FORMAT, ID_FORMAT, ID_FORMAT));
 
     @Override
-    public SqlBypassDevice toSQL(BypassDevice bypassDevice) {
-        final SqlBypassDevice device = super.toSQL(bypassDevice);
+    public SqlBypassDevice toSQL(BypassDevice bypassDevice, SqlBypassDevice sqlBypassDevice) {
+        final SqlBypassDevice device = super.toSQL(bypassDevice, sqlBypassDevice);
         if (device != null) {
-            device.setCodes(new HashSet<SqlBypassCode>());
+            //clearing the set b/c we are about to set all the remaining valid codes from the ldap device
+            device.getCodes().clear();
             device.setUserId(fromUniqueIdToUserId(bypassDevice.getUniqueId()));
             for (String code : bypassDevice.getBypassCodes()) {
                 final SqlBypassCode sqlCode = new SqlBypassCode();

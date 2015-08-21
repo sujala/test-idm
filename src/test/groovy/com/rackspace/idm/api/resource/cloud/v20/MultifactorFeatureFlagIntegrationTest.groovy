@@ -150,7 +150,8 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         setFlagSettings(flagSettingsFile)
         def settings = v2Factory.createMultiFactorSettings(true)
         def user = createUserAdmin()
-        def token = authenticate(user.username)
+        utils.addApiKeyToUser(user)
+        def token = utils.authenticateApiKey(user.username).token.id
         if(addMfaRole) {
             def role = roleService.getRoleByName(config.getString("cloudAuth.multiFactorBetaRoleName"))
             cloud20.addUserRole(utils.getServiceAdminToken(), user.id, role.id)
@@ -161,7 +162,6 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
         }
         if(enableMfa) {
             cloud20.updateMultiFactorSettings(token, user.id, settings, requestContentMediaType, acceptMediaType)
-            resetTokenExpiration(token)
         }
 
         when:
@@ -432,14 +432,6 @@ class MultifactorFeatureFlagIntegrationTest extends RootConcurrentIntegrationTes
             utils.verifyPhone(token, user.id, responsePhone.id, constantVerificationCode)
         }
         responsePhone
-    }
-
-    def void resetTokenExpiration(tokenString) {
-        Date now = new Date()
-        Date future = new Date(now.year + 1, now.month, now.day)
-        def userScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenString)
-        userScopeAccess.setAccessTokenExp(future)
-        scopeAccessRepository.updateScopeAccess(userScopeAccess)
     }
 
 }

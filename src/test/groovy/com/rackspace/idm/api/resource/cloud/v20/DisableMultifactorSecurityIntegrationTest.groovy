@@ -261,14 +261,6 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
         }
     }
 
-    def void resetTokenExpiration(token) {
-        def scopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(token)
-        Date now = new Date()
-        Date future = new Date(now.year + 1, now.month, now.day)
-        scopeAccess.setAccessTokenExp(future)
-        scopeAccessRepository.updateScopeAccess(scopeAccess)
-    }
-
     def cleanupMfa(user, token) {
         user = utils.getUserById(user.id)
         if(user.multiFactorEnabled) {
@@ -292,15 +284,8 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
     }
 
     def resetAndGetToken(user) {
-        user = userRepository.getUserById(user.id)
-        def token = scopeAccessRepository.getMostRecentScopeAccessForUser(user)
-        if(token != null) {
-            resetTokenExpiration(token.accessTokenString)
-            token = scopeAccessRepository.getMostRecentScopeAccessForUser(user)
-            return token.accessTokenString
-        } else {
-            return utils.getToken(user.username)
-        }
+        utils.addApiKeyToUser(user)
+        return utils.authenticateApiKey(user.username).token.id
     }
 
 }
