@@ -6,9 +6,11 @@ import com.rackspace.idm.domain.dao.impl.SqlDomainRepository;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.sql.dao.DomainRepository;
 import com.rackspace.idm.domain.sql.dao.EndpointRepository;
+import com.rackspace.idm.domain.sql.entity.SqlDomain;
 import com.rackspace.idm.domain.sql.entity.SqlEndpoint;
 import com.rackspace.idm.domain.sql.entity.SqlProject;
 import com.rackspace.idm.domain.sql.mapper.SqlMapper;
+import com.rackspace.idm.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
@@ -43,6 +45,7 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
                 tenant.getBaseUrlIds().add(legacyId);
             }
         }
+
         for (SqlEndpoint sqlEndpoint: entity.getV1Defaults()) {
             String legacyId = sqlEndpoint.getLegacyEndpointId();
             if (!tenant.getV1Defaults().contains(legacyId)) {
@@ -63,6 +66,7 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
             return null;
         }
 
+        mapDomain(entity, sqlProject);
         return mapEndpointIdsToProject(entity, sqlProject);
     }
 
@@ -74,7 +78,18 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
             return null;
         }
 
+        mapDomain(entity, sqlProject);
         return mapEndpointIdsToProject(entity, sqlEntity);
+    }
+
+    private void mapDomain(Tenant tenant, SqlProject project) {
+        if (tenant.getDomainId() != null) {
+            SqlDomain domain = domainRepository.findOne(tenant.getDomainId());
+            if (domain == null) {
+                throw new NotFoundException("Domain does not exist");
+            }
+            project.setDomain(domain);
+        }
     }
 
     private SqlProject mapEndpointIdsToProject(Tenant entity, SqlProject sqlEntity) {

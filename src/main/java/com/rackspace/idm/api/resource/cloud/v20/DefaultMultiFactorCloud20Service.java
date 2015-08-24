@@ -408,10 +408,12 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             throw new BadRequestException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
         }
 
+        //TODO: FIXME: pass the user not the ID
         MfaAuthenticationResponse response = multiFactorService.verifyPasscode(sessionId.getUserId(), passcode);
         if (response.getDecision() == MfaAuthenticationDecision.ALLOW) {
             return createSuccessfulSecondFactorResponse(user, response, sessionId);
         } else if (response.getDecisionReason() == MfaAuthenticationDecisionReason.LOCKEDOUT) {
+            user = userService.getUserById(user.getId());
             emailClient.asyncSendMultiFactorLockedOutMessage(user);
             user.setMultiFactorState(BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED);
             userService.updateUserForMultiFactor(user);

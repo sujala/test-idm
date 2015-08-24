@@ -31,7 +31,7 @@ public class SqlProject {
     @Column(name = "enabled")
     private Boolean enabled;
 
-    @ManyToOne(optional = false, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "domain_id", nullable = false)
     private SqlDomain domain;
 

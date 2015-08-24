@@ -4,6 +4,7 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 @Data
@@ -29,6 +30,6 @@ public class SqlBypassDevice {
     private Integer iterations;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "id")
-    private Set<SqlBypassCode> codes;
+    private Set<SqlBypassCode> codes = new HashSet<SqlBypassCode>();
 
 }

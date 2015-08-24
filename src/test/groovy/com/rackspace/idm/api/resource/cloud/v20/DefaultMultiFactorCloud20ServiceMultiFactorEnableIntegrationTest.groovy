@@ -73,7 +73,8 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
      */
     def setup() {
         userAdmin = createUserAdmin()
-        userAdminToken = authenticate(userAdmin.username)
+        utils.addApiKeyToUser(userAdmin)
+        userAdminToken = utils.authenticateApiKey(userAdmin.username).token.id
         userScopeAccess = (UserScopeAccess)scopeAccessRepository.getScopeAccessByAccessToken(userAdminToken)
     }
 
@@ -156,6 +157,8 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
 
         then:
         cloud20.validateToken(specificationIdentityAdminToken, apiToken).status == HttpStatus.SC_OK
+        //sleep for a second to avoid race condition with docker image
+        sleep(1000)
         cloud20.validateToken(specificationIdentityAdminToken, pwdToken).status == HttpStatus.SC_NOT_FOUND
     }
 
@@ -166,7 +169,6 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         verifyPhone()
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
-        resetTokenExpiration()
         User intialUserAdmin = userRepository.getUserById(userAdmin.getId())
         assert intialUserAdmin.isMultiFactorEnabled()
         assert intialUserAdmin.getExternalMultiFactorUserId() != null
@@ -255,7 +257,6 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
 
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
-        resetTokenExpiration()
         settings.setEnabled(false)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
         User initialUserAdmin = userRepository.getUserById(userAdmin.getId())
@@ -369,7 +370,6 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
 
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
-        resetTokenExpiration()
 
         when:
         def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings, requestContentMediaType, acceptMediaType)
@@ -406,7 +406,6 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
 
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
-        resetTokenExpiration()
 
         //here we're hacking ldap to get the data into an inconsistent state for testing purposes
         User userEntity = userRepository.getUserById(userAdmin.id)
@@ -467,27 +466,21 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         utils.verifyPhone(defaultUserToken, defaultUser.id, defaultUserResponsePhone.id, constantVerificationCode)
     }
 
-    def void resetTokenExpiration(token = userScopeAccess) {
-        Date now = new Date()
-        Date future = new Date(now.year + 1, now.month, now.day)
-        token.setAccessTokenExp(future)
-        scopeAccessRepository.updateScopeAccess(token)
-    }
-
     def void enableMultiFactor(token, user, scopeAccess) {
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         cloud20.updateMultiFactorSettings(token, user.id, settings)
-        resetTokenExpiration(scopeAccess)
     }
 
     def void createMultiFactorDefaultUser() {
         userManager = createDefaultUser(userAdminToken)
         utils.addRoleToUser(userManager, USER_MANAGE_ROLE_ID)
-        userManagerToken = authenticate(userManager.username)
+        utils.addApiKeyToUser(userManager)
+        userManagerToken = utils.authenticateApiKey(userManager.username).token.id
         userManagerScopeAccess = (UserScopeAccess) scopeAccessRepository.getScopeAccessByAccessToken(userManagerToken)
 
         defaultUser = createDefaultUser(userManagerToken)
-        defaultUserToken = authenticate(defaultUser.username)
+        utils.addApiKeyToUser(defaultUser)
+        defaultUserToken = utils.authenticateApiKey(defaultUser.username).token.id
         defaultUserScopeAccess = (UserScopeAccess) scopeAccessRepository.getScopeAccessByAccessToken(defaultUserToken)
     }
 
@@ -699,7 +692,6 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         addDefaultUserPhone()
         verifyDefaultUserPhone()
         enableMultiFactor(defaultUserToken, defaultUser, defaultUserScopeAccess)
-        resetTokenExpiration()
 
         def adminToken
         switch (tokenType) {

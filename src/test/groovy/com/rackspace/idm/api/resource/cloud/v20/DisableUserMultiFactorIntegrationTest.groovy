@@ -201,12 +201,4 @@ class DisableUserMultiFactorIntegrationTest extends RootConcurrentIntegrationTes
         responsePhone
     }
 
-    def void resetTokenExpiration(tokenString) {
-        Date now = new Date()
-        Date future = new Date(now.year + 1, now.month, now.day)
-        def userScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenString)
-        userScopeAccess.setAccessTokenExp(future)
-        scopeAccessRepository.updateScopeAccess(userScopeAccess)
-    }
-
 }

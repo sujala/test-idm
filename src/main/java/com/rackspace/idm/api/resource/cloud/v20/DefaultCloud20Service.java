@@ -533,10 +533,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenant.setId(tenant.getName());
             final Tenant savedTenant = this.tenantConverterCloudV20.fromTenant(tenant);
 
+            // add the creating user's domain to the tenant.
+            // domain_id is required as part of keystone schema
+            EndUser user = getUser(scopeAccess);
+            savedTenant.setDomainId(user.getDomainId());
+
             // Saves the Tenant
             this.tenantService.addTenant(savedTenant);
 
-            // Keystone V3 compatibility
             addTenantKeystoneV3Data(savedTenant, scopeAccess);
 
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();

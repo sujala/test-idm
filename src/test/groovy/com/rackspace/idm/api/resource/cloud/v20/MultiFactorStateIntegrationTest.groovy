@@ -77,10 +77,10 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         given:
         def settings = v2Factory.createMultiFactorSettings(true)
         def user = createUserAdmin()
-        def token = utils.authenticate(user).token.id
-        def responsePhone = addPhone(token, user)
+        utils.addApiKeyToUser(user)
+        def token = utils.authenticateApiKey(user.username).token.id
+        addPhone(token, user)
         cloud20.updateMultiFactorSettings(token, user.id, settings)
-        resetTokenExpiration(token)
 
         when: "the mfa user's mfa state is initially 'ACTIVE'"
         def userById = utils.getUserById(user.id)
@@ -111,10 +111,10 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         given:
         def settings = v2Factory.createMultiFactorSettings(true)
         def user = createUserAdmin()
-        def token = utils.authenticate(user).token.id
+        utils.addApiKeyToUser(user)
+        def token = utils.authenticateApiKey(user.username).token.id
         def responsePhone = addPhone(token, user)
         cloud20.updateMultiFactorSettings(token, user.id, settings)
-        resetTokenExpiration(token)
 
         when: "the mfa user's mfa state is initially 'ACTIVE'"
         def userById = utils.getUserById(user.id)
@@ -144,13 +144,13 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         given:
         def settings = v2Factory.createMultiFactorSettings(true)
         def user = createUserAdmin()
-        def token = utils.authenticate(user).token.id
+        utils.addApiKeyToUser(user)
+        def token = utils.authenticateApiKey(user.username).token.id
         def responsePhone = addPhone(token, user)
         cloud20.updateMultiFactorSettings(token, user.id, settings)
         def directoryUser = userDao.getUserById(user.id)
         directoryUser.multiFactorState = null
         userDao.updateUserAsIs(directoryUser)
-        resetTokenExpiration(token)
 
         when: "user by ID call"
         def userById = cloud20.getUserById(utils.getServiceAdminToken(), user.id, acceptContentType).getEntity(User)
@@ -240,13 +240,13 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
          given:
         def settings = v2Factory.createMultiFactorSettings(true)
         def user = createUserAdmin()
-        def token = utils.authenticate(user).token.id
+        utils.addApiKeyToUser(user)
+        def token = utils.authenticateApiKey(user.username).token.id
         def responsePhone = addPhone(token, user)
         cloud20.updateMultiFactorSettings(token, user.id, settings)
         def directoryUser = userDao.getUserById(user.id)
         directoryUser.multiFactorState = 'INVALID'
         userDao.updateUserAsIs(directoryUser)
-        resetTokenExpiration(token)
 
         when: "user by ID call"
         def userByIdRequest = cloud20.getUserById(token, user.id)
@@ -287,13 +287,13 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         given:
         def settings = v2Factory.createMultiFactorSettings(true)
         def user = createUserAdmin()
-        def token = utils.authenticate(user).token.id
+        utils.addApiKeyToUser(user)
+        def token = utils.authenticateApiKey(user.username).token.id
         def responsePhone = addPhone(token, user)
         cloud20.updateMultiFactorSettings(token, user.id, settings)
         def directoryUser = userDao.getUserById(user.id)
         directoryUser.multifactorEnabled = Boolean.FALSE
         userDao.updateUserAsIs(directoryUser)
-        resetTokenExpiration(token)
 
         when: "user by ID call"
         def userById = cloud20.getUserById(utils.getServiceAdminToken(), user.id, acceptContentType).getEntity(User)
@@ -346,10 +346,10 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
 
         def settings = v2Factory.createMultiFactorSettings(true)
         def user = createUserAdmin()
-        def token = utils.authenticate(user).token.id
+        utils.addApiKeyToUser(user)
+        def token = utils.authenticateApiKey(user.username).token.id
         def responsePhone = addPhone(token, user)
         cloud20.updateMultiFactorSettings(token, user.id, settings)
-        resetTokenExpiration(token)
 
         when: "loading the user through the api"
         def userById = utils.getUserById(user.id)
@@ -407,8 +407,9 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
 
         def settings = v2Factory.createMultiFactorSettings(true)
         def responsePhone = addPhone(defaultUserToken, defaultUser)
+        utils.addApiKeyToUser(defaultUser)
+        defaultUserToken = utils.authenticateApiKey(defaultUser.username).token.id
         cloud20.updateMultiFactorSettings(defaultUserToken, defaultUser.id, settings)
-        resetTokenExpiration(defaultUserToken)
 
         when: "loading the user through the api"
         def userById = utils.getUserById(defaultUser.id)
@@ -470,18 +471,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
             utils.verifyPhone(token, user.id, responsePhone.id, constantVerificationCode)
         }
         responsePhone
-    }
-
-    def void resetTokenExpiration(tokenString) {
-        try {
-            Date now = new Date()
-            Date future = new Date(now.year + 1, now.month, now.day)
-            def userScopeAccess = scopeAccessService.getScopeAccessByAccessToken(tokenString)
-            userScopeAccess.setAccessTokenExp(future)
-            scopeAccessRepository.updateScopeAccess(userScopeAccess)
-        } catch (Exception e) {
-            // FIXME: Remove this for AE tokens?
-        }
     }
 
     def void verifyMfaStateForUser(user, mediaType, expectedResult) {

@@ -1,10 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.EndpointList
-import org.openstack.docs.identity.api.v2.User
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
