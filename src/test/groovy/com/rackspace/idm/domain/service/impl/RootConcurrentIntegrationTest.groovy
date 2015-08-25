@@ -86,6 +86,7 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
     }
 
     def setup() {
+        utils.resetServiceAdminToken()
         FEATURE_RANDOM = getNormalizedRandomString()
     }
 

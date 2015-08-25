@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+import testHelpers.junit.IgnoreByRepositoryProfile
 
 import javax.ws.rs.core.MediaType
 
@@ -457,6 +459,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "test feature flag for adding expired tokens on user create: addTokens = #addTokens"() {
         given:
         staticIdmConfiguration.setProperty(DefaultUserService.ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG, addTokens)

@@ -139,10 +139,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
     }
 
-    @Unroll
     def "impersonate - impersonation request greater than max service user token lifetime throws exception"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.AE.name())
         //get new impersonator token with this format
         def token = utils.getToken(specificationIdentityAdmin.username)
 
@@ -164,9 +163,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
-
-        where:
-        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
     }
 
     @Unroll
@@ -1339,6 +1335,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         //make sure all tokens are expired (they should be, but verify just the same)
         scopeAccessService.expireAllTokensForUserById(defaultUser.id)
+
+        sleep(1000)
 
         //authenticate normally, to make sure the token is created per usual process
         def defaultUserToken = utils.getToken(defaultUser.username)

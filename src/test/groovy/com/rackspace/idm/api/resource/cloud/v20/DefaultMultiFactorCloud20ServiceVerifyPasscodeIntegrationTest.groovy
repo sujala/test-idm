@@ -103,6 +103,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
      * @return
      */
     def setup() {
+        utils.resetServiceAdminToken()
         userAdmin = createUserAdmin()
         userAdminToken = authenticate(userAdmin.username)
     }

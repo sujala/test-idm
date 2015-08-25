@@ -4,8 +4,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.helpers.Cloud20Utils
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.apache.http.HttpStatus
@@ -14,7 +12,6 @@ import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
-import static com.rackspace.idm.Constants.SERVICE_ADMIN_2_PASSWORD
 import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
 import static com.rackspace.idm.Constants.SERVICE_ADMIN_USERNAME
 import static com.rackspace.idm.Constants.SERVICE_ADMIN_2_USERNAME
@@ -59,34 +56,41 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
     @Shared def constantVerificationCode
 
     def setup() {
-        serviceAdminToken = utils.getServiceAdminToken()
+        utils.addApiKeyToUser(utils.getUserByName(Constants.SERVICE_ADMIN_USERNAME), Constants.DEFAULT_API_KEY)
+        serviceAdminToken = utils.authenticateApiKey(Constants.SERVICE_ADMIN_USERNAME, Constants.DEFAULT_API_KEY).token.id
 
         serviceAdmin = utils.getUserByName(SERVICE_ADMIN_USERNAME)
         serviceAdmin2 = utils.getUserByName(SERVICE_ADMIN_2_USERNAME)
 
-        serviceAdminToken2 = utils.getToken(SERVICE_ADMIN_2_USERNAME, SERVICE_ADMIN_2_PASSWORD)
+        utils.addApiKeyToUser(utils.getUserByName(Constants.SERVICE_ADMIN_2_USERNAME), Constants.SERVICE_ADMIN_2_API_KEY)
+        serviceAdminToken2 = utils.authenticateApiKey(SERVICE_ADMIN_2_USERNAME, Constants.SERVICE_ADMIN_2_API_KEY).token.id
 
         domain1 = utils.createDomain()
         domain2 = utils.createDomain()
 
         (userManage1, users1) = utils.createDefaultUser(domain1)
         utils.addRoleToUser(userManage1, USER_MANAGE_ROLE_ID)
-        userManageToken = utils.getToken(userManage1.username)
+        utils.addApiKeyToUser(userManage1)
+        userManageToken = utils.authenticateApiKey(userManage1.username).token.id
 
         (userManage2, users2) = utils.createDefaultUser(domain2)
         utils.addRoleToUser(userManage2, USER_MANAGE_ROLE_ID)
 
         userAdmin1 = users1.get(1)
-        userAdminToken = utils.getToken(userAdmin1.username)
+        utils.addApiKeyToUser(userAdmin1)
+        userAdminToken = utils.authenticateApiKey(userAdmin1.username).token.id
         identityAdmin1 = users1.get(2)
-        identityAdminToken = utils.getToken(identityAdmin1.username)
+        utils.addApiKeyToUser(identityAdmin1)
+        identityAdminToken = utils.authenticateApiKey(identityAdmin1.username).token.id
 
         userAdmin2 = users2.get(1)
-        def userAdminToken2 = utils.getToken(userAdmin2.username)
+        utils.addApiKeyToUser(userAdmin2)
+        def userAdminToken2 = utils.authenticateApiKey(userAdmin2.username).token.id
         identityAdmin2 = users2.get(2)
 
         defaultUser1 = utils.createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), domain1)
-        defaultUserToken = utils.getToken(defaultUser1.username)
+        utils.addApiKeyToUser(defaultUser1)
+        defaultUserToken = utils.authenticateApiKey(defaultUser1.username).token.id
 
         userManage3 = utils.createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), domain1)
         utils.addRoleToUser(userManage3, USER_MANAGE_ROLE_ID)
@@ -105,7 +109,7 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
 
     def cleanup() {
         resetUsers()
-        resetTokens()
+        utils.resetServiceAdminToken()
         utils.deleteUser(defaultUser1)
         utils.deleteUser(defaultUser2)
         utils.deleteUser(defaultUser3)
@@ -916,18 +920,7 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
         utils.updateMultiFactor(serviceAdminToken, serviceAdmin.id, settings)
 
-        Date newExpiry = new Date()
-        newExpiry.setYear(newExpiry.getYear() + 1)
-
-        def saScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(serviceAdminToken)
-        saScopeAccess.setAccessTokenExp(newExpiry)
-        scopeAccessRepository.updateScopeAccess(saScopeAccess)
-
         utils.updateMultiFactor(serviceAdminToken2, serviceAdmin2.id, settings)
-
-        def sa2ScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(serviceAdminToken2)
-        sa2ScopeAccess.setAccessTokenExp(newExpiry)
-        scopeAccessRepository.updateScopeAccess(sa2ScopeAccess)
 
         utils.updateMultiFactor(serviceAdminToken, identityAdmin1.id, settings)
         utils.updateMultiFactor(serviceAdminToken, identityAdmin2.id, settings)
@@ -939,49 +932,6 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
         utils.updateMultiFactor(serviceAdminToken, defaultUser1.id, settings)
         utils.updateMultiFactor(serviceAdminToken, defaultUser2.id, settings)
         utils.updateMultiFactor(serviceAdminToken, defaultUser3.id, settings)
-
-        def iaScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(identityAdminToken)
-        def uaScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(userAdminToken)
-        def umScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(userManageToken)
-        def duScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(defaultUserToken)
-
-        iaScopeAccess.setAccessTokenExp(newExpiry)
-        uaScopeAccess.setAccessTokenExp(newExpiry)
-        umScopeAccess.setAccessTokenExp(newExpiry)
-        duScopeAccess.setAccessTokenExp(newExpiry)
-
-        scopeAccessRepository.updateScopeAccess(iaScopeAccess)
-        scopeAccessRepository.updateScopeAccess(uaScopeAccess)
-        scopeAccessRepository.updateScopeAccess(umScopeAccess)
-        scopeAccessRepository.updateScopeAccess(duScopeAccess)
-    }
-
-    def resetTokens() {
-        Date newExpiry = new Date()
-        newExpiry.setYear(newExpiry.getYear() + 1)
-
-        def saScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(serviceAdminToken)
-        saScopeAccess.setAccessTokenExp(newExpiry)
-        scopeAccessRepository.updateScopeAccess(saScopeAccess)
-
-        def sa2ScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(serviceAdminToken2)
-        sa2ScopeAccess.setAccessTokenExp(newExpiry)
-        scopeAccessRepository.updateScopeAccess(sa2ScopeAccess)
-
-        def iaScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(identityAdminToken)
-        def uaScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(userAdminToken)
-        def umScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(userManageToken)
-        def duScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(defaultUserToken)
-
-        iaScopeAccess.setAccessTokenExp(newExpiry)
-        uaScopeAccess.setAccessTokenExp(newExpiry)
-        umScopeAccess.setAccessTokenExp(newExpiry)
-        duScopeAccess.setAccessTokenExp(newExpiry)
-
-        scopeAccessRepository.updateScopeAccess(iaScopeAccess)
-        scopeAccessRepository.updateScopeAccess(uaScopeAccess)
-        scopeAccessRepository.updateScopeAccess(umScopeAccess)
-        scopeAccessRepository.updateScopeAccess(duScopeAccess)
     }
 
     def setupVerifiedPhonesForUsers() {

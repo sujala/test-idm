@@ -1136,7 +1136,7 @@ public class BasicMultiFactorService implements MultiFactorService {
     }
 
     public boolean isPhoneUserMembershipEnabled() {
-        return globalConfig.getBoolean(CONFIG_PROP_PHONE_MEMBERSHIP_ENABLED, false);
+        return false;
     }
 
     @Override

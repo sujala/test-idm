@@ -1,7 +1,10 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.dao.PolicyDao;
+import com.rackspace.idm.domain.entity.Application;
+import org.junit.*;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +18,9 @@ import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.Policy;
 import com.rackspace.idm.exception.NotFoundException;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -32,35 +32,36 @@ public class LdapEndpointRepositoryIntegrationTestOld extends InMemoryLdapIntegr
 
     @Autowired
     private EndpointDao endpointRepository;
+
     @Autowired
     private PolicyDao policyRepository;
 
-    private String baseUrlId1 = "100000000";
-    private String baseUrlId2 = "1010110110";
-    private String policyId1 = "100000000";
-    private String policyId2 = "100000002";
+    @Autowired
+    private ApplicationDao applicationDao;
+
+    private String baseUrlId1 = getUuid();
+    private String baseUrlId2 = getUuid();
+    private String policyId1 = getUuid();
+    private String policyId2 = getUuid();
 
     @Before
-    public void preTestSetUp() throws Exception {
-        CloudBaseUrl repositoryCloudBaseUrl1 = endpointRepository.getBaseUrlById(baseUrlId1);
-        if (repositoryCloudBaseUrl1 != null) {
+    public void cleanupBefore() {
+        try {
             endpointRepository.deleteBaseUrl(baseUrlId1);
-        }
-
-        CloudBaseUrl repositoryCloudBaseUrl2 = endpointRepository.getBaseUrlById(baseUrlId2);
-        if (repositoryCloudBaseUrl2 != null) {
             endpointRepository.deleteBaseUrl(baseUrlId2);
-        }
-
-        Policy repositoryPolicy1 = policyRepository.getPolicy(policyId1);
-        if (repositoryPolicy1 != null) {
             policyRepository.deletePolicy(policyId1);
-        }
-
-        Policy repositoryPolicy2 = policyRepository.getPolicy(policyId2);
-        if (repositoryPolicy2 != null) {
             policyRepository.deletePolicy(policyId2);
-        }
+        } catch (Exception e) {}
+    }
+
+    @After
+    public void cleanupAfter() {
+        try {
+            endpointRepository.deleteBaseUrl(baseUrlId1);
+            endpointRepository.deleteBaseUrl(baseUrlId2);
+            policyRepository.deletePolicy(policyId1);
+            policyRepository.deletePolicy(policyId2);
+        } catch (Exception e) {}
     }
 
     @Test
@@ -117,30 +118,24 @@ public class LdapEndpointRepositoryIntegrationTestOld extends InMemoryLdapIntegr
         return policy;
     }
 
-    private CloudBaseUrl getCloudBaseUrl(Integer baseUrlId) {
+    private CloudBaseUrl getCloudBaseUrl() {
+        String serviceName = "test";
+        Application app = applicationDao.getApplicationByName(serviceName);
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlType("MOSSO");
-        cloudBaseUrl.setServiceName("test");
-        cloudBaseUrl.setPublicUrl("test");
-        cloudBaseUrl.setBaseUrlId(String.valueOf(baseUrlId));
+        cloudBaseUrl.setBaseUrlType("NAST");
+        cloudBaseUrl.setServiceName(serviceName);
+        cloudBaseUrl.setPublicUrl("http://example.com/" + getUuid());
+        cloudBaseUrl.setBaseUrlId(baseUrlId1);
+        cloudBaseUrl.setPublicUrlId(getUuid());
         cloudBaseUrl.setDef(false);
         cloudBaseUrl.setEnabled(true);
         cloudBaseUrl.setGlobal(false);
         cloudBaseUrl.setOpenstackType("cloudServers");
+        cloudBaseUrl.setClientId(app.getClientId());
         return cloudBaseUrl;
     }
 
-
-    private CloudBaseUrl getCloudBaseUrl() {
-        CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
-        cloudBaseUrl.setBaseUrlType("NAST");
-        cloudBaseUrl.setServiceName("test");
-        cloudBaseUrl.setPublicUrl("test");
-        cloudBaseUrl.setBaseUrlId(baseUrlId1);
-        cloudBaseUrl.setDef(false);
-        cloudBaseUrl.setEnabled(true);
-        cloudBaseUrl.setGlobal(false);
-        cloudBaseUrl.setOpenstackType("cloudServers");
-        return cloudBaseUrl;
+    private String getUuid() {
+        return UUID.randomUUID().toString().replaceAll("-", "");
     }
 }
