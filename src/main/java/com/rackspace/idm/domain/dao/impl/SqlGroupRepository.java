@@ -5,6 +5,8 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.GroupRepository;
 import com.rackspace.idm.domain.sql.entity.SqlGroup;
 import com.rackspace.idm.domain.sql.mapper.impl.GroupMapper;
@@ -17,17 +19,46 @@ import java.util.UUID;
 public class SqlGroupRepository implements GroupDao {
 
     @Autowired
-    IdentityConfig config;
+    private IdentityConfig config;
 
     @Autowired
-    GroupMapper mapper;
+    private GroupMapper mapper;
 
     @Autowired
-    GroupRepository groupRepository;
+    private GroupRepository groupRepository;
+
+    @Autowired
+    private DeltaDao deltaDao;
 
     @Override
-    public String getNextGroupId() {
-        return UUID.randomUUID().toString().replace("-", "");
+    @Transactional
+    public void addGroup(Group group) {
+        SqlGroup sqlGroup = mapper.toSQL(group);
+        //TODO: Keystone requires domain_id to be specified
+        sqlGroup.setDomainId(config.getReloadableConfig().getGroupDefaultDomainId());
+        sqlGroup = groupRepository.save(sqlGroup);
+
+        final Group newGroup = mapper.fromSQL(sqlGroup, group);
+        deltaDao.save(ChangeType.ADD, newGroup.getUniqueId(), mapper.toLDIF(newGroup));
+    }
+
+    @Override
+    @Transactional
+    public void updateGroup(Group group) {
+        final SqlGroup sqlGroup = groupRepository.save(mapper.toSQL(group, groupRepository.findOne(group.getGroupId())));
+
+        final Group newGroup = mapper.fromSQL(sqlGroup, group);
+        deltaDao.save(ChangeType.MODIFY, newGroup.getUniqueId(), mapper.toLDIF(newGroup));
+    }
+
+    @Override
+    @Transactional
+    public void deleteGroup(String groupId) {
+        final SqlGroup sqlGroup = groupRepository.findOne(groupId);
+        groupRepository.delete(groupId);
+
+        final Group newGroup = mapper.fromSQL(sqlGroup);
+        deltaDao.save(ChangeType.DELETE, newGroup.getUniqueId(), null);
     }
 
     @Override
@@ -46,24 +77,8 @@ public class SqlGroupRepository implements GroupDao {
     }
 
     @Override
-    @Transactional
-    public void deleteGroup(String groupId) {
-        groupRepository.delete(groupId);
-    }
-
-    @Override
-    @Transactional
-    public void addGroup(Group group) {
-        SqlGroup sqlGroup = mapper.toSQL(group);
-        //TODO: Keystone requires domain_id to be specified
-        sqlGroup.setDomainId(config.getReloadableConfig().getGroupDefaultDomainId());
-        groupRepository.save(sqlGroup);
-    }
-
-    @Override
-    @Transactional
-    public void updateGroup(Group group) {
-        groupRepository.save(mapper.toSQL(group, groupRepository.findOne(group.getGroupId())));
+    public String getNextGroupId() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
 }

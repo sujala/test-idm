@@ -11,10 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class SqlIdentityProviderRepository implements IdentityProviderDao {
 
     @Autowired
-    IdentityProviderMapper mapper;
+    private IdentityProviderMapper mapper;
 
     @Autowired
-    IdentityProviderRepository repository;
+    private IdentityProviderRepository repository;
 
     @Override
     public IdentityProvider getIdentityProviderByUri(String uri) {

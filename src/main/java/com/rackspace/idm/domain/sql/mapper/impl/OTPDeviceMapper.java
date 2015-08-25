@@ -16,28 +16,22 @@ public class OTPDeviceMapper extends SqlMapper<OTPDevice, SqlOTPDevice> {
     private static final Pattern REGEXP = Pattern.compile(String.format(FORMAT, ID_FORMAT, ID_FORMAT));
 
     @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected String[] getIds(SqlOTPDevice sqlOTPDevice) {
+        return new String[] {sqlOTPDevice.getId(), sqlOTPDevice.getUserId()};
+    }
+
+    @Override
     public SqlOTPDevice toSQL(OTPDevice otpDevice) {
         final SqlOTPDevice device = super.toSQL(otpDevice);
         if (device != null) {
             device.setUserId(fromUniqueIdToUserId(otpDevice.getUniqueId()));
         }
         return device;
-    }
-
-    @Override
-    public OTPDevice fromSQL(SqlOTPDevice sqlOTPDevice) {
-        final OTPDevice device = super.fromSQL(sqlOTPDevice);
-        if (device != null) {
-            device.setUniqueId(fromSqlOTPDeviceToUniqueId(sqlOTPDevice));
-        }
-        return device;
-    }
-
-    public String fromSqlOTPDeviceToUniqueId(SqlOTPDevice device) {
-        if (device != null) {
-            return String.format(FORMAT, device.getId(), device.getUserId());
-        }
-        return null;
     }
 
     private String fromUniqueIdToUserId(String uniqueId) {

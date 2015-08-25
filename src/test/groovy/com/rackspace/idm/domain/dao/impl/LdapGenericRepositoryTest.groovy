@@ -42,5 +42,8 @@ class LdapGenericRepositoryTest extends Specification {
         String getUniqueId() {
             return '';
         }
+        @Override
+        void setUniqueId(String uniqueId) {
+        }
     }
 }

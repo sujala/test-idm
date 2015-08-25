@@ -12,10 +12,11 @@ import java.util.List;
 public class SqlKeyCzarKeyVersionRepository implements KeyCzarKeyVersionDao {
 
     @Autowired
-    KeyCzarKeyVersionRepository keyCzarKeyVersionRepository;
+    private KeyCzarKeyVersionRepository keyCzarKeyVersionRepository;
 
     @Override
     public List<KeyVersion> getKeyVersionsForMetadata(String metadataName) {
         return keyCzarKeyVersionRepository.getByMetadata(metadataName);
     }
+
 }

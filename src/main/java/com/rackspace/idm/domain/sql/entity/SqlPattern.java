@@ -14,6 +14,9 @@ public class SqlPattern {
 
     @Id
     @Column(name = "id", length = 64)
+    private String id;
+
+    @Column(name = "name", length = 64)
     private String name;
 
     @Column(name = "regex")

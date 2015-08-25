@@ -7,4 +7,17 @@ import com.rackspace.idm.domain.sql.mapper.SqlMapper;
 
 @SQLComponent
 public class GroupMapper extends SqlMapper<Group, SqlGroup> {
+
+    private static final String FORMAT = "rsId=%s,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+
+    @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected String[] getIds(SqlGroup sqlGroup) {
+        return new String[] {sqlGroup.getGroupId()};
+    }
+
 }

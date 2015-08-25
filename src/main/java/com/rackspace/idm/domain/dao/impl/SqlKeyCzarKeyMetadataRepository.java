@@ -10,10 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class SqlKeyCzarKeyMetadataRepository implements KeyCzarKeyMetadataDao {
 
     @Autowired
-    KeyCzarKeyMetadataRepository keyCzarKeyMetadataRepository;
+    private KeyCzarKeyMetadataRepository keyCzarKeyMetadataRepository;
 
     @Override
     public KeyMetadata getKeyMetadataByName(String name) {
         return keyCzarKeyMetadataRepository.getByName(name);
     }
+
 }

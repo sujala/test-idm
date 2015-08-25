@@ -5,6 +5,8 @@ import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.DomainRepository;
 import com.rackspace.idm.domain.sql.entity.SqlDomain;
 import com.rackspace.idm.domain.sql.mapper.impl.DomainMapper;
@@ -18,15 +20,40 @@ import java.util.List;
 public class SqlDomainRepository implements DomainDao {
 
     @Autowired
-    DomainMapper mapper;
+    private DomainMapper mapper;
 
     @Autowired
-    DomainRepository domainRepository;
+    private DomainRepository domainRepository;
+
+    @Autowired
+    private DeltaDao deltaDao;
 
     @Override
     @Transactional
     public void addDomain(Domain domain) {
-        domainRepository.save(mapper.toSQL(domain));
+        final SqlDomain sqlDomain = domainRepository.save(mapper.toSQL(domain));
+
+        final Domain newDomain = mapper.fromSQL(sqlDomain, domain);
+        deltaDao.save(ChangeType.ADD, newDomain.getUniqueId(), mapper.toLDIF(newDomain));
+    }
+
+    @Override
+    @Transactional
+    public void updateDomain(Domain domain) {
+        final SqlDomain sqlDomain = domainRepository.save(mapper.toSQL(domain, domainRepository.findOne(domain.getDomainId())));
+
+        final Domain newDomain = mapper.fromSQL(sqlDomain, domain);
+        deltaDao.save(ChangeType.MODIFY, newDomain.getUniqueId(), mapper.toLDIF(newDomain));
+    }
+
+    @Override
+    @Transactional
+    public void deleteDomain(String domainId) {
+        final SqlDomain sqlDomain = domainRepository.findOne(domainId);
+        domainRepository.delete(domainId);
+
+        final Domain newDomain = mapper.fromSQL(sqlDomain);
+        deltaDao.save(ChangeType.MODIFY, newDomain.getUniqueId(), null);
     }
 
     @Override
@@ -42,18 +69,6 @@ public class SqlDomainRepository implements DomainDao {
         PaginatorContext<Domain> page = mapper.getPageRequest(offset, limit);
         while (mapper.fromSQL(domainRepository.findAll(page.getPageRequest()), page)) {}
         return page;
-    }
-
-    @Override
-    @Transactional
-    public void updateDomain(Domain domain) {
-        domainRepository.save(mapper.toSQL(domain, domainRepository.findOne(domain.getDomainId())));
-    }
-
-    @Override
-    @Transactional
-    public void deleteDomain(String domainId) {
-        domainRepository.delete(domainId);
     }
 
     @Override

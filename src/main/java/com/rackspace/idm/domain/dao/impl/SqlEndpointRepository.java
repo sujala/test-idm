@@ -3,6 +3,8 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.EndpointRepository;
 import com.rackspace.idm.domain.sql.entity.SqlEndpoint;
 import com.rackspace.idm.domain.sql.mapper.impl.AdminEndpointMapper;
@@ -25,94 +27,122 @@ public class SqlEndpointRepository implements EndpointDao {
     private static final String LON_REGION = "LON";
 
     @Autowired
-    PublicEndpointMapper publicEndpointMapper;
+    private PublicEndpointMapper publicEndpointMapper;
 
     @Autowired
-    InternalEndpointMapper internalEndpointMapper;
+    private InternalEndpointMapper internalEndpointMapper;
 
     @Autowired
-    AdminEndpointMapper adminEndpointMapper;
+    private AdminEndpointMapper adminEndpointMapper;
 
     @Autowired
-    EndpointRepository endpointRepository;
+    private EndpointRepository endpointRepository;
+
+    @Autowired
+    private DeltaDao deltaDao;
 
     @Override
     @Transactional
     public void addBaseUrl(CloudBaseUrl baseUrl) {
+        final List<SqlEndpoint> endpoints = new ArrayList<SqlEndpoint>();
+
         SqlEndpoint publicEndpoint = publicEndpointMapper.toSQL(baseUrl);
         if(publicEndpoint.getUrl() != null){
             publicEndpoint.setInterface1(PUBLIC_INTERFACE);
-            endpointRepository.save(publicEndpoint);
+            endpoints.add(endpointRepository.save(publicEndpoint));
         }
 
         SqlEndpoint internalEndpoint = internalEndpointMapper.toSQL(baseUrl);
         if(internalEndpoint.getUrl() != null){
             internalEndpoint.setInterface1(INTERNAL_INTERFACE);
-            endpointRepository.save(internalEndpoint);
+            endpoints.add(endpointRepository.save(internalEndpoint));
         }
 
         SqlEndpoint adminEndpoint = adminEndpointMapper.toSQL(baseUrl);
         if(adminEndpoint.getUrl() != null){
             adminEndpoint.setInterface1(ADMIN_INTERFACE);
-            endpointRepository.save(adminEndpoint);
+            endpoints.add(endpointRepository.save(adminEndpoint));
         }
+
+        final String ldif = publicEndpointMapper.toLDIF(buildCloudBaseUrl(endpoints));
+        deltaDao.save(ChangeType.ADD, baseUrl.getUniqueId(), ldif);
+    }
+
+    @Override
+    @Transactional
+    public void updateCloudBaseUrl(CloudBaseUrl cloudBaseUrl) {
+        final List<SqlEndpoint> endpoints = new ArrayList<SqlEndpoint>();
+
+        SqlEndpoint publicEndpoint = publicEndpointMapper.toSQL(cloudBaseUrl);
+        publicEndpoint.setInterface1(PUBLIC_INTERFACE);
+        endpoints.add(endpointRepository.save(publicEndpoint));
+
+        if(!StringUtils.isEmpty(cloudBaseUrl.getInternalUrl())){
+            SqlEndpoint internalEndpoint = internalEndpointMapper.toSQL(cloudBaseUrl);
+            internalEndpoint.setInterface1(INTERNAL_INTERFACE);
+            endpoints.add(endpointRepository.save(internalEndpoint));
+        }
+
+        if(!StringUtils.isEmpty(cloudBaseUrl.getAdminUrl())){
+            SqlEndpoint adminEndpoint = adminEndpointMapper.toSQL(cloudBaseUrl);
+            adminEndpoint.setInterface1(ADMIN_INTERFACE);
+            endpoints.add(endpointRepository.save(adminEndpoint));
+        }
+
+        final String ldif = publicEndpointMapper.toLDIF(buildCloudBaseUrl(endpoints));
+        deltaDao.save(ChangeType.MODIFY, cloudBaseUrl.getUniqueId(), ldif);
     }
 
     @Override
     @Transactional
     public void deleteBaseUrl(String baseUrlId) {
-        List<SqlEndpoint> endpoints = endpointRepository.findByLegacyEndpointId(baseUrlId);
-
+        final List<SqlEndpoint> endpoints = endpointRepository.findByLegacyEndpointId(baseUrlId);
         endpointRepository.delete(endpoints);
+
+        final CloudBaseUrl baseUrl = buildCloudBaseUrl(endpoints);
+        deltaDao.save(ChangeType.DELETE, baseUrl.getUniqueId(), null);
     }
 
     @Override
     public CloudBaseUrl getBaseUrlById(String baseUrlId) {
-        List<SqlEndpoint> endpoints = endpointRepository.findByLegacyEndpointId(baseUrlId);
-
+        final List<SqlEndpoint> endpoints = endpointRepository.findByLegacyEndpointId(baseUrlId);
         return buildCloudBaseUrl(endpoints);
     }
 
     @Override
     public Iterable<CloudBaseUrl> getBaseUrlsByService(String service) {
-        List<SqlEndpoint> endpoints = endpointRepository.findByRaxServiceName(service);
-
+        final List<SqlEndpoint> endpoints = endpointRepository.findByRaxServiceName(service);
         return getCloudBaseUrls(endpoints);
     }
 
     @Override
     public Iterable<CloudBaseUrl> getDefaultBaseUrlsByBaseUrlTypeAndEnabled(String baseUrlType, boolean enabled) {
-        List<SqlEndpoint> endpoints = endpointRepository.findByRaxBaseUrlTypeAndEnabledAndRaxDefTrue(baseUrlType, enabled);
-
+        final List<SqlEndpoint> endpoints = endpointRepository.findByRaxBaseUrlTypeAndEnabledAndRaxDefTrue(baseUrlType, enabled);
         return getCloudBaseUrls(endpoints);
     }
 
     @Override
     public Iterable<CloudBaseUrl> getGlobalUSBaseUrlsByBaseUrlType(String baseUrlType) {
-        List<SqlEndpoint> endpoints = endpointRepository.findByRegionNotAndRaxBaseUrlTypeAndRaxGlobalTrueAndEnabledTrue(LON_REGION, baseUrlType);
-
+        final List<SqlEndpoint> endpoints = endpointRepository.findByRegionNotAndRaxBaseUrlTypeAndRaxGlobalTrueAndEnabledTrue(LON_REGION, baseUrlType);
         return getCloudBaseUrls(endpoints);
     }
 
     @Override
     public Iterable<CloudBaseUrl> getGlobalUKBaseUrlsByBaseUrlType(String baseUrlType) {
-        List<SqlEndpoint> endpoints = endpointRepository.findByRegionAndRaxBaseUrlType(LON_REGION, baseUrlType);
-
+        final List<SqlEndpoint> endpoints = endpointRepository.findByRegionAndRaxBaseUrlType(LON_REGION, baseUrlType);
         return getCloudBaseUrls(endpoints);
 
     }
 
     @Override
     public Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
-        List<SqlEndpoint> endpoints = endpointRepository.findByRaxSqlPolicyPolicyId(policyId);
-
+        final List<SqlEndpoint> endpoints = endpointRepository.findByRaxSqlPolicyPolicyId(policyId);
         return getCloudBaseUrls(endpoints);
     }
 
     @Override
     public Iterable<CloudBaseUrl> getBaseUrls() {
-        List<SqlEndpoint> endpoints = endpointRepository.findAll();
-
+        final List<SqlEndpoint> endpoints = endpointRepository.findAll();
         return getCloudBaseUrls(endpoints);
     }
 
@@ -121,29 +151,9 @@ public class SqlEndpointRepository implements EndpointDao {
         if(baseUrlIds.isEmpty()){
             return new ArrayList<CloudBaseUrl>();
         }
-        List<SqlEndpoint> endpoints = endpointRepository.findByLegacyEndpointIdIn(baseUrlIds);
+
+        final List<SqlEndpoint> endpoints = endpointRepository.findByLegacyEndpointIdIn(baseUrlIds);
         return getCloudBaseUrls(endpoints);
-    }
-
-    @Override
-    @Transactional
-    public void updateCloudBaseUrl(CloudBaseUrl cloudBaseUrl) {
-        SqlEndpoint publicEndpoint = publicEndpointMapper.toSQL(cloudBaseUrl);
-        publicEndpoint.setInterface1(PUBLIC_INTERFACE);
-        endpointRepository.save(publicEndpoint);
-
-        if(!StringUtils.isEmpty(cloudBaseUrl.getInternalUrl())){
-            SqlEndpoint internalEndpoint = internalEndpointMapper.toSQL(cloudBaseUrl);
-            internalEndpoint.setInterface1(INTERNAL_INTERFACE);
-            endpointRepository.save(internalEndpoint);
-        }
-
-        if(!StringUtils.isEmpty(cloudBaseUrl.getAdminUrl())){
-            SqlEndpoint adminEndpoint = adminEndpointMapper.toSQL(cloudBaseUrl);
-            adminEndpoint.setInterface1(ADMIN_INTERFACE);
-            endpointRepository.save(adminEndpoint);
-        }
-
     }
 
     private CloudBaseUrl buildCloudBaseUrl(List<SqlEndpoint> endpoints){

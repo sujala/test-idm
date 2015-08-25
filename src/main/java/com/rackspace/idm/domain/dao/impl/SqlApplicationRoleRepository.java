@@ -6,8 +6,11 @@ import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.RoleRepository;
 import com.rackspace.idm.domain.sql.dao.TenantRoleRepository;
+import com.rackspace.idm.domain.sql.entity.SqlRole;
 import com.rackspace.idm.domain.sql.mapper.impl.RoleMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,25 +22,34 @@ import java.util.UUID;
 public class SqlApplicationRoleRepository implements ApplicationRoleDao {
 
     @Autowired
-    RoleMapper mapper;
+    private RoleMapper mapper;
 
     @Autowired
-    RoleRepository repository;
+    private RoleRepository repository;
 
     @Autowired
-    TenantRoleRepository tenantRoleRepository;
+    private TenantRoleRepository tenantRoleRepository;
+
+    @Autowired
+    private DeltaDao deltaDao;
 
     @Override
     @Transactional
     public void addClientRole(Application application, ClientRole role) {
         role.setClientId(application.getClientId());
-        repository.save(mapper.toSQL(role));
+        final SqlRole sqlRole = repository.save(mapper.toSQL(role));
+
+        final ClientRole clientRole = mapper.fromSQL(sqlRole, role);
+        deltaDao.save(ChangeType.ADD, clientRole.getUniqueId(), mapper.toLDIF(clientRole));
     }
 
     @Override
     @Transactional
     public void updateClientRole(ClientRole role) {
-        repository.save(mapper.toSQL(role, repository.findOne(role.getId())));
+        final SqlRole sqlRole = repository.save(mapper.toSQL(role, repository.findOne(role.getId())));
+
+        final ClientRole clientRole = mapper.fromSQL(sqlRole, role);
+        deltaDao.save(ChangeType.MODIFY, clientRole.getUniqueId(), mapper.toLDIF(clientRole));
     }
 
     @Override
@@ -45,6 +57,8 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
     public void deleteClientRole(ClientRole role) {
         tenantRoleRepository.deleteBySqlRoleId(role.getId());
         repository.delete(role.getId());
+
+        deltaDao.save(ChangeType.DELETE, role.getUniqueId(), null);
     }
 
     @Override

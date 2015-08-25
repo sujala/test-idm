@@ -10,7 +10,6 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name = "bypass_device_rax")
-@NamedEntityGraph(name = "SqlBypassDevice.codes", attributeNodes = @NamedAttributeNode("codes"))
 public class SqlBypassDevice {
 
     @Id
@@ -29,7 +28,10 @@ public class SqlBypassDevice {
     @Column(name = "iterations")
     private Integer iterations;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "id")
-    private Set<SqlBypassCode> codes = new HashSet<SqlBypassCode>();
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "bypass_code_rax",
+            joinColumns = @JoinColumn(name = "bypass_device_rax_id"))
+    @Column(name = "code")
+    private Set<String> bypassCodes = new HashSet<String>();
 
 }

@@ -11,14 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class SqlPatternRepository implements PatternDao {
 
     @Autowired
-    PatternMapper mapper;
+    private PatternMapper mapper;
 
     @Autowired
-    PatternRepository patternRepository;
+    private PatternRepository patternRepository;
 
     @Override
     public Pattern getPattern(String name) {
-        return mapper.fromSQL(patternRepository.findOne(name));
+        return mapper.fromSQL(patternRepository.findByName(name));
     }
 
 }

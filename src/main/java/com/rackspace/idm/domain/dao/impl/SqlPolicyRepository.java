@@ -4,7 +4,10 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.PolicyDao;
 import com.rackspace.idm.domain.entity.Policies;
 import com.rackspace.idm.domain.entity.Policy;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.PolicyRepository;
+import com.rackspace.idm.domain.sql.entity.SqlPolicy;
 import com.rackspace.idm.domain.sql.mapper.impl.PolicyMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,15 +18,46 @@ import java.util.UUID;
 public class SqlPolicyRepository implements PolicyDao {
 
     @Autowired
-    PolicyMapper mapper;
+    private PolicyMapper mapper;
 
     @Autowired
-    PolicyRepository policyRepository;
+    private PolicyRepository policyRepository;
+
+    @Autowired
+    private DeltaDao deltaDao;
 
     @Override
     @Transactional
     public void addPolicy(Policy policy) {
-        policyRepository.save(mapper.toSQL(policy));
+        final SqlPolicy sqlPolicy = policyRepository.save(mapper.toSQL(policy));
+
+        final Policy newPolicy = mapper.fromSQL(sqlPolicy, policy);
+        deltaDao.save(ChangeType.ADD, newPolicy.getUniqueId(), mapper.toLDIF(newPolicy));
+    }
+
+    @Override
+    @Transactional
+    public void updatePolicy(Policy policy) {
+        final SqlPolicy sqlPolicy = policyRepository.save(mapper.toSQL(policy, policyRepository.findOne(policy.getPolicyId())));
+
+        final Policy newPolicy = mapper.fromSQL(sqlPolicy, policy);
+        deltaDao.save(ChangeType.MODIFY, newPolicy.getUniqueId(), mapper.toLDIF(newPolicy));
+    }
+
+    @Override
+    @Transactional
+    public void deletePolicy(String policyId) {
+        final SqlPolicy sqlPolicy = policyRepository.findOne(policyId);
+        policyRepository.delete(policyId);
+
+        final Policy newPolicy = mapper.fromSQL(sqlPolicy);
+        deltaDao.save(ChangeType.DELETE, newPolicy.getUniqueId(), null);
+    }
+
+    @Override
+    @Transactional
+    public void softDeletePolicy(Policy policy) {
+        deletePolicy(policy.getPolicyId());
     }
 
     @Override
@@ -34,18 +68,6 @@ public class SqlPolicyRepository implements PolicyDao {
     @Override
     public Policy getPolicyByName(String name) {
         return mapper.fromSQL(policyRepository.findByRaxName(name));
-    }
-
-    @Override
-    @Transactional
-    public void updatePolicy(Policy policy) {
-        policyRepository.save(mapper.toSQL(policy, policyRepository.findOne(policy.getPolicyId())));
-    }
-
-    @Override
-    @Transactional
-    public void deletePolicy(String policyId) {
-        policyRepository.delete(policyId);
     }
 
     @Override
@@ -60,12 +82,6 @@ public class SqlPolicyRepository implements PolicyDao {
             policies.getPolicy().add(policy);
         }
         return policies;
-    }
-
-    @Override
-    @Transactional
-    public void softDeletePolicy(Policy policy) {
-        policyRepository.delete(policy.getPolicyId());
     }
 
 }

@@ -7,4 +7,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 @SQLRepository
 public interface PatternRepository extends JpaSpecificationExecutor<SqlPattern>, JpaRepository<SqlPattern, String> {
+
+    SqlPattern findByName(String name);
+
 }

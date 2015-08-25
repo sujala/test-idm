@@ -67,6 +67,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
             case IdentityUserTypeEnum.SERVICE_ADMIN:
                 username = Constants.SERVICE_ADMIN_2_USERNAME
                 apiKey = Constants.SERVICE_ADMIN_2_API_KEY
+                utils.addApiKeyToUser(utils.getUserByName(username), apiKey) // FIXME: fix wherever we override this
                 password = Constants.SERVICE_ADMIN_2_PASSWORD
                 break;
             case IdentityUserTypeEnum.IDENTITY_ADMIN:

@@ -3,6 +3,8 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.ServiceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlService;
 import com.rackspace.idm.domain.sql.mapper.impl.ServiceMapper;
@@ -12,15 +14,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-
 @SQLComponent
 public class SqlApplicationRepository implements ApplicationDao {
 
     @Autowired
-    ServiceMapper mapper;
+    private ServiceMapper mapper;
 
     @Autowired
-    ServiceRepository serviceRepository;
+    private ServiceRepository serviceRepository;
+
+    @Autowired
+    private DeltaDao deltaDao;
 
     public static final String APPLICATION_NAME_REGEX_QUERY = "\"name\":[[:space:]]*\":service_name\"";
     public static final String APPLICATION_NAME_REGEX_NAME_PARAM = ":service_name";
@@ -28,14 +32,27 @@ public class SqlApplicationRepository implements ApplicationDao {
     @Override
     @Transactional
     public void addApplication(Application client) {
-        SqlService sqlService = mapper.toSQL(client);
-        serviceRepository.save(sqlService);
+        final SqlService sqlService = serviceRepository.save(mapper.toSQL(client));
+
+        final Application application = mapper.fromSQL(sqlService, client);
+        deltaDao.save(ChangeType.ADD, application.getUniqueId(), mapper.toLDIF(application));
+    }
+
+    @Override
+    @Transactional
+    public void updateApplication(Application client) {
+        final SqlService sqlService = serviceRepository.save(mapper.toSQL(client, serviceRepository.findOne(client.getClientId())));
+
+        final Application application = mapper.fromSQL(sqlService, client);
+        deltaDao.save(ChangeType.MODIFY, application.getUniqueId(), mapper.toLDIF(application));
     }
 
     @Override
     @Transactional
     public void deleteApplication(Application client) {
         serviceRepository.delete(client.getClientId());
+
+        deltaDao.save(ChangeType.DELETE, client.getUniqueId(), null);
     }
 
     @Override
@@ -67,12 +84,6 @@ public class SqlApplicationRepository implements ApplicationDao {
     @Override
     public Iterable<Application> getApplicationByType(String type) {
         return mapper.fromSQL(serviceRepository.findByOpenStackType(type));
-    }
-
-    @Override
-    @Transactional
-    public void updateApplication(Application client) {
-        serviceRepository.save(mapper.toSQL(client, serviceRepository.findOne(client.getClientId())));
     }
 
     @Override

@@ -12,6 +12,18 @@ import java.util.Map;
 @SQLComponent
 public class AdminEndpointMapper extends SqlRaxMapper<CloudBaseUrl, SqlEndpoint, SqlEndpointRax> {
 
+    private static final String FORMAT = "rsId=%s,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+
+    @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected Object[] getIds(SqlEndpoint sqlEndpoint) {
+        return new Object[] {sqlEndpoint.getLegacyEndpointId()};
+    }
+
     @Override
     public void overrideFields(Map<String, String> map){
         map.put("id", "adminUrlId");

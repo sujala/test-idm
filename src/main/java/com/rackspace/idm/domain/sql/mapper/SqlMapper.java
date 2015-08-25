@@ -1,7 +1,13 @@
 package com.rackspace.idm.domain.sql.mapper;
 
 import com.rackspace.idm.annotation.DeleteNullValues;
+import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.sql.entity.SqlEndpoint;
+import com.rackspace.idm.domain.sql.entity.SqlService;
+import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.common.util.StringUtils;
 import org.hibernate.collection.spi.PersistentCollection;
@@ -20,7 +26,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
 
-public abstract class SqlMapper<Entity, SQLEntity> {
+public abstract class SqlMapper<Entity extends UniqueId, SQLEntity> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlMapper.class);
 
@@ -67,7 +73,30 @@ public abstract class SqlMapper<Entity, SQLEntity> {
             setExtraToSQL(entityWrapper, sqlEntityWrapper);
         }
 
+        if (entity != null) {
+            final String uniqueId = fromIdToUniqueId(sqlEntity);
+            if (uniqueId != null) {
+                entity.setUniqueId(uniqueId);
+            }
+        }
+
         return sqlEntity;
+    }
+
+    public String toLDIF(Entity entity) {
+        try {
+            final LDAPPersister<Entity> persister = LDAPPersister.getInstance(entityClass);
+            final Entry entry = persister.encode(entity, new DN(entity.getUniqueId()).getParentString());
+            return entry.toLDIFString();
+        } catch (Exception e) {
+            LOGGER.error("Cannot create LDIF", e);
+        }
+        return null;
+    }
+
+    public String toLDIF(SQLEntity sqlEntity) {
+        final Entity entity = fromSQL(sqlEntity);
+        return toLDIF(entity);
     }
 
     protected final void setToSQL(Map<String, String> declaredFields, BeanWrapper entityWrapper, BeanWrapper sqlEntityWrapper, Class<?> entityClass, boolean ignoreNulls) {
@@ -147,27 +176,40 @@ public abstract class SqlMapper<Entity, SQLEntity> {
         return fromSQL(sqlEntity, true);
     }
 
+    public Entity fromSQL(SQLEntity sqlEntity, Entity entity) {
+        return fromSQL(sqlEntity, entity, true);
+    }
+
     public Entity fromSQL(SQLEntity sqlEntity, boolean ignoreNulls) {
+        try {
+            return fromSQL(sqlEntity, entityClass.newInstance(), ignoreNulls);
+        } catch (ReflectiveOperationException e) {
+            LOGGER.error("Error mapping data.", e);
+        }
+        return null;
+    }
+
+    public Entity fromSQL(SQLEntity sqlEntity, Entity entity, boolean ignoreNulls) {
         if (sqlEntity == null) {
             return null;
         }
 
-        Entity entity = null;
-        try {
-            entity = entityClass.newInstance();
+        final BeanWrapper entityWrapper = new BeanWrapperImpl(entity);
+        final BeanWrapper sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
 
-            final BeanWrapper entityWrapper = new BeanWrapperImpl(entity);
-            final BeanWrapper sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);
+        final Map<String, String> declaredFields = getDeclaredFields(sqlEntityClass);
+        overrideFields(declaredFields);
+        setFromSQL(declaredFields, entityWrapper, sqlEntityWrapper, entityClass, ignoreNulls);
 
-            final Map<String, String> declaredFields = getDeclaredFields(sqlEntityClass);
-            overrideFields(declaredFields);
-            setFromSQL(declaredFields, entityWrapper, sqlEntityWrapper, entityClass, ignoreNulls);
+        if (declaredFields.keySet().contains(EXTRA_FIELD)) {
+            setExtraFromSQL(entityWrapper, sqlEntityWrapper);
+        }
 
-            if (declaredFields.keySet().contains(EXTRA_FIELD)) {
-                setExtraFromSQL(entityWrapper, sqlEntityWrapper);
+        if (entity != null) {
+            final String uniqueId = fromIdToUniqueId(sqlEntity);
+            if (uniqueId != null) {
+                entity.setUniqueId(uniqueId);
             }
-        } catch (ReflectiveOperationException e) {
-            LOGGER.error("Error mapping data.", e);
         }
 
         return entity;
@@ -285,4 +327,20 @@ public abstract class SqlMapper<Entity, SQLEntity> {
 
         return true;
     }
+
+    protected String getUniqueIdFormat() {
+        return "";
+    }
+
+    protected Object[] getIds(SQLEntity sqlEntity) {
+        return null;
+    }
+
+    private String fromIdToUniqueId(SQLEntity sqlEntity) {
+        if (getIds(sqlEntity) != null) {
+            return String.format(getUniqueIdFormat(), getIds(sqlEntity));
+        }
+        return null;
+    }
+
 }

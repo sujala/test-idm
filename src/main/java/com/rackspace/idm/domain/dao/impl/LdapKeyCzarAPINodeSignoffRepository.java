@@ -14,8 +14,6 @@ public class LdapKeyCzarAPINodeSignoffRepository extends LdapGenericRepository<L
     @Autowired
     private IdentityConfig config;
 
-    public static final String KEY_DISTRIBUTION_OU = "keydistribution";
-
     @Override
     public String getBaseDn() {
         return String.format("ou=%s,%s", KEY_DISTRIBUTION_OU, config.getStaticConfig().getKeyCzarDN());

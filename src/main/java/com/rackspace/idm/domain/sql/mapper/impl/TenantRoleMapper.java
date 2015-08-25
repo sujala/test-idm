@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.sql.mapper.impl;
 
+import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.sql.entity.SqlRole;
@@ -8,15 +9,16 @@ import com.rackspace.idm.domain.sql.entity.SqlTenantRole;
 import com.rackspace.idm.domain.sql.mapper.SqlMapper;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
+@SQLComponent
 public class TenantRoleMapper extends SqlMapper<TenantRole, SqlTenantRole> {
+
+    private static final String FORMAT = "roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com";
 
     /*
      *  Assign cloud-identity user's global roles to the "identity" tenant.
@@ -24,7 +26,17 @@ public class TenantRoleMapper extends SqlMapper<TenantRole, SqlTenantRole> {
      */
 
     @Autowired
-    IdentityConfig config;
+    private IdentityConfig config;
+
+    @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected Object[] getIds(SqlTenantRole sqlTenantRole) {
+        return new Object[] {sqlTenantRole.getRoleId(), sqlTenantRole.getActorId()};
+    }
 
     public TenantRole fromSQL(List<SqlTenantRole> sqlTenantRoles){
         TenantRole tenantRole = null;
