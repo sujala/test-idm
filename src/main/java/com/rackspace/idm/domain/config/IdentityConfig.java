@@ -2,8 +2,8 @@ package com.rackspace.idm.domain.config;
 
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter;
 import com.rackspace.idm.api.security.IdentityRole;
+import com.rackspace.idm.domain.migration.ChangeType;
 import com.rackspace.idm.domain.security.TokenFormat;
-import com.rackspace.idm.util.migration.ChangeType;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
@@ -204,12 +204,6 @@ public class IdentityConfig {
     public static final Boolean MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_DEFAULT = false;
     public static final String MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP = "ignore.migration.change.events.of.type.default";
     public static final List MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_DEFAULT = Collections.EMPTY_LIST;
-
-    public static final String MIGRATION_LISTENER_HANDLES_CHANGE_EVENTS_PROP_PREFIX = "handle.migration.change.events.for.listener";
-    public static final String MIGRATION_LISTENER_HANDLES_MIGRATION_CHANGE_EVENTS_PROP_REG = MIGRATION_LISTENER_HANDLES_CHANGE_EVENTS_PROP_PREFIX + ".%s";
-    public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX = "ignore.migration.change.events.of.type.for.listener";
-    public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_REG = MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX + ".%s";
-
 
     /* ************************
      **************************/
@@ -1097,19 +1091,6 @@ public class IdentityConfig {
             return getStringSafely(reloadableConfiguration, IDENTITY_ROLE_TENANT_DEFAULT);
         }
 
-        public boolean isMigrationListenerEnabled(String listenerName) {
-            return reloadableConfiguration.getBoolean(String.format(MIGRATION_LISTENER_HANDLES_MIGRATION_CHANGE_EVENTS_PROP_REG, listenerName), areMigrationListenersEnabledByDefault());
-        }
-
-        public Set<ChangeType> getIgnoredChangeTypesForMigrationListener(String listenerName) {
-            String dynamicPropName = String.format(MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_REG, listenerName);
-            Set configuredVal = getSetSafely(reloadableConfiguration, dynamicPropName);
-            if (CollectionUtils.isEmpty(configuredVal) && !reloadableConfiguration.containsKey(dynamicPropName)) {
-                configuredVal = getDefaultMigrationListenerIgnoredChangeTypes();
-            }
-            return convertToChangeType(configuredVal);
-        }
-
         @IdmProp(key = MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP, description = "Whether a migration listener is enabled by default", versionAdded = "3.0.0")
         public boolean areMigrationListenersEnabledByDefault() {
             return getBooleanSafely(reloadableConfiguration, MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP);
@@ -1117,7 +1098,7 @@ public class IdentityConfig {
 
         @IdmProp(key = MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP, description = "What change types types migration listeners should ignore by default", versionAdded = "3.0.0")
         public Set<ChangeType> getDefaultMigrationListenerIgnoredChangeTypes() {
-            return getSetSafely(reloadableConfiguration, MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP);
+            return convertToChangeType(getSetSafely(reloadableConfiguration, MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP));
         }
     }
 

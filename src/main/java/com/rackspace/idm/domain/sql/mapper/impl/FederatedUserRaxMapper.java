@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.sql.mapper.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.sql.dao.IdentityProviderRepository;
 import com.rackspace.idm.domain.sql.entity.SqlFederatedRoleRax;
 import com.rackspace.idm.domain.sql.entity.SqlFederatedUserRax;
 import com.rackspace.idm.domain.sql.mapper.SqlMapper;
@@ -15,10 +16,24 @@ import java.util.UUID;
 @SQLComponent
 public class FederatedUserRaxMapper extends SqlMapper<FederatedUser, SqlFederatedUserRax> {
 
-    public static final String UNIQUE_ID_PLACEHOLDER = "<NotUsedForSql>";
+    private static final String FORMAT = "uid=%s,ou=users,ou=%s,o=externalProviders,dc=rackspace,dc=com";
 
     @Autowired
     private FederatedRoleRaxMapper federatedRoleRaxMapper;
+
+    @Autowired
+    private IdentityProviderRepository identityProviderRepository;
+
+    @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected Object[] getIds(SqlFederatedUserRax sqlFederatedUserRax) {
+        final String idpName = identityProviderRepository.getIdpNameByURI(sqlFederatedUserRax.getFederatedIdpUri());
+        return new Object[] {sqlFederatedUserRax.getId(), idpName};
+    }
 
     @Override
     public FederatedUser fromSQL(SqlFederatedUserRax sqlFederatedUserRax) {
@@ -30,7 +45,6 @@ public class FederatedUserRaxMapper extends SqlMapper<FederatedUser, SqlFederate
             for (SqlFederatedRoleRax sqlFederatedRoleRax : sqlFederatedUserRax.getFederatedRoles()) {
                 federatedUser.getRoles().add(federatedRoleRaxMapper.fromSQL(sqlFederatedRoleRax));
             }
-            federatedUser.setUniqueId(UNIQUE_ID_PLACEHOLDER);
         }
         return federatedUser;
     }

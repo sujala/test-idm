@@ -14,7 +14,7 @@ import java.util.UUID;
 public class SqlKeyCzarAPINodeSignoffRepository implements KeyCzarAPINodeSignoffDao {
 
     @Autowired
-    KeyCzarAPINodeSignoffRepository repository;
+    private KeyCzarAPINodeSignoffRepository repository;
 
     @Override
     public APINodeSignoff getByNodeAndMetaName(String metaName, String nodeName) {
@@ -31,7 +31,6 @@ public class SqlKeyCzarAPINodeSignoffRepository implements KeyCzarAPINodeSignoff
         }
 
         repository.save(sqlAPINodeSignoff);
-
     }
 
     @Override
@@ -44,4 +43,5 @@ public class SqlKeyCzarAPINodeSignoffRepository implements KeyCzarAPINodeSignoff
     public APINodeSignoff createApiNodeSignoff() {
         return new SqlAPINodeSignoff();
     }
+
 }

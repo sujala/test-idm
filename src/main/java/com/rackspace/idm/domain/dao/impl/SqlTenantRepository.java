@@ -5,6 +5,8 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.ProjectRepository;
 import com.rackspace.idm.domain.sql.entity.SqlProject;
 import com.rackspace.idm.domain.sql.mapper.impl.ProjectMapper;
@@ -15,13 +17,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class SqlTenantRepository implements TenantDao {
 
     @Autowired
-    IdentityConfig config;
+    private IdentityConfig config;
 
     @Autowired
-    ProjectMapper mapper;
+    private ProjectMapper mapper;
 
     @Autowired
-    ProjectRepository projectRepository;
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private DeltaDao deltaDao;
 
     @Override
     @Transactional
@@ -30,13 +35,30 @@ public class SqlTenantRepository implements TenantDao {
         if (tenant.getDomainId() == null) {
             tenant.setDomainId(config.getReloadableConfig().getTenantDefaultDomainId());
         }
-        projectRepository.save(mapper.toSQL(tenant));
+        final SqlProject sqlProject = projectRepository.save(mapper.toSQL(tenant));
+
+        final Tenant newTenant = mapper.fromSQL(sqlProject, tenant);
+        deltaDao.save(ChangeType.ADD, newTenant.getUniqueId(), mapper.toLDIF(newTenant));
+    }
+
+    @Override
+    @Transactional
+    public void updateTenant(Tenant tenant) {
+        SqlProject sqlProject = projectRepository.findOne(tenant.getTenantId());
+        sqlProject = projectRepository.save(mapper.toSQL(tenant, sqlProject));
+
+        final Tenant newTenant = mapper.fromSQL(sqlProject, tenant);
+        deltaDao.save(ChangeType.MODIFY, newTenant.getUniqueId(), mapper.toLDIF(newTenant));
     }
 
     @Override
     @Transactional
     public void deleteTenant(String tenantId) {
+        final SqlProject sqlProject = projectRepository.findOne(tenantId);
         projectRepository.delete(tenantId);
+
+        final Tenant newTenant = mapper.fromSQL(sqlProject);
+        deltaDao.save(ChangeType.DELETE, newTenant.getUniqueId(), null);
     }
 
     @Override
@@ -61,10 +83,4 @@ public class SqlTenantRepository implements TenantDao {
         return page;
     }
 
-    @Override
-    @Transactional
-    public void updateTenant(Tenant tenant) {
-        SqlProject sqlProject = projectRepository.findOne(tenant.getTenantId());
-        projectRepository.save(mapper.toSQL(tenant, sqlProject));
-    }
 }

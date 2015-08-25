@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.sql.mapper;
 
+import com.rackspace.idm.domain.dao.UniqueId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
@@ -11,7 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlMapper<Entity, SQLEntity> {
+public abstract class SqlRaxMapper<Entity extends UniqueId, SQLEntity, SQLRaxEntity> extends SqlMapper<Entity, SQLEntity> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlRaxMapper.class);
 
@@ -64,14 +65,13 @@ public abstract class SqlRaxMapper<Entity, SQLEntity, SQLRaxEntity> extends SqlM
     }
 
     @Override
-    public Entity fromSQL(SQLEntity sqlEntity, boolean ignoreNulls) {
+    public Entity fromSQL(SQLEntity sqlEntity, Entity entity, boolean ignoreNulls) {
         if (sqlEntity == null) {
             return null;
         }
 
-        Entity entity = null;
         SQLRaxEntity sqlRaxEntity = null;
-        entity = super.fromSQL(sqlEntity, ignoreNulls);
+        entity = super.fromSQL(sqlEntity, entity, ignoreNulls);
 
         final BeanWrapper entityWrapper = new BeanWrapperImpl(entity);
         final BeanWrapper sqlEntityWrapper = new BeanWrapperImpl(sqlEntity);

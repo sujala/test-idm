@@ -7,4 +7,17 @@ import com.rackspace.idm.domain.sql.mapper.SqlMapper;
 
 @SQLComponent
 public class QuestionMapper extends SqlMapper<Question, SqlQuestion> {
+
+    private static final String FORMAT = "rsId=%s,ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+
+    @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected Object[] getIds(SqlQuestion sqlQuestion) {
+        return new Object[] {sqlQuestion.getId()};
+    }
+
 }

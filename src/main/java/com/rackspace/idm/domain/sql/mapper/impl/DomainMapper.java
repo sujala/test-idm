@@ -15,8 +15,20 @@ import java.util.*;
 @SQLComponent
 public class DomainMapper extends SqlRaxMapper<Domain, SqlDomain, SqlDomainRax> {
 
+    private static final String FORMAT = "rsId=%s,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+
     @Autowired
     private ProjectRepository projectRepository;
+
+    @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected Object[] getIds(SqlDomain sqlDomain) {
+        return new Object[] {sqlDomain.getDomainId()};
+    }
 
     @Override
     public Domain fromSQL(SqlDomain entity) {

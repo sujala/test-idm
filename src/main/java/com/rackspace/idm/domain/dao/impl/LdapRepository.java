@@ -1,8 +1,8 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.util.migration.*;
-import com.rackspace.idm.util.migration.ldap.LDAPMigrationChangeApplicationEvent;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
@@ -12,15 +12,15 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 public abstract class LdapRepository {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(LdapRepository.class);
 
     // Definitions for LDAP Objectclasses
     public static final String OBJECTCLASS_BASEURL = "baseUrl";
@@ -71,6 +71,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_KEY_DESCRIPTOR = "rsKeyDescriptor";
     public static final String OBJECTCLASS_KEY_METADATA = "rsKeyMetadata";
     public static final String OBJECTCLASS_API_NODE_SIGNOFF = "rsApiNodeSignOff";
+    public static final String KEY_DISTRIBUTION_OU = "keydistribution";
     public static final String ATTR_KEY_DATA = "rsKeyData";
     public static final String ATTR_KEY_VERSION = "rsKeyVersion";
     public static final String ATTR_KEY_CREATED = "rsKeyCreated";
@@ -262,8 +263,8 @@ public abstract class LdapRepository {
     @Autowired
     protected Configuration config;
 
-    @Autowired
-    protected ApplicationEventPublisher applicationEventPublisher;
+    @Autowired(required = false)
+    private DeltaDao deltaDao;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -307,9 +308,8 @@ public abstract class LdapRepository {
             DeleteRequest deleteRequest = new DeleteRequest(dn);
             deleteRequest.addControl(new SubtreeDeleteRequestControl(true));
             LDAPInterface inter = getAppInterface();
-            Date timeStamp = new Date();
             inter.delete(deleteRequest);
-            emitMigrationDeleteEventIfNecessary(dn, timeStamp);
+            emitMigrationDeleteEventIfNecessary(dn);
         } catch (LDAPException e) {
             audit.fail();
             getLogger().error(LDAP_SEARCH_ERROR, e.getMessage());
@@ -327,9 +327,8 @@ public abstract class LdapRepository {
                 deleteEntryAndSubtree(entry.getDN(), audit);
             }
 
-            Date timeStamp = new Date();
             getAppInterface().delete(dn);
-            emitMigrationDeleteEventIfNecessary(dn, timeStamp);
+            emitMigrationDeleteEventIfNecessary(dn);
         } catch (LDAPException e) {
             audit.fail();
             getLogger().error(LDAP_SEARCH_ERROR, e.getMessage());
@@ -337,14 +336,18 @@ public abstract class LdapRepository {
         }
     }
 
-    private void emitMigrationDeleteEventIfNecessary(String dn, Date timeStamp) {
-        if (shouldEmitEventForDN(dn)) {
-            applicationEventPublisher.publishEvent(new LDAPMigrationChangeApplicationEvent(this, timeStamp, com.rackspace.idm.util.migration.ChangeType.DELETE, dn));
+    private void emitMigrationDeleteEventIfNecessary(String dn) {
+        if (deltaDao != null && shouldEmitEventForDN(dn)) {
+            try {
+                deltaDao.save(ChangeType.DELETE, dn, null);
+            } catch (Exception e) {
+                LOGGER.error("Cannot emmit 'DELETE' change event!", e);
+            }
         }
     }
 
     protected boolean shouldEmitEventForDN(String dn) {
-        if (dn.endsWith(CHANGE_EVENT_BASE_DN) || dn.contains("cn=" + CONTAINER_TOKENS)) {
+        if (dn.endsWith(CHANGE_EVENT_BASE_DN) || dn.contains("cn=" + CONTAINER_TOKENS) || dn.contains("ou=" + KEY_DISTRIBUTION_OU)) {
             //don't record tokens or change events
             return false;
         }

@@ -5,11 +5,6 @@ objectClass: top
 objectClass: cosineDomain
 dc: rackspace
 
-dn: ou=changeevent,dc=rackspace,dc=com
-objectClass: top
-objectClass: organizationalUnit
-description: Defines container for change events
-
 dn: o=configuration,dc=rackspace,dc=com
 objectClass: top
 objectClass: organization
@@ -3691,6 +3686,19 @@ objectClass: top
 objectClass: organizationalUnit
 ou: capabilities
 
+dn: rsId=110123321,ou=capabilities,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsCapability
+capabilityId: get_test
+cn: get_test
+openStackType: compute
+rsAction: GET
+rsId: 110123321
+rsUrl: http://someUrl
+versionId: 1
+rsResources: res1
+rsResources: res2
+description: description
+
 dn: ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: top
 objectClass: organizationalUnit
@@ -3847,6 +3855,14 @@ objectClass: rsDomain
 rsId: 938e0ee4e8ce4fe7a179db79cadd245a
 cn: 938e0ee4e8ce4fe7a179db79cadd245a
 enabled: TRUE
+
+dn: rsId=938e0ee4e8ce4fe7a179db79cadd245b,ou=domains,ou=cloud,o=rackspace,d
+ c=rackspace,dc=com
+objectClass: rsDomain
+rsId: 938e0ee4e8ce4fe7a179db79cadd245b
+cn: 938e0ee4e8ce4fe7a179db79cadd245b
+enabled: TRUE
+rsDomainMultiFactorEnforcementLevel: REQUIRED
 
 dn: rsId=983452,ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsDomain

@@ -12,6 +12,18 @@ import java.util.UUID;
 @SQLComponent
 public class IdentityProviderMapper extends SqlMapper<IdentityProvider, SqlIdentityProvider> {
 
+    private static final String FORMAT = "ou=%s,o=externalProviders,dc=rackspace,dc=com";
+
+    @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected String[] getIds(SqlIdentityProvider sqlIdentityProvider) {
+        return new String[] {sqlIdentityProvider.getName()};
+    }
+
     public IdentityProvider fromSQL(SqlIdentityProvider sqlEntity) {
         if (sqlEntity == null) {
             return null;

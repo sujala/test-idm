@@ -11,7 +11,6 @@ import java.util.List;
 @SQLRepository
 public interface BypassDeviceRepository extends JpaSpecificationExecutor<SqlBypassDevice>, JpaRepository<SqlBypassDevice, String> {
 
-    @EntityGraph(value = "SqlBypassDevice.codes", type = EntityGraph.EntityGraphType.FETCH)
     List<SqlBypassDevice> findByUserId(String userId);
 
     void deleteByUserId(String userId);

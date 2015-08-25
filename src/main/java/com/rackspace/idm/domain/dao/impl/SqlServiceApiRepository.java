@@ -11,13 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class SqlServiceApiRepository implements ServiceApiDao {
 
     @Autowired
-    ServiceApiMapper mapper;
+    private ServiceApiMapper mapper;
 
     @Autowired
-    ServiceApiRepository repository;
+    private ServiceApiRepository repository;
 
     @Override
     public Iterable<ServiceApi> getServiceApis() {
         return mapper.fromSQL(repository.findByVersionNotNullAndTypeNotNull());
     }
+
 }

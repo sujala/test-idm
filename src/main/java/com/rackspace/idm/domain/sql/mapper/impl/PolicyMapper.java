@@ -12,6 +12,18 @@ import java.util.List;
 @SQLComponent
 public class PolicyMapper extends SqlRaxMapper<Policy, SqlPolicy, SqlPolicyRax> {
 
+    private static final String FORMAT = "rsId=%s,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+
+    @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected Object[] getIds(SqlPolicy sqlPolicy) {
+        return new Object[] {sqlPolicy.getPolicyId()};
+    }
+
     public List<String> getExtraAttributes() {
         return Arrays.asList("user_id", "project_id");
     }

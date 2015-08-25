@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.5.44, for debian-linux-gnu (x86_64)
+-- MySQL dump 10.13  Distrib 5.6.24, for osx10.10 (x86_64)
 --
 -- Host: 127.0.0.1    Database: keystone
 -- ------------------------------------------------------
@@ -125,6 +125,7 @@ DROP TABLE IF EXISTS `capability_rax`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `capability_rax` (
   `id` varchar(64) NOT NULL,
+  `capability_id` varchar(64) DEFAULT NULL,
   `name` varchar(64) DEFAULT NULL,
   `action` varchar(64) DEFAULT NULL,
   `url` text,
@@ -145,7 +146,8 @@ DROP TABLE IF EXISTS `capability_resource_rax`;
 CREATE TABLE `capability_resource_rax` (
   `capability_id` varchar(64) NOT NULL,
   `resource` varchar(255) NOT NULL,
-  PRIMARY KEY (`capability_id`,`resource`)
+  PRIMARY KEY (`capability_id`,`resource`),
+  CONSTRAINT `fk_crr_capability_id` FOREIGN KEY (`capability_id`) REFERENCES `capability_rax` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -180,6 +182,54 @@ CREATE TABLE `credential` (
   `type` varchar(255) NOT NULL,
   `extra` text,
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `delta_ldap_to_sql_rax`
+--
+
+DROP TABLE IF EXISTS `delta_ldap_to_sql_rax`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `delta_ldap_to_sql_rax` (
+  `id` varchar(64) NOT NULL,
+  `event` varchar(15) NOT NULL,
+  `host` varchar(255) NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `data` text,
+  `error` text,
+  `retrieved` datetime(6) DEFAULT NULL,
+  `migrated` datetime(6) DEFAULT NULL,
+  `created` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  KEY `idx_dltsr_created` (`created`),
+  KEY `idx_dltsr_retrieved` (`retrieved`),
+  KEY `idx_dltsr_migrated` (`migrated`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `delta_sql_to_ldap_rax`
+--
+
+DROP TABLE IF EXISTS `delta_sql_to_ldap_rax`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `delta_sql_to_ldap_rax` (
+  `id` varchar(64) NOT NULL,
+  `event` varchar(15) NOT NULL,
+  `host` varchar(255) NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `data` text,
+  `error` text,
+  `retrieved` datetime(6) DEFAULT NULL,
+  `migrated` datetime(6) DEFAULT NULL,
+  `created` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  KEY `idx_dstlr_created` (`created`),
+  KEY `idx_dstlr_retrieved` (`retrieved`),
+  KEY `idx_dstlr_migrated` (`migrated`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -493,7 +543,7 @@ DROP TABLE IF EXISTS `migrate_version`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `migrate_version` (
   `repository_id` varchar(250) NOT NULL,
-  `repository_path` mediumtext,
+  `repository_path` text,
   `version` int(11) DEFAULT NULL,
   PRIMARY KEY (`repository_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -542,6 +592,7 @@ DROP TABLE IF EXISTS `pattern_rax`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `pattern_rax` (
   `id` varchar(64) NOT NULL,
+  `name` varchar(64) DEFAULT NULL,
   `regex` text,
   `error_message` text,
   `description` text,
@@ -997,9 +1048,9 @@ CREATE TABLE `user` (
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
-/*!50003 SET collation_connection  = latin1_swedish_ci */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
@@ -1090,9 +1141,9 @@ CREATE TABLE `user_rax` (
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = latin1 */ ;
-/*!50003 SET character_set_results = latin1 */ ;
-/*!50003 SET collation_connection  = latin1_swedish_ci */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
@@ -1131,4 +1182,4 @@ CREATE TABLE `whitelisted_config` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-08-20 13:34:49
+-- Dump completed on 2015-08-23 18:34:47

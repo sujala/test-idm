@@ -4,6 +4,8 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.FederatedRoleRepository;
 import com.rackspace.idm.domain.sql.dao.TenantRoleRepository;
 import com.rackspace.idm.domain.sql.entity.SqlFederatedRoleRax;
@@ -30,21 +32,26 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    TenantRoleRepository tenantRoleRepository;
+    private TenantRoleRepository tenantRoleRepository;
 
     @Autowired
-    FederatedRoleRepository federatedRoleRepository;
+    private FederatedRoleRepository federatedRoleRepository;
 
     @Autowired
-    FederatedRoleRaxMapper federatedRoleRaxMapper;
+    private FederatedRoleRaxMapper federatedRoleRaxMapper;
 
     @Autowired
-    TenantRoleMapper mapper;
+    private TenantRoleMapper mapper;
+
+    @Autowired
+    private DeltaDao deltaDao;
 
     @Override
     @Transactional
     public void addTenantRoleToUser(BaseUser user, TenantRole tenantRole) {
         tenantRole.setUserId(user.getId());
+
+        TenantRole newTenantRole = null;
         if(user instanceof FederatedUser) {
             SqlFederatedRoleRax federatedRoleRax = federatedRoleRepository.findOneByRoleRsIdAndUserId(tenantRole.getRoleRsId(), user.getId());
             if(federatedRoleRax != null) {
@@ -52,16 +59,92 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
                     throw new ClientConflictException();
                 }
                 federatedRoleRax.getTenantIds().addAll(tenantRole.getTenantIds());
-                federatedRoleRepository.save(federatedRoleRax);
+                federatedRoleRax = federatedRoleRepository.save(federatedRoleRax);
             } else {
-                federatedRoleRepository.save(federatedRoleRaxMapper.toSQL(tenantRole));
+                federatedRoleRax = federatedRoleRepository.save(federatedRoleRaxMapper.toSQL(tenantRole));
             }
+
+            newTenantRole = federatedRoleRaxMapper.fromSQL(federatedRoleRax, tenantRole);
         } else {
             List<SqlTenantRole> sqlTenantRoles = tenantRoleRepository.findByActorIdAndRoleId(user.getId(), tenantRole.getRoleRsId());
             if (containsTenantRole(sqlTenantRoles, mapper.toSQL(tenantRole))) {
                 throw new ClientConflictException();
             }
-            tenantRoleRepository.save(mapper.toSQL(tenantRole));
+            final SqlTenantRole sqlTenantRole = tenantRoleRepository.save(mapper.toSQL(tenantRole));
+
+            newTenantRole = mapper.fromSQL(sqlTenantRole, tenantRole);
+        }
+
+        deltaDao.save(ChangeType.ADD, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole));
+    }
+
+    @Override
+    @Transactional
+    public void updateTenantRole(TenantRole tenantRole) {
+        //check the assignments table to see if this tenant role is for a provisioned user
+        List<SqlTenantRole> existingSqlTenantRoles = tenantRoleRepository.findByActorIdAndRoleId(tenantRole.getUserId(), tenantRole.getRoleRsId());
+        if(!CollectionUtils.isEmpty(existingSqlTenantRoles)) {
+            List<SqlTenantRole> sqlTenantRoles = mapper.toSQLList(tenantRole);
+
+            for (SqlTenantRole sqlTenantRole : existingSqlTenantRoles) {
+                if (!containsTenantRole(sqlTenantRoles, sqlTenantRole)) {
+                    tenantRoleRepository.delete(sqlTenantRole);
+
+                    final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole);
+                    deltaDao.save(ChangeType.DELETE, newTenantRole.getUniqueId(), null);
+                }
+            }
+
+            for (SqlTenantRole sqlTenantRole : sqlTenantRoles) {
+                if (!containsTenantRole(existingSqlTenantRoles, sqlTenantRole)) {
+                    tenantRoleRepository.save(sqlTenantRole);
+
+                    final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole, tenantRole);
+                    deltaDao.save(ChangeType.MODIFY, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole));
+                }
+            }
+            return;
+        }
+
+        //if we get here, then the role was not found for a provisioned user. Now check to see if this is for a federated user
+        SqlFederatedRoleRax federatedRoleRax = federatedRoleRepository.findOneByRoleRsIdAndUserId(tenantRole.getRoleRsId(), tenantRole.getUserId());
+        if(federatedRoleRax != null) {
+            federatedRoleRax = federatedRoleRepository.save(federatedRoleRaxMapper.toSQL(tenantRole, federatedRoleRax));
+
+            final TenantRole newTenantRole = federatedRoleRaxMapper.fromSQL(federatedRoleRax, tenantRole);
+            deltaDao.save(ChangeType.ADD, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole));
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteTenantRoleForUser(EndUser user, TenantRole tenantRole) {
+        if(user instanceof FederatedUser) {
+            federatedRoleRepository.deleteByUserIdAndRoleRsId(user.getId(), tenantRole.getRoleRsId());
+        } else {
+            for (SqlTenantRole sqlTenantRole : mapper.toSQLList(tenantRole)) {
+                sqlTenantRole.setActorId(user.getId());
+                tenantRoleRepository.delete(sqlTenantRole);
+
+                final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole);
+                deltaDao.save(ChangeType.DELETE, newTenantRole.getUniqueId(), null);
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteTenantRole(TenantRole tenantRole) {
+        if(federatedRoleRepository.findOneByRoleRsIdAndUserId(tenantRole.getRoleRsId(), tenantRole.getUserId()) != null) {
+            federatedRoleRepository.deleteByUserIdAndRoleRsId(tenantRole.getUserId(), tenantRole.getRoleRsId());
+        } else {
+            final List<SqlTenantRole> list = mapper.toSQLList(tenantRole);
+            tenantRoleRepository.delete(list);
+
+            for (SqlTenantRole sqlTenantRole : list) {
+                final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole);
+                deltaDao.save(ChangeType.DELETE, newTenantRole.getUniqueId(), null);
+            }
         }
     }
 
@@ -113,58 +196,6 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
             return federatedRoleRaxMapper.fromSQL(federatedRoleRepository.findOneByRoleRsIdAndUserId(roleId, user.getId()));
         } else {
             return mapper.fromSQL(tenantRoleRepository.findByActorIdAndRoleId(user.getId(), roleId));
-        }
-    }
-
-    @Override
-    @Transactional
-    public void updateTenantRole(TenantRole tenantRole) {
-        //check the assignments table to see if this tenant role is for a provisioned user
-        List<SqlTenantRole> existingSqlTenantRoles = tenantRoleRepository.findByActorIdAndRoleId(tenantRole.getUserId(), tenantRole.getRoleRsId());
-        if(!CollectionUtils.isEmpty(existingSqlTenantRoles)) {
-            List<SqlTenantRole> sqlTenantRoles = mapper.toSQLList(tenantRole);
-
-            for (SqlTenantRole sqlTenantRole : existingSqlTenantRoles) {
-                if (!containsTenantRole(sqlTenantRoles, sqlTenantRole)) {
-                    tenantRoleRepository.delete(sqlTenantRole);
-                }
-            }
-
-            for (SqlTenantRole sqlTenantRole : sqlTenantRoles) {
-                if (!containsTenantRole(existingSqlTenantRoles, sqlTenantRole)) {
-                    tenantRoleRepository.save(sqlTenantRole);
-                }
-            }
-            return;
-        }
-
-        //if we get here, then the role was not found for a provisioned user. Now check to see if this is for a federated user
-        SqlFederatedRoleRax federatedRoleRax = federatedRoleRepository.findOneByRoleRsIdAndUserId(tenantRole.getRoleRsId(), tenantRole.getUserId());
-        if(federatedRoleRax != null) {
-            federatedRoleRepository.save(federatedRoleRaxMapper.toSQL(tenantRole, federatedRoleRax));
-        }
-    }
-
-    @Override
-    @Transactional
-    public void deleteTenantRoleForUser(EndUser user, TenantRole tenantRole) {
-        if(user instanceof FederatedUser) {
-            federatedRoleRepository.deleteByUserIdAndRoleRsId(user.getId(), tenantRole.getRoleRsId());
-        } else {
-            for (SqlTenantRole sqlTenantRole : mapper.toSQLList(tenantRole)) {
-                sqlTenantRole.setActorId(user.getId());
-                tenantRoleRepository.delete(sqlTenantRole);
-            }
-        }
-    }
-
-    @Override
-    @Transactional
-    public void deleteTenantRole(TenantRole tenantRole) {
-        if(federatedRoleRepository.findOneByRoleRsIdAndUserId(tenantRole.getRoleRsId(), tenantRole.getUserId()) != null) {
-            federatedRoleRepository.deleteByUserIdAndRoleRsId(tenantRole.getUserId(), tenantRole.getRoleRsId());
-        } else {
-            tenantRoleRepository.delete(mapper.toSQLList(tenantRole));
         }
     }
 

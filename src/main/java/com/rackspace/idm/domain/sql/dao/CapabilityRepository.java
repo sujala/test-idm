@@ -10,7 +10,7 @@ import java.util.List;
 @SQLRepository
 public interface CapabilityRepository extends JpaSpecificationExecutor<SqlCapability>, JpaRepository<SqlCapability, String> {
 
-    SqlCapability findByIdAndTypeAndVersion(String id, String type, String version);
+    SqlCapability findByCapabilityIdAndTypeAndVersion(String capabilityId, String type, String version);
 
     List<SqlCapability> findByTypeAndVersion(String type, String version);
 }

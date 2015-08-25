@@ -7,13 +7,11 @@ import com.rackspace.idm.domain.dao.GenericDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.Auditable;
 import com.rackspace.idm.domain.entity.PaginatorContext;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.StalePasswordException;
-import com.rackspace.idm.util.migration.*;
-import com.rackspace.idm.util.migration.ChangeType;
-import com.rackspace.idm.util.migration.ldap.LDAPMigrationChangeApplicationEvent;
-import com.rackspace.idm.util.migration.ldap.LdapMigrationChangeEvent;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPPersistException;
@@ -21,14 +19,22 @@ import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class LdapGenericRepository<T extends UniqueId> extends LdapRepository implements GenericDao<T> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(LdapGenericRepository.class);
+
     public static final String ERROR_GETTING_OBJECT = "Error getting object";
     public static final int PAGE_SIZE = 1000;
 
@@ -39,6 +45,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Autowired
     private LdapPaginatorRepository<T> paginator;
+
+    @Autowired(required = false)
+    private DeltaDao deltaDao;
 
     @Override
     public Iterable<T> getObjects(Filter searchFilter) {
@@ -173,10 +182,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             doPreEncode(object);
 
             //this is an approximation of the date this occurred
-            Date timeStamp = new Date();
             LDAPResult result = persister.add(object, getAppInterface(), dn);
             audit.succeed();
-            emitMigrationAddEventIfNecessary(object, timeStamp);
+            emitMigrationAddEventIfNecessary(object);
             getLogger().info("Added: {}", object);
         } catch (final LDAPException e) {
             getLogger().error("Error adding object", e);
@@ -190,15 +198,23 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         }
     }
 
-    private void emitMigrationAddEventIfNecessary(T object, Date timeStamp) {
-        if (shouldEmitEventForDN(object.getUniqueId())) {
-            applicationEventPublisher.publishEvent(new LDAPMigrationChangeApplicationEvent(this, timeStamp, ChangeType.ADD, object.getUniqueId()));
+    private void emitMigrationAddEventIfNecessary(T object) {
+        if (deltaDao != null && shouldEmitEventForDN(object.getUniqueId())) {
+            try {
+                deltaDao.save(ChangeType.ADD, object.getUniqueId(), null);
+            } catch (Exception e) {
+                LOGGER.error("Cannot emmit 'ADD' change event!", e);
+            }
         }
     }
 
-    private void emitMigrationModifyEventIfNecessary(T object, Date timeStamp) {
-        if (shouldEmitEventForDN(object.getUniqueId())) {
-            applicationEventPublisher.publishEvent(new LDAPMigrationChangeApplicationEvent(this, timeStamp, ChangeType.MODIFY, object.getUniqueId()));
+    private void emitMigrationModifyEventIfNecessary(T object) {
+        if (deltaDao != null && shouldEmitEventForDN(object.getUniqueId())) {
+            try {
+                deltaDao.save(ChangeType.MODIFY, object.getUniqueId(), null);
+            } catch (Exception e) {
+                LOGGER.error("Cannot emmit 'MODIFY' change event!", e);
+            }
         }
     }
 
@@ -329,11 +345,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         String loggerMsg = String.format("Updating object %s with id %s", entityType.toString(), object.getUniqueId());
         getLogger().debug(loggerMsg);
         Audit audit = Audit.log((Auditable)object).modify();
-        Date timeStamp;
 
         try {
             doPreEncode(object);
-            timeStamp = new Date();
             applyModificationsForAttributes(object, true);
         } catch (LDAPException ldapEx) {
             getLogger().error("Error updating {} - {}", object, ldapEx);
@@ -342,7 +356,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
         audit.succeed();
-        emitMigrationModifyEventIfNecessary(object, timeStamp);
+        emitMigrationModifyEventIfNecessary(object);
         getLogger().info("Updated - {}", object);
     }
 
@@ -356,10 +370,8 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         String loggerMsg = String.format("Updating object %s with id %s", entityType.toString(), object.getUniqueId());
         getLogger().debug(loggerMsg);
         Audit audit = Audit.log((Auditable)object).modify();
-        Date timeStamp;
         try {
             doPreEncode(object);
-            timeStamp = new Date();
             applyModifications(object, false);
             applyModifications(object, true);
         } catch (LDAPException ldapEx) {
@@ -369,7 +381,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
         audit.succeed();
-        emitMigrationModifyEventIfNecessary(object, timeStamp);
+        emitMigrationModifyEventIfNecessary(object);
         getLogger().info("Updated - {}", object);
     }
 

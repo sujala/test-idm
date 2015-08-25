@@ -19,17 +19,29 @@ import java.util.*;
 @SQLComponent
 public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
 
+    private static final String FORMAT = "rsId=%s,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+
     private static final String V1_DEFAULTS_FIELD = "v1Defaults";
     private static final String BASE_URL_IDS_FIELD = "baseUrlIds";
 
     @Autowired
-    IdentityConfig config;
+    private IdentityConfig config;
 
     @Autowired
-    DomainRepository domainRepository;
+    private DomainRepository domainRepository;
 
     @Autowired
-    EndpointRepository endpointRepository;
+    private EndpointRepository endpointRepository;
+
+    @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected Object[] getIds(SqlProject sqlProject) {
+        return new Object[] {sqlProject.getTenantId()};
+    }
 
     @Override
     public Tenant fromSQL(SqlProject entity) {

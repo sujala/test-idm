@@ -28,16 +28,22 @@ public class UserMapper extends SqlRaxMapper<User, SqlUser, SqlUserRax> {
     private CryptHelper cryptHelper;
 
     @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected String[] getIds(SqlUser sqlUser) {
+        return new String[] {sqlUser.getId()};
+    }
+
+    @Override
     public User fromSQL(SqlUser sqlUser, boolean ignoreNulls) {
         if (sqlUser == null) {
             return null;
         }
 
         final User user = super.fromSQL(sqlUser, ignoreNulls);
-        if (user.getUniqueId() == null) {
-            user.setUniqueId(fromSqlUserToUniqueId(sqlUser));
-        }
-
         encryptionService.decryptUser(user);
         user.setPasswordIsNew(false);
         user.setPassword(null);
@@ -52,9 +58,6 @@ public class UserMapper extends SqlRaxMapper<User, SqlUser, SqlUserRax> {
 
         encryptionService.encryptUser(user);
         sqlUser = super.toSQL(user, sqlUser, ignoreNulls);
-        if (user.getUniqueId() == null) {
-            user.setUniqueId(fromSqlUserToUniqueId(sqlUser));
-        }
         if (user.getPassword() != null && (
                 !user.getPassword().equals(user.getUserPassword()) ||
                 !cryptHelper.isPasswordEncrypted(user.getPassword()))) {
@@ -66,13 +69,6 @@ public class UserMapper extends SqlRaxMapper<User, SqlUser, SqlUserRax> {
 
     public List<String> getExtraAttributes() {
         return Arrays.asList("email");
-    }
-
-    private String fromSqlUserToUniqueId(SqlUser sqlUser) {
-        if (sqlUser != null) {
-            return String.format(FORMAT, sqlUser.getId());
-        }
-        return null;
     }
 
 }

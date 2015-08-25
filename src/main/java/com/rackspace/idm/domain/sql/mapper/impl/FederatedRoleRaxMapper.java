@@ -1,10 +1,15 @@
 package com.rackspace.idm.domain.sql.mapper.impl;
 
 import com.rackspace.idm.annotation.SQLComponent;
+import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.sql.dao.FederatedRoleRepository;
+import com.rackspace.idm.domain.sql.dao.FederatedUserRepository;
+import com.rackspace.idm.domain.sql.dao.IdentityProviderRepository;
 import com.rackspace.idm.domain.sql.entity.SqlFederatedRoleRax;
 import com.rackspace.idm.domain.sql.mapper.SqlMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Set;
 import java.util.UUID;
@@ -14,16 +19,27 @@ import java.util.regex.Pattern;
 @SQLComponent
 public class FederatedRoleRaxMapper extends SqlMapper<TenantRole, SqlFederatedRoleRax> {
 
-    private static final String ID_FORMAT = "([a-z0-9]+)";
-    private static final String DN_FORMAT = "roleRsId=%s,cn=ROLES,uid=%s,ou=users,ou=test,o=externalProviders,dc=rackspace,dc=com";
-    private static final Pattern REGEXP = Pattern.compile(String.format(DN_FORMAT, ID_FORMAT, ID_FORMAT));
+    private static final String FORMAT = "roleRsId=%s,cn=ROLES,uid=%s,ou=users,ou=%s,o=externalProviders,dc=rackspace,dc=com";
+
+    @Autowired
+    private FederatedUserRepository federatedUserRepository;
+
+    @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected Object[] getIds(SqlFederatedRoleRax sqlFederatedRoleRax) {
+        final String idpName = federatedUserRepository.getIdpNameByUserId(sqlFederatedRoleRax.getUserId());
+        return new Object[] {sqlFederatedRoleRax.getRoleRsId(), sqlFederatedRoleRax.getUserId(), idpName};
+    }
 
     @Override
     public TenantRole fromSQL(SqlFederatedRoleRax sqlRole) {
         if(sqlRole == null) return null;
 
         TenantRole role = super.fromSQL(sqlRole);
-        role.setUniqueId(getUniqueId(sqlRole));
         return role;
     }
 
@@ -40,13 +56,6 @@ public class FederatedRoleRaxMapper extends SqlMapper<TenantRole, SqlFederatedRo
 
     private String getNextId() {
         return UUID.randomUUID().toString().replaceAll("-", "");
-    }
-
-    public String getUniqueId(SqlFederatedRoleRax role) {
-        if (role != null) {
-            return String.format(DN_FORMAT, role.getRoleRsId(), role.getUserId());
-        }
-        return null;
     }
 
 }

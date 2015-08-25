@@ -11,10 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class SqlPropertyRepository implements PropertyDao {
 
     @Autowired
-    PropertyMapper mapper;
+    private PropertyMapper mapper;
 
     @Autowired
-    PropertyRepository propertyRepository;
+    private PropertyRepository propertyRepository;
 
     @Override
     public Property getProperty(String name) {

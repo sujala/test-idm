@@ -5,6 +5,8 @@ import com.rackspace.idm.domain.dao.OTPDeviceDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.OTPDevice;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.OTPDeviceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlOTPDevice;
 import com.rackspace.idm.domain.sql.mapper.impl.OTPDeviceMapper;
@@ -18,23 +20,60 @@ import java.util.List;
 public class SqlOTPDeviceRepository implements OTPDeviceDao {
 
     @Autowired
-    OTPDeviceMapper mapper;
+    private OTPDeviceMapper mapper;
 
     @Autowired
-    OTPDeviceRepository repository;
+    private OTPDeviceRepository repository;
+
+    @Autowired
+    private DeltaDao deltaDao;
 
     @Override
     @Transactional
     public void addOTPDevice(UniqueId parent, OTPDevice otpDevice) {
         if (parent instanceof BaseUser) {
             final String userId = ((BaseUser) parent).getId();
-            final SqlOTPDevice device = mapper.toSQL(otpDevice);
+            SqlOTPDevice device = mapper.toSQL(otpDevice);
             device.setUserId(userId);
-            repository.save(device);
+            device = repository.save(device);
 
-            // Update original entity (TODO: improve the way this method is used to avoid this)
-            otpDevice.setUniqueId(mapper.fromSqlOTPDeviceToUniqueId(device));
+            final OTPDevice newOTPDevice = mapper.fromSQL(device, otpDevice);
+            deltaDao.save(ChangeType.ADD, newOTPDevice.getUniqueId(), mapper.toLDIF(newOTPDevice));
         }
+    }
+
+    @Override
+    @Transactional
+    public void updateOTPDevice(OTPDevice otpDevice) {
+        final SqlOTPDevice sqlOTPDevice = repository.save(mapper.toSQL(otpDevice, repository.findOne(otpDevice.getId())));
+
+        final OTPDevice newOTPDevice = mapper.fromSQL(sqlOTPDevice, otpDevice);
+        deltaDao.save(ChangeType.MODIFY, newOTPDevice.getUniqueId(), mapper.toLDIF(newOTPDevice));
+    }
+
+    @Override
+    @Transactional
+    public void deleteAllOTPDevicesFromParent(UniqueId parent) {
+        if (parent instanceof BaseUser) {
+            final String userId = ((BaseUser) parent).getId();
+            final List<SqlOTPDevice> otpDevices = repository.findByUserId(userId);
+
+            repository.deleteByUserId(userId);
+
+            if (otpDevices != null) {
+                for (SqlOTPDevice sqlOTPDevice : otpDevices) {
+                    final OTPDevice otpDevice = mapper.fromSQL(sqlOTPDevice);
+                    deltaDao.save(ChangeType.DELETE, otpDevice.getUniqueId(), null);
+                }
+            }
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteOTPDevice(OTPDevice otpDevice) {
+        repository.delete(otpDevice.getId());
+        deltaDao.save(ChangeType.DELETE, otpDevice.getUniqueId(), null);
     }
 
     @Override
@@ -83,27 +122,6 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
             return mapper.fromSQL(list);
         }
         return Collections.EMPTY_LIST;
-    }
-
-    @Override
-    @Transactional
-    public void deleteAllOTPDevicesFromParent(UniqueId parent) {
-        if (parent instanceof BaseUser) {
-            final String userId = ((BaseUser) parent).getId();
-            repository.deleteByUserId(userId);
-        }
-    }
-
-    @Override
-    @Transactional
-    public void deleteOTPDevice(OTPDevice object) {
-        repository.delete(object.getId());
-    }
-
-    @Override
-    @Transactional
-    public void updateOTPDevice(OTPDevice object) {
-        repository.save(mapper.toSQL(object, repository.findOne(object.getId())));
     }
 
 }

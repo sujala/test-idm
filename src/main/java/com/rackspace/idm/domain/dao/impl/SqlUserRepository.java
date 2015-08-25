@@ -8,6 +8,8 @@ import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.service.EncryptionService;
 import com.rackspace.idm.domain.sql.dao.GroupRepository;
 import com.rackspace.idm.domain.sql.dao.UserRepository;
@@ -55,6 +57,9 @@ public class SqlUserRepository implements UserDao {
     @Autowired
     private CryptHelper cryptHelper;
 
+    @Autowired
+    private DeltaDao deltaDao;
+
     @Override
     @Transactional
     public void addUser(User user) {
@@ -62,12 +67,29 @@ public class SqlUserRepository implements UserDao {
             user.setId(getNextUserId());
         }
         encryptionService.setUserEncryptionSaltAndVersion(user);
-        userRepository.save(userMapper.toSQL(user));
+        final SqlUser sqlUser = userRepository.save(userMapper.toSQL(user));
+
+        final User savedUser = userMapper.fromSQL(sqlUser, user);
+        deltaDao.save(ChangeType.ADD, savedUser.getUniqueId(), userMapper.toLDIF(savedUser));
     }
 
     @Override
-    public User getUserById(String id) {
-        return userMapper.fromSQL(userRepository.findOne(id));
+    @Transactional
+    public void updateUser(User user) {
+        updateUser(user, true);
+    }
+
+    @Override
+    @Transactional
+    public void updateUserAsIs(User user) {
+        updateUser(user, false);
+    }
+
+    private void updateUser(User user, boolean ignoreNulls) {
+        final SqlUser sqlUser = userRepository.save(userMapper.toSQL(user, userRepository.findOne(user.getId()), ignoreNulls));
+
+        final User savedUser = userMapper.fromSQL(sqlUser, user);
+        deltaDao.save(ChangeType.MODIFY, savedUser.getUniqueId(), userMapper.toLDIF(savedUser));
     }
 
     @Override
@@ -75,6 +97,7 @@ public class SqlUserRepository implements UserDao {
     public void deleteUser(User user) {
         try {
             userRepository.delete(user.getId());
+            deltaDao.save(ChangeType.DELETE, user.getUniqueId(), null);
         } catch (Exception e) {
             throw new IllegalStateException("no such object");
         }
@@ -83,7 +106,18 @@ public class SqlUserRepository implements UserDao {
     @Override
     @Transactional
     public void deleteUser(String username) {
-        userRepository.deleteByUsername(username);
+        try {
+            final User user = userMapper.fromSQL(userRepository.findOneByUsername(username));
+            userRepository.deleteByUsername(username);
+            deltaDao.save(ChangeType.DELETE, user.getUniqueId(), null);
+        } catch (Exception e) {
+            throw new IllegalStateException("no such object");
+        }
+    }
+
+    @Override
+    public User getUserById(String id) {
+        return userMapper.fromSQL(userRepository.findOne(id));
     }
 
     @Override
@@ -229,22 +263,6 @@ public class SqlUserRepository implements UserDao {
     @Override
     public String getNextUserId() {
         return UUID.randomUUID().toString().replace("-", "");
-    }
-
-    @Override
-    @Transactional
-    public void updateUser(User user) {
-        updateUser(user, true);
-    }
-
-    @Override
-    @Transactional
-    public void updateUserAsIs(User user) {
-        updateUser(user, false);
-    }
-
-    private void updateUser(User user, boolean ignoreNulls) {
-        userRepository.save(userMapper.toSQL(user, userRepository.findOne(user.getId()), ignoreNulls));
     }
 
     @Override

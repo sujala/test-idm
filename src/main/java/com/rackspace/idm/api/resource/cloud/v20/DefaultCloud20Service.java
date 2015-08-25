@@ -536,7 +536,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             // add the creating user's domain to the tenant.
             // domain_id is required as part of keystone schema
             EndUser user = getUser(scopeAccess);
-            savedTenant.setDomainId(user.getDomainId());
+            if (user != null) {
+                savedTenant.setDomainId(user.getDomainId());
+            }
 
             // Saves the Tenant
             this.tenantService.addTenant(savedTenant);

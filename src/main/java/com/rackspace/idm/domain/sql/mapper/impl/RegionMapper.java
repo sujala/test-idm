@@ -8,4 +8,17 @@ import com.rackspace.idm.domain.sql.mapper.SqlRaxMapper;
 
 @SQLComponent
 public class RegionMapper extends SqlRaxMapper<Region, SqlRegion, SqlRegionRax> {
+
+    private static final String FORMAT = "cn=%s,ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+
+    @Override
+    protected String getUniqueIdFormat() {
+        return FORMAT;
+    }
+
+    @Override
+    protected Object[] getIds(SqlRegion sqlRegion) {
+        return new Object[] {sqlRegion.getName()};
+    }
+
 }

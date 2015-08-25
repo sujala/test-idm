@@ -4,18 +4,11 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.OTPDeviceDao
 import com.rackspace.idm.domain.dao.UniqueId
 import com.rackspace.idm.domain.dao.UserDao
-import com.rackspace.idm.domain.dao.impl.LdapRepository
-import com.rackspace.idm.util.migration.ChangeType
-import com.rackspace.idm.util.migration.PersistenceTarget
-import com.rackspace.idm.util.migration.ldap.LdapChangeEventRecorderListener
-import com.rackspace.idm.util.migration.ldap.LdapChangeEventRepository
-import com.rackspace.idm.util.migration.ldap.LdapMigrationChangeEvent
-import com.unboundid.ldap.sdk.Filter
-import org.apache.commons.collections4.IteratorUtils
+import com.rackspace.idm.domain.migration.ChangeType
+import com.rackspace.idm.domain.migration.dao.DeltaDao
 import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -24,14 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
-    @Autowired
-    LdapChangeEventRecorderListener ldapChangeEventRecorderListener
 
     @Autowired
-    LdapChangeEventRepository ldapChangeEventRepository
+    DeltaDao deltaDao
 
     @Autowired
     IdentityConfig identityConfig
@@ -53,12 +43,11 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
      * Test full integration through REST service add, modify, delete. Includes specifying the type of events to record.
      * @return
      */
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     @Unroll
     def "Record Change Event :: OTP Device :: Recording '#recordChangeTypes' - A change event is recorded to LDAP for OTP Devices"() {
         given:
         //set up properties to record event
-        enableListenerForChangeTypes(ldapChangeEventRecorderListener.getListenerName(), recordChangeTypes.toArray(new ChangeType[recordChangeTypes.size()]))
+        enableListenerForChangeTypes(recordChangeTypes.toArray(new ChangeType[recordChangeTypes.size()]))
 
         def userAdmin
         def users
@@ -73,7 +62,7 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
         com.rackspace.idm.domain.entity.OTPDevice deviceEntity = otpDeviceDao.getOTPDeviceByParentAndId(userEntity, device.id)
 
-        List<LdapMigrationChangeEvent> eventsAfterAdd = getEventsForEntity(deviceEntity)
+        List<?> eventsAfterAdd = getEventsForEntity(deviceEntity)
 
         then: "an add ldap entry is recorded if applicable"
         if (recordChangeTypes.contains(ChangeType.ADD)) {
@@ -86,7 +75,7 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
         when: "modify OTP Device"
         //verify will modify the OTP device by setting verified flag
         utils.verifyOTPDevice(userAdminToken, userAdmin.id, device.id, utils.getOTPVerificationCodeForDevice(device))
-        List<LdapMigrationChangeEvent> eventsAfterModify = getEventsForEntity(deviceEntity)
+        List<?> eventsAfterModify = getEventsForEntity(deviceEntity)
 
         then: "modify event recorded"
         if (recordChangeTypes.contains(ChangeType.MODIFY)) {
@@ -98,7 +87,7 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
         when: "delete OTP Device"
         utils.deleteOTPDeviceFromUser(userAdminToken, userAdmin.id, device.id)
-        List<LdapMigrationChangeEvent> eventsAfterDelete = getEventsForEntity(deviceEntity)
+        List<?> eventsAfterDelete = getEventsForEntity(deviceEntity)
 
         then: "delete event is recorded"
         if (recordChangeTypes.contains(ChangeType.DELETE)) {
@@ -107,6 +96,9 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
         } else {
             assert eventsAfterDelete.size() == eventsAfterModify.size()
         }
+
+        cleanup:
+        deltaDao.deleteAll()
 
         where:
         recordChangeTypes                                    | _
@@ -120,11 +112,10 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
      * Test full integration through REST service add, modify, delete
      * @return
      */
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "Record Change Event :: User"() {
         given:
         //set up properties to record event
-        enableListenerForAllChangeTypes(ldapChangeEventRecorderListener.getListenerName())
+        enableListenerForAllChangeTypes()
         DateTime beforeStart = new DateTime();
 
         User userAdmin
@@ -134,7 +125,7 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdmin()
         def entity = userDao.getUserById(userAdmin.id)
 
-        List<LdapMigrationChangeEvent> eventsAfterAdd = getEventsForEntity(entity)
+        List<?> eventsAfterAdd = getEventsForEntity(entity)
 
         then: "an add ldap entry is recorded if applicable"
         assert eventsAfterAdd.size() == 1
@@ -144,7 +135,7 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
         //verify will modify the OTP device by setting verified flag
         userAdmin.setEmail("somethingnew@rackspace.com")
         utils.updateUser(userAdmin)
-        List<LdapMigrationChangeEvent> eventsAfterModify = getEventsForEntity(entity)
+        List<?> eventsAfterModify = getEventsForEntity(entity)
 
         then: "modify event recorded"
         assert eventsAfterModify.size() == eventsAfterAdd.size() + 1
@@ -152,22 +143,24 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
         when: "delete user"
         utils.deleteUser(userAdmin)
-        List<LdapMigrationChangeEvent> eventsAfterDelete = getEventsForEntity(entity)
+        List<?> eventsAfterDelete = getEventsForEntity(entity)
 
         then: "delete event is recorded"
         assert eventsAfterDelete.size() == eventsAfterModify.size() + 1
         verifyEvent(eventsAfterDelete.last(), ChangeType.DELETE, entity, beforeStart)
+
+        cleanup:
+        deltaDao.deleteAll()
     }
 
     /**
      * Test MFA Changes cause modify event
      * @return
      */
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "Record Change Event :: User MFA modification"() {
         given:
         //set up properties to record event
-        enableListenerForAllChangeTypes(ldapChangeEventRecorderListener.getListenerName())
+        enableListenerForAllChangeTypes()
 
         DateTime beforeStart = new DateTime();
 
@@ -175,11 +168,11 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
         def users
         (userAdmin, users) = utils.createUserAdmin()
         def entity = userDao.getUserById(userAdmin.id)
-        List<LdapMigrationChangeEvent> eventsAfterAdd = getEventsForEntity(entity)
+        List<?> eventsAfterAdd = getEventsForEntity(entity)
 
         when: "Add Mobile Phone To User"
         MobilePhone phone = utils.addMobilePhoneToUser(specificationServiceAdminToken, userAdmin)
-        List<LdapMigrationChangeEvent> eventsAfterAddingPhone = getEventsForEntity(entity)
+        List<?> eventsAfterAddingPhone = getEventsForEntity(entity)
 
         then: "a modify ldap entry is recorded"
         assert eventsAfterAddingPhone.size() == eventsAfterAdd.size() + 1
@@ -187,62 +180,51 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
         when: "Send verification code To User"
         utils.sendVerificationCodeToPhone(specificationServiceAdminToken, userAdmin.id, phone.id)
-        List<LdapMigrationChangeEvent> eventsAfterSendVerification = getEventsForEntity(entity)
+        List<?> eventsAfterSendVerification = getEventsForEntity(entity)
 
         then: "a modify ldap entry is recorded"
         assert eventsAfterSendVerification.size() == eventsAfterAddingPhone.size() + 1
         verifyEvent(eventsAfterSendVerification.last(), ChangeType.MODIFY, entity, beforeStart)
 
+        cleanup:
+        deltaDao.deleteAll()
     }
 
-    def void verifyEvent(LdapMigrationChangeEvent event, ChangeType expectedChangeType, UniqueId expectedEntityRecorded, DateTime expectedOccurredOnOrAfter) {
-        assert event.getChangeType() == expectedChangeType
-        assert event.getPersistenceTarget() == PersistenceTarget.LDAP
+    def void verifyEvent(Object event, ChangeType expectedChangeType, UniqueId expectedEntityRecorded, DateTime expectedOccurredOnOrAfter) {
+        assert expectedChangeType.equals(event.event)
 
-        assert event.getChangeOccurredDate() != null
-        def deleteChangeDate = new DateTime(event.getChangeOccurredDate())
+        assert event.created != null
+        def deleteChangeDate = new DateTime(event.created)
         assert deleteChangeDate.equals(expectedOccurredOnOrAfter) || deleteChangeDate.isAfter(expectedOccurredOnOrAfter)
 
-        assert event.getEntityId() == expectedEntityRecorded.getUniqueId()
-        assert event.getHostName() == identityConfig.getReloadableConfig().getNodeName()
-        assert event.getId() != null
+        assert expectedEntityRecorded.getUniqueId().equals(event.type)
+        assert identityConfig.getReloadableConfig().getNodeName().equals(event.host)
+        assert event.id != null
     }
 
 
-    def void enableListenerForAllChangeTypes(String listener) {
-        reloadableConfiguration.setProperty(getMigrationListerEnabledPropertyName(listener), true)
-        setListenerIgnoreChangeTypes(listener)
+    def void enableListenerForAllChangeTypes() {
+        reloadableConfiguration.setProperty(IdentityConfig.MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP, true)
+        setListenerIgnoreChangeTypes()
     }
 
-    def void enableListenerForChangeTypes(String listener, ChangeType ... allowedChangeType) {
+    def void enableListenerForChangeTypes(ChangeType ... allowedChangeType) {
         List<ChangeType> changeTypes = [ChangeType.ADD, ChangeType.DELETE, ChangeType.MODIFY]
         for (ChangeType allowedType : allowedChangeType) {
             changeTypes.remove(allowedType)
         }
 
-        reloadableConfiguration.setProperty(getMigrationListerEnabledPropertyName(listener), true)
-        setListenerIgnoreChangeTypes(listener, changeTypes.toArray(new ChangeType[changeTypes.size()]))
+        reloadableConfiguration.setProperty(IdentityConfig.MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP, true)
+        setListenerIgnoreChangeTypes(changeTypes.toArray(new ChangeType[changeTypes.size()]))
     }
 
-    def void setListenerIgnoreChangeTypes(String listener, ChangeType... ignoredChangeTypes) {
+    def void setListenerIgnoreChangeTypes(ChangeType... ignoredChangeTypes) {
         String changeTypeCSV = StringUtils.join(ignoredChangeTypes, ",");
-        reloadableConfiguration.setProperty(getMigrationListerIgnoredChangeTypesPropertyName(listener), changeTypeCSV);
+        reloadableConfiguration.setProperty(IdentityConfig.MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP, changeTypeCSV);
     }
 
-    def String getMigrationListerEnabledPropertyName(String listenerName) {
-        return String.format(IdentityConfig.MIGRATION_LISTENER_HANDLES_MIGRATION_CHANGE_EVENTS_PROP_REG, listenerName);
+    private List<?> getEventsForEntity(UniqueId entity) {
+        return deltaDao.findByType(entity.getUniqueId())
     }
 
-    def String getMigrationListerIgnoredChangeTypesPropertyName(String listenerName) {
-        return String.format(IdentityConfig.MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_REG, listenerName);
-    }
-
-    private List<LdapMigrationChangeEvent> getEventsForEntity(UniqueId entity) {
-        Filter filter = new LdapRepository.LdapSearchBuilder()
-                .addEqualAttribute(LdapRepository.ATTR_ENTITY_ID, entity.getUniqueId())
-                .addEqualAttribute(LdapRepository.ATTR_OBJECT_CLASS, LdapRepository.OBJECTCLASS_CHANGE_EVENT).build();
-
-        Iterable<LdapMigrationChangeEvent> it = ldapChangeEventRepository.getObjects(filter);
-        return IteratorUtils.toList(it.iterator());
-    }
 }

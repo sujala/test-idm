@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.sql.entity;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -13,6 +14,9 @@ public class SqlCapability {
     @Id
     @Column(name = "id", length = 64)
     private String id;
+
+    @Column(name = "capability_id", length = 64)
+    private String capabilityId;
 
     @Column(name = "name", length = 64)
     private String name;
@@ -32,6 +36,10 @@ public class SqlCapability {
     @Column(name = "version")
     private String version;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "id")
-    private List<SqlCapabilityResource> resources;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "capability_resource_rax",
+            joinColumns = @JoinColumn(name = "capability_id"))
+    @Column(name = "resource")
+    private List<String> resources = new ArrayList<String>();
+
 }

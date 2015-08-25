@@ -5,6 +5,8 @@ import com.rackspace.idm.domain.dao.BypassDeviceDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.BypassDevice;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.BypassDeviceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlBypassDevice;
 import com.rackspace.idm.domain.sql.mapper.impl.BypassDeviceMapper;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
+import java.util.List;
 
 @SQLComponent
 public class SqlBypassDeviceRepository implements BypassDeviceDao {
@@ -26,17 +29,33 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
     @Autowired
     private BypassDeviceRepository repository;
 
+    @Autowired
+    private DeltaDao deltaDao;
+
     @Override
     @Transactional
     public void addBypassDevice(UniqueId parent, BypassDevice bypassDevice) {
         if (parent instanceof BaseUser) {
             final String userId = ((BaseUser) parent).getId();
-            final SqlBypassDevice device = mapper.toSQL(bypassDevice);
+            SqlBypassDevice device = mapper.toSQL(bypassDevice);
             device.setUserId(userId);
-            repository.save(device);
+            device = repository.save(device);
 
-            // Update original entity (TODO: improve the way this method is used to avoid this)
-            bypassDevice.setUniqueId(mapper.fromSqlBypassDeviceToUniqueId(device));
+            final BypassDevice newBypassDevice = mapper.fromSQL(device, bypassDevice);
+            deltaDao.save(ChangeType.ADD, newBypassDevice.getUniqueId(), mapper.toLDIF(newBypassDevice));
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updateBypassDevice(BypassDevice bypassDevice) {
+        try {
+            final SqlBypassDevice device = repository.save(mapper.toSQL(bypassDevice, repository.findOne(bypassDevice.getId())));
+
+            final BypassDevice newBypassDevice = mapper.fromSQL(device, bypassDevice);
+            deltaDao.save(ChangeType.MODIFY, newBypassDevice.getUniqueId(), mapper.toLDIF(newBypassDevice));
+        } catch (Exception e) {
+            LOGGER.error("Cannot update bypass device: " + bypassDevice.getId(), e);
         }
     }
 
@@ -46,7 +65,15 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
         try {
             if (parent instanceof BaseUser) {
                 final String userId = ((BaseUser) parent).getId();
+                final List<SqlBypassDevice> devices = repository.findByUserId(userId);
                 repository.deleteByUserId(userId);
+
+                if (devices != null) {
+                    for (SqlBypassDevice device : devices) {
+                        final BypassDevice bypassDevice = mapper.fromSQL(device);
+                        deltaDao.save(ChangeType.DELETE, bypassDevice.getUniqueId(), null);
+                    }
+                }
             }
         } catch (Exception e) {
             LOGGER.error("Cannot remove bypass devices for uniqueId: " + parent.getUniqueId(), e);
@@ -58,20 +85,11 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
     public boolean deleteBypassDevice(BypassDevice bypassDevice) {
         try {
             repository.delete(bypassDevice.getId());
+            deltaDao.save(ChangeType.DELETE, bypassDevice.getUniqueId(), null);
             return true;
         } catch (Exception e) {
             LOGGER.error("Cannot remove bypass device: " + bypassDevice.getId(), e);
             return false;
-        }
-    }
-
-    @Override
-    @Transactional
-    public void updateBypassDevice(BypassDevice bypassDevice) {
-        try {
-            repository.save(mapper.toSQL(bypassDevice, repository.findOne(bypassDevice.getId())));
-        } catch (Exception e) {
-            LOGGER.error("Cannot update bypass device: " + bypassDevice.getId(), e);
         }
     }
 

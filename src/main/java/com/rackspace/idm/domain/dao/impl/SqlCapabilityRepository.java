@@ -3,7 +3,10 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.CapabilityDao;
 import com.rackspace.idm.domain.entity.Capability;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.CapabilityRepository;
+import com.rackspace.idm.domain.sql.entity.SqlCapability;
 import com.rackspace.idm.domain.sql.mapper.impl.CapabilityMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,25 +17,36 @@ import java.util.UUID;
 public class SqlCapabilityRepository implements CapabilityDao {
 
     @Autowired
-    CapabilityMapper mapper;
+    private CapabilityMapper mapper;
 
     @Autowired
-    CapabilityRepository repository;
+    private CapabilityRepository repository;
 
-    @Override
-    public String getNextCapabilityId() {
-        return UUID.randomUUID().toString().replace("-", "");
-    }
+    @Autowired
+    private DeltaDao deltaDao;
 
     @Override
     @Transactional
     public void addCapability(Capability capability) {
-        repository.save(mapper.toSQL(capability));
+        final SqlCapability sqlCapability = repository.save(mapper.toSQL(capability));
+
+        final Capability newCapability = mapper.fromSQL(sqlCapability, capability);
+        deltaDao.save(ChangeType.ADD, newCapability.getUniqueId(), mapper.toLDIF(newCapability));
+    }
+
+    @Override
+    @Transactional
+    public void deleteCapability(String capabilityId, String type, String version) {
+        final SqlCapability sqlCapability = repository.findByCapabilityIdAndTypeAndVersion(capabilityId, type, version);
+        repository.delete(sqlCapability);
+
+        final Capability capability = mapper.fromSQL(sqlCapability);
+        deltaDao.save(ChangeType.DELETE, capability.getUniqueId(), mapper.toLDIF(capability));
     }
 
     @Override
     public Capability getCapability(String id, String type, String version) {
-        return mapper.fromSQL(repository.findByIdAndTypeAndVersion(id, type, version));
+        return mapper.fromSQL(repository.findByCapabilityIdAndTypeAndVersion(id, type, version));
     }
 
     @Override
@@ -41,8 +55,8 @@ public class SqlCapabilityRepository implements CapabilityDao {
     }
 
     @Override
-    @Transactional
-    public void deleteCapability(String id, String type, String version) {
-        repository.delete(id);
+    public String getNextCapabilityId() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
+
 }

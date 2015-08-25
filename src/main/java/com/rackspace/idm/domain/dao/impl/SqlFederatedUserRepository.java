@@ -6,6 +6,8 @@ import com.rackspace.idm.domain.entity.BaseUserToken;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.IdentityProvider;
+import com.rackspace.idm.domain.migration.ChangeType;
+import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository;
 import com.rackspace.idm.domain.sql.dao.GroupRepository;
 import com.rackspace.idm.domain.sql.entity.SqlFederatedUserRax;
@@ -34,6 +36,9 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
     @Autowired
     private GroupRepository groupRepository;
 
+    @Autowired
+    private DeltaDao deltaDao;
+
     @Override
     @Transactional
     public void addUser(IdentityProvider provider, FederatedUser user) {
@@ -41,14 +46,20 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
         if (StringUtils.isBlank(user.getId())) {
             user.setId(getNextId());
         }
-        federatedUserRepository.save(federatedUserRaxMapper.toSQL(user));
-        user.setUniqueId(FederatedUserRaxMapper.UNIQUE_ID_PLACEHOLDER);
+        final SqlFederatedUserRax sqlFederatedUserRax = federatedUserRepository.save(federatedUserRaxMapper.toSQL(user));
+
+        final FederatedUser federatedUser = federatedUserRaxMapper.fromSQL(sqlFederatedUserRax, user);
+        deltaDao.save(ChangeType.ADD, federatedUser.getUniqueId(), federatedUserRaxMapper.toLDIF(federatedUser));
     }
 
     @Override
     @Transactional
     public void updateUser(FederatedUser user) {
-        federatedUserRepository.save(federatedUserRaxMapper.toSQL(user, federatedUserRepository.findOne(user.getId())));
+        final SqlFederatedUserRax sqlFederatedUserRax = federatedUserRepository.save(
+                federatedUserRaxMapper.toSQL(user, federatedUserRepository.findOne(user.getId())));
+
+        final FederatedUser federatedUser = federatedUserRaxMapper.fromSQL(sqlFederatedUserRax, user);
+        deltaDao.save(ChangeType.MODIFY, federatedUser.getUniqueId(), federatedUserRaxMapper.toLDIF(federatedUser));
     }
 
     @Override

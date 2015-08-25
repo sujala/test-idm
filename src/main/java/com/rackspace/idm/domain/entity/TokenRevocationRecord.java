@@ -1,7 +1,5 @@
 package com.rackspace.idm.domain.entity;
 
-import com.rackspace.idm.GlobalConstants;
-
 import java.util.*;
 
 public interface TokenRevocationRecord {

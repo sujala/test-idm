@@ -30,4 +30,5 @@ public interface FederatedRoleRepository extends JpaSpecificationExecutor<SqlFed
     List<SqlFederatedRoleRax> findByTenantIdAndRoleRsId(@Param("tenantId") String tenantId, @Param("roleRsId") String roleRsId);
 
     Long deleteByUserIdAndRoleRsId(String userId, String roleId);
+
 }
