@@ -81,6 +81,18 @@ public abstract class SqlMapper<Entity extends UniqueId, SQLEntity> {
         return sqlEntity;
     }
 
+    public String toContainerLDIF(String dn, String name) {
+        final StringBuilder builder = new StringBuilder();
+        builder.append("dn: " + toContainerDN(dn, name) + "\n");
+        builder.append("objectClass: rsContainer\n");
+        builder.append("cn: " + name + "\n");
+        return builder.toString();
+    }
+
+    public String toContainerDN(String dn, String name) {
+        return "cn=" + name + "," + dn;
+    }
+
     public String toLDIF(Entity entity) {
         try {
             final LDAPPersister<Entity> persister = LDAPPersister.getInstance(entityClass);

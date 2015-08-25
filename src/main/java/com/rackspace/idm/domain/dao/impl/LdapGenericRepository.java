@@ -197,11 +197,14 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             }
         }
     }
-
     private void emitMigrationAddEventIfNecessary(T object) {
-        if (deltaDao != null && shouldEmitEventForDN(object.getUniqueId())) {
+        emitMigrationAddEventIfNecessary(object.getUniqueId());
+    }
+
+    private void emitMigrationAddEventIfNecessary(String dn) {
+        if (deltaDao != null && shouldEmitEventForDN(dn)) {
             try {
-                deltaDao.save(ChangeType.ADD, object.getUniqueId(), null);
+                deltaDao.save(ChangeType.ADD, dn, null);
             } catch (Exception e) {
                 LOGGER.error("Cannot emmit 'ADD' change event!", e);
             }
@@ -230,6 +233,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             String dn = new LdapDnBuilder(partialDnString).addAttribute(ATTR_NAME, containerName).build();
             try {
                 getAppInterface().add(dn, attributeArray);
+                emitMigrationAddEventIfNecessary(dn);
                 audit.succeed();
                 return dn;
             } catch (LDAPException e) {

@@ -27,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
+import static com.rackspace.idm.domain.dao.impl.LdapRepository.*;
+
 @SQLComponent
 public class SqlUserRepository implements UserDao {
 
@@ -69,8 +71,16 @@ public class SqlUserRepository implements UserDao {
         encryptionService.setUserEncryptionSaltAndVersion(user);
         final SqlUser sqlUser = userRepository.save(userMapper.toSQL(user));
 
-        final User savedUser = userMapper.fromSQL(sqlUser, user);
-        deltaDao.save(ChangeType.ADD, savedUser.getUniqueId(), userMapper.toLDIF(savedUser));
+        // Save necessary LDIF for rollback
+        final User savedUser = userMapper.fromSQL(sqlUser);
+        final String dn = savedUser.getUniqueId();
+        deltaDao.save(ChangeType.ADD, dn, userMapper.toLDIF(savedUser));
+        deltaDao.save(ChangeType.ADD, userMapper.toContainerDN(dn, CONTAINER_ROLES),
+                userMapper.toContainerLDIF(dn, CONTAINER_ROLES));
+        deltaDao.save(ChangeType.ADD, userMapper.toContainerDN(dn, CONTAINER_BYPASS_CODES),
+                userMapper.toContainerLDIF(dn, CONTAINER_BYPASS_CODES));
+        deltaDao.save(ChangeType.ADD, userMapper.toContainerDN(dn, CONTAINER_OTP_DEVICES),
+                userMapper.toContainerLDIF(dn, CONTAINER_OTP_DEVICES));
     }
 
     @Override
@@ -88,7 +98,7 @@ public class SqlUserRepository implements UserDao {
     private void updateUser(User user, boolean ignoreNulls) {
         final SqlUser sqlUser = userRepository.save(userMapper.toSQL(user, userRepository.findOne(user.getId()), ignoreNulls));
 
-        final User savedUser = userMapper.fromSQL(sqlUser, user);
+        final User savedUser = userMapper.fromSQL(sqlUser);
         deltaDao.save(ChangeType.MODIFY, savedUser.getUniqueId(), userMapper.toLDIF(savedUser));
     }
 
