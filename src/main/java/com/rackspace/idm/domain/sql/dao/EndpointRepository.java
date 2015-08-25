@@ -37,7 +37,7 @@ public interface EndpointRepository extends JpaSpecificationExecutor<SqlEndpoint
     List<SqlEndpoint> findByRegionNotAndRaxBaseUrlTypeAndRaxGlobalTrueAndEnabledTrue(String region, String baseUrlType);
 
     @EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
-    List<SqlEndpoint> findByRegionAndRaxBaseUrlType(String region, String baseUrlType);
+    List<SqlEndpoint> findByRegionAndRaxBaseUrlTypeAndEnabledTrue(String region, String baseUrlType);
 
     @EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
     List<SqlEndpoint> findByRaxBaseUrlTypeAndEnabledAndRaxDefTrue(String baseUrlType, boolean enabled);

@@ -129,7 +129,7 @@ public class SqlEndpointRepository implements EndpointDao {
 
     @Override
     public Iterable<CloudBaseUrl> getGlobalUKBaseUrlsByBaseUrlType(String baseUrlType) {
-        final List<SqlEndpoint> endpoints = endpointRepository.findByRegionAndRaxBaseUrlType(LON_REGION, baseUrlType);
+        final List<SqlEndpoint> endpoints = endpointRepository.findByRegionAndRaxBaseUrlTypeAndEnabledTrue(LON_REGION, baseUrlType);
         return getCloudBaseUrls(endpoints);
 
     }

@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.sql.mapper;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.sql.entity.SqlEndpoint;
-import com.rackspace.idm.domain.sql.entity.SqlService;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
@@ -107,7 +105,7 @@ public abstract class SqlMapper<Entity extends UniqueId, SQLEntity> {
                     final String propertyName = declaredFields.get(field);
                     Object value = entityWrapper.getPropertyValue(propertyName);
                     final boolean deleteNullValues = entityWrapper.getPropertyTypeDescriptor(propertyName).hasAnnotation(DeleteNullValues.class);
-                    if (isValid(value) || !ignoreNulls || deleteNullValues) {
+                    if (validEmptyAttributes().contains(field) || isValid(value) || !ignoreNulls || deleteNullValues) {
                         value = convertBase64(value, field, entityClass);
                         value = convertPersistentCollection(value, field, sqlEntityWrapper);
                         sqlEntityWrapper.setPropertyValue(field, value);
@@ -124,6 +122,10 @@ public abstract class SqlMapper<Entity extends UniqueId, SQLEntity> {
            return false;
         }
         return !(value instanceof String) || !StringUtils.isEmpty((String) value);
+    }
+
+    public List<String> validEmptyAttributes(){
+        return new ArrayList<String>();
     }
 
     private Object convertPersistentCollection(Object value, String field, BeanWrapper sqlEntityWrapper) {

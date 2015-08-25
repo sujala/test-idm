@@ -123,13 +123,33 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
             }
         }
 
+        // Add all baseURLs to project
         for (String endpointId : entity.getBaseUrlIds()) {
             sqlEntity.getBaseUrlIds().addAll(endpointMap.get(endpointId));
         }
 
+        // Remove baseURls not associated project
+        List<SqlEndpoint> removeBaseUrls = new ArrayList<SqlEndpoint>();
+        for (SqlEndpoint endpoint : sqlEntity.getBaseUrlIds()) {
+            if(!entity.getBaseUrlIds().contains(endpoint.getLegacyEndpointId())) {
+                removeBaseUrls.add(endpoint);
+            }
+        }
+        sqlEntity.getBaseUrlIds().removeAll(removeBaseUrls);
+
+        // Add all v1Defaults to project
         for (String endpointId : entity.getV1Defaults()) {
             sqlEntity.getV1Defaults().addAll(endpointMap.get(endpointId));
         }
+
+        // Remove v1Defaults not associated to project
+        List<SqlEndpoint> removeV1Defaults = new ArrayList<SqlEndpoint>();
+        for (SqlEndpoint endpoint : sqlEntity.getV1Defaults()) {
+            if(!entity.getV1Defaults().contains(endpoint.getLegacyEndpointId())) {
+                removeV1Defaults.add(endpoint);
+            }
+        }
+        sqlEntity.getV1Defaults().removeAll(removeV1Defaults);
 
         return sqlEntity;
     }

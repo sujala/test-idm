@@ -39,9 +39,9 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils11.deleteUser(user)
-        utils.deleteDomain(String.valueOf(user.mossoId))
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
+        utils.deleteDomain(String.valueOf(user.mossoId))
     }
 
     def "Update user's apiKey - validate encryption" () {
@@ -67,9 +67,9 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils11.deleteUser(user)
-        utils.deleteDomain(String.valueOf(user.mossoId))
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
+        utils.deleteDomain(String.valueOf(user.mossoId))
     }
 
     def "Add/Update user's secretQA - validate encryption" () {
@@ -93,9 +93,9 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils11.deleteUser(user)
-        utils.deleteDomain(String.valueOf(user.mossoId))
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
+        utils.deleteDomain(String.valueOf(user.mossoId))
     }
 
     def "Verify v1Defaults on user creation" () {
@@ -110,9 +110,9 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils11.deleteUser(user)
-        utils.deleteDomain(String.valueOf(user.mossoId))
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
+        utils.deleteDomain(String.valueOf(user.mossoId))
     }
 
     def "Replacing v1Default on existing service on user" () {
@@ -130,7 +130,8 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         then:
         for(BaseURLRef baseURLRef : updatedUser.baseURLRefs.baseURLRef) {
             String baseUrlRefId = baseURLRef.id
-            if(baseUrlRefId == NAST_V1_DEF[0]){
+            def baseUrl = utils11.getBaseURLById(baseUrlRefId)
+            if(baseUrl.getServiceName().equals("cloudFiles") && !baseUrlRefId.equals(baseUrlId)) {
                 assert (baseURLRef.v1Default == false)
             }
             if(baseUrlRefId == baseUrlId){
@@ -140,9 +141,9 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils11.deleteUser(user)
-        utils.deleteDomain(String.valueOf(user.mossoId))
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
+        utils.deleteDomain(String.valueOf(user.mossoId))
     }
 
     def "Verify attributes on the v1.1 create user" () {
@@ -164,9 +165,9 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils11.deleteUser(user)
-        utils.deleteDomain(String.valueOf(user.mossoId))
         utils.deleteTenant(String.valueOf(user.mossoId))
         utils.deleteTenant(user.nastId)
+        utils.deleteDomain(String.valueOf(user.mossoId))
     }
 
     def "default user group list JSON doesn't have extra data [D-17806]"() {

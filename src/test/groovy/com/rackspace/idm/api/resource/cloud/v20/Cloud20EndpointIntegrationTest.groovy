@@ -1,11 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.EndpointList
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+import testHelpers.junit.IgnoreByRepositoryProfile
 
 import javax.ws.rs.core.MediaType
 
@@ -48,8 +50,8 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
-        utils.deleteDomain(domainId)
         utils.deleteTenant(tenant)
+        utils.deleteDomain(domainId)
         utils.deleteEndpointTemplate(endpointTemplate)
     }
 
@@ -82,11 +84,13 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
-        utils.deleteDomain(domainId)
         utils.deleteTenant(tenant)
+        utils.deleteDomain(domainId)
         utils.deleteEndpointTemplate(endpointTemplate)
     }
 
+    // NOTE: This will fail with AE tokens. AE tokens are revoked when user is disabled.
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "endpoints returned for disabled"() {
         given:
         def domainId = utils.createDomain()
@@ -119,8 +123,8 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
-        utils.deleteDomain(domainId)
         utils.deleteTenant(tenant)
+        utils.deleteDomain(domainId)
         utils.deleteEndpointTemplate(endpointTemplate)
     }
 
@@ -154,8 +158,8 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
-        utils.deleteDomain(domainId)
         utils.deleteTenant(tenant)
+        utils.deleteDomain(domainId)
         utils.deleteEndpointTemplate(endpointTemplate)
         staticIdmConfiguration.reset()
     }
@@ -190,8 +194,8 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
-        utils.deleteDomain(domainId)
         utils.deleteTenant(tenant)
+        utils.deleteDomain(domainId)
         utils.deleteEndpointTemplate(endpointTemplate)
     }
 
