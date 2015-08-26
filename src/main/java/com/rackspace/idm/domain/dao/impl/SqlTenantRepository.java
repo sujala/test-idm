@@ -6,11 +6,12 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.ProjectRepository;
 import com.rackspace.idm.domain.sql.entity.SqlProject;
 import com.rackspace.idm.domain.sql.mapper.impl.ProjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 @SQLComponent
@@ -26,7 +27,7 @@ public class SqlTenantRepository implements TenantDao {
     private ProjectRepository projectRepository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -38,7 +39,7 @@ public class SqlTenantRepository implements TenantDao {
         final SqlProject sqlProject = projectRepository.save(mapper.toSQL(tenant));
 
         final Tenant newTenant = mapper.fromSQL(sqlProject, tenant);
-        deltaDao.save(ChangeType.ADD, newTenant.getUniqueId(), mapper.toLDIF(newTenant));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newTenant.getUniqueId(), mapper.toLDIF(newTenant)));
     }
 
     @Override
@@ -48,7 +49,7 @@ public class SqlTenantRepository implements TenantDao {
         sqlProject = projectRepository.save(mapper.toSQL(tenant, sqlProject));
 
         final Tenant newTenant = mapper.fromSQL(sqlProject, tenant);
-        deltaDao.save(ChangeType.MODIFY, newTenant.getUniqueId(), mapper.toLDIF(newTenant));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newTenant.getUniqueId(), mapper.toLDIF(newTenant)));
     }
 
     @Override
@@ -58,7 +59,7 @@ public class SqlTenantRepository implements TenantDao {
         projectRepository.delete(tenantId);
 
         final Tenant newTenant = mapper.fromSQL(sqlProject);
-        deltaDao.save(ChangeType.DELETE, newTenant.getUniqueId(), null);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newTenant.getUniqueId(), null));
     }
 
     @Override

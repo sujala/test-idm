@@ -8,7 +8,7 @@ import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.Auditable;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.ldap.event.LdapMigrationChangeApplicationEvent;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.StalePasswordException;
@@ -45,9 +45,6 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Autowired
     private LdapPaginatorRepository<T> paginator;
-
-    @Autowired(required = false)
-    private DeltaDao deltaDao;
 
     @Override
     public Iterable<T> getObjects(Filter searchFilter) {
@@ -202,9 +199,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     private void emitMigrationAddEventIfNecessary(String dn) {
-        if (deltaDao != null && shouldEmitEventForDN(dn)) {
+        if (shouldEmitEventForDN(dn)) {
             try {
-                deltaDao.save(ChangeType.ADD, dn, null);
+                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.ADD, dn, null));
             } catch (Exception e) {
                 LOGGER.error("Cannot emmit 'ADD' change event!", e);
             }
@@ -212,9 +209,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     private void emitMigrationModifyEventIfNecessary(T object) {
-        if (deltaDao != null && shouldEmitEventForDN(object.getUniqueId())) {
+        if (shouldEmitEventForDN(object.getUniqueId())) {
             try {
-                deltaDao.save(ChangeType.MODIFY, object.getUniqueId(), null);
+                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.MODIFY, object.getUniqueId(), null));
             } catch (Exception e) {
                 LOGGER.error("Cannot emmit 'MODIFY' change event!", e);
             }

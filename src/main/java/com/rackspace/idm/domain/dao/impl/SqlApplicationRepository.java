@@ -4,12 +4,13 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.ServiceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlService;
 import com.rackspace.idm.domain.sql.mapper.impl.ServiceMapper;
 import com.rackspace.idm.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public class SqlApplicationRepository implements ApplicationDao {
     private ServiceRepository serviceRepository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     private static final String APPLICATION_NAME_REGEX_QUERY = "\"name\":[[:space:]]*\":service_name\"";
     private static final String APPLICATION_NAME_REGEX_NAME_PARAM = ":service_name";
@@ -39,9 +40,8 @@ public class SqlApplicationRepository implements ApplicationDao {
         // Save necessary LDIF for rollback
         final Application application = mapper.fromSQL(sqlService, client);
         final String dn = application.getUniqueId();
-        deltaDao.save(ChangeType.ADD, application.getUniqueId(), mapper.toLDIF(application));
-        deltaDao.save(ChangeType.ADD, mapper.toContainerDN(dn, CONTAINER_APPLICATION_ROLES),
-                mapper.toContainerLDIF(dn, CONTAINER_APPLICATION_ROLES));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, application.getUniqueId(), mapper.toLDIF(application)));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, mapper.toContainerDN(dn, CONTAINER_APPLICATION_ROLES), mapper.toContainerLDIF(dn, CONTAINER_APPLICATION_ROLES)));
     }
 
     @Override
@@ -50,7 +50,7 @@ public class SqlApplicationRepository implements ApplicationDao {
         final SqlService sqlService = serviceRepository.save(mapper.toSQL(client, serviceRepository.findOne(client.getClientId())));
 
         final Application application = mapper.fromSQL(sqlService, client);
-        deltaDao.save(ChangeType.MODIFY, application.getUniqueId(), mapper.toLDIF(application));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, application.getUniqueId(), mapper.toLDIF(application)));
     }
 
     @Override
@@ -58,7 +58,7 @@ public class SqlApplicationRepository implements ApplicationDao {
     public void deleteApplication(Application client) {
         serviceRepository.delete(client.getClientId());
 
-        deltaDao.save(ChangeType.DELETE, client.getUniqueId(), null);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, client.getUniqueId(), null));
     }
 
     @Override

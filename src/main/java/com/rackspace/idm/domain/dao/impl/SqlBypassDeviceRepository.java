@@ -6,13 +6,14 @@ import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.BypassDevice;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.BypassDeviceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlBypassDevice;
 import com.rackspace.idm.domain.sql.mapper.impl.BypassDeviceMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
@@ -30,7 +31,7 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
     private BypassDeviceRepository repository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -42,7 +43,7 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
             device = repository.save(device);
 
             final BypassDevice newBypassDevice = mapper.fromSQL(device, bypassDevice);
-            deltaDao.save(ChangeType.ADD, newBypassDevice.getUniqueId(), mapper.toLDIF(newBypassDevice));
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newBypassDevice.getUniqueId(), mapper.toLDIF(newBypassDevice)));
         }
     }
 
@@ -53,7 +54,7 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
             final SqlBypassDevice device = repository.save(mapper.toSQL(bypassDevice, repository.findOne(bypassDevice.getId())));
 
             final BypassDevice newBypassDevice = mapper.fromSQL(device, bypassDevice);
-            deltaDao.save(ChangeType.MODIFY, newBypassDevice.getUniqueId(), mapper.toLDIF(newBypassDevice));
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newBypassDevice.getUniqueId(), mapper.toLDIF(newBypassDevice)));
         } catch (Exception e) {
             LOGGER.error("Cannot update bypass device: " + bypassDevice.getId(), e);
         }
@@ -71,7 +72,7 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
                 if (devices != null) {
                     for (SqlBypassDevice device : devices) {
                         final BypassDevice bypassDevice = mapper.fromSQL(device);
-                        deltaDao.save(ChangeType.DELETE, bypassDevice.getUniqueId(), null);
+                        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, bypassDevice.getUniqueId(), null));
                     }
                 }
             }
@@ -85,7 +86,7 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
     public boolean deleteBypassDevice(BypassDevice bypassDevice) {
         try {
             repository.delete(bypassDevice.getId());
-            deltaDao.save(ChangeType.DELETE, bypassDevice.getUniqueId(), null);
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, bypassDevice.getUniqueId(), null));
             return true;
         } catch (Exception e) {
             LOGGER.error("Cannot remove bypass device: " + bypassDevice.getId(), e);

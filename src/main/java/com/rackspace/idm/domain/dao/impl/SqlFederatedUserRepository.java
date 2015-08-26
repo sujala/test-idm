@@ -7,7 +7,7 @@ import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository;
 import com.rackspace.idm.domain.sql.dao.GroupRepository;
 import com.rackspace.idm.domain.sql.entity.SqlFederatedUserRax;
@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.sql.mapper.impl.FederatedUserRaxMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.GroupMapper;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -39,7 +40,7 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
     private GroupRepository groupRepository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -53,9 +54,10 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
         // Save necessary LDIF for rollback
         final FederatedUser federatedUser = federatedUserRaxMapper.fromSQL(sqlFederatedUserRax, user);
         final String dn = federatedUser.getUniqueId();
-        deltaDao.save(ChangeType.ADD, dn, federatedUserRaxMapper.toLDIF(federatedUser));
-        deltaDao.save(ChangeType.ADD, federatedUserRaxMapper.toContainerDN(dn, CONTAINER_ROLES),
-                federatedUserRaxMapper.toContainerLDIF(dn, CONTAINER_ROLES));
+
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, federatedUser.getUniqueId(), federatedUserRaxMapper.toLDIF(federatedUser)));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, federatedUserRaxMapper.toContainerDN(dn, CONTAINER_ROLES),
+                federatedUserRaxMapper.toContainerLDIF(dn, CONTAINER_ROLES)));
     }
 
     @Override
@@ -65,7 +67,7 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
                 federatedUserRaxMapper.toSQL(user, federatedUserRepository.findOne(user.getId())));
 
         final FederatedUser federatedUser = federatedUserRaxMapper.fromSQL(sqlFederatedUserRax, user);
-        deltaDao.save(ChangeType.MODIFY, federatedUser.getUniqueId(), federatedUserRaxMapper.toLDIF(federatedUser));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, federatedUser.getUniqueId(), federatedUserRaxMapper.toLDIF(federatedUser)));
     }
 
     @Override

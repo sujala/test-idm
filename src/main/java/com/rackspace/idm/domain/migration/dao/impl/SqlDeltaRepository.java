@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.migration.dao.impl;
 
-import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.annotation.SQLRepository;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.migration.ChangeType;
@@ -27,21 +26,18 @@ public class SqlDeltaRepository implements DeltaDao {
 
     @Override
     public void save(ChangeType event, String type, String ldif) {
-        if (identityConfig.getReloadableConfig().areMigrationListenersEnabledByDefault() &&
-                !identityConfig.getReloadableConfig().getDefaultMigrationListenerIgnoredChangeTypes().contains(event)) {
-            try {
-                final SqlToLdapEntity entity = new SqlToLdapEntity();
-                entity.setId(UUID.randomUUID().toString().replaceAll("-", ""));
-                entity.setType(type);
-                entity.setEvent(event);
-                entity.setHost(identityConfig.getReloadableConfig().getAENodeNameForSignoff());
-                if (event != ChangeType.DELETE) {
-                    entity.setData(ldif);
-                }
-                sqlToLdapRepository.save(entity);
-            } catch (Exception e) {
-                LOGGER.error("Cannot save delta (SQL->LDAP)!", e);
+        try {
+            final SqlToLdapEntity entity = new SqlToLdapEntity();
+            entity.setId(UUID.randomUUID().toString().replaceAll("-", ""));
+            entity.setType(type);
+            entity.setEvent(event);
+            entity.setHost(identityConfig.getReloadableConfig().getAENodeNameForSignoff());
+            if (event != ChangeType.DELETE) {
+                entity.setData(ldif);
             }
+            sqlToLdapRepository.save(entity);
+        } catch (Exception e) {
+            LOGGER.error("Cannot save delta (SQL->LDAP)!", e);
         }
     }
 

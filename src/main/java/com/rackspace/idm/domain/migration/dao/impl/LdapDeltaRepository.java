@@ -38,25 +38,22 @@ public class LdapDeltaRepository implements DeltaDao {
 
     @Override
     public void save(ChangeType event, String type, String ldif) {
-        if (identityConfig.getReloadableConfig().areMigrationListenersEnabledByDefault() &&
-            !identityConfig.getReloadableConfig().getDefaultMigrationListenerIgnoredChangeTypes().contains(event)) {
-            try {
-                final LdapToSqlEntity entity = new LdapToSqlEntity();
-                entity.setId(UUID.randomUUID().toString().replaceAll("-", ""));
-                entity.setType(type);
-                entity.setEvent(event);
-                entity.setHost(identityConfig.getReloadableConfig().getAENodeNameForSignoff());
-                if (event != ChangeType.DELETE) {
-                    try {
-                        entity.setData(getAppInterface().getEntry(type).toLDIFString());
-                    } catch (LDAPException e) {
-                        entity.setError(e.getMessage());
-                    }
+        try {
+            final LdapToSqlEntity entity = new LdapToSqlEntity();
+            entity.setId(UUID.randomUUID().toString().replaceAll("-", ""));
+            entity.setType(type);
+            entity.setEvent(event);
+            entity.setHost(identityConfig.getReloadableConfig().getAENodeNameForSignoff());
+            if (event != ChangeType.DELETE) {
+                try {
+                    entity.setData(getAppInterface().getEntry(type).toLDIFString());
+                } catch (LDAPException e) {
+                    entity.setError(e.getMessage());
                 }
-                ldapToSqlRepository.save(entity);
-            } catch (Exception e) {
-                LOGGER.error("Cannot save delta (LDAP->SQL)!", e);
             }
+            ldapToSqlRepository.save(entity);
+        } catch (Exception e) {
+            LOGGER.error("Cannot save delta (LDAP->SQL)!", e);
         }
     }
 

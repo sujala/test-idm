@@ -9,7 +9,7 @@ import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.service.EncryptionService;
 import com.rackspace.idm.domain.sql.dao.GroupRepository;
 import com.rackspace.idm.domain.sql.dao.UserRepository;
@@ -23,6 +23,7 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -60,7 +61,7 @@ public class SqlUserRepository implements UserDao {
     private CryptHelper cryptHelper;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -74,13 +75,14 @@ public class SqlUserRepository implements UserDao {
         // Save necessary LDIF for rollback
         final User savedUser = userMapper.fromSQL(sqlUser);
         final String dn = savedUser.getUniqueId();
-        deltaDao.save(ChangeType.ADD, dn, userMapper.toLDIF(savedUser));
-        deltaDao.save(ChangeType.ADD, userMapper.toContainerDN(dn, CONTAINER_ROLES),
-                userMapper.toContainerLDIF(dn, CONTAINER_ROLES));
-        deltaDao.save(ChangeType.ADD, userMapper.toContainerDN(dn, CONTAINER_BYPASS_CODES),
-                userMapper.toContainerLDIF(dn, CONTAINER_BYPASS_CODES));
-        deltaDao.save(ChangeType.ADD, userMapper.toContainerDN(dn, CONTAINER_OTP_DEVICES),
-                userMapper.toContainerLDIF(dn, CONTAINER_OTP_DEVICES));
+
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, savedUser.getUniqueId(), userMapper.toLDIF(savedUser)));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, userMapper.toContainerDN(dn, CONTAINER_ROLES),
+                userMapper.toContainerLDIF(dn, CONTAINER_ROLES)));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, userMapper.toContainerDN(dn, CONTAINER_BYPASS_CODES),
+                userMapper.toContainerLDIF(dn, CONTAINER_BYPASS_CODES)));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, userMapper.toContainerDN(dn, CONTAINER_OTP_DEVICES),
+                userMapper.toContainerLDIF(dn, CONTAINER_OTP_DEVICES)));
     }
 
     @Override
@@ -99,7 +101,7 @@ public class SqlUserRepository implements UserDao {
         final SqlUser sqlUser = userRepository.save(userMapper.toSQL(user, userRepository.findOne(user.getId()), ignoreNulls));
 
         final User savedUser = userMapper.fromSQL(sqlUser);
-        deltaDao.save(ChangeType.MODIFY, savedUser.getUniqueId(), userMapper.toLDIF(savedUser));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, savedUser.getUniqueId(), userMapper.toLDIF(savedUser)));
     }
 
     @Override
@@ -107,7 +109,7 @@ public class SqlUserRepository implements UserDao {
     public void deleteUser(User user) {
         try {
             userRepository.delete(user.getId());
-            deltaDao.save(ChangeType.DELETE, user.getUniqueId(), null);
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, user.getUniqueId(), null));
         } catch (Exception e) {
             throw new IllegalStateException("no such object");
         }
@@ -119,7 +121,7 @@ public class SqlUserRepository implements UserDao {
         try {
             final User user = userMapper.fromSQL(userRepository.findOneByUsername(username));
             userRepository.deleteByUsername(username);
-            deltaDao.save(ChangeType.DELETE, user.getUniqueId(), null);
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, user.getUniqueId(), null));
         } catch (Exception e) {
             throw new IllegalStateException("no such object");
         }

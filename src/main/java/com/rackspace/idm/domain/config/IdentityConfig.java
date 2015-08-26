@@ -205,6 +205,12 @@ public class IdentityConfig {
     public static final String MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP = "ignore.migration.change.events.of.type.default";
     public static final List MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_DEFAULT = Collections.EMPTY_LIST;
 
+    public static final String MIGRATION_LISTENER_HANDLES_CHANGE_EVENTS_PROP_PREFIX = "handle.migration.change.events.for.listener";
+    public static final String MIGRATION_LISTENER_HANDLES_MIGRATION_CHANGE_EVENTS_PROP_REG = MIGRATION_LISTENER_HANDLES_CHANGE_EVENTS_PROP_PREFIX + ".%s";
+    public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX = "ignore.migration.change.events.of.type.for.listener";
+    public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_REG = MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX + ".%s";
+
+
     /* ************************
      **************************/
 
@@ -1089,6 +1095,23 @@ public class IdentityConfig {
         @IdmProp(key = IDENTITY_ROLE_TENANT_DEFAULT, description = "Identity role default tenant", versionAdded = "3.0.0")
         public String getIdentityRoleDefaultTenant() {
             return getStringSafely(reloadableConfiguration, IDENTITY_ROLE_TENANT_DEFAULT);
+        }
+
+        public boolean isMigrationListenerEnabled(String listenerName) {
+            return reloadableConfiguration.getBoolean(String.format(MIGRATION_LISTENER_HANDLES_MIGRATION_CHANGE_EVENTS_PROP_REG, listenerName), areMigrationListenersEnabledByDefault());
+        }
+
+        public Set<ChangeType> getIgnoredChangeTypesForMigrationListener(String listenerName) {
+            String dynamicPropName = String.format(MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_REG, listenerName);
+            Set configuredVal = getSetSafely(reloadableConfiguration, dynamicPropName);
+
+            Set<ChangeType> changeTypes = null;
+            if (!CollectionUtils.isEmpty(configuredVal) || reloadableConfiguration.containsKey(dynamicPropName)) {
+                changeTypes = convertToChangeType(configuredVal);
+            } else {
+                changeTypes = getDefaultMigrationListenerIgnoredChangeTypes();
+            }
+            return changeTypes;
         }
 
         @IdmProp(key = MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP, description = "Whether a migration listener is enabled by default", versionAdded = "3.0.0")

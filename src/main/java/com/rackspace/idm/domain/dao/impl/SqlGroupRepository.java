@@ -6,11 +6,12 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.GroupRepository;
 import com.rackspace.idm.domain.sql.entity.SqlGroup;
 import com.rackspace.idm.domain.sql.mapper.impl.GroupMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -28,7 +29,7 @@ public class SqlGroupRepository implements GroupDao {
     private GroupRepository groupRepository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -39,7 +40,7 @@ public class SqlGroupRepository implements GroupDao {
         sqlGroup = groupRepository.save(sqlGroup);
 
         final Group newGroup = mapper.fromSQL(sqlGroup, group);
-        deltaDao.save(ChangeType.ADD, newGroup.getUniqueId(), mapper.toLDIF(newGroup));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newGroup.getUniqueId(), mapper.toLDIF(newGroup)));
     }
 
     @Override
@@ -48,7 +49,7 @@ public class SqlGroupRepository implements GroupDao {
         final SqlGroup sqlGroup = groupRepository.save(mapper.toSQL(group, groupRepository.findOne(group.getGroupId())));
 
         final Group newGroup = mapper.fromSQL(sqlGroup, group);
-        deltaDao.save(ChangeType.MODIFY, newGroup.getUniqueId(), mapper.toLDIF(newGroup));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newGroup.getUniqueId(), mapper.toLDIF(newGroup)));
     }
 
     @Override
@@ -58,7 +59,7 @@ public class SqlGroupRepository implements GroupDao {
         groupRepository.delete(groupId);
 
         final Group newGroup = mapper.fromSQL(sqlGroup);
-        deltaDao.save(ChangeType.DELETE, newGroup.getUniqueId(), null);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newGroup.getUniqueId(), null));
     }
 
     @Override
