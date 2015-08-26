@@ -4,10 +4,13 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapFederatedRackerRepository
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.Racker
+import com.rackspace.idm.domain.security.ConfigurableTokenFormatSelector
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import org.apache.log4j.Logger
@@ -42,6 +45,20 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
     @Autowired
     IdentityConfig identityConfig
 
+    @Autowired
+    ConfigurableTokenFormatSelector configurableTokenFormatSelector
+
+    private static final String EDIR_ROLE_NAME = "team-cloud-identity"
+
+    AuthenticatedByMethodGroup fedAndPasswordGroup = AuthenticatedByMethodGroup.getGroup(AuthenticatedByMethodEnum.FEDERATION, AuthenticatedByMethodEnum.PASSWORD)
+    AuthenticatedByMethodGroup fedAndRsaKeyGroup = AuthenticatedByMethodGroup.getGroup(AuthenticatedByMethodEnum.FEDERATION, AuthenticatedByMethodEnum.RSAKEY)
+
+    def setup() {
+    }
+
+    def cleanup() {
+    }
+
     @Unroll
     def "racker populated appropriately from saml and edir w/ no EDIR groups. Persist Racker: #persistRacker"() {
         given:
@@ -50,15 +67,16 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         def username = Constants.RACKER_NOGROUP
         def expDays = 5
 
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, expDays);
+        def samlAssertionPassword = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, expDays, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS);
+        def samlAssertionToken = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, expDays, SAMLConstants.TIMESYNCTOKEN_PROTECTED_AUTHCONTEXT_REF_CLASS);
 
         when:
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertionPassword)
 
         then: "Response contains appropriate content"
         samlResponse.status == HttpServletResponse.SC_OK
         AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        verifyResponseFromSamlRequest(authResponse, username)
+        verifyResponseFromSamlRequest(authResponse, username, fedAndPasswordGroup)
 
         and: "if persisted, the persisted object is valid"
         if (persistRacker && ldapFederatedRackerRepository != null) {
@@ -67,6 +85,14 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
             fedUser.federatedUserName == authResponse.user.name
             fedUser.federatedIdpUri == RACKER_IDP_URI
         }
+
+        when:
+        samlResponse = cloud20.samlAuthenticate(samlAssertionToken)
+
+        then: "Response contains appropriate content"
+        samlResponse.status == HttpServletResponse.SC_OK
+        def authResponse2 = samlResponse.getEntity(AuthenticateResponse).value
+        verifyResponseFromSamlRequest(authResponse2, username, fedAndRsaKeyGroup)
 
         cleanup:
         if (persistRacker && ldapFederatedRackerRepository != null) {
@@ -86,15 +112,16 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         def username = Constants.RACKER_IMPERSONATE
         def expDays = 5
 
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, expDays);
+        def samlAssertionPassword = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, expDays, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS);
+        def samlAssertionToken = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, expDays, SAMLConstants.TIMESYNCTOKEN_PROTECTED_AUTHCONTEXT_REF_CLASS);
 
         when:
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertionPassword)
 
         then: "Response contains appropriate content"
         samlResponse.status == HttpServletResponse.SC_OK
         AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        verifyResponseFromSamlRequest(authResponse, username, [identityConfig.getStaticConfig().getRackerImpersonateRoleName()])
+        verifyResponseFromSamlRequest(authResponse, username, fedAndPasswordGroup, [identityConfig.getStaticConfig().getRackerImpersonateRoleName()])
 
         and: "if persisted, the persisted object is valid"
         if (persistRacker && ldapFederatedRackerRepository != null) {
@@ -103,6 +130,14 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
             fedUser.federatedUserName == authResponse.user.name
             fedUser.federatedIdpUri == RACKER_IDP_URI
         }
+
+        when:
+        samlResponse = cloud20.samlAuthenticate(samlAssertionToken)
+
+        then: "Response contains appropriate content"
+        samlResponse.status == HttpServletResponse.SC_OK
+        def authResponse2 = samlResponse.getEntity(AuthenticateResponse).value
+        verifyResponseFromSamlRequest(authResponse2, username, fedAndRsaKeyGroup, [identityConfig.getStaticConfig().getRackerImpersonateRoleName()])
 
         cleanup:
         if (persistRacker) {
@@ -121,7 +156,7 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERSIST_RACKERS_PROP, persistRacker)
         def username = Constants.RACKER_IMPERSONATE
 
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, 1);
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, 1, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS);
 
         when:
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -129,14 +164,17 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         then: "Response contains appropriate content"
         samlResponse.status == HttpServletResponse.SC_OK
         AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        assert authResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.FEDERATION.getValue())
+        assert authResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
 
         when: "validate token"
         AuthenticateResponse validationAuthResponse = utils.validateToken(authResponse.token.id)
 
         then:
         validationAuthResponse.token.id == authResponse.token.id
-        validationAuthResponse.token.authenticatedBy.credential.size() == 1
-        assert authResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.FEDERATION.getValue())
+        validationAuthResponse.token.authenticatedBy.credential.size() == authResponse.token.authenticatedBy.credential.size()
+        assert validationAuthResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.FEDERATION.getValue())
+        assert validationAuthResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
 
         validationAuthResponse.user.id == authResponse.user.id
         validationAuthResponse.user.defaultRegion == authResponse.user.defaultRegion
@@ -173,9 +211,10 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         AuthenticateResponse samlAuthResponse = samlResponse.getEntity(AuthenticateResponse).value
 
         then: "responses match other than token id"
-        rackerAuthResponse.token.authenticatedBy.credential.size() == samlAuthResponse.token.authenticatedBy.credential.size()
+        rackerAuthResponse.token.authenticatedBy.credential.size() == samlAuthResponse.token.authenticatedBy.credential.size() - 1
 
         assert samlAuthResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.FEDERATION.getValue())
+        assert samlAuthResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
         assert rackerAuthResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
 
         rackerAuthResponse.user.id == samlAuthResponse.user.id
@@ -269,7 +308,7 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(samlResponse, BadRequestFault, HttpServletResponse.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_FEDERATION_RACKER_NON_EXISTANT_RACKER)
     }
 
-    def void verifyResponseFromSamlRequest(AuthenticateResponse authResponse, expectedUserName, List<String> expectedEDirRoleNames = Collections.EMPTY_LIST) {
+    def void verifyResponseFromSamlRequest(AuthenticateResponse authResponse, expectedUserName, AuthenticatedByMethodGroup authByGroup, List<String> expectedEDirRoleNames = Collections.EMPTY_LIST) {
         //check the user object
         assert authResponse.user.id != null
         assert authResponse.user.name == expectedUserName
@@ -277,8 +316,12 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
 
         //check the token
         assert authResponse.token.id != null
-        assert authResponse.token.authenticatedBy.credential.size() == 1
-        assert authResponse.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.FEDERATION.getValue())
+
+        List<String> expectedAuthByVals = authByGroup.authenticatedByMethodsAsValues
+        assert authResponse.token.authenticatedBy.credential.size() == expectedAuthByVals.size()
+        expectedAuthByVals.each {
+            assert authResponse.token.authenticatedBy.credential.contains(it)
+        }
 
         assert authResponse.user.roles.role.size() == expectedEDirRoleNames.size() + 1
 

@@ -1,8 +1,10 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedRackerRequest
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedRackerDao
+import com.rackspace.idm.domain.decorator.SAMLAuthContext
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.IdentityProvider
@@ -259,25 +261,67 @@ class RackerSourceFederationHandlerTest extends Specification {
 
         def existingRackerUsername = RACKER_USERNAME
         Racker existingRacker = entityFactory.createRacker(RACKER_USERNAME + "@" + IDP_URI)
+        def s1Password = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 1, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
+        def s1Token = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 1, SAMLConstants.TIMESYNCTOKEN_PROTECTED_AUTHCONTEXT_REF_CLASS)
+
         federatedRackerDao.getUserById(existingRacker.rackerId) >> existingRacker
         userService.getRackerByRackerId(Racker.asFederatedRackerId(existingRackerUsername, IDP_URI)) >> existingRacker
         tenantService.getEphemeralRackerTenantRoles(existingRackerUsername) >> Collections.EMPTY_LIST
         def s1 = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 1)
+
+        when: "Password based saml"
+        SamlAuthResponse r1 = federationHandler.processRequestForProvider(new SamlResponseDecorator(s1Password), identityProvider)
+
+        then: "token contains valid data"
+        r1.token instanceof RackerScopeAccess
+        r1.token.accessTokenExp != null
+        r1.token.accessTokenString != null
+        r1.token.authenticatedBy.size() == 2
+        r1.token.authenticatedBy.find() {it == AuthenticatedByMethodEnum.FEDERATION.value}
+        r1.token.authenticatedBy.find() {it == AuthenticatedByMethodEnum.PASSWORD.value}
+        r1.token.clientId == CLOUD_AUTH_CLIENT_ID
+        ((RackerScopeAccess)r1.token).rackerId == existingRacker.rackerId
+        ((RackerScopeAccess)r1.token).issuedToUserId == existingRacker.rackerId
+        ((RackerScopeAccess)r1.token).federatedIdpUri == IDP_URI
+        ((RackerScopeAccess)r1.token).federatedRackerToken
+
+        when: "token based saml"
+        SamlAuthResponse r2 = federationHandler.processRequestForProvider(new SamlResponseDecorator(s1Token), identityProvider)
+
+        then: "token contains valid data"
+        r2.token instanceof RackerScopeAccess
+        r2.token.accessTokenExp != null
+        r2.token.accessTokenString != null
+        r2.token.authenticatedBy.size() == 2
+        r2.token.authenticatedBy.find() {it == AuthenticatedByMethodEnum.FEDERATION.value}
+        r2.token.authenticatedBy.find() {it == AuthenticatedByMethodEnum.RSAKEY.value}
+        r2.token.clientId == CLOUD_AUTH_CLIENT_ID
+        ((RackerScopeAccess)r2.token).rackerId == existingRacker.rackerId
+        ((RackerScopeAccess)r2.token).issuedToUserId == existingRacker.rackerId
+        ((RackerScopeAccess)r2.token).federatedIdpUri == IDP_URI
+        ((RackerScopeAccess)r2.token).federatedRackerToken
+
+        where:
+        persistRacker | _
+        true | _
+        false | _
+    }
+
+    def "processRequestForProvider - creates new token"() {
+        given:
+        def existingRackerUsername = RACKER_USERNAME
+        Racker existingRacker = entityFactory.createRacker(RACKER_USERNAME + "@" + IDP_URI)
+        federatedRackerDao.getUserById(existingRacker.rackerId) >> existingRacker
+        def s1 = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 1)
+        userService.getRackerByRackerId(Racker.asFederatedRackerId(existingRackerUsername, IDP_URI)) >> existingRacker
 
         when: "first token"
         SamlAuthResponse r1 = federationHandler.processRequestForProvider(new SamlResponseDecorator(s1), identityProvider)
 
         then: "racker not added, token added, clean tokens, retrieve racker roles"
         1 * scopeAccessService.addUserScopeAccess(_, _); //just test is called
+        1 * tenantService.getEphemeralRackerTenantRoles(existingRackerUsername) >> Collections.EMPTY_LIST
         r1.token instanceof RackerScopeAccess
-        r1.token.accessTokenExp != null
-        r1.token.accessTokenString != null
-        r1.token.authenticatedBy.find() {it == AuthenticatedByMethodEnum.FEDERATION.value}
-        r1.token.clientId == CLOUD_AUTH_CLIENT_ID
-        ((RackerScopeAccess)r1.token).rackerId == existingRacker.rackerId
-        ((RackerScopeAccess)r1.token).issuedToUserId == existingRacker.rackerId
-        ((RackerScopeAccess)r1.token).federatedIdpUri == IDP_URI
-        ((RackerScopeAccess)r1.token).federatedRackerToken
 
         when: "second token"
         SamlAuthResponse r2 = federationHandler.processRequestForProvider(new SamlResponseDecorator(s1), identityProvider)
@@ -285,11 +329,6 @@ class RackerSourceFederationHandlerTest extends Specification {
         then: "new token id"
         1 * scopeAccessService.addUserScopeAccess(_, _); //just test is called
         r1.token.accessTokenString != r2.token.accessTokenString
-
-        where:
-        persistRacker | _
-        true | _
-        false | _
     }
 
     def "processRequestForProvider - endpoints are always empty list"() {
