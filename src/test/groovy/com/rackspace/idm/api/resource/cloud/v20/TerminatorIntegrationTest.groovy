@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.rackspacecloud.docs.auth.api.v1.ForbiddenFault
+import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
@@ -36,6 +37,8 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
 
     @Autowired(required = false)
     FederatedUserRepository sqlFederatedUserRepository
+
+    private static final Logger LOG = Logger.getLogger(TerminatorIntegrationTest.class)
 
     @Unroll
     def "test provisioned user authentication when all tenants on user are disabled: userType = #tokenType, featureEnabled = #featureEnabled"() {

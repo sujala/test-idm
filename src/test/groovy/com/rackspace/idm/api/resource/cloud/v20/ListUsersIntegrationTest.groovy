@@ -1,7 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.RepositoryProfileResolver
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import groovy.json.JsonSlurper
+import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,7 +20,9 @@ import static com.rackspace.idm.Constants.*
 class ListUsersIntegrationTest extends RootIntegrationTest {
 
     @Autowired
-    FederatedUserDao ldapFederatedUserRepository
+    FederatedUserDao federatedUserRepository
+
+    private static final Logger LOG = Logger.getLogger(ListUsersIntegrationTest.class)
 
     def "federated user can call list users"() {
         given:
@@ -542,14 +547,18 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
 
     def deleteFederatedUserQuietly(username) {
         try {
-            def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
             if (federatedUser != null) {
-                ldapFederatedUserRepository.deleteObject(federatedUser)
+                if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                    federatedUser = federatedUserRepository.findOneByUsernameAndFederatedIdpName(username, DEFAULT_IDP_NAME)
+                    federatedUserRepository.delete(federatedUser)
+                } else {
+                    federatedUserRepository.deleteObject(federatedUser)
+                }
             }
         } catch (Exception e) {
             //eat but log
             LOG.warn(String.format("Error cleaning up federatedUser with username '%s'", username), e)
         }
     }
-
 }
