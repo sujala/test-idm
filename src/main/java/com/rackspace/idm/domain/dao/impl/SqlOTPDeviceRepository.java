@@ -6,11 +6,12 @@ import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.OTPDevice;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.OTPDeviceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlOTPDevice;
 import com.rackspace.idm.domain.sql.mapper.impl.OTPDeviceMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
@@ -26,7 +27,7 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
     private OTPDeviceRepository repository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -38,7 +39,7 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
             device = repository.save(device);
 
             final OTPDevice newOTPDevice = mapper.fromSQL(device, otpDevice);
-            deltaDao.save(ChangeType.ADD, newOTPDevice.getUniqueId(), mapper.toLDIF(newOTPDevice));
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newOTPDevice.getUniqueId(), mapper.toLDIF(newOTPDevice)));
         }
     }
 
@@ -48,7 +49,7 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
         final SqlOTPDevice sqlOTPDevice = repository.save(mapper.toSQL(otpDevice, repository.findOne(otpDevice.getId())));
 
         final OTPDevice newOTPDevice = mapper.fromSQL(sqlOTPDevice, otpDevice);
-        deltaDao.save(ChangeType.MODIFY, newOTPDevice.getUniqueId(), mapper.toLDIF(newOTPDevice));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newOTPDevice.getUniqueId(), mapper.toLDIF(newOTPDevice)));
     }
 
     @Override
@@ -63,7 +64,7 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
             if (otpDevices != null) {
                 for (SqlOTPDevice sqlOTPDevice : otpDevices) {
                     final OTPDevice otpDevice = mapper.fromSQL(sqlOTPDevice);
-                    deltaDao.save(ChangeType.DELETE, otpDevice.getUniqueId(), null);
+                    applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, otpDevice.getUniqueId(), null));
                 }
             }
         }
@@ -73,7 +74,7 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
     @Transactional
     public void deleteOTPDevice(OTPDevice otpDevice) {
         repository.delete(otpDevice.getId());
-        deltaDao.save(ChangeType.DELETE, otpDevice.getUniqueId(), null);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, otpDevice.getUniqueId(), null));
     }
 
     @Override

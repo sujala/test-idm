@@ -4,11 +4,12 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.QuestionDao;
 import com.rackspace.idm.domain.entity.Question;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.QuestionRepository;
 import com.rackspace.idm.domain.sql.entity.SqlQuestion;
 import com.rackspace.idm.domain.sql.mapper.impl.QuestionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -23,7 +24,7 @@ public class SqlQuestionRepository implements QuestionDao {
     private QuestionRepository questionRepository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -31,7 +32,7 @@ public class SqlQuestionRepository implements QuestionDao {
         final SqlQuestion sqlQuestion = questionRepository.save(mapper.toSQL(question));
 
         final Question newQuestion = mapper.fromSQL(sqlQuestion, question);
-        deltaDao.save(ChangeType.ADD, newQuestion.getUniqueId(), mapper.toLDIF(newQuestion));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newQuestion.getUniqueId(), mapper.toLDIF(newQuestion)));
     }
 
     @Override
@@ -40,7 +41,7 @@ public class SqlQuestionRepository implements QuestionDao {
         final SqlQuestion sqlQuestion = questionRepository.save(mapper.toSQL(question, questionRepository.findOne(question.getId())));
 
         final Question newQuestion = mapper.fromSQL(sqlQuestion, question);
-        deltaDao.save(ChangeType.MODIFY, newQuestion.getUniqueId(), mapper.toLDIF(newQuestion));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newQuestion.getUniqueId(), mapper.toLDIF(newQuestion)));
     }
 
     @Override
@@ -50,7 +51,7 @@ public class SqlQuestionRepository implements QuestionDao {
         questionRepository.delete(questionId);
 
         final Question newQuestion = mapper.fromSQL(sqlQuestion);
-        deltaDao.save(ChangeType.DELETE, newQuestion.getUniqueId(), null);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newQuestion.getUniqueId(), null));
     }
 
     @Override

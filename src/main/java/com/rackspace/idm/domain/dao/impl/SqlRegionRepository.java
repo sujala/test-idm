@@ -4,13 +4,14 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.RegionDao;
 import com.rackspace.idm.domain.entity.Region;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.RegionRepository;
 import com.rackspace.idm.domain.sql.entity.SqlRegion;
 import com.rackspace.idm.domain.sql.mapper.impl.RegionMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
@@ -27,7 +28,7 @@ public class SqlRegionRepository implements RegionDao {
     private RegionRepository regionRepository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -40,7 +41,7 @@ public class SqlRegionRepository implements RegionDao {
             sqlRegion = regionRepository.save(sqlRegion);
 
             final Region newRegion = mapper.fromSQL(sqlRegion, region);
-            deltaDao.save(ChangeType.ADD, newRegion.getUniqueId(), mapper.toLDIF(newRegion));
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newRegion.getUniqueId(), mapper.toLDIF(newRegion)));
         } catch (Exception e) {
             LOGGER.error("Cannot add region: " + region.getName(), e);
         }
@@ -58,7 +59,7 @@ public class SqlRegionRepository implements RegionDao {
             sqlRegion = regionRepository.save(sqlRegion);
 
             final Region newRegion = mapper.fromSQL(sqlRegion, region);
-            deltaDao.save(ChangeType.MODIFY, newRegion.getUniqueId(), mapper.toLDIF(newRegion));
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newRegion.getUniqueId(), mapper.toLDIF(newRegion)));
         } catch (Exception e) {
             LOGGER.error("Cannot update region: " + region.getName(), e);
         }
@@ -72,7 +73,7 @@ public class SqlRegionRepository implements RegionDao {
             regionRepository.delete(name);
 
             final Region newRegion = mapper.fromSQL(sqlRegion);
-            deltaDao.save(ChangeType.DELETE, newRegion.getUniqueId(), null);
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newRegion.getUniqueId(), null));
         } catch (Exception e) {
             LOGGER.error("Cannot delete region: " + name, e);
         }

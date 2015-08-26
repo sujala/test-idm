@@ -5,11 +5,12 @@ import com.rackspace.idm.domain.dao.PolicyDao;
 import com.rackspace.idm.domain.entity.Policies;
 import com.rackspace.idm.domain.entity.Policy;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.PolicyRepository;
 import com.rackspace.idm.domain.sql.entity.SqlPolicy;
 import com.rackspace.idm.domain.sql.mapper.impl.PolicyMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -24,7 +25,7 @@ public class SqlPolicyRepository implements PolicyDao {
     private PolicyRepository policyRepository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -32,7 +33,7 @@ public class SqlPolicyRepository implements PolicyDao {
         final SqlPolicy sqlPolicy = policyRepository.save(mapper.toSQL(policy));
 
         final Policy newPolicy = mapper.fromSQL(sqlPolicy, policy);
-        deltaDao.save(ChangeType.ADD, newPolicy.getUniqueId(), mapper.toLDIF(newPolicy));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newPolicy.getUniqueId(), mapper.toLDIF(newPolicy)));
     }
 
     @Override
@@ -41,7 +42,7 @@ public class SqlPolicyRepository implements PolicyDao {
         final SqlPolicy sqlPolicy = policyRepository.save(mapper.toSQL(policy, policyRepository.findOne(policy.getPolicyId())));
 
         final Policy newPolicy = mapper.fromSQL(sqlPolicy, policy);
-        deltaDao.save(ChangeType.MODIFY, newPolicy.getUniqueId(), mapper.toLDIF(newPolicy));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newPolicy.getUniqueId(), mapper.toLDIF(newPolicy)));
     }
 
     @Override
@@ -51,7 +52,7 @@ public class SqlPolicyRepository implements PolicyDao {
         policyRepository.delete(policyId);
 
         final Policy newPolicy = mapper.fromSQL(sqlPolicy);
-        deltaDao.save(ChangeType.DELETE, newPolicy.getUniqueId(), null);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newPolicy.getUniqueId(), null));
     }
 
     @Override

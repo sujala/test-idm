@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.ldap.event.LdapMigrationChangeApplicationEvent;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
@@ -12,6 +12,7 @@ import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.ArrayList;
@@ -263,8 +264,8 @@ public abstract class LdapRepository {
     @Autowired
     protected Configuration config;
 
-    @Autowired(required = false)
-    private DeltaDao deltaDao;
+    @Autowired
+    protected ApplicationEventPublisher applicationEventPublisher;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -337,9 +338,9 @@ public abstract class LdapRepository {
     }
 
     private void emitMigrationDeleteEventIfNecessary(String dn) {
-        if (deltaDao != null && shouldEmitEventForDN(dn)) {
+        if (shouldEmitEventForDN(dn)) {
             try {
-                deltaDao.save(ChangeType.DELETE, dn, null);
+                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.DELETE, dn, null));
             } catch (Exception e) {
                 LOGGER.error("Cannot emmit 'DELETE' change event!", e);
             }

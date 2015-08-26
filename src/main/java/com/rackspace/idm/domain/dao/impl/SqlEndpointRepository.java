@@ -4,7 +4,7 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.EndpointRepository;
 import com.rackspace.idm.domain.sql.entity.SqlEndpoint;
 import com.rackspace.idm.domain.sql.mapper.impl.AdminEndpointMapper;
@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.sql.mapper.impl.InternalEndpointMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.PublicEndpointMapper;
 import org.apache.cxf.common.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public class SqlEndpointRepository implements EndpointDao {
     private EndpointRepository endpointRepository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -65,7 +66,7 @@ public class SqlEndpointRepository implements EndpointDao {
         }
 
         final String ldif = publicEndpointMapper.toLDIF(buildCloudBaseUrl(endpoints));
-        deltaDao.save(ChangeType.ADD, baseUrl.getUniqueId(), ldif);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, baseUrl.getUniqueId(), ldif));
     }
 
     @Override
@@ -90,7 +91,7 @@ public class SqlEndpointRepository implements EndpointDao {
         }
 
         final String ldif = publicEndpointMapper.toLDIF(buildCloudBaseUrl(endpoints));
-        deltaDao.save(ChangeType.MODIFY, cloudBaseUrl.getUniqueId(), ldif);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, cloudBaseUrl.getUniqueId(), ldif));
     }
 
     @Override
@@ -100,7 +101,7 @@ public class SqlEndpointRepository implements EndpointDao {
         endpointRepository.delete(endpoints);
 
         final CloudBaseUrl baseUrl = buildCloudBaseUrl(endpoints);
-        deltaDao.save(ChangeType.DELETE, baseUrl.getUniqueId(), null);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, baseUrl.getUniqueId(), null));
     }
 
     @Override

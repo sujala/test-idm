@@ -4,11 +4,12 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.MobilePhoneDao;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.MobilePhoneRepository;
 import com.rackspace.idm.domain.sql.entity.SqlMobilePhone;
 import com.rackspace.idm.domain.sql.mapper.impl.MobilePhoneMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -23,7 +24,7 @@ public class SqlMobilePhoneRepository implements MobilePhoneDao {
     private MobilePhoneRepository repository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -31,7 +32,7 @@ public class SqlMobilePhoneRepository implements MobilePhoneDao {
         final SqlMobilePhone sqlMobilePhone = repository.save(mapper.toSQL(mobilePhone));
 
         final MobilePhone newMobilePhone = mapper.fromSQL(sqlMobilePhone, mobilePhone);
-        deltaDao.save(ChangeType.ADD, newMobilePhone.getUniqueId(), mapper.toLDIF(newMobilePhone));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newMobilePhone.getUniqueId(), mapper.toLDIF(newMobilePhone)));
     }
 
     @Override
@@ -40,15 +41,14 @@ public class SqlMobilePhoneRepository implements MobilePhoneDao {
         final SqlMobilePhone sqlMobilePhone = repository.save(mapper.toSQL(mobilePhone, repository.findOne(mobilePhone.getId())));
 
         final MobilePhone newMobilePhone = mapper.fromSQL(sqlMobilePhone, mobilePhone);
-        deltaDao.save(ChangeType.MODIFY, newMobilePhone.getUniqueId(), mapper.toLDIF(newMobilePhone));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newMobilePhone.getUniqueId(), mapper.toLDIF(newMobilePhone)));
     }
 
     @Override
     @Transactional
     public void deleteMobilePhone(MobilePhone mobilePhone) {
         repository.delete(mobilePhone.getId());
-
-        deltaDao.save(ChangeType.MODIFY, mobilePhone.getUniqueId(), null);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, mobilePhone.getUniqueId(), null));
     }
 
     @Override

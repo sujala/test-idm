@@ -5,7 +5,7 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.FederatedRoleRepository;
 import com.rackspace.idm.domain.sql.dao.TenantRoleRepository;
 import com.rackspace.idm.domain.sql.entity.SqlFederatedRoleRax;
@@ -18,6 +18,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +46,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     private TenantRoleMapper mapper;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -75,8 +76,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
 
             newTenantRole = mapper.fromSQL(sqlTenantRole, tenantRole);
         }
-
-        deltaDao.save(ChangeType.ADD, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole)));
     }
 
     @Override
@@ -97,7 +97,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
                     tenantRoleRepository.delete(sqlTenantRole);
 
                     final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole);
-                    deltaDao.save(ChangeType.DELETE, newTenantRole.getUniqueId(), null);
+                    applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newTenantRole.getUniqueId(), null));
                 }
             }
 
@@ -106,7 +106,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
                     tenantRoleRepository.save(sqlTenantRole);
 
                     final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole, tenantRole);
-                    deltaDao.save(ChangeType.MODIFY, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole));
+                    applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole)));
                 }
             }
             return;
@@ -118,7 +118,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
             federatedRoleRax = federatedRoleRepository.save(federatedRoleRaxMapper.toSQL(tenantRole, federatedRoleRax));
 
             final TenantRole newTenantRole = federatedRoleRaxMapper.fromSQL(federatedRoleRax, tenantRole);
-            deltaDao.save(ChangeType.ADD, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole));
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole)));
         }
     }
 
@@ -133,7 +133,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
                 tenantRoleRepository.delete(sqlTenantRole);
 
                 final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole);
-                deltaDao.save(ChangeType.DELETE, newTenantRole.getUniqueId(), null);
+                applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newTenantRole.getUniqueId(), null));
             }
         }
     }
@@ -160,7 +160,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
 
             for (SqlTenantRole sqlTenantRole : list) {
                 final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole);
-                deltaDao.save(ChangeType.DELETE, newTenantRole.getUniqueId(), null);
+                applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newTenantRole.getUniqueId(), null));
             }
         }
     }

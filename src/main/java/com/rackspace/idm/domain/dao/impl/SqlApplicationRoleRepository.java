@@ -7,12 +7,13 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.RoleRepository;
 import com.rackspace.idm.domain.sql.dao.TenantRoleRepository;
 import com.rackspace.idm.domain.sql.entity.SqlRole;
 import com.rackspace.idm.domain.sql.mapper.impl.RoleMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
     private TenantRoleRepository tenantRoleRepository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -40,7 +41,7 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
         final SqlRole sqlRole = repository.save(mapper.toSQL(role));
 
         final ClientRole clientRole = mapper.fromSQL(sqlRole, role);
-        deltaDao.save(ChangeType.ADD, clientRole.getUniqueId(), mapper.toLDIF(clientRole));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, clientRole.getUniqueId(), mapper.toLDIF(clientRole)));
     }
 
     @Override
@@ -49,7 +50,7 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
         final SqlRole sqlRole = repository.save(mapper.toSQL(role, repository.findOne(role.getId())));
 
         final ClientRole clientRole = mapper.fromSQL(sqlRole, role);
-        deltaDao.save(ChangeType.MODIFY, clientRole.getUniqueId(), mapper.toLDIF(clientRole));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, clientRole.getUniqueId(), mapper.toLDIF(clientRole)));
     }
 
     @Override
@@ -58,7 +59,7 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
         tenantRoleRepository.deleteBySqlRoleId(role.getId());
         repository.delete(role.getId());
 
-        deltaDao.save(ChangeType.DELETE, role.getUniqueId(), null);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, role.getUniqueId(), null));
     }
 
     @Override

@@ -4,11 +4,12 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.CapabilityDao;
 import com.rackspace.idm.domain.entity.Capability;
 import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.CapabilityRepository;
 import com.rackspace.idm.domain.sql.entity.SqlCapability;
 import com.rackspace.idm.domain.sql.mapper.impl.CapabilityMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -23,7 +24,7 @@ public class SqlCapabilityRepository implements CapabilityDao {
     private CapabilityRepository repository;
 
     @Autowired
-    private DeltaDao deltaDao;
+    private ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     @Transactional
@@ -31,7 +32,7 @@ public class SqlCapabilityRepository implements CapabilityDao {
         final SqlCapability sqlCapability = repository.save(mapper.toSQL(capability));
 
         final Capability newCapability = mapper.fromSQL(sqlCapability, capability);
-        deltaDao.save(ChangeType.ADD, newCapability.getUniqueId(), mapper.toLDIF(newCapability));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newCapability.getUniqueId(), mapper.toLDIF(newCapability)));
     }
 
     @Override
@@ -41,7 +42,7 @@ public class SqlCapabilityRepository implements CapabilityDao {
         repository.delete(sqlCapability);
 
         final Capability capability = mapper.fromSQL(sqlCapability);
-        deltaDao.save(ChangeType.DELETE, capability.getUniqueId(), mapper.toLDIF(capability));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, capability.getUniqueId(), mapper.toLDIF(capability)));
     }
 
     @Override
