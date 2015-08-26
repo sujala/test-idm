@@ -67,7 +67,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public void updateTenantRole(TenantRole tenantRole) {
+    public void updateTenantRole(TenantRole tenantRole, String tenantId) {
         updateObject(tenantRole);
     }
 
@@ -78,6 +78,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
 
     @Override
     public void deleteTenantRole(TenantRole tenantRole) {
+        deleteTenantRole(tenantRole, null);
+    }
+
+    @Override
+    public void deleteTenantRole(TenantRole tenantRole, String tenantId) {
         deleteObject(tenantRole);
     }
 
@@ -168,6 +173,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     @Override
     public TenantRole getTenantRoleForUser(BaseUser user, String roleId) {
         return getTenantRole(user.getUniqueId(), roleId);
+    }
+
+    @Override
+    public void updateTenantRole(TenantRole tenantRole) {
+        updateTenantRole(tenantRole, null);
     }
 
     @Override

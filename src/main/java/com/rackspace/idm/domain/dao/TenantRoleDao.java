@@ -13,8 +13,10 @@ public interface TenantRoleDao {
     Iterable<TenantRole> getAllTenantRolesForClientRole(ClientRole role);
     TenantRole getTenantRoleForUser(BaseUser user, String roleId);
     void updateTenantRole(TenantRole tenantRole);
+    void updateTenantRole(TenantRole tenantRole, String tenantId);
     void deleteTenantRoleForUser(EndUser user, TenantRole tenantRole);
     void deleteTenantRole(TenantRole tenantRole);
+    void deleteTenantRole(TenantRole tenantRole, String tenantId);
     List<String> getIdsForUsersWithTenantRole(String roleId, int maxResult);
 
     Iterable<TenantRole> getTenantRoleForUser(EndUser user, List<ClientRole> clientRoles);

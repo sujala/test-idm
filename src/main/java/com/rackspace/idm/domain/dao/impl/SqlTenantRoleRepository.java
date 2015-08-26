@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 @SQLComponent
@@ -80,9 +81,14 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
 
     @Override
     @Transactional
-    public void updateTenantRole(TenantRole tenantRole) {
+    public void updateTenantRole(TenantRole tenantRole, String tenantId) {
         //check the assignments table to see if this tenant role is for a provisioned user
-        List<SqlTenantRole> existingSqlTenantRoles = tenantRoleRepository.findByActorIdAndRoleId(tenantRole.getUserId(), tenantRole.getRoleRsId());
+        List<SqlTenantRole> existingSqlTenantRoles = null;
+        if (tenantId == null) {
+            existingSqlTenantRoles = tenantRoleRepository.findByActorIdAndRoleId(tenantRole.getUserId(), tenantRole.getRoleRsId());
+        } else {
+            existingSqlTenantRoles = tenantRoleRepository.findByActorIdAndTargetIdAndRoleId(tenantRole.getUserId(), tenantId, tenantRole.getRoleRsId());
+        }
         if(!CollectionUtils.isEmpty(existingSqlTenantRoles)) {
             List<SqlTenantRole> sqlTenantRoles = mapper.toSQLList(tenantRole);
 
@@ -135,9 +141,20 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     @Override
     @Transactional
     public void deleteTenantRole(TenantRole tenantRole) {
+        deleteTenantRole(tenantRole, null);
+    }
+
+    @Override
+    @Transactional
+    public void deleteTenantRole(TenantRole tenantRole, String tenantId) {
         if(federatedRoleRepository.findOneByRoleRsIdAndUserId(tenantRole.getRoleRsId(), tenantRole.getUserId()) != null) {
             federatedRoleRepository.deleteByUserIdAndRoleRsId(tenantRole.getUserId(), tenantRole.getRoleRsId());
         } else {
+            if (tenantRole.getTenantIds().size() == 0 && tenantId != null) {
+                HashSet<String> tenantIds = new HashSet<String>();
+                tenantIds.add(tenantId);
+                tenantRole.setTenantIds(tenantIds);
+            }
             final List<SqlTenantRole> list = mapper.toSQLList(tenantRole);
             tenantRoleRepository.delete(list);
 
@@ -197,6 +214,12 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
         } else {
             return mapper.fromSQL(tenantRoleRepository.findByActorIdAndRoleId(user.getId(), roleId));
         }
+    }
+
+    @Override
+    @Transactional
+    public void updateTenantRole(TenantRole tenantRole) {
+        updateTenantRole(tenantRole, null);
     }
 
     @Override

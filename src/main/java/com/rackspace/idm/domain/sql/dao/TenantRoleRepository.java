@@ -31,6 +31,9 @@ public interface TenantRoleRepository extends JpaSpecificationExecutor<SqlTenant
     List<SqlTenantRole> findByActorIdAndRoleId(String actorId, String roleId);
 
     @EntityGraph(value = "SqlTenantRole.sqlRole", type = EntityGraph.EntityGraphType.FETCH)
+    List<SqlTenantRole> findByActorIdAndTargetIdAndRoleId(String actorId, String targetId, String roleId);
+
+    @EntityGraph(value = "SqlTenantRole.sqlRole", type = EntityGraph.EntityGraphType.FETCH)
     List<SqlTenantRole> findByTargetIdAndRoleId(String targetId, String roleId);
 
     @EntityGraph(value = "SqlTenantRole.sqlRole", type = EntityGraph.EntityGraphType.FETCH)

@@ -81,7 +81,7 @@ public class TenantRoleMapper extends SqlMapper<TenantRole, SqlTenantRole> {
 
     public List<SqlTenantRole> toSQLList(TenantRole tenantRole){
         List<String> tenantids = new ArrayList<String>();
-        if (tenantids.size() == 0) {
+        if (tenantRole.getTenantIds().size() == 0) {
             tenantids.add(config.getReloadableConfig().getIdentityRoleDefaultTenant());
         } else {
             tenantids.addAll(tenantRole.getTenantIds());
