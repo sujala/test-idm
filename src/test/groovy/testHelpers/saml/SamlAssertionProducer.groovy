@@ -1,5 +1,7 @@
-package testHelpers.saml;
+package testHelpers.saml
 
+import com.rackspace.idm.SAMLConstants
+import com.rackspace.idm.domain.decorator.SAMLAuthContext;
 import org.joda.time.DateTime;
 import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.SAMLVersion;
@@ -33,7 +35,7 @@ public class SamlAssertionProducer {
     }
 
     public Response createSAMLResponse(final String subjectId, final DateTime authenticationTime,
-			                           final HashMap<String, List<String>> attributes, String issuer, Integer samlAssertionDays) {
+			                           final HashMap<String, List<String>> attributes, String issuer, Integer samlAssertionDays, String authnContextClassRef = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS) {
 		
 		try {
 			DefaultBootstrap.bootstrap();
@@ -58,7 +60,7 @@ public class SamlAssertionProducer {
 				attributeStatement = createAttributeStatement(attributes);
 			}
 			
-			AuthnStatement authnStatement = createAuthnStatement(authenticationTime);
+			AuthnStatement authnStatement = createAuthnStatement(authenticationTime, authnContextClassRef);
 			
 			Assertion assertion = createAssertion(new DateTime(), subject, assertionIssuer, authnStatement, attributeStatement);
 			
@@ -158,11 +160,11 @@ public class SamlAssertionProducer {
 		return subject;
 	}
 	
-	private AuthnStatement createAuthnStatement(final DateTime issueDate) {
+	private AuthnStatement createAuthnStatement(final DateTime issueDate, String authnContextClassRef) {
 		// create authcontextclassref object
 		AuthnContextClassRefBuilder classRefBuilder = new AuthnContextClassRefBuilder();
 		AuthnContextClassRef classRef = classRefBuilder.buildObject();
-		classRef.setAuthnContextClassRef("urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport");
+		classRef.setAuthnContextClassRef(authnContextClassRef);
 		
 		// create authcontext object
 		AuthnContextBuilder authContextBuilder = new AuthnContextBuilder();
