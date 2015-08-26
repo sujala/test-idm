@@ -7,6 +7,9 @@ import com.rackspace.idm.domain.sql.entity.SqlEndpointRax;
 import com.rackspace.idm.domain.sql.entity.SqlPolicy;
 import com.rackspace.idm.domain.sql.mapper.SqlRaxMapper;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 @SQLComponent
@@ -64,5 +67,10 @@ public class InternalEndpointMapper extends SqlRaxMapper<CloudBaseUrl, SqlEndpoi
         }
 
         return sqlEndpoint;
+    }
+
+    @Override
+    public List<String> validEmptyAttributes(){
+        return new ArrayList<String>(Arrays.asList("tenantAlias"));
     }
 }

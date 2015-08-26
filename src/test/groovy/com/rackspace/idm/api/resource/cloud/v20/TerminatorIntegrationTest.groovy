@@ -135,8 +135,8 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(identityAdmin, defaultUser, userManage, userAdmin)
         deleteRoleOnServiceAdmin(role.id, Constants.SERVICE_ADMIN_2_USERNAME)
-        utils.deleteDomain(domain)
         utils.deleteTenant(tenant)
+        utils.deleteDomain(domain)
         utils.deleteEndpointTemplate(endpointTemplate)
         reloadableConfiguration.reset()
 
@@ -231,9 +231,9 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         cleanup:
         try { utils.deleteUsers(identityAdmin, defaultUser, userManage, userAdmin) } catch (Exception e) {}
         try { deleteRoleOnServiceAdmin(role.id, Constants.SERVICE_ADMIN_2_USERNAME) } catch (Exception e) {}
-        try { utils.deleteDomain(domain) } catch (Exception e) {}
         try { utils.deleteTenant(tenant1) } catch (Exception e) {}
         try { utils.deleteTenant(tenant2) } catch (Exception e) {}
+        try { utils.deleteDomain(domain) } catch (Exception e) {}
         try { utils.deleteEndpointTemplate(endpointTemplate) } catch (Exception e) {}
 
         where:
@@ -349,7 +349,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
-        deleteFederatedUser(username)
+        deleteFederatedUserQuietly(username)
         reloadableConfiguration.reset()
 
         where:
@@ -432,13 +432,20 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         tenantRoleDao.deleteTenantRoleForUser(serviceAdmin, tenantRoleEntity)
     }
 
-    def deleteFederatedUser(username) {
-        def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
-        if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            sqlFederatedUserRepository.delete(federatedUser)
-        } else {
-            ldapFederatedUserRepository.deleteObject(federatedUser)
+    def deleteFederatedUserQuietly(username) {
+        try {
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            if (federatedUser != null) {
+                if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                    federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpName(username, DEFAULT_IDP_NAME)
+                    sqlFederatedUserRepository.delete(federatedUser)
+                } else {
+                    federatedUserRepository.deleteObject(federatedUser)
+                }
+            }
+        } catch (Exception e) {
+            //eat but log
+            LOG.warn(String.format("Error cleaning up federatedUser with username '%s'", username), e)
         }
     }
-
 }
