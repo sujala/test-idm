@@ -21,6 +21,8 @@ import org.springframework.util.Assert;
 import java.util.Collections;
 import java.util.UUID;
 
+import static com.rackspace.idm.domain.dao.impl.LdapRepository.CONTAINER_ROLES;
+
 @SQLComponent
 public class SqlFederatedUserRepository  implements FederatedUserDao {
 
@@ -48,8 +50,12 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
         }
         final SqlFederatedUserRax sqlFederatedUserRax = federatedUserRepository.save(federatedUserRaxMapper.toSQL(user));
 
+        // Save necessary LDIF for rollback
         final FederatedUser federatedUser = federatedUserRaxMapper.fromSQL(sqlFederatedUserRax, user);
-        deltaDao.save(ChangeType.ADD, federatedUser.getUniqueId(), federatedUserRaxMapper.toLDIF(federatedUser));
+        final String dn = federatedUser.getUniqueId();
+        deltaDao.save(ChangeType.ADD, dn, federatedUserRaxMapper.toLDIF(federatedUser));
+        deltaDao.save(ChangeType.ADD, federatedUserRaxMapper.toContainerDN(dn, CONTAINER_ROLES),
+                federatedUserRaxMapper.toContainerLDIF(dn, CONTAINER_ROLES));
     }
 
     @Override

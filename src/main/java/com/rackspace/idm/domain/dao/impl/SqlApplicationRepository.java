@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static com.rackspace.idm.domain.dao.impl.LdapRepository.CONTAINER_APPLICATION_ROLES;
+
 @SQLComponent
 public class SqlApplicationRepository implements ApplicationDao {
 
@@ -26,16 +28,20 @@ public class SqlApplicationRepository implements ApplicationDao {
     @Autowired
     private DeltaDao deltaDao;
 
-    public static final String APPLICATION_NAME_REGEX_QUERY = "\"name\":[[:space:]]*\":service_name\"";
-    public static final String APPLICATION_NAME_REGEX_NAME_PARAM = ":service_name";
+    private static final String APPLICATION_NAME_REGEX_QUERY = "\"name\":[[:space:]]*\":service_name\"";
+    private static final String APPLICATION_NAME_REGEX_NAME_PARAM = ":service_name";
 
     @Override
     @Transactional
     public void addApplication(Application client) {
         final SqlService sqlService = serviceRepository.save(mapper.toSQL(client));
 
+        // Save necessary LDIF for rollback
         final Application application = mapper.fromSQL(sqlService, client);
+        final String dn = application.getUniqueId();
         deltaDao.save(ChangeType.ADD, application.getUniqueId(), mapper.toLDIF(application));
+        deltaDao.save(ChangeType.ADD, mapper.toContainerDN(dn, CONTAINER_APPLICATION_ROLES),
+                mapper.toContainerLDIF(dn, CONTAINER_APPLICATION_ROLES));
     }
 
     @Override
