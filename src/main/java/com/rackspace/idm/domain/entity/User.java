@@ -235,7 +235,7 @@ public class User implements EndUser {
         return !(multifactorEnabled == null) && multifactorEnabled;
     }
 
-    public boolean isMultiFactorDeviceVerified() {
+    public Boolean isMultiFactorDeviceVerified() {
         return !(multiFactorDeviceVerified == null) && multiFactorDeviceVerified;
     }
 
