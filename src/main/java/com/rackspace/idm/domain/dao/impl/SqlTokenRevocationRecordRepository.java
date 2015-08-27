@@ -11,8 +11,10 @@ import com.rackspace.idm.domain.sql.entity.SqlTokenRevocationRecordAuthenticated
 import com.rackspace.idm.domain.sql.mapper.impl.TokenRevocationMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -54,8 +56,10 @@ public class SqlTokenRevocationRecordRepository implements TokenRevocationRecord
         sqlTrr.setId(TokenRevocationRecordUtil.getNextId());
         sqlTrr.setTargetIssuedToId(targetUserId);
         sqlTrr.setTargetAuthenticatedByMethodGroups(authenticatedByMethodGroups);
-        sqlTrr.setTargetCreatedBefore(new Date());
-        sqlTrr.setCreateTimestamp(new Date());
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.MILLISECOND, 0);
+        sqlTrr.setTargetCreatedBefore(cal.getTime());
+        sqlTrr.setCreateTimestamp(cal.getTime());
 
         for (SqlTokenRevocationRecordAuthenticatedByRax authBy : sqlTrr.getSqlTokenRevocationRecordAuthenticatedBy()) {
             authBy.setId(TokenRevocationRecordUtil.getNextId());

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Calendar;
 import java.util.Date;
 
 @Component
@@ -76,7 +77,9 @@ public class DefaultAETokenService implements AETokenService {
         Validate.notNull(token.getAuthenticatedBy(), "Token must not have a null authenticated by");
 
         //set the creation timestamp
-        token.setCreateTimestamp(new Date());
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.MILLISECOND, 0);
+        token.setCreateTimestamp(cal.getTime());
 
         byte[] dataBytes = packTokenData(user, token);
         byte[] userTokenBytes = secureTokenData(dataBytes);
