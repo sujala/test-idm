@@ -341,11 +341,11 @@ public class IdentityConfig {
         verifyAndLogStaticProperty(SQL_URL_PROP, REQUIRED);
         verifyAndLogStaticProperty(SQL_USERNAME_PROP, REQUIRED);
         verifyAndLogStaticProperty(SQL_PASSWORD_PROP, REQUIRED);
-        verifyAndLogStaticProperty(GROUP_DOMAINID_DEFAULT, REQUIRED);
-        verifyAndLogStaticProperty(TENANT_DOMAINID_DEFAULT, REQUIRED);
 
         logFederatedTokenFormatOverrides();
 
+        verifyAndLogReloadableProperty(GROUP_DOMAINID_DEFAULT, REQUIRED);
+        verifyAndLogReloadableProperty(TENANT_DOMAINID_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(AE_NODE_NAME_FOR_SIGNOFF_PROP, REQUIRED);
         verifyAndLogReloadableProperty(FEATURE_PERSIST_RACKERS_PROP, OPTIONAL);
         verifyAndLogReloadableProperty(IDENTITY_ROLE_TENANT_DEFAULT, REQUIRED);
