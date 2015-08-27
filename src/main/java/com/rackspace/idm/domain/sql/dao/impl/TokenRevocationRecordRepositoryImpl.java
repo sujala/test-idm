@@ -96,7 +96,7 @@ public class TokenRevocationRecordRepositoryImpl implements TokenRevocationRecor
         return Restrictions.and(
                 Restrictions.eq("targetIssuedToId", userId),
                 Restrictions.isNull("accessTokenRax.id"),
-                Restrictions.gt("targetCreatedBefore", tokenExpiration),
+                Restrictions.ge("targetCreatedBefore", tokenExpiration),
                 authByOrFilter
         );
     }
