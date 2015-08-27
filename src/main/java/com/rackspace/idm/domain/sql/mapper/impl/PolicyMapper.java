@@ -12,7 +12,7 @@ import java.util.List;
 @SQLComponent
 public class PolicyMapper extends SqlRaxMapper<Policy, SqlPolicy, SqlPolicyRax> {
 
-    private static final String FORMAT = "rsId=%s,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    private static final String FORMAT = "rsId=%s,ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com";
 
     @Override
     protected String getUniqueIdFormat() {
