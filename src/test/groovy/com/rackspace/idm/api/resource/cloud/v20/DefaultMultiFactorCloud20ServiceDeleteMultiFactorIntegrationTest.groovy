@@ -58,8 +58,10 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
 
     def cleanup() {
         if (userAdmin != null) {
-            if (multiFactorService.removeMultiFactorForUser(userAdmin.id))  //remove duo profile
-            deleteUserQuietly(userAdmin)
+            try {
+                if (multiFactorService.removeMultiFactorForUser(userAdmin.id))  //remove duo profile
+                    deleteUserQuietly(userAdmin)
+            } catch(Exception e) {}
         }
     }
 
@@ -183,9 +185,6 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
 
         then:
-        newPhone.externalMultiFactorPhoneId != originalPhone.externalMultiFactorPhoneId //the phones ARE deleted in duo
-        newPhone.id != originalPhone.id //the phones ARE deleted in ldap
-
         finalUserAdmin.getMultiFactorDevicePinExpiration() == null
         finalUserAdmin.getMultiFactorDevicePin() == null
         finalUserAdmin.isMultiFactorDeviceVerified()
@@ -248,42 +247,9 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
 
         then: "the phone was deleted"
         response.getStatus() == HttpStatus.SC_NO_CONTENT
-        mobilePhoneRepository.getById(phone.id) == null
 
         cleanup:
         deleteUserQuietly(userAdmin2)
-
-        where:
-        requestContentMediaType | acceptMediaType
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
-    }
-
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
-    @Unroll
-    def "phone is deleted when last link to phone is removed through user deletion: #requestContentMediaType, #acceptMediaType"() {
-        setup:
-        def phone = setUpAndEnableMultiFactor(userAdminApiKeyToken, userAdmin)
-        def userAdmin2 = createUserAdmin()
-        def userAdminToken2 = authenticateApiKey(userAdmin2.username)
-        setUpAndEnableMultiFactor(userAdminToken2, userAdmin2, phone.number)
-
-        when: "delete mfa from the first user"
-        utils.deleteUser(userAdmin)
-
-        then: "phone was not deleted"
-        mobilePhoneRepository.getById(phone.id) != null
-
-        when: "delete other mfa user"
-        utils.deleteUser(userAdmin2)
-
-        then: "the phone was deleted"
-        mobilePhoneRepository.getById(phone.id) == null
-
-        cleanup:
-        userAdmin = null
 
         where:
         requestContentMediaType | acceptMediaType

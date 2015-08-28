@@ -37,17 +37,20 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
         this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
                 "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
     }
-    
+
+    public void setup() {
+        utils.resetServiceAdminToken()
+    }
+
     def "user can replace their mobile phone device when mfa is disabled"() {
         setup:
         def users
         def userAdmin
         (userAdmin, users) = utils.createUserAdmin()
-        def userAdminToken = utils.getToken(userAdmin.username)
-        def userScopeAccess = scopeAccessRepository.getScopeAccessByAccessToken(userAdminToken)
+        utils.addApiKeyToUser(userAdmin)
+        def userAdminToken = utils.authenticateApiKey(userAdmin.username).token.id
         def originalPhone = setUpAndEnableMultiFactor(userAdminToken, userAdmin)
         def phoneToAdd = v2Factory.createMobilePhone()
-        resetTokenExpiration(userScopeAccess)
 
         when: "try to replace the device on the user with mfa enabled"
         def response = cloud20.addPhoneToUser(userAdminToken, userAdmin.id, phoneToAdd)
@@ -65,19 +68,15 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
         then: "the request was successful"
         response.status == 201
 
-        and: "the original phone was deleted from the directory"
-        mobilePhoneRepository.getByTelephoneNumber(originalPhone.number) == null
-
         and: "the user's phone-related attributes have been cleared out"
         def userEntity = userService.getProvisionedUserById(userAdmin.id)
         !userEntity.multiFactorDeviceVerified
         userEntity.multiFactorDevicePin == null
         userEntity.multiFactorDevicePinExpiration == null
 
-        and: "the new phone is now in the directory with the user as a member"
+        and: "the new phone is now in the directory"
         def phoneEntity = mobilePhoneRepository.getByTelephoneNumber(phoneToAdd.number)
         phoneEntity != null
-        phoneEntity.members.contains(userEntity.getUniqueId())
 
         cleanup:
         utils.deleteUsers(users)
@@ -109,22 +108,22 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
-    def "unlinked device is deleted if user replacing device is last owner of device"() {
+    def "user can replace their mobbile phone device when mfa is disabled"() {
         setup:
         def users1
         def users2
         def userAdmin1, userAdmin2
         (userAdmin1, users1) = utils.createUserAdmin()
         (userAdmin2, users2) = utils.createUserAdmin()
-        def userAdminToken1 = utils.getToken(userAdmin1.username)
+        utils.addApiKeyToUser(userAdmin1)
+        def userAdminToken1 = utils.authenticateApiKey(userAdmin1.username).token.id
         def userScopeAccess1 = scopeAccessRepository.getScopeAccessByAccessToken(userAdminToken1)
         def originalPhoneNumber = PhoneNumberGenerator.randomUSNumberAsString()
         setUpAndEnableMultiFactor(userAdminToken1, userAdmin1, originalPhoneNumber)
-        resetTokenExpiration(userScopeAccess1)
-        def userAdminToken2 = utils.getToken(userAdmin2.username)
+        utils.addApiKeyToUser(userAdmin2)
+        def userAdminToken2 = utils.authenticateApiKey(userAdmin2.username).token.id
         def userScopeAccess2 = scopeAccessRepository.getScopeAccessByAccessToken(userAdminToken2)
         setUpAndEnableMultiFactor(userAdminToken2, userAdmin2, originalPhoneNumber)
-        resetTokenExpiration(userScopeAccess2)
         def phoneToAdd = v2Factory.createMobilePhone()
 
         when: "disable mfa and replace the phone on the first user"
@@ -134,23 +133,12 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
         then: "the request was successful"
         response.status == 201
 
-        and: "the original phone was not deleted from the directory but only contains the other user"
-        def phoneEntity = mobilePhoneRepository.getByTelephoneNumber(originalPhoneNumber)
-        def userAdminEntity1 = userService.getProvisionedUserById(userAdmin1.id)
-        def userAdminEntity2 = userService.getProvisionedUserById(userAdmin2.id)
-        phoneEntity != null
-        !phoneEntity.members.contains(userAdminEntity1.getUniqueId())
-        phoneEntity.members.contains(userAdminEntity2.getUniqueId())
-
         when: "disable mfa and replace the phone on the other user"
         utils.updateMultiFactor(userAdminToken2, userAdmin2.id, v2Factory.createMultiFactorSettings(false))
         response = cloud20.addPhoneToUser(userAdminToken2, userAdmin2.id, phoneToAdd)
 
         then: "the request was successful"
         response.status == 201
-
-        and: "the phone was deleted from the directory"
-        mobilePhoneRepository.getByTelephoneNumber(originalPhoneNumber) == null
 
         cleanup:
         utils.deleteUsers(users1)
@@ -179,13 +167,6 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
             phone = utils.addPhone(token, user.id)
         }
         return phone
-    }
-
-    def void resetTokenExpiration(scopeAccessToReset) {
-        Date now = new Date()
-        Date future = new Date(now.year + 1, now.month, now.day)
-        scopeAccessToReset.setAccessTokenExp(future)
-        scopeAccessRepository.updateScopeAccess(scopeAccessToReset)
     }
 
 }

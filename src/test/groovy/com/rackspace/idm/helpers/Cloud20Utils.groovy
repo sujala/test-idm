@@ -228,6 +228,10 @@ class Cloud20Utils {
         return serviceAdminToken
     }
 
+    def resetServiceAdminToken() {
+        serviceAdminToken = getToken(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PASSWORD)
+    }
+
     def getIdentityAdminToken() {
         getToken(IDENTITY_ADMIN_USERNAME, IDENTITY_ADMIN_PASSWORD)
     }

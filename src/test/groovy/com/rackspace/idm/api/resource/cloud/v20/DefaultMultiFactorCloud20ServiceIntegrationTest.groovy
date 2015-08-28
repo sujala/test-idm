@@ -53,6 +53,10 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
                 "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
     }
 
+    public void setup() {
+        utils.resetServiceAdminToken()
+    }
+
     @Override
     public void doCleanupSpec() {
         stopGrizzly();

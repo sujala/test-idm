@@ -60,7 +60,7 @@ public class TokenRevocationRecordRepositoryImpl implements TokenRevocationRecor
         return Restrictions.eq("accessTokenRax.token", token.getAccessTokenString());
     }
 
-    private Criterion getRevocationByUserWithWildcardTokenFilterCriterion(String userId, List<String> authenticatedBy, Date tokenExpiration) {
+    private Criterion getRevocationByUserWithWildcardTokenFilterCriterion(String userId, List<String> authenticatedBy, Date tokenCreationTimestamp) {
         Criterion authByExactMatchesFilter;
         boolean isTokenForImpersonation = false;
 
@@ -96,7 +96,7 @@ public class TokenRevocationRecordRepositoryImpl implements TokenRevocationRecor
         return Restrictions.and(
                 Restrictions.eq("targetIssuedToId", userId),
                 Restrictions.isNull("accessTokenRax.id"),
-                Restrictions.ge("targetCreatedBefore", tokenExpiration),
+                Restrictions.ge("targetCreatedBefore", tokenCreationTimestamp),
                 authByOrFilter
         );
     }

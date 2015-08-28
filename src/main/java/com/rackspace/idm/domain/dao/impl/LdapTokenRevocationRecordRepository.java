@@ -12,9 +12,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Responsible for storing and retrieving TRRs to/from CA LDAP repository
@@ -49,7 +47,9 @@ public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<L
         trr.setId(getNextId());
         trr.setTargetIssuedToId(targetUserId);
         trr.setTargetAuthenticatedByMethodGroups(authenticatedByMethodGroups);
-        trr.setTargetCreatedBefore(new Date());
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.MILLISECOND, 0);
+        trr.setTargetCreatedBefore(cal.getTime());
 
         addObject(trr);
 
