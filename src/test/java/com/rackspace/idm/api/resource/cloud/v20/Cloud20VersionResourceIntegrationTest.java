@@ -592,7 +592,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
 
         assertThat("create policy", clientResponse.getStatus(), equalTo(201));
         String location = clientResponse.getHeaders().get("Location").get(0);
-        Pattern pattern = Pattern.compile(".*policies/([0-9]*)");
+        Pattern pattern = Pattern.compile(".*policies/([0-9a-z]*)");
         Matcher matcher = pattern.matcher(location);
         String policyId = "";
         if (matcher.find()) {
@@ -673,7 +673,7 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         ClientResponse policyClientResponse = createPolicy(identityToken, "someName", "someBlob", "someType");
         assertThat("create policy", policyClientResponse.getStatus(), equalTo(201));
         String location = policyClientResponse.getHeaders().get("Location").get(0);
-        Pattern pattern = Pattern.compile(".*policies/([0-9]*)");
+        Pattern pattern = Pattern.compile(".*policies/([0-9a-z]*)");
         Matcher matcher = pattern.matcher(location);
         String policyId = "";
         if (matcher.find()) {
