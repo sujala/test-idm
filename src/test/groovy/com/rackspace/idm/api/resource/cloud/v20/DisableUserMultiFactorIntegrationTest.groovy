@@ -188,7 +188,7 @@ class DisableUserMultiFactorIntegrationTest extends RootConcurrentIntegrationTes
 
         cleanup:
         deleteUserQuietly(user)
-        mobilePhoneRepository.deleteObject(mobilePhoneRepository.getById(responsePhone.id))
+        mobilePhoneRepository.deleteMobilePhone(mobilePhoneRepository.getById(responsePhone.id))
     }
 
     def addPhone(token, user, verify=true) {

@@ -1,21 +1,24 @@
 package com.rackspace.idm.domain.dao.impl;
 
+
+import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
+import com.unboundid.ldap.sdk.LDAPException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.apache.commons.configuration.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import testHelpers.junit.java.ConditionalIgnoreRule;
 import testHelpers.junit.java.IgnoreByRepositoryProfile;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.mock;
 
 
 /**
@@ -25,11 +28,16 @@ import static org.powermock.api.mockito.PowerMockito.mock;
  * Time: 2:04 PM
  * To change this template use File | Settings | File Templates.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(LDAPConnectionPool.class)  //Dont use power mock unless absolutely necessary it takes FOREVER to set up.
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = "classpath:app-config.xml")
 @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 public class LdapConnectionPoolsTest {
+
+    @Autowired(required = false)
+    Configuration config;
+
     LdapConnectionPools ldapConnectionPools;
+
     LDAPConnectionPool appConnectionPool;
     LDAPConnectionPool bindConnectionPool;
 
@@ -38,8 +46,10 @@ public class LdapConnectionPoolsTest {
 
     @Before
     public void setUp() throws Exception {
-        appConnectionPool = mock(LDAPConnectionPool.class);
-        bindConnectionPool = mock(LDAPConnectionPool.class);
+        LdapConfiguration ldapConfiguration = new LdapConfiguration(config);
+        LdapConnectionPools connectionPools  = ldapConfiguration.connectionPools();
+        appConnectionPool = connectionPools.getAppConnPool();
+        bindConnectionPool = connectionPools.getBindConnPool();
         ldapConnectionPools  = new LdapConnectionPools(appConnectionPool, bindConnectionPool);
     }
 
@@ -71,8 +81,23 @@ public class LdapConnectionPoolsTest {
     @Test
     public void close_callsCloseOnConnectionPools() throws Exception {
         ldapConnectionPools.close();
-        verify(appConnectionPool).close();
-        verify(bindConnectionPool).close();
+
+        boolean appConnectionClosed = false;
+        try {
+            appConnectionPool.getConnection();
+        } catch (LDAPException e) {
+            appConnectionClosed = true;
+        }
+
+        boolean bindConnectionClosed = false;
+        try {
+            bindConnectionPool.getConnection();
+        } catch (LDAPException e) {
+            bindConnectionClosed = true;
+        }
+
+        assertThat("App conection closed", appConnectionClosed, equalTo(true));
+        assertThat("Bind connection closed", bindConnectionClosed, equalTo(true));
     }
 
     @Test
