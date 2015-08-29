@@ -45,11 +45,7 @@ public class LdapDeltaRepository implements DeltaDao {
             entity.setEvent(event);
             entity.setHost(identityConfig.getReloadableConfig().getAENodeNameForSignoff());
             if (event != ChangeType.DELETE) {
-                try {
-                    entity.setData(getAppInterface().getEntry(type).toLDIFString());
-                } catch (LDAPException e) {
-                    entity.setError(e.getMessage());
-                }
+                entity.setData(getAppInterface().getEntry(type).toLDIFString());
             }
             ldapToSqlRepository.save(entity);
         } catch (Exception e) {
