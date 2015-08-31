@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -119,12 +120,22 @@ public class DefaultDomainService implements DomainService {
 
         final Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
-        String[] curDomainTenantIds = domain.getTenantIds();
+        addTenantToDomain(tenant, domain);
+    }
+
+    private void addTenantToDomain(Tenant tenant, Domain newDomain) {
+        Assert.notNull(tenant);
+        Assert.notNull(newDomain);
+
+        String tenantId = tenant.getTenantId();
+        String domainId = newDomain.getDomainId();
+
+        String[] curDomainTenantIds = newDomain.getTenantIds();
         if (!ArrayUtils.contains(curDomainTenantIds, tenantId)) {
-            final List<String> tenantIds = setTenantIdList(domain, tenantId);
+            final List<String> tenantIds = setTenantIdList(newDomain, tenantId);
             tenantIds.add(tenantId);
-            domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
-            domainDao.updateDomain(domain);
+            newDomain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
+            domainDao.updateDomain(newDomain);
         }
 
         //update the tenant if it doesn't already point to this domain
@@ -138,9 +149,13 @@ public class DefaultDomainService implements DomainService {
                 throw new RuntimeException(e);
             }
 
-            //if tenant previously pointed to old domain, must remove association. Must call this AFTER updating the tenant to new tenantId
+            //if tenant previously pointed to old domain, must remove association from that domain. Must call this
+            // AFTER updating the tenant to new tenantId
             if (StringUtils.isNotBlank(oldDomainId)) {
-                removeTenantFromDomain(tenantId, oldDomainId);
+                Domain oldDomain = domainDao.getDomain(oldDomainId);
+                if (oldDomain != null) {
+                    removeTenantFromDomain(tenant, oldDomain);
+                }
             }
         }
     }
@@ -151,9 +166,55 @@ public class DefaultDomainService implements DomainService {
         if(domain == null)
             throw new NotFoundException("Domain could not be found");
 
-        List<String> tenantIds = setTenantIdList(domain, tenantId);
-        domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
-        domainDao.updateDomain(domain);
+        final Tenant tenant = tenantService.getTenant(tenantId);
+        if (tenant == null) {
+            /*
+            do this to allow for case where domain contains pointer to invalid tenant (since LDAP doesn't maintain
+            ref integrity. Don't need to account for case where tenant points to invalid domain because can just add
+            tenant to new domain
+             */
+            String[] curDomainTenantIds = domain.getTenantIds();
+            if (ArrayUtils.contains(curDomainTenantIds, tenantId)) {
+                List<String> tenantIds = setTenantIdList(domain, tenantId);
+                domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
+                domainDao.updateDomain(domain);
+            }
+        } else {
+            try {
+                removeTenantFromDomain(tenant, domain);
+            } catch (IllegalArgumentException ex) {
+                throw new BadRequestException(ex.getMessage(), ex);
+            }
+        }
+    }
+
+    private void removeTenantFromDomain(Tenant tenant, Domain domain) {
+        Assert.notNull(tenant);
+        Assert.notNull(domain);
+
+        String tenantId = tenant.getTenantId();
+        String domainId = domain.getDomainId();
+        String defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
+
+        //can only remove a tenant from the default domain if the tenant is associated with a different domain
+        if (defaultDomainId.equals(domain.getDomainId()) && domainId.equals(tenant.getDomainId())) {
+            throw new IllegalArgumentException("Can not remove a tenant from the default domain. To change the domain add the tenant to a new domain");
+        }
+
+        //remove tenant from specified domain
+        String[] curDomainTenantIds = domain.getTenantIds();
+        if (ArrayUtils.contains(curDomainTenantIds, tenantId)) {
+            List<String> tenantIds = setTenantIdList(domain, tenantId);
+            domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
+            domainDao.updateDomain(domain);
+        }
+
+        //if the tenant currently points to the domain that it's to be removed from, must reset the tenant to the default domain
+        //since a tenant must always belong to a domain
+        if (domainId.equals(tenant.getDomainId())) {
+            Domain defaultDomain = domainDao.getDomain(defaultDomainId);
+            addTenantToDomain(tenant, defaultDomain);
+        }
     }
 
     @Override

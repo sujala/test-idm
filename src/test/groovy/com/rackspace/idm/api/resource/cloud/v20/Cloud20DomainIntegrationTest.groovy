@@ -3,11 +3,12 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.DomainService
-import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.exception.BadRequestException
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
@@ -16,6 +17,7 @@ import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.IdmAssert
+import testHelpers.junit.IgnoreByRepositoryProfile
 
 import javax.ws.rs.core.HttpHeaders
 import testHelpers.RootIntegrationTest
@@ -39,7 +41,6 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
     @Autowired UserDao userDao;
 
-    // Keystone V3 compatibility
     def "Test if 'cloud20Service.addTenant(...)' adds default 'domainId' to the tenant and updates domain to point to tenant"() {
         given:
         def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
@@ -68,7 +69,6 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         try { domainService.deleteDomain(domainId) } catch (Exception e) {}
     }
 
-    // Keystone V3 compatibility
     def "Test if 'domainService.addTenantToDomain(...)' adds 'domainId' to the tenant"() {
         given:
         def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
@@ -77,13 +77,9 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def tenant = utils.createTenant() //will associate tenant to default domain
         def tenantEntity = tenantService.getTenantByName(tenant.name)
 
-        //assert initial state is as expected w/ tenant pointing to default domain and default domain pointing to tenant
-        assert tenantEntity.domainId == defaultDomainId
-        cloud20.getDomainTenants(utils.getServiceAdminToken(), defaultDomainId).getEntity(Tenants).value.tenant.find {it.id == tenant.id} != null
-
-        //new domain has no tenants
-        def domainTenantResponse = cloud20.getDomainTenants(utils.getServiceAdminToken(), domainId)
-        IdmAssert.assertOpenStackV2FaultResponse(domainTenantResponse, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, GlobalConstants.ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN)
+        //assert initial state is as expected
+        assertDomainContainsTenant(defaultDomainId, tenant.id)
+        assertDomainDoesNotContainTenant(domainId, tenant.id)
 
         when:
         domainService.addTenantToDomain(tenant.id, domainId)
@@ -91,13 +87,131 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         then:
         result.domainId == domainId
-        def defaultDomainTenantResponse = cloud20.getDomainTenants(utils.getServiceAdminToken(), defaultDomainId)
-        if (defaultDomainTenantResponse.status == HttpStatus.SC_NOT_FOUND) {
-            IdmAssert.assertOpenStackV2FaultResponse(defaultDomainTenantResponse, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, GlobalConstants.ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN)
-        } else {
-            assert defaultDomainTenantResponse.getEntity(Tenants).value.tenant.find {it.id == tenant.id} == null
+        assertDomainContainsTenant(domainId, tenant.id)
+        assertDomainDoesNotContainTenant(defaultDomainId, tenant.id)
+
+        cleanup:
+        tenantService.deleteTenant(tenant.id)
+        domainService.deleteDomain(domainId)
+    }
+
+    @Unroll
+    def "Test 'domainService.addTenantToDomain(...)' adding tenant to same domain it belongs to is no-op for #testDescription"() {
+        given:
+        //create tenant
+        def tenant = utils.createTenant() //will associate tenant to default domain
+
+        def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
+        def domainToUse = defaultDomainId
+        //if not using default domain, create a test domain and associate tenant with that domain
+        if (!testWithDefaultDomain) {
+            domainToUse = utils.createDomain()
+            domainService.createNewDomain(domainToUse)
+            domainService.addTenantToDomain(tenant.id, domainToUse)
         }
-        cloud20.getDomainTenants(utils.getServiceAdminToken(), domainId).getEntity(Tenants).value.tenant.find {it.id == tenant.id} != null
+
+        when: "add the tenant to domain that it already points to"
+        domainService.addTenantToDomain(tenant.id, domainToUse)
+        def result = tenantService.getTenantByName(tenant.name)
+
+        then: "tenant still points to domain"
+        result.domainId == domainToUse
+
+        and: "domain still points to this tenant"
+        assertDomainContainsTenant(domainToUse, tenant.id)
+
+        cleanup:
+        tenantService.deleteTenant(tenant.id)
+        if (!testWithDefaultDomain) {
+            domainService.deleteDomain(domainToUse)
+        }
+
+        where:
+        testWithDefaultDomain | testDescription
+        Boolean.FALSE | "non-default domain"
+        Boolean.TRUE | "default domain"
+    }
+
+    def "Test if 'domainService.removeTenantFromDomain(...)' sets tenant to default domain"() {
+        given:
+        def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+        def tenant = utils.createTenant() //will associate tenant to default domain
+
+        //add tenant to specified domain
+        domainService.addTenantToDomain(tenant.id, domainId)
+
+        //assert initial state is as expected w/ tenant pointing to new domain
+        assertDomainContainsTenant(domainId, tenant.id)
+        assertDomainDoesNotContainTenant(defaultDomainId, tenant.id)
+
+        when: "remove tenant"
+        domainService.removeTenantFromDomain(tenant.id, domainId)
+        def result = tenantService.getTenantByName(tenant.name)
+
+        then:
+        result.domainId == defaultDomainId
+        assertDomainContainsTenant(defaultDomainId, tenant.id)
+        assertDomainDoesNotContainTenant(domainId, tenant.id)
+
+        cleanup:
+        tenantService.deleteTenant(tenant.id)
+        domainService.deleteDomain(domainId)
+    }
+
+    def "Test 'domainService.removeTenantFromDomain(...)' removing tenant from default domain not allowed"() {
+        given:
+        def tenant = utils.createTenant() //will associate tenant to default domain
+        def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
+
+        when: "remove tenant from default domain"
+        domainService.removeTenantFromDomain(tenant.id, defaultDomainId)
+
+        then: "get BadRequest exception"
+        thrown(BadRequestException)
+    }
+
+    /**
+     * Ignore for SQL because dual pointers are NOT maintained in MariaDB. Instead the TENANT pointer to the domain is
+     * what is maintained. The domain's pointers to tenants are ignored.
+     *
+     * @return
+     */
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
+    def "Test 'domainService.removeTenantFromDomain(...)' and ''domainService.addTenantToDomain(...)' when pointers are off"() {
+        given:
+        def tenant = utils.createTenant() //will associate tenant to default domain
+        def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
+
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+
+        //add tenant to specified domain using backend so default domain still points to tenant, and new domain does not (invalid state)
+        def tenantEntity = tenantService.getTenantByName(tenant.name)
+        tenantEntity.setDomainId(domainId)
+        tenantService.updateTenant(tenantEntity)
+
+        //test initial state
+        assertDomainContainsTenant(defaultDomainId, tenant.id)
+
+        when: "remove tenant from default domain when tenant points to different domain"
+        domainService.removeTenantFromDomain(tenant.id, defaultDomainId)
+
+        then: "do not get IllegalArgument exception"
+        notThrown(BadRequestException)
+
+        and: "default domain no longer points to tenant"
+        assertDomainDoesNotContainTenant(defaultDomainId, tenant.id)
+
+        and: "actual domain does not point to tenant either since hacked data"
+        assertDomainDoesNotContainTenant(domainId, tenant.id)
+
+        when: "add tenant to domain"
+        domainService.addTenantToDomain(tenant.id, domainId)
+
+        then: "domain now points to tenant"
+        assertDomainContainsTenant(domainId, tenant.id)
 
         cleanup:
         tenantService.deleteTenant(tenant.id)
@@ -412,6 +526,20 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def user = userService.checkAndGetUserByName(username)
         user.setDomainId(null)
         userService.updateUser(user)
+    }
+
+    def void assertDomainDoesNotContainTenant(domainId, tenantId) {
+        def domainTenantResponse = cloud20.getDomainTenants(utils.getServiceAdminToken(), domainId)
+        if (domainTenantResponse.status == HttpStatus.SC_NOT_FOUND) {
+            IdmAssert.assertOpenStackV2FaultResponse(domainTenantResponse, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, GlobalConstants.ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN)
+        } else {
+            assert domainTenantResponse.getEntity(Tenants).value.tenant.find {it.id == tenantId} == null
+        }
+     }
+
+    def void assertDomainContainsTenant(domainId, tenantId) {
+        def domainTenantResponse = cloud20.getDomainTenants(utils.getServiceAdminToken(), domainId)
+        assert domainTenantResponse.getEntity(Tenants).value.tenant.find {it.id == tenantId} != null
     }
 
 }
