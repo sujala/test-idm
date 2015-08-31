@@ -27,6 +27,7 @@ import java.util.Iterator;
 public class IdentityConfig {
 
     private static final String LOCALHOST = "localhost";
+    private static final String PORT_25 = "25";
     public static final String CONFIG_FOLDER_SYS_PROP_NAME = "idm.properties.location";
     public static final String FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME = "feature.use.reloadable.docs";
 
@@ -42,6 +43,7 @@ public class IdentityConfig {
     private static final String EMAIL_MFA_DISABLED_SUBJECT = "email.mfa.disabled.subject";
     private static final String EMAIL_LOCKED_OUT_SUBJECT = "email.locked.out.email.subject";
     private static final String EMAIL_HOST = "email.host";
+    private static final String EMAIL_PORT = "email.port";
     private static final String EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES = "email.send.to.only.rackspace.addresses.enabled";
     private static final String SCOPED_TOKEN_EXPIRATION_SECONDS = "token.scoped.expirationSeconds";
     private static final String CLOUD_AUTH_CLIENT_ID = "cloudAuth.clientId";
@@ -249,6 +251,7 @@ public class IdentityConfig {
     private static final Map<String,Object> setDefaults() {
         Map<String,Object> defaults = new HashMap<String, Object>();
         defaults.put(EMAIL_HOST, LOCALHOST);
+        defaults.put(EMAIL_PORT, PORT_25);
         defaults.put(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, true);
         defaults.put(IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID");
         defaults.put(FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, true);
@@ -321,6 +324,7 @@ public class IdentityConfig {
         verifyAndLogStaticProperty(EMAIL_MFA_ENABLED_SUBJECT, REQUIRED);
         verifyAndLogStaticProperty(EMAIL_MFA_DISABLED_SUBJECT, REQUIRED);
         verifyAndLogStaticProperty(EMAIL_HOST, OPTIONAL);
+        verifyAndLogStaticProperty(EMAIL_PORT, OPTIONAL);
         verifyAndLogStaticProperty(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, OPTIONAL);
         verifyAndLogStaticProperty(SCOPED_TOKEN_EXPIRATION_SECONDS, REQUIRED);
         verifyAndLogStaticProperty(CLOUD_AUTH_CLIENT_ID, REQUIRED);
@@ -653,6 +657,11 @@ public class IdentityConfig {
         @IdmProp(key=EMAIL_HOST, description = "Email host to use when sending emails.", versionAdded = "2.5.0")
         public String getEmailHost() {
             return getStringSafely(staticConfiguration, EMAIL_HOST);
+        }
+
+        @IdmProp(key=EMAIL_PORT, description = "Email port to use when sending emails.", versionAdded = "3.0.0")
+        public String getEmailPort() {
+            return getStringSafely(staticConfiguration, EMAIL_PORT);
         }
 
         @IdmProp(key=EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, description = "Flag that restricts outgoing emails to only rackspace.com emails. This will prevent any emails from being sent from staging.", versionAdded = "2.5.0")
