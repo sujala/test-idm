@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -30,6 +31,9 @@ public class DefaultDomainService implements DomainService {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Autowired
     private UserService userService;
@@ -119,17 +123,13 @@ public class DefaultDomainService implements DomainService {
         domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
         domainDao.updateDomain(domain);
 
-        // Keystone V3 compatibility
-        addTenantKeystoneV3Data(tenant, domainId);
-    }
-
-    private void addTenantKeystoneV3Data(Tenant tenant, String domainId) {
-        try {
-            tenant.setDomainId(domainId);
-            tenantService.updateTenant(tenant);
-        } catch (Exception e) {
-            logger.error("[K3] Impossible state.", e);
-            if (config.getBoolean("feature.DefaultDomainService.addTenantKeystoneV3Data.throwError", false)) {
+        //update the tenant if it doesn't already point to this domain
+        if (!domainId.equals(tenant.getDomainId())) {
+            try {
+                tenant.setDomainId(domainId);
+                tenantService.updateTenant(tenant);
+            } catch (Exception e) {
+                logger.error(String.format("Inconsistent state. Domain '%s' was updated to point to tenant '%s', but tenant does not point to domain", domainId, tenantId), e);
                 throw new RuntimeException(e);
             }
         }

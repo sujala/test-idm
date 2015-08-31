@@ -533,17 +533,18 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenant.setId(tenant.getName());
             final Tenant savedTenant = this.tenantConverterCloudV20.fromTenant(tenant);
 
-            // add the creating user's domain to the tenant.
-            // domain_id is required as part of keystone schema
-            EndUser user = getUser(scopeAccess);
-            if (user != null) {
-                savedTenant.setDomainId(user.getDomainId());
+            //new tenants get added to the default domain. Default domain MUST exist and must be enabled
+            Domain defaultDomain = domainService.getDomain(identityConfig.getReloadableConfig().getTenantDefaultDomainId());
+            if (defaultDomain == null || !Boolean.TRUE.equals(defaultDomain.getEnabled())) {
+                throw new IllegalStateException("Default domain must exist and be enabled in order to create tenants");
             }
+            savedTenant.setDomainId(defaultDomain.getDomainId());
 
             // Saves the Tenant
             this.tenantService.addTenant(savedTenant);
 
-            addTenantKeystoneV3Data(savedTenant, scopeAccess);
+            //update the domain backpointer to the tenant
+            domainService.addTenantToDomain(savedTenant.getTenantId(), defaultDomain.getDomainId());
 
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             String tenantId = savedTenant.getTenantId();
@@ -555,22 +556,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionHandler.tenantConflictExceptionResponse(de.getMessage());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    private void addTenantKeystoneV3Data(Tenant savedTenant, ScopeAccess scopeAccess) {
-        try {
-            final EndUser user = getUser(scopeAccess);
-            if (user != null && user.getDomainId() != null) {
-                domainService.addTenantToDomain(savedTenant.getTenantId(), user.getDomainId());
-            } else {
-                throw new RuntimeException("[K3] User '" + user.getId() + "' is not associated to a domainId.");
-            }
-        } catch (Exception e) {
-            logger.error("[K3] Impossible state.", e);
-            if (config.getBoolean("feature.DefaultCloud20Service.addTenantKeystoneV3Data.throwError", false)) {
-                throw new RuntimeException(e);
-            }
         }
     }
 

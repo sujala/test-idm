@@ -121,7 +121,7 @@ public class DefaultDomainServiceTestOld {
         Tenant tenant = new Tenant();
         when(domainDao.getDomain(anyString())).thenReturn(domain);
         when(tenantService.checkAndGetTenant(anyString())).thenReturn(tenant);
-        defaultDomainService.addTenantToDomain(null, null);
+        defaultDomainService.addTenantToDomain(null, "1");
     }
 
     @Test(expected = NotFoundException.class)
