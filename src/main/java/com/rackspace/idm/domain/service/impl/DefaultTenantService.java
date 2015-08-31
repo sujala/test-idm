@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.security.ImmutableClientRole;
@@ -766,7 +767,7 @@ public class DefaultTenantService implements TenantService {
         //TODO: This should probably return an empty list as opposed to throwing an exception
         Domain domain = domainService.getDomain(domainId);
         if(domain.getTenantIds() == null || domain.getTenantIds().length == 0) {
-            throw new NotFoundException("No tenants belong to this domain.");
+            throw new NotFoundException(GlobalConstants.ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN);
         }
         List<Tenant> tenantList = new ArrayList<Tenant>();
         for (String tenantId : domain.getTenantIds()){

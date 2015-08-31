@@ -78,4 +78,6 @@ public final class GlobalConstants {
 
     public static final String ROLE_NAME_RACKER = "Racker";
 
+    public static final String ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN = "No tenants belong to this domain.";
+
 }
