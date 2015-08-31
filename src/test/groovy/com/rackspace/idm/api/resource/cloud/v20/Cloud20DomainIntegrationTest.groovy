@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.DomainService
@@ -8,9 +9,13 @@ import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import groovy.json.JsonSlurper
+import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.ItemNotFoundFault
+import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 
 import javax.ws.rs.core.HttpHeaders
 import testHelpers.RootIntegrationTest
@@ -66,9 +71,19 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     // Keystone V3 compatibility
     def "Test if 'domainService.addTenantToDomain(...)' adds 'domainId' to the tenant"() {
         given:
+        def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
         def domainId = utils.createDomain()
         domainService.createNewDomain(domainId)
-        def tenant = utils.createTenant()
+        def tenant = utils.createTenant() //will associate tenant to default domain
+        def tenantEntity = tenantService.getTenantByName(tenant.name)
+
+        //assert initial state is as expected w/ tenant pointing to default domain and default domain pointing to tenant
+        assert tenantEntity.domainId == defaultDomainId
+        cloud20.getDomainTenants(utils.getServiceAdminToken(), defaultDomainId).getEntity(Tenants).value.tenant.find {it.id == tenant.id} != null
+
+        //new domain has no tenants
+        def domainTenantResponse = cloud20.getDomainTenants(utils.getServiceAdminToken(), domainId)
+        IdmAssert.assertOpenStackV2FaultResponse(domainTenantResponse, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, GlobalConstants.ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN)
 
         when:
         domainService.addTenantToDomain(tenant.id, domainId)
@@ -76,6 +91,13 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         then:
         result.domainId == domainId
+        def defaultDomainTenantResponse = cloud20.getDomainTenants(utils.getServiceAdminToken(), defaultDomainId)
+        if (defaultDomainTenantResponse.status == HttpStatus.SC_NOT_FOUND) {
+            IdmAssert.assertOpenStackV2FaultResponse(defaultDomainTenantResponse, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, GlobalConstants.ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN)
+        } else {
+            assert defaultDomainTenantResponse.getEntity(Tenants).value.tenant.find {it.id == tenant.id} == null
+        }
+        cloud20.getDomainTenants(utils.getServiceAdminToken(), domainId).getEntity(Tenants).value.tenant.find {it.id == tenant.id} != null
 
         cleanup:
         tenantService.deleteTenant(tenant.id)

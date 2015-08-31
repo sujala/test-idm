@@ -9,6 +9,7 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,19 +119,28 @@ public class DefaultDomainService implements DomainService {
 
         final Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
-        final List<String> tenantIds = setTenantIdList(domain, tenantId);
-        tenantIds.add(tenantId);
-        domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
-        domainDao.updateDomain(domain);
+        String[] curDomainTenantIds = domain.getTenantIds();
+        if (!ArrayUtils.contains(curDomainTenantIds, tenantId)) {
+            final List<String> tenantIds = setTenantIdList(domain, tenantId);
+            tenantIds.add(tenantId);
+            domain.setTenantIds(tenantIds.toArray(new String[tenantIds.size()]));
+            domainDao.updateDomain(domain);
+        }
 
         //update the tenant if it doesn't already point to this domain
-        if (!domainId.equals(tenant.getDomainId())) {
+        String oldDomainId = tenant.getDomainId();
+        if (!domainId.equals(oldDomainId)) {
             try {
                 tenant.setDomainId(domainId);
                 tenantService.updateTenant(tenant);
             } catch (Exception e) {
                 logger.error(String.format("Inconsistent state. Domain '%s' was updated to point to tenant '%s', but tenant does not point to domain", domainId, tenantId), e);
                 throw new RuntimeException(e);
+            }
+
+            //if tenant previously pointed to old domain, must remove association. Must call this AFTER updating the tenant to new tenantId
+            if (StringUtils.isNotBlank(oldDomainId)) {
+                removeTenantFromDomain(tenantId, oldDomainId);
             }
         }
     }
