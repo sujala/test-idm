@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
@@ -27,7 +28,8 @@ import javax.ws.rs.core.UriInfo
 
 import static com.rackspace.idm.Constants.*
 
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mock
+import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse;
 
 class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
@@ -40,6 +42,11 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     private IdentityConfig identityConfig
 
     @Autowired UserDao userDao;
+
+    def setup() {
+        staticIdmConfiguration.reset()
+        reloadableConfiguration.reset()
+    }
 
     def "Test if 'cloud20Service.addTenant(...)' adds default 'domainId' to the tenant and updates domain to point to tenant"() {
         given:
@@ -218,6 +225,72 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domainService.deleteDomain(domainId)
     }
 
+    def "Delete Domain - require disabled when prop set"() {
+        given:
+        def enabledDomainId = utils.createDomain()
+        def disabledDomainId = utils.createDomain()
+        utils.createDomain(v2Factory.createDomain(enabledDomainId, enabledDomainId).with {
+            it.enabled = true
+            it
+        })
+        utils.createDomain(v2Factory.createDomain(disabledDomainId, disabledDomainId).with {
+            it.enabled = false
+            it
+        })
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, true)
+
+        when: "delete an enabled domain when prop set to true"
+        def response = cloud20.deleteDomain(utils.getServiceAdminToken(), enabledDomainId)
+
+        then: "can't delete"
+        assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, GlobalConstants.ERROR_MSG_DELETE_ENABLED_DOMAIN)
+
+        when: "delete a disabled domain when prop set to true"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, false)
+        response = cloud20.deleteDomain(utils.getServiceAdminToken(), disabledDomainId)
+
+        then: "can delete"
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "delete an enabled domain when prop set to false"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, false)
+        response = cloud20.deleteDomain(utils.getServiceAdminToken(), enabledDomainId)
+
+        then: "can delete"
+        response.status == HttpStatus.SC_NO_CONTENT
+    }
+
+    def "Delete Domain - Fail if default"() {
+        given:
+        def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
+
+        when: "delete default domain"
+        def response = cloud20.deleteDomain(utils.getServiceAdminToken(), defaultDomainId)
+
+        then:
+        assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, GlobalConstants.ERROR_MSG_DELETE_DEFAULT_DOMAIN)
+    }
+
+    def "Delete Domain - reassigns tenants"() {
+        given:
+        def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
+        def domainId = utils.createDomain()
+        domainService.createNewDomain(domainId)
+        def tenant = utils.createTenant() //will associate tenant to default domain
+        def tenantEntity = tenantService.getTenantByName(tenant.name)
+
+        utils.addTenantToDomain(domainId, tenant.id)
+        utils.disableDomain(domainId)
+
+        when: "delete a disabled domain with associated tenant"
+        def response = cloud20.deleteDomain(utils.getServiceAdminToken(), domainId)
+
+        then: "tenant is reassigned to default domain and domain is deleted"
+        response.status == HttpStatus.SC_NO_CONTENT
+        cloud20.getDomain(utils.getServiceAdminToken(), domainId).status == HttpStatus.SC_NOT_FOUND
+        assertDomainContainsTenant(defaultDomainId, tenant.id)
+    }
+
     @Unroll
     def "test getDomain security - accept == #accept"() {
         given:
@@ -361,7 +434,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         removeDomainFromUser(IDENTITY_ADMIN_USERNAME)
-        utils.deleteDomain(domainId1)
+        utils.deleteTestDomainQuietly(domainId1)
     }
 
     def "identity admin can only update domain of user admins and sub-users"() {
