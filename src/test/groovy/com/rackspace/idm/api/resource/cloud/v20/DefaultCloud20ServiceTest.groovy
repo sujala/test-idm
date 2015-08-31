@@ -2570,6 +2570,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
         def tenant = new org.openstack.docs.identity.api.v2.Tenant()
         tenant.name = "name"
+        reloadableConfig.getTenantDefaultDomainId() >> "defaultDomain"
+        domainService.getDomain("defaultDomain") >> entityFactory.createDomain("defaultDomain")
         tenantService.addTenant(_) >> {throw new DuplicateException()}
         mockTenantConverter(service)
 

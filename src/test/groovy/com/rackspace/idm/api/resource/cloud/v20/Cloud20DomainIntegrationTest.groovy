@@ -1,12 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import groovy.json.JsonSlurper
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 
@@ -27,32 +29,33 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     @Autowired UserService userService;
     @Autowired TenantService tenantService;
 
+    @Autowired
+    private IdentityConfig identityConfig
+
     @Autowired UserDao userDao;
 
     // Keystone V3 compatibility
-    def "Test if 'cloud20Service.addTenant(...)' adds users 'domainId' to the tenant"() {
+    def "Test if 'cloud20Service.addTenant(...)' adds default 'domainId' to the tenant and updates domain to point to tenant"() {
         given:
-        def domainId = utils.createDomain()
-        domainService.createNewDomain(domainId)
+        def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
 
-        def userId = utils.createIdentityAdmin().id
-        def user = userDao.getUserById(userId)
-        user.setDomainId(domainId)
-        userDao.updateUser(user)
-
+        User user = utils.createUser(utils.getServiceAdminToken(), testUtils.getRandomUUID("identityAdmin"), testUtils.getRandomUUID("domain"));
         def token = utils.getToken(user.username)
         def tenantName = testUtils.getRandomUUID("tenant")
+        assert user.domainId != null
+
+        //must be different or this test doesn't test that the default domain is used instead of the caller's domain
+        assert user.domainId != defaultDomainId
 
         when:
-        def tenant = new org.openstack.docs.identity.api.v2.Tenant()
-        tenant.setName(tenantName)
+        def tenant = v2Factory.createTenant(tenantName, tenantName)
         cloud20Service.addTenant(mock(HttpHeaders), mock(UriInfo), token, tenant)
         def result = tenantService.getTenantByName(tenantName)
-        def domain = domainService.getDomain(domainId)
+        def defaultDomain = domainService.getDomain(defaultDomainId)
 
         then:
-        result.domainId == domainId
-        Arrays.asList(domain.tenantIds).contains(result.tenantId)
+        result.domainId == defaultDomainId
+        Arrays.asList(defaultDomain.tenantIds).contains(result.tenantId)
 
         cleanup:
         try { tenantService.deleteTenant(tenantName) } catch (Exception e) {}
