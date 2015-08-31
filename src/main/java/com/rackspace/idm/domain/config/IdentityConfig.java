@@ -174,6 +174,9 @@ public class IdentityConfig {
     public static final boolean FEATURE_PERSIST_RACKERS_SQL_OVERRIDE = false;
     public static final boolean FEATURE_PERSIST_RACKERS_DEFAULT = true;
 
+    public static final String FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP = "feature.enforce.delete.domain.rule.must.be.disabled";
+    public static final boolean FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -303,6 +306,7 @@ public class IdentityConfig {
         defaults.put(SQL_INITIAL_SIZE_PROP, SQL_INITIAL_SIZE_DEFAULT);
         defaults.put(SQL_MAX_ACTIVE_PROP, SQL_MAX_ACTIVE_DEFAULT);
         defaults.put(SQL_MAX_IDLE_PROP, SQL_MAX_IDLE_DEFAULT);
+        defaults.put(FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_DEFAULT);
 
         return defaults;
     }
@@ -1122,6 +1126,11 @@ public class IdentityConfig {
         @IdmProp(key = MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP, description = "What change types types migration listeners should ignore by default", versionAdded = "3.0.0")
         public Set<ChangeType> getDefaultMigrationListenerIgnoredChangeTypes() {
             return convertToChangeType(getSetSafely(reloadableConfiguration, MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP));
+        }
+
+        @IdmProp(key = FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, description = "Whether domains must be disabled before they can be deleted", versionAdded = "3.0.0")
+        public boolean enforceDomainDeleteRuleMustBeDisabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP);
         }
     }
 

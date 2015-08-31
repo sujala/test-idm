@@ -80,4 +80,10 @@ public final class GlobalConstants {
 
     public static final String ERROR_MSG_NO_TENANTS_BELONG_TO_DOMAIN = "No tenants belong to this domain.";
 
+    public static final String ERROR_MSG_DELETE_DEFAULT_DOMAIN = "Can not delete default domain for tenants";
+    public static final String ERROR_MSG_DELETE_ENABLED_DOMAIN = "Can not delete enabled domains";
+    public static final String ERROR_MSG_DELETE_DOMAIN_WITH_TENANTS = "Cannot delete domains which contain tenants";
+    public static final String ERROR_MSG_DELETE_DOMAIN_WITH_USERS = "Cannot delete Domains which contain users";
+
+
 }

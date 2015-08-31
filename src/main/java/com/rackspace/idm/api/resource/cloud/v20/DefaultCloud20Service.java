@@ -35,6 +35,7 @@ import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
@@ -2557,11 +2558,37 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder deleteDomain(String authToken, String domainId) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
+            String defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
+            if (defaultDomainId.equals(domainId)) {
+                throw new BadRequestException(GlobalConstants.ERROR_MSG_DELETE_DEFAULT_DOMAIN);
+            }
+
+            Domain domain = domainService.checkAndGetDomain(domainId);
+            if (identityConfig.getReloadableConfig().enforceDomainDeleteRuleMustBeDisabled()
+                    && Boolean.TRUE.equals(domain.getEnabled())) {
+                throw new BadRequestException(GlobalConstants.ERROR_MSG_DELETE_ENABLED_DOMAIN);
+            }
+
             Iterable<User> users = domainService.getUsersByDomainId(domainId);
             if (users.iterator().hasNext()) {
-                throw new BadRequestException("Cannot delete Domains which contain users");
+                throw new BadRequestException(GlobalConstants.ERROR_MSG_DELETE_DOMAIN_WITH_USERS);
             }
-            Domain domain = domainService.checkAndGetDomain(domainId);
+
+            String[] associatedTenants = domain.getTenantIds();
+            if (ArrayUtils.isNotEmpty(associatedTenants)) {
+                /*
+                assign tenants to default domain. Since we're deleting the domain, there's no need to update
+                the domain to remove the association (assuming the delete domain works). However, to maintain
+                consistency use the standard call which will cause extra reads and updates to the domain. Delete domain
+                is minimally used so I don't think the inefficiency outweighs the consistency.
+                 */
+                for (String associatedTenantId : associatedTenants) {
+                    logger.info(String.format("Deleting domain '%s'. Setting associated tenant '%s' to default domain '%s'", domainId, associatedTenantId, defaultDomainId));
+                    domainService.removeTenantFromDomain(associatedTenantId, domainId);
+                }
+            }
+
             domainService.deleteDomain(domain.getDomainId());
             return Response.noContent();
         } catch (Exception ex) {

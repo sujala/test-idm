@@ -198,6 +198,7 @@ class Cloud20Utils {
     def disableDomain(domainId) {
         def domainToUpdate = v1Factory.createDomain().with {
             it.id = domainId
+            it.name = domainId
             it.enabled = false
             it
         }
@@ -220,6 +221,26 @@ class Cloud20Utils {
         assert (entity != null)
         return entity
     }
+
+    def deleteTestDomainQuietly(domainId) {
+        try {
+            if (domainId == null) {
+                return
+            }
+            def saToken = getServiceAdminToken()
+            Domain domain = getDomain(domainId, saToken)
+
+            if (domain.isEnabled()) {
+                domain.setEnabled(false)
+                updateDomain(domainId, domain, saToken)
+            }
+            def response = methods.deleteDomain(getServiceAdminToken(), domainId)
+            assert (response.status == SC_NO_CONTENT)
+        } catch (Exception ex) {
+            //eat
+        }
+    }
+
 
     def getServiceAdminToken() {
         if (serviceAdminToken == null) {
