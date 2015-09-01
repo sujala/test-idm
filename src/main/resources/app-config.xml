@@ -45,27 +45,29 @@
 
     <import resource="namespaces.xml"/>
 
-    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
-        <property name="driverClassName" value="#{identityConfig.staticConfig.sqlDriverClassName}"/>
-        <property name="url" value="#{identityConfig.staticConfig.sqlUrl}"/>
-        <property name="username" value="#{identityConfig.staticConfig.sqlUsername}"/>
-        <property name="password" value="#{identityConfig.staticConfig.sqlPassword}"/>
-        <property name="initialSize" value="#{identityConfig.staticConfig.sqlInitialSize}"/>
-        <property name="maxActive" value="#{identityConfig.staticConfig.sqlMaxActive}"/>
-        <property name="maxIdle" value="#{identityConfig.staticConfig.sqlMaxIdle}"/>
-        <property name="removeAbandoned" value="true"/>
-    </bean>
+    <beans profile="SQL,MIGRATION">
+        <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+            <property name="driverClassName" value="#{identityConfig.staticConfig.sqlDriverClassName}"/>
+            <property name="url" value="#{identityConfig.staticConfig.sqlUrl}"/>
+            <property name="username" value="#{identityConfig.staticConfig.sqlUsername}"/>
+            <property name="password" value="#{identityConfig.staticConfig.sqlPassword}"/>
+            <property name="initialSize" value="#{identityConfig.staticConfig.sqlInitialSize}"/>
+            <property name="maxActive" value="#{identityConfig.staticConfig.sqlMaxActive}"/>
+            <property name="maxIdle" value="#{identityConfig.staticConfig.sqlMaxIdle}"/>
+            <property name="removeAbandoned" value="true"/>
+        </bean>
 
-    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
-        <property name="entityManagerFactory" ref="entityManagerFactory"/>
-        <property name="jpaDialect">
-            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaDialect"/>
-        </property>
-    </bean>
+        <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+            <property name="entityManagerFactory" ref="entityManagerFactory"/>
+            <property name="jpaDialect">
+                <bean class="org.springframework.orm.jpa.vendor.HibernateJpaDialect"/>
+            </property>
+        </bean>
 
-    <tx:annotation-driven transaction-manager="transactionManager" order="2"/>
+        <tx:annotation-driven transaction-manager="transactionManager" order="2"/>
+    </beans>
 
-    <beans profile="LDAP">
+    <beans profile="MIGRATION">
         <jpa:repositories base-package="com.rackspace.idm.domain.migration.ldap.dao" />
 
         <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
