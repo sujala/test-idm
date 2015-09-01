@@ -52,9 +52,10 @@ public class MailTransferAgentClient implements EmailClient {
     @PostConstruct
     private void postConstruct() {
         properties = System.getProperties();
-        properties.setProperty("mail.smtp.localhost", identityConfig.getEmailHost());
+        properties.setProperty("mail.smtp.host", identityConfig.getEmailHost());
         properties.setProperty("mail.smtp.timeout", ONE_MINUTE);
         properties.setProperty("smtp.connectiontimeout", ONE_MINUTE);
+        properties.setProperty("mail.smtp.port", identityConfig.getStaticConfig().getEmailPort());
 
         session = Session.getDefaultInstance(properties);
 
