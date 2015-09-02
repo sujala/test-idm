@@ -17,8 +17,7 @@ public class SqlKeyVersion implements KeyVersion {
     private Integer version;
 
     @Column(name = "created", updatable = false)
-    @Temporal(TemporalType.DATE)
-    @DateTimeFormat(style = "M-")
+    @Temporal(TemporalType.TIMESTAMP)
     private Date created = new Date();
 
     @Column(name = "data")
