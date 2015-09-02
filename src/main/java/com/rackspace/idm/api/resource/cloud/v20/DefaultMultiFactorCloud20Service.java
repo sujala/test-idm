@@ -20,6 +20,7 @@ import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId;
 import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.MobilePhone;
@@ -410,16 +411,20 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
         //TODO: FIXME: pass the user not the ID
         MfaAuthenticationResponse response = multiFactorService.verifyPasscode(sessionId.getUserId(), passcode);
+        Audit mfaAudit = Audit.authUser(String.format("User(rsId=%s):(PASSCODE)", sessionId.getUserId()));
         if (response.getDecision() == MfaAuthenticationDecision.ALLOW) {
+            mfaAudit.succeed();
             return createSuccessfulSecondFactorResponse(user, response, sessionId);
         } else if (response.getDecisionReason() == MfaAuthenticationDecisionReason.LOCKEDOUT) {
             user = userService.getUserById(user.getId());
             emailClient.asyncSendMultiFactorLockedOutMessage(user);
             user.setMultiFactorState(BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED);
             userService.updateUserForMultiFactor(user);
+            mfaAudit.fail();
             throw createFailedSecondFactorException(response, sessionId);
         } else {
             //2-factor request denied. Determine appropriate exception/message for user
+            mfaAudit.fail();
             throw createFailedSecondFactorException(response, sessionId);
         }
     }

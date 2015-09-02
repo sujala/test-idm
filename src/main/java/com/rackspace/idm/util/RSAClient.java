@@ -1,5 +1,6 @@
 package com.rackspace.idm.util;
 
+import com.rackspace.idm.audit.Audit;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,17 +20,26 @@ public class RSAClient {
 	private Configuration config;
 
     public boolean authenticate(String userID, String passCode) {
+		Audit rsaAuthAudit = Audit.authRacker(userID + ":(RSA)");
+		boolean success = false;
 		try {
 			String rsaHost = config.getString("rsa.host");
 			String rsaSecret = config.getString("rsa.sharedSecret");
 			logger.debug("rsa host: " + rsaHost);
 			
 			RadiusClient client = new RadiusClient(rsaHost, rsaSecret);
-			return client.authenticate(userID, passCode);
+			success = client.authenticate(userID, passCode);
 		} catch (Exception e) {
 			logger.info("error authentication racker with rsa credentials: {}", e.getMessage());
-			return false;
+			success = false;
 		}
+		if (success) {
+			rsaAuthAudit.succeed();
+		} else {
+			rsaAuthAudit.fail();
+		}
+
+		return success;
 	}
 
     public void setConfig(Configuration config) {

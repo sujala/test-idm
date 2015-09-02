@@ -335,6 +335,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             }
         }
 
+        Audit.logSuccessfulImpersonation(scopeAccessToUse);
         return scopeAccessToUse;
     }
 

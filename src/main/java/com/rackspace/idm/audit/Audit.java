@@ -1,7 +1,7 @@
 package com.rackspace.idm.audit;
 
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.rackspace.idm.domain.entity.Auditable;
+import com.rackspace.idm.domain.entity.*;
 import com.unboundid.ldap.sdk.Modification;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -21,7 +21,7 @@ public class Audit {
     public static final String X_FORWARDED_FOR = "X_FORWARDED_FOR";
 
 	private enum ACTION {
-		USERAUTH, CLIENTAUTH, RACKERAUTH, ADD, DELETE, MODIFY, CLOUDADMINAUTH
+		USERAUTH, CLIENTAUTH, RACKERAUTH, ADD, DELETE, MODIFY, CLOUDADMINAUTH, IMPERSONATION, FEDERATEDAUTH
 	}
 
 	private enum RESULT {
@@ -83,9 +83,27 @@ public class Audit {
     
     public static Audit authRacker(Auditable o) {
         return new Audit(o.getAuditContext()).addEvent(ACTION.RACKERAUTH);
-    }	
+    }
 
-    public static Audit deleteOTP(String container) {
+	public static Audit authFederated(FederatedBaseUser o) {
+		return new Audit(o.getAuditContext()).addEvent(ACTION.FEDERATEDAUTH);
+	}
+
+	public static Audit authImpersonation(Auditable o) {
+		return new Audit(o.getAuditContext()).addEvent(ACTION.IMPERSONATION);
+	}
+
+	public static void logSuccessfulFederatedAuth(FederatedBaseUser federatedBaseUser) {
+		Audit audit = authFederated(federatedBaseUser);
+		audit.succeed();
+	}
+
+	public static void logSuccessfulImpersonation(ImpersonatedScopeAccess scopeAccess) {
+		Audit audit = authImpersonation(scopeAccess);
+		audit.succeed();
+	}
+
+	public static Audit deleteOTP(String container) {
         return new Audit(container).addEvent(ACTION.DELETE);
     }
 

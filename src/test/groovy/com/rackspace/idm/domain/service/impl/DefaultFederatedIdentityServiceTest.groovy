@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.dao.IdentityProviderDao
+import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.SamlAuthResponse
 import com.rackspace.idm.domain.entity.TargetUserSourceEnum
@@ -126,23 +127,25 @@ class DefaultFederatedIdentityServiceTest extends Specification {
     def "Sends Provisioned IDP requests to provisioned handler"() {
         def saml = assertionFactory.generateSamlAssertionResponseForFederatedUser(Constants.DEFAULT_IDP_URI, "any", 1, "1234", Collections.EMPTY_LIST)
         identityProviderDao.getIdentityProviderByUri(_) >> provisionedIdentityProvider
+        def samlResponse = new SamlAuthResponse(new FederatedUser(), null, null, null)
 
         when:
         def response = service.processSamlResponse(saml)
 
         then:
-        1 * provisionedUserSourceFederationHandler.processRequestForProvider(_, provisionedIdentityProvider)
+        1 * provisionedUserSourceFederationHandler.processRequestForProvider(_, provisionedIdentityProvider) >> samlResponse
     }
 
     def "Sends Racker IDP requests to racker handler"() {
         def saml = assertionFactory.generateSamlAssertionResponseForFederatedRacker(Constants.DEFAULT_IDP_URI, "any", 1)
         identityProviderDao.getIdentityProviderByUri(_) >> rackerIdentityProvider
+        def samlResponse = new SamlAuthResponse(new FederatedUser(), null, null, null)
 
         when:
         def response = service.processSamlResponse(saml)
 
         then:
-        1 * rackerSourceFederationHandler.processRequestForProvider(_, rackerIdentityProvider)
+        1 * rackerSourceFederationHandler.processRequestForProvider(_, rackerIdentityProvider) >> samlResponse
     }
 
 }
