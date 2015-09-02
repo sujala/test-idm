@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
@@ -53,14 +54,19 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
         //Basic format is good. Now hand off request to handler for the user source
         TargetUserSourceEnum providerSource = provider.getTargetUserSourceAsEnum();
+        SamlAuthResponse authResponse = null;
+
         if (TargetUserSourceEnum.PROVISIONED == providerSource) {
-            return provisionedUserSourceFederationHandler.processRequestForProvider(decoratedSamlResponse, provider);
+            authResponse = provisionedUserSourceFederationHandler.processRequestForProvider(decoratedSamlResponse, provider);
         } else if (TargetUserSourceEnum.RACKER == providerSource) {
-            return rackerSourceFederationHandler.processRequestForProvider(decoratedSamlResponse, provider);
+            authResponse = rackerSourceFederationHandler.processRequestForProvider(decoratedSamlResponse, provider);
+        } else {
+            throw new UnsupportedOperationException(String.format("Provider user source '%s' not supported", providerSource));
         }
 
-        throw new UnsupportedOperationException(String.format("Provider user source '%s' not supported", providerSource));
-    }
+        Audit.logSuccessfulFederatedAuth(authResponse.getUser());
+        return authResponse;
+   }
 
     private IdentityProvider getIdentityProviderForResponse(SamlResponseDecorator samlResponseDecorator) {
         IdentityProvider provider = identityProviderDao.getIdentityProviderByUri(samlResponseDecorator.checkAndGetIssuer());

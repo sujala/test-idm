@@ -96,8 +96,8 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
 
     @Override
     public String getAuditContext() {
-        String format = "username=%s";
-        return String.format(format, getUsername());
+        String format = "FederatedUser(username=%s; federatedIdpUri=%s)";
+        return String.format(format, getUsername(), getFederatedIdpUri());
     }
 
     public Set<String> getRsGroupId() {
