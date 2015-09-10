@@ -13,10 +13,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@LDAPComponent(value = "tokenRevocationService")
 public class RouterTokenRevocationService implements TokenRevocationService {
-    private final AETokenRevocationService aeTokenRevocationService;
-    private final UUIDTokenRevocationService uuidRevokeTokenService;
+
+    @Autowired
+    private AETokenRevocationService aeTokenRevocationService;
+
+    @Autowired
+    private UUIDTokenRevocationService uuidRevokeTokenService;
 
     @Autowired
     private TokenFormatSelector tokenFormatSelector;
@@ -27,12 +30,6 @@ public class RouterTokenRevocationService implements TokenRevocationService {
     @Override
     public boolean supportsRevokingFor(Token token) {
         return uuidRevokeTokenService.supportsRevokingFor(token) || aeTokenRevocationService.supportsRevokingFor(token);
-    }
-
-    @Autowired
-    public RouterTokenRevocationService(AETokenRevocationService aeTokenRevocationService, UUIDTokenRevocationService uuidRevokeTokenService) {
-        this.aeTokenRevocationService = aeTokenRevocationService;
-        this.uuidRevokeTokenService = uuidRevokeTokenService;
     }
 
     private TokenRevocationService getRouteByBaseUser(BaseUser user) {

@@ -29,7 +29,6 @@ import java.util.List;
 /**
  * Simple in the sense that it goes against a single backend persistence mechanism for ae token revocation.
  */
-@Component
 public class SimpleAETokenRevocationService implements AETokenRevocationService {
     private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 

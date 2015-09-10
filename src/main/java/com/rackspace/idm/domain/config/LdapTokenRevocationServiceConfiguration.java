@@ -1,21 +1,25 @@
 package com.rackspace.idm.domain.config;
 
-
 import com.rackspace.idm.domain.service.AETokenRevocationService;
 import com.rackspace.idm.domain.service.TokenRevocationService;
+import com.rackspace.idm.domain.service.impl.RouterTokenRevocationService;
 import com.rackspace.idm.domain.service.impl.SimpleAETokenRevocationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-@Profile("SQL")
+@Profile({"LDAP", "default"})
 @Configuration
-public class SqlTokenRevocationServiceConfiguration {
+public class LdapTokenRevocationServiceConfiguration {
+
+    @Bean(name = "aeTokenRevocationService")
+    public AETokenRevocationService getAETokenRevocationService() {
+        return new SimpleAETokenRevocationService();
+    }
 
     @Bean(name = "tokenRevocationService")
-    public AETokenRevocationService getTokenRevocationService() {
-        return new SimpleAETokenRevocationService();
+    public TokenRevocationService getTokenRevocationService() {
+        return new RouterTokenRevocationService();
     }
 
 }

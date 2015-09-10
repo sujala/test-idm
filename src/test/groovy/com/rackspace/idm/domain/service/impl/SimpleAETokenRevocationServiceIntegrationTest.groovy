@@ -28,7 +28,6 @@ import testHelpers.EntityFactory
 class SimpleAETokenRevocationServiceIntegrationTest extends Specification {
 
     @Autowired
-    @Qualifier("simpleAETokenRevocationService")
     SimpleAETokenRevocationService revocationService;
 
     @Shared AETokenService aeTokenService
