@@ -12,6 +12,17 @@ import javax.persistence.Table;
 @Table(name = "policy_rax")
 public class SqlPolicyRax {
 
+    /*
+     * Foreign key: 'fk_por_policy'
+     * Table: policy_rax
+     * Key: id
+     *
+     * Reference table: policy
+     * Key: id
+     *
+     * OnDelete: CASCADE
+     */
+
     @Id
     @Column(name = "id", length = 64)
     private String policyId;

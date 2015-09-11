@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.6.24, for osx10.10 (x86_64)
+-- MySQL dump 10.13  Distrib 5.6.26, for osx10.10 (x86_64)
 --
 -- Host: 127.0.0.1    Database: keystone
 -- ------------------------------------------------------
@@ -79,8 +79,7 @@ CREATE TABLE `assignment` (
   `target_id` varchar(64) NOT NULL,
   `role_id` varchar(64) NOT NULL,
   `inherited` tinyint(1) NOT NULL,
-  PRIMARY KEY (`type`,`actor_id`,`target_id`,`role_id`),
-  KEY `assignment_role_id_fkey` (`role_id`),
+  PRIMARY KEY (`type`,`actor_id`,`target_id`,`role_id`,`inherited`),
   KEY `ix_actor_id` (`actor_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -95,7 +94,8 @@ DROP TABLE IF EXISTS `bypass_code_rax`;
 CREATE TABLE `bypass_code_rax` (
   `bypass_device_rax_id` varchar(64) NOT NULL,
   `code` varchar(255) NOT NULL,
-  PRIMARY KEY (`bypass_device_rax_id`,`code`)
+  PRIMARY KEY (`bypass_device_rax_id`,`code`),
+  CONSTRAINT `fk_bcr_bypass_device_rax_id` FOREIGN KEY (`bypass_device_rax_id`) REFERENCES `bypass_device_rax` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -112,7 +112,9 @@ CREATE TABLE `bypass_device_rax` (
   `multifactor_device_pin_expiration` datetime(6) DEFAULT NULL,
   `salt` varchar(64) DEFAULT NULL,
   `iterations` int(11) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_bdr_user_id` (`user_id`),
+  CONSTRAINT `fk_bdr_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -132,7 +134,9 @@ CREATE TABLE `capability_rax` (
   `description` text,
   `type` varchar(64) DEFAULT NULL,
   `version` varchar(64) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_capability_rax_ctv` (`capability_id`,`type`,`version`),
+  KEY `idx_capability_rax_tv` (`type`,`version`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -283,6 +287,7 @@ CREATE TABLE `endpoint` (
   PRIMARY KEY (`id`),
   KEY `service_id` (`service_id`),
   KEY `fk_endpoint_region_id` (`region_id`),
+  KEY `idx_e_legacy_endpoint_id` (`legacy_endpoint_id`),
   CONSTRAINT `endpoint_service_id_fkey` FOREIGN KEY (`service_id`) REFERENCES `service` (`id`),
   CONSTRAINT `fk_endpoint_region_id` FOREIGN KEY (`region_id`) REFERENCES `region` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -322,7 +327,9 @@ CREATE TABLE `endpoint_rax` (
   `version_id` varchar(64) DEFAULT NULL,
   `version_info` text,
   `version_list` text,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_er_service_name` (`service_name`),
+  KEY `idx_er_type` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -342,6 +349,7 @@ CREATE TABLE `federated_role_rax` (
   UNIQUE KEY `uq_frr` (`role_id`,`federated_user_rax_id`),
   KEY `fk_frr_federated_user_rax_id` (`federated_user_rax_id`),
   KEY `fk_frr_service_id` (`service_id`),
+  KEY `idx_frr_role_id` (`role_id`),
   CONSTRAINT `fk_frr_federated_user_rax_id` FOREIGN KEY (`federated_user_rax_id`) REFERENCES `federated_user_rax` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_frr_role_id` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_frr_service_id` FOREIGN KEY (`service_id`) REFERENCES `service` (`id`) ON DELETE CASCADE
@@ -359,6 +367,8 @@ CREATE TABLE `federated_role_tenant_membership_rax` (
   `federated_role_rax_id` varchar(64) NOT NULL,
   `tenant_id` varchar(64) NOT NULL,
   PRIMARY KEY (`federated_role_rax_id`,`tenant_id`),
+  KEY `idx_frtmr_federated_role_rax_id` (`federated_role_rax_id`),
+  KEY `idx_frtmr_tenant_id` (`tenant_id`),
   CONSTRAINT `fk_frtmr_federated_role_rax_id` FOREIGN KEY (`federated_role_rax_id`) REFERENCES `federated_role_rax` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -374,7 +384,8 @@ CREATE TABLE `federated_user_group_membership_rax` (
   `group_id` varchar(64) NOT NULL,
   `federated_user_rax_id` varchar(64) NOT NULL,
   PRIMARY KEY (`group_id`,`federated_user_rax_id`),
-  KEY `fk_fugmr_federated_user_rax_id` (`federated_user_rax_id`),
+  KEY `idx_fugmr_group_id` (`group_id`),
+  KEY `idx_fugmr_federated_user_rax_id` (`federated_user_rax_id`),
   CONSTRAINT `fk_fugmr_federated_user_rax_id` FOREIGN KEY (`federated_user_rax_id`) REFERENCES `federated_user_rax` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_fugmr_group_id` FOREIGN KEY (`group_id`) REFERENCES `group` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -395,10 +406,12 @@ CREATE TABLE `federated_user_rax` (
   `created` datetime(6) DEFAULT NULL,
   `updated` datetime(6) DEFAULT NULL,
   `domain_id` varchar(64) DEFAULT NULL,
-  `federated_idp_uri` text,
+  `federated_idp_uri` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_fur_region_id` (`region_id`),
-  KEY `fk_fur_domain_id` (`domain_id`),
+  KEY `idx_fur_domain_id` (`domain_id`),
+  KEY `idx_fur_username` (`username`),
+  KEY `idx_fur_federated_idp_uri` (`federated_idp_uri`),
   CONSTRAINT `fk_fur_domain_id` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_fur_region_id` FOREIGN KEY (`region_id`) REFERENCES `region` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -467,7 +480,6 @@ CREATE TABLE `identity_provider` (
   `id` varchar(64) NOT NULL,
   `enabled` tinyint(1) NOT NULL,
   `description` text,
-  `remote_id` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -481,11 +493,28 @@ DROP TABLE IF EXISTS `identity_provider_rax`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `identity_provider_rax` (
   `id` varchar(64) NOT NULL,
-  `uri` text NOT NULL,
+  `uri` varchar(255) NOT NULL,
   `description` text,
   `public_certificate` text,
   `target_user_source` varchar(64) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_ipr_uri` (`uri`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `idp_remote_ids`
+--
+
+DROP TABLE IF EXISTS `idp_remote_ids`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `idp_remote_ids` (
+  `idp_id` varchar(64) DEFAULT NULL,
+  `remote_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`remote_id`),
+  KEY `idp_id` (`idp_id`),
+  CONSTRAINT `idp_remote_ids_ibfk_1` FOREIGN KEY (`idp_id`) REFERENCES `identity_provider` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -543,7 +572,7 @@ DROP TABLE IF EXISTS `migrate_version`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `migrate_version` (
   `repository_id` varchar(250) NOT NULL,
-  `repository_path` text,
+  `repository_path` mediumtext,
   `version` int(11) DEFAULT NULL,
   PRIMARY KEY (`repository_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -562,7 +591,9 @@ CREATE TABLE `mobile_phone_rax` (
   `name` varchar(64) DEFAULT NULL,
   `external_id` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_mpr_number` (`number`)
+  UNIQUE KEY `uq_mpr_number` (`number`),
+  KEY `idx_mpr_number` (`number`),
+  KEY `idx_mpr_external_id` (`external_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -579,7 +610,9 @@ CREATE TABLE `otp_device_rax` (
   `multifactor_device_verified` tinyint(1) DEFAULT NULL,
   `name` varchar(64) DEFAULT NULL,
   `key` text,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_odr_user_id` (`user_id`),
+  KEY `idx_odr_user_id_verified` (`user_id`,`multifactor_device_verified`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -596,7 +629,8 @@ CREATE TABLE `pattern_rax` (
   `regex` text,
   `error_message` text,
   `description` text,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_par_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -644,7 +678,9 @@ DROP TABLE IF EXISTS `policy_endpoint_rax`;
 CREATE TABLE `policy_endpoint_rax` (
   `endpoint_id` varchar(64) NOT NULL,
   `policy_id` varchar(64) NOT NULL,
-  PRIMARY KEY (`endpoint_id`,`policy_id`)
+  PRIMARY KEY (`endpoint_id`,`policy_id`),
+  KEY `idx_poer_policy_id` (`policy_id`),
+  CONSTRAINT `fk_poer_policy_id` FOREIGN KEY (`policy_id`) REFERENCES `policy` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -661,7 +697,9 @@ CREATE TABLE `policy_rax` (
   `enabled` tinyint(1) DEFAULT NULL,
   `global` tinyint(1) DEFAULT NULL,
   `description` text,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_por_name` (`name`),
+  CONSTRAINT `fk_por_policy` FOREIGN KEY (`id`) REFERENCES `policy` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -680,6 +718,7 @@ CREATE TABLE `project` (
   `enabled` tinyint(1) DEFAULT NULL,
   `domain_id` varchar(64) NOT NULL,
   `parent_id` varchar(64) DEFAULT NULL,
+  `is_domain` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `ixu_project_name_domain_id` (`domain_id`,`name`),
   KEY `project_parent_id_fkey` (`parent_id`),
@@ -698,7 +737,9 @@ DROP TABLE IF EXISTS `project_endpoint`;
 CREATE TABLE `project_endpoint` (
   `endpoint_id` varchar(64) NOT NULL,
   `project_id` varchar(64) NOT NULL,
-  PRIMARY KEY (`endpoint_id`,`project_id`)
+  PRIMARY KEY (`endpoint_id`,`project_id`),
+  KEY `idx_pe_endpoint_id` (`endpoint_id`),
+  KEY `idx_pe_project_id` (`project_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -727,7 +768,10 @@ DROP TABLE IF EXISTS `project_endpoint_rax`;
 CREATE TABLE `project_endpoint_rax` (
   `endpoint_id` varchar(64) NOT NULL,
   `project_id` varchar(64) NOT NULL,
-  PRIMARY KEY (`endpoint_id`,`project_id`)
+  PRIMARY KEY (`endpoint_id`,`project_id`),
+  KEY `idx_per_endpoint_id` (`endpoint_id`),
+  KEY `idx_per_project_id` (`project_id`),
+  CONSTRAINT `fk_prer_project_id_endpoint_id` FOREIGN KEY (`endpoint_id`, `project_id`) REFERENCES `project_endpoint` (`endpoint_id`, `project_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -787,7 +831,9 @@ CREATE TABLE `region_rax` (
   `enabled` tinyint(1) DEFAULT NULL,
   `cloud` varchar(64) DEFAULT NULL,
   `default_region` tinyint(1) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_rr_cloud` (`cloud`),
+  KEY `idx_rr_default_region` (`default_region`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -829,7 +875,7 @@ CREATE TABLE `revocation_event` (
   `trust_id` varchar(64) DEFAULT NULL,
   `consumer_id` varchar(64) DEFAULT NULL,
   `access_token_id` varchar(64) DEFAULT NULL,
-  `issued_before` datetime NOT NULL,
+  `issued_before` datetime(6) NOT NULL,
   `expires_at` datetime DEFAULT NULL,
   `revoked_at` datetime NOT NULL,
   `audit_id` varchar(32) DEFAULT NULL,
@@ -951,6 +997,7 @@ CREATE TABLE `service_provider` (
   `enabled` tinyint(1) NOT NULL,
   `description` text,
   `sp_url` varchar(256) NOT NULL,
+  `relay_state_prefix` varchar(256) NOT NULL DEFAULT 'ss:mem:',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1182,4 +1229,4 @@ CREATE TABLE `whitelisted_config` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-08-23 18:34:47
+-- Dump completed on 2015-09-16  9:58:41

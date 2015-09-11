@@ -10,6 +10,17 @@ import javax.validation.constraints.NotNull;
 @Table(name = "policy")
 public class SqlPolicy {
 
+     /*
+     * Foreign key: 'fk_poer_policy_id'
+     * Table: policy_endpoint_rax
+     * Key: policy_id
+     *
+     * Reference table: policy
+     * Key: id
+     *
+     * OnDelete: CASCADE
+     */
+
     @Id
     @Column(name = "id", length = 64)
     private String policyId;
