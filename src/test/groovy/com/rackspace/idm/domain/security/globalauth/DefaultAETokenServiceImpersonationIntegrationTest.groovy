@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.security
+package com.rackspace.idm.domain.security.globalauth
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.BaseUser
@@ -7,8 +7,8 @@ import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.rackspace.idm.domain.security.packers.MessagePackTokenDataPacker
-import org.apache.commons.lang.RandomStringUtils
+import com.rackspace.idm.domain.security.DefaultAETokenServiceBaseIntegrationTest
+import com.rackspace.idm.domain.security.tokenproviders.globalauth.MessagePackTokenDataPacker
 import org.joda.time.DateTime
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -71,7 +71,7 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
             it.accessTokenExp = new Date()
             it.rsImpersonatingRsId = impersonatedUser.id
             it.userRsId = impersonatorUser.id
-            it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
+            it.clientId = staticConfig.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
             it.scope = null
@@ -104,7 +104,7 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
             it.accessTokenExp = new Date()
             it.rsImpersonatingRsId = impersonatedUser.id
             it.userRsId = impersonatorUser.id
-            it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
+            it.clientId = staticConfig.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)
             it.scope = null
@@ -184,7 +184,7 @@ class DefaultAETokenServiceImpersonationIntegrationTest extends DefaultAETokenSe
             it.accessTokenExp = expiration
             it.rsImpersonatingRsId = impersonated.id
             it.userRsId = impersonator.id
-            it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
+            it.clientId = staticConfig.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.getAuthenticatedBy().addAll(authBy)
             return it
         }

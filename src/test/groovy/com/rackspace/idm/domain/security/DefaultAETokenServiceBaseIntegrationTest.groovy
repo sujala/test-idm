@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.security
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.RepositoryProfileResolver
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.Racker
@@ -11,58 +13,97 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.encrypters.KeyCzarAuthenticatedMessageProvider
 import com.rackspace.idm.domain.security.encrypters.KeyCzarCrypterLocator
-import com.rackspace.idm.domain.security.packers.MessagePackTokenDataPacker
+import com.rackspace.idm.domain.security.tokenproviders.TokenProvider
+import com.rackspace.idm.domain.security.tokenproviders.globalauth.GlobalAuthTokenProvider
+import com.rackspace.idm.domain.security.tokenproviders.globalauth.MessagePackTokenDataPacker
+import com.rackspace.idm.domain.security.tokenproviders.keystone_keyczar.KeystoneAEMessagePackTokenDataPacker
+import com.rackspace.idm.domain.security.tokenproviders.keystone_keyczar.KeystoneAETokenProvider
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.UserService
 import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.joda.time.DateTime
+import org.springframework.core.env.Environment
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
 
 abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
-    @Shared DefaultAETokenService aeTokenService;
     @Shared EntityFactory entityFactory = new EntityFactory()
-
-    @Shared Configuration config
     @Shared IdentityUserService identityUserService
-    @Shared MessagePackTokenDataPacker dataPacker
-    @Shared KeyCzarAuthenticatedMessageProvider amProvider
-    @Shared KeyCzarCrypterLocator crypterLocator
     @Shared UserService userService
     @Shared IdentityConfig identityConfig
+    @Shared Configuration staticConfig
+    @Shared Configuration reloadableConfig
+    @Shared RepositoryProfileResolver repositoryProfileResolver
+
+    //keyczar encryption stuff
+    @Shared KeyCzarCrypterLocator crypterLocator
+    @Shared KeyCzarAuthenticatedMessageProvider amProvider
+
+    //main controller service for AE tokens
+    @Shared DefaultAETokenService aeTokenService;
+
+    //global auth ae provider
+    @Shared GlobalAuthTokenProvider globalAuthTokenProvider
+    @Shared MessagePackTokenDataPacker globalAuthTokenDataPacker
+
+    //keystone ae provider
+    @Shared KeystoneAETokenProvider keystoneAETokenProvider
+    @Shared KeystoneAEMessagePackTokenDataPacker keystoneAEMessagePackTokenDataPacker
 
     def setupSpec() {
         crypterLocator = new ClasspathKeyCzarCrypterLocator();
         crypterLocator.setKeysClassPathLocation("/com/rackspace/idm/api/resource/cloud/v20/keys")
 
-        config = new PropertiesConfiguration()
-        config.setProperty(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME, "aaa7cb17b52d4e1ca3cb5c7c5996cc3b")
-        config.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
-        config.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, true)
+        staticConfig = new PropertiesConfiguration()
+        staticConfig.setProperty(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME, "aaa7cb17b52d4e1ca3cb5c7c5996cc3b")
+        staticConfig.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
+        staticConfig.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, true)
 
+        reloadableConfig = new PropertiesConfiguration()
+
+        repositoryProfileResolver = new RepositoryProfileResolver()
+        Environment env = Mock(Environment)
+        env.getActiveProfiles() >> SpringRepositoryProfileEnum.SQL
+        repositoryProfileResolver.setEnvironment(env)
 
         identityConfig = new IdentityConfig()
-        identityConfig.staticConfiguration = config
+        identityConfig.staticConfiguration = staticConfig
+        identityConfig.reloadableConfiguration = reloadableConfig
 
         identityUserService = Mock()
         userService = Mock()
         aeTokenService = new DefaultAETokenService()
 
-        dataPacker = new MessagePackTokenDataPacker()
-        dataPacker.config = config
-        dataPacker.identityUserService = identityUserService
-        dataPacker.provisionedUserService = userService
-        dataPacker.aeTokenService = aeTokenService
-
         amProvider = new KeyCzarAuthenticatedMessageProvider()
         amProvider.keyCzarCrypterLocator = crypterLocator
         amProvider.identityConfig = identityConfig
 
-        aeTokenService.tokenDataPacker = dataPacker
-        aeTokenService.authenticatedMessageProvider = amProvider
+        //init global auth ae provider
+        globalAuthTokenDataPacker = new MessagePackTokenDataPacker()
+        globalAuthTokenDataPacker.identityConfig = identityConfig
+        globalAuthTokenDataPacker.identityUserService = identityUserService
+        globalAuthTokenDataPacker.provisionedUserService = userService
+        globalAuthTokenDataPacker.aeTokenService = aeTokenService
+
+        globalAuthTokenProvider = new GlobalAuthTokenProvider()
+        globalAuthTokenProvider.authenticatedMessageProvider = amProvider
+        globalAuthTokenProvider.tokenDataPacker = globalAuthTokenDataPacker
+
+        //init keystone ae provider
+        keystoneAEMessagePackTokenDataPacker = new KeystoneAEMessagePackTokenDataPacker()
+        keystoneAEMessagePackTokenDataPacker.identityConfig = identityConfig
+
+        keystoneAETokenProvider = new KeystoneAETokenProvider()
+        keystoneAETokenProvider.tokenDataPacker = keystoneAEMessagePackTokenDataPacker
+        keystoneAETokenProvider.authenticatedMessageProvider = amProvider
+        keystoneAETokenProvider.identityConfig = identityConfig
+
+        List<TokenProvider> tokenProviders = [globalAuthTokenProvider, keystoneAETokenProvider]
+
+        aeTokenService.tokenProviders = tokenProviders
     }
 
     def void validateScopeAccessesEqual(ScopeAccess original, ScopeAccess toValidate) {
@@ -125,7 +166,7 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.userRsId = user.id
-            it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
+            it.clientId = staticConfig.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.clientRCN = "clientRCN"
             it.getAuthenticatedBy().addAll(authBy)
             return it
@@ -137,7 +178,7 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.rackerId = user.id
-            it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
+            it.clientId = staticConfig.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.clientRCN = "clientRCN"
             it.getAuthenticatedBy().addAll(authBy)
             return it

@@ -1,4 +1,4 @@
-package com.rackspace.idm.domain.security
+package com.rackspace.idm.domain.security.globalauth
 
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.GlobalConstants
@@ -8,7 +8,8 @@ import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.rackspace.idm.domain.security.packers.MessagePackTokenDataPacker
+import com.rackspace.idm.domain.security.DefaultAETokenServiceBaseIntegrationTest
+import com.rackspace.idm.domain.security.tokenproviders.globalauth.MessagePackTokenDataPacker
 import spock.lang.Shared
 import spock.lang.Unroll
 
@@ -66,7 +67,7 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
             it.accessTokenString = null //irrelevant
             it.accessTokenExp = new Date()
             it.userRsId = hardCodedProvisionedUser.id
-            it.clientId = config.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
+            it.clientId = staticConfig.getString(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME)
             it.clientRCN = "RACKSPACE"
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
             it.authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSCODE)

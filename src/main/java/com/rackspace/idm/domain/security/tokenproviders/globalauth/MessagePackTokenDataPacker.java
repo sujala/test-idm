@@ -1,11 +1,14 @@
-package com.rackspace.idm.domain.security.packers;
+package com.rackspace.idm.domain.security.tokenproviders.globalauth;
 
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.security.MarshallTokenException;
+import com.rackspace.idm.domain.security.TokenDNCalculator;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
+import com.rackspace.idm.domain.security.tokenproviders.TokenDataPacker;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.UserService;
 import org.apache.commons.configuration.Configuration;
@@ -30,7 +33,7 @@ import java.util.*;
  *
  * Eventually, if another data packer is chosen in the future or different versions are used
  */
-@Component
+@Component(value = "globalAuthMessagePackTokenDataPacker")
 public class MessagePackTokenDataPacker implements TokenDataPacker {
     private static final Logger LOG = LoggerFactory.getLogger(MessagePackTokenDataPacker.class);
 
@@ -50,19 +53,8 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
     public static final String CLOUD_AUTH_CLIENT_ID_PROP_NAME = "cloudAuth.clientId";
 
-    public static final String ERROR_CODE_PACKING_EXCEPTION = "MPP-0001";
-    public static final String ERROR_CODE_PACKING_INVALID_SCOPE_EXCEPTION = "MPP-0002";
-    public static final String ERROR_CODE_PACKING_INVALID_AUTHENTICATEDBY_EXCEPTION = "MPP-0003";
-
-    public static final String ERROR_CODE_UNPACK_INVALID_DATAPACKING_SCHEME = "MPU-0003";
-    public static final String ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION = "MPU-0004";
-    public static final String ERROR_CODE_UNPACK_INVALID_DATA_CONTENTS = "MPU-0005";
-    public static final String ERROR_CODE_UNPACK_INVALID_SCOPE_DATA_CONTENTS = "MPU-0006";
-    public static final String ERROR_CODE_UNPACK_INVALID_AUTHBY_DATA_CONTENTS = "MPU-0007";
-    public static final String ERROR_CODE_UNPACK_INVALID_IMPERSONATED_DATA_CONTENTS = "MPU-0008";
-
     @Autowired
-    private Configuration config;
+    private IdentityConfig identityConfig;
 
     @Autowired
     private IdentityUserService identityUserService;
@@ -223,7 +215,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             scopeAccess.setUserRsId(safeRead(unpacker, String.class));
 
             // DN
-            scopeAccess.setUniqueId(calculateProvisionedUserTokenDN(scopeAccess.getUserRsId(), webSafeToken));
+            scopeAccess.setUniqueId(TokenDNCalculator.calculateProvisionedUserTokenDN(scopeAccess.getUserRsId(), webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
@@ -275,7 +267,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             FederatedUser user = identityUserService.getFederatedUserById(scopeAccess.getUserRsId());
             IdentityProvider idp = identityProviderRepository.getIdentityProviderByUri(user.getFederatedIdpUri());
 
-            scopeAccess.setUniqueId(calculateFederatedUserTokenDN(user.getUsername(), idp.getName(), webSafeToken));
+            scopeAccess.setUniqueId(TokenDNCalculator.calculateFederatedUserTokenDN(user.getUsername(), idp.getName(), webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
@@ -344,7 +336,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             scopeAccess.setImpersonatingToken(usa.getAccessTokenString());
 
             // DN
-            scopeAccess.setUniqueId(calculateProvisionedUserTokenDN(impersonatorId, webSafeToken));
+            scopeAccess.setUniqueId(TokenDNCalculator.calculateProvisionedUserTokenDN(impersonatorId, webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
@@ -413,7 +405,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             scopeAccess.setImpersonatingToken(usa.getAccessTokenString());
 
             // DN
-            scopeAccess.setUniqueId(calculateRackerTokenDN(impersonatorId, webSafeToken));
+            scopeAccess.setUniqueId(TokenDNCalculator.calculateRackerTokenDN(impersonatorId, webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
@@ -463,7 +455,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             scopeAccess.setRackerId(safeRead(unpacker, String.class));
 
             // DN
-            scopeAccess.setUniqueId(calculateRackerTokenDN(scopeAccess.getRackerId(), webSafeToken));
+            scopeAccess.setUniqueId(TokenDNCalculator.calculateRackerTokenDN(scopeAccess.getRackerId(), webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));
@@ -526,19 +518,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         return null;
     }
 
-    private String calculateProvisionedUserTokenDN(String userRsId, String webSafeToken) {
-        return String.format("accessToken=%s,cn=TOKENS,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", webSafeToken, userRsId);
-    }
-
-    private String calculateFederatedUserTokenDN(String username, String idpName, String webSafeToken) {
-        return String.format("accessToken=%s,cn=TOKENS,uid=%s,ou=users,ou=%s,o=externalproviders,o=rackspace,dc=rackspace,dc=com", webSafeToken, username, idpName);
-    }
-
-    private String calculateRackerTokenDN(String rackerId, String webSafeToken) {
-        return String.format("accessToken=%s,cn=TOKENS,rackerId=%s,ou=rackers,o=rackspace,dc=rackspace,dc=com", webSafeToken, rackerId);
-    }
-
     private String getCloudAuthClientId() {
-        return config.getString(CLOUD_AUTH_CLIENT_ID_PROP_NAME);
+        return identityConfig.getStaticConfig().getCloudAuthClientId();
     }
 }

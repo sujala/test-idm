@@ -48,7 +48,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     /**
      * Pattern to recognize validate call against AE or UUID tokens
      */
-    private static Pattern tokenValidationPathPattern = Pattern.compile("^cloud/v2.0/tokens/[\\w-_]+$");
+    private static Pattern tokenValidationPathPattern = Pattern.compile("^cloud/v2.0/tokens/[\\w-_=]+$");
+    private static Pattern tokenEndpointPathPattern = Pattern.compile("^cloud/v2.0/tokens/[\\w-_=]+/endpoints/?$");
 
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
@@ -119,11 +120,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         //Cloud v1.0/v1.1/v2.0 checks
         if (path.startsWith("cloud")) {
             // Return if call is authentication or validation
-            if (tokenValidationPathPattern.matcher(path).matches() && !path.contains("endpoints")) {
-                //validate call
+            if (tokenValidationPathPattern.matcher(path).matches() && (!tokenEndpointPathPattern.matcher(path).matches())) {
+                //validate call. Don't replace impersonation token
                 populateSecurityContextForValidateCall(request, securityContext);
                 return request;
-            } else if (path.startsWith("cloud/v2.0/tokens") && !path.contains("endpoints")) {
+            } else if (path.startsWith("cloud/v2.0/tokens") && (!tokenEndpointPathPattern.matcher(path).matches())) {
                 //auth call
                 return request;
             }
