@@ -13,14 +13,10 @@ import org.springframework.test.context.ContextConfiguration;
 
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.Policy;
-import com.rackspace.idm.exception.NotFoundException;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.Random;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -39,10 +35,10 @@ public class LdapEndpointRepositoryIntegrationTestOld extends InMemoryLdapIntegr
     @Autowired
     private ApplicationDao applicationDao;
 
-    private String baseUrlId1 = getUuid();
-    private String baseUrlId2 = getUuid();
-    private String policyId1 = getUuid();
-    private String policyId2 = getUuid();
+    private String baseUrlId1 = getId();
+    private String baseUrlId2 = getId();
+    private String policyId1 = getId();
+    private String policyId2 = getId();
 
     @Before
     public void cleanupBefore() {
@@ -124,9 +120,9 @@ public class LdapEndpointRepositoryIntegrationTestOld extends InMemoryLdapIntegr
         CloudBaseUrl cloudBaseUrl = new CloudBaseUrl();
         cloudBaseUrl.setBaseUrlType("NAST");
         cloudBaseUrl.setServiceName(serviceName);
-        cloudBaseUrl.setPublicUrl("http://example.com/" + getUuid());
+        cloudBaseUrl.setPublicUrl("http://example.com/" + getId());
         cloudBaseUrl.setBaseUrlId(baseUrlId1);
-        cloudBaseUrl.setPublicUrlId(getUuid());
+        cloudBaseUrl.setPublicUrlId(getId());
         cloudBaseUrl.setDef(false);
         cloudBaseUrl.setEnabled(true);
         cloudBaseUrl.setGlobal(false);
@@ -135,7 +131,8 @@ public class LdapEndpointRepositoryIntegrationTestOld extends InMemoryLdapIntegr
         return cloudBaseUrl;
     }
 
-    private String getUuid() {
-        return UUID.randomUUID().toString().replaceAll("-", "");
+    private String getId() {
+        Random r = new Random();
+        return "" + ((int) (100000 + r.nextFloat() * 900000));
     }
 }
