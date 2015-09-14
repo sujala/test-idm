@@ -271,9 +271,13 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(RAX_KSGRP).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def getUsersFromGroup(String token, String groupId) {
+    def getUsersFromGroup(String token, String groupId, String limit = null, String offset = null) {
         initOnUse()
-        resource.path(path20).path(RAX_GRPADM).path(GROUPS).path(groupId).path(USERS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        def request = resource.path(path20).path(RAX_GRPADM).path(GROUPS).path(groupId).path(USERS)
+        if(limit != null || offset != null) {
+            request = request.queryParams(pageParams(offset, limit))
+        }
+        request.header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def authenticateTokenAndTenant(String token, String tenantId) {
