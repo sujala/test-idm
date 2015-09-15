@@ -46,10 +46,6 @@ public class AdminEndpointMapper extends SqlRaxMapper<CloudBaseUrl, SqlEndpoint,
             return cloudBaseUrl;
         }
 
-        for (SqlPolicy sqlPolicy : entity.getRax().getSqlPolicy()) {
-            cloudBaseUrl.getPolicyList().add(sqlPolicy.getPolicyId());
-        }
-
         return cloudBaseUrl;
     }
 
@@ -58,12 +54,6 @@ public class AdminEndpointMapper extends SqlRaxMapper<CloudBaseUrl, SqlEndpoint,
 
         if (sqlEndpoint == null) {
             return sqlEndpoint;
-        }
-
-        for (String policyId : entity.getPolicyList()) {
-            SqlPolicy sqlPolicy = new SqlPolicy();
-            sqlPolicy.setPolicyId(policyId);
-            sqlEndpoint.getRax().getSqlPolicy().add(sqlPolicy);
         }
 
         return sqlEndpoint;

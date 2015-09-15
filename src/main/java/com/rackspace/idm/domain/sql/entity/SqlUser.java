@@ -43,7 +43,7 @@ public class SqlUser {
     @Column(name = "default_project_id")
     private Integer mossoId;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "id", referencedColumnName = "id", nullable = true)
     private SqlUserRax rax = new SqlUserRax();
 

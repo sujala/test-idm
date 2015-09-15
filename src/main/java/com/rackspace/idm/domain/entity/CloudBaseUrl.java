@@ -14,6 +14,7 @@ import org.dozer.Mapping;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.HashSet;
+import java.util.Set;
 
 import static com.rackspace.idm.GlobalConstants.TENANT_ALIAS_PATTERN;
 
@@ -75,7 +76,7 @@ public class CloudBaseUrl implements Auditable, UniqueId {
     @LDAPField(attribute=LdapRepository.ATTR_POLICY_ID,
             objectClass=LdapRepository.OBJECTCLASS_BASEURL,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private HashSet<String> policyList;
+    private Set<String> policyList;
 
     @LDAPField(attribute=LdapRepository.ATTR_ADMIN_URL,
             objectClass=LdapRepository.OBJECTCLASS_BASEURL,
@@ -144,7 +145,7 @@ public class CloudBaseUrl implements Auditable, UniqueId {
         return String.format("baseUrl=%s", baseUrlId);
     }
 
-    public HashSet<String> getPolicyList() {
+    public Set<String> getPolicyList() {
         if (policyList == null) {
             policyList = new HashSet<String>();
         }

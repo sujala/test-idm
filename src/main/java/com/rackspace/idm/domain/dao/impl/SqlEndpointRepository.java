@@ -16,6 +16,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -137,7 +138,7 @@ public class SqlEndpointRepository implements EndpointDao {
 
     @Override
     public Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
-        final List<SqlEndpoint> endpoints = endpointRepository.findByRaxSqlPolicyPolicyId(policyId);
+        final List<SqlEndpoint> endpoints = endpointRepository.findByRaxPolicyListIn(Collections.singleton(policyId));
         return getCloudBaseUrls(endpoints);
     }
 
