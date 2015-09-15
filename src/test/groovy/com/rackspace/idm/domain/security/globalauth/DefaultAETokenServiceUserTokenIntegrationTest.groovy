@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.DefaultAETokenServiceBaseIntegrationTest
+import com.rackspace.idm.domain.security.UnmarshallTokenException
 import com.rackspace.idm.domain.security.tokenproviders.globalauth.MessagePackTokenDataPacker
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -24,6 +25,8 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
     @Shared User hardCodedProvisionedUser;
     @Shared Racker hardCodedRackerUser;
 
+    @Shared def sampleToken
+
     def setupSpec() {
         hardCodedProvisionedUser = entityFactory.createUser().with {
             it.id = UUID.randomUUID().toString().replaceAll("-", "")
@@ -38,6 +41,8 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
 
         identityUserService.getBaseUserById(hardCodedProvisionedUser.id) >> hardCodedProvisionedUser
         identityUserService.getBaseUserById(hardCodedRackerUser.id) >> hardCodedRackerUser
+
+        sampleToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, createUserToken(hardCodedProvisionedUser))
     }
 
     @Unroll
@@ -179,6 +184,26 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def "Can unmarshall sampleToken: '#sampleToken'"() {
+        when:
+        aeTokenService.unmarshallToken(sampleToken)
+
+        then:
+        notThrown(UnmarshallTokenException)
+    }
+
+    @Unroll
+    def "Unmarshall throws UnmarshallTokenException when token '#webSafeToken' is truncated to length '#lengthToTest'"() {
+        when:
+        aeTokenService.unmarshallToken(webSafeToken.substring(0,lengthToTest))
+
+        then:
+        thrown(UnmarshallTokenException)
+
+        where:
+        [webSafeToken, lengthToTest] << [[sampleToken], 1..sampleToken.length()-1].combinations()
     }
 
     def ScopeAccess createUserToken(BaseUser user, List<String> authBy = Arrays.asList(AuthenticatedByMethodEnum.PASSWORD.value)) {

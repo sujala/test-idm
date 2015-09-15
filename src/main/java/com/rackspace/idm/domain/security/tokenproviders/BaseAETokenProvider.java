@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.security.TokenDNCalculator;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
 import com.rackspace.idm.domain.security.WebSafeTokenCoder;
 import com.rackspace.idm.domain.security.encrypters.AuthenticatedMessageProvider;
@@ -126,26 +127,14 @@ public abstract class BaseAETokenProvider implements TokenProvider {
     private String calculateTokenDN(BaseUser user, String webSafeToken) {
         if (user instanceof User) {
             User user1 = (User) user;
-            return calculateProvisionedUserTokenDN(user1.getId(), webSafeToken);
+            return TokenDNCalculator.calculateProvisionedUserTokenDN(user1.getId(), webSafeToken);
         } else if (user instanceof FederatedUser) {
             FederatedUser user1 = (FederatedUser) user;
             IdentityProvider provider = identityProviderRepository.getIdentityProviderByUri(user1.getFederatedIdpUri());
-            return calculateFederatedUserTokenDN(user1.getUsername(), provider.getName(), webSafeToken);
+            return TokenDNCalculator.calculateFederatedUserTokenDN(user1.getUsername(), provider.getName(), webSafeToken);
         } else if (user instanceof Racker) {
-            return calculateRackerUserTokenDN(((Racker) user).getRackerId(), webSafeToken);
+            return TokenDNCalculator.calculateRackerTokenDN(((Racker) user).getRackerId(), webSafeToken);
         }
         throw new RuntimeException("Unsupported user type '" + user.getClass());
-    }
-
-    private String calculateProvisionedUserTokenDN(String userRsId, String webSafeToken) {
-        return String.format("accessToken=%s,cn=TOKENS,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", webSafeToken, userRsId);
-    }
-
-    private String calculateFederatedUserTokenDN(String username, String idpName, String webSafeToken) {
-        return String.format("accessToken=%s,cn=TOKENS,uid=%s,ou=users,ou=%s,o=externalproviders,o=rackspace,dc=rackspace,dc=com", webSafeToken, username, idpName);
-    }
-
-    private String calculateRackerUserTokenDN(String rackerId, String webSafeToken) {
-        return String.format("accessToken=%s,cn=TOKENS,rackerId=%s,ou=rackers,o=rackspace,dc=rackspace,dc=com", webSafeToken, rackerId);
     }
 }
