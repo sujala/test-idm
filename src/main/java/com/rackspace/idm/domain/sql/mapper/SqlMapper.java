@@ -323,7 +323,10 @@ public abstract class SqlMapper<Entity extends UniqueId, SQLEntity> {
         final List<Entity> entities = fromSQL(sqlEntities);
 
         if (context.getValueList().size() == 0) {
-            context.setValueList(entities.subList(context.getOffset() % PAGE_SIZE, entities.size()));
+            int entitiesIndex = context.getOffset() % PAGE_SIZE;
+            if(entitiesIndex < entities.size()) {
+                context.setValueList(entities.subList(entitiesIndex, entities.size()));
+            }
         } else {
             context.getValueList().addAll(entities);
         }

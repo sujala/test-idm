@@ -17,6 +17,7 @@ import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.User
+import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import spock.lang.Shared
@@ -82,6 +83,37 @@ class ListUserGroupsIntegrationTest extends RootIntegrationTest {
             utils.deleteUsers(users)
         } catch (Exception ex) {/*ignore*/
         }
+    }
+
+    def "test list users in group with pagination"() {
+        given:
+        def group = utils.createGroup()
+        def domain = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domain)
+        utils.addUserToGroup(group, userAdmin)
+
+        when: "index into the only user in the group"
+        def response = cloud20.getUsersFromGroup(utils.getServiceAdminToken(), group.id, "10", "0")
+
+        then:
+        response.status == 200
+        def userList = response.getEntity(UserList).value
+        userList.user.size() == 1
+        userList.user[0].id == userAdmin.id
+
+        when: "index out of the list of users"
+        response = cloud20.getUsersFromGroup(utils.getServiceAdminToken(), group.id, "10", "1")
+
+        then:
+        response.status == 200
+        def userList2 = response.getEntity(UserList).value
+        userList2.user.size() == 0
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domain)
+        utils.deleteGroup(group)
     }
 
     private ClientRole getUserManageRole() {
