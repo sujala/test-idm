@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
@@ -74,8 +75,11 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
         !tenants.tenant.isEmpty()
         tenants.tenant.size == 2
 
-        def mossoId = tenants.tenant[0].id
-        def mossoName = tenants.tenant[0].name
+        def mossoTenant = tenants.tenant.find {
+            !it.name.startsWith(Constants.NAST_TENANT_PREFIX)
+        }
+        def mossoId = mossoTenant.id
+        def mossoName = mossoTenant.name
 
         when:
         def authRequest = v2Factory.createPasswordAuthenticationRequestWithTenantId(username, "Password1", mossoId)
@@ -100,7 +104,7 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
         cloud20.deleteDomain(identityAdminToken, domainId)
     }
 
-    def "service catalog IS filtered when tenant othner than mossoId is specified in auth request"() {
+    def "service catalog IS filtered when tenant other than mossoId is specified in auth request"() {
         given:
         def username = "v20Username" + testUtils.getRandomUUID()
         def domainId = utils.createDomain()
@@ -118,8 +122,11 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
         !tenants.tenant.isEmpty()
         tenants.tenant.size == 2
 
-        def nastId = tenants.tenant[1].id
-        def nastName = tenants.tenant[1].name
+        def nastTenant = tenants.tenant.find {
+            it.name.startsWith(Constants.NAST_TENANT_PREFIX)
+        }
+        def nastId = nastTenant.id
+        def nastName = nastTenant.name
 
         when:
         def authRequest = v2Factory.createPasswordAuthenticationRequestWithTenantId(username, "Password1", nastId)
