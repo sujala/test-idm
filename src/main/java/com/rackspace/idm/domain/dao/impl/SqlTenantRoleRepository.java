@@ -2,6 +2,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.SQLComponent;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.migration.ChangeType;
@@ -70,6 +71,11 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
         } else {
             List<SqlTenantRole> sqlTenantRoles = tenantRoleRepository.findByActorIdAndRoleId(user.getId(), tenantRole.getRoleRsId());
             if (containsTenantRole(sqlTenantRoles, mapper.toSQL(tenantRole))) {
+                //do not return a 409 for global roles
+                //this is to mimic the original behavior of returning a 201 for adding global roles
+                if(org.apache.commons.collections4.CollectionUtils.isEmpty(tenantRole.getTenantIds())) {
+                    return;
+                }
                 throw new ClientConflictException();
             }
             final SqlTenantRole sqlTenantRole = tenantRoleRepository.save(mapper.toSQL(tenantRole));
