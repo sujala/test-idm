@@ -45,6 +45,22 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
     }
 
     @Override
+    public boolean domainExistsWithName(String name) {
+        if (StringUtils.isBlank(name)) {
+            return false;
+        }
+        return countObjects(searchByNameFilter(name)) >= 1;
+    }
+
+    @Override
+    public boolean domainExistsWithNameAndNotId(String name, String id) {
+        if (StringUtils.isBlank(name) || StringUtils.isBlank(id)) {
+            return false;
+        }
+        return countObjects(searchByNameAndNotIdFilter(name, id)) >= 1;
+    }
+
+    @Override
     public void updateDomain(Domain domain) {
         updateObject(domain);
     }
@@ -80,6 +96,19 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
     Filter searchByIdFilter(String id) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, id)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DOMAIN).build();
+    }
+
+    Filter searchByNameFilter(String name) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_NAME, name)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DOMAIN).build();
+    }
+
+    Filter searchByNameAndNotIdFilter(String name, String id) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_NAME, name)
+                .addNotEqualAttribute(ATTR_ID, id)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DOMAIN).build();
     }
 

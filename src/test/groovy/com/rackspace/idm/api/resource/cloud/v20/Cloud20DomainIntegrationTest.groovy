@@ -76,6 +76,35 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         try { domainService.deleteDomain(domainId) } catch (Exception e) {}
     }
 
+    def "Domain names are unique"() {
+        given:
+        def domainId1 = utils.createDomain()
+        def domainName1 = testUtils.getRandomUUID(domainId1)
+        def domainId2 = utils.createDomain()
+        def domainName2 = testUtils.getRandomUUID(domainId2)
+        utils.createDomain(v2Factory.createDomain(domainId1, domainName1))
+
+        when: "try to create domain 2 with the name of domain 1"
+        def domainData = v2Factory.createDomain(domainId2, domainName1)
+        def createResponse = cloud20.addDomain(utils.getServiceAdminToken(), domainData)
+
+        then: "409"
+        createResponse.status == 409
+
+        when: "now create domain 2 and then update the domain to have name of domain 1"
+        domainData = v2Factory.createDomain(domainId2, domainName2)
+        cloud20.addDomain(utils.getServiceAdminToken(), domainData)
+        domainData = v2Factory.createDomain(domainId2, domainName1)
+        def updateResponse = cloud20.updateDomain(utils.getServiceAdminToken(), domainId2, domainData)
+
+        then: "409"
+        updateResponse.status == 409
+
+        cleanup:
+        utils.deleteDomain(domainId1)
+        utils.deleteDomain(domainId2)
+    }
+
     def "Test if 'domainService.addTenantToDomain(...)' adds 'domainId' to the tenant"() {
         given:
         def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId();
