@@ -6,10 +6,10 @@ import java.util.List;
 
 public interface DeltaDao {
 
-    public void save(ChangeType type, String event, String ldif);
+    void save(ChangeType type, String event, String ldif);
 
-    public List<?> findByType(String type);
+    List<?> findByType(String type);
 
-    public void deleteAll();
+    void deleteAll();
 
 }

@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +39,7 @@ public class LdapDeltaRepository implements DeltaDao {
 
     @Override
     @Async("deltaMigrationExecutor")
+    @Transactional
     public void save(ChangeType event, String type, String ldif) {
         try {
             final LdapToSqlEntity entity = new LdapToSqlEntity();
