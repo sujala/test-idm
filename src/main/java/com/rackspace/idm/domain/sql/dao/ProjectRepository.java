@@ -12,8 +12,14 @@ import java.util.List;
 public interface ProjectRepository extends JpaSpecificationExecutor<SqlProject>, JpaRepository<SqlProject, String> {
 
     @Override
-    @EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
+    @EntityGraph(value = "SqlProject.rax", type = EntityGraph.EntityGraphType.FETCH)
     List<SqlProject> findAll();
 
+    @Override
+    @EntityGraph(value = "SqlProject.rax", type = EntityGraph.EntityGraphType.FETCH)
+    SqlProject findOne(String projectId);
+
+    @EntityGraph(value = "SqlProject.rax", type = EntityGraph.EntityGraphType.FETCH)
     SqlProject findByName(String name);
+
 }

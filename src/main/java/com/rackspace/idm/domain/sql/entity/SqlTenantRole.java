@@ -11,11 +11,17 @@ import javax.persistence.*;
 @EqualsAndHashCode(callSuper=false)
 @DiscriminatorValue("UserProject")
 @NamedEntityGraph(name = "SqlTenantRole.sqlRole",
-        attributeNodes = @NamedAttributeNode(value = "sqlRole", subgraph = "sqlRole.rax"),
-        subgraphs = @NamedSubgraph(name = "sqlRole.rax", attributeNodes = @NamedAttributeNode("rax")))
-public class SqlTenantRole extends SqlAssignment{
+        attributeNodes = {
+                @NamedAttributeNode("sqlRole"),
+                @NamedAttributeNode(value = "sqlRole", subgraph = "sqlRoleRax")
+        },
+        subgraphs = {
+                @NamedSubgraph(name = "sqlRoleRax", attributeNodes = @NamedAttributeNode("rax"))
+        })
+public class SqlTenantRole extends SqlAssignment {
 
     @OneToOne(cascade = CascadeType.DETACH)
     @JoinColumn(name = "role_id", referencedColumnName = "id", nullable = true, updatable = false, insertable = false)
     private SqlRole sqlRole;
+
 }

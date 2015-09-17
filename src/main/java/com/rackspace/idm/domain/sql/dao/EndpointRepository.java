@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @SQLRepository
 public interface EndpointRepository extends JpaSpecificationExecutor<SqlEndpoint>, JpaRepository<SqlEndpoint, String> {
@@ -43,5 +44,6 @@ public interface EndpointRepository extends JpaSpecificationExecutor<SqlEndpoint
     List<SqlEndpoint> findByRaxBaseUrlTypeAndEnabledAndRaxDefTrue(String baseUrlType, boolean enabled);
 
     @EntityGraph(value = "SqlEndpoint.rax", type = EntityGraph.EntityGraphType.FETCH)
-    List<SqlEndpoint> findByRaxSqlPolicyPolicyId(String policyId);
+    List<SqlEndpoint> findByRaxPolicyListIn(Set<String> policyList);
+
 }

@@ -9,8 +9,13 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name = "endpoint")
 @NamedEntityGraph(name = "SqlEndpoint.rax",
-        attributeNodes = @NamedAttributeNode( value = "rax", subgraph = "sqlEndpointRax.sqlPolicy"),
-        subgraphs = @NamedSubgraph(name = "sqlEndpointRax.sqlPolicy", attributeNodes = @NamedAttributeNode("sqlPolicy")))
+        attributeNodes = {
+                @NamedAttributeNode("rax"),
+                @NamedAttributeNode(value = "rax", subgraph = "policyList")
+        },
+        subgraphs = {
+                @NamedSubgraph(name = "policyList", attributeNodes = @NamedAttributeNode("policyList")),
+        })
 public class SqlEndpoint {
 
     @Id
@@ -42,4 +47,5 @@ public class SqlEndpoint {
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "id", referencedColumnName = "id", nullable = true)
     private SqlEndpointRax rax;
+
 }

@@ -66,7 +66,7 @@ public class DomainMapper extends SqlRaxMapper<Domain, SqlDomain, SqlDomainRax> 
 
         for (String tenantId : tenantIds) {
             SqlProject sqlProject = projectRepository.findOne(tenantId);
-            sqlProject.setDomain(sqlDomain);
+            sqlProject.setDomainId(sqlDomain.getDomainId());
             sqlProjects.add(sqlProject);
         }
 

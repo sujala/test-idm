@@ -65,7 +65,7 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
             }
         }
 
-        tenant.setDomainId(entity.getDomain().getDomainId());
+        tenant.setDomainId(entity.getDomainId());
 
         return tenant;
     }
@@ -96,11 +96,10 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
 
     private void mapDomain(Tenant tenant, SqlProject project) {
         if (tenant.getDomainId() != null) {
-            SqlDomain domain = domainRepository.findOne(tenant.getDomainId());
-            if (domain == null) {
+            if (!domainRepository.exists(tenant.getDomainId())) {
                 throw new NotFoundException("Domain does not exist");
             }
-            project.setDomain(domain);
+            project.setDomainId(tenant.getDomainId());
         }
     }
 
@@ -109,7 +108,7 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
         endpointIds.addAll(entity.getBaseUrlIds());
         endpointIds.addAll(entity.getV1Defaults());
 
-        sqlEntity.setDomain(domainRepository.findOne(entity.getDomainId()));
+        sqlEntity.setDomainId(entity.getDomainId());
 
         HashMap<String, List<SqlEndpoint>> endpointMap = new HashMap<String, List<SqlEndpoint>>();
         for(SqlEndpoint endpoint : endpointRepository.findByLegacyEndpointIdIn(endpointIds)){
