@@ -316,6 +316,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
+    public int countObjects(Filter searchFilter) {
+        return countObjects(searchFilter, getBaseDn(), SearchScope.SUB);
+    }
+
+    @Override
     public int countObjects(Filter searchFilter, String dn) {
         return countObjects(searchFilter, dn, SearchScope.SUB);
     }

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.ctc.wstx.util.StringUtil;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
@@ -63,6 +64,22 @@ public class SqlDomainRepository implements DomainDao {
             return null;
         }
         return mapper.fromSQL(domainRepository.findOne(domainId));
+    }
+
+    @Override
+    public boolean domainExistsWithName(String name) {
+        if (StringUtils.isBlank(name)) {
+            return false;
+        }
+        return domainRepository.countByName(name) >= 1;
+    }
+
+    @Override
+    public boolean domainExistsWithNameAndNotId(String name, String id) {
+        if (StringUtils.isBlank(name) || StringUtils.isBlank(id)) {
+            return false;
+        }
+        return domainRepository.countByNameAndNotDomainId(name, id) >= 1;
     }
 
     @Override

@@ -17,6 +17,8 @@ import java.util.List;
 public interface DomainDao {
     void addDomain(Domain domain);
     Domain getDomain(String domainId);
+    boolean domainExistsWithName(String name);
+    boolean domainExistsWithNameAndNotId(String name, String id);
     PaginatorContext<Domain> getAllDomainsPaged(int offset, int limit);
     void updateDomain(Domain domain);
     void deleteDomain(String domainId);

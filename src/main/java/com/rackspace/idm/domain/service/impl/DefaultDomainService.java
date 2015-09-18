@@ -75,6 +75,9 @@ public class DefaultDomainService implements DomainService {
         if(StringUtils.isBlank(domain.getDescription())) {
             domain.setDescription(null);
         }
+        if(domainDao.domainExistsWithName(domain.getName())) {
+            throw new DuplicateException(String.format("Domain with name %s already exists.", domain.getName()));
+        }
         verifyDomain(domain);
         logger.info("Adding Domain: {}", domain);
         domainDao.addDomain(domain);
@@ -100,6 +103,9 @@ public class DefaultDomainService implements DomainService {
         }
         if(StringUtils.isBlank(domain.getName())) {
             throw new BadRequestException(DOMAIN_NAME_CANNOT_BE_NULL);
+        }
+        if(domainDao.domainExistsWithNameAndNotId(domain.getName(), domain.getDomainId())) {
+            throw new DuplicateException(String.format("Domain with name %s already exists.", domain.getName()));
         }
         verifyDomain(domain);
         domainDao.updateDomain(domain);
