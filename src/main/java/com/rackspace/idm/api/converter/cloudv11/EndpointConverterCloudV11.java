@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.converter.cloudv11;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.CloudEndpoint;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
@@ -17,6 +18,9 @@ import java.util.List;
 public class EndpointConverterCloudV11 {
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     private final ObjectFactory of = new ObjectFactory();
     private final CloudAuthServiceCatalogFactory sf = new CloudAuthServiceCatalogFactory();
@@ -38,7 +42,10 @@ public class EndpointConverterCloudV11 {
         if (url.getPublicUrl() != null) {
             baseUrl.setPublicURL(url.getPublicUrl().trim());
         }
-        baseUrl.setRegion(url.getRegion());
+
+        if (url.getRegion() != null && !url.getRegion().equals(identityConfig.getReloadableConfig().getEndpointDefaultRegionId())) {
+            baseUrl.setRegion(url.getRegion());
+        }
         baseUrl.setServiceName(url.getServiceName());
         if (url.getBaseUrlType() != null) {
             UserType userType;

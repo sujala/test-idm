@@ -30,6 +30,7 @@ class DefaultEndpointServiceTest extends RootServiceTest {
     def setup() {
         mockEndpointDao(service)
         mockConfiguration(service)
+        mockIdentityConfig(service)
     }
 
     def "dao is used to retrieve a list of baseUrls with policyId when calling getBaseUrlsWithPolicyId"() {
@@ -210,6 +211,7 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         })
         config.getString(DefaultEndpointService.FEATURE_BASEURL_TO_REGION_MAPPING_STRATEGY) >> DefaultEndpointService.BaseUrlToRegionMappingStrategy.HYBRID.getCode()
         config.getString(DefaultEndpointService.CLOUD_REGION_PROP_NAME) >> cloudRegion
+        reloadableConfig.getEndpointDefaultRegionId() >> "DEFAULT"
 
         expect:
         doesBaseUrlBelongToCloudRegionResult == service.doesBaseUrlBelongToCloudRegion(baseUrl)
@@ -230,5 +232,11 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         DefaultEndpointService.CLOUD_REGION_UK  |   10000       |   "DFW"               |   false
         DefaultEndpointService.CLOUD_REGION_UK  |   10000       |   "LON"               |   true
         DefaultEndpointService.CLOUD_REGION_UK  |   200         |   "LON"               |   true
+        DefaultEndpointService.CLOUD_REGION_US  |   -1000       |   "DEFAULT"           |   true
+        DefaultEndpointService.CLOUD_REGION_US  |   999         |   "DEFAULT"           |   true
+        DefaultEndpointService.CLOUD_REGION_US  |   1000        |   "DEFAULT"           |   false
+        DefaultEndpointService.CLOUD_REGION_UK  |   -1000       |   "DEFAULT"           |   false
+        DefaultEndpointService.CLOUD_REGION_UK  |   999         |   "DEFAULT"           |   false
+        DefaultEndpointService.CLOUD_REGION_UK  |   1000        |   "DEFAULT"           |   true
     }
 }

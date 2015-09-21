@@ -61,6 +61,7 @@ public class IdentityConfig {
     public static final String GROUP_DOMAINID_DEFAULT = "group.domainId.default";
     public static final String TENANT_DOMAINID_DEFAULT = "tenant.domainId.default";
     public static final String IDENTITY_ROLE_TENANT_DEFAULT = "identity.role.tenant.default";
+    public static final String ENDPOINT_REGIONID_DEFAULT = "endpoint.regionId.default";
 
     // left as static var to support external reference
     public static final int PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE = 30;
@@ -361,6 +362,7 @@ public class IdentityConfig {
         verifyAndLogReloadableProperty(AE_NODE_NAME_FOR_SIGNOFF_PROP, REQUIRED);
         verifyAndLogReloadableProperty(FEATURE_PERSIST_RACKERS_PROP, OPTIONAL);
         verifyAndLogReloadableProperty(IDENTITY_ROLE_TENANT_DEFAULT, REQUIRED);
+        verifyAndLogReloadableProperty(ENDPOINT_REGIONID_DEFAULT, REQUIRED);
     }
 
     private void verifyAndLogStaticProperty(String property, boolean required) {
@@ -1102,6 +1104,11 @@ public class IdentityConfig {
         @IdmProp(key = TENANT_DOMAINID_DEFAULT, description = "Default domain_id when creating a tenant in sql", versionAdded = "3.0.0")
         public String getTenantDefaultDomainId() {
             return getStringSafely(reloadableConfiguration, TENANT_DOMAINID_DEFAULT);
+        }
+
+        @IdmProp(key = ENDPOINT_REGIONID_DEFAULT, description = "Default region_id when creating an endpoint", versionAdded = "3.0.0")
+        public String getEndpointDefaultRegionId() {
+            return getStringSafely(reloadableConfiguration, ENDPOINT_REGIONID_DEFAULT);
         }
 
         @IdmProp(key = FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP, description = "Whether entities that can be switched to read-only should be switched", versionAdded = "3.0.0")
