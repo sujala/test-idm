@@ -36,6 +36,17 @@ public class SqlCapability {
     @Column(name = "version")
     private String version;
 
+    /*
+     * Foreign key: 'fk_crr_capability_id'
+     * Table: capability_resource_rax
+     * Key: capability_id
+     *
+     * Reference table: capability_rax
+     * Key: id
+     *
+     * OnDelete: CASCADE
+     */
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "capability_resource_rax",
             joinColumns = @JoinColumn(name = "capability_id"))

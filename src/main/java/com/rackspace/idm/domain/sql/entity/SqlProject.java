@@ -54,6 +54,17 @@ public class SqlProject {
     @JoinTable(name="project_endpoint", joinColumns={@JoinColumn(name="project_id", referencedColumnName="id")}, inverseJoinColumns={@JoinColumn(name="endpoint_id", referencedColumnName="id")})
     private Set<SqlEndpoint> baseUrlIds = new HashSet<SqlEndpoint>();
 
+    /*
+     * Foreign key: 'fk_prer_project_id_endpoint_id'
+     * Table: project_endpoint_rax
+     * Key: (endpoint_id, project_id)
+     *
+     * Reference table: project_endpoint
+     * Key: (endpoint_id, project_id)
+     *
+     * OnDelete: CASCADE
+     */
+
     @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH}, fetch = FetchType.EAGER)
     @JoinTable(name="project_endpoint_rax", joinColumns={@JoinColumn(name="project_id", referencedColumnName="id")}, inverseJoinColumns={@JoinColumn(name="endpoint_id", referencedColumnName="id")})
     private Set<SqlEndpoint> v1Defaults = new HashSet<SqlEndpoint>();

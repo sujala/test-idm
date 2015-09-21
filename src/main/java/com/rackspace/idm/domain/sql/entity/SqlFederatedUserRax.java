@@ -15,6 +15,17 @@ import java.util.Set;
 @Table(name = "federated_user_rax")
 public class SqlFederatedUserRax {
 
+    /*
+     * Foreign key: 'fk_fugmr_federated_user_rax_id'
+     * Table: federated_user_group_membership_rax
+     * Key: federated_user_rax_id
+     *
+     * Reference table: federated_user_rax
+     * Key: id
+     *
+     * OnDelete: CASCADE
+     */
+
     @Id
     @Column(name = "id")
     private String id;
@@ -27,9 +38,31 @@ public class SqlFederatedUserRax {
     @Column(name = "email")
     private String email;
 
+    /*
+     * Foreign key: 'fk_fur_region_id'
+     * Table: federated_user_rax
+     * Key: region_id
+     *
+     * Reference table: region
+     * Key: id
+     *
+     * OnDelete: CASCADE
+     */
+
     @Mapping("defaultRegion")
     @Column(name = "region_id")
     private String region;
+
+    /*
+     * Foreign key: 'fk_fur_domain_id'
+     * Table: federated_user_rax
+     * Key: region_id
+     *
+     * Reference table: domain
+     * Key: id
+     *
+     * OnDelete: CASCADE
+     */
 
     @Column(name = "domain_id")
     private String domainId;
@@ -42,6 +75,17 @@ public class SqlFederatedUserRax {
 
     @Column(name = "updated")
     private Date updated;
+
+    /*
+     * Foreign key: 'fk_fugmr_group_id'
+     * Table: federated_user_group_membership_rax
+     * Key: group_id
+     *
+     * Reference table: group
+     * Key: id
+     *
+     * OnDelete: CASCADE
+     */
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name="federated_user_group_membership_rax",
