@@ -38,7 +38,7 @@ public class LdapDeltaRepository implements DeltaDao {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void save(ChangeType event, String type, String ldif) {
         try {
             final LdapToSqlEntity entity = new LdapToSqlEntity();

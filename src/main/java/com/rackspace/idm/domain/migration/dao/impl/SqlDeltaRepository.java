@@ -27,7 +27,7 @@ public class SqlDeltaRepository implements DeltaDao {
     private SqlToLdapRepository sqlToLdapRepository;
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void save(ChangeType event, String type, String ldif) {
         try {
             final SqlToLdapEntity entity = new SqlToLdapEntity();
