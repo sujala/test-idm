@@ -185,6 +185,24 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         and: "does not contain the disabled user"
         !userList2.user.id.contains(disabledUser.id)
 
+        when: "list users in domain"
+        def usersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId).getEntity(UserList).value
+
+        then: "see federated user"
+        usersInDomain.user.id.contains(authResponse.user.id)
+
+        when: "list enabled users in domain"
+        def enabledUsersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId, true).getEntity(UserList).value
+
+        then: "see federated user"
+        enabledUsersInDomain.user.id.contains(authResponse.user.id)
+
+        when: "list disabled users in domain"
+        def disabledUsersInDomain = cloud20.listUsersInDomain(identityAdminToken, domainId, false).getEntity(UserList).value
+
+        then: "no federated user"
+        !disabledUsersInDomain.user.id.contains(authResponse.user.id)
+
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUser(disabledUser)

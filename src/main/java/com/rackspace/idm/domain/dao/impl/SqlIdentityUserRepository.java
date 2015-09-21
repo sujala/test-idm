@@ -103,10 +103,12 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
             }
         }
 
-        final Iterable<FederatedUser> federatedUsers = fedUserDao.getUsersByDomainId(domainId);
-        if (federatedUsers != null) {
-            for (FederatedUser federatedUser : federatedUsers) {
-                endUsers.add(federatedUser);
+        if(enabled) {
+            final Iterable<FederatedUser> federatedUsers = fedUserDao.getUsersByDomainId(domainId);
+            if (federatedUsers != null) {
+                for (FederatedUser federatedUser : federatedUsers) {
+                    endUsers.add(federatedUser);
+                }
             }
         }
 
