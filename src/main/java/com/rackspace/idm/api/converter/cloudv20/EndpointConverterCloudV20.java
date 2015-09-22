@@ -20,6 +20,7 @@ import java.util.List;
 
 @Component
 public class EndpointConverterCloudV20 {
+
     @Autowired
     private Mapper mapper;
 
@@ -99,6 +100,11 @@ public class EndpointConverterCloudV20 {
             version.setList(baseUrl.getVersionList());
             template.setVersion(version);
         }
+
+        if (template.getRegion() != null && template.getRegion().equals(identityConfig.getReloadableConfig().getEndpointDefaultRegionId())) {
+            template.setRegion(null);
+        }
+
         return template;
     }
 

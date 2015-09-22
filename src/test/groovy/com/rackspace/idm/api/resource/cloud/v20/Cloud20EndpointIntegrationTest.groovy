@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.EndpointList
+import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -19,6 +21,10 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
     @Shared def identityAdmin, userAdmin, userManage, defaultUser
     @Shared def domainId
+
+    @Autowired
+    EndpointDao endpointDao;
+
 
     def "global endpoints are assigned to users"() {
         given:
@@ -266,4 +272,20 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         IdentityUserTypeEnum.IDENTITY_ADMIN | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
+    def "Endpoints created do not display DEFAULT region"() {
+        given:
+        def endpointTemplate = utils.createEndpointTemplate(true, "", true, "compute", "DEFAULT", )
+
+        when:
+        String endpointTemplateId = String.valueOf(endpointTemplate.id)
+        def createdEndpointTemplate = utils.getEndpointTemplate(endpointTemplateId)
+        def daoEndpoint = endpointDao.getBaseUrlById(endpointTemplateId)
+
+        then:
+        daoEndpoint.region == "DEFAULT"
+        createdEndpointTemplate.region == null
+
+        cleanup:
+        utils.deleteEndpointTemplate(endpointTemplate)
+    }
 }

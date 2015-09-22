@@ -1295,6 +1295,7 @@ INSERT INTO `question_rax` VALUES ('6','What is your pass phrase?');
 -- Dumping data for table `region`
 --
 
+INSERT INTO `region` VALUES ('DEFAULT','',NULL,'{}');
 INSERT INTO `region` VALUES ('DFW','',NULL,'{}');
 INSERT INTO `region` VALUES ('IAD','',NULL,'{}');
 INSERT INTO `region` VALUES ('LON','',NULL,'{}');
@@ -1304,6 +1305,7 @@ INSERT INTO `region` VALUES ('ORD','',NULL,'{}');
 -- Dumping data for table `region_rax`
 --
 
+INSERT INTO `region_rax` VALUES ('DEFAULT',1,'US',0);
 INSERT INTO `region_rax` VALUES ('DFW',1,'US',0);
 INSERT INTO `region_rax` VALUES ('IAD',1,'US',0);
 INSERT INTO `region_rax` VALUES ('LON',1,'UK',1);

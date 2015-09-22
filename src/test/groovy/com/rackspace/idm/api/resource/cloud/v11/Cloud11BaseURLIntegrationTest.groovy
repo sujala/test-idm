@@ -70,4 +70,38 @@ class Cloud11BaseURLIntegrationTest extends RootIntegrationTest {
         then:
         response.status == 404
     }
+
+    void "Endpoints created do not display DEFAULT region"() {
+        given:
+        def request = mock(HttpServletRequest)
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn('Basic YXV0aDphdXRoMTIz')
+
+        def application = applicationDao.getApplicationByName('cloudFiles')
+        def baseUrlId = 500 + (int) (Math.random() * 10000000);
+        String endpointId = String.valueOf(baseUrlId)
+
+        when:
+        def BaseURL baseURL = new BaseURL()
+        baseURL.setId(baseUrlId)
+        baseURL.setServiceName('cloudFiles')
+        baseURL.setPublicURL('http://localhost')
+        baseURL.setInternalURL('http://localhost')
+        baseURL.setAdminURL('http://localhost')
+        baseURL.setRegion("DEFAULT")
+        cloud11Service.addBaseURL(request, mock(HttpHeaders), baseURL)
+
+        def data = endpointDao.getBaseUrlById(endpointId)
+
+        def createdEndpoint = cloud11Service.getBaseURLById(request, endpointId, null, mock(HttpHeaders))
+
+        then:
+        data.clientId == application.clientId
+        data.region == "DEFAULT"
+        createdEndpoint.entity.region == null
+
+
+        cleanup:
+        try { endpointDao.deleteBaseUrl(endpointId) } catch (Exception e) {}
+    }
+
 }

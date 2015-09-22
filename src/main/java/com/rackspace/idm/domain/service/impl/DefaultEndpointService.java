@@ -56,6 +56,10 @@ public class DefaultEndpointService implements EndpointService {
             throw new BaseUrlConflictException(errMsg);
         }
 
+        if (baseUrl.getRegion() == null) {
+            baseUrl.setRegion(identityConfig.getReloadableConfig().getEndpointDefaultRegionId());
+        }
+
         this.endpointDao.addBaseUrl(baseUrl);
         logger.debug("Done adding base url.");
     }
@@ -339,23 +343,27 @@ public class DefaultEndpointService implements EndpointService {
             String baseUrlRegion = baseUrl.getRegion();
             int baseUrlId = Integer.parseInt(baseUrl.getBaseUrlId());
             if(ukCloudRegion
-                    && (baseUrlId >= UK_CLOUD_BASEURL_ID_THRESHOLD && (org.apache.commons.lang.StringUtils.isBlank(baseUrlRegion) || UK_CLOUD_LON_REGION.equals(baseUrlRegion))
+                    && (baseUrlId >= UK_CLOUD_BASEURL_ID_THRESHOLD && (isDefaultRegion(baseUrlRegion) || UK_CLOUD_LON_REGION.equals(baseUrlRegion))
                         ||
-                       (baseUrlId < UK_CLOUD_BASEURL_ID_THRESHOLD && baseUrlRegion != null && UK_CLOUD_LON_REGION.equals(baseUrlRegion)))
+                       (baseUrlId < UK_CLOUD_BASEURL_ID_THRESHOLD && !isDefaultRegion(baseUrlRegion) && UK_CLOUD_LON_REGION.equals(baseUrlRegion)))
                ) {
                 //only uk region if id is (>= 1000 AND the region is either blank or LON) OR <1000 and region is LON
                 return true;
             }
             if(!ukCloudRegion
-                    && (baseUrlId < UK_CLOUD_BASEURL_ID_THRESHOLD && (org.apache.commons.lang.StringUtils.isBlank(baseUrlRegion) || !UK_CLOUD_LON_REGION.equals(baseUrlRegion))
+                    && (baseUrlId < UK_CLOUD_BASEURL_ID_THRESHOLD && (isDefaultRegion(baseUrlRegion) || !UK_CLOUD_LON_REGION.equals(baseUrlRegion))
                     ||
-                    (baseUrlId >= UK_CLOUD_BASEURL_ID_THRESHOLD && baseUrlRegion != null && !UK_CLOUD_LON_REGION.equals(baseUrlRegion)))
+                    (baseUrlId >= UK_CLOUD_BASEURL_ID_THRESHOLD && !isDefaultRegion(baseUrlRegion) && !UK_CLOUD_LON_REGION.equals(baseUrlRegion)))
                     ) {
                 //only us region if id is (< 1000 AND the region is either blank or something other than LON) OR >=1000 and region is something other than LON
                 return true;
             }
         }
         return false;
+    }
+
+    private boolean isDefaultRegion(String baseUrlRegion) {
+        return org.apache.commons.lang.StringUtils.isBlank(baseUrlRegion) || baseUrlRegion.equals(identityConfig.getReloadableConfig().getEndpointDefaultRegionId());
     }
 
     private boolean isUkCloudRegion() {

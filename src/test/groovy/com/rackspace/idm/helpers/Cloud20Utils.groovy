@@ -535,6 +535,10 @@ class Cloud20Utils {
         return endpointTemplateResp
     }
 
+    def getEndpointTemplate(String endpointTemplateId) {
+        return methods.getEndpointTemplate(getServiceAdminToken(), endpointTemplateId).getEntity(EndpointTemplate).value
+    }
+
     def deleteEndpointTemplate(endpointTemplate) {
         def response = methods.deleteEndpointTemplate(getServiceAdminToken(), endpointTemplate.id.toString())
         assert (response.status == SC_NO_CONTENT)
