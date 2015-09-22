@@ -5453,6 +5453,18 @@ uid: identityAdmin5ac28fdd56b14020965350b907c7dfb7
 userPassword:: e1NTSEE1MTJ9RCtsNVAwM3QxNWsycGF3YUVzY25XTkswSUduemdTN2V6Tlppb
  UxXOEt2YVNUUElrWkdNaE5PSG9RS01kQldVclRwRm1wTjRZdkM2VC80bndZWExKZ2NEYjRZST0=
 
+dn: cn=ROLES,rsId=af455d1387ab4281873ceae5bc400e50,ou=users,o=rackspace,dc=r
+ ackspace,dc=com
+objectClass: rsContainer
+cn: TOKENS
+
+dn: roleRsId=1,cn=ROLES,rsId=af455d1387ab4281873ceae5bc400e50,ou=users,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 1
+userRsId: af455d1387ab4281873ceae5bc400e50
+
 dn: uid=samlUserac1acb2af04b43fb9e4674dea554d245,ou=users,ou=test,o=external
  Providers,dc=rackspace,dc=com
 objectClass: rsFederatedPerson
@@ -5464,11 +5476,30 @@ rsRegion: ORD
 uid: samlUserac1acb2af04b43fb9e4674dea554d245
 rsGroupId: 0
 
+dn: cn=ROLES,uid=samlUserac1acb2af04b43fb9e4674dea554d245,ou=users,ou=test,o
+ =externalProviders,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
 dn: roleRsId=2,cn=ROLES,uid=samlUserac1acb2af04b43fb9e4674dea554d245,ou=user
  s,ou=test,o=externalProviders,dc=rackspace,dc=com
 objectClass: tenantRole
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 roleRsId: 2
+
+dn: roleRsId=5,cn=ROLES,uid=samlUserac1acb2af04b43fb9e4674dea554d245,ou=user
+ s,ou=test,o=externalProviders,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
+roleRsId: 5
+tenantRsId: MossoCloudFS_132885
+
+dn: roleRsId=6,cn=ROLES,uid=samlUserac1acb2af04b43fb9e4674dea554d245,ou=user
+ s,ou=test,o=externalProviders,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+roleRsId: 6
+tenantRsId: 132885
 
 dn: rsId=MossoCloudFS_132885,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc
  =com
@@ -5508,19 +5539,10 @@ tenantDisplayName: 132885
 vOneDefault: 120
 vOneDefault: 15
 
-dn: roleRsId=5,cn=ROLES,uid=samlUserac1acb2af04b43fb9e4674dea554d245,ou=user
- s,ou=test,o=externalProviders,dc=rackspace,dc=com
-objectClass: tenantRole
-clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
-roleRsId: 5
-tenantRsId: MossoCloudFS_132885
-
-dn: roleRsId=6,cn=ROLES,uid=samlUserac1acb2af04b43fb9e4674dea554d245,ou=user
- s,ou=test,o=externalProviders,dc=rackspace,dc=com
-objectClass: tenantRole
-clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
-roleRsId: 6
-tenantRsId: 132885
+dn: cn=ROLES,rsId=c90d35db77d14133b05fdc576a4f4ffb,ou=users,o=rackspace,dc=
+ rackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
 
 dn: roleRsId=3,cn=ROLES,rsId=c90d35db77d14133b05fdc576a4f4ffb,ou=users,o=rac
  kspace,dc=rackspace,dc=com
@@ -5545,9 +5567,80 @@ roleRsId: 6
 tenantRsId: 132885
 userRsId: c90d35db77d14133b05fdc576a4f4ffb
 
-dn: roleRsId=1,cn=ROLES,rsId=af455d1387ab4281873ceae5bc400e50,ou=users,o=rac
+dn: rsId=7fcb777308fa41219e300070a5ee4973,ou=users,o=rackspace,dc=rackspace,
+ dc=com
+objectClass: rsPerson
+rsId: 7fcb777308fa41219e300070a5ee4973
+enabled: TRUE
+encryptionSalt: 27 72 74 99 95 bc b9 a9 57 8e 81 fe 44 0f db 9f
+encryptionVersionId: 0
+mail: test_mfa@email.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20150916213702.717Z
+rsApiKey:: r/siREzNJMxcUxk11uT4WzCi1QzrsyDTyzQnSSPUCGFMzrUHphmKBvtLAOvv8rby
+rsDomainId: c1ef67e28d754256bb1843ff6b8434fb
+rsMultiFactorEnabled: TRUE
+rsMultiFactorState: ACTIVE
+rsMultiFactorType: OTP
+rsRegion: ORD
+uid: test_mfa
+userPassword:: e1NTSEE1MTJ9MmtkRzZrUVNHMUFYYnVhWlFBeXZEOUdEQkhnb1BKcHhyaE9ZZ
+ 1NmRUJDQ1V6ZkFIbFNsMk1yc0R3QWIwalN5UkpEOE12a3RZQlJWVVlqN0NKbE5xZDNrbGtGRT0=
+
+dn: cn=BYPASSCODES,rsId=7fcb777308fa41219e300070a5ee4973,ou=users,o=rackspac
+ e,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: BYPASSCODES
+
+dn: cn=OTPDEVICES,rsId=7fcb777308fa41219e300070a5ee4973,ou=users,o=rackspace
+ ,dc=rackspace,dc=com
+objectClass: rsContainer
+cn: OTPDEVICES
+
+dn: cn=ROLES,rsId=7fcb777308fa41219e300070a5ee4973,ou=users,o=rackspace,dc=r
+ ackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: rsId=a634cccc4ba6415690717c7f0118e5f2,cn=BYPASSCODES,rsId=7fcb777308fa41
+ 219e300070a5ee4973,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsBypassDevice
+encryptionSalt: RoAFRRZVN3FXT5Ql4+spIA==
+rsId: a634cccc4ba6415690717c7f0118e5f2
+rsMultiFactorDevicePinExpiration: 20150916214230.957Z
+rsBypassCode: 2WDzZaS3k1urHzHv55CHCPK9jCG1iegm3c1AqsdqH4ZqXLxKTT6IUE3FKY8yc+
+ XbVcqDj3c2c/l2ps3O2S8Vxg==
+rsBypassCode: AO96yvIvk7JQq4L5opSovrzirzLxzWHWbbFWVwdQmHK/y8O7kRysqh/oTTqj55
+ 90upXJFrFU73GRGH2BlmuUIQ==
+rsBypassCode: cg/E5Gc/MeOe9oFaLRbEHewOP9H35l1m1Q+NY/kaC8e7dgfc2AD/kZ9ZUV9GT+
+ oAfJfRysl//I2+uk2rQNUlpw==
+rsBypassCode: DZR5bYkTaf6DmgM8z1GFKLN9vTKc9nGLNDiN67GxFAFkeAWN8uIY4eAe7eB27x
+ bZucHwXJZLNfyJpCSEogCzfw==
+rsBypassCode: gbOsOI7ezTXFS7FqzZW0/p2riZWTXH4Qz3HOfK1pT7JGTHRSobF4UQ4rAFhzk6
+ R2aNKMKNPLQjC4ObnqydnR+Q==
+rsBypassCode: HAf2JBRodfDePL/HQjcJKK8GQo9G75UAHxoOl0ujWvt9fENrcFvw5Ry41kYboC
+ azzALVIIyUkMVly2Sy7zszNg==
+rsBypassCode: RqOJ9M7L6mWqTgq3iKBwYR1g7qKckevImOuLLRXdzkyY8O+VCYXkAwuxAN/ddt
+ mnoe7JdzyMOwHhB3tP15xCtQ==
+rsBypassCode: sYeUMlTOWo9YDe05IsVZYFdO0N0MwGr3Tsodm4NPKnc9klsoD4hWPR+YzJiiRF
+ w555yokCGY4p4N/X1QRHisCg==
+rsBypassCode: viotTRNx8v2JbjKJdFGwiKZO5wrHhFPVhuoWZXaZYJW1NTdvH3eGzXd9NX6ZNO
+ yFySf3MNlX8AIoXN9sr6KIlg==
+rsBypassCode: ycrU/UsKxe9jDiCfgHz0CoQmApjHd1kzaxAPpR9cRhlhH/d6vE4gNb3rFu7IUi
+ cOj+iq3wQAQBMRg8hDSwt/7w==
+rsIterationCount: 10000
+
+dn: rsId=c99c7d900a5448b5ab61a4edb625b1da,cn=OTPDEVICES,rsId=7fcb777308fa412
+ 19e300070a5ee4973,ou=users,o=rackspace,dc=rackspace,dc=com
+objectClass: rsOTPDevice
+rsId: c99c7d900a5448b5ab61a4edb625b1da
+rsMultiFactorDeviceVerified: TRUE
+rsOTPKey:: cCjt0oQle4HWpQ87Yh+fW5jNdYg=
+rsOTPName: Test OTP
+
+dn: roleRsId=1,cn=ROLES,rsId=7fcb777308fa41219e300070a5ee4973,ou=users,o=rac
  kspace,dc=rackspace,dc=com
 objectClass: tenantRole
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 roleRsId: 1
-userRsId: af455d1387ab4281873ceae5bc400e50
+userRsId: 7fcb777308fa41219e300070a5ee4973

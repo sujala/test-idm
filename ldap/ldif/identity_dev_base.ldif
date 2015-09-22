@@ -1,6 +1,1 @@
 version: 1
-
-dn: o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: organization
-o: rackspace
