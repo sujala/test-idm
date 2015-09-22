@@ -319,18 +319,6 @@ public class Validator20Test {
     }
 
     @Test
-    public void validateKsGroup_invalidGroupLength_throwsBadRequestMessage() {
-        Group groupKs = new Group();
-        groupKs.setName("Invalidnamellllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll");
-        try {
-            validator20.validateKsGroup(groupKs);
-            assertTrue("should throw exception",false);
-        } catch (BadRequestException e) {
-            assertThat("Exception", e.getMessage(), equalTo("Group name length cannot exceed 200 characters"));
-        }
-    }
-
-    @Test
     public void validateTenantIdInRoles_tenantIdBlankAndContainedInTenantRoles_succeeds() throws Exception {
         List<TenantRole> roles = new ArrayList<TenantRole>();
         when(tenantService.isTenantIdContainedInTenantRoles("",roles)).thenReturn(true);

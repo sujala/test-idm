@@ -40,7 +40,7 @@ public class Validator20 {
     private EmailValidator emailValidator = new EmailValidator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     public static final int PASSWORD_MIN_LENGTH = 8;
-    public static final int MAX_GROUP_NAME = 200;
+    public static final int MAX_GROUP_NAME = 64;
     public static final int MAX_GROUP_DESC = 1000;
 
     private static final String ENDPOINT_TEMPLATE_REQUIRED_ATTR_MESSAGE = "'%s' is a required attribute";
@@ -169,7 +169,7 @@ public class Validator20 {
             throw new BadRequestException("Missing group name");
         }
         if (checkName.length() > MAX_GROUP_NAME) {
-            throw new BadRequestException("Group name length cannot exceed 200 characters");
+            throw new BadRequestException("Group name length cannot exceed " + MAX_GROUP_NAME + " characters");
         }
 
         if (group.getDescription() == null) {
