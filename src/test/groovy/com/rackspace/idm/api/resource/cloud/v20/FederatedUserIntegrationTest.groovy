@@ -733,6 +733,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         validateResponse2.status == HttpServletResponse.SC_NOT_FOUND
 
         when: "try to get another token"
+        sleep(1000) //sleep for 1 second to avoid missing sub-second on TRRs issue
         def samlResponse2 = cloud20.samlAuthenticate(samlAssertion)
 
         then: "token should not work"
@@ -752,6 +753,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         validateResponse3.status == HttpServletResponse.SC_NOT_FOUND
 
         when: "try to get another token"
+        sleep(1000) //sleep for 1 second to avoid missing sub-second on TRRs issue
         def samlResponse3 = cloud20.samlAuthenticate(samlAssertion)
         def AuthenticateResponse authResponse2 = samlResponse3.getEntity(AuthenticateResponse).value
         def samlToken2 = authResponse2.token.id
