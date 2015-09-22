@@ -21,3 +21,4 @@ rpmbuild/rpmbuild
 rpmbuild/master
 rpmbuild/rpms
 rpmbuild/source
+fig.yml
