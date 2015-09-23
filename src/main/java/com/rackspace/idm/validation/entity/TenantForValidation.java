@@ -7,6 +7,7 @@ import javax.validation.constraints.Size;
 
 import static com.rackspace.idm.validation.entity.Constants.LONG_MAX;
 import static com.rackspace.idm.validation.entity.Constants.MAX;
+import static com.rackspace.idm.validation.entity.Constants.MAX_64;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,7 +21,7 @@ import static com.rackspace.idm.validation.entity.Constants.MAX;
 public class TenantForValidation {
     @Size(max = MAX)
     private String id;
-    @Size(max = MAX)
+    @Size(max = MAX_64)
     private String name;
     @Size(max = MAX)
     private String displayName;
