@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.6.26, for osx10.10 (x86_64)
+-- MySQL dump 10.13  Distrib 5.6.24, for osx10.10 (x86_64)
 --
 -- Host: 127.0.0.1    Database: keystone
 -- ------------------------------------------------------
@@ -152,6 +152,20 @@ CREATE TABLE `capability_resource_rax` (
   `resource` varchar(255) NOT NULL,
   PRIMARY KEY (`capability_id`,`resource`),
   CONSTRAINT `fk_crr_capability_id` FOREIGN KEY (`capability_id`) REFERENCES `capability_rax` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `config_register`
+--
+
+DROP TABLE IF EXISTS `config_register`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `config_register` (
+  `type` varchar(64) NOT NULL,
+  `domain_id` varchar(64) NOT NULL,
+  PRIMARY KEY (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -572,7 +586,7 @@ DROP TABLE IF EXISTS `migrate_version`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `migrate_version` (
   `repository_id` varchar(250) NOT NULL,
-  `repository_path` mediumtext,
+  `repository_path` text,
   `version` int(11) DEFAULT NULL,
   PRIMARY KEY (`repository_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -875,7 +889,7 @@ CREATE TABLE `revocation_event` (
   `trust_id` varchar(64) DEFAULT NULL,
   `consumer_id` varchar(64) DEFAULT NULL,
   `access_token_id` varchar(64) DEFAULT NULL,
-  `issued_before` datetime(6) NOT NULL,
+  `issued_before` datetime NOT NULL,
   `expires_at` datetime DEFAULT NULL,
   `revoked_at` datetime NOT NULL,
   `audit_id` varchar(32) DEFAULT NULL,
@@ -1229,4 +1243,4 @@ CREATE TABLE `whitelisted_config` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-09-16  9:58:41
+-- Dump completed on 2015-09-22 13:40:27
