@@ -182,7 +182,22 @@ public class IdentityConfig {
 
     public static final String FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP = "feature.support.v3.provisioned.user.tokens";
     public static final boolean FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_DEFAULT = false;
-    
+
+    public static final String FEATURE_CACHE_AE_TOKENS_PROP = "feature.cache.ae.tokens";
+    public static final boolean FEATURE_CACHE_AE_TOKENS_DEFAULT = false;
+
+    public static final String CACHED_AE_TOKEN_TTL_SECONDS_PROP = "cached.ae.token.ttl.seconds";
+    public static final int CACHED_AE_TOKEN_TTL_SECONDS_DEFAULT = 60;
+
+    public static final String CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP = "cached.ae.token.cache.concurrency.level";
+    public static final int CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_DEFAULT = 50;
+
+    public static final String CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP = "cached.ae.token.cache.max.size";
+    public static final int CACHED_AE_TOKEN_CACHE_MAX_SIZE_DEFAULT = 10000;
+
+    public static final String CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP = "cached.ae.token.cache.initial.capacity";
+    public static final int CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_DEFAULT = 5000;
+
     /**
      * Required static prop
      */
@@ -315,6 +330,11 @@ public class IdentityConfig {
         defaults.put(SQL_MAX_IDLE_PROP, SQL_MAX_IDLE_DEFAULT);
         defaults.put(FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_DEFAULT);
         defaults.put(FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP, FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_DEFAULT);
+        defaults.put(FEATURE_CACHE_AE_TOKENS_PROP, FEATURE_CACHE_AE_TOKENS_DEFAULT);
+        defaults.put(CACHED_AE_TOKEN_TTL_SECONDS_PROP, CACHED_AE_TOKEN_TTL_SECONDS_DEFAULT);
+        defaults.put(CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP, CACHED_AE_TOKEN_CACHE_MAX_SIZE_DEFAULT);
+        defaults.put(CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP, CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_DEFAULT);
+        defaults.put(CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP, CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_DEFAULT);
 
         return defaults;
     }
@@ -937,6 +957,27 @@ public class IdentityConfig {
         public int getSqlMaxIdle() {
             return getIntSafely(staticConfiguration, SQL_MAX_IDLE_PROP);
         }
+
+        @IdmProp(key = CACHED_AE_TOKEN_TTL_SECONDS_PROP, versionAdded = "3.0.1", description = "The time an entry will exist in the AE token cache before naturally expiring")
+        public int cachedAETokenTTLSeconds() {
+            return getIntSafely(staticConfiguration, CACHED_AE_TOKEN_TTL_SECONDS_PROP);
+        }
+
+        @IdmProp(key = CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP, versionAdded = "3.0.1", description = "The maximum size of the AE Token cache")
+        public int cachedAETokenCacheMaxSize() {
+            return getIntSafely(staticConfiguration, CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP);
+        }
+
+        @IdmProp(key = CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP, versionAdded = "3.0.1", description = "The initial capacity of the AE Token cache. A higher value prevents unnecessary resizing later at the cost of more upfront memory")
+        public int cachedAETokenCacheInitialCapacity() {
+            return getIntSafely(staticConfiguration, CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP);
+        }
+
+        @IdmProp(key = CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP, versionAdded = "3.0.1", description = "The concurrency level of the AE Token cache. Should roughly how many threads will attempt to concurrently update the cache.")
+        public int cachedAETokenCacheConcurrencyLevel() {
+            return getIntSafely(staticConfiguration, CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP);
+        }
+
     }
 
     /**
@@ -1157,8 +1198,10 @@ public class IdentityConfig {
         public boolean supportV3ProvisionedUserTokens() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP);
         }
-
-
+        @IdmProp(key = FEATURE_CACHE_AE_TOKENS_PROP, versionAdded = "3.0.1")
+        public Boolean cacheAETokens() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_CACHE_AE_TOKENS_PROP);
+        }
     }
 
     @Deprecated

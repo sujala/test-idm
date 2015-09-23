@@ -18,7 +18,9 @@ import com.rackspace.idm.domain.security.tokenproviders.globalauth.GlobalAuthTok
 import com.rackspace.idm.domain.security.tokenproviders.globalauth.MessagePackTokenDataPacker
 import com.rackspace.idm.domain.security.tokenproviders.keystone_keyczar.KeystoneAEMessagePackTokenDataPacker
 import com.rackspace.idm.domain.security.tokenproviders.keystone_keyczar.KeystoneAETokenProvider
+import com.rackspace.idm.domain.service.AETokenRevocationService
 import com.rackspace.idm.domain.service.IdentityUserService
+import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.UserService
 import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.configuration.Configuration
@@ -28,6 +30,7 @@ import org.springframework.core.env.Environment
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
+import testHelpers.FakeTicker
 
 abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
     @Shared EntityFactory entityFactory = new EntityFactory()
@@ -53,6 +56,9 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
     @Shared KeystoneAETokenProvider keystoneAETokenProvider
     @Shared KeystoneAEMessagePackTokenDataPacker keystoneAEMessagePackTokenDataPacker
 
+    AETokenRevocationService aeTokenRevocationService
+
+
     def setupSpec() {
         crypterLocator = new ClasspathKeyCzarCrypterLocator();
         crypterLocator.setKeysClassPathLocation("/com/rackspace/idm/api/resource/cloud/v20/keys")
@@ -61,6 +67,7 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         staticConfig.setProperty(MessagePackTokenDataPacker.CLOUD_AUTH_CLIENT_ID_PROP_NAME, "aaa7cb17b52d4e1ca3cb5c7c5996cc3b")
         staticConfig.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
         staticConfig.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, true)
+        staticConfig.setProperty(IdentityConfig.CACHED_AE_TOKEN_TTL_SECONDS_PROP, 60)
 
         reloadableConfig = new PropertiesConfiguration()
 
@@ -101,9 +108,27 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         keystoneAETokenProvider.authenticatedMessageProvider = amProvider
         keystoneAETokenProvider.identityConfig = identityConfig
 
-        List<TokenProvider> tokenProviders = [globalAuthTokenProvider, keystoneAETokenProvider]
+        //AE Cache
+        AETokenCache aeTokenCache = new AETokenCache()
+        aeTokenCache.identityConfig = identityConfig
+        aeTokenCache.ticker = new FakeTicker()
+        aeTokenCache.init()
 
+        List<TokenProvider> tokenProviders = [globalAuthTokenProvider, keystoneAETokenProvider]
         aeTokenService.tokenProviders = tokenProviders
+        aeTokenService.identityConfig = identityConfig
+        aeTokenService.aeTokenCache = aeTokenCache
+    }
+
+    def void setup() {
+        //for some reason need to initialize this here rather than setupSpec (event when defined as a shared variable).
+        //when done in setupSpec couldn't set expectations on the mock from within feature methods. It didn't throw
+        // error, just acted like the expectations were never set. I verified same object was being used so not sure why
+        // it didn't work... recreating the revocationService for each feature method does allow me to set the expectations
+        // from within the feature method though so switched to that.
+        aeTokenRevocationService = Mock()
+        aeTokenService.aeTokenCache.aeTokenRevocationService = aeTokenRevocationService
+        aeTokenService.aeTokenRevocationService = aeTokenRevocationService
     }
 
     def void validateScopeAccessesEqual(ScopeAccess original, ScopeAccess toValidate) {

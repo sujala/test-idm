@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.security;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.*;
@@ -30,6 +31,12 @@ public class DefaultAETokenService implements AETokenService {
     @Autowired
     private List<TokenProvider> tokenProviders;
 
+    @Autowired
+    private AETokenCache aeTokenCache;
+
+    @Autowired
+    private IdentityConfig identityConfig;
+
     /**
      * Returns whether the service support creating tokens of the specified type against the specified user.
      *
@@ -52,7 +59,13 @@ public class DefaultAETokenService implements AETokenService {
 
         TokenProvider provider = findFirstTokenProviderThatSupportsCreatingTokenFor(user, token);
 
-        return provider.marshallTokenForUser(user, token);
+        String marshalledToken = null;
+        if (identityConfig.getReloadableConfig().cacheAETokens()) {
+            marshalledToken = aeTokenCache.marshallTokenForUserWithProvider(user, token, provider);
+        } else {
+            marshalledToken = provider.marshallTokenForUser(user, token);
+        }
+        return marshalledToken;
     }
 
     @Override
