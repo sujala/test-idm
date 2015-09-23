@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.security.globalauth
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
@@ -13,6 +14,9 @@ import com.rackspace.idm.domain.security.UnmarshallTokenException
 import com.rackspace.idm.domain.security.tokenproviders.globalauth.MessagePackTokenDataPacker
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.FakeTicker
+
+import java.util.concurrent.TimeUnit
 
 /**
  * This test is meant to test issuing a regular token to a user. "Regular" is whatever type of token is appropriate for
@@ -45,6 +49,10 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         sampleToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, createUserToken(hardCodedProvisionedUser))
     }
 
+    def setup() {
+        reloadableConfig.setProperty(IdentityConfig.FEATURE_CACHE_AE_TOKENS_PROP, false)
+    }
+
     @Unroll
     def "marshall/unmarshall fully populated #methodDesc token"() {
         ScopeAccess originalUSA = createUserToken(hardCodedUser)
@@ -65,6 +73,74 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
         hardCodedUser | methodDesc
         hardCodedProvisionedUser | "Provisioned User"
         hardCodedRackerUser | "Racker"
+    }
+
+    /**
+     * Assumes cache lifetime is 60 seconds per base class
+     */
+    def "marshall token w/ cache and revocation"() {
+        given:
+        ScopeAccess pwdUSA = createUserToken(hardCodedProvisionedUser, Arrays.asList(AuthenticatedByMethodEnum.PASSWORD.value))
+        ScopeAccess apiUSA = createUserToken(hardCodedProvisionedUser, Arrays.asList(AuthenticatedByMethodEnum.APIKEY.value))
+        ScopeAccess apiPwdUSA = createUserToken(hardCodedProvisionedUser, Arrays.asList(AuthenticatedByMethodEnum.APIKEY.value, AuthenticatedByMethodEnum.PASSWORD.value))
+        ScopeAccess pwdApiUSA = createUserToken(hardCodedProvisionedUser, Arrays.asList(AuthenticatedByMethodEnum.PASSWORD.value, AuthenticatedByMethodEnum.APIKEY.value))
+
+        reloadableConfig.setProperty(IdentityConfig.FEATURE_CACHE_AE_TOKENS_PROP, true)
+
+        when:
+        String firstToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, pwdUSA)
+
+        then:
+        firstToken != null
+        aeTokenService.unmarshallToken(firstToken) != null
+
+        when: "request a token within cache period"
+        String secondToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, pwdUSA)
+
+        then: "get the first token back"
+        secondToken == firstToken
+
+        when: "request a token within cache period, but cached token is revoked"
+        aeTokenRevocationService.isTokenRevoked(secondToken) >> true
+        String thirdToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, pwdUSA)
+
+        then: "get a new token"
+        thirdToken != null
+        thirdToken != secondToken
+        aeTokenService.unmarshallToken(thirdToken) != null
+
+        when: "request a token within cache period again"
+        String fourthToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, pwdUSA)
+
+        then: "get the third token back"
+        thirdToken == fourthToken
+
+        when: "cached token expires"
+        ((FakeTicker)aeTokenService.aeTokenCache.ticker).advance(60, TimeUnit.SECONDS)
+        String fifthToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, pwdUSA)
+
+        then: "get a new token"
+        fifthToken != null
+        fifthToken != secondToken
+        aeTokenService.unmarshallToken(fifthToken) != null
+
+        when: "request a token for different auth by"
+        String apiToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, apiUSA)
+
+        then:
+        apiToken != fifthToken
+        aeTokenService.unmarshallToken(apiToken) != null
+
+        when: "request a token for different auth by methods"
+        String apiPwdToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, apiPwdUSA)
+        String pwdApiToken = aeTokenService.marshallTokenForUser(hardCodedProvisionedUser, pwdApiUSA)
+
+        then: "tokens created based on unique set of authBy - order is irrelevent"
+        apiToken != apiPwdToken
+        fifthToken != pwdApiToken
+        pwdApiToken == apiPwdToken
+        aeTokenService.unmarshallToken(pwdApiToken) != null
+        aeTokenService.unmarshallToken(apiPwdToken) != null
     }
 
     def "marshallTokenForUser() - maximize provisioned user token length; run: #run"() {
@@ -121,7 +197,7 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
 
     @Unroll
     def "marshall/unmarshall multiple authby #methodDesc token"() {
-        ScopeAccess originalUSA = createUserToken(hardCodedUser, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSCODE))
+        ScopeAccess originalUSA = createUserToken(hardCodedUser, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD, GlobalConstants.AUTHENTICATED_BY_PASSCODE))
 
         when: "generate token with multiple auth by"
         String webSafeToken = aeTokenService.marshallTokenForUser(hardCodedUser, originalUSA)
@@ -209,12 +285,12 @@ class DefaultAETokenServiceUserTokenIntegrationTest extends DefaultAETokenServic
     def ScopeAccess createUserToken(BaseUser user, List<String> authBy = Arrays.asList(AuthenticatedByMethodEnum.PASSWORD.value)) {
         if (user instanceof EndUser) {
             return createProvisionedUserToken((User)user).with {
-                it.authenticatedBy.addAll(authBy)
+                it.authenticatedBy = authBy
                 return it
             }
         } else if (user instanceof Racker) {
             return createRackerToken((Racker) user).with {
-                it.authenticatedBy.addAll(authBy)
+                it.authenticatedBy = authBy
                 return it
             }
         }
