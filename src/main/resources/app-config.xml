@@ -51,10 +51,24 @@
             <property name="url" value="#{identityConfig.staticConfig.sqlUrl}"/>
             <property name="username" value="#{identityConfig.staticConfig.sqlUsername}"/>
             <property name="password" value="#{identityConfig.staticConfig.sqlPassword}"/>
+
             <property name="initialSize" value="#{identityConfig.staticConfig.sqlInitialSize}"/>
             <property name="maxActive" value="#{identityConfig.staticConfig.sqlMaxActive}"/>
             <property name="maxIdle" value="#{identityConfig.staticConfig.sqlMaxIdle}"/>
+            <property name="minIdle" value="#{identityConfig.staticConfig.sqlMinIdle}"/>
+
+            <property name="testWhileIdle" value="true"/>
+            <property name="testOnBorrow" value="true"/>
+            <property name="testOnReturn" value="false"/>
             <property name="removeAbandoned" value="true"/>
+            <property name="logAbandoned" value="true"/>
+
+            <property name="validationQuery" value="SELECT 1"/>
+
+            <property name="removeAbandonedTimeout" value="60"/>
+            <property name="timeBetweenEvictionRunsMillis" value="5000"/>
+            <property name="maxWait" value="10000"/>
+            <property name="minEvictableIdleTimeMillis" value="30000"/>
         </bean>
 
         <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">

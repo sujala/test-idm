@@ -217,6 +217,8 @@ public class IdentityConfig {
     private static final int SQL_MAX_ACTIVE_DEFAULT = 10;
     private static final String SQL_MAX_IDLE_PROP = "sql.maxIdle";
     private static final int SQL_MAX_IDLE_DEFAULT = 5;
+    private static final String SQL_MIN_IDLE_PROP = "sql.minIdle";
+    private static final int SQL_MIN_IDLE_DEFAULT = 3;
 
     /* ************************
      * MIGRATION PROPS
@@ -328,6 +330,7 @@ public class IdentityConfig {
         defaults.put(SQL_INITIAL_SIZE_PROP, SQL_INITIAL_SIZE_DEFAULT);
         defaults.put(SQL_MAX_ACTIVE_PROP, SQL_MAX_ACTIVE_DEFAULT);
         defaults.put(SQL_MAX_IDLE_PROP, SQL_MAX_IDLE_DEFAULT);
+        defaults.put(SQL_MIN_IDLE_PROP, SQL_MIN_IDLE_DEFAULT);
         defaults.put(FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_DEFAULT);
         defaults.put(FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP, FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_DEFAULT);
         defaults.put(FEATURE_CACHE_AE_TOKENS_PROP, FEATURE_CACHE_AE_TOKENS_DEFAULT);
@@ -956,6 +959,11 @@ public class IdentityConfig {
         @IdmProp(key = SQL_MAX_IDLE_PROP, versionAdded = "3.0.0")
         public int getSqlMaxIdle() {
             return getIntSafely(staticConfiguration, SQL_MAX_IDLE_PROP);
+        }
+
+        @IdmProp(key = SQL_MIN_IDLE_PROP, versionAdded = "3.0.1")
+        public int getSqlMinIdle() {
+            return getIntSafely(staticConfiguration, SQL_MIN_IDLE_PROP);
         }
 
         @IdmProp(key = CACHED_AE_TOKEN_TTL_SECONDS_PROP, versionAdded = "3.0.1", description = "The time an entry will exist in the AE token cache before naturally expiring")
