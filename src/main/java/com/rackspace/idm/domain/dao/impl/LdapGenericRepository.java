@@ -203,17 +203,18 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             try {
                 applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.ADD, dn, null));
             } catch (Exception e) {
-                LOGGER.error("Cannot emmit 'ADD' change event!", e);
+                LOGGER.error("Cannot emmit 'ADD' change event (DN: " + dn + ")!", e);
             }
         }
     }
 
     private void emitMigrationModifyEventIfNecessary(T object) {
-        if (shouldEmitEventForDN(object.getUniqueId())) {
+        final String dn = object.getUniqueId();
+        if (shouldEmitEventForDN(dn)) {
             try {
-                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.MODIFY, object.getUniqueId(), null));
+                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.MODIFY, dn, null));
             } catch (Exception e) {
-                LOGGER.error("Cannot emmit 'MODIFY' change event!", e);
+                LOGGER.error("Cannot emmit 'MODIFY' change event (DN: " + dn + ")!", e);
             }
         }
     }

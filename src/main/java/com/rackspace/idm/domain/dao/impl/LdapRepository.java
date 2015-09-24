@@ -342,7 +342,7 @@ public abstract class LdapRepository {
             try {
                 applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.DELETE, dn, null));
             } catch (Exception e) {
-                LOGGER.error("Cannot emmit 'DELETE' change event!", e);
+                LOGGER.error("Cannot emmit 'DELETE' change event (DN: " + dn + ")!", e);
             }
         }
     }
