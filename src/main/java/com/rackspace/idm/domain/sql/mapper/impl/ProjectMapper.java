@@ -2,17 +2,14 @@ package com.rackspace.idm.domain.sql.mapper.impl;
 
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.dao.impl.SqlDomainRepository;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.sql.dao.DomainRepository;
 import com.rackspace.idm.domain.sql.dao.EndpointRepository;
-import com.rackspace.idm.domain.sql.entity.SqlDomain;
 import com.rackspace.idm.domain.sql.entity.SqlEndpoint;
 import com.rackspace.idm.domain.sql.entity.SqlProject;
 import com.rackspace.idm.domain.sql.mapper.SqlMapper;
 import com.rackspace.idm.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.jdbc.Sql;
 
 import java.util.*;
 
@@ -104,7 +101,7 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
     }
 
     private SqlProject mapEndpointIdsToProject(Tenant entity, SqlProject sqlEntity) {
-        LinkedHashSet<String> endpointIds = new LinkedHashSet<String>();
+        final Set<String> endpointIds = new LinkedHashSet<String>();
         endpointIds.addAll(entity.getBaseUrlIds());
         endpointIds.addAll(entity.getV1Defaults());
 
@@ -112,11 +109,11 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
 
         HashMap<String, List<SqlEndpoint>> endpointMap = new HashMap<String, List<SqlEndpoint>>();
         for(SqlEndpoint endpoint : endpointRepository.findByLegacyEndpointIdIn(endpointIds)){
-            String legacyEndpointId = endpoint.getLegacyEndpointId();
+            final String legacyEndpointId = endpoint.getLegacyEndpointId();
             if(endpointMap.containsKey(legacyEndpointId)){
                 endpointMap.get(legacyEndpointId).add(endpoint);
             } else {
-                List<SqlEndpoint> endpointList = new ArrayList<SqlEndpoint>();
+                final List<SqlEndpoint> endpointList = new ArrayList<SqlEndpoint>();
                 endpointList.add(endpoint);
                 endpointMap.put(legacyEndpointId, endpointList);
             }
@@ -124,7 +121,9 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
 
         // Add all baseURLs to project
         for (String endpointId : entity.getBaseUrlIds()) {
-            sqlEntity.getBaseUrlIds().addAll(endpointMap.get(endpointId));
+            if (endpointMap.containsKey(endpointId)) {
+                sqlEntity.getBaseUrlIds().addAll(endpointMap.get(endpointId));
+            }
         }
 
         // Remove baseURls not associated project
@@ -138,7 +137,9 @@ public class ProjectMapper extends SqlMapper<Tenant, SqlProject> {
 
         // Add all v1Defaults to project
         for (String endpointId : entity.getV1Defaults()) {
-            sqlEntity.getV1Defaults().addAll(endpointMap.get(endpointId));
+            if (endpointMap.containsKey(endpointId)) {
+                sqlEntity.getV1Defaults().addAll(endpointMap.get(endpointId));
+            }
         }
 
         // Remove v1Defaults not associated to project
