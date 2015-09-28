@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.security.jmx.GuavaCacheStats;
 import com.rackspace.idm.domain.security.tokenproviders.TokenProvider;
 import com.rackspace.idm.domain.service.AETokenRevocationService;
 import org.apache.commons.lang.StringUtils;
@@ -41,13 +42,22 @@ public class AETokenCache {
     @PostConstruct
     public void init() {
         Ticker theTicker = ticker != null ? ticker : Ticker.systemTicker();
-        cachedTokens = CacheBuilder.newBuilder()
+        CacheBuilder builder = CacheBuilder.newBuilder()
                 .maximumSize(identityConfig.getStaticConfig().cachedAETokenCacheMaxSize())
                 .initialCapacity(identityConfig.getStaticConfig().cachedAETokenCacheInitialCapacity())
                 .expireAfterWrite(identityConfig.getStaticConfig().cachedAETokenTTLSeconds(), TimeUnit.SECONDS)
                 .concurrencyLevel(identityConfig.getStaticConfig().cachedAETokenCacheConcurrencyLevel())
-                .ticker(theTicker)
-                .build();
+                .ticker(theTicker);
+
+        if (identityConfig.getStaticConfig().cachedAETokenCacheRecordStats()) {
+            builder.recordStats();
+        }
+
+        cachedTokens = builder.build();
+
+        if (identityConfig.getStaticConfig().cachedAETokenCacheRecordStats()) {
+            new GuavaCacheStats("AETokenCache", cachedTokens);
+        }
     }
 
     public String marshallTokenForUserWithProvider(final BaseUser user, final ScopeAccess token, final TokenProvider provider) {
