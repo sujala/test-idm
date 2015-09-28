@@ -47,6 +47,7 @@ public class KeystoneAEMessagePackTokenDataPacker implements TokenDataPacker {
 
     static {
         AUTH_BY_UNMARSHALL.put(1, AuthenticatedByMethodEnum.PASSWORD.getValue());
+        AUTH_BY_UNMARSHALL.put(2, AuthenticatedByMethodEnum.TOKEN.getValue());
     }
 
     @Override
@@ -211,7 +212,7 @@ public class KeystoneAEMessagePackTokenDataPacker implements TokenDataPacker {
                 if (authByVal == null) {
                     throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_AUTHBY_DATA_CONTENTS, String.format("Unrecognized authby '%s'", auth));
                 }
-                authenticatedBy.add(AUTH_BY_UNMARSHALL.get(auth));
+                authenticatedBy.add(authByVal);
             }
         }
         return Collections.unmodifiableList(authenticatedBy);
