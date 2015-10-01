@@ -375,8 +375,6 @@ public class IdentityConfig {
 
         verifyAndLogStaticProperty(SQL_DRIVER_CLASS_NAME_PROP, REQUIRED);
         verifyAndLogStaticProperty(SQL_URL_PROP, REQUIRED);
-        verifyAndLogStaticProperty(SQL_USERNAME_PROP, REQUIRED);
-        verifyAndLogStaticProperty(SQL_PASSWORD_PROP, REQUIRED);
 
         logFederatedTokenFormatOverrides();
 
