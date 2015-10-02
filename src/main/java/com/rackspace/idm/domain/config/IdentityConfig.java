@@ -198,6 +198,9 @@ public class IdentityConfig {
     public static final String CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP = "cached.ae.token.cache.initial.capacity";
     public static final int CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_DEFAULT = 5000;
 
+    public static final String CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP = "cached.ae.token.cache.record.stats";
+    public static final boolean CACHED_AE_TOKEN_CACHE_RECORD_STATS_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -338,6 +341,7 @@ public class IdentityConfig {
         defaults.put(CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP, CACHED_AE_TOKEN_CACHE_MAX_SIZE_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP, CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP, CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_DEFAULT);
+        defaults.put(CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP, CACHED_AE_TOKEN_CACHE_RECORD_STATS_DEFAULT);
 
         return defaults;
     }
@@ -986,6 +990,10 @@ public class IdentityConfig {
             return getIntSafely(staticConfiguration, CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP);
         }
 
+        @IdmProp(key = CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP, versionAdded = "3.0.1", description = "Whether the AE Token cache will record stats.")
+        public boolean cachedAETokenCacheRecordStats() {
+            return getBooleanSafely(staticConfiguration, CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP);
+        }
     }
 
     /**
