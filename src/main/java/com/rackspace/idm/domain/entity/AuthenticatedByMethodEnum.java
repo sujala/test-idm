@@ -12,6 +12,7 @@ public enum AuthenticatedByMethodEnum {
     ,RSAKEY("RSAKEY")
     ,SYSTEM("SYSTEM") //auto created by system. Should not be exposed externally
     ,OTPPASSCODE("OTPPASSCODE")
+    ,TOKEN("TOKEN") //when a NEW token is issued based on passing a previous token (v3 concept of scoping an unscoped token)
     ;
 
     String value;
