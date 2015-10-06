@@ -791,6 +791,35 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(samlResponse, BadRequestFault, HttpServletResponse.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_FEDERATION_INVALID_SIGNATURE)
     }
 
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.LDAP)
+    def "test federated user with username of length of 100 and email of 255"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUIDOfLength("userAdminForSaml", 100)
+        def email = testUtils.getRandomUUIDOfLength("email", 255)
+        def expDays = 5
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def adminToken = utils.getIdentityAdminToken()
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+
+        when: "authenticate the token"
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def samlToken = authResponse.token.id
+        def validateResponse = cloud20.validateToken(adminToken, samlToken)
+
+        then: "response contains appropriate content"
+        samlResponse.status == HttpServletResponse.SC_OK
+        validateResponse.status == HttpServletResponse.SC_OK
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+    }
+
     def deleteFederatedUserQuietly(username) {
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)

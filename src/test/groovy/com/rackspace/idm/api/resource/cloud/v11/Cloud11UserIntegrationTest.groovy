@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
+import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import com.rackspacecloud.docs.auth.api.v1.User
 import groovy.json.JsonSlurper
 import testHelpers.RootIntegrationTest
+import testHelpers.junit.IgnoreByRepositoryProfile
 
 import javax.ws.rs.core.MediaType
 
@@ -150,6 +152,32 @@ public class Cloud11UserIntegrationTest extends RootIntegrationTest{
         given:
         String username=testUtils.getRandomUUID()
         String key=testUtils.getRandomUUID()
+        Integer mossoId=testUtils.getRandomInteger()
+        String nastId=testUtils.getRandomUUID()
+        Boolean enabled=true
+
+        when:
+        def user = utils11.createUser(username, key, mossoId, nastId, enabled)
+
+        then:
+        user.nastId != nastId
+        user.mossoId == mossoId
+        user.enabled == true
+        user.key == key
+
+        cleanup:
+        utils11.deleteUser(user)
+        utils.deleteTenant(String.valueOf(user.mossoId))
+        utils.deleteTenant(user.nastId)
+        utils.deleteDomain(String.valueOf(user.mossoId))
+    }
+
+    //FIXME: New story: Check encrypted value length before saving to SQL (ApiKey = varchar(100))
+    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.LDAP)
+    def "Create user with an apikey of length 32" () {
+        given:
+        String username=testUtils.getRandomUUID()
+        String key=testUtils.getRandomUUIDOfLength("key", 32)
         Integer mossoId=testUtils.getRandomInteger()
         String nastId=testUtils.getRandomUUID()
         Boolean enabled=true
