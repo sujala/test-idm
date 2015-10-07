@@ -79,7 +79,7 @@ CREATE TABLE `assignment` (
   `target_id` varchar(64) NOT NULL,
   `role_id` varchar(64) NOT NULL,
   `inherited` tinyint(1) NOT NULL,
-  PRIMARY KEY (`type`,`actor_id`,`target_id`,`role_id`),
+  PRIMARY KEY (`type`,`actor_id`,`target_id`,`role_id`,`inherited`),
   KEY `ix_actor_id` (`actor_id`),
   KEY `idx_assignment_role_id` (`role_id`),
   KEY `idx_assignment_target_id` (`target_id`)
@@ -154,6 +154,20 @@ CREATE TABLE `capability_resource_rax` (
   `resource` varchar(255) NOT NULL,
   PRIMARY KEY (`capability_id`,`resource`),
   CONSTRAINT `fk_crr_capability_id` FOREIGN KEY (`capability_id`) REFERENCES `capability_rax` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `config_register`
+--
+
+DROP TABLE IF EXISTS `config_register`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `config_register` (
+  `type` varchar(64) NOT NULL,
+  `domain_id` varchar(64) NOT NULL,
+  PRIMARY KEY (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -321,10 +335,10 @@ DROP TABLE IF EXISTS `endpoint_rax`;
 CREATE TABLE `endpoint_rax` (
   `id` varchar(64) NOT NULL,
   `type` varchar(64) DEFAULT NULL,
-  `openstack_type` varchar(64) DEFAULT NULL,
+  `openstack_type` varchar(255) DEFAULT NULL,
   `default` tinyint(1) DEFAULT NULL,
   `global` tinyint(1) DEFAULT NULL,
-  `service_name` varchar(64) DEFAULT NULL,
+  `service_name` varchar(255) DEFAULT NULL,
   `project_alias` varchar(64) DEFAULT NULL,
   `version_id` varchar(64) DEFAULT NULL,
   `version_info` text,
@@ -402,9 +416,9 @@ DROP TABLE IF EXISTS `federated_user_rax`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `federated_user_rax` (
   `id` varchar(64) NOT NULL,
-  `username` varchar(64) DEFAULT NULL,
-  `email` varchar(64) DEFAULT NULL,
-  `region_id` varchar(64) DEFAULT NULL,
+  `username` varchar(300) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `region_id` varchar(255) DEFAULT NULL,
   `created` datetime(6) DEFAULT NULL,
   `updated` datetime(6) DEFAULT NULL,
   `domain_id` varchar(64) DEFAULT NULL,
@@ -412,7 +426,7 @@ CREATE TABLE `federated_user_rax` (
   PRIMARY KEY (`id`),
   KEY `fk_fur_region_id` (`region_id`),
   KEY `idx_fur_domain_id` (`domain_id`),
-  KEY `idx_fur_username` (`username`),
+  KEY `idx_fur_username` (`username`(255)),
   KEY `idx_fur_federated_idp_uri` (`federated_idp_uri`),
   CONSTRAINT `fk_fur_domain_id` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_fur_region_id` FOREIGN KEY (`region_id`) REFERENCES `region` (`id`) ON DELETE CASCADE
@@ -482,7 +496,6 @@ CREATE TABLE `identity_provider` (
   `id` varchar(64) NOT NULL,
   `enabled` tinyint(1) NOT NULL,
   `description` text,
-  `remote_id` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -502,6 +515,22 @@ CREATE TABLE `identity_provider_rax` (
   `target_user_source` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_ipr_uri` (`uri`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `idp_remote_ids`
+--
+
+DROP TABLE IF EXISTS `idp_remote_ids`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `idp_remote_ids` (
+  `idp_id` varchar(64) DEFAULT NULL,
+  `remote_id` varchar(255) NOT NULL,
+  PRIMARY KEY (`remote_id`),
+  KEY `idp_id` (`idp_id`),
+  CONSTRAINT `idp_remote_ids_ibfk_1` FOREIGN KEY (`idp_id`) REFERENCES `identity_provider` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -705,6 +734,7 @@ CREATE TABLE `project` (
   `enabled` tinyint(1) DEFAULT NULL,
   `domain_id` varchar(64) NOT NULL,
   `parent_id` varchar(64) DEFAULT NULL,
+  `is_domain` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `ixu_project_name_domain_id` (`domain_id`,`name`),
   KEY `project_parent_id_fkey` (`parent_id`),
@@ -987,6 +1017,7 @@ CREATE TABLE `service_provider` (
   `enabled` tinyint(1) NOT NULL,
   `description` text,
   `sp_url` varchar(256) NOT NULL,
+  `relay_state_prefix` varchar(256) NOT NULL DEFAULT 'ss:mem:',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -1153,7 +1184,7 @@ CREATE TABLE `user_rax` (
   `secret_answer` text,
   `secret_question_id` text,
   `display_name` text,
-  `api_key` varchar(64) DEFAULT NULL,
+  `api_key` varchar(100) DEFAULT NULL,
   `nast_id` varchar(64) DEFAULT NULL,
   `region` varchar(64) DEFAULT NULL,
   `created` datetime(6) DEFAULT CURRENT_TIMESTAMP(6),
@@ -1219,4 +1250,4 @@ CREATE TABLE `whitelisted_config` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-09-29 13:55:21
+-- Dump completed on 2015-10-02 12:33:51
