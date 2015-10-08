@@ -587,8 +587,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
                         userLowestWeightIdentityRoleType = identityUserTypeEnum;
                     }
                 }
-            } else {
-                logger.error(String.format("Tenant role '%s' is linked to missing identity client role '%s'", tenantRole.getAuditContext(), tenantRole.getRoleRsId()));
             }
         }
         return userLowestWeightIdentityRoleType;
