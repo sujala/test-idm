@@ -29,38 +29,50 @@ public class TokenRevocationRecordRepositoryImpl implements TokenRevocationRecor
 
     @Override
     public List<TokenRevocationRecord> listTokenRevocationRecordsForToken(Token token) {
-        return buildTrrCriteriaForToken(token).list();
+        List<TokenRevocationRecord> trrs = buildTrrCriteriaForTokenString(token).list();
+        if (!(token instanceof BaseUserToken)) {
+            // only apply auth-by filtering to base user tokens
+            return trrs;
+        }
+        trrs.addAll(buildTrrCriteriaForTokenAuthBy(token).list());
+
+        return trrs;
     }
 
     @Override
     public Long listTokenRevocationRecordsForTokenCount(Token token) {
-        Criteria criteria = buildTrrCriteriaForToken(token);
-        return (Long) criteria.setProjection(Projections.countDistinct("id")).uniqueResult();
+        Long trrCount = (Long) buildTrrCriteriaForTokenString(token).setProjection(Projections.countDistinct("id")).uniqueResult();
+        if (!(token instanceof BaseUserToken)) {
+            // only apply auth-by filtering to base user tokens
+            return trrCount;
+        }
+        trrCount = trrCount + (Long) buildTrrCriteriaForTokenAuthBy(token).setProjection(Projections.countDistinct("id")).uniqueResult();
+
+        return trrCount;
     }
 
-    private Criteria buildTrrCriteriaForToken(Token token) {
-        List<Criterion> criterion = new ArrayList<Criterion>();
+    private Criteria buildTrrCriteriaForTokenString(Token token) {
         Session session = entityManager.unwrap(Session.class);
         Criteria criteria = session.createCriteria(SqlTokenRevocationRecord.class, "trr");
-        criteria.createAlias("trr.sqlTokenRevocationRecordAuthenticatedBy", "authenticatedByRax", JoinType.LEFT_OUTER_JOIN);
-        criteria.createAlias("trr.accessToken", "accessTokenRax", JoinType.LEFT_OUTER_JOIN);
-
-        criterion.add(getRevocationByTokenCriterion(token));
-
-        if (token instanceof BaseUserToken) {
-            criterion.add(getRevocationByUserWithWildcardTokenFilterCriterion(((BaseUserToken) token).getIssuedToUserId(), token.getAuthenticatedBy(), token.getCreateTimestamp()));
-        }
-
-        criteria.add(Restrictions.or(criterion.toArray(new Criterion[criterion.size()])));
+        criteria.createAlias("trr.accessToken", "accessTokenRax");
+        criteria.add(Restrictions.eq("accessTokenRax.token", token.getAccessTokenString()));
 
         return criteria;
     }
 
-    private Criterion getRevocationByTokenCriterion(Token token) {
-        return Restrictions.eq("accessTokenRax.token", token.getAccessTokenString());
+    private Criteria buildTrrCriteriaForTokenAuthBy(Token token) {
+        Session session = entityManager.unwrap(Session.class);
+        Criteria criteria = session.createCriteria(SqlTokenRevocationRecord.class, "trr");
+        criteria.createAlias("trr.sqlTokenRevocationRecordAuthenticatedBy", "authenticatedByRax",
+                JoinType.INNER_JOIN, getRevocationByWildcardTokenFilterCriterion(token.getAuthenticatedBy()));
+
+        criteria.add(Restrictions.eq("targetIssuedToId", ((BaseUserToken) token).getIssuedToUserId()));
+        criteria.add(Restrictions.ge("targetCreatedBefore", token.getCreateTimestamp()));
+
+        return criteria;
     }
 
-    private Criterion getRevocationByUserWithWildcardTokenFilterCriterion(String userId, List<String> authenticatedBy, Date tokenCreationTimestamp) {
+    private Criterion getRevocationByWildcardTokenFilterCriterion(List<String> authenticatedBy) {
         Criterion authByExactMatchesFilter;
         boolean isTokenForImpersonation = false;
 
@@ -93,12 +105,7 @@ public class TokenRevocationRecordRepositoryImpl implements TokenRevocationRecor
             authByOrFilter = authByExactMatchesFilter;
         }
 
-        return Restrictions.and(
-                Restrictions.eq("targetIssuedToId", userId),
-                Restrictions.isNull("accessTokenRax.id"),
-                Restrictions.ge("targetCreatedBefore", tokenCreationTimestamp),
-                authByOrFilter
-        );
+        return authByOrFilter;
     }
 
 }
