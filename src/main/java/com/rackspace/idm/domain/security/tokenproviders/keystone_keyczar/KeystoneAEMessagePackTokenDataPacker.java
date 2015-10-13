@@ -36,9 +36,10 @@ public class KeystoneAEMessagePackTokenDataPacker implements TokenDataPacker {
 
     private static final Map<Integer, String> AUTH_BY_UNMARSHALL = new HashMap<Integer, String>();
 
-    private static final byte TOKEN_TYPE_UNSCOPED_USER = 0;
+    private static final byte TOKEN_TYPE_0 = 0;
     private static final byte UNSCOPED_USER_TOKEN_FORMAT_1 = 1;
     private static final byte PROJECT_SCOPED_USER_TOKEN_FORMAT_3 = 3;
+    private static final byte DOMAIN_SCOPED_USER_TOKEN_FORMAT_2 = 2;
 
     private static final BigDecimal BIG_DECIMAL_1000 = new BigDecimal(1000);
 
@@ -69,10 +70,12 @@ public class KeystoneAEMessagePackTokenDataPacker implements TokenDataPacker {
             byte type = unpacker.readByte();
             byte format = unpacker.readByte();
 
-            if (type == TOKEN_TYPE_UNSCOPED_USER && format == UNSCOPED_USER_TOKEN_FORMAT_1) {
+            if (type == TOKEN_TYPE_0 && format == UNSCOPED_USER_TOKEN_FORMAT_1) {
                 token = unpackProvisionedUserUnScopedToken(webSafeToken, unpacker);
-            } else if (type == TOKEN_TYPE_UNSCOPED_USER && format == PROJECT_SCOPED_USER_TOKEN_FORMAT_3) {
+            } else if (type == TOKEN_TYPE_0 && format == PROJECT_SCOPED_USER_TOKEN_FORMAT_3) {
                 token = unpackProvisionedUserProjectScopedToken(webSafeToken, unpacker);
+            } else if (type == TOKEN_TYPE_0 && format == DOMAIN_SCOPED_USER_TOKEN_FORMAT_2) {
+                token = unpackProvisionedUserDomainScopedToken(webSafeToken, unpacker);
             } else {
                 throw new UnmarshallTokenException(ERROR_CODE_UNPACK_KEYSTONE_AE_UNSUPPORTED_TOKEN_TYPE_FORMAT, String.format("Unrecognized keystone v3 token type '%s' and format '%s' combination", type, format));
             }
@@ -165,6 +168,56 @@ public class KeystoneAEMessagePackTokenDataPacker implements TokenDataPacker {
         Value rawUserIdValue = unpacker.readValue(); //a UUID, but could be compressed as bytes or just the UUID string
         List<String> authByList = decompressAuthenticatedBy(safeRead(unpacker, Integer[].class));
         Value projectId = unpacker.readValue(); //ignored
+
+        Value createdAtRawValue = unpacker.readValue();
+        Value expiresAtRawValue = unpacker.readValue();
+
+        DateTime createdAt = convertToDateVal(createdAtRawValue);
+        DateTime expiresAt = convertToDateVal(expiresAtRawValue);
+
+        //an array of UUIDs, but could be compressed as bytes or just the UUID string. Ignored.
+        Value b_audit_ids = unpacker.readValue();
+
+        //construct the user token
+        UserScopeAccess scopeAccess = new UserScopeAccess();
+
+        // Timestamps
+        scopeAccess.setAccessTokenExp(expiresAt.toDate());
+        scopeAccess.setCreateTimestamp(createdAt.toDate());
+
+        // ScopeAccess
+        scopeAccess.setAuthenticatedBy(authByList);
+
+        // UserScopeAccess
+        scopeAccess.setUserRsId(uncompressUUID(rawUserIdValue));
+
+        // DN
+        scopeAccess.setUniqueId(TokenDNCalculator.calculateProvisionedUserTokenDN(scopeAccess.getUserRsId(), webSafeToken));
+        scopeAccess.setClientId(identityConfig.getStaticConfig().getCloudAuthClientId());
+
+        return scopeAccess;
+    }
+
+    /**
+     * """Disassemble the payload of a Keystone domain scoped token.
+
+     :param user_id: identifier of the user in the token request
+     :param methods: list of authentication methods used
+     :param domain_id: identifier of the domain to scope to
+     :param created_at: datetime of the token's creation
+     :param expires_at: datetime of the token's expiration
+     :param audit_ids: list of the token's audit IDs
+     """
+     * @param webSafeToken
+     * @param unpacker
+     * @return
+     * @throws IOException
+     */
+    private ScopeAccess unpackProvisionedUserDomainScopedToken(String webSafeToken, Unpacker unpacker) throws IOException {
+        //extract the data from the pack
+        Value rawUserIdValue = unpacker.readValue(); //a UUID, but could be compressed as bytes or just the UUID string
+        List<String> authByList = decompressAuthenticatedBy(safeRead(unpacker, Integer[].class));
+        Value domainId = unpacker.readValue(); //ignored
 
         Value createdAtRawValue = unpacker.readValue();
         Value expiresAtRawValue = unpacker.readValue();
