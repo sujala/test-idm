@@ -8,7 +8,6 @@ import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.OTPDeviceConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RegionConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
@@ -49,7 +48,6 @@ import com.rackspace.idm.api.resource.cloud.v20.CloudGroupBuilder
 import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder
 import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService
-import com.rackspace.idm.api.resource.cloud.v20.PolicyValidator
 import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
@@ -77,7 +75,6 @@ import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.GroupService
 import com.rackspace.idm.domain.service.PasswordComplexityService
-import com.rackspace.idm.domain.service.PolicyService
 import com.rackspace.idm.domain.service.QuestionService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.SecretQAService
@@ -92,7 +89,6 @@ import com.rackspace.idm.domain.service.impl.DefaultDomainService
 import com.rackspace.idm.domain.service.impl.DefaultEndpointService
 import com.rackspace.idm.domain.service.impl.DefaultGroupService
 import com.rackspace.idm.domain.service.impl.DefaultPasswordComplexityService
-import com.rackspace.idm.domain.service.impl.DefaultPolicyService
 import com.rackspace.idm.domain.service.impl.DefaultQuestionService
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultSecretQAService
@@ -138,7 +134,6 @@ class RootServiceTest extends Specification {
     @Shared Validator validator
     @Shared Validator20 validator20
     @Shared PrecedenceValidator precedenceValidator
-    @Shared PolicyValidator policyValidator
     @Shared InputValidator inputValidator
     @Shared CloudGroupBuilder cloudGroupBuilder
     @Shared CloudKsGroupBuilder cloudKsGroupBuilder
@@ -155,7 +150,6 @@ class RootServiceTest extends Specification {
     @Shared UserConverterCloudV20 userConverter
     @Shared UserConverterCloudV11 userConverterV11
     @Shared DomainConverterCloudV20 domainConverter
-    @Shared PolicyConverterCloudV20 policyConverter
     @Shared CapabilityConverterCloudV20 capabilityConverter
     @Shared RegionConverterCloudV20 regionConverter
     @Shared QuestionConverterCloudV20 questionConverter
@@ -195,8 +189,6 @@ class RootServiceTest extends Specification {
     @Shared DefaultDomainService defaultDomainService
     @Shared DefaultCloudRegionService defaultCloudRegionService
     @Shared DefaultAuthenticationService defaultAuthenticationService
-    @Shared DefaultPolicyService defaultPolicyService
-    @Shared PolicyService policyService
     @Shared Cloud11Service cloud11Service
     @Shared DefaultCloud11Service defaultCloud11Service
     @Shared DefaultRegionService defaultRegionService
@@ -336,14 +328,6 @@ class RootServiceTest extends Specification {
         domainConverter.toDomain(_) >> v1Factory.createDomain()
         domainConverter.fromDomain(_) >> entityFactory.createDomain()
         service.domainConverterCloudV20 = domainConverter
-    }
-
-    def mockPolicyConverter(service) {
-        policyConverter = Mock()
-        policyConverter.toPolicy(_) >> v1Factory.createPolicy()
-        policyConverter.fromPolicy(_) >> entityFactory.createPolicy()
-        policyConverter.toPolicyForPolicies(_) >> v1Factory.createPolicy()
-        service.policyConverterCloudV20 = policyConverter
     }
 
     def mockCapabilityConverter(service) {
@@ -606,16 +590,6 @@ class RootServiceTest extends Specification {
         service.defaultAuthenticationService = defaultAuthenticationService
     }
 
-    def mockDefaultPolicyService(service) {
-        defaultPolicyService = Mock()
-        service.defaultPolicyService = defaultPolicyService
-    }
-
-    def mockPolicyService(service) {
-        policyService = Mock()
-        service.policyService = policyService
-    }
-
     def mockCloud11Service(service) {
         cloud11Service = Mock()
         service.cloud11Service = cloud11Service
@@ -743,11 +717,6 @@ class RootServiceTest extends Specification {
     def mockValidator20(service) {
         validator20 = Mock()
         service.validator20 = validator20
-    }
-
-    def mockPolicyValidator(service) {
-        policyValidator = Mock()
-        service.policyValidator = policyValidator
     }
 
     def mockPrecedenceValidator(service) {

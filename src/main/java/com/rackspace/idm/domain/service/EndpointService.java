@@ -31,8 +31,6 @@ public interface EndpointService {
     
     List<CloudBaseUrl> getBaseUrlsByBaseUrlType(String baseUrlType);
 
-    Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId);
-
     List<OpenstackEndpoint> getEndpointsFromTenantList(List<Tenant> tenantList);
 
     OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant);
@@ -40,10 +38,6 @@ public interface EndpointService {
     OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, String openStackType, String region);
 
     void updateBaseUrl(CloudBaseUrl baseUrl);
-
-	void addPolicyToEndpoint(String baseUrlId, String policyId);
-
-	void deletePolicyToEndpoint(String baseUrlId, String policyId);
 
 	void setEndpointDao(EndpointDao endpointDao);
 

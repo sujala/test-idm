@@ -9,13 +9,7 @@ import javax.validation.constraints.NotNull;
 @Entity
 @Table(name = "endpoint")
 @NamedEntityGraph(name = "SqlEndpoint.rax",
-        attributeNodes = {
-                @NamedAttributeNode("rax"),
-                @NamedAttributeNode(value = "rax", subgraph = "policyList")
-        },
-        subgraphs = {
-                @NamedSubgraph(name = "policyList", attributeNodes = @NamedAttributeNode("policyList")),
-        })
+        attributeNodes = {@NamedAttributeNode("rax")})
 public class SqlEndpoint {
 
     @Id

@@ -233,43 +233,6 @@ class EntityFactory extends Specification {
         }
     }
 
-    def createPolicies() {
-        return createPolicies(null)
-    }
-
-    def createPolicies(List<Policy> policyList) {
-        def list = policyList ? policyList : [].asList()
-        new Policies().with {
-            it.policy = list
-            return it
-        }
-    }
-
-    def createPolicy() {
-        return createPolicy("blob")
-    }
-
-    def createPolicy(String blob) {
-        new Policy().with {
-            it.blob = blob
-            it.enabled = true
-            it.global = true
-            return it
-        }
-    }
-
-    def createPolicy(String blob, String name, String policyType, String policyId) {
-        new Policy().with {
-            it.blob = blob
-            it.name = name
-            it.policyType = policyType
-            it.policyId = policyId
-            it.enabled = true
-            it.global = true
-            return it
-        }
-    }
-
     def createQuestion() {
         return createQuestion(ID, "question")
     }

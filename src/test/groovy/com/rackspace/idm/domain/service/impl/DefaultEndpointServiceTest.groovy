@@ -1,24 +1,14 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Tenant
-import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 import static com.rackspace.idm.GlobalConstants.*
 
-/**
- * Created with IntelliJ IDEA.
- * User: jacob
- * Date: 2/26/13
- * Time: 4:42 PM
- * To change this template use File | Settings | File Templates.
- */
 class DefaultEndpointServiceTest extends RootServiceTest {
 
     @Shared DefaultEndpointService service
@@ -31,29 +21,6 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         mockEndpointDao(service)
         mockConfiguration(service)
         mockIdentityConfig(service)
-    }
-
-    def "dao is used to retrieve a list of baseUrls with policyId when calling getBaseUrlsWithPolicyId"() {
-        when:
-        service.getBaseUrlsWithPolicyId("policyId")
-
-        then:
-        1 * endpointDao.getBaseUrlsWithPolicyId("policyId")
-    }
-
-    def "deletePolicyToEndpoint throws NotFoundException if policy does not exist"() {
-        given:
-        def baseUrl = entityFactory.createCloudBaseUrl().with {
-            it.policyList = [].asList()
-            it
-        }
-        endpointDao.getBaseUrlById(_) >> baseUrl
-
-        when:
-        service.deletePolicyToEndpoint("0", "1")
-
-        then:
-        thrown(NotFoundException)
     }
 
     def "addGlobalBaseUrls gets global uk baseUrls by baseUrlType when region is 'LON'"() {

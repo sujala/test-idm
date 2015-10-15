@@ -207,24 +207,6 @@ public interface Cloud20Service {
 
     ResponseBuilder removeTenantFromDomain(String authToken, String domainId, String tenantId);
 
-    ResponseBuilder getPoliciesForEndpointTemplate(String authToken, String endpointTemplateId);
-
-    ResponseBuilder updatePoliciesForEndpointTemplate(String authToken, String endpointTemplateId, Policies policies);
-
-    ResponseBuilder addPolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId);
-
-    ResponseBuilder deletePolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId);
-    
-    ResponseBuilder getPolicies(String authToken);
-
-    ResponseBuilder addPolicy(UriInfo uriInfo, String authToken, Policy policy);
-
-    ResponseBuilder getPolicy(String authToken, String policyId);
-
-    ResponseBuilder updatePolicy(String authToken, String policyId, Policy policy);
-
-    ResponseBuilder deletePolicy(String authToken, String policyId);
-
     ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, Integer marker, Integer limit);
 
     ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId);

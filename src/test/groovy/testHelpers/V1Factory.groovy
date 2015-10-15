@@ -222,48 +222,6 @@ class V1Factory {
         }
     }
 
-    def createPolicies() {
-        return createPolicies(null)
-    }
-
-    def createPolicies(List<Policy> policyList) {
-        def list = policyList ? policyList : [].asList()
-        new Policies().with {
-            it.policy = list
-            return it
-        }
-    }
-
-    def createPolicy() {
-        return createPolicy(ID, "blob")
-    }
-
-    def createPolicy(String id, String blob) {
-        new Policy().with {
-            it.id = id
-            it.blob = blob
-            it.enabled = true
-            it.global = true
-            return it
-        }
-    }
-
-    def createPolicy(String name, String blob, String type) {
-        if (blob == null) {
-            blob = "blob"
-        }
-        if (type == null) {
-            type = "type"
-        }
-
-        new Policy().with {
-            it.name = name
-            it.blob = blob
-            it.type = type
-            return it
-        }
-    }
-
     def createRole() {
         return createRole(NAME)
     }

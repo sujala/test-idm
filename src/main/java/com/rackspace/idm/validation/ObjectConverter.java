@@ -39,8 +39,6 @@ public class ObjectConverter {
         mapping.put(Service.class, ServiceForValidation.class);
         mapping.put(Tenant.class, TenantForValidation.class);
         mapping.put(EndpointTemplate.class, EndpointTemplateForValidation.class);
-        mapping.put(Policy.class, PolicyForValidation.class);
-        mapping.put(Policies.class, PoliciesForValidation.class);
         mapping.put(DefaultRegionServices.class, DefaultRegionServicesForValidation.class);
         mapping.put(User.class, UserForValidation.class);
         mapping.put(UserForCreate.class, UserForValidation.class);

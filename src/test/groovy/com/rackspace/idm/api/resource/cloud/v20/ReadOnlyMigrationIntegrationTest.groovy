@@ -71,21 +71,6 @@ class ReadOnlyMigrationIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Policy :: Can not #operation during migration"() {
-        expect: "not allowed"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
-
-        where:
-        operation | response
-        "add policy" | cloud20.addPolicy(specificationServiceAdminToken, v1Factory.createPolicy())
-        "update policy" | cloud20.updatePolicy(specificationServiceAdminToken, "1", v1Factory.createPolicy())
-        "delete policy" | cloud20.deletePolicy(specificationServiceAdminToken, "1")
-        "add policy to endpoint" | cloud20.addPolicyToEndpointTemplate(specificationServiceAdminToken, "1", "1")
-        "delete policy from endpoint" | cloud20.deletePolicyToEndpointTemplate(specificationServiceAdminToken, "1", "1")
-        "updates policies on endpoint" | cloud20.updatePoliciesForEndpointTemplate(specificationServiceAdminToken, "1", v1Factory.createPolicies())
-    }
-
-    @Unroll
     def "Secret Question :: Can not #operation during migration"() {
         expect: "not allowed"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)

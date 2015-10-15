@@ -87,7 +87,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared def testDomainId2
     @Shared def defaultRegion
     @Shared def endpointTemplateId
-    @Shared def policyId
 
     def randomness = UUID.randomUUID()
     @Shared def groupLocation
@@ -147,10 +146,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         endpointTemplateId = "100001"
         cloud20.addEndpointTemplate(serviceAdminToken, v1Factory.createEndpointTemplate(endpointTemplateId, "compute", "http://public.url", "cloudServers"))
-        def addPolicyResponse = cloud20.addPolicy(serviceAdminToken, v1Factory.createPolicy("name", null, null))
-        def getPolicyResponse = cloud20.getPolicy(serviceAdminToken, addPolicyResponse.location)
-        policyId = getPolicyResponse.getEntity(Policy).id as String
-
 
         defaultRegion = v1Factory.createRegion("ORD", true, true)
         cloud20.createRegion(serviceAdminToken, defaultRegion)
@@ -305,7 +300,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         //TODO: DELETE RAX_AUTH_DOMAINS
         cloud20.deleteEndpointTemplate(serviceAdminToken, endpointTemplateId)
-        cloud20.deletePolicy(serviceAdminToken, policyId)
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
@@ -1853,63 +1847,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         ]
     }
 
-    def "add policy to endpoint without endpoint without policy returns 404"() {
-        when:
-        def response = cloud20.addPolicyToEndpointTemplate(identityAdminToken, "111111", "111111")
-
-        then:
-        response.status == 404
-    }
-
-    def "add policy to endpoint with endpoint without policy returns 404"() {
-        when:
-        def response = cloud20.addPolicyToEndpointTemplate(identityAdminToken, endpointTemplateId, "111111")
-
-        then:
-        response.status == 404
-    }
-
-    def "add policy to endpoint with endpoint with policy returns 204"() {
-        when:
-        def addResponse = cloud20.addPolicyToEndpointTemplate(serviceAdminToken, endpointTemplateId, policyId)
-        def getResponse = cloud20.getPoliciesFromEndpointTemplate(serviceAdminToken, endpointTemplateId)
-        def policies = getResponse.getEntity(Policies)
-        def updateResponse = cloud20.updatePoliciesForEndpointTemplate(serviceAdminToken, endpointTemplateId, policies)
-        def deletePolicyResponse = cloud20.deletePolicy(serviceAdminToken, policyId)
-        def deleteResponse = cloud20.deletePolicyToEndpointTemplate(serviceAdminToken, endpointTemplateId, policyId)
-        def deleteResponse2 = cloud20.deletePolicyToEndpointTemplate(serviceAdminToken, endpointTemplateId, policyId)
-
-        then:
-        addResponse.status == 204
-        policies.policy.size() == 1
-        updateResponse.status == 204
-        deletePolicyResponse.status == 400
-        deleteResponse.status == 204
-        deleteResponse2.status == 404
-    }
-
-    def "update policy to endpoint without endpoint without policy returns 404"() {
-        when:
-        Policies policies = new Policies()
-        Policy policy = v1Factory.createPolicy("name", null, null)
-        policies.policy.add(policy)
-        def response = cloud20.updatePoliciesForEndpointTemplate(serviceAdminToken, "111111", policies)
-
-        then:
-        response.status == 404
-    }
-
-    def "update policy to endpoint with endpoint without policy returns 404"() {
-        when:
-        Policies policies = new Policies()
-        Policy policy = v1Factory.createPolicy("name", null, null)
-        policies.policy.add(policy)
-        def response = cloud20.updatePoliciesForEndpointTemplate(serviceAdminToken, endpointTemplateId, policies)
-
-        then:
-        response.status == 400
-    }
-
     def "Create createSecretQA and get createSecretQA"() {
         when:
         def response = cloud20.createSecretQA(serviceAdminToken,defaultUser.getId(), v1Factory.createSecretQA("1","answer"))
@@ -3131,52 +3068,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cleanup:
         cloud20.destroyUser(serviceAdminToken, createUser.id)
         cloud20.destroyUser(serviceAdminToken, createSubUser.id)
-    }
-
-    def "Updating policy with bold and type null - return 200" () {
-        given:
-        def name = "policy$sharedRandom"
-        Policy policy = v1Factory.createPolicy(name, "someBlob", "type")
-
-        when:
-        def createPolicy = cloud20.addPolicy(identityAdminToken, policy)
-        def policyEntity = cloud20.getPolicy(identityAdminToken, createPolicy.location).getEntity(Policy)
-        policy.blob = null
-        policy.type = null
-        policy.description = "new description"
-        def updatePolicy = cloud20.updatePolicy(identityAdminToken, policyEntity.id, policy)
-        def updatedPolicyEntity = cloud20.getPolicy(identityAdminToken, createPolicy.location).getEntity(Policy)
-
-        then:
-        updatePolicy.status == 204
-        updatedPolicyEntity.blob == "someBlob"
-        updatedPolicyEntity.type == "type"
-
-        cleanup:
-        cloud20.deletePolicy(identityAdminToken, policyEntity.id)
-    }
-
-    def "Updating policy with bold and type empty strings - return 200" () {
-        given:
-        def name = "policy$sharedRandom"
-        Policy policy = v1Factory.createPolicy(name, "someBlob", "type")
-
-        when:
-        def createPolicy = cloud20.addPolicy(identityAdminToken, policy)
-        def policyEntity = cloud20.getPolicy(identityAdminToken, createPolicy.location).getEntity(Policy)
-        policy.blob = ""
-        policy.type = ""
-        policy.description = "new description"
-        def updatePolicy = cloud20.updatePolicy(identityAdminToken, policyEntity.id, policy)
-        def updatedPolicyEntity = cloud20.getPolicy(identityAdminToken, createPolicy.location).getEntity(Policy)
-
-        then:
-        updatePolicy.status == 204
-        updatedPolicyEntity.blob == "someBlob"
-        updatedPolicyEntity.type == "type"
-
-        cleanup:
-        cloud20.deletePolicy(identityAdminToken, policyEntity.id)
     }
 
     def "Default user should not be allow to retrieve users by email unless its promoted to user-manage"() {

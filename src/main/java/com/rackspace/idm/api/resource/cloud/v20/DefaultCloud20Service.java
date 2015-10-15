@@ -2,8 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
@@ -173,19 +171,10 @@ public class DefaultCloud20Service implements Cloud20Service {
     private DomainConverterCloudV20 domainConverterCloudV20;
 
     @Autowired
-    private PolicyConverterCloudV20 policyConverterCloudV20;
-
-    @Autowired
     private DomainService domainService;
 
     @Autowired
     private FederatedIdentityService federatedIdentityService;
-
-    @Autowired
-    private PolicyService policyService;
-
-    @Autowired
-    private PolicyValidator policyValidator;
 
     @Autowired
     private CapabilityService capabilityService;
@@ -2676,57 +2665,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getPoliciesForEndpointTemplate(String authToken, String endpointTemplateId) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-
-        CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
-        com.rackspace.idm.domain.entity.Policies savedPolicies = policyService.getPolicies(new ArrayList<String>(cloudBaseUrl.getPolicyList()));
-
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
-        Policies policies = policyConverterCloudV20.toPolicies(savedPolicies);
-        return Response.ok().entity(objectFactory.createPolicies(policies).getValue());
-    }
-
-    @Override
-    public ResponseBuilder updatePoliciesForEndpointTemplate(String authToken, String endpointTemplateId, Policies policies) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-
-        CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
-        cloudBaseUrl.getPolicyList().clear();
-
-        for (Policy policy : policies.getPolicy()) {
-            String policyId = policy.getId();
-            this.policyService.checkAndGetPolicy(policyId);
-            cloudBaseUrl.getPolicyList().add(policyId);
-        }
-
-        endpointService.updateBaseUrl(cloudBaseUrl);
-
-        return Response.noContent();
-    }
-
-    @Override
-    public ResponseBuilder addPolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-
-        CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
-        com.rackspace.idm.domain.entity.Policy policyEntity = this.policyService.checkAndGetPolicy(policyId);
-
-        endpointService.addPolicyToEndpoint(cloudBaseUrl.getBaseUrlId(), policyEntity.getPolicyId());
-        return Response.noContent();
-    }
-
-    @Override
-    public ResponseBuilder deletePolicyToEndpointTemplate(String authToken, String endpointTemplateId, String policyId) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-
-        CloudBaseUrl cloudBaseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
-
-        endpointService.deletePolicyToEndpoint(cloudBaseUrl.getBaseUrlId(), policyId);
-        return Response.noContent();
-    }
-
-    @Override
     public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
@@ -3742,72 +3680,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         scopeAccessService.expireAccessToken(tokenId);
         return Response.status(204);
-    }
-
-    @Override
-    public ResponseBuilder getPolicies(String authToken) {
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        com.rackspace.idm.domain.entity.Policies savedPolicies = this.policyService.getPolicies();
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
-        Policies policies = policyConverterCloudV20.toPolicies(savedPolicies);
-        return Response.ok().entity(objectFactory.createPolicies(policies).getValue());
-    }
-
-    @Override
-    public ResponseBuilder addPolicy(UriInfo uriInfo, String authToken, Policy policy) {
-        try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            com.rackspace.idm.domain.entity.Policy savedPolicy = this.policyConverterCloudV20.fromPolicy(policy);
-            policyValidator.validatePolicyName(policy.getName());
-            this.policyService.addPolicy(savedPolicy);
-            String policyId = savedPolicy.getPolicyId();
-            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
-            URI build = requestUriBuilder.path(policyId).build();
-            return Response.created(build);
-        } catch (DuplicateException de) {
-            return exceptionHandler.conflictExceptionResponse(de.getMessage());
-        } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    @Override
-    public ResponseBuilder getPolicy(String authToken, String policyId) {
-        try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            com.rackspace.idm.domain.entity.Policy policyEnt = this.policyService.checkAndGetPolicy(policyId);
-            com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
-            Policy policy = policyConverterCloudV20.toPolicy(policyEnt);
-            return Response.ok().entity(objectFactory.createPolicy(policy).getValue());
-        } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    @Override
-    public ResponseBuilder updatePolicy(String authToken, String policyId, Policy policy) {
-        try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            policyValidator.validatePolicyName(policy.getName());
-            policyService.checkAndGetPolicy(policyId);
-            com.rackspace.idm.domain.entity.Policy updatePolicy = this.policyConverterCloudV20.fromPolicy(policy);
-            this.policyService.updatePolicy(policyId, updatePolicy);
-            return Response.noContent();
-        } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
-        }
-
-    }
-
-    @Override
-    public ResponseBuilder deletePolicy(String authToken, String policyId) {
-        try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            this.policyService.softDeletePolicy(policyId);
-            return Response.noContent();
-        } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
-        }
     }
 
     ClientRole checkAndGetClientRole(String id) {

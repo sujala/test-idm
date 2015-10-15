@@ -1,7 +1,5 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.BadRequestException;
@@ -328,34 +326,6 @@ public final class JsonWriterHelper {
             }
         }
         return baseUrls;
-    }
-
-    public static JSONObject getPoliciesWithoutWrapper(Policies policies) {
-        JSONObject policyOuter = new JSONObject();
-        JSONArray policyInner = new JSONArray();
-        if(policies != null){
-            for(Policy policy : policies.getPolicy()){
-                JSONObject policySave = new JSONObject();
-                if(policy.getId() != null){
-                    policySave.put(JSONConstants.ID,policy.getId());
-                }
-                if(policy.getName() != null){
-                    policySave.put(JSONConstants.NAME, policy.getName());
-                }
-                if(policy.getType() != null){
-                    policySave.put(JSONConstants.TYPE, policy.getType());
-                }
-                policySave.put(JSONConstants.ENABLED, policy.isEnabled());
-                policySave.put(JSONConstants.GLOBAL, policy.isGlobal());
-
-                policyInner.add(policySave);
-            }
-        }
-        policyOuter.put(JSONConstants.RAX_AUTH_POLICY, policyInner);
-        if (policies.getAlgorithm() != null) {
-            policyOuter.put(JSONConstants.POLICIES_ALGORITHM, policies.getAlgorithm().value());
-        }
-        return policyOuter;
     }
 
     public static JSONObject getServiceCatalog11(com.rackspacecloud.docs.auth.api.v1.ServiceCatalog serviceCatalog) {

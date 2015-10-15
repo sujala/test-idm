@@ -84,11 +84,6 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
     }
 
     @Override
-    public Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
-        return getObjects(searchFilterGetBaseUrlByPolicyId(policyId));
-    }
-
-    @Override
     public void updateCloudBaseUrl(CloudBaseUrl cloudBaseUrl) {
         updateObject(cloudBaseUrl);
     }
@@ -150,12 +145,6 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
                 .addEqualAttribute(ATTR_GLOBAL, Boolean.toString(true).toUpperCase())
                 .addEqualAttribute(ATTR_ENABLED, Boolean.toString(true).toUpperCase())
                 .addEqualAttribute(ATTR_REGION, "LON").build();
-    }
-
-    private Filter searchFilterGetBaseUrlByPolicyId(String policyId) {
-        return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_POLICY_ID, policyId)
-                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_BASEURL).build();
     }
 
     private Filter searchFilterGetBaseUrl() {
