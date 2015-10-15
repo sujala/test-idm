@@ -2,10 +2,7 @@ package com.rackspace.idm.domain.entity;
 
 import org.apache.commons.lang.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public final class TokenRevocationRecordUtil {
 
@@ -16,6 +13,10 @@ public final class TokenRevocationRecordUtil {
     }
 
     public static List<AuthenticatedByMethodGroup> getAuthdByGroupsFromAuthByStrings(Iterable<String> internalTargetAuthenticatedBy) {
+        if(internalTargetAuthenticatedBy == null || !internalTargetAuthenticatedBy.iterator().hasNext()) {
+            return Collections.EMPTY_LIST;
+        }
+
         List<AuthenticatedByMethodGroup> authBy = new ArrayList<AuthenticatedByMethodGroup>();
 
         for (String flattenedAuthBySet : internalTargetAuthenticatedBy) {
