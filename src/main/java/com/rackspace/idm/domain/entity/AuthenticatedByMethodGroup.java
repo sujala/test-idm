@@ -1,12 +1,14 @@
 package com.rackspace.idm.domain.entity;
 
 import com.rackspace.idm.exception.UnrecognizedAuthenticationMethodException;
+import lombok.EqualsAndHashCode;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@EqualsAndHashCode
 public final class AuthenticatedByMethodGroup {
     /**
      * Includes ALL authenticatedBy methods <b>except</b> impersonation, which are a special class and must be specified
