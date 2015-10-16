@@ -78,6 +78,8 @@ public class SqlTokenRevocationRecord implements TokenRevocationRecord {
         for(String authBy : authByStrings) {
             SqlTokenRevocationRecordAuthenticatedByRax authByRax = new SqlTokenRevocationRecordAuthenticatedByRax();
             authByRax.setAuthenticatedBy(authBy);
+            authByRax.setTokenRevocationRecord(this);
+            authByRax.setId(TokenRevocationRecordUtil.getNextId());
             sqlTokenRevocationRecordAuthenticatedBy.add(authByRax);
         }
     }
