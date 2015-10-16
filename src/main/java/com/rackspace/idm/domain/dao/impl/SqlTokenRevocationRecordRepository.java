@@ -61,11 +61,6 @@ public class SqlTokenRevocationRecordRepository implements TokenRevocationRecord
         sqlTrr.setTargetCreatedBefore(cal.getTime());
         sqlTrr.setCreateTimestamp(cal.getTime());
 
-        for (SqlTokenRevocationRecordAuthenticatedByRax authBy : sqlTrr.getSqlTokenRevocationRecordAuthenticatedBy()) {
-            authBy.setId(TokenRevocationRecordUtil.getNextId());
-            authBy.setTokenRevocationRecord(sqlTrr);
-        }
-
         sqlTrr = tokenRevocationRecordRepository.save(sqlTrr);
 
         final LdapTokenRevocationRecord trr = tokenRevocationMapper.fromSQL(sqlTrr);
