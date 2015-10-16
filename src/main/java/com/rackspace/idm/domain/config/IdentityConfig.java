@@ -967,31 +967,6 @@ public class IdentityConfig {
         public int getSqlMinIdle() {
             return getIntSafely(staticConfiguration, SQL_MIN_IDLE_PROP);
         }
-
-        @IdmProp(key = CACHED_AE_TOKEN_TTL_SECONDS_PROP, versionAdded = "3.0.1", description = "The time an entry will exist in the AE token cache before naturally expiring")
-        public int cachedAETokenTTLSeconds() {
-            return getIntSafely(staticConfiguration, CACHED_AE_TOKEN_TTL_SECONDS_PROP);
-        }
-
-        @IdmProp(key = CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP, versionAdded = "3.0.1", description = "The maximum size of the AE Token cache")
-        public int cachedAETokenCacheMaxSize() {
-            return getIntSafely(staticConfiguration, CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP);
-        }
-
-        @IdmProp(key = CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP, versionAdded = "3.0.1", description = "The initial capacity of the AE Token cache. A higher value prevents unnecessary resizing later at the cost of more upfront memory")
-        public int cachedAETokenCacheInitialCapacity() {
-            return getIntSafely(staticConfiguration, CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP);
-        }
-
-        @IdmProp(key = CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP, versionAdded = "3.0.1", description = "The concurrency level of the AE Token cache. Should roughly how many threads will attempt to concurrently update the cache.")
-        public int cachedAETokenCacheConcurrencyLevel() {
-            return getIntSafely(staticConfiguration, CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP);
-        }
-
-        @IdmProp(key = CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP, versionAdded = "3.0.1", description = "Whether the AE Token cache will record stats.")
-        public boolean cachedAETokenCacheRecordStats() {
-            return getBooleanSafely(staticConfiguration, CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP);
-        }
     }
 
     /**
@@ -1215,6 +1190,31 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_CACHE_AE_TOKENS_PROP, versionAdded = "3.0.1")
         public Boolean cacheAETokens() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_CACHE_AE_TOKENS_PROP);
+        }
+
+        @IdmProp(key = CACHED_AE_TOKEN_TTL_SECONDS_PROP, versionAdded = "3.0.3", description = "The time an entry will exist in the AE token cache before naturally expiring")
+        public int cachedAETokenTTLSeconds() {
+            return getIntSafely(reloadableConfiguration, CACHED_AE_TOKEN_TTL_SECONDS_PROP);
+        }
+
+        @IdmProp(key = CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP, versionAdded = "3.0.3", description = "The maximum size of the AE Token cache")
+        public int cachedAETokenCacheMaxSize() {
+            return getIntSafely(reloadableConfiguration, CACHED_AE_TOKEN_CACHE_MAX_SIZE_PROP);
+        }
+
+        @IdmProp(key = CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP, versionAdded = "3.0.3", description = "The initial capacity of the AE Token cache. A higher value prevents unnecessary resizing later at the cost of more upfront memory")
+        public int cachedAETokenCacheInitialCapacity() {
+            return getIntSafely(reloadableConfiguration, CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP);
+        }
+
+        @IdmProp(key = CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP, versionAdded = "3.0.3", description = "The concurrency level of the AE Token cache. Should roughly how many threads will attempt to concurrently update the cache.")
+        public int cachedAETokenCacheConcurrencyLevel() {
+            return getIntSafely(reloadableConfiguration, CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP);
+        }
+
+        @IdmProp(key = CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP, versionAdded = "3.0.3", description = "Whether the AE Token cache will record stats.")
+        public boolean cachedAETokenCacheRecordStats() {
+            return getBooleanSafely(reloadableConfiguration, CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP);
         }
     }
 

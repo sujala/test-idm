@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.security.jmx;
 
+import com.rackspace.idm.domain.security.AETokenCache;
+
 import javax.management.*;
 import java.lang.management.ManagementFactory;
 
@@ -8,9 +10,9 @@ import java.lang.management.ManagementFactory;
  */
 public class GuavaCacheStats implements GuavaCacheStatsMXBean {
 
-    private final com.google.common.cache.Cache cache;
+    private final AETokenCache cache;
 
-    public GuavaCacheStats(String cname, com.google.common.cache.Cache cache) {
+    public GuavaCacheStats(String cname, AETokenCache cache) {
         this.cache = cache;
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         try {
@@ -33,76 +35,81 @@ public class GuavaCacheStats implements GuavaCacheStatsMXBean {
 
     @Override
     public long getRequestCount() {
-        return cache.stats().requestCount();
+        return cache.getCache().stats().requestCount();
     }
 
     @Override
     public long getHitCount() {
-        return cache.stats().hitCount();
+        return cache.getCache().stats().hitCount();
     }
 
     @Override
     public double getHitRate() {
-        return cache.stats().hitRate();
+        return cache.getCache().stats().hitRate();
     }
 
     @Override
     public long getMissCount() {
-        return cache.stats().missCount();
+        return cache.getCache().stats().missCount();
     }
 
     @Override
     public double getMissRate() {
-        return cache.stats().missRate();
+        return cache.getCache().stats().missRate();
     }
 
     @Override
     public long getLoadCount() {
-        return cache.stats().loadCount();
+        return cache.getCache().stats().loadCount();
     }
 
     @Override
     public long getLoadSuccessCount() {
-        return cache.stats().loadSuccessCount();
+        return cache.getCache().stats().loadSuccessCount();
     }
 
     @Override
     public long getLoadExceptionCount() {
-        return cache.stats().loadExceptionCount();
+        return cache.getCache().stats().loadExceptionCount();
     }
 
     @Override
     public double getLoadExceptionRate() {
-        return cache.stats().loadExceptionRate();
+        return cache.getCache().stats().loadExceptionRate();
     }
 
     @Override
     public long getTotalLoadTime() {
-        return cache.stats().totalLoadTime();
+        return cache.getCache().stats().totalLoadTime();
     }
 
     @Override
     public double getAverageLoadPenalty() {
-        return cache.stats().averageLoadPenalty();
+        return cache.getCache().stats().averageLoadPenalty();
     }
 
     @Override
     public long getEvictionCount() {
-        return cache.stats().evictionCount();
+        return cache.getCache().stats().evictionCount();
     }
 
     @Override
     public long getSize() {
-        return cache.size();
+        return cache.getCache().size();
     }
 
     @Override
     public void cleanUp() {
-        cache.cleanUp();
+        cache.getCache().cleanUp();
     }
 
     @Override
     public void invalidateAll() {
-        cache.invalidateAll();
+        cache.getCache().invalidateAll();
+    }
+
+    @Override
+    public void recreateCache() {
+        cache.recreateCache();
     }
 }

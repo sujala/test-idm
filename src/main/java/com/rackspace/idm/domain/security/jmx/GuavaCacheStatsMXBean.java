@@ -31,4 +31,6 @@ public interface GuavaCacheStatsMXBean {
     public void cleanUp();
 
     public void invalidateAll();
+
+    public void recreateCache();
 }
