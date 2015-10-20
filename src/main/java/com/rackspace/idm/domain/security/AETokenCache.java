@@ -25,7 +25,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class AETokenCache {
+public class AETokenCache implements RecreatableGuavaCache {
     private static final Logger LOG = LoggerFactory.getLogger(AETokenCache.class);
 
     @Autowired
@@ -37,27 +37,47 @@ public class AETokenCache {
     @Autowired
     private AETokenRevocationService aeTokenRevocationService;
 
-    private Cache<String,TokenCacheEntry> cachedTokens;
+    private volatile Cache<String,TokenCacheEntry> cachedTokens;
 
     @PostConstruct
     public void init() {
+        cachedTokens = createCacheFromProps();
+        if (identityConfig.getReloadableConfig().cachedAETokenCacheRecordStats()) {
+            new GuavaCacheStats("AETokenCache", this);
+        }
+    }
+
+    private Cache<String,TokenCacheEntry> createCacheFromProps() {
         Ticker theTicker = ticker != null ? ticker : Ticker.systemTicker();
         CacheBuilder builder = CacheBuilder.newBuilder()
-                .maximumSize(identityConfig.getStaticConfig().cachedAETokenCacheMaxSize())
-                .initialCapacity(identityConfig.getStaticConfig().cachedAETokenCacheInitialCapacity())
-                .expireAfterWrite(identityConfig.getStaticConfig().cachedAETokenTTLSeconds(), TimeUnit.SECONDS)
-                .concurrencyLevel(identityConfig.getStaticConfig().cachedAETokenCacheConcurrencyLevel())
+                .maximumSize(identityConfig.getReloadableConfig().cachedAETokenCacheMaxSize())
+                .initialCapacity(identityConfig.getReloadableConfig().cachedAETokenCacheInitialCapacity())
+                .expireAfterWrite(identityConfig.getReloadableConfig().cachedAETokenTTLSeconds(), TimeUnit.SECONDS)
+                .concurrencyLevel(identityConfig.getReloadableConfig().cachedAETokenCacheConcurrencyLevel())
                 .ticker(theTicker);
 
-        if (identityConfig.getStaticConfig().cachedAETokenCacheRecordStats()) {
+        if (identityConfig.getReloadableConfig().cachedAETokenCacheRecordStats()) {
             builder.recordStats();
         }
 
-        cachedTokens = builder.build();
+        return builder.build();
+    }
 
-        if (identityConfig.getStaticConfig().cachedAETokenCacheRecordStats()) {
-            new GuavaCacheStats("AETokenCache", cachedTokens);
-        }
+    @Override
+    public void recreateCache() {
+        Cache<String,TokenCacheEntry> oldCache = cachedTokens;
+
+        cachedTokens = createCacheFromProps();
+
+        //cleanup old cache. Shouldn't be necessary as the old reference would drop and make available for gc, but perf
+        // hit should be small and doesn't hurt to be explicit. Also protects in case the guava cache does some things
+        // that requires explicit invalidation.
+        oldCache.invalidateAll();
+    }
+
+    @Override
+    public Cache getCache() {
+        return cachedTokens;
     }
 
     public String marshallTokenForUserWithProvider(final BaseUser user, final ScopeAccess token, final TokenProvider provider) {
