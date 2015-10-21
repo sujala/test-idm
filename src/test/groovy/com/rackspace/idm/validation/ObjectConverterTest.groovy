@@ -1,7 +1,6 @@
 package com.rackspace.idm.validation
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PolicyAlgorithm
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.validation.entity.AuthenticationRequestForValidation
 import com.rackspace.idm.validation.entity.BaseUrlForValidation
@@ -12,8 +11,6 @@ import com.rackspace.idm.validation.entity.DomainForValidation
 import com.rackspace.idm.validation.entity.EndpointTemplateForValidation
 import com.rackspace.idm.validation.entity.GroupForValidation
 import com.rackspace.idm.validation.entity.ImpersonationRequestForValidation
-import com.rackspace.idm.validation.entity.PoliciesForValidation
-import com.rackspace.idm.validation.entity.PolicyForValidation
 import com.rackspace.idm.validation.entity.QuestionForValidation
 import com.rackspace.idm.validation.entity.RegionForValidation
 import com.rackspace.idm.validation.entity.RoleForValidation
@@ -263,44 +260,6 @@ class ObjectConverterTest extends RootServiceTest{
         result.version != null
         result.version.info == "info"
         result.version.list == "list"
-    }
-
-    def "Convert Policy to PolicyForValidation"(){
-        when:
-        def entity = v1Factory.createPolicy()
-        entity.name = "name"
-        entity.type = "type"
-        entity.description = "description"
-        PolicyForValidation result = converter.convert(entity)
-
-        then:
-        result != null
-        result.id == "id"
-        result.name == "name"
-        result.description == "description"
-        result.type == "type"
-        result.blob == "blob"
-    }
-
-    def "Convert Policies to PoliciesForValidation"(){
-        when:
-        def entity = v1Factory.createPolicy()
-        entity.name = "name"
-        entity.type = "type"
-        entity.description = "description"
-        def policies = v1Factory.createPolicies([entity].asList())
-        policies.algorithm = PolicyAlgorithm.IF_TRUE_ALLOW
-        PoliciesForValidation result = converter.convert(policies)
-
-        then:
-        result != null
-        result.policy != null
-        result.algorithm ==  "IF_TRUE_ALLOW"
-        result.policy.get(0).id == "id"
-        result.policy.get(0).name == "name"
-        result.policy.get(0).description == "description"
-        result.policy.get(0).type == "type"
-        result.policy.get(0).blob == "blob"
     }
 
     def "Convert DefaultRegionServices to DefaultRegionServicesForValidation"(){

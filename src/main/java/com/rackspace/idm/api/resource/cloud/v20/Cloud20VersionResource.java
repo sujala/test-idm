@@ -256,59 +256,6 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("RAX-AUTH/policies")
-    public Response getPolicies(
-            @HeaderParam(X_AUTH_TOKEN) String authToken) {
-        return cloud20Service.getPolicies(authToken).build();
-    }
-
-    @POST
-    @Path("RAX-AUTH/policies")
-    public Response addPolicy(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @Context UriInfo uriInfo,
-            Policy policy) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.addPolicy(uriInfo, authToken, policy).build();
-        }
-    }
-
-    @GET
-    @Path("RAX-AUTH/policies/{policyId}")
-    public Response getPolicy(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("policyId") String policyId) {
-        return cloud20Service.getPolicy(authToken, policyId).build();
-    }
-
-    @PUT
-    @Path("RAX-AUTH/policies/{policyId}")
-    public Response updatePolicy(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("policyId") String policyId,
-            Policy policy) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.updatePolicy(authToken, policyId, policy).build();
-        }
-    }
-
-    @DELETE
-    @Path("RAX-AUTH/policies/{policyId}")
-    public Response deletePolicy(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("policyId") String policyId) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.deletePolicy(authToken, policyId).build();
-        }
-    }
-
-    @GET
     @Path("RAX-AUTH/domains")
     public Response getAccessibleDomains(
             @Context UriInfo uriInfo,
@@ -841,54 +788,6 @@ public class Cloud20VersionResource {
             return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
         } else {
             return cloud20Service.deleteEndpointTemplate(httpHeaders, authToken, enpdointTemplateId).build();
-        }
-    }
-
-    @GET
-    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/policies")
-    public Response getPoliciesForEndpointTemplate(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("endpointTemplateId") String endpointTemplateId) {
-        return cloud20Service.getPoliciesForEndpointTemplate(authToken, endpointTemplateId).build();
-    }
-
-    @PUT
-    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/policies")
-    public Response updatePoliciesForEndpointTemplate(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("endpointTemplateId") String endpointTemplateId,
-            Policies policies
-            ) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.updatePoliciesForEndpointTemplate(authToken, endpointTemplateId, policies).build();
-        }
-    }
-
-    @PUT
-    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/policies/{policyId}")
-    public Response addPolicyToEndpointTemplate(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("endpointTemplateId") String endpointTemplateId,
-            @PathParam("policyId") String policyId){
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.addPolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
-        }
-    }
-
-    @DELETE
-    @Path("OS-KSCATALOG/endpointTemplates/{endpointTemplateId}/RAX-AUTH/policies/{policyId}")
-    public Response deletePolicyToEndpointTemplate(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("endpointTemplateId") String endpointTemplateId,
-            @PathParam("policyId") String policyId){
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.deletePolicyToEndpointTemplate(authToken, endpointTemplateId, policyId).build();
         }
     }
 

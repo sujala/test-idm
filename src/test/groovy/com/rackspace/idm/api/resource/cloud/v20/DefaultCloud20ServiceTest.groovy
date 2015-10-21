@@ -6,7 +6,6 @@ import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.PolicyConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.GroupConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
@@ -1894,134 +1893,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * capabilityService.getServiceApis()
         response.build().status == 200
-    }
-
-    def "getPolicies verifies access level"() {
-        given:
-        allowUserAccess()
-        mockPolicyConverter(service)
-
-        when:
-        service.getPolicies(authToken)
-
-        then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-    }
-
-    def "getPolicies gets policies"() {
-        given:
-        allowUserAccess()
-        mockPolicyConverter(service)
-
-        when:
-        def response = service.getPolicies(authToken)
-
-        then:
-        1 * policyService.getPolicies()
-
-        response.build().status == 200
-    }
-
-    def "add policy verifies access level"() {
-        given:
-        allowUserAccess()
-        mockPolicyConverter(service)
-
-        when:
-        service.addPolicy(uriInfo(), authToken, v1Factory.createPolicy())
-
-        then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-    }
-
-    def "add policy validates policy name"() {
-        given:
-        allowUserAccess()
-        mockPolicyConverter(service)
-
-        when:
-        def response = service.addPolicy(uriInfo(), authToken, v1Factory.createPolicy())
-
-        then:
-        1 * policyValidator.validatePolicyName(_) >> { throw new BadRequestException() }
-        response.build().status == 400
-    }
-
-    def "add policy adds policy with duplicate exception and success"() {
-        given:
-        allowUserAccess()
-
-        def policy1 = Mock(Policy)
-        def policy2 = Mock(Policy)
-
-        policyConverter = Mock(PolicyConverterCloudV20)
-        policyConverter.fromPolicy(_) >>> [
-                policy1,
-                policy2
-        ]
-
-        service.policyConverterCloudV20 = policyConverter
-
-        when:
-        def response1 = service.addPolicy(uriInfo(), authToken, v1Factory.createPolicy())
-        def response2 = service.addPolicy(uriInfo(), authToken, v1Factory.createPolicy())
-
-        then:
-        1 * policyService.addPolicy(policy1) >> { throw new DuplicateException() }
-        1 * policyService.addPolicy(policy2)
-
-        response1.build().status == 409
-        response2.build().status == 201
-    }
-
-    def "updatePolicy verifies access level"() {
-        given:
-        allowUserAccess()
-        mockPolicyConverter(service)
-
-        when:
-        service.updatePolicy(authToken,"policyId", v1Factory.createPolicy())
-
-        then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-    }
-
-    def "updatePolicy verifies policy"() {
-        given:
-        allowUserAccess()
-        mockPolicyConverter(service)
-
-        when:
-        def response = service.updatePolicy(authToken, "policyId", v1Factory.createPolicy())
-
-        then:
-        1 * policyService.checkAndGetPolicy("policyId") >> { throw new NotFoundException() }
-        response.build().status == 404
-    }
-
-    def "updatePolicy verifies policy name"() {
-        given:
-        allowUserAccess()
-        mockPolicyConverter(service)
-
-        when:
-        service.updatePolicy(authToken, "policyId", v1Factory.createPolicy())
-
-        then:
-        1 * policyValidator.validatePolicyName(_)
-    }
-
-    def "updatePolicy updates policy"() {
-        given:
-        allowUserAccess()
-        mockPolicyConverter(service)
-
-        when:
-        def response = service.updatePolicy(authToken, "policyId", v1Factory.createPolicy())
-
-        then:
-        1 * policyService.updatePolicy(_,_)
-        response.build().status == 204
     }
 
     def "checkDomainFromAuthRequest returns domain"() {
@@ -4365,7 +4236,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserService(service)
         mockDefaultRegionService(service)
         mockDomainService(service)
-        mockPolicyService(service)
         mockCapabilityService(service)
         mockCloudRegionService(service)
         mockQuestionService(service)
@@ -4385,7 +4255,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockCloudKsGroupBuilder(service)
         mockValidator(service)
         mockValidator20(service)
-        mockPolicyValidator(service)
         mockPrecedenceValidator(service)
         mockUserPaginator(service)
         mockAuthWithToken(service)

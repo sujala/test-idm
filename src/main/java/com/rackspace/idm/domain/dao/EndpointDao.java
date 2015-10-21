@@ -29,8 +29,6 @@ public interface EndpointDao {
 
     Iterable<CloudBaseUrl> getGlobalUKBaseUrlsByBaseUrlType(String openStackType);
 
-    Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId);
-
     Iterable<CloudBaseUrl> getBaseUrls();
 
     Iterable<CloudBaseUrl> getBaseUrlsById(List<String> baseUrlIds);

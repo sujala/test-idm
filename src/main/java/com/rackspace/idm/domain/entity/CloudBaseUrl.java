@@ -20,8 +20,7 @@ import static com.rackspace.idm.GlobalConstants.TENANT_ALIAS_PATTERN;
 
 @Data
 @EqualsAndHashCode(exclude={"uniqueId"})
-@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_BASEURL,
-        postEncodeMethod="doPostEncode")
+@LDAPObject(structuralClass= LdapRepository.OBJECTCLASS_BASEURL)
 public class CloudBaseUrl implements Auditable, UniqueId {
     @LDAPDNField
     private String uniqueId;
@@ -71,12 +70,6 @@ public class CloudBaseUrl implements Auditable, UniqueId {
             objectClass=LdapRepository.OBJECTCLASS_BASEURL,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String openstackType;
-
-    @DeleteNullValues
-    @LDAPField(attribute=LdapRepository.ATTR_POLICY_ID,
-            objectClass=LdapRepository.OBJECTCLASS_BASEURL,
-            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private Set<String> policyList;
 
     @LDAPField(attribute=LdapRepository.ATTR_ADMIN_URL,
             objectClass=LdapRepository.OBJECTCLASS_BASEURL,
@@ -145,13 +138,6 @@ public class CloudBaseUrl implements Auditable, UniqueId {
         return String.format("baseUrl=%s", baseUrlId);
     }
 
-    public Set<String> getPolicyList() {
-        if (policyList == null) {
-            policyList = new HashSet<String>();
-        }
-        return policyList;
-    }
-
     public Boolean getGlobal() {
         if (global == null) {
             return false;
@@ -164,13 +150,6 @@ public class CloudBaseUrl implements Auditable, UniqueId {
             return TENANT_ALIAS_PATTERN;
         } else {
             return tenantAlias;
-        }
-    }
-
-    private void doPostEncode(final Entry entry) throws LDAPPersistException {
-        String[] policyIds = entry.getAttributeValues(LdapRepository.ATTR_POLICY_ID);
-        if (policyIds != null && policyIds.length == 0) {
-            entry.removeAttribute(LdapRepository.ATTR_POLICY_ID);
         }
     }
 }

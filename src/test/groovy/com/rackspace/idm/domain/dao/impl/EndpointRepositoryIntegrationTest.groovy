@@ -125,7 +125,6 @@ class EndpointRepositoryIntegrationTest extends Specification {
             it.enabled = true
             it.internalUrl = "internalUrl"
             it.openstackType = "openstackType"
-            it.policyList = ["100000000"].asList()
             it.adminUrl = "adminUrl"
             it.global = true
             it.region = "ORD"
@@ -151,7 +150,6 @@ class EndpointRepositoryIntegrationTest extends Specification {
             it.enabled = false
             it.internalUrl = "internalUrl2"
             it.openstackType = "openstackType2"
-            it.policyList = [].asList()
             it.adminUrl = "adminUrl2"
             it.global = false
             it.region = "DFW"

@@ -137,12 +137,6 @@ public class SqlEndpointRepository implements EndpointDao {
     }
 
     @Override
-    public Iterable<CloudBaseUrl> getBaseUrlsWithPolicyId(String policyId) {
-        final List<SqlEndpoint> endpoints = endpointRepository.findByRaxPolicyListIn(Collections.singleton(policyId));
-        return getCloudBaseUrls(endpoints);
-    }
-
-    @Override
     public Iterable<CloudBaseUrl> getBaseUrls() {
         final List<SqlEndpoint> endpoints = endpointRepository.findAll();
         return getCloudBaseUrls(endpoints);

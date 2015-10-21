@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.domain.dao.PolicyDao
 import com.rackspace.idm.domain.dao.RegionDao
 import com.rackspace.idm.domain.entity.Region
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,9 +20,6 @@ class RegionRepositoryIntegrationTest extends Specification {
 
     @Autowired
     private RegionDao regionDao
-
-    @Autowired
-    private PolicyDao policyDao
 
     def setupSpec() {
         random = ("$randomness").replace('-',"")

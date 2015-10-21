@@ -17,16 +17,11 @@ import java.util.Set;
                 @NamedAttributeNode(value = "baseUrlIds"),
                 @NamedAttributeNode(value = "v1Defaults"),
                 @NamedAttributeNode(value = "baseUrlIds", subgraph = "sqlProject.baseUrlIds.rax"),
-                @NamedAttributeNode(value = "v1Defaults", subgraph = "sqlProject.v1Defaults.rax"),
-                @NamedAttributeNode(value = "baseUrlIds", subgraph = "sqlProject.baseUrlIds.rax.policyList"),
-                @NamedAttributeNode(value = "v1Defaults", subgraph = "sqlProject.v1Defaults.rax.policyList")
+                @NamedAttributeNode(value = "v1Defaults", subgraph = "sqlProject.v1Defaults.rax")
         },
         subgraphs = {
                 @NamedSubgraph(name = "sqlProject.baseUrlIds.rax", attributeNodes = @NamedAttributeNode("rax")),
-                @NamedSubgraph(name = "sqlProject.v1Defaults.rax", attributeNodes = @NamedAttributeNode("rax")),
-                @NamedSubgraph(name = "sqlProject.baseUrlIds.rax.policyList", attributeNodes = @NamedAttributeNode(value = "rax", subgraph = "policyList")),
-                @NamedSubgraph(name = "sqlProject.v1Defaults.rax.policyList", attributeNodes = @NamedAttributeNode(value = "rax", subgraph = "policyList")),
-                @NamedSubgraph(name = "policyList", attributeNodes = @NamedAttributeNode("policyList"))
+                @NamedSubgraph(name = "sqlProject.v1Defaults.rax", attributeNodes = @NamedAttributeNode("rax"))
         })
 public class SqlProject {
 

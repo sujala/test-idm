@@ -4,7 +4,6 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.sql.entity.SqlEndpoint;
 import com.rackspace.idm.domain.sql.entity.SqlEndpointRax;
-import com.rackspace.idm.domain.sql.entity.SqlPolicy;
 import com.rackspace.idm.domain.sql.mapper.SqlRaxMapper;
 
 import java.util.ArrayList;

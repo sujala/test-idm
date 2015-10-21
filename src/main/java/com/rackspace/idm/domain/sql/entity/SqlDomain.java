@@ -21,20 +21,14 @@ import java.util.Set;
                 @NamedAttributeNode(value = "sqlProject", subgraph = "sqlProject.baseUrlIds"),
                 @NamedAttributeNode(value = "sqlProject", subgraph = "sqlProject.v1Defaults"),
                 @NamedAttributeNode(value = "sqlProject", subgraph = "sqlProject.baseUrlIds.rax"),
-                @NamedAttributeNode(value = "sqlProject", subgraph = "sqlProject.v1Defaults.rax"),
-                @NamedAttributeNode(value = "sqlProject", subgraph = "sqlProject.baseUrlIds.rax.policyList"),
-                @NamedAttributeNode(value = "sqlProject", subgraph = "sqlProject.v1Defaults.rax.policyList")
+                @NamedAttributeNode(value = "sqlProject", subgraph = "sqlProject.v1Defaults.rax")
         },
         subgraphs = {
                 @NamedSubgraph(name = "sqlProject.baseUrlIds", attributeNodes = @NamedAttributeNode("baseUrlIds")),
                 @NamedSubgraph(name = "sqlProject.v1Defaults", attributeNodes = @NamedAttributeNode("v1Defaults")),
                 @NamedSubgraph(name = "sqlProject.baseUrlIds.rax", attributeNodes = @NamedAttributeNode(value = "baseUrlIds", subgraph = "sqlEndpoint.rax")),
                 @NamedSubgraph(name = "sqlProject.v1Defaults.rax", attributeNodes = @NamedAttributeNode(value = "v1Defaults", subgraph = "sqlEndpoint.rax")),
-                @NamedSubgraph(name = "sqlEndpoint.rax", attributeNodes = @NamedAttributeNode("rax")),
-                @NamedSubgraph(name = "sqlProject.baseUrlIds.rax.policyList", attributeNodes = @NamedAttributeNode(value = "baseUrlIds", subgraph = "sqlEndpoint.rax.policyList")),
-                @NamedSubgraph(name = "sqlProject.v1Defaults.rax.policyList", attributeNodes = @NamedAttributeNode(value = "v1Defaults", subgraph = "sqlEndpoint.rax.policyList")),
-                @NamedSubgraph(name = "sqlEndpoint.rax.policyList", attributeNodes = @NamedAttributeNode(value = "rax", subgraph = "policyList")),
-                @NamedSubgraph(name = "policyList", attributeNodes = @NamedAttributeNode("policyList"))
+                @NamedSubgraph(name = "sqlEndpoint.rax", attributeNodes = @NamedAttributeNode("rax"))
         })
 public class SqlDomain {
 

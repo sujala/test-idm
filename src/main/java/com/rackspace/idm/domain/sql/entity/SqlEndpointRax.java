@@ -44,11 +44,4 @@ public class SqlEndpointRax {
 
     @Column(name =  "version_list")
     private String versionList;
-
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name="policy_endpoint_rax",
-            joinColumns=@JoinColumn(name="endpoint_id"))
-    @Column(name="policy_id")
-    private Set<String> policyList = new HashSet<String>();
-
 }

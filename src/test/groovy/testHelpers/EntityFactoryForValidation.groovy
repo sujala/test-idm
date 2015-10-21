@@ -12,8 +12,6 @@ import com.rackspace.idm.validation.entity.EndpointTemplateForValidation
 import com.rackspace.idm.validation.entity.GroupForValidation
 import com.rackspace.idm.validation.entity.ImpersonationRequestForValidation
 import com.rackspace.idm.validation.entity.JAXBElementCredentialTypeForValidation
-import com.rackspace.idm.validation.entity.PoliciesForValidation
-import com.rackspace.idm.validation.entity.PolicyForValidation
 import com.rackspace.idm.validation.entity.QuestionForValidation
 import com.rackspace.idm.validation.entity.QuestonForValidationTest
 import com.rackspace.idm.validation.entity.RegionForValidation
@@ -179,25 +177,6 @@ class EntityFactoryForValidation extends Specification{
             it.id = id
             it.info = info
             it.list = list
-            return it
-        }
-    }
-
-    def createPolicy(String id, String name, String type, String blob, String description) {
-        new PolicyForValidation().with {
-            it.description = description
-            it.id = id
-            it.name = name
-            it.type = type
-            it.blob = blob
-            return it
-        }
-    }
-
-    def createPolicies(String algorithm, policy) {
-        new PoliciesForValidation().with {
-            it.algorithm = algorithm
-            it.policy = policy
             return it
         }
     }

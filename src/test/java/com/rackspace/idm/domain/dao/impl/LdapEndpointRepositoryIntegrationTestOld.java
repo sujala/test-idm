@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.EndpointDao;
-import com.rackspace.idm.domain.dao.PolicyDao;
 import com.rackspace.idm.domain.entity.Application;
 import org.junit.*;
 import org.junit.runner.RunWith;
@@ -14,11 +13,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.Policy;
 
 import java.util.Random;
 
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
@@ -30,23 +27,16 @@ public class LdapEndpointRepositoryIntegrationTestOld extends InMemoryLdapIntegr
     private EndpointDao endpointRepository;
 
     @Autowired
-    private PolicyDao policyRepository;
-
-    @Autowired
     private ApplicationDao applicationDao;
 
     private String baseUrlId1 = getId();
     private String baseUrlId2 = getId();
-    private String policyId1 = getId();
-    private String policyId2 = getId();
 
     @Before
     public void cleanupBefore() {
         try {
             endpointRepository.deleteBaseUrl(baseUrlId1);
             endpointRepository.deleteBaseUrl(baseUrlId2);
-            policyRepository.deletePolicy(policyId1);
-            policyRepository.deletePolicy(policyId2);
         } catch (Exception e) {}
     }
 
@@ -55,8 +45,6 @@ public class LdapEndpointRepositoryIntegrationTestOld extends InMemoryLdapIntegr
         try {
             endpointRepository.deleteBaseUrl(baseUrlId1);
             endpointRepository.deleteBaseUrl(baseUrlId2);
-            policyRepository.deletePolicy(policyId1);
-            policyRepository.deletePolicy(policyId2);
         } catch (Exception e) {}
     }
 
@@ -68,50 +56,6 @@ public class LdapEndpointRepositoryIntegrationTestOld extends InMemoryLdapIntegr
         CloudBaseUrl repositoryCloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId1);
 
         assertThat("repositoryCloudBaseUrl", repositoryCloudBaseUrl, notNullValue());
-    }
-
-    @Test
-    public void updatePolicyToBaseUrl_noPolicy_addsPolicy() {
-        CloudBaseUrl cloudBaseUrl = getCloudBaseUrl();
-        endpointRepository.addBaseUrl(cloudBaseUrl);
-
-        Policy policy1 = getPolicy(policyId1);
-        policyRepository.addPolicy(policy1);
-
-        Policy policy2 = getPolicy(policyId2);
-        policyRepository.addPolicy(policy2);
-
-        cloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId1);
-        cloudBaseUrl.getPolicyList().add(policyId1);
-        cloudBaseUrl.getPolicyList().add(policyId2);
-
-        endpointRepository.updateCloudBaseUrl(cloudBaseUrl);
-
-        cloudBaseUrl = endpointRepository.getBaseUrlById(baseUrlId1);
-
-        assertThat("repositoryCloudBaseUrl", cloudBaseUrl.getPolicyList().size(), equalTo(2));
-    }
-
-    @Test
-    public void getBaseUrlsWithPolicyId_doesNotContainsPolicy_returnsEmptyList() {
-        CloudBaseUrl cloudBaseUrl = getCloudBaseUrl();
-        endpointRepository.addBaseUrl(cloudBaseUrl);
-
-        Iterable<CloudBaseUrl> baseUrls = endpointRepository.getBaseUrlsWithPolicyId(policyId1);
-
-        assertThat("repositoryCloudBaseUrl", baseUrls.iterator().hasNext(), equalTo(false));
-    }
-
-    private Policy getPolicy(String policyId) {
-        Policy policy = new Policy();
-        policy.setBlob("blob");
-        policy.setDescription("description");
-        policy.setEnabled(true);
-        policy.setGlobal(true);
-        policy.setName("name");
-        policy.setPolicyType("type");
-        policy.setPolicyId(policyId);
-        return policy;
     }
 
     private CloudBaseUrl getCloudBaseUrl() {

@@ -2,8 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policies;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Policy;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest;
 import com.rackspace.test.Cloud20TestHelper;
@@ -587,117 +585,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
     }
 
     @Test
-    public void policyCrud_validPolicy_returnsCorrectValues() throws JAXBException {
-        ClientResponse clientResponse = createPolicy(identityToken, "name", "blob", "type");
-
-        assertThat("create policy", clientResponse.getStatus(), equalTo(201));
-        String location = clientResponse.getHeaders().get("Location").get(0);
-        Pattern pattern = Pattern.compile(".*policies/([0-9a-z]*)");
-        Matcher matcher = pattern.matcher(location);
-        String policyId = "";
-        if (matcher.find()) {
-            policyId = matcher.group(1);
-        }
-        Policy policy = getPolicy(identityToken, policyId);
-
-        assertThat("get policy", policy, notNullValue());
-
-        deletePolicy(identityToken, policy.getId());
-
-        policy = null;
-
-        try {
-            policy = getPolicy(identityToken, policy.getId());
-        } catch (Exception e) {
-        }
-
-        assertThat("delete policy", policy, equalTo(null));
-    }
-
-    private ClientResponse updatePolicyToEndpointTemplate(String token, String endpointTemplateId, String policies) {
-        return getWebResourceBuilder(
-                "cloud/v2.0/OS-KSCATALOG/endpointTemplates/" + endpointTemplateId + "/RAX-AUTH/policies",
-                MediaType.APPLICATION_XML)
-                .header(X_AUTH_TOKEN, token).put(ClientResponse.class, policies);
-
-    }
-
-    private ClientResponse addPolicyToEndpointTemplate(String token, String endpointTemplateId, String policyId) {
-        return getWebResourceBuilder(
-                "cloud/v2.0/OS-KSCATALOG/endpointTemplates/" + endpointTemplateId + "/RAX-AUTH/policies/" + policyId,
-                MediaType.APPLICATION_XML)
-                .header(X_AUTH_TOKEN, token).put(ClientResponse.class);
-    }
-
-    private Policies getPoliciesFromEndpointTemplate(String token, String endpointTemplateId) throws JAXBException {
-        String response = getWebResourceBuilder(
-                "cloud/v2.0/OS-KSCATALOG/endpointTemplates/" + endpointTemplateId + "/RAX-AUTH/policies",
-                MediaType.APPLICATION_XML)
-                .header(X_AUTH_TOKEN, token).get(String.class);
-
-        return cloud20TestHelper.getPolicies(response);
-    }
-
-    private ClientResponse deletePolicyToEndpointTemplate(String token, String endpointTemplateId, String policyId) {
-        return getWebResourceBuilder(
-                "cloud/v2.0/OS-KSCATALOG/endpointTemplates/" + endpointTemplateId + "/RAX-AUTH/policies/" + policyId,
-                MediaType.APPLICATION_XML)
-                .header(X_AUTH_TOKEN, token).delete(ClientResponse.class);
-    }
-
-    private void deleteEndpointTemplate(String token, String endpointTemplateId) throws JAXBException {
-        getWebResourceBuilder("cloud/v2.0/OS-KSCATALOG/endpointTemplates/" + endpointTemplateId, MediaType.APPLICATION_XML)
-                .header(X_AUTH_TOKEN, token).delete();
-    }
-
-    @Test
-    public void createPolicy_validPolicy_invalidToken_returns401() throws JAXBException {
-        try {
-            createPolicy("badToken", "name", "blob", "type");
-        } catch (Exception ex) {
-            assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(401));
-        }
-    }
-
-    @Test
-    public void createPolicy_invalidPolicy_returns400() throws JAXBException {
-        try {
-            createPolicy(identityToken, "name", null, "type");
-        } catch (Exception ex) {
-            assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(400));
-        }
-    }
-
-    @Test
-    public void getPolicy_validValue_returns400() throws Exception {
-        ClientResponse policyClientResponse = createPolicy(identityToken, "someName", "someBlob", "someType");
-        assertThat("create policy", policyClientResponse.getStatus(), equalTo(201));
-        String location = policyClientResponse.getHeaders().get("Location").get(0);
-        Pattern pattern = Pattern.compile(".*policies/([0-9a-z]*)");
-        Matcher matcher = pattern.matcher(location);
-        String policyId = "";
-        if (matcher.find()) {
-            policyId = matcher.group(1);
-
-        }
-
-        Policy policy = getPolicy(identityToken, policyId);
-        Policy policy2 = getPolicy(identityToken, policy.getId());
-        assertThat("Policy Value", policy2.getBlob(), equalTo("someBlob"));
-        assertThat("Policy Value", policy2.getName(), equalTo("someName"));
-        assertThat("Policy Value", policy2.getType(), equalTo("someType"));
-    }
-
-    @Test
-    public void getPolicy_invalidValue_returns404() throws Exception {
-        try {
-            getPolicy(identityToken, "00000");
-        } catch (Exception ex) {
-            assertThat("Status Code", ((UniformInterfaceException) ex).getResponse().getStatus(), equalTo(404));
-        }
-    }
-
-    @Test
     public void getAccessibleDomains_invalidToken_return401() throws JAXBException {
         try {
             String token = "badToken";
@@ -757,24 +644,6 @@ public class Cloud20VersionResourceIntegrationTest extends AbstractAroundClassJe
         String response = getWebResourceBuilder("cloud/v2.0/users/" + userId + "/RAX-AUTH/domains/" + domainId + "/endpoints", MediaType.APPLICATION_XML)
                 .header(X_AUTH_TOKEN, token).get(String.class);
         return cloud20TestHelper.getEndpointListObject(response);
-    }
-
-    private ClientResponse createPolicy(String token, String name, String blob, String type) throws JAXBException {
-        String request = cloud20TestHelper.getPolicyString(name, blob, type);
-        return getWebResourceBuilder("cloud/v2.0/RAX-AUTH/policies", MediaType.APPLICATION_XML)
-                .header(X_AUTH_TOKEN, token).post(ClientResponse.class, request);
-    }
-
-    private Policy getPolicy(String token, String policyId) throws JAXBException {
-        String response = getWebResourceBuilder("cloud/v2.0/RAX-AUTH/policies/" + policyId, MediaType.APPLICATION_XML)
-                .header(X_AUTH_TOKEN, token).get(String.class);
-
-        return cloud20TestHelper.getPolicyObject(response);
-    }
-
-    private void deletePolicy(String token, String policyId) {
-        getWebResourceBuilder("cloud/v2.0/RAX-AUTH/policies/" + policyId, MediaType.APPLICATION_XML)
-                .header(X_AUTH_TOKEN, token).delete();
     }
 
     private String authenticate(String user, String pwd, String mediaType) throws JAXBException {

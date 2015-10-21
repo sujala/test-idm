@@ -622,46 +622,6 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(endpointTemplateId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addPolicy(String token, policy) {
-        initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(POLICIES).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(policy).post(ClientResponse)
-    }
-
-    def updatePolicy(String token, String policyId, policy) {
-        initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(POLICIES).path(policyId).header(X_AUTH_TOKEN, token).type(APPLICATION_XML).accept(APPLICATION_XML).entity(policy).put(ClientResponse)
-    }
-
-    def getPolicy(String token, location) {
-        initOnUse()
-        resource.uri(location).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def deletePolicy(String token, policyId) {
-        initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(POLICIES).path(policyId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
-    }
-
-    def addPolicyToEndpointTemplate(String token, endpointTemplateId, policyId) {
-        initOnUse()
-        resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(endpointTemplateId).path(RAX_AUTH).path(POLICIES).path(policyId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
-    }
-
-    def deletePolicyToEndpointTemplate(String token, endpointTemplateId, policyId) {
-        initOnUse()
-        resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(endpointTemplateId).path(RAX_AUTH).path(POLICIES).path(policyId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
-    }
-
-    def getPoliciesFromEndpointTemplate(String token, endpointTemplateId) {
-        initOnUse()
-        resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(endpointTemplateId).path(RAX_AUTH).path(POLICIES).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
-    }
-
-    def updatePoliciesForEndpointTemplate(String token, endpointTemplateId, policies) {
-        initOnUse()
-        resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(endpointTemplateId).path(RAX_AUTH).path(POLICIES).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(policies).put(ClientResponse)
-    }
-
     def addTenant(String token, Tenant tenant) {
         initOnUse()
         resource.path(path20).path(TENANTS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
