@@ -778,16 +778,6 @@ class Cloud20Methods {
         deleteUser(token, userId)
     }
 
-    def updateCapabilities(String token, type, version, capabilities) {
-        initOnUse()
-        resource.path(path20).path(RAX_AUTH).path("service-apis").path(type).path(version).path("capabilities").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(capabilities).put(ClientResponse)
-    }
-
-    def deleteCapabilities(String token, type, version) {
-        initOnUse()
-        resource.path(path20).path(RAX_AUTH).path("service-apis").path(type).path(version).path("capabilities").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
-    }
-
     def updateDefaultRegionServices(String token, defaultRegionServices) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path("default-region").path("services").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(defaultRegionServices).put(ClientResponse)

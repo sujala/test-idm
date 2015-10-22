@@ -65,13 +65,8 @@ public final class JSONConstants {
     public static final String OS_KSADM_SERVICES = "OS-KSADM:services";
     public static final String PASSWORD = "password";
     public static final String PASSWORD_CREDENTIALS = "passwordCredentials";
-    public static final String POLICY = "policy";
-    public static final String POLICIES = "policies";
     public static final String PUBLIC_URL = "publicURL";
     public static final String QUESTION = "question";
-    public static final String CAPABILITIES = "capabilities";
-    public static final String SERVICE_APIS = "serviceApis";
-    public static final String CAPABILITY = "capability";
     public static final String REGION = "region";
     public static final String REGIONS = "regions";
     public static final String RSA_CREDENTIALS = "rsaCredentials";
@@ -122,8 +117,6 @@ public final class JSONConstants {
     public static final String SERVICE = "service";
     public static final String RAX_AUTH_QUESTION = "RAX-AUTH:question";
     public static final String RAX_AUTH_QUESTIONS = "RAX-AUTH:questions";
-    public static final String RAX_AUTH_CAPABILITIES = "RAX-AUTH:capabilities";
-    public static final String RAX_AUTH_SERVICE_APIS = "RAX-AUTH:serviceApis";
     public static final String RAX_AUTH_SECRETQA = "RAX-AUTH:secretqa";
     public static final String RAX_AUTH_SECRETQAS = "RAX-AUTH:secretqas";
     public static final String DISPLAY_NAME_CLOUD = "display-name";

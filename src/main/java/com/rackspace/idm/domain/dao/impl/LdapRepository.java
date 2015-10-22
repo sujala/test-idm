@@ -213,7 +213,6 @@ public abstract class LdapRepository {
     protected static final String DOMAIN_BASE_DN = "ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String POLICY_BASE_DN = "ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String QUESTION_BASE_DN = "ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
-    protected static final String CAPABILITY_BASE_DN = "ou=capabilities,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String REGION_BASE_DN = "ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String APPLICATIONS_BASE_DN = "ou=applications,o=rackspace,dc=rackspace,dc=com";
     protected static final String USERS_BASE_DN = "ou=users,o=rackspace,dc=rackspace,dc=com";

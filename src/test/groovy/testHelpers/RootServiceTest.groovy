@@ -3,7 +3,6 @@ package testHelpers
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.CapabilityConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20
@@ -69,7 +68,6 @@ import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.AuthenticationService
 import com.rackspace.idm.domain.service.AuthorizationService
-import com.rackspace.idm.domain.service.CapabilityService
 import com.rackspace.idm.domain.service.CloudRegionService
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.EndpointService
@@ -150,7 +148,6 @@ class RootServiceTest extends Specification {
     @Shared UserConverterCloudV20 userConverter
     @Shared UserConverterCloudV11 userConverterV11
     @Shared DomainConverterCloudV20 domainConverter
-    @Shared CapabilityConverterCloudV20 capabilityConverter
     @Shared RegionConverterCloudV20 regionConverter
     @Shared QuestionConverterCloudV20 questionConverter
     @Shared SecretQAConverterCloudV20 secretQAConverter
@@ -161,7 +158,6 @@ class RootServiceTest extends Specification {
     //services
     @Shared ApplicationService applicationService
     @Shared DomainService domainService
-    @Shared CapabilityService capabilityService
     @Shared QuestionService questionService
     @Shared ScopeAccessService scopeAccessService
     @Shared PasswordComplexityService passwordComplexityService
@@ -328,16 +324,6 @@ class RootServiceTest extends Specification {
         domainConverter.toDomain(_) >> v1Factory.createDomain()
         domainConverter.fromDomain(_) >> entityFactory.createDomain()
         service.domainConverterCloudV20 = domainConverter
-    }
-
-    def mockCapabilityConverter(service) {
-        capabilityConverter = Mock()
-        capabilityConverter.fromCapability(_) >> entityFactory.createCapability()
-        capabilityConverter.fromCapabilities(_) >> entityFactory.createCapabilities()
-        capabilityConverter.toCapability(_) >> jaxbMock
-        capabilityConverter.toCapabilities(_) >> jaxbMock
-        capabilityConverter.toServiceApis(_) >> jaxbMock
-        service.capabilityConverterCloudV20 = capabilityConverter
     }
 
     def mockRegionConverter(service) {

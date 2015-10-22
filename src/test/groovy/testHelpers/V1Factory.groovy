@@ -96,29 +96,6 @@ class V1Factory {
         return objFactory.createApiKeyCredentials(credentials)
     }
 
-    def createCapability() {
-        return createCapability(ID, NAME)
-    }
-
-    def createCapability(String id, String name) {
-        new Capability().with {
-            it.id = id ? id : ID
-            it.name = name ? name : NAME
-            return it
-        }
-    }
-    def createCapabilities() {
-        return createCapabilities(null)
-    }
-
-    def createCapabilities(List<Capability> capabilityList) {
-        def list = capabilityList ? capabilityList : [].asList()
-        new Capabilities().with {
-            it.getCapability().addAll(list)
-            return it
-        }
-    }
-
     def createDomain() {
         return createDomain("id", "name")
     }

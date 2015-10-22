@@ -347,147 +347,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         questionsResponse2.status == 403
     }
 
-    def "updateCapabilities verifies identity admin level access"() {
-        given:
-        mockCapabilityConverter(service)
-        allowUserAccess()
-
-        when:
-        service.updateCapabilities(authToken, v1Factory.createCapabilities(), "type", "version")
-
-        then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-    }
-
-    def "updateCapabilities updates capability"() {
-        given:
-        mockCapabilityConverter(service)
-        allowUserAccess()
-
-        when:
-        def response = service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest","1").build()
-
-        then:
-        response.status == 204
-    }
-
-    def "updateCapabilities handles exceptions"() {
-        given:
-        mockCapabilityConverter(service)
-
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
-        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
-        capabilityService.updateCapabilities(_, _, _) >> { throw new BadRequestException() }
-
-        when:
-        def response1 = service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
-        def response2 = service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
-        def response3 = service.updateCapabilities(authToken, v1Factory.createCapabilities(),"computeTest", "1").build()
-
-        then:
-        response1.status == 401
-        response2.status == 403
-        response3.status == 400
-    }
-
-    def "capabilites get verifies identity admin level access"() {
-        given:
-        mockCapabilityConverter(service)
-        allowUserAccess()
-
-        when:
-        service.getCapabilities(authToken, "type", "version")
-
-        then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-    }
-
-    def "Capabilities get gets and returns capabilities"() {
-        given:
-        mockCapabilityConverter(service)
-        allowUserAccess()
-
-        jaxbMock.getValue() >> v1Factory.createCapabilities([ v1Factory.createCapability("1", "capability") ].asList())
-
-        when:
-        def response = service.getCapabilities(authToken,"computeTest","1").build()
-
-        then:
-        1 * capabilityService.getCapabilities(_, _)
-        def com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities entity = response.getEntity()
-        entity.getCapability().get(0).id.equals("1")
-        entity.getCapability().get(0).name.equals("capability")
-        response.status == 200
-    }
-
-    def "capabilities get handles exceptions"() {
-        given:
-        mockCapabilityConverter(service)
-
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
-        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
-        capabilityService.getCapabilities(_, _) >> { throw new BadRequestException() }
-
-        capabilityService.getCapabilities(_, _) >> { throw new BadRequestException() }
-
-        when:
-        def response1 = service.getCapabilities("badToken","computeTest","1").build()
-        def response2 = service.getCapabilities("badToken","computeTest","1").build()
-        def response3 = service.getCapabilities("badToken","computeTest","1").build()
-
-        then:
-        response1.status == 401
-        response2.status == 403
-        response3.status == 400
-    }
-
-    def "deleteCapabilities verifies identity admin level access"() {
-        given:
-        mockCapabilityConverter(service)
-        allowUserAccess()
-
-        when:
-        service.removeCapabilities(authToken, "type", "version")
-
-        then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-    }
-
-    def "deleteCapabilities deletes capability"() {
-        given:
-        mockCapabilityConverter(service)
-        allowUserAccess()
-
-        when:
-        def response = service.removeCapabilities(authToken , "computeTest", "1").build()
-
-        then:
-        response.status == 204
-        1 * capabilityService.removeCapabilities("computeTest", "1")
-    }
-
-    def "deleteCapabilities handles exceptions"() {
-        given:
-        mockCapabilityConverter(service)
-
-        def mock = Mock(ScopeAccess)
-        scopeAccessService.getScopeAccessByAccessToken(_) >>> [ null, mock, Mock(ScopeAccess) ]
-        authorizationService.verifyIdentityAdminLevelAccess(mock) >> { throw new ForbiddenException() }
-        capabilityService.removeCapabilities(_, _) >> { throw new BadRequestException() }
-
-        when:
-        def response1 = service.removeCapabilities(authToken, null, null).build()
-        def response2 = service.removeCapabilities(authToken, null, null).build()
-        def response3 = service.removeCapabilities(authToken, null, null).build()
-
-        then:
-        response1.status == 401
-        response2.status == 403
-        response3.status == 400
-    }
-
     def "assignRoleToUser provisions role and adds role to user"() {
         given:
         def user = entityFactory.createUser()
@@ -1868,31 +1727,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * domainService.removeTenantFromDomain(_, _)
 
         response.build().status == 204
-    }
-
-    def "getServiceApis verifies access level"() {
-        given:
-        allowUserAccess()
-        mockCapabilityConverter(service)
-
-        when:
-        service.getServiceApis(authToken)
-
-        then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
-    }
-
-    def "getServiceApis gets service api's"() {
-        given:
-        allowUserAccess()
-        mockCapabilityConverter(service)
-
-        when:
-        def response = service.getServiceApis(authToken)
-
-        then:
-        1 * capabilityService.getServiceApis()
-        response.build().status == 200
     }
 
     def "checkDomainFromAuthRequest returns domain"() {
@@ -4236,7 +4070,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockUserService(service)
         mockDefaultRegionService(service)
         mockDomainService(service)
-        mockCapabilityService(service)
         mockCloudRegionService(service)
         mockQuestionService(service)
         mockSecretQAService(service)

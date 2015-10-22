@@ -79,32 +79,6 @@ class EntityFactory extends Specification {
         }
     }
 
-    def createCapabilities() {
-        return createCapabilities(null)
-    }
-
-    def createCapabilities(List<Capability> capabilityList) {
-        def list = capabilityList ? capabilityList : [].asList()
-        new Capabilities().with {
-            it.getCapability().addAll(list)
-            return it
-        }
-    }
-
-    def createCapability() {
-        def list = ["resource"].asList()
-        return createCapability(ID, NAME)
-    }
-
-    def createCapability(String id, String name) {
-        new Capability().with {
-            it.id = id
-            it.name = name
-            it.resources = [].asList()
-            return it
-        }
-    }
-
     def createClientAuthenticationResult() {
         return createClientAuthenticationResult(createApplication(), true)
     }
