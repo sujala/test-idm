@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
@@ -46,6 +47,25 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     def setup() {
         staticIdmConfiguration.reset()
         reloadableConfiguration.reset()
+    }
+
+    def "list accessible domains for user admin returns the user's domain"() {
+        given:
+        def domain = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domain)
+
+        when:
+        def response = cloud20.getAccessibleDomains(utils.getToken(userAdmin.username))
+
+        then:
+        response.status == 200
+        def domains = response.getEntity(Domains)
+        domains.domain.size() == 1
+        domains.domain[0].id == domain
+
+        cleanup:
+        utils.deleteUsers(users)
     }
 
     def "Test if 'cloud20Service.addTenant(...)' adds default 'domainId' to the tenant and updates domain to point to tenant"() {

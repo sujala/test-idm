@@ -11,11 +11,15 @@ import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicatio
 import com.rackspace.idm.domain.sql.dao.DomainRepository;
 import com.rackspace.idm.domain.sql.entity.SqlDomain;
 import com.rackspace.idm.domain.sql.mapper.impl.DomainMapper;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @SQLComponent
@@ -91,7 +95,16 @@ public class SqlDomainRepository implements DomainDao {
 
     @Override
     public Iterable<Domain> getDomainsForTenant(List<Tenant> tenants) {
-        return null;
+        if (CollectionUtils.isEmpty(tenants)) {
+            return Collections.EMPTY_LIST;
+        }
+        Collection<String> tenantIds = CollectionUtils.collect(tenants, new Transformer<Tenant, String>() {
+            @Override
+            public String transform(Tenant tenant) {
+                return tenant.getTenantId();
+            }
+        });
+        return mapper.fromSQL(domainRepository.findBySqlProjectTenantIdIn(tenantIds));
     }
 
 }
