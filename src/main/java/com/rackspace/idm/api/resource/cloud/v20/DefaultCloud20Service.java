@@ -1,11 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Capabilities;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ServiceApis;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.GlobalConstants;
@@ -22,7 +20,6 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.Capability;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.Tenant;
@@ -175,12 +172,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private FederatedIdentityService federatedIdentityService;
-
-    @Autowired
-    private CapabilityService capabilityService;
-
-    @Autowired
-    private CapabilityConverterCloudV20 capabilityConverterCloudV20;
 
     @Autowired
     private CloudRegionService cloudRegionService;
@@ -2751,48 +2742,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
-    }
-
-    @Override
-    public ResponseBuilder updateCapabilities(String authToken, Capabilities capabilities, String type, String version) {
-        try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            com.rackspace.idm.domain.entity.Capabilities capabilitiesObj = capabilityConverterCloudV20.fromCapabilities(capabilities);
-            capabilityService.updateCapabilities(capabilitiesObj.getCapability(),type, version);
-            return Response.noContent();
-        }catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    @Override
-    public ResponseBuilder getCapabilities(String authToken, String type, String version) {
-        try{
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            Iterable<Capability> capabilitiesDO = capabilityService.getCapabilities(type, version);
-            Capabilities capabilities = capabilityConverterCloudV20.toCapabilities(capabilitiesDO).getValue();
-            return Response.ok(capabilities);
-        }catch (Exception ex){
-            return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    @Override
-    public ResponseBuilder removeCapabilities(String authToken, String type, String version) {
-        try{
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            capabilityService.removeCapabilities(type, version);
-            return Response.noContent();  //To change body of implemented methods use File | Settings | File Templates.
-        }catch (Exception ex){
-            return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    @Override
-    public ResponseBuilder getServiceApis(String authToken){
-        authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        ServiceApis serviceApis = capabilityConverterCloudV20.toServiceApis(capabilityService.getServiceApis()).getValue();
-        return Response.ok().entity(serviceApis);
     }
 
     public ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, Integer marker, Integer limit) {

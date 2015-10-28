@@ -792,49 +792,6 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("RAX-AUTH/service-apis")
-    public Response getServiceApis(
-            @HeaderParam(X_AUTH_TOKEN) String authToken){
-        return cloud20Service.getServiceApis(authToken).build();
-    }
-
-    @GET
-    @Path("RAX-AUTH/service-apis/{type}/{version}/capabilities")
-    public Response getCapabilities(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("type") String type,
-            @PathParam("version") String version){
-        return cloud20Service.getCapabilities(authToken, type, version).build();
-    }
-
-    @PUT
-    @Path("RAX-AUTH/service-apis/{type}/{version}/capabilities")
-    public Response updateCapabilities(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("type") String type,
-            @PathParam("version") String version,
-            Capabilities capabilities){
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.updateCapabilities(authToken, capabilities, type, version).build();
-        }
-    }
-
-    @DELETE
-    @Path("RAX-AUTH/service-apis/{type}/{version}/capabilities")
-    public Response removeCapabilities(
-            @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("type") String type,
-            @PathParam("version") String version){
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.removeCapabilities(authToken, type, version).build();
-        }
-    }
-
-    @GET
     @Path("/tenants/{tenantId}/OS-KSCATALOG/endpoints")
     public Response listEndpoints(
             @Context HttpHeaders httpHeaders,

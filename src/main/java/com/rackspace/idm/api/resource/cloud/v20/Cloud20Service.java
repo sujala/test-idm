@@ -213,14 +213,6 @@ public interface Cloud20Service {
 
     ResponseBuilder getAccessibleDomainsEndpointsForUser(String authToken, String userId, String domainId);
 
-    ResponseBuilder updateCapabilities(String token, Capabilities capabilities, String type, String version);
-
-    ResponseBuilder getCapabilities(String token, String type, String version);
-
-    ResponseBuilder removeCapabilities(String token, String type, String version);
-
-    ResponseBuilder getServiceApis(String authToken);
-
     ResponseBuilder listUsersWithRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String roleId, Integer marker, Integer limit);
 
     ResponseBuilder addRegion(UriInfo uriInfo, String authToken, Region region);

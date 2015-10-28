@@ -48,17 +48,6 @@ class ReadOnlyMigrationIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Capabilities :: Can not #operation during migration"() {
-        expect: "not allowed"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
-
-        where:
-        operation | response
-        "update capabilities" | cloud20.updateCapabilities(specificationServiceAdminToken, "1", "2", v1Factory.createCapabilities())
-        "delete capabilities" | cloud20.deleteCapabilities(specificationServiceAdminToken, "1", "2")
-    }
-
-    @Unroll
     def "Groups :: Can not #operation during migration"() {
         expect: "not allowed"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, IdentityFault, HttpStatus.SC_SERVICE_UNAVAILABLE, ErrorCodes.ERROR_CODE_MIGRATION_READ_ONLY_ENTITY_CODE)
