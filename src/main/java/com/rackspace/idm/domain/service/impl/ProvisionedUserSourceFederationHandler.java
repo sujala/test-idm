@@ -21,6 +21,7 @@ import org.apache.commons.collections.ListUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
+import org.joda.time.Seconds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,7 +141,15 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
         }
 
         request.getUser().setUsername(samlResponseDecorator.checkAndGetUsername());
-        request.setRequestedTokenExpirationDate(samlResponseDecorator.checkAndGetSubjectConfirmationNotOnOrAfterDate());
+        DateTime requestedExp = samlResponseDecorator.checkAndGetSubjectConfirmationNotOnOrAfterDate();
+        DateTime now = new DateTime();
+        int maxTokenLifetime = identityConfig.getReloadableConfig().getFederatedDomainTokenLifetimeMax();
+        int timeDelta = Seconds.secondsBetween(now, requestedExp).getSeconds();
+        if (timeDelta > maxTokenLifetime) {
+            throw new BadRequestException("Invalid requested token expiration. " +
+                    "Tokens cannot be requested with an expiration of more than " + maxTokenLifetime + "seconds.");
+        }
+        request.setRequestedTokenExpirationDate(requestedExp);
 
         //validate and populate domain
         validateSamlDomainAndPopulateRequest(samlResponseDecorator, request);
