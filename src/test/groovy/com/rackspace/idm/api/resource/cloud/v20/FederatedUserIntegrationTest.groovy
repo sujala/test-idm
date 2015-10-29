@@ -21,6 +21,7 @@ import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHand
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import org.apache.commons.lang.BooleanUtils
 import org.apache.log4j.Logger
+import org.joda.time.DateTime
 import org.opensaml.saml2.core.Response
 import org.opensaml.xml.signature.Signature
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -135,6 +136,39 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+    }
+
+    @Unroll
+    def "test response age validation for fedreation: secToAddToAge == #secToAddToAge, expectedResponse == #expectedResponse"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def assertionFactory = new SamlAssertionFactory()
+        def maxResponseAge = identityConfig.getReloadableConfig().getFederatedResponseMaxAge()
+        def issueInstant = new DateTime().minusSeconds(maxResponseAge)
+        issueInstant = issueInstant.plusSeconds(secToAddToAge)
+        def samlResponse = assertionFactory.generateSamlAssertionResponseForFederatedUser(DEFAULT_IDP_URI, username, 60, domainId, null, email, Constants.DEFAULT_IDP_PRIVATE_KEY, Constants.DEFAULT_IDP_PUBLIC_KEY, issueInstant);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+
+        when:
+        def response = cloud20.samlAuthenticate(assertionFactory.convertResponseToString(samlResponse))
+
+        then:
+        response.status == expectedResponse
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+
+        where:
+        secToAddToAge | expectedResponse
+        -60           | 400
+        60            | 200
     }
 
     @Unroll

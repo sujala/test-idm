@@ -37,6 +37,7 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_FEDERATION_MISSING_AUTH_CONTEXT_CLASSREF = "FED-010";
     public static final String ERROR_CODE_FEDERATION_INVALID_AUTH_CONTEXT_CLASSREF = "FED-011";
 
+    public static final String ERROR_CODE_FEDERATION_MISSING_ISSUE_INSTANT = "FED-012";
 
     //fed racker specific errors
     public static final String ERROR_CODE_FEDERATION_RACKER_NON_EXISTANT_RACKER = "FED_R-001";

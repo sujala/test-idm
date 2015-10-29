@@ -12,12 +12,12 @@ import static com.rackspace.idm.Constants.*
 
 class SamlAssertionFactory {
 
-    def generateSamlAssertionResponseForFederatedUser(issuer, subject, expirationSeconds, domain, roles, email = Constants.DEFAULT_FED_EMAIL, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY) {
+    def generateSamlAssertionResponseForFederatedUser(issuer, subject, expirationSeconds, domain, roles, email = Constants.DEFAULT_FED_EMAIL, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY, issueInstant = new DateTime()) {
         HashMap<String, List<String>> attributes = SamlAttributeFactory.createAttributes(domain, roles, email)
-        return generateSamlAssertion(issuer, subject, expirationSeconds, attributes, SAMLAuthContext.PASSWORD.samlAuthnContextClassRef, privateKey, publicKey)
+        return generateSamlAssertion(issuer, subject, expirationSeconds, attributes, SAMLAuthContext.PASSWORD.samlAuthnContextClassRef, privateKey, publicKey, issueInstant)
     }
 
-    def generateSamlAssertionStringForFederatedUser(issuer, subject, expirationSeconds, domain, roles, email = Constants.DEFAULT_FED_EMAIL, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY) {
+    def generateSamlAssertionStringForFederatedUser(issuer, subject, expirationSeconds, domain, roles, email = Constants.DEFAULT_FED_EMAIL, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY, issueInstant = new DateTime()) {
         Response response = generateSamlAssertionResponseForFederatedUser(issuer, subject, expirationSeconds, domain, roles, email, privateKey, publicKey)
         return convertResponseToString(response)
     }
@@ -32,10 +32,10 @@ class SamlAssertionFactory {
         return convertResponseToString(response)
     }
 
-    def generateSamlAssertion(issuer, subject, expirationSeconds, Map<String, List<String>> attributes, String authnContextClassRef = SAMLAuthContext.PASSWORD.samlAuthnContextClassRef, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY) {
+    def generateSamlAssertion(issuer, subject, expirationSeconds, Map<String, List<String>> attributes, String authnContextClassRef = SAMLAuthContext.PASSWORD.samlAuthnContextClassRef, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY, issueInstant = new DateTime()) {
         SamlAssertionProducer producer = new SamlAssertionProducer(privateKey, publicKey);
 
-        Response responseInitial = producer.createSAMLResponse(subject, new DateTime(), attributes, issuer, expirationSeconds, authnContextClassRef);
+        Response responseInitial = producer.createSAMLResponse(subject, new DateTime(), attributes, issuer, expirationSeconds, authnContextClassRef, issueInstant);
         return responseInitial;
     }
 

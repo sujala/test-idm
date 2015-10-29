@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
@@ -48,6 +49,10 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         service.provisionedUserSourceFederationHandler = provisionedUserSourceFederationHandler
         service.rackerSourceFederationHandler = rackerSourceFederationHandler
         service.identityProviderDao = identityProviderDao
+        service.identityConfig = Mock(IdentityConfig)
+        def reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
+        service.identityConfig.getReloadableConfig() >> reloadableConfig
+        reloadableConfig.getFederatedResponseMaxAge() >> 100000
     }
 
     def "Error thrown when saml missing issuer"() {
