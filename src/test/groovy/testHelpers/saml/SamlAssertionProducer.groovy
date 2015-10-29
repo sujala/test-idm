@@ -35,7 +35,7 @@ public class SamlAssertionProducer {
     }
 
     public Response createSAMLResponse(final String subjectId, final DateTime authenticationTime,
-			                           final HashMap<String, List<String>> attributes, String issuer, Integer samlAssertionDays, String authnContextClassRef = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS) {
+			                           final HashMap<String, List<String>> attributes, String issuer, Integer samlAssertionSeconds, String authnContextClassRef = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS) {
 		
 		try {
 			DefaultBootstrap.bootstrap();
@@ -53,7 +53,7 @@ public class SamlAssertionProducer {
 			}
 			
 			if (subjectId != null) {
-				subject = createSubject(subjectId, samlAssertionDays);
+				subject = createSubject(subjectId, samlAssertionSeconds);
 			}
 			
 			if (attributes != null && attributes.size() != 0) {
@@ -131,10 +131,10 @@ public class SamlAssertionProducer {
 		return issuer;
 	}
 	
-	private Subject createSubject(final String subjectId, final Integer samlAssertionDays) {
+	private Subject createSubject(final String subjectId, final Integer samlAssertionSeconds) {
 		DateTime currentDate = new DateTime();
-		if (samlAssertionDays != null)
-			currentDate = currentDate.plusDays(samlAssertionDays);
+		if (samlAssertionSeconds != null)
+			currentDate = currentDate.plusSeconds(samlAssertionSeconds);
 		
 		// create name element
 		NameIDBuilder nameIdBuilder = new NameIDBuilder(); 

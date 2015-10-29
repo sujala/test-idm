@@ -60,6 +60,9 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     @Autowired
     ConfigurableTokenFormatSelector configurableTokenFormatSelector
 
+    @Autowired
+    IdentityConfig identityConfig
+
     private static final String RBACROLE1_NAME = "rbacRole1"
     private static final String RBACROLE2_NAME = "rbacRole2"
     private static final String ROLE_1000_NAME = "Role 1000"
@@ -132,6 +135,37 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+    }
+
+    @Unroll
+    def "test token lifetime validation for domain user federated tokens: secToAddToExp == #secToAddToExp, expectedResponse == #expectedResponse"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def expSeconds = identityConfig.getReloadableConfig().getFederatedDomainTokenLifetimeMax() + secToAddToExp
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSeconds, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+
+        when:
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then:
+        samlResponse.status == expectedResponse
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+
+        where:
+        secToAddToExp | expectedResponse
+        -60           | 200
+        0             | 200
+        60            | 400
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)

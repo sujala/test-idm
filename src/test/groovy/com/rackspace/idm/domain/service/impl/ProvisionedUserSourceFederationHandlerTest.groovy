@@ -30,6 +30,7 @@ import com.rackspace.idm.util.SamlUnmarshaller
 import com.rackspace.idm.validation.PrecedenceValidator
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.opensaml.saml2.core.Response
 import spock.lang.Shared
 import spock.lang.Specification
@@ -120,6 +121,8 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockTenantService(provisionedUserSourceFederationHandler)
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
 
+        reloadableConfig.getFederatedDomainTokenLifetimeMax() >> IdentityConfig.FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME_DEFAULT
+
         domainAdmin = new User().with {
             it.enabled = true
             it.domainId = DOMAIN_ID
@@ -144,6 +147,8 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         endpoints = [].toList()
         roles = [].toList()
         tenants = [createTenant("tenantId"), createTenant("nastTenantId")].toList()
+        def expireTime = new DateTime().plusHours(12)
+        def expireTimeString = DateTimeFormat.forPattern("yyyy-MM-dd'T'H:m:s.SZ").print(expireTime)
 
         samlStr = "<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"bc1c335f-8078-4769-81a1-bb519194279c\" IssueInstant=\"2013-10-01T15:02:42.110Z\" Version=\"2.0\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
                 "   <saml2:Issuer xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + IDP_URI + "</saml2:Issuer>\n" +
@@ -172,7 +177,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
                 "      <saml2:Subject>\n" +
                 "         <saml2:NameID Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified\">john.doe</saml2:NameID>\n" +
                 "         <saml2:SubjectConfirmation Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\">\n" +
-                "            <saml2:SubjectConfirmationData NotOnOrAfter=\"2020-10-01T17:02:42.101Z\"/>\n" +
+                "            <saml2:SubjectConfirmationData NotOnOrAfter=\"" + expireTimeString + "\"/>\n" +
                 "         </saml2:SubjectConfirmation>\n" +
                 "      </saml2:Subject>\n" +
                 "      <saml2:AuthnStatement AuthnInstant=\"2013-10-01T15:02:42.103Z\">\n" +
@@ -511,6 +516,8 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
 
     def "validate saml response is accepted when roles attribute is not specified" (){
         given:
+        def expireTime = new DateTime().plusHours(12)
+        def expireTimeString = DateTimeFormat.forPattern("yyyy-MM-dd'T'H:m:s.SZ").print(expireTime)
 
         samlStr = "<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"bc1c335f-8078-4769-81a1-bb519194279c\" IssueInstant=\"2013-10-01T15:02:42.110Z\" Version=\"2.0\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
                 "   <saml2:Issuer xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + IDP_URI + "</saml2:Issuer>\n" +
@@ -539,7 +546,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
                 "      <saml2:Subject>\n" +
                 "         <saml2:NameID Format=\"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified\">john.doe</saml2:NameID>\n" +
                 "         <saml2:SubjectConfirmation Method=\"urn:oasis:names:tc:SAML:2.0:cm:bearer\">\n" +
-                "            <saml2:SubjectConfirmationData NotOnOrAfter=\"2020-10-01T17:02:42.101Z\"/>\n" +
+                "            <saml2:SubjectConfirmationData NotOnOrAfter=\"" + expireTimeString + "\"/>\n" +
                 "         </saml2:SubjectConfirmation>\n" +
                 "      </saml2:Subject>\n" +
                 "      <saml2:AuthnStatement AuthnInstant=\"2013-10-01T15:02:42.103Z\">\n" +

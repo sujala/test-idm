@@ -73,6 +73,9 @@ public class IdentityConfig {
     public static final String IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP = "feature.federated.provider.defaultTokenFormat";
     public static final String IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_SQL_OVERRIDE = "feature.federated.provider.defaultTokenFormat";
 
+    public static final String FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME = "feature.federated.domain.tokenLifetime.max";
+    public static final int FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME_DEFAULT = 86400;
+
     /**
      * The format of the property name to set the token format for a specific IDP. The '%s' is replaced by the IDP's labeledUri. This
      * means that each IDP has a custom property. If no such property exists for the IDP, the value for {@link #IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP}
@@ -342,6 +345,7 @@ public class IdentityConfig {
         defaults.put(CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_PROP, CACHED_AE_TOKEN_CACHE_CONCURRENCY_LEVEL_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_PROP, CACHED_AE_TOKEN_CACHE_INITIAL_CAPACITY_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP, CACHED_AE_TOKEN_CACHE_RECORD_STATS_DEFAULT);
+        defaults.put(FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME, FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME_DEFAULT);
 
         return defaults;
     }
@@ -1215,6 +1219,11 @@ public class IdentityConfig {
         @IdmProp(key = CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP, versionAdded = "3.0.3", description = "Whether the AE Token cache will record stats.")
         public boolean cachedAETokenCacheRecordStats() {
             return getBooleanSafely(reloadableConfiguration, CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP);
+        }
+
+        @IdmProp(key = FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME, versionAdded = "3.1.0", description = "The max token lifetime for a provisioned federated user token")
+        public int getFederatedDomainTokenLifetimeMax() {
+            return getIntSafely(reloadableConfiguration, FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME);
         }
     }
 
