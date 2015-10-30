@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 @SQLRepository
@@ -25,5 +26,7 @@ public interface DomainRepository extends JpaSpecificationExecutor<SqlDomain>, J
 
     @Query("select count(d) from SqlDomain d where d.name = :name and d.domainId != :id")
     Long countByNameAndNotDomainId(@Param("name") String name, @Param("id") String id);
+
+    List<SqlDomain> findBySqlProjectTenantIdIn(Collection<String> tenantIds);
 
 }
