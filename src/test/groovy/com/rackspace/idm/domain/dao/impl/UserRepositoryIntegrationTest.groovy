@@ -189,7 +189,7 @@ class UserRepositoryIntegrationTest extends Specification {
         userDao.addUser(user2)
 
         when:
-        def userList = userDao.getEnabledUsers(0, 1000).valueList.collect()
+        def userList = userDao.getEnabledUsers(0, 10000).valueList.collect()
 
         then:
         userList != null

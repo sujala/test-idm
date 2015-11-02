@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
@@ -16,6 +17,7 @@ import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
+import spock.lang.Ignore
 import spock.lang.Unroll
 import testHelpers.junit.IgnoreByRepositoryProfile
 
@@ -65,7 +67,7 @@ class DefaultMultiFactorCloud20ServiceDeleteMultiFactorIntegrationTest extends R
         }
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
+    @Ignore("Ignoring this test due to the test having a dependency on UUID tokens and UUID tokens have now been deprecated")
     def "Verify that enabling multifactor expires existing token"() {
         setup:
         def token = scopeAccessRepository.getScopeAccessByAccessToken(userScopeAccess.accessTokenString)

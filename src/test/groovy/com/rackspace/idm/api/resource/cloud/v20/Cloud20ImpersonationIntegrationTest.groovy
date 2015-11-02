@@ -411,7 +411,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     /* *******************
     AE only tests
     ************************* */
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonate user using ae tokens"() {
         given:
         def iAdmin = utils.createUser(specificationServiceAdminToken)
@@ -456,6 +455,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     def "ability to impersonate federated user depends on feature flag : featureFlagAllows=#federatedImpersonationAllowed"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, federatedImpersonationAllowed)
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expDays = 5
@@ -477,6 +478,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+        staticIdmConfiguration.reset()
 
         where:
         federatedImpersonationAllowed    | _
@@ -488,6 +490,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with existing user token lifetime later than impersonation request"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def now = new DateTime()
 
         //just set to the max lifetime of an imp token
@@ -510,6 +514,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
+        staticIdmConfiguration.reset()
 
         where:
         disableUser << [false, true]
@@ -519,6 +524,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with existing user token lifetime less than impersonation request"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def now = new DateTime()
 
         //request the maximum impersonation lifetime
@@ -552,6 +559,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
+        staticIdmConfiguration.reset()
 
         where:
         disableUser << [false, true]
@@ -561,6 +569,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with only expired user tokens"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def now = new DateTime()
 
         Integer userTokenLifetimeSeconds =  -1 * ONE_HOUR_IN_SECONDS
@@ -590,6 +600,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
+        staticIdmConfiguration.reset()
 
         where:
         disableUser << [false, true]
@@ -599,6 +610,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with no user tokens - uuid tokens"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def now = new DateTime()
 
         Integer userTokenLifetimeSeconds =  -1 * ONE_HOUR_IN_SECONDS
@@ -631,6 +644,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
+        staticIdmConfiguration.reset()
 
         where:
         disableUser << [false, true]
@@ -639,6 +653,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID Only - impersonate federated user impersonates existing impersonated tokens if they are within the requested window"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expDays = 5
@@ -688,11 +704,14 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+        staticIdmConfiguration.reset()
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID Only - a federated user cannot get an impersonated token when authenticating with saml"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expDays = 5
@@ -725,11 +744,14 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+        staticIdmConfiguration.reset()
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID Only - authenticating as a federated user deletes expired federated tokens"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expDays = 5
@@ -783,11 +805,14 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+        staticIdmConfiguration.reset()
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - federated user impersonation - a new impersonation token is only created if one does not exist that expires on or after requested time"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
         def expDays = 5
@@ -831,6 +856,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+        staticIdmConfiguration.reset()
     }
 
     /**
@@ -841,6 +867,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonating a federated user does not return impersonation tokens for provisioned users with the same username (even if the token does not have the rsImpersonatingRsId attribute)"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
         def expDays = 5
@@ -894,11 +922,14 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         deleteFederatedUserQuietly(username)
         utils.deleteUser(provUserWithSameUsername)
         utils.deleteUsers(users)
+        staticIdmConfiguration.reset()
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonating a federated user only cleans up tokens for the federated user"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         staticIdmConfiguration.setProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
@@ -952,6 +983,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUser(provUserWithSameUsername)
         utils.deleteUsers(users)
         staticIdmConfiguration.clearProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME)
+        staticIdmConfiguration.reset()
     }
 
 
@@ -1003,6 +1035,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonating a provisioned user only cleans up tokens for the provisioned user"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         staticIdmConfiguration.setProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
@@ -1056,6 +1090,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUser(provUserWithSameUsername)
         utils.deleteUsers(users)
         staticIdmConfiguration.clearProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME)
+        staticIdmConfiguration.reset()
     }
 
    def "creating an impersonation token sets the impresonating username to hardcoded value"() {
@@ -1178,6 +1213,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonated user gets new token with authBy set to impersonated if no 'impersonation' tokens exist for that user"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         //after this the user has a single token that doesn't expire till 23 hours from now, which is greater than the requested impersonation token
         // validity. but token does not have authBy set
         def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().plusHours(23))
@@ -1202,11 +1239,14 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
+        staticIdmConfiguration.reset()
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonation token re-uses existing 'impersonation' user token when possible"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         //after this the user has a single token that doesn't expire till 23 hours from now, which is greater than the requested impersonation token
         // validity AND token has authBy set to "IMPERSONATION"
         def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().plusHours(23), false, Arrays.asList(GlobalConstants.AUTHENTICATED_BY_IMPERSONATION))
@@ -1231,6 +1271,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
+        staticIdmConfiguration.reset()
     }
 
     /**
@@ -1273,6 +1314,8 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "An impersonation token that links to an expired user token should return a 404"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def localDefaultUser = createUserWithTokenExpirationDate(new DateTime().plusHours(23))
 
         ImpersonatedScopeAccess impersonatedScopeAccess = impersonateUserForTokenLifetime(localDefaultUser, serviceImpersonatorTokenMaxLifetimeInSeconds())
@@ -1297,6 +1340,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         cleanup:
         utils.deleteUsers(localDefaultUser)
+        staticIdmConfiguration.reset()
     }
 
     /**
@@ -1346,12 +1390,14 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
             disableUser(defaultUser)
         }
 
-        //now reset the token expiration time to the specified lifetime
-        UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(defaultUserToken)
-        token.setAccessTokenExp(tokenExpirationDate.toDate())
+        if(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT) == "UUID") {
+            //now reset the token expiration time to the specified lifetime
+            UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(defaultUserToken)
+            token.setAccessTokenExp(tokenExpirationDate.toDate())
 
-        token.setAuthenticatedBy(tokenAuthBy)
-        scopeAccessRepository.updateScopeAccess(token)
+            token.setAuthenticatedBy(tokenAuthBy)
+            scopeAccessRepository.updateScopeAccess(token)
+        }
 
         return defaultUser
     }

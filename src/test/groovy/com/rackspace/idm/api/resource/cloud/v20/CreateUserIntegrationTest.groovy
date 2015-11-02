@@ -17,6 +17,7 @@ import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -459,7 +460,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
+    @Ignore
     def "test feature flag for adding expired tokens on user create: addTokens = #addTokens"() {
         given:
         staticIdmConfiguration.setProperty(DefaultUserService.ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG, addTokens)

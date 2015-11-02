@@ -17,12 +17,15 @@ public class RepositoryProfileResolver implements EnvironmentAware {
 
     public static SpringRepositoryProfileEnum getActiveRepositoryProfile() {
 
-        for(String profileString : environment.getActiveProfiles()) {
-            SpringRepositoryProfileEnum profileEnum = SpringRepositoryProfileEnum.getProfileEnumFromProfileString(profileString);
-            if(profileEnum != null) {
-                return profileEnum;
+        if(environment != null) {
+            for (String profileString : environment.getActiveProfiles()) {
+                SpringRepositoryProfileEnum profileEnum = SpringRepositoryProfileEnum.getProfileEnumFromProfileString(profileString);
+                if (profileEnum != null) {
+                    return profileEnum;
+                }
             }
         }
+
         return SpringRepositoryProfileEnum.LDAP;
     }
 
