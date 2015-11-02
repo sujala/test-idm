@@ -35,7 +35,8 @@ public class SamlAssertionProducer {
     }
 
     public Response createSAMLResponse(final String subjectId, final DateTime authenticationTime,
-			                           final HashMap<String, List<String>> attributes, String issuer, Integer samlAssertionSeconds, String authnContextClassRef = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS) {
+			                           final HashMap<String, List<String>> attributes, String issuer, Integer samlAssertionSeconds,
+									   String authnContextClassRef = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS, DateTime issueInstant = new DateTime()) {
 		
 		try {
 			DefaultBootstrap.bootstrap();
@@ -64,7 +65,7 @@ public class SamlAssertionProducer {
 			
 			Assertion assertion = createAssertion(new DateTime(), subject, assertionIssuer, authnStatement, attributeStatement);
 			
-			Response response = createResponse(new DateTime(), responseIssuer, status, assertion);
+			Response response = createResponse(issueInstant, responseIssuer, status, assertion);
 			response.setSignature(signature);
 			
 			ResponseMarshaller marshaller = new ResponseMarshaller();

@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
@@ -9,6 +10,8 @@ import com.rackspace.idm.domain.service.FederatedIdentityService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.SignatureValidationException;
 import com.rackspace.idm.util.SamlSignatureValidator;
+import org.joda.time.DateTime;
+import org.joda.time.Seconds;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.xml.signature.Signature;
 import org.slf4j.Logger;
@@ -37,6 +40,9 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     @Autowired
     private RackerSourceFederationHandler rackerSourceFederationHandler;
 
+    @Autowired
+    private IdentityConfig identityConfig;
+
     @Override
     public SamlAuthResponse processSamlResponse(Response response) {
         //validate
@@ -51,6 +57,15 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         decoratedSamlResponse.checkAndGetSubjectConfirmationNotOnOrAfterDate();
         decoratedSamlResponse.checkAndGetAuthnInstant();
         decoratedSamlResponse.checkAndGetAuthContextClassRef();
+
+        //validate the issueInstant is not older than the configure max age for a saml response
+        DateTime issueInstant = decoratedSamlResponse.checkAndGetIssueInstant();
+        DateTime now = new DateTime();
+        int maxResponseAge = identityConfig.getReloadableConfig().getFederatedResponseMaxAge();
+        int timeDelta = Seconds.secondsBetween(issueInstant, now).getSeconds();
+        if (timeDelta > maxResponseAge) {
+            throw new BadRequestException("Saml responses cannot be older than " + maxResponseAge + " seconds.");
+        }
 
         //Basic format is good. Now hand off request to handler for the user source
         TargetUserSourceEnum providerSource = provider.getTargetUserSourceAsEnum();

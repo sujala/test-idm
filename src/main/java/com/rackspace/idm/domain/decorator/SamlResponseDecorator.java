@@ -117,6 +117,16 @@ public class SamlResponseDecorator {
         return notOnOrAfter;
     }
 
+    public DateTime checkAndGetIssueInstant() {
+        DateTime issueInstant = getSamlResponse().getIssueInstant();
+
+        if (issueInstant == null) {
+            throw new BadRequestException(ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_FEDERATION_MISSING_AUTH_INSTANT, "IssueInstant is not specified"));
+        }
+
+        return issueInstant;
+    }
+
     private DateTime getSubjectConfirmationNotOnOrAfterDate() {
         if (checkAndGetSubject().getSubjectConfirmations() == null ||
                 checkAndGetSubject().getSubjectConfirmations().size() == 0 ||
