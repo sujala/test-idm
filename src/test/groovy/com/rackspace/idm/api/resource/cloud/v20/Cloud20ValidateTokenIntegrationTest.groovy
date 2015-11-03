@@ -420,7 +420,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -464,7 +464,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -511,7 +511,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users

@@ -65,7 +65,7 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERSIST_RACKERS_PROP, persistRacker)
 
         def username = Constants.RACKER_NOGROUP
-        def expDays = 5
+        def expDays = 500
 
         def samlAssertionPassword = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, expDays, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS);
         def samlAssertionToken = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, expDays, SAMLConstants.TIMESYNCTOKEN_PROTECTED_AUTHCONTEXT_REF_CLASS);
@@ -110,7 +110,7 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERSIST_RACKERS_PROP, persistRacker)
         def username = Constants.RACKER_IMPERSONATE
-        def expDays = 5
+        def expDays = 500
 
         def samlAssertionPassword = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, expDays, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS);
         def samlAssertionToken = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, expDays, SAMLConstants.TIMESYNCTOKEN_PROTECTED_AUTHCONTEXT_REF_CLASS);
@@ -156,7 +156,7 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERSIST_RACKERS_PROP, persistRacker)
         def username = Constants.RACKER_IMPERSONATE
 
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, 1, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS);
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, 100, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS);
 
         when:
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -199,7 +199,7 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERSIST_RACKERS_PROP, persistRacker)
         def username = Constants.RACKER_IMPERSONATE
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, 1);
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, 100);
 
         AuthenticateResponse rackerAuthResponse = utils.authenticateRacker(username, Constants.RACKER_IMPERSONATE_PASSWORD)
 
@@ -241,7 +241,7 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERSIST_RACKERS_PROP, persistRacker)
         def username = Constants.RACKER_IMPERSONATE
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, 1);
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, 100);
 
         AuthenticateResponse rackerAuthResponse = utils.authenticateRacker(username, Constants.RACKER_IMPERSONATE_PASSWORD)
 
@@ -275,11 +275,11 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
     def "Invalid SAML signature results in 400"() {
         given:
         def username = Constants.RACKER_NOGROUP
-        def expDays = 5
+        def expDays = 500
         def samlFactor = new SamlAssertionFactory()
 
         Response samlAssertion = samlFactor.generateSamlAssertionResponseForFederatedRacker(RACKER_IDP_URI, username, expDays);
-        Response samlAssertion2 = samlFactor.generateSamlAssertionResponseForFederatedRacker(RACKER_IDP_URI, username, expDays+1);
+        Response samlAssertion2 = samlFactor.generateSamlAssertionResponseForFederatedRacker(RACKER_IDP_URI, username, expDays+100);
 
         //replace first assertion with second to make an invalid assertion
         Signature sig = samlAssertion2.getSignature()
@@ -296,7 +296,7 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
     def "When receive samlResponse for non-existant racker, throw 400"() {
         given:
         def username = "non-existant_racker"
-        def expDays = 5
+        def expDays = 500
         def samlFactor = new SamlAssertionFactory()
 
         String samlAssertion = samlFactor.generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, expDays);
