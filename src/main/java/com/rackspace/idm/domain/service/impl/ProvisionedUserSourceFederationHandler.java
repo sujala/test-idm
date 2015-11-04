@@ -101,7 +101,12 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
         FederatedUserRequest request = parseAndValidateSaml(samlResponseDecorator, provider);
 
         FederatedUser user = processUserForRequest(request);
-        UserScopeAccess token = createToken(user, request.getRequestedTokenExpirationDate());
+
+        List<AuthenticatedByMethodEnum> authByList = new ArrayList<AuthenticatedByMethodEnum>(2);
+        authByList.add(AuthenticatedByMethodEnum.FEDERATION);
+        authByList.add(samlResponseDecorator.checkAndGetAuthContextClassRef().getIdmAuthBy());
+
+        UserScopeAccess token = createToken(user, request.getRequestedTokenExpirationDate(), authByList);
         ServiceCatalogInfo serviceCatalogInfo = scopeAccessService.getServiceCatalogInfo(user);
         List<TenantRole> tenantRoles = serviceCatalogInfo.getUserTenantRoles();
 
@@ -411,13 +416,16 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
         return tenantRoles;
     }
 
-    private UserScopeAccess createToken(FederatedUser user, DateTime requestedExpirationDate) {
+    private UserScopeAccess createToken(FederatedUser user, DateTime requestedExpirationDate, List<AuthenticatedByMethodEnum> authBy) {
         UserScopeAccess token = new UserScopeAccess();
         token.setUserRsId(user.getId());
         token.setAccessTokenString(scopeAccessService.generateToken());
         token.setAccessTokenExp(requestedExpirationDate.toDate());
         token.setClientId(identityConfig.getStaticConfig().getCloudAuthClientId());
-        token.getAuthenticatedBy().add(GlobalConstants.AUTHENTICATED_BY_FEDERATION);
+
+        for (AuthenticatedByMethodEnum authMethod : authBy) {
+            token.getAuthenticatedBy().add(authMethod.getValue());
+        }
 
         scopeAccessService.addUserScopeAccess(user, token);
 
