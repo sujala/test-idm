@@ -9,6 +9,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.rackspace.idm.domain.entity.ClientRole
@@ -305,6 +306,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticating where total access tokens remains unchanged"() {
         when:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
         def scopeAccessOne = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         def scopeAccessTwo = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
@@ -313,11 +315,15 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         then:
         scopeAccessOne.token.id.equals(scopeAccessTwo.token.id)
         allUsersScopeAccessAfter.entryCount <= 2
+
+        cleanup:
+        staticIdmConfiguration.reset()
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticating where token is within refresh window adds new token"() {
         when:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
         def scopeAccessOne = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         setTokenInRefreshWindow(USER_FOR_AUTH, scopeAccessOne.token.id)
 
@@ -331,21 +337,28 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         allUsersScopeAccessBefore.getEntryCount() + 1 == allUsersScopeAccessAfter.getEntryCount()
         !scopeAccessOne.token.id.equals(scopeAccessTwo.token.id)
 
+        cleanup:
+        staticIdmConfiguration.reset()
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticating where token is valid returns existing token"() {
         when:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
         def scopeAccessOne = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         def scopeAccessTwo = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
 
         then:
         scopeAccessOne.token.id.equals(scopeAccessTwo.token.id)
+
+        cleanup:
+        staticIdmConfiguration.reset()
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticate with two valid tokens"() {
         when:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
         def firstScopeAccess = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         setTokenInRefreshWindow(USER_FOR_AUTH, firstScopeAccess.token.id)
         def secondScopeAccess = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
@@ -354,11 +367,15 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         then:
         secondScopeAccess.token.id.equals(thirdScopeAccess.token.id)
+
+        cleanup:
+        staticIdmConfiguration.reset()
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticating token in refresh window with 2 existing tokens deletes existing expired token"() {
         when:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
         def firstScopeAccess = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
         setTokenInRefreshWindow(USER_FOR_AUTH, firstScopeAccess.token.id)
         def secondScopeAccess = cloud20.authenticatePassword(USER_FOR_AUTH, USER_FOR_AUTH_PWD).getEntity(AuthenticateResponse).value
@@ -373,6 +390,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         for (entry in allUsersScopeAccessAfter.searchEntries) {
             assert(!entry.DN.contains("$firstScopeAccess.token.id"))
         }
+
+        cleanup:
+        staticIdmConfiguration.reset()
     }
 
     def "authenticating with token and tenantName"() {

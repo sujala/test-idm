@@ -40,7 +40,6 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
     @Autowired UserManagement<DuoUser, DuoPhone> userManagement;
 
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "delete MFA user through v2.0 user delete call deletes user's Duo account"() {
         given:
         def settings = v2Factory.createMultiFactorSettings(true)
@@ -49,7 +48,6 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
         def responsePhone = addPhone(token, user)
         cloud20.updateMultiFactorSettings(token, user.id, settings)
         def userEntity = userService.getUserById(user.id)
-        resetTokenExpiration(token)
 
         when:
         def response = cloud20.deleteUser(utils.getServiceAdminToken(), user.id)
@@ -73,7 +71,6 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
         response.status == 204
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "delete MFA user through v1.1 user delete call deletes user's Duo account"() {
         given:
         def settings = v2Factory.createMultiFactorSettings(true)
@@ -82,7 +79,6 @@ class MultiFactorDeleteUserTest extends RootConcurrentIntegrationTest {
         def responsePhone = addPhone(token, user)
         cloud20.updateMultiFactorSettings(token, user.id, settings)
         def userEntity = userService.getUserById(user.id)
-        resetTokenExpiration(token)
 
         when:
         def response = cloud11.deleteUser(user.username)

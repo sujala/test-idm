@@ -22,6 +22,7 @@ import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -286,6 +287,8 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "Previously created impersonation tokens are no longer valid once the impersonated user's domain is disabled" () {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def domainDisable = v1Factory.createDomain().with {
             it.id = domainId
@@ -342,6 +345,8 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+        staticIdmConfiguration.reset()
+        utils.resetServiceAdminToken()
     }
 
     def "Validating user's token within a disabled domain should return 404"() {
@@ -461,6 +466,9 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID impersonation tokens created before a federated user's domain is disabled are no longer valid"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
+        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, DEFAULT_IDP_URI), "UUID")
+        utils.resetServiceAdminToken()
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
@@ -503,6 +511,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
         staticIdmConfiguration.reset()
+        utils.resetServiceAdminToken()
     }
 
     @Unroll

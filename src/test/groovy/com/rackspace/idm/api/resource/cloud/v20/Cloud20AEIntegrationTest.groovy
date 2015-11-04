@@ -66,8 +66,10 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "update user - setting token format on user only allowed if ae tokens disabled. Testing with ae tokens enabled: #ae_enabled"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, ae_enabled ? "AE" : "UUID")
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, ae_enabled)
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, ae_enabled)
+        utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
 
         def userAdmin
@@ -98,8 +100,10 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "create user - setting token format on user creation only allowed if ae tokens enabled. Testing with ae tokens enabled: #ae_enabled"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, ae_enabled ? "AE" : "UUID")
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, ae_enabled)
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, ae_enabled)
+        utils.resetServiceAdminToken()
 
         def username = testUtils.getRandomUUID()
         User userForCreate = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, null, "Password1")
@@ -126,6 +130,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "retrieve AE token for a user"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, null)
         def domainId = utils.createDomain()
 
         def retrievedUser
@@ -181,11 +186,13 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+        staticIdmConfiguration.reset()
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "retrieve and update AE token for a user using JSON"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, null)
         def domainId = utils.createDomain()
         def serviceAdminToken = utils.getServiceAdminToken()
 
@@ -253,6 +260,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+        staticIdmConfiguration.reset()
     }
 
     @Unroll
@@ -489,6 +497,8 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "verify revoke UUID tokens when AE token config is set"() {
         given:
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, null)
+        utils.resetServiceAdminToken()
         def response
         def authToken
         def uuidToken
@@ -519,6 +529,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+        staticIdmConfiguration.reset()
     }
 
     def "authenticating with AE token and tenantName"() {
@@ -596,6 +607,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         when: "creation and reading of tokens is disable"
         staticIdmConfiguration.setProperty('feature.ae.tokens.decrypt', 'false')
         aeToken = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
+        utils.resetServiceAdminToken()
         aeTokenValidate = utils.validateToken(aeToken.token.id)
         response = methods.validateToken(utils.getServiceAdminToken(), aeTokenOriginal.token.id)
 

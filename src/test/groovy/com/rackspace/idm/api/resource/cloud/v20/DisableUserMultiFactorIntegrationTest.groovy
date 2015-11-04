@@ -118,6 +118,7 @@ class DisableUserMultiFactorIntegrationTest extends RootConcurrentIntegrationTes
         authResponse.status == 200
 
         when: "re-enable MFA on the user and try to authenticate"
+        sleep(1000)
         authToken = authenticate(user.username)
         cloud20.updateMultiFactorSettings(authToken, user.id, settings)
         authResponse = cloud20.authenticate(user.username, DEFAULT_PASSWORD)

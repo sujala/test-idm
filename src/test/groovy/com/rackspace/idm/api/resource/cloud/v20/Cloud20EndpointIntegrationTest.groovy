@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
@@ -95,10 +96,11 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.deleteEndpointTemplate(endpointTemplate)
     }
 
-    // NOTE: This will fail with AE tokens. AE tokens are revoked when user is disabled.
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "endpoints returned for disabled"() {
         given:
+        // NOTE: This will fail with AE tokens. AE tokens are revoked when user is disabled.
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
         def domainId = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
 
@@ -132,6 +134,7 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.deleteTenant(tenant)
         utils.deleteDomain(domainId)
         utils.deleteEndpointTemplate(endpointTemplate)
+        staticIdmConfiguration.reset()
     }
 
     def "disabled UK global endpoints are not displayed in created user's service catalog"() {
