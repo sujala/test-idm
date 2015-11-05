@@ -173,7 +173,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -226,7 +226,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -459,7 +459,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -657,7 +657,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -714,7 +714,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -754,7 +754,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -815,7 +815,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -871,7 +871,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -933,7 +933,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.setProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -996,7 +996,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
@@ -1040,7 +1040,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.setProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
-        def expDays = 5
+        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users

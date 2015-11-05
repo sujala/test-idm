@@ -324,7 +324,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         def mossoTenantId = domainId
         def nastTenantId = utils.getNastTenant(domainId)
         def username = testUtils.getRandomUUID("samlUser")
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, 5, domainId, [].asList());
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, 500, domainId, [].asList());
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 

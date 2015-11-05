@@ -59,7 +59,7 @@ public class SqlDomainRepository implements DomainDao {
         domainRepository.delete(domainId);
 
         final Domain newDomain = mapper.fromSQL(sqlDomain);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newDomain.getUniqueId(), null));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newDomain.getUniqueId(), null));
     }
 
     @Override

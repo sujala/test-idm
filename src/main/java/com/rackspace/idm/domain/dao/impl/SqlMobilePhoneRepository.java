@@ -48,7 +48,7 @@ public class SqlMobilePhoneRepository implements MobilePhoneDao {
     @Transactional
     public void deleteMobilePhone(MobilePhone mobilePhone) {
         repository.delete(mobilePhone.getId());
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, mobilePhone.getUniqueId(), null));
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, mobilePhone.getUniqueId(), null));
     }
 
     @Override
