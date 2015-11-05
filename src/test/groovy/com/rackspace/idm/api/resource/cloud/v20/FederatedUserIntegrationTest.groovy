@@ -888,6 +888,131 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
+    def "empty IssueInstant should give bad request"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 500
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        samlAssertion = samlAssertion.replaceAll("IssueInstant=\"([^\"]+)\"", "IssueInstant=\"\"")
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        when:
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains bad request"
+        samlResponse.status == HttpServletResponse.SC_BAD_REQUEST
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+    }
+
+    def "empty Version should give bad request"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 500
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        samlAssertion = samlAssertion.replaceAll("Version=\"([^\"]+)\"", "Version=\"\"")
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        when:
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains bad request"
+        samlResponse.status == HttpServletResponse.SC_BAD_REQUEST
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+    }
+
+    def "invalid NotOnOrAfter should give bad request"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 500
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        samlAssertion = samlAssertion.replaceAll("NotOnOrAfter=\"([^\"]+)\"", "NotOnOrAfter=\"test\"")
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        when:
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains bad request"
+        samlResponse.status == HttpServletResponse.SC_BAD_REQUEST
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+    }
+
+    def "invalid AuthnInstant should give bad request"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 500
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        samlAssertion = samlAssertion.replaceAll("AuthnInstant=\"([^\"]+)\"", "AuthnInstant=\"test\"")
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        when:
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains bad request"
+        samlResponse.status == HttpServletResponse.SC_BAD_REQUEST
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+    }
+
+    def "empty Algorithm should give bad request"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 500
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        samlAssertion = samlAssertion.replaceAll("Algorithm=\"([^\"]+)\"", "Algorithm=\"\"")
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        when:
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains bad request"
+        samlResponse.status == HttpServletResponse.SC_BAD_REQUEST
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+    }
+
     def deleteFederatedUserQuietly(username) {
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)

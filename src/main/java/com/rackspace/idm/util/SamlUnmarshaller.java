@@ -7,6 +7,7 @@ import org.opensaml.saml2.core.Response;
 import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.io.Unmarshaller;
 import org.opensaml.xml.io.UnmarshallerFactory;
+import org.opensaml.xml.io.UnmarshallingException;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -27,22 +28,26 @@ import java.io.ByteArrayInputStream;
 public class SamlUnmarshaller {
 
     public Response unmarshallResponse(final String responseString) {
-        ByteArrayInputStream is = new ByteArrayInputStream(responseString.getBytes());
+        final ByteArrayInputStream is = new ByteArrayInputStream(responseString.getBytes());
 
         try {
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);
-            DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
+            final DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
 
-            Document document = docBuilder.parse(is);
-            Element element = document.getDocumentElement();
+            final Document document = docBuilder.parse(is);
+            final Element element = document.getDocumentElement();
 
-            UnmarshallerFactory unmarshallerFactory = Configuration.getUnmarshallerFactory();
-            Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
-            XMLObject responseXmlObj = unmarshaller.unmarshall(element);
+            final UnmarshallerFactory unmarshallerFactory = Configuration.getUnmarshallerFactory();
+            final Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
+            final XMLObject responseXmlObj = unmarshaller.unmarshall(element);
             return (org.opensaml.saml2.core.Response) responseXmlObj;
-        } catch (SAXException sex) {
-            throw new BadRequestException("Error parsing saml response");
+        } catch (SAXException ex1) {
+            throw new BadRequestException("Error parsing saml response", ex1);
+        } catch (IllegalArgumentException ex2) {
+            throw new BadRequestException("Invalid data in saml response", ex2);
+        } catch (UnmarshallingException ex3) {
+            throw new BadRequestException("Invalid format in saml response", ex3);
         } catch (Throwable t) {
             throw new IdmException("Error unmarshalling saml response", t);
         }
