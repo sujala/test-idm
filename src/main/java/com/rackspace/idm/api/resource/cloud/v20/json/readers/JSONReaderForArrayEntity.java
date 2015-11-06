@@ -88,8 +88,7 @@ public abstract class JSONReaderForArrayEntity<T> implements MessageBodyReader<T
                 "org.w3._2005.atom:" +
                 "com.rackspace.docs.identity.api.ext.rax_ksqa.v1:" +
                 "com.rackspace.api.common.fault.v1:" +
-                "com.rackspace.docs.identity.api.ext.rax_auth.v1:" +
-                "com.rackspace.docs.identity.policy.v1");
+                "com.rackspace.docs.identity.api.ext.rax_auth.v1");
 
         return context.createJSONUnmarshaller();
     }
