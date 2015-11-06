@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.TenantRole
@@ -525,6 +526,45 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
         then: "the token is still valid"
         validateSamlTokenResponse.status == 200
+
+        cleanup:
+        utils.deleteUsers(users1)
+        staticIdmConfiguration.reset()
+
+        where:
+        mediaType             | _
+        APPLICATION_XML_TYPE  | _
+        APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "domain federated token contains correct authBy values: #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("samlUser")
+        def expSecs = 500
+        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def userAdmin1, users1
+        (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
+
+        when: "authenticate with saml"
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def samlAuthToken = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.token : samlAuthResponse.token
+
+        then: "the authBy is populated"
+        samlResponse.status == 200
+        samlAuthToken.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.FEDERATION.getValue())
+        samlAuthToken.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
+
+        when: "validate the token"
+        def validateSamlTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), samlAuthToken.id)
+        def validateSamlAuthToken = validateSamlTokenResponse.getEntity(AuthenticateResponse).value.token
+
+        then: "the returned token also has valid authBy values"
+        validateSamlTokenResponse.status == 200
+        validateSamlAuthToken.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.FEDERATION.getValue())
+        validateSamlAuthToken.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
 
         cleanup:
         utils.deleteUsers(users1)
