@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.EndpointDao
@@ -12,6 +13,8 @@ import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
+
+import javax.servlet.http.HttpServletResponse
 
 import static com.rackspace.idm.Constants.*
 
@@ -81,6 +84,53 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users)
         deleteFederatedUser(username)
+    }
+
+    def "[CIDMDEV-5286:CIDMDEV-5305] Test if the user count limit is reached, we get a 400 error (per domain)"() {
+        given:
+        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PROP_REG, DEFAULT_IDP_URI), 1)
+        def domainId = utils.createDomain()
+        def domainId2 = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def username2 = testUtils.getRandomUUID("userSecondForSaml")
+        def username3 = testUtils.getRandomUUID("userAdminForSaml2")
+        def username4 = testUtils.getRandomUUID("userSecondForSaml2")
+        def expDays = 500
+        def email = "fedIntTest@invalid.rackspace.com"
+        def email2 = "fedIntTest2@invalid.rackspace.com"
+        def email3 = "fedIntTest3@invalid.rackspace.com"
+        def email4 = "fedIntTest4@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expDays, domainId, null, email2);
+        def samlAssertion3 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username3, expDays, domainId2, null, email3);
+        def samlAssertion4 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username4, expDays, domainId2, null, email4);
+
+        def userAdmin, users, userAdmin2, users2
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
+
+        when:
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
+        def samlResponse3 = cloud20.samlAuthenticate(samlAssertion3)
+        def samlResponse4 = cloud20.samlAuthenticate(samlAssertion4)
+
+        then: "Response contains appropriate status"
+        samlResponse.status == HttpServletResponse.SC_OK
+        samlResponse2.status == HttpServletResponse.SC_BAD_REQUEST
+        samlResponse3.status == HttpServletResponse.SC_OK
+        samlResponse4.status == HttpServletResponse.SC_BAD_REQUEST
+
+        cleanup:
+        deleteFederatedUser(username)
+        deleteFederatedUser(username2)
+        deleteFederatedUser(username3)
+        deleteFederatedUser(username4)
+        utils.deleteUsers(users)
+        utils.deleteUsers(users2)
+        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PROP_REG, DEFAULT_IDP_URI), Integer.MAX_VALUE)
     }
 
     def "authenticate with federated user's token and invalid tenant gives error"() {

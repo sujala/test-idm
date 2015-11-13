@@ -383,6 +383,16 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
     }
 
     private FederatedUser createUserForRequest(FederatedUserRequest request) {
+        final Integer maxUserCount = identityConfig.getReloadableConfig().getIdentityFederationMaxUserCountForIdp(request.getIdentityProvider().getUri());
+        if (maxUserCount != null && maxUserCount > 0) {
+            final String idpName = request.getIdentityProvider().getName();
+            final String domainId = request.getUser().getDomainId();
+            final int count = federatedUserDao.getFederatedUsersByDomainIdAndIdentityProviderNameCount(domainId, idpName);
+            if (count >= maxUserCount) {
+                throw new BadRequestException("maximum number of users reached for this domain: " + domainId);
+            }
+        }
+
         FederatedUser userToCreate = request.getUser();
 
         List<User> domainUserAdmins = domainService.getDomainAdmins(userToCreate.getDomainId());
