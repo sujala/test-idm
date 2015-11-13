@@ -85,5 +85,6 @@ public final class GlobalConstants {
     public static final String ERROR_MSG_DELETE_DOMAIN_WITH_TENANTS = "Cannot delete domains which contain tenants";
     public static final String ERROR_MSG_DELETE_DOMAIN_WITH_USERS = "Cannot delete Domains which contain users";
 
+    public static final String DELETE_USER_LOG_NAME = "userDelete";
 
 }

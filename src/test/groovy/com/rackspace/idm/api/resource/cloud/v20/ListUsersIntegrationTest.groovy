@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Ignore
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-import testHelpers.saml.SamlAssertionFactory
+import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
 
@@ -30,7 +30,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def username = testUtils.getRandomUUID("userForSaml")
         def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -59,8 +59,8 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def username2 = testUtils.getRandomUUID("userForSaml")
         def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion1 = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username1, expDays, domainId1, null, email);
-        def samlAssertion2 = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expDays, domainId2, null, email);
+        def samlAssertion1 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username1, expDays, domainId1, null, email);
+        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expDays, domainId2, null, email);
         def userAdmin1, userAdmin2, users1, users2
         (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId1)
         (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
@@ -110,7 +110,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def username = testUtils.getRandomUUID("userForSaml")
         def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def adminToken = utils.getToken(userAdmin.username)
@@ -142,7 +142,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def username = testUtils.getRandomUUID("userForSaml")
         def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -216,7 +216,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def username = testUtils.getRandomUUID("userForSaml")
         def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -265,7 +265,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def username = testUtils.getRandomUUID("userForSaml")
         def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -317,7 +317,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def username = testUtils.getRandomUUID("userForSaml")
         def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, userAdmin2, users, users2
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         (userAdmin2, users2) = utils.createUserAdmin(domainId)
@@ -392,8 +392,8 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def username2 = testUtils.getRandomUUID("userForSaml")
         def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
-        def samlAssertion2 = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expDays, domainId2, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expDays, domainId2, null, email);
         def userAdmin, userAdmin2, users, users2
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
@@ -465,8 +465,8 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         def username2 = testUtils.getRandomUUID("userForSaml")
         def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
-        def samlAssertion2 = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expDays, domainId2, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expDays, domainId2, null, email);
         def userAdmin, userAdmin2, users, users2
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)

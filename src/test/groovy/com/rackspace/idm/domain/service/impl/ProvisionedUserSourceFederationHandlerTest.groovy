@@ -35,7 +35,7 @@ import org.opensaml.saml2.core.Response
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
-import testHelpers.saml.SamlAssertionFactory
+import testHelpers.saml.SamlFactory
 
 class ProvisionedUserSourceFederationHandlerTest extends Specification {
     @Shared ProvisionedUserSourceFederationHandler provisionedUserSourceFederationHandler
@@ -87,7 +87,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
     IdentityConfig.StaticConfig staticConfig = Mock(IdentityConfig.StaticConfig)
     IdentityConfig.ReloadableConfig reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
 
-    def SamlAssertionFactory samlAssertionFactory = new SamlAssertionFactory()
+    def SamlFactory samlAssertionFactory = new SamlFactory()
 
     def setupSpec() {
         //initializes open saml. allows us use unmarshaller

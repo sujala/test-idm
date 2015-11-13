@@ -112,4 +112,9 @@ public interface IdentityUserDao {
      * @param baseUser
      */
     void updateIdentityUser(BaseUser baseUser);
+
+    /**
+     * Delete the user
+     */
+    void deleteIdentityUser(BaseUser baseUser);
 }

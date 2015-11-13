@@ -12,7 +12,7 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.util.SamlSignatureValidator
 import spock.lang.Specification
 import testHelpers.IdmAssert
-import testHelpers.saml.SamlAssertionFactory
+import testHelpers.saml.SamlFactory
 
 class DefaultFederatedIdentityServiceTest extends Specification {
     DefaultFederatedIdentityService service
@@ -25,7 +25,7 @@ class DefaultFederatedIdentityServiceTest extends Specification {
 
     RackerSourceFederationHandler rackerSourceFederationHandler = Mock()
 
-    SamlAssertionFactory assertionFactory = new SamlAssertionFactory()
+    SamlFactory assertionFactory = new SamlFactory()
 
     def IDP_NAME = "nam";
     def IDP_URI = "http://my.test.idp"

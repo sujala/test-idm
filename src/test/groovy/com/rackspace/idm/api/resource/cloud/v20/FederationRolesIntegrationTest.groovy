@@ -20,7 +20,7 @@ import org.openstack.docs.identity.api.v2.RoleList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
-import testHelpers.saml.SamlAssertionFactory
+import testHelpers.saml.SamlFactory
 
 import static com.rackspace.idm.Constants.DEFAULT_IDP_NAME
 import static com.rackspace.idm.Constants.DEFAULT_IDP_URI
@@ -58,7 +58,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, [].asList());
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, [].asList());
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 
@@ -91,7 +91,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
@@ -128,7 +128,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
@@ -159,7 +159,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, [propagatingRole.name].asList());
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, [propagatingRole.name].asList());
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         utils.addRoleToUser(userAdmin, propagatingRole.id)
@@ -197,7 +197,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         utils.addRoleToUser(userAdmin, propagatingRole.id)
@@ -232,7 +232,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         utils.addRoleToUserOnTenantId(userAdmin, domainId, propagatingRole.id)
@@ -267,7 +267,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         utils.addRoleToUser(userAdmin, propagatingRole.id)
@@ -302,7 +302,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         utils.addRoleToUser(userAdmin, propagatingRole.id)
@@ -338,7 +338,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         utils.addRoleToUserOnTenantId(userAdmin, domainId, propagatingRole.id)
@@ -371,7 +371,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def nastTenantId = userService.getNastTenantId(domainId)
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         utils.addRoleToUserOnTenantId(userAdmin, domainId, propagatingRole.id)
@@ -403,7 +403,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
         def userAdmin1, userAdmin2, users1, users2
         (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
         (userAdmin2, users2) = utils.createUserAdmin(domainId)
@@ -434,7 +434,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         utils.addTenantToDomain(domainId, tenant.id)
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
 
         when:
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -457,35 +457,35 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 
         when: "service admin role"
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:service-admin"].asList());
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:service-admin"].asList());
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then:
         samlResponse.status == 400
 
         when: "identity admin role"
-        samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:admin"].asList());
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:admin"].asList());
         samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then:
         samlResponse.status == 400
 
         when: "user admin role"
-        samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:user-admin"].asList());
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:user-admin"].asList());
         samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then:
         samlResponse.status == 400
 
         when: "user manage role"
-        samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:user-manage"].asList());
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:user-manage"].asList());
         samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then:
         samlResponse.status == 400
 
         when: "default user role"
-        samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:default"].asList());
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, ["identity:default"].asList());
         samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then:

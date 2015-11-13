@@ -3,6 +3,7 @@ package com.rackspace.idm.util;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import org.opensaml.Configuration;
+import org.opensaml.saml2.core.LogoutRequest;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.io.Unmarshaller;
@@ -30,6 +31,7 @@ public class SamlUnmarshaller {
     public Response unmarshallResponse(final String responseString) {
         final ByteArrayInputStream is = new ByteArrayInputStream(responseString.getBytes());
 
+        XMLObject responseXmlObj;
         try {
             final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);
@@ -40,8 +42,7 @@ public class SamlUnmarshaller {
 
             final UnmarshallerFactory unmarshallerFactory = Configuration.getUnmarshallerFactory();
             final Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
-            final XMLObject responseXmlObj = unmarshaller.unmarshall(element);
-            return (org.opensaml.saml2.core.Response) responseXmlObj;
+            responseXmlObj = unmarshaller.unmarshall(element);
         } catch (SAXException ex1) {
             throw new BadRequestException("Error parsing saml response", ex1);
         } catch (IllegalArgumentException ex2) {
@@ -51,6 +52,41 @@ public class SamlUnmarshaller {
         } catch (Throwable t) {
             throw new IdmException("Error unmarshalling saml response", t);
         }
+
+        if (!(responseXmlObj instanceof Response)) {
+            throw new BadRequestException("Invalid content for saml token request.");
+        }
+
+        return (org.opensaml.saml2.core.Response) responseXmlObj;
+    }
+
+    public LogoutRequest unmarshallLogoutRequest(String logoutRequestStr) {
+        ByteArrayInputStream is = new ByteArrayInputStream(logoutRequestStr.getBytes());
+
+        XMLObject responseXmlObj;
+        try {
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            documentBuilderFactory.setNamespaceAware(true);
+            DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
+
+            Document document = docBuilder.parse(is);
+            Element element = document.getDocumentElement();
+
+            UnmarshallerFactory unmarshallerFactory = Configuration.getUnmarshallerFactory();
+            Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
+            responseXmlObj = unmarshaller.unmarshall(element);
+        } catch (SAXException sex) {
+            throw new BadRequestException("Error parsing saml logout request", sex);
+        } catch (Exception t) {
+            throw new IdmException("Error unmarshalling saml logout request", t);
+        }
+
+        if (!(responseXmlObj instanceof LogoutRequest)) {
+            throw new BadRequestException("Invalid content for logout request.");
+        }
+
+        return (org.opensaml.saml2.core.LogoutRequest) responseXmlObj;
+
     }
 
 }

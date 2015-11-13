@@ -31,7 +31,6 @@ public class DefaultUserService implements UserService {
     public static final String GETTING_USER = "Getting User: {}";
     public static final String GOT_USER = "Got User: {}";
     static final String ENCRYPTION_VERSION_ID = "encryptionVersionId";
-    private static final String DELETE_USER_LOG_NAME = "userDelete";
     private static final String DELETE_USER_FORMAT = "DELETED username={},domainId={},roles={}";
 
     private static final String ERROR_MSG_SAVE_OR_UPDATE_USER = "Error updating user %s";
@@ -48,7 +47,7 @@ public class DefaultUserService implements UserService {
     static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final Logger deleteUserLogger = LoggerFactory.getLogger(DELETE_USER_LOG_NAME);
+    private final Logger deleteUserLogger = LoggerFactory.getLogger(GlobalConstants.DELETE_USER_LOG_NAME);
 
     @Autowired
     private ScopeAccessService scopeAccessService;

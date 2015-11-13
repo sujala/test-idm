@@ -19,7 +19,7 @@ import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
-import testHelpers.saml.SamlAssertionFactory
+import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
 
@@ -80,7 +80,7 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         def fedEmail = "fedIntTest@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, fedUsername, 500, userAdmin.domainId, null, fedEmail);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, fedUsername, 500, userAdmin.domainId, null, fedEmail);
         AuthenticateResponse samlAuthResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
         UserForAuthenticateResponse samlUser = samlAuthResponse.user
 

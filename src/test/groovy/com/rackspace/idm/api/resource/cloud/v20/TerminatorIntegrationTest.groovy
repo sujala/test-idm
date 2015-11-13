@@ -20,7 +20,7 @@ import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-import testHelpers.saml.SamlAssertionFactory
+import testHelpers.saml.SamlFactory
 
 import static com.rackspace.idm.Constants.*
 
@@ -324,7 +324,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         def mossoTenantId = domainId
         def nastTenantId = utils.getNastTenant(domainId)
         def username = testUtils.getRandomUUID("samlUser")
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, 500, domainId, [].asList());
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, 500, domainId, [].asList());
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 

@@ -6,6 +6,7 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedRackerRequest;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.FederatedRackerDao;
+import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -15,6 +16,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
+import org.opensaml.saml2.core.LogoutResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,6 +78,11 @@ public class RackerSourceFederationHandler implements FederationHandler {
         RackerScopeAccess token = createToken(request.getUser(), request.getRequestedTokenExpirationDate(), authByList);
 
         return new SamlAuthResponse(request.getUser(), tenantRoles, Collections.EMPTY_LIST, token);
+    }
+
+    @Override
+    public void processLogoutRequestForProvider(LogoutRequestDecorator logoutRequestDecorator, IdentityProvider provider) {
+        return; //NO-OP - assumes rackers are not persisted.
     }
 
     private void persistRackerForRequest(FederatedRackerRequest request) {

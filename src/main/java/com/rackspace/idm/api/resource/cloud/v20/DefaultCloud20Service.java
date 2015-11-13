@@ -26,6 +26,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.util.SamlUnmarshaller;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
@@ -223,6 +224,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private RequestContextHolder requestContextHolder;
+
+    @Autowired
+    private SamlUnmarshaller samlUnmarshaller;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -1072,11 +1076,30 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder validateSamlResponse(HttpHeaders httpHeaders, org.opensaml.saml2.core.Response samlResponse) {
+    public ResponseBuilder validateSamlResponse(HttpHeaders httpHeaders, String samlResponseStr) {
         try {
+            org.opensaml.saml2.core.Response samlResponse = samlUnmarshaller.unmarshallResponse(samlResponseStr);
             SamlAuthResponse samlAuthResponse = federatedIdentityService.processSamlResponse(samlResponse);
             AuthenticateResponse response = authConverterCloudV20.toAuthenticationResponse(samlAuthResponse);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(response).getValue());
+        } catch (BadRequestException ex) {
+            logger.debug("Received invalid Federation auth request", ex);
+            return exceptionHandler.exceptionResponse(ex);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder logoutFederatedUser(HttpHeaders httpHeaders, String samlLogoutRequest) {
+        try {
+            org.opensaml.saml2.core.LogoutRequest logoutRequest = samlUnmarshaller.unmarshallLogoutRequest(samlLogoutRequest);
+
+            federatedIdentityService.processLogoutRequest(logoutRequest);
+            return Response.noContent();
+        } catch (BadRequestException ex) {
+            logger.debug("Received invalid Federation logout request", ex);
+            return exceptionHandler.exceptionResponse(ex);
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

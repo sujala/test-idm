@@ -20,17 +20,17 @@ import org.w3c.dom.Element
 import java.util.*;
 
 
-public class SamlAssertionProducer {
+public class SamlProducer {
 
     private Credential credential;
 
 	private SamlCredentialUtils samlCredentialUtils = new SamlCredentialUtils();
 
-    SamlAssertionProducer(String privateKeyLocation, String publicKeyLocation) {
+	SamlProducer(String privateKeyLocation, String publicKeyLocation) {
         credential = samlCredentialUtils.getSigningCredential(publicKeyLocation, privateKeyLocation)
     }
 
-    SamlAssertionProducer(Credential credential) {
+	SamlProducer(Credential credential) {
         this.credential = credential
     }
 
@@ -80,6 +80,50 @@ public class SamlAssertionProducer {
 		
 			return response;
 			
+		} catch (Throwable t) {
+			t.printStackTrace();
+			return null;
+		}
+	}
+
+	public LogoutRequest createSAMLLogoutRequest(final String subjectId, String issuer, DateTime issueInstant = new DateTime()) {
+		try {
+			DefaultBootstrap.bootstrap();
+
+			Signature signature = createSignature();
+			Issuer logoutRequestIssuer = null;
+
+			if (issuer != null) {
+				logoutRequestIssuer = createIssuer(issuer);
+			}
+
+			// create name element
+			NameIDBuilder nameIdBuilder = new NameIDBuilder();
+			NameID nameId = nameIdBuilder.buildObject();
+			nameId.setValue(subjectId );
+			nameId.setFormat("urn:oasis:names:tc:SAML:2.0:nameid-format:persistent");
+
+			LogoutRequestBuilder builder = new LogoutRequestBuilder();
+			LogoutRequest logoutRequest = builder.buildObject();
+
+			logoutRequest.setNameID(nameId)
+			logoutRequest.setIssueInstant(issueInstant)
+			logoutRequest.setIssuer(logoutRequestIssuer)
+
+			logoutRequest.setSignature(signature);
+
+			LogoutRequestMarshaller marshaller = new LogoutRequestMarshaller();
+			Element element = marshaller.marshall(logoutRequest);
+
+			if (signature != null) {
+				Signer.signObject(signature);
+			}
+
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			XMLHelper.writeNode(element, baos);
+
+			return logoutRequest;
+
 		} catch (Throwable t) {
 			t.printStackTrace();
 			return null;

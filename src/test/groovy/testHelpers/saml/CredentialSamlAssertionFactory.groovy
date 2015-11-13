@@ -11,11 +11,11 @@ import org.w3c.dom.Element
 class CredentialSamlAssertionFactory {
 
     private Credential credential
-    SamlAssertionProducer producer
+    SamlProducer producer
 
     CredentialSamlAssertionFactory(Credential credential) {
         this.credential = credential
-        producer = new SamlAssertionProducer(credential);
+        producer = new SamlProducer(credential);
     }
 
     def generateSamlAssertion(issuer, subject, expirationDays, domain, roles) {

@@ -117,6 +117,12 @@ public class SqlFederatedUserRepository  implements FederatedUserDao {
         return federatedUserRaxMapper.fromSQL(federatedUserRepository.findOneByUsernameAndFederatedIdpName(username, identityProviderName));
     }
 
+    @Override
+    public void deleteUser(FederatedUser federatedUser) {
+        federatedUserRepository.delete(federatedUser.getId());
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, federatedUser.getUniqueId(), null));
+    }
+
     private String getNextId() {
         return UUID.randomUUID().toString().replaceAll("-", "");
     }

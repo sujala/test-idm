@@ -11,7 +11,7 @@ import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
 import testHelpers.RootIntegrationTest
-import testHelpers.saml.SamlAssertionFactory
+import testHelpers.saml.SamlFactory
 
 import static com.rackspace.idm.Constants.*
 
@@ -40,7 +40,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, [].asList());
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, [].asList());
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdminEntity = identityUserService.getEndUserById(userAdmin.id)
@@ -88,7 +88,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expDays = 500
-        def samlAssertion = new SamlAssertionFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, [].asList());
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, [].asList());
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value

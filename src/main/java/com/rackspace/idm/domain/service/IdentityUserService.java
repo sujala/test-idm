@@ -178,4 +178,11 @@ public interface IdentityUserService {
      * @return
      */
     Iterable<EndUser> getEnabledEndUsersByGroupId(String groupId);
+
+    /**
+     * Delete the specified user
+     *
+     * @param baseUser
+     */
+    void deleteUser(BaseUser baseUser);
 }
