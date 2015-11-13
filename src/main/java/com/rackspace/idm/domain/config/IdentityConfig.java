@@ -79,6 +79,9 @@ public class IdentityConfig {
     public static final String FEDERATED_RESPONSE_MAX_AGE = "feature.federated.issueInstant.max.age";
     public static final int FEDERATED_RESPONSE_MAX_AGE_DEFAULT = 86400;
 
+    public static final String FEDERATED_RESPONSE_MAX_SKEW = "feature.federated.issueInstant.max.skew";
+    public static final int FEDERATED_RESPONSE_MAX_SKEW_DEFAULT = 5;
+
     /**
      * The format of the property name to set the token format for a specific IDP. The '%s' is replaced by the IDP's labeledUri. This
      * means that each IDP has a custom property. If no such property exists for the IDP, the value for {@link #IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP}
@@ -350,6 +353,7 @@ public class IdentityConfig {
         defaults.put(CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP, CACHED_AE_TOKEN_CACHE_RECORD_STATS_DEFAULT);
         defaults.put(FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME, FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME_DEFAULT);
         defaults.put(FEDERATED_RESPONSE_MAX_AGE, FEDERATED_RESPONSE_MAX_AGE_DEFAULT);
+        defaults.put(FEDERATED_RESPONSE_MAX_SKEW, FEDERATED_RESPONSE_MAX_SKEW_DEFAULT);
 
         return defaults;
     }
@@ -1233,6 +1237,11 @@ public class IdentityConfig {
         @IdmProp(key = FEDERATED_RESPONSE_MAX_AGE, versionAdded = "3.1.0", description = "The max age of a saml response for it to be considered valid.")
         public int getFederatedResponseMaxAge() {
             return getIntSafely(reloadableConfiguration, FEDERATED_RESPONSE_MAX_AGE);
+        }
+
+        @IdmProp(key = FEDERATED_RESPONSE_MAX_SKEW, versionAdded = "3.1.0", description = "The max skew +/- seconds of a saml response for it to still be considered valid.")
+        public int getFederatedResponseMaxSkew() {
+            return getIntSafely(reloadableConfiguration, FEDERATED_RESPONSE_MAX_SKEW);
         }
 
     }

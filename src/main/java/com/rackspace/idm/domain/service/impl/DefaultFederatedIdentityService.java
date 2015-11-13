@@ -62,8 +62,12 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         DateTime issueInstant = decoratedSamlResponse.checkAndGetIssueInstant();
         DateTime now = new DateTime();
         int maxResponseAge = identityConfig.getReloadableConfig().getFederatedResponseMaxAge();
+        int maxResponseSkew = identityConfig.getReloadableConfig().getFederatedResponseMaxSkew();
         int timeDelta = Seconds.secondsBetween(issueInstant, now).getSeconds();
-        if (timeDelta > maxResponseAge) {
+        if (issueInstant.isAfter(now.plusSeconds(maxResponseSkew))) {
+            throw new BadRequestException("Saml response issueInstant cannot be in the future.");
+        }
+        if (timeDelta > maxResponseAge + maxResponseSkew) {
             throw new BadRequestException("Saml responses cannot be older than " + maxResponseAge + " seconds.");
         }
 

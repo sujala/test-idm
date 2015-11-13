@@ -149,27 +149,59 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         //specify assertion with no roles
         def assertionFactory = new SamlAssertionFactory()
         def maxResponseAge = identityConfig.getReloadableConfig().getFederatedResponseMaxAge()
-        def issueInstant = new DateTime().minusSeconds(maxResponseAge)
-        issueInstant = issueInstant.plusSeconds(secToAddToAge)
-        def samlResponse = assertionFactory.generateSamlAssertionResponseForFederatedUser(DEFAULT_IDP_URI, username, 60, domainId, null, email, Constants.DEFAULT_IDP_PRIVATE_KEY, Constants.DEFAULT_IDP_PUBLIC_KEY, issueInstant);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdminEntity = userService.getUserById(userAdmin.id)
 
-        when:
+        when: "issueInstant is in the past but not older than max saml response age"
+        def issueInstant = new DateTime().minusSeconds(maxResponseAge)
+        def samlResponse = assertionFactory.generateSamlAssertionResponseForFederatedUser(DEFAULT_IDP_URI, username, 60, domainId, null, email, Constants.DEFAULT_IDP_PRIVATE_KEY, Constants.DEFAULT_IDP_PUBLIC_KEY, issueInstant);
         def response = cloud20.samlAuthenticate(assertionFactory.convertResponseToString(samlResponse))
 
         then:
-        response.status == expectedResponse
+        response.status == 200
+
+        when: "issueInstant is in the past but not older than max saml response age + skew"
+        issueInstant = new DateTime().minusSeconds(maxResponseAge)
+        //subtracting a few seconds off of the skew. Making it exactly equal will fail b/c of the time for the round trip
+        issueInstant = issueInstant.minusSeconds(identityConfig.getReloadableConfig().getFederatedResponseMaxSkew() - 3)
+        samlResponse = assertionFactory.generateSamlAssertionResponseForFederatedUser(DEFAULT_IDP_URI, username, 60, domainId, null, email, Constants.DEFAULT_IDP_PRIVATE_KEY, Constants.DEFAULT_IDP_PUBLIC_KEY, issueInstant);
+        response = cloud20.samlAuthenticate(assertionFactory.convertResponseToString(samlResponse))
+
+        then:
+        response.status == 200
+
+        when: "issueInstant is in the past and older than max saml response age + skew"
+        issueInstant = new DateTime().minusSeconds(maxResponseAge)
+        //subtracting a few seconds off of the skew. Making it exactly equal will fail b/c of the time for the round trip
+        issueInstant = issueInstant.minusSeconds(identityConfig.getReloadableConfig().getFederatedResponseMaxSkew() + 60)
+        samlResponse = assertionFactory.generateSamlAssertionResponseForFederatedUser(DEFAULT_IDP_URI, username, 60, domainId, null, email, Constants.DEFAULT_IDP_PRIVATE_KEY, Constants.DEFAULT_IDP_PUBLIC_KEY, issueInstant);
+        response = cloud20.samlAuthenticate(assertionFactory.convertResponseToString(samlResponse))
+
+        then:
+        response.status == 400
+
+        when: "issueInstant is in the future but within the allowed skew"
+        issueInstant = new DateTime()
+        issueInstant = issueInstant.plusSeconds(identityConfig.getReloadableConfig().getFederatedResponseMaxSkew() - 3)
+        samlResponse = assertionFactory.generateSamlAssertionResponseForFederatedUser(DEFAULT_IDP_URI, username, 60, domainId, null, email, Constants.DEFAULT_IDP_PRIVATE_KEY, Constants.DEFAULT_IDP_PUBLIC_KEY, issueInstant);
+        response = cloud20.samlAuthenticate(assertionFactory.convertResponseToString(samlResponse))
+
+        then:
+        response.status == 200
+
+        when: "issueInstant is in the future but outside of the the allowed skew"
+        issueInstant = new DateTime()
+        issueInstant = issueInstant.plusSeconds(identityConfig.getReloadableConfig().getFederatedResponseMaxSkew() + 60)
+        samlResponse = assertionFactory.generateSamlAssertionResponseForFederatedUser(DEFAULT_IDP_URI, username, 60, domainId, null, email, Constants.DEFAULT_IDP_PRIVATE_KEY, Constants.DEFAULT_IDP_PUBLIC_KEY, issueInstant);
+        response = cloud20.samlAuthenticate(assertionFactory.convertResponseToString(samlResponse))
+
+        then:
+        response.status == 400
 
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
-
-        where:
-        secToAddToAge | expectedResponse
-        -60           | 400
-        60            | 200
     }
 
     @Unroll
