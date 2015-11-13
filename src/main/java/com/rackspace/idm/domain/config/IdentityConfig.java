@@ -82,6 +82,10 @@ public class IdentityConfig {
     public static final String FEDERATED_RESPONSE_MAX_SKEW = "feature.federated.issueInstant.max.skew";
     public static final int FEDERATED_RESPONSE_MAX_SKEW_DEFAULT = 5;
 
+    /* Federated max number of users in IDP [CIDMDEV-5286:CIDMDEV-5305] */
+    public static final String IDENTITY_FEDERATED_IDP_MAX_USER_PROP_PREFIX = "federated.provider.maxUserCount";
+    public static final String IDENTITY_FEDERATED_IDP_MAX_USER_PROP_REG = IDENTITY_FEDERATED_IDP_MAX_USER_PROP_PREFIX + ".%s";
+
     /**
      * The format of the property name to set the token format for a specific IDP. The '%s' is replaced by the IDP's labeledUri. This
      * means that each IDP has a custom property. If no such property exists for the IDP, the value for {@link #IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP}
@@ -525,29 +529,6 @@ public class IdentityConfig {
             result = defaultValue;
         }
         return result;
-    }
-
-    private String[] getStringArraySafely(Configuration config, String prop) {
-        String[] defaultValue = (String[]) propertyDefaults.get(prop);
-        String[] setVal;
-        try {
-            if (defaultValue == null) {
-                setVal = config.getStringArray(prop);
-            } else {
-                setVal = config.getStringArray(prop);
-                /*
-                An empty array is returned when the property is not defined OR if the property exists but does not contain
-                any values. Want to use the default ONLY if the property does not exist.
-                 */
-                if (ArrayUtils.isEmpty(setVal) && !config.containsKey(prop)) {
-                    setVal = defaultValue;
-                }
-            }
-            return setVal;
-        } catch (ConversionException e) {
-            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
-            return defaultValue;
-        }
     }
 
     /**
@@ -1252,6 +1233,11 @@ public class IdentityConfig {
         @IdmProp(key = FEDERATED_RESPONSE_MAX_SKEW, versionAdded = "3.1.0", description = "The max skew +/- seconds of a saml response for it to still be considered valid.")
         public int getFederatedResponseMaxSkew() {
             return getIntSafely(reloadableConfiguration, FEDERATED_RESPONSE_MAX_SKEW);
+        }
+
+        @IdmProp(key = IDENTITY_FEDERATED_IDP_MAX_USER_PROP_PREFIX, versionAdded = "3.1.0", description = "The max number of users in IDP per domain.")
+        public Integer getIdentityFederationMaxUserCountForIdp(String idpLabeledUri) {
+            return reloadableConfiguration.getInteger(String.format(IDENTITY_FEDERATED_IDP_MAX_USER_PROP_REG, idpLabeledUri), null);
         }
 
         @IdmProp(key = FEATURE_SUPPORT_SAML_LOGOUT_PROP, versionAdded = "3.1.0", description = "Whether or not to support SAML Federation Logout")
