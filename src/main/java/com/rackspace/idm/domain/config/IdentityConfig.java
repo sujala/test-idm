@@ -210,6 +210,14 @@ public class IdentityConfig {
     public static final String CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP = "cached.ae.token.cache.record.stats";
     public static final boolean CACHED_AE_TOKEN_CACHE_RECORD_STATS_DEFAULT = true;
 
+
+    public static final String FEATURE_SUPPORT_SAML_AUTH_PROP = "feature.support.saml.authentication";
+    public static final boolean FEATURE_SUPPORT_SAML_AUTH_DEFAULT = true;
+
+    public static final String FEATURE_SUPPORT_SAML_LOGOUT_PROP = "feature.support.saml.logout";
+    public static final boolean FEATURE_SUPPORT_SAML_LOGOUT_DEFAULT = true;
+
+
     /**
      * Required static prop
      */
@@ -271,8 +279,8 @@ public class IdentityConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityConfig.class);
     private final Map<String,Object> propertyDefaults;
-    private final StaticConfig staticConfig = new StaticConfig();
-    private final ReloadableConfig reloadableConfig = new ReloadableConfig();
+    private StaticConfig staticConfig = new StaticConfig();
+    private ReloadableConfig reloadableConfig = new ReloadableConfig();
 
     public IdentityConfig() {
         propertyDefaults = setDefaults();
@@ -354,6 +362,8 @@ public class IdentityConfig {
         defaults.put(FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME, FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME_DEFAULT);
         defaults.put(FEDERATED_RESPONSE_MAX_AGE, FEDERATED_RESPONSE_MAX_AGE_DEFAULT);
         defaults.put(FEDERATED_RESPONSE_MAX_SKEW, FEDERATED_RESPONSE_MAX_SKEW_DEFAULT);
+        defaults.put(FEATURE_SUPPORT_SAML_LOGOUT_PROP, FEATURE_SUPPORT_SAML_LOGOUT_DEFAULT);
+        defaults.put(FEATURE_SUPPORT_SAML_AUTH_PROP, FEATURE_SUPPORT_SAML_AUTH_DEFAULT);
 
         return defaults;
     }
@@ -1244,6 +1254,15 @@ public class IdentityConfig {
             return getIntSafely(reloadableConfiguration, FEDERATED_RESPONSE_MAX_SKEW);
         }
 
+        @IdmProp(key = FEATURE_SUPPORT_SAML_LOGOUT_PROP, versionAdded = "3.1.0", description = "Whether or not to support SAML Federation Logout")
+        public boolean isFederationLogoutSupported() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_SAML_LOGOUT_PROP);
+        }
+
+        @IdmProp(key = FEATURE_SUPPORT_SAML_AUTH_PROP, versionAdded = "3.1.0", description = "Whether or not to support SAML Federation Authentication")
+        public boolean isFederationAuthenticationSupported() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_SAML_AUTH_PROP);
+        }
     }
 
     @Deprecated

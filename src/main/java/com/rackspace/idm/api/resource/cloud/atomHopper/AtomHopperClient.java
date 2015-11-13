@@ -8,6 +8,7 @@ import com.rackspace.docs.event.identity.trr.user.ValuesEnum;
 import com.rackspace.docs.event.identity.user.CloudIdentityType;
 import com.rackspace.docs.event.identity.user.ResourceTypes;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import org.apache.commons.configuration.Configuration;
@@ -74,6 +75,9 @@ public class AtomHopperClient {
     private UserService userService;
 
     @Autowired
+    private IdentityUserService identityUserService;
+
+    @Autowired
     private DefaultTenantService defaultTenantService;
 
     @Autowired
@@ -110,7 +114,7 @@ public class AtomHopperClient {
     }
 
     @Async
-    public void asyncPost(User user, String userStatus) {
+    public void asyncPost(EndUser user, String userStatus) {
         try {
             postUser(user, atomHopperHelper.getAuthToken(), userStatus);
         } catch (Exception e) {
@@ -150,7 +154,7 @@ public class AtomHopperClient {
         }
     }
 
-    public void postUser(User user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+    public void postUser(EndUser user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         try {
             UsageEntry entry = null;
             if (userStatus.equals(AtomHopperConstants.DELETED)) {
@@ -227,14 +231,19 @@ public class AtomHopperClient {
         return new InputStreamEntity(new ByteArrayInputStream(s.getBytes("UTF-8")), -1);
     }
 
-    public UsageEntry createEntryForUser(User user, EventType eventType, Boolean migrated) throws DatatypeConfigurationException {
+    public UsageEntry createEntryForUser(EndUser user, EventType eventType, Boolean migrated) throws DatatypeConfigurationException {
         logger.warn("Creating user entry ...");
 
         final CloudIdentityType cloudIdentityType = new CloudIdentityType();
         cloudIdentityType.setDisplayName(user.getUsername());
         cloudIdentityType.setResourceType(ResourceTypes.USER);
-        cloudIdentityType.setMultiFactorEnabled(user.isMultiFactorEnabled());
-        for (Group group : userService.getGroupsForUser(user.getId())) {
+
+        if (user instanceof User) {
+            //only applicable for provisioned users
+            cloudIdentityType.setMultiFactorEnabled(((User)user).isMultiFactorEnabled());
+        }
+
+        for (Group group : identityUserService.getGroupsForEndUser(user.getId())) {
             cloudIdentityType.getGroups().add(group.getGroupId());
         }
 

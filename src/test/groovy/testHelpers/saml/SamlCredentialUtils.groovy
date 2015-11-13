@@ -4,11 +4,13 @@ import org.apache.commons.io.IOUtils
 import org.bouncycastle.openssl.PEMWriter
 import org.bouncycastle.x509.X509V3CertificateGenerator
 import org.joda.time.DateTime;
-import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.security.x509.BasicX509Credential
 import org.opensaml.xml.security.x509.X509Credential;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory
+import org.springframework.core.io.ClassPathResource
+import org.springframework.core.io.FileSystemResource
+import org.springframework.core.io.Resource
 
 import javax.security.auth.x500.X500Principal;
 import java.security.KeyFactory
@@ -36,14 +38,17 @@ public class SamlCredentialUtils {
 	 * @throws Throwable
 	 */
 	public X509Credential getSigningCredential(String publicKeyLocation, String privateKeyLocation) throws Throwable {
+        Resource pubKeyResource = getResource(publicKeyLocation);
+        Resource priKeyResource = getResource(privateKeyLocation);
+
 		// create public key (cert) portion of credential
-        InputStream inStream = this.getClass().getClassLoader().getResourceAsStream(publicKeyLocation);
+        InputStream inStream = pubKeyResource.getInputStream();
 		CertificateFactory cf = CertificateFactory.getInstance("X.509");
 		X509Certificate publicKey = (X509Certificate)cf.generateCertificate(inStream);
 		inStream.close();
 		    
 		// create private key
-        InputStream privateKeyStream = this.getClass().getClassLoader().getResourceAsStream(privateKeyLocation);
+        InputStream privateKeyStream = priKeyResource.getInputStream()
 		byte[] buf = IOUtils.toByteArray(privateKeyStream);
         privateKeyStream.close();
 		PKCS8EncodedKeySpec kspec = new PKCS8EncodedKeySpec(buf);
@@ -57,6 +62,20 @@ public class SamlCredentialUtils {
 		
 		return credential;
 	}
+
+    private Resource getResource(String resourceLocation) {
+        FileSystemResource fsResource = new FileSystemResource(resourceLocation);
+        if (fsResource.exists()) {
+            return fsResource;
+        }
+
+        ClassPathResource cpResource = new ClassPathResource(resourceLocation);
+        if (cpResource.exists()) {
+            return cpResource;
+        }
+
+        return null;
+    }
 
     static X509Certificate toX509Certificate(String certAsStr) throws Throwable {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");

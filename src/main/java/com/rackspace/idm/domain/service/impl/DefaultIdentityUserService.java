@@ -179,4 +179,12 @@ public class DefaultIdentityUserService implements IdentityUserService {
         return identityUserRepository.getEnabledEndUsersByGroupId(groupId);
     }
 
+    @Override
+    public void deleteUser(BaseUser user) {
+        if (user instanceof Racker) {
+            //rackers are not persistent, so don't bother trying to delete
+            return;
+        }
+        identityUserRepository.deleteIdentityUser(user);
+    }
 }

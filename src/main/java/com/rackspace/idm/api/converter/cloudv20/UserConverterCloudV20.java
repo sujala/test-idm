@@ -118,7 +118,7 @@ public class UserConverterCloudV20 {
     }
 
     private void toUserForAuthenticateResponseFederated(UserForAuthenticateResponse jaxbUser, FederatedUser user) {
-        if(isSamlEnabled() && StringUtils.isNotBlank(user.getFederatedIdpUri())){
+        if(identityConfig.getReloadableConfig().isFederationAuthenticationSupported() && StringUtils.isNotBlank(user.getFederatedIdpUri())){
             jaxbUser.setFederatedIdp(user.getFederatedIdpUri());
         }
     }
@@ -130,7 +130,7 @@ public class UserConverterCloudV20 {
         if(roles != null){
             userForAuthenticateResponse.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
         }
-        if (racker.isFederatedRacker() && isSamlEnabled()) {
+        if (identityConfig.getReloadableConfig().isFederationAuthenticationSupported() && racker.isFederatedRacker()) {
             userForAuthenticateResponse.setFederatedIdp(racker.getFederatedIdpUri());
             userForAuthenticateResponse.setId(racker.getUsername());
             userForAuthenticateResponse.setName(racker.getUsername());
@@ -261,7 +261,7 @@ public class UserConverterCloudV20 {
             */
             jaxbUser.setRoles(null);
 
-            if(isSamlEnabled() && StringUtils.isNotBlank(user.getFederatedIdpUri())){
+            if(identityConfig.getReloadableConfig().isFederationAuthenticationSupported() && StringUtils.isNotBlank(user.getFederatedIdpUri())){
                 jaxbUser.setFederatedIdp(user.getFederatedIdpUri());
             }
 
@@ -283,9 +283,5 @@ public class UserConverterCloudV20 {
         }
 
         return list;
-    }
-
-    private boolean isSamlEnabled(){
-        return config.getBoolean("saml.enabled");
     }
 }

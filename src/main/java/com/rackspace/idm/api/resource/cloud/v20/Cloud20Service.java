@@ -25,7 +25,9 @@ public interface Cloud20Service {
 
     ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest);
 
-    ResponseBuilder validateSamlResponse(HttpHeaders httpHeaders, org.opensaml.saml2.core.Response samlResponse);
+    ResponseBuilder validateSamlResponse(HttpHeaders httpHeaders, String samlResponse);
+
+    ResponseBuilder logoutFederatedUser(HttpHeaders httpHeaders, String logoutRequest);
 
     ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo);
 

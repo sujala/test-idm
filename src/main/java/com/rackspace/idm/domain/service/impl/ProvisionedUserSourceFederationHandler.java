@@ -2,17 +2,21 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.SAMLConstants;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
+import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.SamlSignatureValidator;
 import com.rackspace.idm.util.predicate.UserEnabledPredicate;
 import com.rackspace.idm.validation.PrecedenceValidator;
@@ -22,6 +26,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
+import org.opensaml.saml2.core.LogoutResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,6 +92,13 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
     @Autowired
     private Configuration config;
 
+    @Autowired
+    private AtomHopperClient atomHopperClient;
+
+    private final Logger deleteUserLogger = LoggerFactory.getLogger(GlobalConstants.DELETE_USER_LOG_NAME);
+    private static final String DELETE_USER_FORMAT = "DELETED username={},federatedUri={},domainId={}";
+
+    @Override
     public SamlAuthResponse processRequestForProvider(SamlResponseDecorator samlResponseDecorator, IdentityProvider provider) {
         Validate.notNull(samlResponseDecorator, "saml response must not be null");
         Validate.notNull(provider, "provider must not be null");
@@ -117,6 +129,26 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
         }
 
         return new SamlAuthResponse(user, tenantRoles, endpoints, token);
+    }
+
+    @Override
+    public void processLogoutRequestForProvider(LogoutRequestDecorator logoutRequestDecorator, IdentityProvider provider) {
+        String username = logoutRequestDecorator.checkAndGetUsername();
+
+        FederatedUser user = identityUserService.getFederatedUserByUsernameAndIdentityProviderName(username, provider.getName());
+
+        if (user == null) {
+            throw new NotFoundException("Not Found");
+        }
+
+        identityUserService.deleteUser(user);
+
+        //log deletion
+        deleteUserLogger.warn(DELETE_USER_FORMAT,
+                new Object[] {user.getUsername(), user.getFederatedIdpUri(), user.getDomainId()});
+
+        //send atom hopper feed showing deletion of this user
+        atomHopperClient.asyncPost(user, AtomHopperConstants.DELETED);
     }
 
     /**

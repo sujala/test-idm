@@ -169,4 +169,18 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
         return identityUserRepository.getEnabledEndUsersPaged(offset, limit);
     }
 
+    @Override
+    public void deleteIdentityUser(BaseUser baseUser) {
+        if (baseUser instanceof User) {
+            //delete regular provisioned user
+            userDao.deleteUser((User) baseUser);
+        }
+        else if (baseUser instanceof FederatedUser) {
+            //delete domain based federated user
+            fedUserDao.deleteUser((FederatedUser) baseUser);
+        } else {
+            //the only other type of users are Rackers (Federated and Non-Federated) which are NOT persisted so no deletion necessary
+            throw new UnsupportedOperationException("Not supported");
+        }
+    }
 }

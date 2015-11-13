@@ -3345,7 +3345,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         org.opensaml.saml2.core.Response res = null;
 
         when:
-        staticIdmConfiguration.setProperty("saml.enabled", samlEnabled)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_SAML_AUTH_PROP, samlEnabled)
         def response = cloud20.samlAuthenticate(res)
 
         then:

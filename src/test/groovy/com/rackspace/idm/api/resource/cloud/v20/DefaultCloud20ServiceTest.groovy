@@ -18,6 +18,7 @@ import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.exception.*
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
+import com.rackspace.idm.util.SamlUnmarshaller
 import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.StringUtils
@@ -4011,16 +4012,19 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def samlResponse = Mock(org.opensaml.saml2.core.Response)
         def mockAuthData = Mock(AuthData)
         def responseBuilder = Mock(javax.ws.rs.core.Response.ResponseBuilder)
+        def samlUnmarshaller = Mock(SamlUnmarshaller)
         AuthenticateResponse mockAuthenticateResponse = Mock()
         AuthConverterCloudV20 authConverter = Mock()
         service.authConverterCloudV20 = authConverter;
+        service.samlUnmarshaller = samlUnmarshaller
 
         and:
         defaultFederatedIdentityService.processSamlResponse() >> mockAuthData
         authConverter.toAuthenticationResponse(_) >> mockAuthenticateResponse
+        samlUnmarshaller.unmarshallResponse(_) >> samlResponse
 
         when: "saml response is validated"
-        def result = service.validateSamlResponse(headers, samlResponse)
+        def result = service.validateSamlResponse(headers, "")
 
         then:
         result.build().status == 200

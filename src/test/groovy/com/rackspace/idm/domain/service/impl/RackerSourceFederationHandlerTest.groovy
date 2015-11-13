@@ -4,7 +4,6 @@ import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedRackerRequest
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedRackerDao
-import com.rackspace.idm.domain.decorator.SAMLAuthContext
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.IdentityProvider
@@ -20,7 +19,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 import testHelpers.EntityFactory
-import testHelpers.saml.SamlAssertionFactory
+import testHelpers.saml.SamlFactory
 
 class RackerSourceFederationHandlerTest extends Specification {
     //service testing
@@ -58,7 +57,7 @@ class RackerSourceFederationHandlerTest extends Specification {
     def FOUNDATION_CLIENT_ID = "asdjwehuqrew"
     def CLOUD_AUTH_CLIENT_ID = "345hjkwetugfhj5346hiou"
 
-    def SamlAssertionFactory samlAssertionFactory = new SamlAssertionFactory()
+    def SamlFactory samlAssertionFactory = new SamlFactory()
 
     def setup() {
         identityConfig.getReloadableConfig() >> reloadableConfig

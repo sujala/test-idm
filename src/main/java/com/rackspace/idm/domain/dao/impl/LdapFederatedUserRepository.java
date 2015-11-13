@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
+import com.rackspace.idm.domain.entity.FederatedBaseUser;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Group;
 import com.unboundid.ldap.sdk.Filter;
@@ -59,6 +60,12 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
     public FederatedUser getUserById(String id) {
         return getObject(searchFilterGetUserById(id), SearchScope.SUB);
     }
+
+    @Override
+    public void deleteUser(FederatedUser federatedBaseUser) {
+        deleteObject(federatedBaseUser);
+    }
+
     private Filter searchFilterGetUserById(String id) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, id)

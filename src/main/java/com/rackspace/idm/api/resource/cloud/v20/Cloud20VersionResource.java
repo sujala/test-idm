@@ -103,12 +103,25 @@ public class Cloud20VersionResource {
     @POST
     @Path("RAX-AUTH/saml-tokens")
     public Response authenticateSamlResponse(@Context HttpHeaders httpHeaders, String samlResponse)  {
-        if(!isSamlEnabled()){
-           throw new NotFoundException("Not Found");
-        }
-        org.opensaml.saml2.core.Response response = samlUnmarshaller.unmarshallResponse(samlResponse);
+        return federationSamlAuthentication(httpHeaders, samlResponse);
+    }
 
-        return cloud20Service.validateSamlResponse(httpHeaders, response).build();
+    @POST
+    @Path("RAX-AUTH/federation/saml/auth")
+    public Response federationSamlAuthentication(@Context HttpHeaders httpHeaders, String samlResponse)  {
+        if(!identityConfig.getReloadableConfig().isFederationAuthenticationSupported()){
+            throw new NotFoundException("Service Not Found");
+        }
+        return cloud20Service.validateSamlResponse(httpHeaders, samlResponse).build();
+    }
+
+    @POST
+    @Path("RAX-AUTH/federation/saml/logout")
+    public Response federationSamlLogout(@Context HttpHeaders httpHeaders, String samlLogoutRequest)  {
+        if(!identityConfig.getReloadableConfig().isFederationLogoutSupported()){
+            throw new NotFoundException("Service Not Found");
+        }
+        return cloud20Service.logoutFederatedUser(httpHeaders, samlLogoutRequest).build();
     }
 
     @GET
@@ -1092,10 +1105,6 @@ public class Cloud20VersionResource {
 
     public void setCloud20Service(DefaultCloud20Service cloud20Service) {
         this.cloud20Service = cloud20Service;
-    }
-
-    private boolean isSamlEnabled(){
-       return config.getBoolean("saml.enabled");
     }
 
     public void setIdentityConfig(IdentityConfig identityConfig) {

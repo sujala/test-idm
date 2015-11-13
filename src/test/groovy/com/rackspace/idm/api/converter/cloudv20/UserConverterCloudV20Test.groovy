@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.domain.config.ExternalBeansConfiguration
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.IdentityConfig.ReloadableConfig
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
@@ -33,16 +34,22 @@ class UserConverterCloudV20Test extends Specification {
     @Shared GroupConverterCloudV20 mockGroupConverterCloudV20
     @Shared AuthorizationService authorizationService
     @Shared Configuration mockConfig;
+    @Shared Configuration mockReloadableConfig
+    @Shared Configuration mockStaticConfig
+    @Shared ReloadableConfig reloadableConfig
     @Shared BasicMultiFactorService basicMultiFactorService
 
     def setupSpec() {
         ExternalBeansConfiguration config = new ExternalBeansConfiguration()
         def mapper = config.getMapper()
-
+        mockReloadableConfig = Mock()
+        mockStaticConfig = Mock()
+        reloadableConfig = Mock()
         converterCloudV20 = new UserConverterCloudV20().with {
             it.mapper = mapper
             it.authorizationService = Mock(AuthorizationService)
-            it.identityConfig = new IdentityConfig(Mock(Configuration), Mock(Configuration))
+            it.identityConfig = new IdentityConfig(mockStaticConfig, mockReloadableConfig)
+            it.identityConfig.reloadableConfig = reloadableConfig
             return it
         }
     }
