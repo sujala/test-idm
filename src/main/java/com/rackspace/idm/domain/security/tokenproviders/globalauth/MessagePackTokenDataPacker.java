@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.security.tokenproviders.globalauth;
 
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
@@ -11,6 +12,7 @@ import com.rackspace.idm.domain.security.UnmarshallTokenException;
 import com.rackspace.idm.domain.security.tokenproviders.TokenDataPacker;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.ErrorCodeIdmException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
@@ -161,6 +163,8 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             // End reading
             unpacker.readArrayEnd();
 
+        } catch (ErrorCodeIdmException e) {
+            throw e; //just rethrow. No transformation required
         } catch (IOException e) {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATA_CONTENTS, "Error encountered unpacking token", e);
         } catch (MessageTypeException ex) {
@@ -265,6 +269,10 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
             // DN
             //TODO: Make this more efficient!
             FederatedUser user = identityUserService.getFederatedUserById(scopeAccess.getUserRsId());
+            if (user == null) {
+                throw new UnmarshallTokenException(ErrorCodes.ERROR_CODE_FEDERATION_USER_NOT_FOUND, String.format("The associated user with id '%s' for the token does not exist", scopeAccess.getUserRsId()));
+            }
+
             IdentityProvider idp = identityProviderRepository.getIdentityProviderByUri(user.getFederatedIdpUri());
 
             scopeAccess.setUniqueId(TokenDNCalculator.calculateFederatedUserTokenDN(user.getUsername(), idp.getName(), webSafeToken));
