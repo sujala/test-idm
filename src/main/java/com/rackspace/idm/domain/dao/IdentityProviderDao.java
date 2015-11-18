@@ -4,7 +4,23 @@ import com.rackspace.idm.domain.entity.IdentityProvider;
 
 public interface IdentityProviderDao {
 
-    public IdentityProvider getIdentityProviderByUri(String uri);
+    IdentityProvider getIdentityProviderByUri(String uri);
 
-    public IdentityProvider getIdentityProviderByName(String name);
+    IdentityProvider getIdentityProviderByName(String name);
+
+    /**
+     * Add a new identity provider.
+     * @param identityProvider
+     * @return
+     * @throws com.rackspace.idm.exception.DuplicateException If provider already exists with specified issuer
+     */
+    void addIdentityProvider(IdentityProvider identityProvider);
+
+    /**
+     * Delete the specified Identity Provider
+     *
+     * @param identityProviderName
+     */
+    void deleteIdentityProviderById(String identityProviderName);
+
 }

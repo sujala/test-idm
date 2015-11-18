@@ -12,6 +12,7 @@ import com.rackspace.idm.exception.ExceptionHandler;
 import com.rackspace.idm.exception.MigrationReadOnlyIdmException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.SamlUnmarshaller;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -106,6 +107,12 @@ public class Cloud20VersionResource {
         return federationSamlAuthentication(httpHeaders, samlResponse);
     }
 
+    /**
+     * Takes standard SAMLResponse in form (input field is SAMLResponse) that is base64'd and url encoded.
+     * @param httpHeaders
+     * @param samlResponse
+     * @return
+     */
     @POST
     @Path("RAX-AUTH/federation/saml/auth")
     public Response federationSamlAuthentication(@Context HttpHeaders httpHeaders, String samlResponse)  {
@@ -122,6 +129,45 @@ public class Cloud20VersionResource {
             throw new NotFoundException("Service Not Found");
         }
         return cloud20Service.logoutFederatedUser(httpHeaders, samlLogoutRequest).build();
+    }
+
+    @POST
+    @Path("RAX-AUTH/federation/identity-providers")
+    public Response addIdentityProvider(
+            @Context HttpHeaders httpHeaders
+            , @Context UriInfo uriInfo
+            , @HeaderParam(X_AUTH_TOKEN) String authToken
+            , IdentityProvider identityProvider)  {
+        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
+            throw new NotFoundException("Service Not Found");
+        }
+        return cloud20Service.addIdentityProvider(httpHeaders, uriInfo, authToken, identityProvider).build();
+    }
+
+    @GET
+    @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}")
+    public Response getIdentityProvider(
+            @Context HttpHeaders httpHeaders
+            , @Context UriInfo uriInfo
+            , @HeaderParam(X_AUTH_TOKEN) String authToken
+            , @PathParam("identityProviderId") String identityProviderId)  {
+        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
+            throw new NotFoundException("Service Not Found");
+        }
+        return cloud20Service.getIdentityProvider(httpHeaders, authToken, identityProviderId).build();
+    }
+
+    @DELETE
+    @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}")
+    public Response deleteIdentityProvider(
+            @Context HttpHeaders httpHeaders
+            , @Context UriInfo uriInfo
+            , @HeaderParam(X_AUTH_TOKEN) String authToken
+            , @PathParam("identityProviderId") String identityProviderId)  {
+        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
+            throw new NotFoundException("Service Not Found");
+        }
+        return cloud20Service.deleteIdentityProvider(httpHeaders, authToken, identityProviderId).build();
     }
 
     @GET

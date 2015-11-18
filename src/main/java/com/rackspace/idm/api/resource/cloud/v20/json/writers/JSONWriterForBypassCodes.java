@@ -32,7 +32,7 @@ public class JSONWriterForBypassCodes extends JSONWriterForEntity<BypassCodes> {
         final HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(JSONConstants.BYPASS_CODES, JSONConstants.RAX_AUTH_BYPASS_CODES);
         final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        write(bypassCodes, buffer, prefixValues, false);
+        write(bypassCodes, buffer, prefixValues, NEVER_PLURALIZE_HANDLER);
 
         try {
             final JSONParser parser = new JSONParser();

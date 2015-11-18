@@ -3,6 +3,8 @@ package com.rackspace.idm.api.resource.cloud;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.util.List;
+
 /**
  * Our Json representation for arrays does not map one to one to the underlying jaxb object.
  * This class is responsible for transforming our representation to match with underlying jaxb
@@ -40,20 +42,21 @@ import org.json.simple.JSONObject;
  * }
  */
 public class JsonArrayTransformer {
+    public static final JsonArrayTransformerHandler ALWAYS_PLURALIZE_HANDLER = new AlwaysPluralizeJsonArrayTransformerHandler();
 
 
     public JSONObject transformIncludeWrapper(JSONObject object) {
-        return transformIncludeWrapper(object, true);
+        return transformIncludeWrapper(object, ALWAYS_PLURALIZE_HANDLER);
     }
 
-    public JSONObject transformIncludeWrapper(JSONObject object, boolean pluralizeArrays){
+    public JSONObject transformIncludeWrapper(JSONObject object, JsonArrayTransformerHandler handler){
         for(Object key : object.keySet()){
             Object value = object.get(key);
             if (value instanceof JSONObject) {
-                value = transformIncludeWrapper((JSONObject) value, pluralizeArrays);
+                value = transformIncludeWrapper((JSONObject) value, handler);
             }
 
-            if (pluralizeArrays && value instanceof JSONArray) {
+            if (value instanceof JSONArray && handler.pluralizeJSONArrayWithName(key.toString())) {
                 //create new wrapper element. following convention
                 //{wrapperName}.{elementName}
                 //what we get from json object is actually the wrapper name.
@@ -72,17 +75,17 @@ public class JsonArrayTransformer {
     }
 
     public JSONObject transformRemoveWrapper(JSONObject object, JSONObject parent) {
-        return transformRemoveWrapper(object, parent, true);
+        return transformRemoveWrapper(object, parent, ALWAYS_PLURALIZE_HANDLER);
     }
 
-    public JSONObject transformRemoveWrapper(JSONObject object, JSONObject parent, boolean pluralizeArrays) {
+    public JSONObject transformRemoveWrapper(JSONObject object, JSONObject parent, JsonArrayTransformerHandler handler) {
         for(Object key : object.keySet()){
             Object value = object.get(key);
             if (value instanceof JSONObject) {
-                value = transformRemoveWrapper((JSONObject) value, object, pluralizeArrays);
+                value = transformRemoveWrapper((JSONObject) value, object, handler);
             }
 
-            if (pluralizeArrays && value instanceof JSONArray) {
+            if (value instanceof JSONArray && handler.pluralizeJSONArrayWithName(key.toString())) {
 
                 //remove the wrapper element. following convention
                 //e.g roles.role
