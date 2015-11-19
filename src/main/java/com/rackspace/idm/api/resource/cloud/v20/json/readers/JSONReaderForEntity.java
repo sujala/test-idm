@@ -3,11 +3,11 @@ package com.rackspace.idm.api.resource.cloud.v20.json.readers;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.JsonArrayTransformer;
-import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
+import com.rackspace.idm.api.resource.cloud.*;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
@@ -30,6 +30,9 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
+    public static final JsonArrayTransformerHandler ALWAYS_PLURALIZE_HANDLER = new AlwaysPluralizeJsonArrayTransformerHandler();
+    public static final JsonArrayTransformerHandler NEVER_PLURALIZE_HANDLER = new NeverPluralizeJsonArrayTransformerHandler();
+
     @Override
     public boolean isReadable(Class<?> type, Type genericType,
                               Annotation[] annotations, MediaType mediaType) {
@@ -45,7 +48,15 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
         return read(entityStream, rootValue, prefixValues, true);
     }
 
-        protected T read(InputStream entityStream, String rootValue, Map prefixValues, boolean pluralizeArrays) {
+    protected T read(InputStream entityStream, String rootValue, Map prefixValues, boolean pluralizeArrays) {
+        if (pluralizeArrays) {
+            return read(entityStream, rootValue, prefixValues, ALWAYS_PLURALIZE_HANDLER);
+        } else {
+            return read(entityStream, rootValue, prefixValues, NEVER_PLURALIZE_HANDLER);
+        }
+    }
+
+    protected T read(InputStream entityStream, String rootValue, Map prefixValues, JsonArrayTransformerHandler arrayTransformerHandler) {
         try {
 
             String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
@@ -71,7 +82,8 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
                 jsonObject = outer;
             }
 
-            arrayTransformer.transformIncludeWrapper(jsonObject, pluralizeArrays);
+
+            arrayTransformer.transformIncludeWrapper(jsonObject, arrayTransformerHandler);
 
             String jsonString = jsonObject.toString();
             ObjectMapper om = new ObjectMapper();
@@ -80,9 +92,11 @@ public abstract class JSONReaderForEntity<T> implements MessageBodyReader<T> {
             return om.readValue(jsonString.getBytes(), entityType);
 
         } catch (ParseException e) {
-            throw new BadRequestException("Invalid json request body");
+            throw new BadRequestException("Invalid json request body", e);
+        } catch (InvalidFormatException e) {
+            throw new BadRequestException(String.format("Invalid json request body for value '%s'", e.getValue()), e);
         } catch (IOException e) {
-            throw new BadRequestException("Invalid json request body");
+            throw new BadRequestException("Invalid json request body", e);
         }
     }
 }

@@ -23,6 +23,6 @@ public class JSONWriterForRaxAuthMultiFactorDevices extends JSONWriterForEntity<
     public void writeTo(MultiFactorDevices multiFactor, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(JSONConstants.MULTIFACTOR_DEVICES, JSONConstants.RAX_AUTH_MULTIFACTOR_DEVICES);
-        write(multiFactor, entityStream, prefixValues, true);
+        write(multiFactor, entityStream, prefixValues, ALWAYS_PLURALIZE_HANDLER);
     }
 }

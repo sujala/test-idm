@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
@@ -30,6 +31,7 @@ import com.rackspace.idm.util.SamlUnmarshaller;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -133,6 +135,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private UserConverterCloudV20 userConverterCloudV20;
+
+    @Autowired
+    private IdentityProviderConverterCloudV20 identityProviderConverterCloudV20;
 
     @Autowired
     private GroupService groupService;
@@ -1100,6 +1105,59 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (BadRequestException ex) {
             logger.debug("Received invalid Federation logout request", ex);
             return exceptionHandler.exceptionResponse(ex);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder addIdentityProvider(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, IdentityProvider provider) {
+        try {
+            //verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            //verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+
+            validator20.validateIdentityProviderForCreation(provider);
+
+            com.rackspace.idm.domain.entity.IdentityProvider newProvider = identityProviderConverterCloudV20.fromIdentityProvider(provider);
+            federatedIdentityService.addIdentityProvider(newProvider);
+            ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path("generatedId").build());
+            return builder.entity(identityProviderConverterCloudV20.toIdentityProvider(newProvider));
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId) {
+        try {
+            //verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            //verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+
+            com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.checkAndGetIdentityProvider(providerId);
+
+            return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProvider(identityProviderConverterCloudV20.toIdentityProvider(provider)).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId) {
+        try {
+            //verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            //verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+
+            federatedIdentityService.deleteIdentityProviderById(providerId);
+            return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

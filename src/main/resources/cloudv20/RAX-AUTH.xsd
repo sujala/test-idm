@@ -653,7 +653,7 @@
 
     <complexType name="IdentityProvider">
         <sequence>
-            <element ref="RAX-AUTH:publicCertificates" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="RAX-AUTH:publicCertificates" minOccurs="0" maxOccurs="1"/>
         </sequence>
         <attribute name="id" type="xsd:string" use="optional">
             <annotation>

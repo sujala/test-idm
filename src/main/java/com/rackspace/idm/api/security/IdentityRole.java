@@ -13,7 +13,9 @@ public enum IdentityRole {
     , GET_TOKEN_ENDPOINTS_GLOBAL("identity:get-token-endpoint-global")
     , GET_USER_ROLES_GLOBAL("identity:get-user-roles-global")
     , GET_USER_GROUPS_GLOBAL("identity:get-user-groups-global")
-    , REPOSE_STANDARD("identity:repose-standard");
+    , REPOSE_STANDARD("identity:repose-standard")
+    , IDENTITY_PROVIDER_MANAGER("identity:identity-provider-manager")
+    ;
 
     @Getter
     private String roleName;

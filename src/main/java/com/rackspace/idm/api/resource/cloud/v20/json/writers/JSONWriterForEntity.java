@@ -1,8 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
 import com.rackspace.idm.JSONConstants;
-import com.rackspace.idm.api.resource.cloud.JsonArrayTransformer;
-import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
+import com.rackspace.idm.api.resource.cloud.*;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.exception.BadRequestException;
 import com.sun.jersey.api.json.JSONJAXBContext;
@@ -31,6 +30,9 @@ public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
+    public static final JsonArrayTransformerHandler ALWAYS_PLURALIZE_HANDLER = new AlwaysPluralizeJsonArrayTransformerHandler();
+    public static final JsonArrayTransformerHandler NEVER_PLURALIZE_HANDLER = new NeverPluralizeJsonArrayTransformerHandler();
+
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == entityType;
@@ -46,10 +48,10 @@ public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
     }
 
     protected void write(T entity, OutputStream entityStream, Map prefixValues) {
-        write(entity, entityStream, prefixValues, true);
+        write(entity, entityStream, prefixValues, ALWAYS_PLURALIZE_HANDLER);
     }
 
-    protected void write(T entity, OutputStream entityStream, Map prefixValues, boolean pluralizeArrays) {
+    protected void write(T entity, OutputStream entityStream, Map prefixValues, JsonArrayTransformerHandler handler) {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
             getMarshaller().marshallToJSON(entity, outputStream);
@@ -66,7 +68,7 @@ public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
                 jsonObject = outer;
             }
 
-            arrayTransformer.transformRemoveWrapper(jsonObject, null, pluralizeArrays);
+            arrayTransformer.transformRemoveWrapper(jsonObject, null, handler);
 
             String newJsonString = jsonObject.toString();
             entityStream.write(newJsonString.getBytes(JSONConstants.UTF_8));

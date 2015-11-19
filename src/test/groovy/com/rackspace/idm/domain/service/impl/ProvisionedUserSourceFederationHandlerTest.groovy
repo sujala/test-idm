@@ -880,7 +880,6 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         new IdentityProvider().with({
             it.name = IDP_NAME
             it.uri = IDP_URI
-            it.publicCertificate = IDP_PUBLIC_CERTIFICATE
             return it
         })
     }

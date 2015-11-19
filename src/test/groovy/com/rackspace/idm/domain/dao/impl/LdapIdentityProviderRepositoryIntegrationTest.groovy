@@ -61,7 +61,6 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         provider.name == IDP_NAME
         provider.uri == IDP_URI
         provider.description != null
-        provider.publicCertificate != null
         provider.userCertificates != null
         provider.userCertificates.size() == 1
 
@@ -83,7 +82,6 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         provider.name == IDP_NAME
         provider.uri == IDP_URI
         provider.description != null
-        provider.publicCertificate != null
         provider.userCertificates != null
         provider.userCertificates.size() == 1
         provider.getUserCertificatesAsX509() != null

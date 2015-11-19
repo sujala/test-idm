@@ -23,7 +23,7 @@ public class JSONWriterForGroups extends JSONWriterForEntity<GroupsList> {
 
     @Override
     public void writeTo(GroupsList groupsList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
-        write(groupsList, entityStream, Collections.singletonMap(GROUPS_LIST_PATH, VALUES), false);
+        write(groupsList, entityStream, Collections.singletonMap(GROUPS_LIST_PATH, VALUES), NEVER_PLURALIZE_HANDLER);
     }
 
 }

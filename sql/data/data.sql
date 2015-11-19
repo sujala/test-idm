@@ -44,6 +44,7 @@ INSERT INTO `assignment` VALUES ('UserProject','10071819','StagingUS_e99825fd-b0
 INSERT INTO `assignment` VALUES ('UserProject','173189','983452','5',0);
 INSERT INTO `assignment` VALUES ('UserProject','173189','identity','1',0);
 INSERT INTO `assignment` VALUES ('UserProject','173190','identity','4',0);
+INSERT INTO `assignment` VALUES ('UserProject','173190','identity','8470c459cfa043ef989976a66ba4d74e',0);
 INSERT INTO `assignment` VALUES ('UserProject','173195','identity','10053955',0);
 INSERT INTO `assignment` VALUES ('UserProject','173195','identity','4',0);
 INSERT INTO `assignment` VALUES ('UserProject','1c5a89a8d99b4e34998f7143d76d99e2','78543990','6',0);
@@ -1089,6 +1090,7 @@ INSERT INTO `role` VALUES ('6','compute:default','{}');
 INSERT INTO `role` VALUES ('7','identity:user-manage','{}');
 INSERT INTO `role` VALUES ('8','identity:multifactor_beta','{}');
 INSERT INTO `role` VALUES ('9','Racker','{}');
+INSERT INTO `role` VALUES ('8470c459cfa043ef989976a66ba4d74e','identity:identity-provider-manager','{}');
 
 --
 -- Dumping data for table `role_rax`

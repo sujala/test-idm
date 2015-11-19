@@ -450,7 +450,6 @@ class EntityFactory extends Specification {
             for (X509Certificate certificate : certificates) {
                 it.addUserCertificate(certificate)
             }
-            it.publicCertificate = SamlCredentialUtils.getCertificateAsPEMString(certificates.get(0));
             return it
         }
 

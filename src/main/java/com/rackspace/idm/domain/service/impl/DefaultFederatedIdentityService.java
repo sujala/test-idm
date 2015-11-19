@@ -1,8 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.ErrorCodes;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
@@ -11,6 +9,7 @@ import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.FederatedIdentityService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.SignatureValidationException;
 import com.rackspace.idm.util.SamlSignatureValidator;
 import org.joda.time.DateTime;
@@ -23,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 /**
  * This class is responsible for handling identity operations related
@@ -139,6 +140,39 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         return provider;
     }
 
+    @Override
+    public void addIdentityProvider(IdentityProvider identityProvider) {
+        identityProvider.setName(getNextId());
+        identityProviderDao.addIdentityProvider(identityProvider);
+    }
+
+    @Override
+    public IdentityProvider getIdentityProvider(String id) {
+        return identityProviderDao.getIdentityProviderByName(id);
+    }
+
+    @Override
+    public IdentityProvider checkAndGetIdentityProvider(String id) {
+        IdentityProvider provider = getIdentityProvider(id);
+
+        if (provider == null) {
+            String errMsg = String.format("Identity Provider with id/name: '%s' was not found.", id);
+            log.info(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+        return provider;
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderByIssuer(String issuer) {
+        return identityProviderDao.getIdentityProviderByUri(issuer);
+    }
+
+    @Override
+    public void deleteIdentityProviderById(String id) {
+        identityProviderDao.deleteIdentityProviderById(id);
+    }
+
     private IdentityProvider getIdentityProviderForResponse(SamlResponseDecorator samlResponseDecorator) {
         IdentityProvider provider = identityProviderDao.getIdentityProviderByUri(samlResponseDecorator.checkAndGetIssuer());
         if (provider == null) {
@@ -153,5 +187,9 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         } catch (SignatureValidationException t) {
             throw new BadRequestException(ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_FEDERATION_INVALID_SIGNATURE, "Signature is invalid"), t);
         }
+    }
+
+    private String getNextId() {
+        return UUID.randomUUID().toString().replaceAll("-", "");
     }
 }

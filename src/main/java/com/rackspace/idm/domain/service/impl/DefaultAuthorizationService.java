@@ -723,6 +723,16 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public void verifyEffectiveCallerHasRoleByName(String roleName) {
+        Assert.hasText(roleName);
+
+        List<String> rolesToSearch = new ArrayList<String>();
+        rolesToSearch.add(roleName);
+
+        verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(rolesToSearch);
+    }
+
+    @Override
     public void verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(List<String> roleNames) {
         Assert.notNull(roleNames);
 

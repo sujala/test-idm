@@ -196,6 +196,9 @@ public final class JSONConstants {
     public static final String MULTIFACTOR_DEVICES = "multiFactorDevices";
     public static final String RAX_AUTH_MULTIFACTOR_DEVICES = "RAX-AUTH:multiFactorDevices";
 
+    public static final String IDENTITY_PROVIDER = "identityProvider";
+    public static final String RAX_AUTH_IDENTITY_PROVIDER = "RAX-AUTH:" + IDENTITY_PROVIDER;
+
     //faults
     public static final String OPENSTACK_BAD_REQUEST = "badRequest";
     public static final String OPENSTACK_FORBIDDEN_REQUEST = "forbidden";

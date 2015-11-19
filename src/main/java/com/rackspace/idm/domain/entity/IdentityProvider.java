@@ -9,6 +9,7 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang.StringUtils;
+import org.dozer.Mapping;
 
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateEncodingException;
@@ -27,26 +28,25 @@ public class IdentityProvider implements Auditable, UniqueId {
     @LDAPDNField
     private String uniqueId;
 
+    /**
+     * The name is also the id
+     */
+    @Mapping("id")
     @LDAPField(attribute = LdapRepository.ATTR_OU, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, inRDN = true, requiredForEncode = true)
     private String name;
 
+    @Mapping("issuer")
     @LDAPField(attribute = LdapRepository.ATTR_URI, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = true)
     private String uri;
 
     @LDAPField(attribute = LdapRepository.ATTR_DESCRIPTION, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
     private String description;
 
-    /**
-     * @deprecated Use userCertificates. This field will be removed in future commits
-     */
-    @Deprecated
-    @LDAPField(attribute = LdapRepository.ATTR_PUBLIC_KEY, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
-    private String publicCertificate;
-
     @DeleteNullValues
     @LDAPField(attribute = LdapRepository.ATTR_USER_CERTIFICATES, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
     private List<byte[]> userCertificates;
 
+    @Mapping("federationType")
     @LDAPField(attribute = LdapRepository.ATTR_TARGET_USER_SOURCE, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
     private String targetUserSource;
 

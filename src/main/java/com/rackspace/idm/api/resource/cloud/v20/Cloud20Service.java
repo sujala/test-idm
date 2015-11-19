@@ -29,6 +29,12 @@ public interface Cloud20Service {
 
     ResponseBuilder logoutFederatedUser(HttpHeaders httpHeaders, String logoutRequest);
 
+    ResponseBuilder addIdentityProvider(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, IdentityProvider provider);
+
+    ResponseBuilder getIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId);
+
+    ResponseBuilder deleteIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId);
+
     ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo);
 
     ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) throws IOException, JAXBException;

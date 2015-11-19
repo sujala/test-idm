@@ -130,10 +130,12 @@ class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest
         samlResponse2Invalid.status == HttpServletResponse.SC_BAD_REQUEST
 
         cleanup:
-        if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            sqlIdentityProviderRepository.delete(provider.getName())
-        } else {
-            ldapIdentityProviderRepository.deleteObject(provider)
+        if (provider != null) {
+            if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                sqlIdentityProviderRepository.delete(provider.getName())
+            } else {
+                ldapIdentityProviderRepository.deleteIdentityProviderById(provider.getName())
+            }
         }
 
     }

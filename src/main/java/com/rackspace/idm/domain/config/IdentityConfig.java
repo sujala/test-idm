@@ -221,6 +221,8 @@ public class IdentityConfig {
     public static final String FEATURE_SUPPORT_SAML_LOGOUT_PROP = "feature.support.saml.logout";
     public static final boolean FEATURE_SUPPORT_SAML_LOGOUT_DEFAULT = true;
 
+    public static final String FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP = "feature.support.identity.provider.management";
+    public static final boolean FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_DEFAULT = true;
 
     /**
      * Required static prop
@@ -368,6 +370,7 @@ public class IdentityConfig {
         defaults.put(FEDERATED_RESPONSE_MAX_SKEW, FEDERATED_RESPONSE_MAX_SKEW_DEFAULT);
         defaults.put(FEATURE_SUPPORT_SAML_LOGOUT_PROP, FEATURE_SUPPORT_SAML_LOGOUT_DEFAULT);
         defaults.put(FEATURE_SUPPORT_SAML_AUTH_PROP, FEATURE_SUPPORT_SAML_AUTH_DEFAULT);
+        defaults.put(FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP, FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_DEFAULT);
 
         return defaults;
     }
@@ -1248,6 +1251,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_SUPPORT_SAML_AUTH_PROP, versionAdded = "3.1.0", description = "Whether or not to support SAML Federation Authentication")
         public boolean isFederationAuthenticationSupported() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_SAML_AUTH_PROP);
+        }
+
+        @IdmProp(key = FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP, versionAdded = "3.1.0", description = "Whether or not to support Identity Provider Management services")
+        public boolean isIdentityProviderManagementSupported() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP);
         }
     }
 

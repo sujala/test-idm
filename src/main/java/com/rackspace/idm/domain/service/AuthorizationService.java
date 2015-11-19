@@ -157,6 +157,15 @@ public interface AuthorizationService {
     void verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(List<String> roleNames);
 
     /**
+     * Verifies that the effective caller has a role with the specified name (either as tenant or global role). If so,
+     * the method returns.Otherwise, throws a ForbiddenException.
+     *
+     * @param roleName
+     * @throws com.rackspace.idm.exception.ForbiddenException
+     */
+    void verifyEffectiveCallerHasRoleByName(String roleName);
+
+    /**
      * Return the list of implicit roles associated with the role with the given name.
      *
      * @param roleName
