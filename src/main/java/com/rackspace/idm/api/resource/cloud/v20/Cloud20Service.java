@@ -25,7 +25,7 @@ public interface Cloud20Service {
 
     ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest);
 
-    ResponseBuilder validateSamlResponse(HttpHeaders httpHeaders, String samlResponse);
+    ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponse);
 
     ResponseBuilder logoutFederatedUser(HttpHeaders httpHeaders, String logoutRequest);
 

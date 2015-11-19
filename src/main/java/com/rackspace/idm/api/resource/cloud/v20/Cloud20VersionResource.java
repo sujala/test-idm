@@ -101,25 +101,84 @@ public class Cloud20VersionResource {
         return cloud20Service.revokeToken(httpHeaders, authToken, tokenId).build();
     }
 
+    /**
+     * @param httpHeaders
+     * @param samlResponse
+     * @return
+     *
+     * @deprecated Consumers should use {@link #federationSamlAuthenticationFormEncoded} version and provide the base64
+     * encoded payload rather than pass in raw XML to avoid potential encoding issues.
+     */
+    @Deprecated
     @POST
     @Path("RAX-AUTH/saml-tokens")
+    @Consumes({MediaType.APPLICATION_XML})
     public Response authenticateSamlResponse(@Context HttpHeaders httpHeaders, String samlResponse)  {
-        return federationSamlAuthentication(httpHeaders, samlResponse);
+        return federationSamlAuthenticationRawXML(httpHeaders, samlResponse);
     }
 
     /**
      * Takes standard SAMLResponse in form (input field is SAMLResponse) that is base64'd and url encoded.
+     *
+     * curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'SAMLResponse=base64EncodedResponse' 'https://identity.api.rackspacecloud.com/v2.0/RAX-AUTH/federation/saml/auth'
+     *
      * @param httpHeaders
      * @param samlResponse
      * @return
      */
     @POST
     @Path("RAX-AUTH/federation/saml/auth")
-    public Response federationSamlAuthentication(@Context HttpHeaders httpHeaders, String samlResponse)  {
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Response federationSamlAuthenticationFormEncoded(@Context HttpHeaders httpHeaders, @FormParam("SAMLResponse") String samlResponse)  {
         if(!identityConfig.getReloadableConfig().isFederationAuthenticationSupported()){
             throw new NotFoundException("Service Not Found");
         }
-        return cloud20Service.validateSamlResponse(httpHeaders, samlResponse).build();
+
+        Response response;
+        if (org.apache.commons.lang.StringUtils.isBlank(samlResponse)) {
+            response = exceptionHandler.exceptionResponse(new BadRequestException("Missing SAMLResponse field")).build();
+        } else {
+            try {
+                byte[] samlResponseBytes = Base64.decodeBase64(samlResponse);
+                response = cloud20Service.authenticateFederated(httpHeaders, samlResponseBytes).build();
+            } catch (Exception ex) {
+                response = exceptionHandler.exceptionResponse(ex).build();
+            }
+        }
+        return response;
+    }
+
+    /**
+     *
+     * @param httpHeaders
+     * @param samlResponse
+     * @return
+     *
+     * @deprecated Consumers should use {@link #federationSamlAuthenticationFormEncoded} version and provide the base64
+     * encoded payload rather than pass in raw XML to avoid potential encoding issues.
+     */
+    @Deprecated
+    @POST
+    @Path("RAX-AUTH/federation/saml/auth")
+    @Consumes({MediaType.APPLICATION_XML})
+    public Response federationSamlAuthenticationRawXML(@Context HttpHeaders httpHeaders, String samlResponse)  {
+        if(!identityConfig.getReloadableConfig().isFederationAuthenticationSupported()){
+            throw new NotFoundException("Service Not Found");
+        }
+
+        Response response;
+        if (org.apache.commons.lang.StringUtils.isBlank(samlResponse)) {
+            response = exceptionHandler.exceptionResponse(new BadRequestException("Must provide SAMLResponse XML in body")).build();
+        } else {
+            try {
+                byte[] samlResponseBytes = org.apache.commons.codec.binary.StringUtils.getBytesUtf8(samlResponse);
+                response = cloud20Service.authenticateFederated(httpHeaders, samlResponseBytes).build();
+            } catch (Exception ex) {
+                response = exceptionHandler.exceptionResponse(ex).build();
+            }
+        }
+
+        return response;
     }
 
     @POST
