@@ -1096,10 +1096,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder logoutFederatedUser(HttpHeaders httpHeaders, String samlLogoutRequest) {
+    public ResponseBuilder logoutFederatedUser(HttpHeaders httpHeaders, byte[] samlLogoutRequestBytes) {
         try {
-            org.opensaml.saml2.core.LogoutRequest logoutRequest = samlUnmarshaller.unmarshallLogoutRequest(samlLogoutRequest);
-
+            org.opensaml.saml2.core.LogoutRequest logoutRequest = samlUnmarshaller.unmarshallLogoutRequest(samlLogoutRequestBytes);
             federatedIdentityService.processLogoutRequest(logoutRequest);
             return Response.noContent();
         } catch (BadRequestException ex) {

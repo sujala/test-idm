@@ -58,8 +58,8 @@ public class SamlUnmarshaller {
         return (org.opensaml.saml2.core.Response) responseXmlObj;
     }
 
-    public LogoutRequest unmarshallLogoutRequest(String logoutRequestStr) {
-        ByteArrayInputStream is = new ByteArrayInputStream(logoutRequestStr.getBytes());
+    public LogoutRequest unmarshallLogoutRequest(byte[] logoutRequestBytes) {
+        ByteArrayInputStream is = new ByteArrayInputStream(logoutRequestBytes);
 
         XMLObject responseXmlObj;
         try {

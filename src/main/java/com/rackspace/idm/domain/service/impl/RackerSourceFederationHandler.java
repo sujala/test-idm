@@ -82,7 +82,7 @@ public class RackerSourceFederationHandler implements FederationHandler {
 
     @Override
     public void processLogoutRequestForProvider(LogoutRequestDecorator logoutRequestDecorator, IdentityProvider provider) {
-        return; //NO-OP - assumes rackers are not persisted.
+        throw new BadRequestException("Logging out federated rackers is not currently supported");
     }
 
     private void persistRackerForRequest(FederatedRackerRequest request) {
