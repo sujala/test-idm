@@ -2,6 +2,7 @@ package com.rackspace.idm.util;
 
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
+import org.apache.commons.codec.binary.StringUtils;
 import org.opensaml.Configuration;
 import org.opensaml.saml2.core.LogoutRequest;
 import org.opensaml.saml2.core.Response;
@@ -18,18 +19,15 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 
-/**
- * Created with IntelliJ IDEA.
- * User: itari.ighoroje
- * Date: 10/1/13
- * Time: 10:14 AM
- * To change this template use File | Settings | File Templates.
- */
 @Component
 public class SamlUnmarshaller {
 
     public Response unmarshallResponse(final String responseString) {
-        final ByteArrayInputStream is = new ByteArrayInputStream(responseString.getBytes());
+        return unmarshallResponse(StringUtils.getBytesUtf8(responseString));
+    }
+
+    public Response unmarshallResponse(final byte[] samlResponseBytes) {
+        final ByteArrayInputStream is = new ByteArrayInputStream(samlResponseBytes);
 
         XMLObject responseXmlObj;
         try {

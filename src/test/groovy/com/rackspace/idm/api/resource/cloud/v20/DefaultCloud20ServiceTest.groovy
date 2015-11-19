@@ -4024,7 +4024,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         samlUnmarshaller.unmarshallResponse(_) >> samlResponse
 
         when: "saml response is validated"
-        def result = service.validateSamlResponse(headers, "")
+        def result = service.authenticateFederated(headers, new byte[0])
 
         then:
         result.build().status == 200

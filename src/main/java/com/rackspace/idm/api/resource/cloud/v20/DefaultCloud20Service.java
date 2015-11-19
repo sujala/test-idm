@@ -1081,9 +1081,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder validateSamlResponse(HttpHeaders httpHeaders, String samlResponseStr) {
+    public ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponseBytes) {
         try {
-            org.opensaml.saml2.core.Response samlResponse = samlUnmarshaller.unmarshallResponse(samlResponseStr);
+            org.opensaml.saml2.core.Response samlResponse = samlUnmarshaller.unmarshallResponse(samlResponseBytes);
             SamlAuthResponse samlAuthResponse = federatedIdentityService.processSamlResponse(samlResponse);
             AuthenticateResponse response = authConverterCloudV20.toAuthenticationResponse(samlAuthResponse);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(response).getValue());
