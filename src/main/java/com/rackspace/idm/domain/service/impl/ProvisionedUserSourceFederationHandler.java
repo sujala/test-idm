@@ -26,7 +26,6 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.opensaml.saml2.core.LogoutResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -383,7 +382,7 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
     }
 
     private FederatedUser createUserForRequest(FederatedUserRequest request) {
-        final Integer maxUserCount = identityConfig.getReloadableConfig().getIdentityFederationMaxUserCountForIdp(request.getIdentityProvider().getUri());
+        final Integer maxUserCount = identityConfig.getReloadableConfig().getIdentityFederationMaxUserCountPerDomainForIdp(request.getIdentityProvider().getUri());
         if (maxUserCount != null && maxUserCount > 0) {
             final String idpName = request.getIdentityProvider().getName();
             final String domainId = request.getUser().getDomainId();
