@@ -107,7 +107,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
         //Basic format is good. Now hand off request to handler for the user source
         TargetUserSourceEnum providerSource = provider.getTargetUserSourceAsEnum();
-        LogoutResponse logoutResponse = null;
 
         if (TargetUserSourceEnum.PROVISIONED == providerSource) {
             provisionedUserSourceFederationHandler.processLogoutRequestForProvider(decoratedLogoutRequest, provider);

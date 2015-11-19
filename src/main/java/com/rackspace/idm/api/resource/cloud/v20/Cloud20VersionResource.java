@@ -183,11 +183,24 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("RAX-AUTH/federation/saml/logout")
-    public Response federationSamlLogout(@Context HttpHeaders httpHeaders, String samlLogoutRequest)  {
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Response federationSamlLogout(@Context HttpHeaders httpHeaders, @FormParam("SAMLRequest") String logoutRequest)  {
         if(!identityConfig.getReloadableConfig().isFederationLogoutSupported()){
             throw new NotFoundException("Service Not Found");
         }
-        return cloud20Service.logoutFederatedUser(httpHeaders, samlLogoutRequest).build();
+
+        Response response;
+        if (org.apache.commons.lang.StringUtils.isBlank(logoutRequest)) {
+            response = exceptionHandler.exceptionResponse(new BadRequestException("Missing SAMLRequest field")).build();
+        } else {
+            try {
+                byte[] logoutRequestBytes = Base64.decodeBase64(logoutRequest);
+                response = cloud20Service.logoutFederatedUser(httpHeaders, logoutRequestBytes).build();
+            } catch (Exception ex) {
+                response = exceptionHandler.exceptionResponse(ex).build();
+            }
+        }
+        return response;
     }
 
     @POST

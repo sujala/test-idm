@@ -235,13 +235,19 @@ public class AtomHopperClient {
         logger.warn("Creating user entry ...");
 
         final CloudIdentityType cloudIdentityType = new CloudIdentityType();
-        cloudIdentityType.setDisplayName(user.getUsername());
+
         cloudIdentityType.setResourceType(ResourceTypes.USER);
 
+        String username = user.getUsername();
         if (user instanceof User) {
             //only applicable for provisioned users
             cloudIdentityType.setMultiFactorEnabled(((User)user).isMultiFactorEnabled());
         }
+        else if (user instanceof FederatedUser) {
+            FederatedUser fedUser = (FederatedUser) user;
+            username = String.format("%s@%s", fedUser.getUsername(), fedUser.getFederatedIdpUri());
+        }
+        cloudIdentityType.setDisplayName(username);
 
         for (Group group : identityUserService.getGroupsForEndUser(user.getId())) {
             cloudIdentityType.getGroups().add(group.getGroupId());
@@ -263,7 +269,7 @@ public class AtomHopperClient {
         }
 
         final String id = UUID.randomUUID().toString();
-        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, user.getId(), user.getUsername(), AtomHopperConstants.IDENTITY_EVENT, tenantId);
+        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, user.getId(), username, AtomHopperConstants.IDENTITY_EVENT, tenantId);
         logger.warn("Created Identity user entry with id: " + id);
         return usageEntry;
     }
