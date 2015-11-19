@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.security.TokenFormat;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -83,8 +82,10 @@ public class IdentityConfig {
     public static final int FEDERATED_RESPONSE_MAX_SKEW_DEFAULT = 5;
 
     /* Federated max number of users in IDP [CIDMDEV-5286:CIDMDEV-5305] */
-    public static final String IDENTITY_FEDERATED_IDP_MAX_USER_PROP_PREFIX = "federated.provider.maxUserCount";
-    public static final String IDENTITY_FEDERATED_IDP_MAX_USER_PROP_REG = IDENTITY_FEDERATED_IDP_MAX_USER_PROP_PREFIX + ".%s";
+    public static final String IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_PREFIX = "federated.provider.maxUserCount.per.domain.for.idp";
+    public static final String IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_REG = IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_PREFIX + ".%s";
+    public static final String IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP = "federated.provider.maxUserCount.per.domain.default";
+    public static final int IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT = 1000;
 
     /**
      * The format of the property name to set the token format for a specific IDP. The '%s' is replaced by the IDP's labeledUri. This
@@ -371,6 +372,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_SUPPORT_SAML_LOGOUT_PROP, FEATURE_SUPPORT_SAML_LOGOUT_DEFAULT);
         defaults.put(FEATURE_SUPPORT_SAML_AUTH_PROP, FEATURE_SUPPORT_SAML_AUTH_DEFAULT);
         defaults.put(FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP, FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_DEFAULT);
+        defaults.put(IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT);
 
         return defaults;
     }
@@ -469,6 +471,9 @@ public class IdentityConfig {
                 return config.getInt(prop, (Integer) defaultValue);
             }
         } catch (NumberFormatException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+            return (Integer) defaultValue;
+        } catch (ConversionException e) {
             logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
             return (Integer) defaultValue;
         }
@@ -1238,9 +1243,21 @@ public class IdentityConfig {
             return getIntSafely(reloadableConfiguration, FEDERATED_RESPONSE_MAX_SKEW);
         }
 
-        @IdmProp(key = IDENTITY_FEDERATED_IDP_MAX_USER_PROP_PREFIX, versionAdded = "3.1.0", description = "The max number of users in IDP per domain.")
-        public Integer getIdentityFederationMaxUserCountForIdp(String idpLabeledUri) {
-            return reloadableConfiguration.getInteger(String.format(IDENTITY_FEDERATED_IDP_MAX_USER_PROP_REG, idpLabeledUri), null);
+        @IdmProp(key = IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_PREFIX, versionAdded = "3.1.0", description = "The max number of users in IDP per domain.")
+        public Integer getIdentityFederationMaxUserCountPerDomainForIdp(String idpLabeledUri) {
+            int def = getIdentityFederationMaxUserCountPerDomainDefault();
+            String propName = String.format(IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_REG, idpLabeledUri);
+            try {
+                return reloadableConfiguration.getInteger(propName, def);
+            } catch (Exception ex) {
+                logger.error(String.format("Error retrieving property '%s' as an integer. Returning default.", propName));
+                return def;
+            }
+        }
+
+        @IdmProp(key = IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, versionAdded = "3.1.0", description = "The default max number of users in IDP per domain.")
+        public int getIdentityFederationMaxUserCountPerDomainDefault() {
+            return getIntSafely(reloadableConfiguration, IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP);
         }
 
         @IdmProp(key = FEATURE_SUPPORT_SAML_LOGOUT_PROP, versionAdded = "3.1.0", description = "Whether or not to support SAML Federation Logout")

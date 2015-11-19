@@ -88,7 +88,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
     def "[CIDMDEV-5286:CIDMDEV-5305] Test if the user count limit is reached, we get a 400 error (per domain)"() {
         given:
-        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PROP_REG, DEFAULT_IDP_URI), 1)
+        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_REG, DEFAULT_IDP_URI), 1)
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
@@ -130,7 +130,7 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         deleteFederatedUser(username4)
         utils.deleteUsers(users)
         utils.deleteUsers(users2)
-        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PROP_REG, DEFAULT_IDP_URI), Integer.MAX_VALUE)
+        reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_REG, DEFAULT_IDP_URI), Integer.MAX_VALUE)
     }
 
     def "authenticate with federated user's token and invalid tenant gives error"() {

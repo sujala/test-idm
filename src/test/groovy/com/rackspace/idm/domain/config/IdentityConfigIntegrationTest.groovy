@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 import testHelpers.SingletonConfiguration
 import testHelpers.SingletonReloadableConfiguration
 import testHelpers.junit.ConditionalIgnoreRule
@@ -112,6 +113,40 @@ class IdentityConfigIntegrationTest  extends Specification {
         true          | true
         false         | false
         "not_valid"   | IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT
+    }
+
+    @Unroll
+    def "Test correct user count limit per idp per domain retrieved when override: #overrideVal; defaultVal: #defaultValue; expectedVal: #expectedVal"() {
+        given:
+        String idp = "http://ran" + UUID.randomUUID().toString().replaceAll("-", "")
+        String idpOverrideProp = String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_PROP_REG, idp)
+        if (overrideVal == null) {
+            reloadableConfiguration.clearProperty(idpOverrideProp)
+        } else {
+            reloadableConfiguration.setProperty(idpOverrideProp, overrideVal)
+        }
+        if (defaultVal == null) {
+            reloadableConfiguration.clearProperty(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP)
+        } else {
+            reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, defaultVal)
+        }
+
+        expect:
+        config.getReloadableConfig().getIdentityFederationMaxUserCountPerDomainForIdp(idp) == expectedVal
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        overrideVal | defaultVal | expectedVal
+        10          | 5          | 10
+        5           | 10         | 5
+        null        | 4          | 4
+        3           | null       | 3
+        null        | null       | 1000
+        "asdf"      | 8          | 8
+        "asdf"      | "asdf"     | 1000
+        3.14        | 2          | 3
     }
 
     def writeProp(file, name, val) {
