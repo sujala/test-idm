@@ -8,6 +8,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.dozer.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,7 @@ public class IdentityProviderConverterCloudV20 {
             for (byte[] cert : identityProvider.getUserCertificates()) {
                 PublicCertificate publicCertificate = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createPublicCertificate();
                 publicCertificate.setPemEncoded(Base64.encodeBase64String(cert));
+                publicCertificate.setId(DigestUtils.sha1Hex(cert));
                 certWrapper.getPublicCertificate().add(publicCertificate);
             }
             provider.setPublicCertificates(certWrapper);

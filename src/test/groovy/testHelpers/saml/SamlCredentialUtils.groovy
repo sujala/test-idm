@@ -2,6 +2,7 @@ package testHelpers.saml;
 
 import org.apache.commons.io.IOUtils
 import org.bouncycastle.openssl.PEMWriter
+import org.bouncycastle.util.encoders.Base64Encoder
 import org.bouncycastle.x509.X509V3CertificateGenerator
 import org.joda.time.DateTime;
 import org.opensaml.xml.security.x509.BasicX509Credential
@@ -92,6 +93,10 @@ public class SamlCredentialUtils {
         KeyPair keyPair = generateKeyPair()
         X509Certificate cert = generateCertificate(keyPair)
 
+        return generateX509Credential(cert, keyPair);
+    }
+
+    static X509Credential generateX509Credential(X509Certificate cert, KeyPair keyPair) throws Exception {
         BasicX509Credential credential = new BasicX509Credential();
         credential.setEntityCertificate(cert);
         credential.setPublicKey(keyPair.getPublic())
@@ -100,10 +105,9 @@ public class SamlCredentialUtils {
         return credential;
     }
 
-    static X509Certificate generateCertificate(KeyPair keyPair) {
-        Date validityBeginDate = new DateTime().minusDays(1).toDate()
-        Date validityEndDate = new DateTime().plusYears(2).toDate()
-
+    static X509Certificate generateCertificate(KeyPair keyPair = generateKeyPair(),
+                                               validityBeginDate = new DateTime().minusDays(1).toDate(),
+                                               validityEndDate = new DateTime().plusYears(2).toDate()) {
         X509V3CertificateGenerator certGen = new X509V3CertificateGenerator();
         X500Principal dnName = new X500Principal("CN=Rackspace Test System");
 
@@ -130,9 +134,8 @@ public class SamlCredentialUtils {
 
     static String getCertificateAsPEMString(X509Certificate certificate) {
         ByteArrayOutputStream out = new ByteArrayOutputStream()
-        PEMWriter pemWriter = new PEMWriter(new PrintWriter(out));
-        pemWriter.writeObject(certificate);
-        pemWriter.flush();
+        def encoder = new Base64Encoder()
+        encoder.encode(certificate.getEncoded(), 0, certificate.getEncoded().length, out)
 
         return out.toString()
     }

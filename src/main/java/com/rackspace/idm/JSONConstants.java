@@ -77,6 +77,9 @@ public final class JSONConstants {
     public static final String RAX_KSGRP_GROUP = "RAX-KSGRP:group";
     public static final String RAX_KSGRP_GROUPS = "RAX-KSGRP:groups";
     public static final String SAML_TOKENS = "saml-tokens";
+    public static final String FEDERATION = "federation";
+    public static final String IDENTITY_PROVIDERS = "identity-providers";
+    public static final String CERTIFICATES = "certificates";
     public static final String STATUS = "status";
     public static final String SECRET = "secret";
     public static final String SERVICECATALOG = "serviceCatalog";
@@ -198,6 +201,9 @@ public final class JSONConstants {
 
     public static final String IDENTITY_PROVIDER = "identityProvider";
     public static final String RAX_AUTH_IDENTITY_PROVIDER = "RAX-AUTH:" + IDENTITY_PROVIDER;
+
+    public static final String PUBLIC_CERTIFICATE = "publicCertificate";
+    public static final String RAX_AUTH_PUBLIC_CERTIFICATE = "RAX-AUTH:" + PUBLIC_CERTIFICATE;
 
     //faults
     public static final String OPENSTACK_BAD_REQUEST = "badRequest";

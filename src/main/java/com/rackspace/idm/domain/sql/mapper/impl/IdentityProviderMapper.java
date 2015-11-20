@@ -47,12 +47,14 @@ public class IdentityProviderMapper extends SqlMapper<IdentityProvider, SqlIdent
 
         SqlIdentityProvider sqlIdentityProvider = super.toSQL(identityProvider);
 
-        for(byte[] cert : identityProvider.getUserCertificates()) {
-            SqlUserCertificate sqlCert = new SqlUserCertificate();
-            sqlCert.setCertificate(cert);
-            sqlCert.setIdentityProvider(sqlIdentityProvider);
-            sqlCert.setUuid(getNextId());
-            sqlIdentityProvider.getUserCertificates().add(sqlCert);
+        if (identityProvider.getUserCertificates() != null) {
+            for(byte[] cert : identityProvider.getUserCertificates()) {
+                SqlUserCertificate sqlCert = new SqlUserCertificate();
+                sqlCert.setCertificate(cert);
+                sqlCert.setIdentityProvider(sqlIdentityProvider);
+                sqlCert.setUuid(getNextId());
+                sqlIdentityProvider.getUserCertificates().add(sqlCert);
+            }
         }
 
         return sqlIdentityProvider;

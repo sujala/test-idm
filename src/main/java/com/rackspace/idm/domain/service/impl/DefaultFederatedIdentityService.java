@@ -146,6 +146,11 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     }
 
     @Override
+    public void updateIdentityProvider(IdentityProvider identityProvider) {
+        identityProviderDao.updateIdentityProvider(identityProvider);
+    }
+
+    @Override
     public IdentityProvider getIdentityProvider(String id) {
         return identityProviderDao.getIdentityProviderByName(id);
     }

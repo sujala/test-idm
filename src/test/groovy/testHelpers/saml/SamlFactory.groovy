@@ -24,6 +24,16 @@ class SamlFactory {
         return convertResponseToString(response)
     }
 
+    def generateSamlAssertionStringForFederatedUser(issuer, subject, expirationSeconds, domain, List<String> roles = Collections.EMPTY_LIST, email = Constants.DEFAULT_FED_EMAIL, SamlProducer samlProducer) {
+        def response = generateSamlAssertionResponseForFederatedUser(issuer, subject, expirationSeconds, domain, roles, email, samlProducer)
+        return convertResponseToString(response)
+    }
+
+    def generateSamlAssertionResponseForFederatedUser(issuer, subject, expirationSeconds, domain, List<String> roles = Collections.EMPTY_LIST, email = Constants.DEFAULT_FED_EMAIL, SamlProducer samlProducer) {
+        HashMap<String, List<String>> attributes = SamlAttributeFactory.createAttributes(domain, roles, email)
+        return generateSamlAssertion(issuer, subject, expirationSeconds, attributes, SAMLAuthContext.PASSWORD.samlAuthnContextClassRef, samlProducer)
+    }
+
     def generateSamlAssertionResponseForFederatedRacker(issuer, subject, expirationSeconds, String authnContextClassRef = SAMLAuthContext.PASSWORD.samlAuthnContextClassRef, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY) {
         HashMap<String, List<String>> attributes = new HashMap<String, List<String>>()
         return generateSamlAssertion(issuer, subject, expirationSeconds, attributes, authnContextClassRef, privateKey, publicKey)
@@ -39,6 +49,10 @@ class SamlFactory {
 
         Response responseInitial = producer.createSAMLResponse(subject, new DateTime(), attributes, issuer, expirationSeconds, authnContextClassRef, issueInstant);
         return responseInitial;
+    }
+
+    def generateSamlAssertion(issuer, subject, expirationSeconds, Map<String, List<String>> attributes, String authnContextClassRef = SAMLAuthContext.PASSWORD.samlAuthnContextClassRef, SamlProducer samlProducer) {
+        return samlProducer.createSAMLResponse(subject, new DateTime(), attributes, issuer, expirationSeconds, authnContextClassRef);
     }
 
     def convertResponseToString(Response samlResponse) {

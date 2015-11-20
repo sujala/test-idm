@@ -41,6 +41,11 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
     }
 
     @Override
+    public void updateIdentityProvider(IdentityProvider identityProvider) {
+        updateObject(identityProvider);
+    }
+
+    @Override
     public void deleteIdentityProviderById(String id) {
         deleteObject(searchByNameFilter(id));
     }

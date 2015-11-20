@@ -35,6 +35,10 @@ public interface Cloud20Service {
 
     ResponseBuilder deleteIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId);
 
+    ResponseBuilder addIdentityProviderCert(HttpHeaders httpHeaders, String authToken, String identityProviderId, PublicCertificate publicCertificate);
+
+    ResponseBuilder deleteIdentityProviderCert(HttpHeaders httpHeaders, String authToken, String identityProviderId, String certificateId);
+
     ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo);
 
     ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) throws IOException, JAXBException;

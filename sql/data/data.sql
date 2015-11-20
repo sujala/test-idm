@@ -1122,6 +1122,7 @@ INSERT INTO `role_rax` VALUES ('6','A Role that allows a user access to keystone
 INSERT INTO `role_rax` VALUES ('7','User manage role',900,0,'bde1268ebabeeabb70a0e702a4626977c331d5c4');
 INSERT INTO `role_rax` VALUES ('8','Multi-Factor BETA',500,0,'bde1268ebabeeabb70a0e702a4626977c331d5c4');
 INSERT INTO `role_rax` VALUES ('9','Defines a user as being a Racker',100,0,'18e7a7032733486cd32f472d7bd58f709ac0d221');
+INSERT INTO `role_rax` VALUES ('8470c459cfa043ef989976a66ba4d74e','Allows a user to manage Identity Providers',50,0,'bde1268ebabeeabb70a0e702a4626977c331d5c4');
 
 --
 -- Dumping data for table `sensitive_config`
