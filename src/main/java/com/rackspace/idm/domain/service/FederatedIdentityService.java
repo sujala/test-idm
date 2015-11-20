@@ -27,6 +27,13 @@ public interface FederatedIdentityService {
     void addIdentityProvider(IdentityProvider identityProvider);
 
     /**
+     * Save updates to an existing identity provider.
+     * @param identityProvider
+     * @return
+     */
+    void updateIdentityProvider(IdentityProvider identityProvider);
+
+    /**
      * Return the identity provider with the given id. The id is synonymous with the identity provider name.
      * @param id
      * @return

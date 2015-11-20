@@ -32,6 +32,7 @@ import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -58,10 +59,13 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.*;
 
 /**
@@ -1156,6 +1160,72 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
 
             federatedIdentityService.deleteIdentityProviderById(providerId);
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder addIdentityProviderCert(HttpHeaders httpHeaders, String authToken, String identityProviderId, PublicCertificate publicCertificate) {
+        try {
+            //verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            //verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+
+            //load the IDP, return 404 is does not exist
+            com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
+
+            validator20.validatePublicCertificateForIdentityProvider(publicCertificate, provider);
+
+            //set the cert on the provider and save
+            byte[] certBytes = Base64.decodeBase64(publicCertificate.getPemEncoded());
+            if(provider.getUserCertificates() == null) {
+                provider.setUserCertificates(new ArrayList<byte[]>());
+            }
+            provider.getUserCertificates().add(certBytes);
+            federatedIdentityService.updateIdentityProvider(provider);
+
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteIdentityProviderCert(HttpHeaders httpHeaders, String authToken, String identityProviderId, String certificateId) {
+        try {
+            //verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            //verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+
+            if (StringUtils.isEmpty(certificateId)) {
+                throw new BadRequestException("Bad certificate id");
+            }
+
+            //load the IDP, return 404 is does not exist
+            com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
+
+            //verify that the cert exists on the IDP
+            boolean certExists = false;
+            byte[] matchingCert = null;
+            for (byte[] cert : provider.getUserCertificates()) {
+                if (certificateId.equals(DigestUtils.sha1Hex(cert))) {
+                    certExists = true;
+                    matchingCert = cert;
+                }
+            }
+            if (!certExists) {
+                throw new NotFoundException("Certificate does not exist on identity provider");
+            }
+
+            provider.getUserCertificates().remove(matchingCert);
+            federatedIdentityService.updateIdentityProvider(provider);
+
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

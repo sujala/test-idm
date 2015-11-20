@@ -3,10 +3,13 @@ package testHelpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
@@ -621,4 +624,22 @@ class V2Factory {
             it
         }
     }
+
+    def createIdentityProvider(description, issuerUri, federationType) {
+        new IdentityProvider().with {
+            it.description = description
+            it.issuer = issuerUri
+            it.federationType = federationType
+            it.publicCertificates
+            it
+        }
+    }
+
+    def createPublicCertificate(pemEncodedCert) {
+        new PublicCertificate().with {
+            it.pemEncoded = pemEncodedCert
+            it
+        }
+    }
+
 }

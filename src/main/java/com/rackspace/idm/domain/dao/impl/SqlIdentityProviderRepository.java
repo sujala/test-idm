@@ -42,9 +42,16 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
     }
 
     @Override
-    public void deleteIdentityProviderById(String identityProviderName) {
-        repository.delete(identityProviderName);
+    public void updateIdentityProvider(IdentityProvider identityProvider) {
+        SqlIdentityProvider sqlProvider = mapper.toSQL(identityProvider);
+        sqlProvider = repository.save(sqlProvider);
 
+        final IdentityProvider newProvider = mapper.fromSQL(sqlProvider, identityProvider);
+        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newProvider.getUniqueId(), mapper.toLDIF(newProvider)));
+    }
+
+    @Override
+    public void deleteIdentityProviderById(String identityProviderName) {
         final SqlIdentityProvider sqlProvider = repository.findOne(identityProviderName);
         repository.delete(identityProviderName);
 

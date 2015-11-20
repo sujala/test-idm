@@ -2,6 +2,8 @@ package com.rackspace.idm.helpers
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
@@ -12,6 +14,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.util.JSONReaderForRoles
 import com.rackspace.idm.util.OTPHelper
@@ -260,6 +263,30 @@ class Cloud20Utils {
     def createIdentityAdmin() {
         def serviceAdminToken = getServiceAdminToken()
         return createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
+    }
+
+    def createIdentityProviderManager() {
+        def identityAdmin = createIdentityAdmin()
+        addRoleToUser(identityAdmin, Constants.IDENTITY_PROVIDER_MANAGER_ROLE_ID)
+        return identityAdmin
+    }
+
+    def createIdentityProvider(token, providerType = IdentityProviderFederationTypeEnum.DOMAIN) {
+        def idp = factory.createIdentityProvider(testUtils.getRandomUUID("My IDP - "), testUtils.getRandomUUID("http://example.com/"), providerType)
+        def response = methods.createIdentityProvider(token, idp)
+        assert (response.status == SC_CREATED)
+        return response.getEntity(IdentityProvider)
+    }
+
+    def getIdentityProvider(token, idpId) {
+        def response = methods.getIdentityProvider(token, idpId)
+        assert (response.status == SC_OK)
+        return response.getEntity(IdentityProvider)
+    }
+
+    def deleteIdentityProvider(token, idpId) {
+        def response = methods.deleteIdentityProvider(token, idpId)
+        assert (response.status == SC_NO_CONTENT)
     }
 
     def createUserAdminWithTenantsAndRole(domainId, rolename, tenantId) {

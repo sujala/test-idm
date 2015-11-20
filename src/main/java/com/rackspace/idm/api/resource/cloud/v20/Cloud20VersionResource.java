@@ -235,11 +235,35 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders
             , @Context UriInfo uriInfo
             , @HeaderParam(X_AUTH_TOKEN) String authToken
-            , @PathParam("identityProviderId") String identityProviderId)  {
-        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
+            , @PathParam("identityProviderId") String identityProviderId) {
+        if (!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()) {
             throw new NotFoundException("Service Not Found");
         }
         return cloud20Service.deleteIdentityProvider(httpHeaders, authToken, identityProviderId).build();
+    }
+
+    @PUT
+    @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/certificates")
+    public Response addCertToIdp(@Context HttpHeaders httpHeaders,
+                                 @HeaderParam(X_AUTH_TOKEN) String authToken,
+                                 @PathParam("identityProviderId") String identityProviderId,
+                                 PublicCertificate publicCertificate) {
+        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
+            throw new NotFoundException("Service Not Found");
+        }
+        return cloud20Service.addIdentityProviderCert(httpHeaders, authToken, identityProviderId, publicCertificate).build();
+    }
+
+    @DELETE
+    @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/certificates/{certificateId}")
+    public Response deleteCertFromIdp(@Context HttpHeaders httpHeaders,
+                                      @HeaderParam(X_AUTH_TOKEN) String authToken,
+                                      @PathParam("identityProviderId") String identityProviderId,
+                                      @PathParam("certificateId") String certificateId) {
+        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
+            throw new NotFoundException("Service Not Found");
+        }
+        return cloud20Service.deleteIdentityProviderCert(httpHeaders, authToken, identityProviderId, certificateId).build();
     }
 
     @GET

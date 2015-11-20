@@ -5,7 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.FederatedIdentityService;
 import com.rackspace.idm.domain.service.TenantService;
@@ -14,10 +13,13 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.entity.Constants;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.impl.EmailValidator;
+import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.openstack.docs.identity.api.v2.User;
@@ -27,8 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
+import java.security.cert.*;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -259,9 +260,51 @@ public class Validator20 {
         PublicCertificates publicCertificatesWrapper = identityProvider.getPublicCertificates();
         if (publicCertificatesWrapper != null && CollectionUtils.isNotEmpty(publicCertificatesWrapper.getPublicCertificate())) {
             for (PublicCertificate publicCertificate : publicCertificatesWrapper.getPublicCertificate()) {
-                //validate each public certificate is an actual cert
+                validatePublicCertificate(publicCertificate);
             }
         }
+    }
+
+    public void validatePublicCertificate(PublicCertificate publicCertificate) {
+        if (publicCertificate == null || StringUtils.isBlank(publicCertificate.getPemEncoded())) {
+            throw new BadRequestException("Public certificate is invalid");
+        }
+
+        try {
+            X509Certificate cert = convertPublicCertificateToX509(publicCertificate);
+
+            //check to see if the cert is expired
+            DateTime now = new DateTime();
+            DateTime certValidityExp = new DateTime(cert.getNotAfter());
+            if(now.isAfter(certValidityExp)) {
+                throw new BadRequestException("Public certificate is invalid");
+            }
+        } catch (CertificateException e) {
+            throw new BadRequestException("Public certificate is invalid");
+        }
+    }
+
+    public void validatePublicCertificateForIdentityProvider(PublicCertificate publicCertificate, com.rackspace.idm.domain.entity.IdentityProvider identityProvider) {
+        //first, validate that the certificate is valid
+        validatePublicCertificate(publicCertificate);
+
+        //now validate that the identity provider does not already have this certificate
+        if (CollectionUtils.isEmpty(identityProvider.getUserCertificates())) return;
+
+        //certificates are uniquely identified by their sha1 so compare for duplicates with the sha1
+        byte[] certBytes = Base64.decodeBase64(publicCertificate.getPemEncoded());
+        String certId = DigestUtils.sha1Hex(certBytes);
+        for (byte[] currCert : identityProvider.getUserCertificates()) {
+            String currCertId = DigestUtils.sha1Hex(currCert);
+            if (currCertId.equals(certId)) {
+                throw  new DuplicateException("Cannot add duplicate public certificates to identity provider");
+            }
+        }
+    }
+
+    private X509Certificate convertPublicCertificateToX509(PublicCertificate publicCertificate) throws CertificateException {
+        byte[] certBytes = Base64.decodeBase64(publicCertificate.getPemEncoded());
+        return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(certBytes));
     }
 
     private void throwBadRequestForMissingAttr(String attrName) {

@@ -3,7 +3,9 @@ package com.rackspace.idm.domain.entity;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
+import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.LDAPDNField;
+import com.unboundid.ldap.sdk.persist.LDAPEntryField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Getter;
@@ -24,6 +26,10 @@ import java.util.List;
 @Setter
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER)
 public class IdentityProvider implements Auditable, UniqueId {
+
+    // TODO: Remove those as soon as we remove the LDAP dependencies.
+    @LDAPEntryField
+    private ReadOnlyEntry readOnlyEntry;
 
     @LDAPDNField
     private String uniqueId;

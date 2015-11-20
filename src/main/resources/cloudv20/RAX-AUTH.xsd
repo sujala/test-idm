@@ -712,6 +712,15 @@
     </complexType>
 
     <complexType name="PublicCertificate">
+        <attribute name="id" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        An ID uniquely identifying the certificate
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
         <attribute name="pemEncoded" type="xsd:string" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
