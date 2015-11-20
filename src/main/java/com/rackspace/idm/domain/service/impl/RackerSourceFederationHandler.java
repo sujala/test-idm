@@ -1,8 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.idm.ErrorCodes;
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedRackerRequest;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.FederatedRackerDao;
@@ -16,7 +15,6 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
-import org.opensaml.saml2.core.LogoutResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,9 +51,9 @@ public class RackerSourceFederationHandler implements FederationHandler {
         Validate.notNull(samlResponseDecorator, "saml response must not be null");
         Validate.notNull(provider, "provider must not be null");
 
-        TargetUserSourceEnum targetUserSourceEnum = provider.getTargetUserSourceAsEnum();
-        if (targetUserSourceEnum != TargetUserSourceEnum.RACKER) {
-            throw new IllegalStateException(String.format("Invalid target user source '%s' for racker user federation", targetUserSourceEnum));
+        IdentityProviderFederationTypeEnum federationTypeEnum = provider.getFederationTypeAsEnum();
+        if (federationTypeEnum != IdentityProviderFederationTypeEnum.RACKER) {
+            throw new IllegalStateException(String.format("Invalid target user source '%s' for racker user federation", federationTypeEnum));
         }
 
         FederatedRackerRequest request = parseSaml(samlResponseDecorator, provider);

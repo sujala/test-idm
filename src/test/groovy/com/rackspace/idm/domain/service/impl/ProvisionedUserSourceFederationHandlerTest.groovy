@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -13,7 +14,6 @@ import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.SamlAuthResponse
-import com.rackspace.idm.domain.entity.TargetUserSourceEnum
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.AuthorizationService
@@ -132,7 +132,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         theIdentityProvider = new IdentityProvider().with {
             it.name = IDP_NAME
             it.uri = IDP_URI
-            it.targetUserSource = TargetUserSourceEnum.PROVISIONED.name()
+            it.federationType = IdentityProviderFederationTypeEnum.DOMAIN.name()
             return it
         }
 

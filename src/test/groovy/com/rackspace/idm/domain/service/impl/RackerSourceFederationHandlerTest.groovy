@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedRackerRequest
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -10,7 +11,6 @@ import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.RackerScopeAccess
 import com.rackspace.idm.domain.entity.SamlAuthResponse
-import com.rackspace.idm.domain.entity.TargetUserSourceEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
@@ -49,7 +49,7 @@ class RackerSourceFederationHandlerTest extends Specification {
     IdentityProvider identityProvider = new IdentityProvider().with {
         it.uri = IDP_URI
         it.name = IDP_NAME
-        it.targetUserSource = TargetUserSourceEnum.RACKER.name()
+        it.federationType = IdentityProviderFederationTypeEnum.RACKER.name()
         it
     }
 

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.SAMLConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
@@ -102,9 +103,9 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
         Validate.notNull(samlResponseDecorator, "saml response must not be null");
         Validate.notNull(provider, "provider must not be null");
 
-        TargetUserSourceEnum targetUserSourceEnum = provider.getTargetUserSourceAsEnum();
-        if (targetUserSourceEnum != TargetUserSourceEnum.PROVISIONED) {
-            throw new IllegalStateException(String.format("Invalid target user source '%s' for provisioned user federation", targetUserSourceEnum));
+        IdentityProviderFederationTypeEnum federationTypeEnum = provider.getFederationTypeAsEnum();
+        if (federationTypeEnum != IdentityProviderFederationTypeEnum.DOMAIN) {
+            throw new IllegalStateException(String.format("Invalid target user source '%s' for provisioned user federation", federationTypeEnum));
         }
 
         samlResponseDecorator.checkAndGetAssertion();

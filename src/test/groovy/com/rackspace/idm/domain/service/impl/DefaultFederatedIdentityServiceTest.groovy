@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -7,7 +8,6 @@ import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.SamlAuthResponse
-import com.rackspace.idm.domain.entity.TargetUserSourceEnum
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.util.SamlSignatureValidator
 import spock.lang.Specification
@@ -32,13 +32,13 @@ class DefaultFederatedIdentityServiceTest extends Specification {
     IdentityProvider provisionedIdentityProvider = new IdentityProvider().with {
         it.uri = IDP_URI
         it.name = IDP_NAME
-        it.targetUserSource = TargetUserSourceEnum.PROVISIONED.name()
+        it.federationType = IdentityProviderFederationTypeEnum.DOMAIN.name()
         it
     }
     IdentityProvider rackerIdentityProvider = new IdentityProvider().with {
         it.uri = IDP_URI
         it.name = IDP_NAME
-        it.targetUserSource = TargetUserSourceEnum.RACKER.name()
+        it.federationType = IdentityProviderFederationTypeEnum.RACKER.name()
         it
     }
 

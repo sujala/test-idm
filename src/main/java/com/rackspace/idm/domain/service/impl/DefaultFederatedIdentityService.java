@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -15,7 +16,6 @@ import com.rackspace.idm.util.SamlSignatureValidator;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.opensaml.saml2.core.LogoutRequest;
-import org.opensaml.saml2.core.LogoutResponse;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.xml.signature.Signature;
 import org.slf4j.Logger;
@@ -70,15 +70,15 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         validateIssueInstant(issueInstant);
 
         //Basic format is good. Now hand off request to handler for the user source
-        TargetUserSourceEnum providerSource = provider.getTargetUserSourceAsEnum();
+        IdentityProviderFederationTypeEnum federationType = provider.getFederationTypeAsEnum();
         SamlAuthResponse authResponse = null;
 
-        if (TargetUserSourceEnum.PROVISIONED == providerSource) {
+        if (IdentityProviderFederationTypeEnum.DOMAIN == federationType) {
             authResponse = provisionedUserSourceFederationHandler.processRequestForProvider(decoratedSamlResponse, provider);
-        } else if (TargetUserSourceEnum.RACKER == providerSource) {
+        } else if (IdentityProviderFederationTypeEnum.RACKER == federationType) {
             authResponse = rackerSourceFederationHandler.processRequestForProvider(decoratedSamlResponse, provider);
         } else {
-            throw new UnsupportedOperationException(String.format("Provider user source '%s' not supported", providerSource));
+            throw new UnsupportedOperationException(String.format("Provider user source '%s' not supported", federationType));
         }
 
         Audit.logSuccessfulFederatedAuth(authResponse.getUser());
@@ -106,11 +106,11 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         validateIssueInstant(issueInstant);
 
         //Basic format is good. Now hand off request to handler for the user source
-        TargetUserSourceEnum providerSource = provider.getTargetUserSourceAsEnum();
+        IdentityProviderFederationTypeEnum providerSource = provider.getFederationTypeAsEnum();
 
-        if (TargetUserSourceEnum.PROVISIONED == providerSource) {
+        if (IdentityProviderFederationTypeEnum.DOMAIN == providerSource) {
             provisionedUserSourceFederationHandler.processLogoutRequestForProvider(decoratedLogoutRequest, provider);
-        } else if (TargetUserSourceEnum.RACKER == providerSource) {
+        } else if (IdentityProviderFederationTypeEnum.RACKER == providerSource) {
             rackerSourceFederationHandler.processLogoutRequestForProvider(decoratedLogoutRequest, provider);
         } else {
             throw new UnsupportedOperationException(String.format("Provider user source '%s' not supported", providerSource));

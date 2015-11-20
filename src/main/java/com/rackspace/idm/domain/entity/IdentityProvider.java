@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
@@ -48,7 +49,7 @@ public class IdentityProvider implements Auditable, UniqueId {
 
     @Mapping("federationType")
     @LDAPField(attribute = LdapRepository.ATTR_TARGET_USER_SOURCE, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
-    private String targetUserSource;
+    private String federationType;
 
     @Override
     public String getAuditContext() {
@@ -107,15 +108,17 @@ public class IdentityProvider implements Auditable, UniqueId {
      *
      * @return
      */
-    public TargetUserSourceEnum getTargetUserSourceAsEnum() {
-        if (StringUtils.isBlank(targetUserSource)) {
-            return TargetUserSourceEnum.PROVISIONED;
+    public IdentityProviderFederationTypeEnum getFederationTypeAsEnum() {
+        if (StringUtils.isBlank(federationType)) {
+            return IdentityProviderFederationTypeEnum.DOMAIN;
         }
-        for (TargetUserSourceEnum that : TargetUserSourceEnum.values()) {
-            if  (that.name().equals(targetUserSource)) {
+        for (IdentityProviderFederationTypeEnum that : IdentityProviderFederationTypeEnum.values()) {
+            if  (that.name().equals(federationType)) {
                 return that;
             }
         }
-        return TargetUserSourceEnum.PROVISIONED;
+
+        //default is DOMAIN (e.g. - if the value is anything else, like legacy "PROVISIONED"
+        return IdentityProviderFederationTypeEnum.DOMAIN;
     }
 }
