@@ -511,12 +511,28 @@ CREATE TABLE `identity_provider_rax` (
   `id` varchar(64) NOT NULL,
   `uri` varchar(255) NOT NULL,
   `description` text,
-  `public_certificate` text,
+  `approved_domain_group` varchar(64),
   `target_user_source` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_ipr_uri` (`uri`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `identity_provider_domain_rax`
+--
+
+DROP TABLE IF EXISTS `identity_provider_domain_rax`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `identity_provider_domain_rax` (
+  `identity_provider_id` varchar(64) NOT NULL,
+  `domain_id` varchar(64) NOT NULL,
+  PRIMARY KEY (`identity_provider_id`,`domain_id`),
+  CONSTRAINT `fk_identity_provider_domain_domain_id` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_identity_provider_domain_provider_id` FOREIGN KEY (`identity_provider_id`) REFERENCES `identity_provider_rax` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 
 --
 -- Table structure for table `idp_remote_ids`

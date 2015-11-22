@@ -1,11 +1,12 @@
 package com.rackspace.idm.validation;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum;
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.FederatedIdentityService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
@@ -57,9 +58,10 @@ public class Validator20 {
 
     public static final int MAX_IDENTITY_PROVIDER_ISSUER = Constants.MAX_255;
     public static final int MAX_IDENTITY_PROVIDER_DESCRIPTION = Constants.MAX_255;
+    public static final String APPROVED_DOMAIN_GROUP_NAME = "approvedDomainGroup";
+    public static final String APPROVED_DOMAINS = "approvedDomains";
 
-
-    private static final String ENDPOINT_TEMPLATE_REQUIRED_ATTR_MESSAGE = "'%s' is a required attribute";
+    private static final String REQUIRED_ATTR_MESSAGE = "'%s' is a required attribute";
 
     public static final String LENGTH_EXCEEDED_ERROR_MSG = "%s length cannot exceed %s characters";
 
@@ -68,6 +70,9 @@ public class Validator20 {
 
     @Autowired
     private FederatedIdentityService federatedIdentityService;
+
+    @Autowired
+    private DomainService domainService;
 
     @Autowired
     Configuration config;
@@ -244,11 +249,11 @@ public class Validator20 {
 
         validateStringNotNullWithMaxLength("issuer", identityProvider.getIssuer(), MAX_IDENTITY_PROVIDER_ISSUER);
         if (federatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) != null) {
-            throw new DuplicateException("Provider already exists with this issuer");
+            throw new DuplicateException("Provider already exists with this issuer", ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS);
         }
 
         if (identityProvider.getFederationType() == null) {
-            throwBadRequestForMissingAttr("federationType");
+            throwBadRequestForMissingAttrWithErrorCode("federationType");
         }
 
         validateStringMaxLength("description", identityProvider.getDescription(), MAX_IDENTITY_PROVIDER_DESCRIPTION);
@@ -261,6 +266,35 @@ public class Validator20 {
         if (publicCertificatesWrapper != null && CollectionUtils.isNotEmpty(publicCertificatesWrapper.getPublicCertificate())) {
             for (PublicCertificate publicCertificate : publicCertificatesWrapper.getPublicCertificate()) {
                 validatePublicCertificate(publicCertificate);
+            }
+        }
+
+        //validate approvedDomainGroup/approvedDomains
+        String providedApprovedDomainGroup = identityProvider.getApprovedDomainGroup();
+        List<String> providedApprovedDomains = identityProvider.getApprovedDomains();
+
+        if (identityProvider.getFederationType() == IdentityProviderFederationTypeEnum.DOMAIN) {
+            if ((StringUtils.isNotBlank(providedApprovedDomainGroup) && CollectionUtils.isNotEmpty(providedApprovedDomains))
+                    || (StringUtils.isBlank(providedApprovedDomainGroup) && CollectionUtils.isEmpty(providedApprovedDomains))) {
+                throw new BadRequestException(String.format("You must provide either %s or %s, but not both", APPROVED_DOMAIN_GROUP_NAME, APPROVED_DOMAINS), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS);
+            }
+
+            if (StringUtils.isNotBlank(providedApprovedDomainGroup)) {
+                if (ApprovedDomainGroupEnum.lookupByStoredValue(providedApprovedDomainGroup) == null) {
+                    throw new BadRequestException(String.format("The provided %s '%s' is not a supported group name", APPROVED_DOMAIN_GROUP_NAME, providedApprovedDomainGroup), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_GROUP);
+                }
+            } else {
+                for (String providedApprovedDomain : providedApprovedDomains) {
+                    Domain domain = domainService.getDomain(providedApprovedDomain);
+                    if (domain == null) {
+                        throw new BadRequestException(String.format("The provided approved domain '%s' does not exist", providedApprovedDomain), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN);
+                    }
+                }
+            }
+        } else {
+            //racker provider don't contain approvedDomain stuff
+            if (StringUtils.isNotBlank(providedApprovedDomainGroup) || CollectionUtils.isNotEmpty(providedApprovedDomains)) {
+                throw new BadRequestException(String.format("%s and %s are not valid attributes for this federation type", APPROVED_DOMAIN_GROUP_NAME, APPROVED_DOMAINS), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS);
             }
         }
     }
@@ -308,9 +342,15 @@ public class Validator20 {
     }
 
     private void throwBadRequestForMissingAttr(String attrName) {
-        String errMsg = String.format(ENDPOINT_TEMPLATE_REQUIRED_ATTR_MESSAGE, attrName);
+        String errMsg = String.format(REQUIRED_ATTR_MESSAGE, attrName);
         logger.warn(errMsg);
         throw new BadRequestException(errMsg);
+    }
+
+    private void throwBadRequestForMissingAttrWithErrorCode(String attrName) {
+        String errMsg = String.format(REQUIRED_ATTR_MESSAGE, attrName);
+        logger.warn(errMsg);
+        throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE);
     }
 
     public void validateEndpointTemplateForUpdate(EndpointTemplate endpoint) {
@@ -321,7 +361,7 @@ public class Validator20 {
 
     private void validateStringNotNullWithMaxLength(String propertyName, String value, int maxLength) {
         if (StringUtils.isBlank(value)) {
-            throwBadRequestForMissingAttr(propertyName);
+            throwBadRequestForMissingAttrWithErrorCode(propertyName);
         }
         validateStringMaxLength(propertyName, value, maxLength);
     }
@@ -329,7 +369,7 @@ public class Validator20 {
     private void validateStringMaxLength(String propertyName, String value, int maxLength) {
         if (value != null) {
             if (value.length() > maxLength) {
-                throw new BadRequestException(generateLengthExceededMsg(propertyName, maxLength));
+                throw new BadRequestException(generateLengthExceededMsg(propertyName, maxLength), ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED);
             }
         }
     }

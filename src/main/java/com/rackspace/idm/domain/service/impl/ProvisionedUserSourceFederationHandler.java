@@ -17,12 +17,14 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
+import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.SamlSignatureValidator;
 import com.rackspace.idm.util.predicate.UserEnabledPredicate;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.ListUtils;
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
@@ -214,6 +216,16 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
         }
 
         String requestedDomain = domains.get(0);
+
+        /*
+        authorize the idp for this domain. Must be:
+        1. A global provider where approvedDomainGroup == GLOBAL
+        2. Contains the domain as part of approved Domains
+         */
+        if (!(request.getIdentityProvider().isApprovedForDomain(requestedDomain))) {
+            throw new ForbiddenException(String.format("This identity provider is not authorized for domain '%s'", requestedDomain));
+        }
+
         Domain domain = domainDao.getDomain(requestedDomain);
         if (domain == null) {
             throw new BadRequestException("Domain '" + requestedDomain + "' does not exist.");

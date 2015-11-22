@@ -113,7 +113,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         } else if (IdentityProviderFederationTypeEnum.RACKER == providerSource) {
             rackerSourceFederationHandler.processLogoutRequestForProvider(decoratedLogoutRequest, provider);
         } else {
-            throw new UnsupportedOperationException(String.format("Provider user source '%s' not supported", providerSource));
+            throw new UnsupportedOperationException(String.format("Provider federation type '%s' not supported", providerSource));
         }
     }
 

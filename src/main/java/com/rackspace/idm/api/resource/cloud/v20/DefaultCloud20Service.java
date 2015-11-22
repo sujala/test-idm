@@ -1126,7 +1126,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             com.rackspace.idm.domain.entity.IdentityProvider newProvider = identityProviderConverterCloudV20.fromIdentityProvider(provider);
             federatedIdentityService.addIdentityProvider(newProvider);
-            ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path("generatedId").build());
+            ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(newProvider.getName()).build());
             return builder.entity(identityProviderConverterCloudV20.toIdentityProvider(newProvider));
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

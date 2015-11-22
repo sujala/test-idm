@@ -692,6 +692,18 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="approvedDomainGroup" type="xsd:string" use="optional" >
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        An approved group of domains for which the identity provider is authorized to authenticate against.
+                        The determination of what domains are included in a given group is left for the implementation,
+                        as well as what "groups" are available. This attribute is only applicable when federationType
+                        is DOMAIN. If this attribute is provided and contains a value, the approvedDomains attribute is ignored.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
         <attribute name="approvedDomains" type="RAX-AUTH:StringList" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">

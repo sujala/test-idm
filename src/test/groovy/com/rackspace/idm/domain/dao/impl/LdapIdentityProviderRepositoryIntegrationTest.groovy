@@ -92,7 +92,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         IdentityProvider provider = entityFactory.createIdentityProviderWithCredential()
 
         when:
-        ldapIdentityProviderRepository.addObject(provider)
+        ldapIdentityProviderRepository.addIdentityProvider(provider)
 
         then: "Application object should now be populated with ldap entry and entry should exist in ldap"
         provider.getUniqueId() != null

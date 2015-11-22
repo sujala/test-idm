@@ -17,4 +17,12 @@ public class BadRequestException extends IdmException {
     public BadRequestException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public BadRequestException(String message, String errorCode) {
+        super(message, errorCode);
+    }
+
+    public BadRequestException(String message, String errorCode, Throwable cause) {
+        super(message, errorCode, cause);
+    }
 }
