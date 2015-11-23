@@ -12,6 +12,7 @@ import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.BooleanUtils
 import org.apache.log4j.Logger
+import org.codehaus.groovy.runtime.typehandling.GroovyCastException
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse
@@ -81,7 +82,15 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
 
         //specify assertion with no roles
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, fedUsername, 500, userAdmin.domainId, null, fedEmail);
-        AuthenticateResponse samlAuthResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+        AuthenticateResponse samlAuthResponse = null
+        for (int i=0; samlAuthResponse == null && i<10; i++) { // Workaround random failures in Jenkins
+            try {
+                samlAuthResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+            } catch (GroovyCastException e) {
+                samlAuthResponse = null
+                sleep(500)
+            }
+        }
         UserForAuthenticateResponse samlUser = samlAuthResponse.user
 
         when: "Retrieve federated user"
