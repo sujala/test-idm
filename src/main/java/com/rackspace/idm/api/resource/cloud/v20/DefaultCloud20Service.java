@@ -59,13 +59,10 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.stream.StreamSource;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.*;
 
 /**
@@ -1145,6 +1142,32 @@ public class DefaultCloud20Service implements Cloud20Service {
             com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.checkAndGetIdentityProvider(providerId);
 
             return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProvider(identityProviderConverterCloudV20.toIdentityProvider(provider)).getValue());
+        } catch (SizeLimitExceededException ex) {
+            throw new BadRequestException(ex.getMessage());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String approvedDomainId) {
+        try {
+            //verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            //verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+
+            List<com.rackspace.idm.domain.entity.IdentityProvider> providerEntities;
+            if (StringUtils.isNotBlank(approvedDomainId)) {
+                providerEntities = federatedIdentityService.findIdentityProvidersApprovedForDomain(approvedDomainId);
+            } else {
+                providerEntities = federatedIdentityService.findAllIdentityProviders();
+            }
+
+            return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProviders(identityProviderConverterCloudV20.toIdentityProviderList(providerEntities)).getValue());
+        } catch (SizeLimitExceededException ex) {
+            return exceptionHandler.exceptionResponse(new ForbiddenException(ex.getMessage())); //translate size limit to forbidden
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

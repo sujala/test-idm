@@ -102,6 +102,7 @@
     </element>
     <element name="publicCertificate" type="RAX-AUTH:PublicCertificate"/>
     <element name="publicCertificates" type="RAX-AUTH:PublicCertificates"/>
+    <element name="approvedDomainIds" type="RAX-AUTH:ApprovedDomainIds"/>
     <element name="otpDevice" type="RAX-AUTH:OTPDevice" >
         <annotation>
             <xsd:documentation>
@@ -651,9 +652,16 @@
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
 
+    <complexType name="ApprovedDomainIds">
+        <sequence>
+            <element name="approvedDomainId" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
     <complexType name="IdentityProvider">
         <sequence>
             <element ref="RAX-AUTH:publicCertificates" minOccurs="0" maxOccurs="1"/>
+            <element ref="RAX-AUTH:approvedDomainIds" minOccurs="0" maxOccurs="1" />
         </sequence>
         <attribute name="id" type="xsd:string" use="optional">
             <annotation>
@@ -700,16 +708,6 @@
                         The determination of what domains are included in a given group is left for the implementation,
                         as well as what "groups" are available. This attribute is only applicable when federationType
                         is DOMAIN. If this attribute is provided and contains a value, the approvedDomains attribute is ignored.
-                    </p>
-                </xsd:documentation>
-            </annotation>
-        </attribute>
-        <attribute name="approvedDomains" type="RAX-AUTH:StringList" use="optional">
-            <annotation>
-                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
-                    <p>
-                        A list of domains for which the provider is authorized to authenticate. Only applicable when
-                        federationType is DOMAIN
                     </p>
                 </xsd:documentation>
             </annotation>

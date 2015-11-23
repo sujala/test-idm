@@ -78,7 +78,8 @@ public final class JSONConstants {
     public static final String RAX_KSGRP_GROUPS = "RAX-KSGRP:groups";
     public static final String SAML_TOKENS = "saml-tokens";
     public static final String FEDERATION = "federation";
-    public static final String IDENTITY_PROVIDERS = "identity-providers";
+    public static final String IDENTITY_PROVIDERS = "identityProviders";
+    public static final String RAX_AUTH_IDENTITY_PROVIDERS = "RAX-AUTH:identityProviders";
     public static final String CERTIFICATES = "certificates";
     public static final String STATUS = "status";
     public static final String SECRET = "secret";

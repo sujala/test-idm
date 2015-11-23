@@ -1,10 +1,7 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
 import com.google.common.base.Charsets;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviders;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.codec.binary.Base64;
@@ -46,9 +43,16 @@ public class IdentityProviderConverterCloudV20 {
 
         //map approvedDomainIds
         if (CollectionUtils.isNotEmpty(identityProvider.getApprovedDomainIds())) {
+            ApprovedDomainIds approvedDomainIds = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createApprovedDomainIds();
             for (String domainId : identityProvider.getApprovedDomainIds()) {
-                provider.getApprovedDomains().add(domainId);
+                approvedDomainIds.getApprovedDomainId().add(domainId);
             }
+            provider.setApprovedDomainIds(approvedDomainIds);
+        }
+
+        //map defaults to what we want to display to user
+        if (provider.getFederationType() == null) {
+            provider.setFederationType(IdentityProviderFederationTypeEnum.DOMAIN);
         }
 
         return provider;
@@ -59,7 +63,9 @@ public class IdentityProviderConverterCloudV20 {
         IdentityProviders jaxbProviders = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProviders();
 
         for (com.rackspace.idm.domain.entity.IdentityProvider provider : identityProviders) {
-            jaxbProviders.getIdentityProvider().add(toIdentityProvider(provider));
+            IdentityProvider jaxbProvider = toIdentityProvider(provider);
+            jaxbProvider.setPublicCertificates(null); //null out certs in list
+            jaxbProviders.getIdentityProvider().add(jaxbProvider);
         }
 
         return jaxbProviders;
@@ -84,12 +90,13 @@ public class IdentityProviderConverterCloudV20 {
         }
 
         //map approvedDomainIds
-        if (CollectionUtils.isNotEmpty(jaxbProvider.getApprovedDomains())) {
+        ApprovedDomainIds approvedDomainIdsWrapper = jaxbProvider.getApprovedDomainIds();
+        if (approvedDomainIdsWrapper != null && CollectionUtils.isNotEmpty(approvedDomainIdsWrapper.getApprovedDomainId())) {
             if (provider.getApprovedDomainIds() == null) {
                 provider.setApprovedDomainIds(new ArrayList<String>());
             }
-            for (String domainId : jaxbProvider.getApprovedDomains()) {
-                provider.getApprovedDomainIds().add(domainId);
+            for (String approvedDomainId : approvedDomainIdsWrapper.getApprovedDomainId()) {
+                provider.getApprovedDomainIds().add(approvedDomainId);
             }
         }
 

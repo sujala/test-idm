@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviders
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
@@ -37,7 +38,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "created successfully"
         response.status == SC_CREATED
         creationResultIdp.approvedDomainGroup == domainGroupIdp.approvedDomainGroup
-        creationResultIdp.approvedDomains.size() == 0
+        creationResultIdp.approvedDomainIds == null
         creationResultIdp.description == domainGroupIdp.description
         creationResultIdp.issuer == domainGroupIdp.issuer
         creationResultIdp.publicCertificates == null
@@ -52,7 +53,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "contains appropriate info"
         getIdpResponse.status == SC_OK
         getResultIdp.approvedDomainGroup == domainGroupIdp.approvedDomainGroup
-        getResultIdp.approvedDomains.size() == 0
+        getResultIdp.approvedDomainIds == null
         getResultIdp.description == domainGroupIdp.description
         getResultIdp.issuer == domainGroupIdp.issuer
         getResultIdp.publicCertificates == null
@@ -102,8 +103,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "created successfully"
         response.status == SC_CREATED
         creationResultIdp.approvedDomainGroup == null
-        creationResultIdp.approvedDomains.size() == 1
-        creationResultIdp.approvedDomains.get(0) == domainId
+        creationResultIdp.approvedDomainIds != null
+        creationResultIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
         creationResultIdp.description == approvedDomainsIdp.description
         creationResultIdp.issuer == approvedDomainsIdp.issuer
         creationResultIdp.publicCertificates != null
@@ -121,8 +122,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "contains appropriate info"
         getIdpResponse.status == SC_OK
         getResultIdp.approvedDomainGroup == null
-        getResultIdp.approvedDomains.size() == 1
-        getResultIdp.approvedDomains.get(0) == domainId
+        getResultIdp.approvedDomainIds != null
+        getResultIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
         getResultIdp.description == approvedDomainsIdp.description
         getResultIdp.issuer == approvedDomainsIdp.issuer
         getResultIdp.publicCertificates != null
@@ -193,6 +194,79 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
         utils.deleteUser(idpManager)
         utils.deleteUsers(users)
+    }
+
+    @Unroll
+    def "Get list of providers returns based on approvedDomains for requestContentType: #requestContentType"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        def domainId = UUID.randomUUID().toString()
+        cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
+        IdentityProvider idp1ToCreate = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        IdentityProvider idp1 = utils.createIdentityProvider(idpManagerToken, idp1ToCreate)
+
+        def domainId2 = UUID.randomUUID().toString()
+        cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId2, domainId2))
+        IdentityProvider idp2ToCreate = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId2]).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        IdentityProvider idp2 = utils.createIdentityProvider(idpManagerToken, idp2ToCreate)
+
+        IdentityProvider idp3ToCreate = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        IdentityProvider idp3 = utils.createIdentityProvider(idpManagerToken, idp3ToCreate)
+
+        IdentityProvider idp4ToCreate = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, null).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        IdentityProvider idp4 = utils.createIdentityProvider(idpManagerToken, idp4ToCreate)
+
+        when: "get all idp"
+        def allIdp = cloud20.listIdentityProviders(idpManagerToken, null, requestContentType, requestContentType)
+
+        then:
+        allIdp.status == SC_OK
+        IdentityProviders providers = allIdp.getEntity(IdentityProviders.class)
+        providers != null
+        providers.identityProvider.size() >= 4
+        providers.identityProvider.find{it.id == idp1.id} != null
+        providers.identityProvider.find{it.id == idp2.id} != null
+        providers.identityProvider.find{it.id == idp3.id} != null
+        providers.identityProvider.find{it.id == idp4.id} != null
+
+        when: "get all idps for specific domain "
+        def domainSpecificIdpResponse = cloud20.listIdentityProviders(idpManagerToken, domainId, requestContentType, requestContentType)
+
+        then: "get all idps for that domain and all global domain idps"
+        allIdp.status == SC_OK
+        IdentityProviders domainSpecificIdps = domainSpecificIdpResponse.getEntity(IdentityProviders.class)
+        domainSpecificIdps != null
+        domainSpecificIdps.identityProvider.size() >= 4
+        domainSpecificIdps.identityProvider.find{it.id == idp1.id} != null
+        domainSpecificIdps.identityProvider.find{it.id == idp2.id} == null
+        domainSpecificIdps.identityProvider.find{it.id == idp3.id} != null
+        domainSpecificIdps.identityProvider.find{it.id == idp4.id} == null
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, idp1.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, idp2.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, idp3.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, idp4.id)
+
+        where:
+        requestContentType | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+
     }
 
     def "Create Identity Provider returns errors appropriately"() {

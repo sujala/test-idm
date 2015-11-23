@@ -12,6 +12,7 @@ import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
+import org.apache.commons.lang.StringUtils
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
@@ -68,6 +69,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_BYPASS_CODES = "bypass-codes"
     static def SERVICE_PATH_OTP_DEVICES = "otp-devices"
     static def SERVICE_PATH_MULTI_FACTOR_DEVICES = "devices"
+    static def SERVICE_PATH_IDENTITY_PROVIDERS = "identity-providers"
 
     static def ENDPOINTS = "endpoints"
 
@@ -327,27 +329,36 @@ class Cloud20Methods {
 
     def createIdentityProvider(token, identityProvider, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(IDENTITY_PROVIDERS).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(identityProvider).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(identityProvider).post(ClientResponse)
     }
 
     def getIdentityProvider(token, identityProviderId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(IDENTITY_PROVIDERS).path(identityProviderId).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).get(ClientResponse)
+    }
+
+    def listIdentityProviders(token, domainId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        WebResource webResource = resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS)
+        if (StringUtils.isNotBlank(domainId)) {
+            webResource = webResource.queryParam("approvedDomainId", domainId)
+        }
+        return webResource.header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).get(ClientResponse)
     }
 
     def deleteIdentityProvider(token, identityProviderId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(IDENTITY_PROVIDERS).path(identityProviderId).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).delete(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).delete(ClientResponse)
     }
 
     def createIdentityProviderCertificates(token, identityProviderId, publicCertificate, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(IDENTITY_PROVIDERS).path(identityProviderId).path(CERTIFICATES).header(X_AUTH_TOKEN, token).type(requestContentMediaType.toString()).entity(publicCertificate).put(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(CERTIFICATES).header(X_AUTH_TOKEN, token).type(requestContentMediaType.toString()).entity(publicCertificate).put(ClientResponse)
     }
 
     def deleteIdentityProviderCertificates(token, identityProviderId, certificateId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(IDENTITY_PROVIDERS).path(identityProviderId).path(CERTIFICATES).path(certificateId).header(X_AUTH_TOKEN, token).type(requestContentMediaType.toString()).delete(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(CERTIFICATES).path(certificateId).header(X_AUTH_TOKEN, token).type(requestContentMediaType.toString()).delete(ClientResponse)
     }
 
     def createRegion(String token, region) {

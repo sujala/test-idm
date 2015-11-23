@@ -225,6 +225,9 @@ public class IdentityConfig {
     public static final String FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP = "feature.support.identity.provider.management";
     public static final boolean FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_DEFAULT = true;
 
+    public static final String IDP_MAX_SEACH_RESULT_SIZE_PROP = "identity.provider.max.search.result.size";
+    public static final int IDP_MAX_SEACH_RESULT_SIZE_DEFAULT = 1000;
+
     /**
      * Required static prop
      */
@@ -373,6 +376,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_SUPPORT_SAML_AUTH_PROP, FEATURE_SUPPORT_SAML_AUTH_DEFAULT);
         defaults.put(FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP, FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_DEFAULT);
         defaults.put(IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT);
+        defaults.put(IDP_MAX_SEACH_RESULT_SIZE_PROP, IDP_MAX_SEACH_RESULT_SIZE_DEFAULT);
 
         return defaults;
     }
@@ -1273,6 +1277,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP, versionAdded = "3.1.0", description = "Whether or not to support Identity Provider Management services")
         public boolean isIdentityProviderManagementSupported() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP);
+        }
+
+        @IdmProp(key = IDP_MAX_SEACH_RESULT_SIZE_PROP, versionAdded = "3.1.0", description = "Maximum numbers of identity providers allowed to be returned in list providers call")
+        public int getMaxListIdentityProviderSize() {
+            return getIntSafely(reloadableConfiguration, IDP_MAX_SEACH_RESULT_SIZE_PROP);
         }
     }
 

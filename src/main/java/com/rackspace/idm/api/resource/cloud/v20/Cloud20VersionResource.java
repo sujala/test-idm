@@ -229,6 +229,20 @@ public class Cloud20VersionResource {
         return cloud20Service.getIdentityProvider(httpHeaders, authToken, identityProviderId).build();
     }
 
+    @GET
+    @Path("RAX-AUTH/federation/identity-providers")
+    public Response getIdentityProviders(
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @QueryParam("approvedDomainId") String approvedDomainId) {
+        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
+            throw new NotFoundException("Service Not Found");
+        }
+
+        return cloud20Service.getIdentityProviders(httpHeaders, authToken, approvedDomainId).build();
+    }
+
     @DELETE
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}")
     public Response deleteIdentityProvider(

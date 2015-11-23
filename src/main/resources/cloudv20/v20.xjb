@@ -256,6 +256,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="identityProvider"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='IdentityProviders']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="identityProviders"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='PublicCertificate']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="publicCertificate"/>

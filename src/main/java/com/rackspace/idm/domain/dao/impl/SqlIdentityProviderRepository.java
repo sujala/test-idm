@@ -11,6 +11,8 @@ import com.rackspace.idm.domain.sql.mapper.impl.IdentityProviderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.util.List;
+
 @SQLComponent
 public class SqlIdentityProviderRepository implements IdentityProviderDao {
     @Autowired
@@ -30,6 +32,18 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
     @Override
     public IdentityProvider getIdentityProviderByName(String name) {
         return mapper.fromSQL(repository.findOne(name));
+    }
+
+    @Override
+    public List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId) {
+        //TODO - force failure when > max result
+        return mapper.fromSQL(repository.findByApprovedDomainId(domainId));
+    }
+
+    @Override
+    public List<IdentityProvider> findAllIdentityProviders() {
+        //TODO - force failure when > max result
+        return mapper.fromSQL(repository.findAll());
     }
 
     @Override
