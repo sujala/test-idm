@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
@@ -18,6 +19,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
+import org.apache.commons.collections4.CollectionUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.*
@@ -640,14 +642,18 @@ class V2Factory {
         }
     }
 
-    def createIdentityProvider(description, issuerUri, federationType, approvedDomainGroup, approvedDomains) {
+    def createIdentityProvider(description, issuerUri, federationType, approvedDomainGroup, List<String> approvedDomainIdsList) {
         new IdentityProvider().with {
             it.description = description
             it.issuer = issuerUri
             it.federationType = federationType
             it.publicCertificates
             it.approvedDomainGroup = approvedDomainGroup
-            it.approvedDomains = approvedDomains
+            if (CollectionUtils.isNotEmpty(approvedDomainIdsList)) {
+                ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
+                approvedDomainIds.getApprovedDomainId().addAll(approvedDomainIdsList)
+                it.approvedDomainIds = approvedDomainIds
+            }
             it
         }
     }

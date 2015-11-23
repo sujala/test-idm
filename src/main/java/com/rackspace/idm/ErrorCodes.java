@@ -57,7 +57,7 @@ public final class ErrorCodes {
     //generic errors
     public static final String ERROR_CODE_REQUIRED_ATTRIBUTE = "GEN-001";
     public static final String ERROR_CODE_MAX_LENGTH_EXCEEDED = "GEN-002";
-
+    public static final String ERROR_CODE_MAX_SEARCH_RESULT_SIZE_EXCEEDED = "GEN-003";
 
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
         if (StringUtils.isNotBlank(errorCode)) {

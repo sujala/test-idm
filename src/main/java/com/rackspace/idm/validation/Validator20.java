@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.security.cert.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -271,7 +272,7 @@ public class Validator20 {
 
         //validate approvedDomainGroup/approvedDomains
         String providedApprovedDomainGroup = identityProvider.getApprovedDomainGroup();
-        List<String> providedApprovedDomains = identityProvider.getApprovedDomains();
+        List<String> providedApprovedDomains = identityProvider.getApprovedDomainIds() != null ? identityProvider.getApprovedDomainIds().getApprovedDomainId() : Collections.EMPTY_LIST;
 
         if (identityProvider.getFederationType() == IdentityProviderFederationTypeEnum.DOMAIN) {
             if ((StringUtils.isNotBlank(providedApprovedDomainGroup) && CollectionUtils.isNotEmpty(providedApprovedDomains))

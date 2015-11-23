@@ -19,17 +19,13 @@ import java.util.Map;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
-public class JSONReaderForRaxAuthIdentityProvider extends JSONReaderForEntity<IdentityProvider> implements JsonArrayTransformerHandler {
+public class JSONReaderForRaxAuthIdentityProvider extends JSONReaderForEntity<IdentityProvider> {
 
     @Override
     public IdentityProvider readFrom(Class<IdentityProvider> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, String> httpHeaders, InputStream entityStream) throws IOException, WebApplicationException {
         final Map<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(JSONConstants.RAX_AUTH_IDENTITY_PROVIDER, JSONConstants.IDENTITY_PROVIDER);
-        return read(entityStream, JSONConstants.RAX_AUTH_IDENTITY_PROVIDER, prefixValues, this);
+        return read(entityStream, JSONConstants.RAX_AUTH_IDENTITY_PROVIDER, prefixValues, ALWAYS_PLURALIZE_HANDLER);
     }
 
-    @Override
-    public boolean pluralizeJSONArrayWithName(String elementName) {
-        return !("approvedDomains".equals(elementName)) ;
-    }
 }

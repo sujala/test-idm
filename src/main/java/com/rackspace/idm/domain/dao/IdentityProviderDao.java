@@ -2,11 +2,27 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.IdentityProvider;
 
+import java.util.List;
+
 public interface IdentityProviderDao {
 
     IdentityProvider getIdentityProviderByUri(String uri);
 
     IdentityProvider getIdentityProviderByName(String name);
+
+    /**
+     * Return the identity provider that can received tokens for the given domainId
+     *
+     * @param domainId
+     * @return
+     */
+    List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId);
+
+    /**
+     * Find all identity providers
+     * @return
+     */
+    List<IdentityProvider> findAllIdentityProviders();
 
     /**
      * Add a new identity provider.

@@ -6,6 +6,8 @@ import org.opensaml.saml2.core.LogoutRequest;
 import org.opensaml.saml2.core.LogoutResponse;
 import org.opensaml.saml2.core.Response;
 
+import java.util.List;
+
 public interface FederatedIdentityService {
     SamlAuthResponse processSamlResponse(Response samlResponse);
 
@@ -55,6 +57,23 @@ public interface FederatedIdentityService {
      * @return
      */
     IdentityProvider getIdentityProviderByIssuer(String issuer);
+
+    /**
+     * Return the identity provider that can received tokens for the given domainId
+     *
+     * @param domainId
+     * @return
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException
+     */
+    List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId);
+
+    /**
+     * Return all identity providers
+     * @return
+     *
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException
+     */
+    List<IdentityProvider> findAllIdentityProviders();
 
     /**
      * Delete the specified Identity Provider. The id is synonymous with the identity provider name.

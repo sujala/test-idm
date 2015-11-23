@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.JsonArrayTransformer;
+import com.rackspace.idm.api.resource.cloud.JsonArrayTransformerHandler;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.exception.BadRequestException;
 import com.sun.jersey.api.json.JSONJAXBContext;
@@ -25,6 +27,7 @@ import java.lang.reflect.Type;
 public abstract class JSONWriterForArrayEntity<T> implements MessageBodyWriter<T> {
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+    private JsonArrayTransformer arrayTransformer = new JsonArrayTransformer();
 
     @Override
     public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
@@ -37,6 +40,10 @@ public abstract class JSONWriterForArrayEntity<T> implements MessageBodyWriter<T
     }
 
     protected void write(T entity, String oldName, String newName, OutputStream entityStream) {
+        write(entity, oldName, newName, entityStream, null);
+    }
+
+    protected void write(T entity, String oldName, String newName, OutputStream entityStream, JsonArrayTransformerHandler handler) {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
             getMarshaller().marshallToJSON(entity, outputStream);
@@ -54,9 +61,11 @@ public abstract class JSONWriterForArrayEntity<T> implements MessageBodyWriter<T
                 String key = (String)keys[0];
 
                 for (Object jsonObject : (JSONArray)middle.get(key)) {
+                    if (handler != null && jsonObject instanceof JSONObject) {
+                        arrayTransformer.transformRemoveWrapper((JSONObject)jsonObject, null, handler);
+                    }
                     jsonArray.add(jsonObject);
                 }
-
             }
             newOuter.put(newName, jsonArray);
 
