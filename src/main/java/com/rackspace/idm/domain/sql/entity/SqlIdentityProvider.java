@@ -29,14 +29,20 @@ public class SqlIdentityProvider {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "public_certificate")
-    private String publicCertificate;
-
     @Column(name = "target_user_source")
     private String targetUserSource;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "identityProvider", orphanRemoval = true)
     private List<SqlUserCertificate> userCertificates = new ArrayList<SqlUserCertificate>();
+
+    @Column(name = "approved_domain_group")
+    private String approvedDomainGroup;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "identity_provider_domain_rax",
+            joinColumns = @JoinColumn(name = "identity_provider_id"))
+    @Column(name = "domain_id")
+    private List<String> approvedDomainIds = new ArrayList<String>();
 
     public void removeUserCertificate(X509Certificate certificate)  throws CertificateEncodingException {
         if (userCertificates == null) {

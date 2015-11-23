@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
@@ -14,6 +15,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.joda.time.DateTime
@@ -631,6 +633,21 @@ class V2Factory {
             it.issuer = issuerUri
             it.federationType = federationType
             it.publicCertificates
+            if (federationType == IdentityProviderFederationTypeEnum.DOMAIN) {
+                it.approvedDomainGroup = ApprovedDomainGroupEnum.GLOBAL
+            }
+            it
+        }
+    }
+
+    def createIdentityProvider(description, issuerUri, federationType, approvedDomainGroup, approvedDomains) {
+        new IdentityProvider().with {
+            it.description = description
+            it.issuer = issuerUri
+            it.federationType = federationType
+            it.publicCertificates
+            it.approvedDomainGroup = approvedDomainGroup
+            it.approvedDomains = approvedDomains
             it
         }
     }
@@ -638,6 +655,13 @@ class V2Factory {
     def createPublicCertificate(pemEncodedCert) {
         new PublicCertificate().with {
             it.pemEncoded = pemEncodedCert
+            it
+        }
+    }
+
+    def createPublicCertificates(PublicCertificate... certificates) {
+        new PublicCertificates().with {
+            it.publicCertificate.addAll(certificates)
             it
         }
     }

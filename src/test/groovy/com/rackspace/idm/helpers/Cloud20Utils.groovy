@@ -271,8 +271,14 @@ class Cloud20Utils {
         return identityAdmin
     }
 
-    def createIdentityProvider(token, providerType = IdentityProviderFederationTypeEnum.DOMAIN) {
+    def createIdentityProvider(token, IdentityProviderFederationTypeEnum providerType = IdentityProviderFederationTypeEnum.DOMAIN) {
         def idp = factory.createIdentityProvider(testUtils.getRandomUUID("My IDP - "), testUtils.getRandomUUID("http://example.com/"), providerType)
+        def response = methods.createIdentityProvider(token, idp)
+        assert (response.status == SC_CREATED)
+        return response.getEntity(IdentityProvider)
+    }
+
+    def createIdentityProvider(token, IdentityProvider idp) {
         def response = methods.createIdentityProvider(token, idp)
         assert (response.status == SC_CREATED)
         return response.getEntity(IdentityProvider)
@@ -287,6 +293,10 @@ class Cloud20Utils {
     def deleteIdentityProvider(token, idpId) {
         def response = methods.deleteIdentityProvider(token, idpId)
         assert (response.status == SC_NO_CONTENT)
+    }
+
+    def deleteIdentityProviderQuietly(token, idpId) {
+        def response = methods.deleteIdentityProvider(token, idpId)
     }
 
     def createUserAdminWithTenantsAndRole(domainId, rolename, tenantId) {

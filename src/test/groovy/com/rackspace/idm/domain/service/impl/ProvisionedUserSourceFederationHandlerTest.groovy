@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator
+import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.FederatedUser
@@ -132,6 +133,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         theIdentityProvider = new IdentityProvider().with {
             it.name = IDP_NAME
             it.uri = IDP_URI
+            it.approvedDomainGroup = ApprovedDomainGroupEnum.GLOBAL.storedVal
             it.federationType = IdentityProviderFederationTypeEnum.DOMAIN.name()
             return it
         }
@@ -880,6 +882,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         new IdentityProvider().with({
             it.name = IDP_NAME
             it.uri = IDP_URI
+            it.approvedDomainGroup = ApprovedDomainGroupEnum.GLOBAL.storedVal
             return it
         })
     }

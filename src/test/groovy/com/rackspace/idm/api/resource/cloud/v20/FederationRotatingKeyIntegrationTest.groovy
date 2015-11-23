@@ -69,7 +69,7 @@ class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest
         if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
             sqlIdentityProviderRepository.save(identityProviderMapper.toSQL(provider))
         } else {
-            ldapIdentityProviderRepository.addObject(provider)
+            ldapIdentityProviderRepository.addIdentityProvider(provider)
         }
 
         //first credential assertino factory
@@ -104,7 +104,7 @@ class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest
             sqlIdentityProviderRepository.save(sqlIdp)
         } else {
             provider.removeUserCertificate(cred1.entityCertificate)
-            ldapIdentityProviderRepository.updateObject(provider)
+            ldapIdentityProviderRepository.updateIdentityProvider(provider)
         }
         def samlResponseInvalid = cloud20.samlAuthenticate(samlAssertion)
         def samlResponse2Again = cloud20.samlAuthenticate(samlAssertion2)
@@ -120,7 +120,7 @@ class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest
             sqlIdentityProviderRepository.save(sqlIdp)
         } else {
             provider.removeUserCertificate(cred2.entityCertificate)
-            ldapIdentityProviderRepository.updateObject(provider)
+            ldapIdentityProviderRepository.updateIdentityProvider(provider)
         }
         def samlResponseInvalid2 = cloud20.samlAuthenticate(samlAssertion)
         def samlResponse2Invalid = cloud20.samlAuthenticate(samlAssertion2)

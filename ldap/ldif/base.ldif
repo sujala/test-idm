@@ -60,6 +60,7 @@ objectClass: organizationalUnit
 objectClass: top
 ou: dedicated
 labeledUri: http://my.rackspace.com
+rsApprovedDomainGroup: GLOBAL
 description: Identity provider for dedicated
 nisPublicKey:: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUI5VENDQVorZ0F3SUJBZ
  0lKQU1wdUw4cjNwZUNiTUEwR0NTcUdTSWIzRFFFQkJRVUFNRll4Q3pBSkJnTlYKQkFZVEFsVlRN
@@ -98,6 +99,7 @@ objectClass: organizationalUnit
 objectClass: top
 ou: identityqe
 labeledUri: http://identityqe.rackspace.com
+rsApprovedDomainGroup: GLOBAL
 description: Identity provider for testing
 nisPublicKey:: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURrRENDQXZtZ0F3SUJBZ
  0lKQU9KUDhyTDd3UjRvTUEwR0NTcUdTSWIzRFFFQkJRVUFNSUdOTVFzd0NRWUQKVlFRR0V3SjFj
@@ -269,6 +271,7 @@ objectClass: top
 ou: test
 labeledUri: http://test.rackspace.com
 description: Identity provider for testing
+rsApprovedDomainGroup: GLOBAL
 nisPublicKey:: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tDQpNSUlDc0RDQ0FobWdBd0lCQ
  WdJSkFQRExJbEJ6a2VDdk1BMEdDU3FHU0liM0RRRUJCUVVBTUVVeEN6QUpCZ05WDQpCQVlUQWtG
  Vk1STXdFUVlEVlFRSUV3cFRiMjFsTFZOMFlYUmxNU0V3SHdZRFZRUUtFeGhKYm5SbGNtNWxkQ0J

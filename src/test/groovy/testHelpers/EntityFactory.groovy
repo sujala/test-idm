@@ -432,6 +432,7 @@ class EntityFactory extends Specification {
         IdentityProvider provider = new IdentityProvider().with {
             it.name = RandomStringUtils.randomAlphabetic(10)
             it.uri = it.name
+            it.approvedDomainGroup = ApprovedDomainGroupEnum.GLOBAL.getStoredVal()
             return it
         }
         return provider

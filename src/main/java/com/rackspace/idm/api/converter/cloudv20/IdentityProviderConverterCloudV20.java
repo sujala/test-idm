@@ -10,6 +10,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -43,6 +44,13 @@ public class IdentityProviderConverterCloudV20 {
             provider.setPublicCertificates(certWrapper);
         }
 
+        //map approvedDomainIds
+        if (CollectionUtils.isNotEmpty(identityProvider.getApprovedDomainIds())) {
+            for (String domainId : identityProvider.getApprovedDomainIds()) {
+                provider.getApprovedDomains().add(domainId);
+            }
+        }
+
         return provider;
     }
 
@@ -72,6 +80,16 @@ public class IdentityProviderConverterCloudV20 {
                 } catch (CertificateException e) {
                     throw new BadRequestException(String.format("Invalid certificate at index '%d'", i), e);
                 }
+            }
+        }
+
+        //map approvedDomainIds
+        if (CollectionUtils.isNotEmpty(jaxbProvider.getApprovedDomains())) {
+            if (provider.getApprovedDomainIds() == null) {
+                provider.setApprovedDomainIds(new ArrayList<String>());
+            }
+            for (String domainId : jaxbProvider.getApprovedDomains()) {
+                provider.getApprovedDomainIds().add(domainId);
             }
         }
 

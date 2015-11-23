@@ -101,6 +101,9 @@ public abstract class LdapRepository {
     public static final String ATTR_PUBLIC_KEY = "nisPublicKey";
     public static final String ATTR_USER_CERTIFICATES = "userCertificate;binary";
     public static final String ATTR_TARGET_USER_SOURCE = "rsTargetUserSource";
+    public static final String ATTR_APPROVED_DOMAIN_GROUP = "rsApprovedDomainGroup";
+    public static final String ATTR_APPROVED_DOMAIN_IDS = "rsApprovedDomainIds";
+
     public static final String ATTR_DESCRIPTION = "description";
     public static final String ATTR_POLICYTYPE = "policyType";
     public static final String ATTR_DISPLAY_NAME = "rsDisplayName";

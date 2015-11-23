@@ -1,5 +1,8 @@
 package com.rackspace.idm;
 
+import com.rackspace.idm.validation.Validator20;
+import org.apache.commons.lang.StringUtils;
+
 /**
  * Contains the constants used to uniquely identify the different type of error codes identity will issue. Further
  * information on these can be found on the wiki at
@@ -45,7 +48,22 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_FEDERATION_RACKER_NON_EXISTANT_RACKER = "FED_R-001";
     public static final String ERROR_MESSAGE_FORMAT_FEDERATION_RACKER_NON_EXISTANT_RACKER = "The user '%s' is invalid";
 
+    //IDP Management errors
+    public static final String ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS = "FED_IDP-001";
+    public static final String ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_GROUP = "FED_IDP-002";
+    public static final String ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN = "FED_IDP-003";
+    public static final String ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS = "FED_IDP-004";
+
+    //generic errors
+    public static final String ERROR_CODE_REQUIRED_ATTRIBUTE = "GEN-001";
+    public static final String ERROR_CODE_MAX_LENGTH_EXCEEDED = "GEN-002";
+
+
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
-        return String.format("Error code: '%s'; %s", errorCode, message);
+        if (StringUtils.isNotBlank(errorCode)) {
+            return String.format("Error code: '%s'; %s", errorCode, message);
+        } else {
+            return message;
+        }
     }
 }

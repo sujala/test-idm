@@ -1,34 +1,21 @@
 package com.rackspace.idm.exception;
 
-import com.rackspace.idm.ErrorCodes;
-import lombok.Getter;
-
+/**
+ * @deprecated use IdmException class which now includes errorCode functionality
+ */
+@Deprecated
 public class ErrorCodeIdmException extends IdmException {
 
-    @Getter
-    private String errorCode;
-
-    public ErrorCodeIdmException(String errorCode) {
-        this.errorCode = errorCode;
+    public ErrorCodeIdmException(String message) {
+        super(message);
     }
 
     public ErrorCodeIdmException(String errorCode, String message) {
-        super(message);
-        this.errorCode = errorCode;
-    }
-
-    public ErrorCodeIdmException(String errorCode, Throwable cause) {
-        super(cause);
-        this.errorCode = errorCode;
+        super(message, errorCode);
     }
 
     public ErrorCodeIdmException(String errorCode, String message, Throwable cause) {
-        super(message, cause);
-        this.errorCode = errorCode;
+        super(message, errorCode, cause);
     }
 
-    @Override
-    public String getMessage()  {
-        return ErrorCodes.generateErrorCodeFormattedMessage(errorCode, super.getMessage());
-    }
 }

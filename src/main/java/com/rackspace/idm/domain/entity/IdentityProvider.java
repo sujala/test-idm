@@ -57,6 +57,12 @@ public class IdentityProvider implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_TARGET_USER_SOURCE, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
     private String federationType;
 
+    @LDAPField(attribute = LdapRepository.ATTR_APPROVED_DOMAIN_GROUP, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
+    private String approvedDomainGroup;
+
+    @LDAPField(attribute = LdapRepository.ATTR_APPROVED_DOMAIN_IDS, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
+    private List<String> approvedDomainIds;
+
     @Override
     public String getAuditContext() {
         String format = "identityProviderName=%s";
@@ -66,6 +72,15 @@ public class IdentityProvider implements Auditable, UniqueId {
     @Override
     public String toString() {
         return getAuditContext();
+    }
+
+    public boolean isApprovedForDomain(String domainId) {
+        return getApprovedDomainGroupAsEnum() == ApprovedDomainGroupEnum.GLOBAL
+                || (approvedDomainIds != null && approvedDomainIds.contains(domainId));
+    }
+
+    public ApprovedDomainGroupEnum getApprovedDomainGroupAsEnum() {
+        return ApprovedDomainGroupEnum.lookupByStoredValue(approvedDomainGroup);
     }
 
     public List<X509Certificate> getUserCertificatesAsX509() throws CertificateException {
