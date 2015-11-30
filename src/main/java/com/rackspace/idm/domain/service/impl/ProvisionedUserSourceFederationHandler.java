@@ -19,12 +19,12 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.util.DateHelper;
 import com.rackspace.idm.util.SamlSignatureValidator;
 import com.rackspace.idm.util.predicate.UserEnabledPredicate;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.ListUtils;
-import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
@@ -96,6 +96,9 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
 
     @Autowired
     private AtomHopperClient atomHopperClient;
+
+    @Autowired
+    private DateHelper dateHelper;
 
     private final Logger deleteUserLogger = LoggerFactory.getLogger(GlobalConstants.DELETE_USER_LOG_NAME);
     private static final String DELETE_USER_FORMAT = "DELETED username={},federatedUri={},domainId={}";
@@ -323,15 +326,31 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
      * @return
      */
     private FederatedUser processUserForRequest(FederatedUserRequest request) {
+        final int delta = identityConfig.getReloadableConfig().getFederatedDeltaExpiration();
+        request.getUser().setExpiredTimestamp(dateHelper.addSecondsToDate(request.getRequestedTokenExpirationDate().toDate(), delta));
+
         FederatedUser resultUser = getFederatedUserForIdp(request.getUser().getUsername(), request.getIdentityProvider());
         if (resultUser == null) {
             resultUser = createUserForRequest(request);
         } else if (!request.getUser().getDomainId().equalsIgnoreCase(resultUser.getDomainId())) {
             throw new DuplicateUsernameException(DUPLICATE_USERNAME_ERROR_MSG);
         } else {
+            boolean updateUser = false;
+
             //update email if necessary
             if (!request.getUser().getEmail().equalsIgnoreCase(resultUser.getEmail())) {
                 resultUser.setEmail(request.getUser().getEmail());
+                updateUser = true;
+            }
+
+            // [CIDMDEV-5294] Mark Federated Users as eligible for deletion
+            if (resultUser.getExpiredTimestamp() == null ||
+                    resultUser.getExpiredTimestamp().compareTo(request.getRequestedTokenExpirationDate().toDate()) == -1) {
+                resultUser.setExpiredTimestamp(request.getUser().getExpiredTimestamp());
+                updateUser = true;
+            }
+
+            if (updateUser) {
                 federatedUserDao.updateUser(resultUser);
             }
 

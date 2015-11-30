@@ -6,7 +6,9 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 import java.math.BigInteger;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 @Component
 public class DateHelper {
@@ -25,6 +27,13 @@ public class DateHelper {
         } catch (DatatypeConfigurationException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    public Date addSecondsToDate(Date date, int seconds) {
+        final Calendar calendar = new GregorianCalendar();
+        calendar.setTime(date);
+        calendar.add(Calendar.SECOND, seconds);
+        return calendar.getTime();
     }
 
 }

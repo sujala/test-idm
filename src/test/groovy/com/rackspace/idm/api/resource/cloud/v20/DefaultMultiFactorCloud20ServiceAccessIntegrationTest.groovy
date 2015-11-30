@@ -856,18 +856,18 @@ class DefaultMultiFactorCloud20ServiceAccessIntegrationTest extends RootIntegrat
     }
 
     def resetUsers() {
-        multiFactorService.removeMultiFactorForUser(serviceAdmin.id)
-        multiFactorService.removeMultiFactorForUser(serviceAdmin2.id)
-        multiFactorService.removeMultiFactorForUser(identityAdmin1.id)
-        multiFactorService.removeMultiFactorForUser(identityAdmin2.id)
-        multiFactorService.removeMultiFactorForUser(userAdmin1.id)
-        multiFactorService.removeMultiFactorForUser(userAdmin2.id)
-        multiFactorService.removeMultiFactorForUser(userManage1.id)
-        multiFactorService.removeMultiFactorForUser(userManage2.id)
-        multiFactorService.removeMultiFactorForUser(userManage3.id)
-        multiFactorService.removeMultiFactorForUser(defaultUser1.id)
-        multiFactorService.removeMultiFactorForUser(defaultUser2.id)
-        multiFactorService.removeMultiFactorForUser(defaultUser3.id)
+        try { multiFactorService.removeMultiFactorForUser(serviceAdmin.id) } catch (Exception e) {}
+        try { multiFactorService.removeMultiFactorForUser(serviceAdmin2.id) } catch (Exception e) {}
+        try { multiFactorService.removeMultiFactorForUser(identityAdmin1.id) } catch (Exception e) {}
+        try { multiFactorService.removeMultiFactorForUser(identityAdmin2.id) } catch (Exception e) {}
+        try { multiFactorService.removeMultiFactorForUser(userAdmin1.id) } catch (Exception e) {}
+        try { multiFactorService.removeMultiFactorForUser(userAdmin2.id) } catch (Exception e) {}
+        try { multiFactorService.removeMultiFactorForUser(userManage1.id) } catch (Exception e) {}
+        try { multiFactorService.removeMultiFactorForUser(userManage2.id) } catch (Exception e) {}
+        try { multiFactorService.removeMultiFactorForUser(userManage3.id) } catch (Exception e) {}
+        try { multiFactorService.removeMultiFactorForUser(defaultUser1.id) } catch (Exception e) {}
+        try { multiFactorService.removeMultiFactorForUser(defaultUser2.id) } catch (Exception e) {}
+        try { multiFactorService.removeMultiFactorForUser(defaultUser3.id) } catch (Exception e) {}
     }
 
     def addPhoneToUsers() {

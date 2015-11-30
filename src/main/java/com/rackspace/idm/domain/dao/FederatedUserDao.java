@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.dao;
 
-import com.rackspace.idm.domain.entity.FederatedBaseUser;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Group;
 

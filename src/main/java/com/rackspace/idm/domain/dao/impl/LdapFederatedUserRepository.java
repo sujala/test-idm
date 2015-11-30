@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
-import com.rackspace.idm.domain.entity.FederatedBaseUser;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Group;
 import com.unboundid.ldap.sdk.Filter;

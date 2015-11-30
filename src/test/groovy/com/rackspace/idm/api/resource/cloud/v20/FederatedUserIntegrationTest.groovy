@@ -133,6 +133,76 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         fedUser.domainId == domainId
         fedUser.email == email
         fedUser.region == userAdminEntity.region
+        fedUser.expiredTimestamp != null
+        fedUser.expiredTimestamp.after(authResponse.token.expires.toGregorianCalendar().getTime())
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+    }
+
+    // [CIDMDEV-5294] Mark Federated Users as eligible for deletion
+    def "auth user updates the expiration time on it"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 500
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+        def authResponse, fedUser, samlResponse, previousExpiration
+
+        when: "Auth first (creates the user)"
+        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains appropriate content"
+        samlResponse.status == HttpServletResponse.SC_OK
+
+        when: "retrieve user from backend"
+        authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        fedUser = federatedUserRepository.getUserById(authResponse.user.id)
+
+        then: "reflects current state"
+        verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
+        fedUser.expiredTimestamp != null
+        fedUser.expiredTimestamp.after(authResponse.token.expires.toGregorianCalendar().getTime())
+
+        when: "test if another token changes the timestamp"
+        previousExpiration = fedUser.expiredTimestamp
+        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        fedUser = federatedUserRepository.getUserById(authResponse.user.id)
+
+        then: "shouldn't change the date"
+        fedUser.expiredTimestamp == previousExpiration
+
+        when: "force change the user expiration"
+        fedUser.expiredTimestamp = new Date(0)
+        federatedUserRepository.updateUser(fedUser)
+        fedUser = federatedUserRepository.getUserById(authResponse.user.id)
+
+        then: "date should not match previous token"
+        fedUser.expiredTimestamp != null
+        fedUser.expiredTimestamp.before(authResponse.token.expires.toGregorianCalendar().getTime())
+
+        when: "Auth second (updates expiration)"
+        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains appropriate content"
+        samlResponse.status == HttpServletResponse.SC_OK
+
+        when: "retrieve user from backend"
+        authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        fedUser = federatedUserRepository.getUserById(authResponse.user.id)
+
+        then: "reflects current state"
+        verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
+        fedUser.expiredTimestamp != null
+        fedUser.expiredTimestamp.after(authResponse.token.expires.toGregorianCalendar().getTime())
 
         cleanup:
         deleteFederatedUserQuietly(username)

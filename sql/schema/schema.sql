@@ -421,6 +421,7 @@ CREATE TABLE `federated_user_rax` (
   `region_id` varchar(255) DEFAULT NULL,
   `created` datetime(6) DEFAULT NULL,
   `updated` datetime(6) DEFAULT NULL,
+  `expired` datetime(6) DEFAULT NULL,
   `domain_id` varchar(64) DEFAULT NULL,
   `federated_idp_uri` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),

@@ -26,6 +26,7 @@ import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateUsernameException
+import com.rackspace.idm.util.DateHelper
 import com.rackspace.idm.util.SamlSignatureValidator
 import com.rackspace.idm.util.SamlUnmarshaller
 import com.rackspace.idm.validation.PrecedenceValidator
@@ -68,6 +69,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
     @Shared def mockIdentityUserService
     @Shared FederatedUserDao mockFederatedUserDao
     @Shared def mockRoleDao
+    @Shared def mockDateHelper
 
     @Shared def mockScopeAccessService
     @Shared def mockTenantService
@@ -120,6 +122,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockRoleDao(provisionedUserSourceFederationHandler)
         mockScopeAccessService(provisionedUserSourceFederationHandler)
         mockTenantService(provisionedUserSourceFederationHandler)
+        mockDateHelper(provisionedUserSourceFederationHandler)
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
 
         reloadableConfig.getFederatedDomainTokenLifetimeMax() >> IdentityConfig.FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME_DEFAULT
@@ -876,6 +879,12 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
     def mockTenantService(service) {
         mockTenantService = Mock(TenantService)
         service.tenantService = mockTenantService
+    }
+
+    def mockDateHelper(service) {
+        mockDateHelper = Mock(DateHelper)
+        mockDateHelper.addSecondsToDate(_, _) >> new Date()
+        service.dateHelper = mockDateHelper
     }
 
     def createIdentityProvider() {

@@ -18,9 +18,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.math.BigInteger;
-import java.util.Iterator;
+import java.util.*;
 
 @Component
 public class IdentityConfig {
@@ -228,6 +227,9 @@ public class IdentityConfig {
     public static final String IDP_MAX_SEACH_RESULT_SIZE_PROP = "identity.provider.max.search.result.size";
     public static final int IDP_MAX_SEACH_RESULT_SIZE_DEFAULT = 1000;
 
+    public static final String FEDERATED_DELTA_EXPIRATION_SECONDS_PROP = "federated.deltaExpiration.seconds";
+    public static final int FEDERATED_DELTA_EXPIRATION_SECONDS_DEFAULT = 43200;
+
     /**
      * Required static prop
      */
@@ -377,6 +379,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP, FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_DEFAULT);
         defaults.put(IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT);
         defaults.put(IDP_MAX_SEACH_RESULT_SIZE_PROP, IDP_MAX_SEACH_RESULT_SIZE_DEFAULT);
+        defaults.put(FEDERATED_DELTA_EXPIRATION_SECONDS_PROP, FEDERATED_DELTA_EXPIRATION_SECONDS_DEFAULT);
 
         return defaults;
     }
@@ -1282,6 +1285,11 @@ public class IdentityConfig {
         @IdmProp(key = IDP_MAX_SEACH_RESULT_SIZE_PROP, versionAdded = "3.1.0", description = "Maximum numbers of identity providers allowed to be returned in list providers call")
         public int getMaxListIdentityProviderSize() {
             return getIntSafely(reloadableConfiguration, IDP_MAX_SEACH_RESULT_SIZE_PROP);
+        }
+
+        @IdmProp(key = FEDERATED_DELTA_EXPIRATION_SECONDS_PROP, versionAdded = "3.1.0", description = "Delta time in seconds to be added for federated users deletion eligibility")
+        public int getFederatedDeltaExpiration() {
+            return getIntSafely(reloadableConfiguration, FEDERATED_DELTA_EXPIRATION_SECONDS_PROP);
         }
     }
 

@@ -4,7 +4,10 @@ import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
-import com.unboundid.ldap.sdk.persist.*;
+import com.unboundid.ldap.sdk.persist.FilterUsage;
+import com.unboundid.ldap.sdk.persist.LDAPDNField;
+import com.unboundid.ldap.sdk.persist.LDAPField;
+import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
 import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
@@ -75,6 +78,11 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String federatedIdpUri;
+
+    @LDAPField(attribute=LdapRepository.ATTR_FEDERATED_USER_EXPIRED_TIMESTAMP,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACE_FEDERATED_PERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
+    private Date expiredTimestamp;
 
     private List<TenantRole> roles;
 
