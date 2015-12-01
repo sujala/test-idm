@@ -251,12 +251,6 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
             throw new BadRequestException(String.format(DISABLED_DOMAIN_ERROR_MESSAGE, requestedDomain));
         }
 
-        int numberUsersInDomainAndIdp = identityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(requestedDomain, request.getIdentityProvider().getName());
-        if (numberUsersInDomainAndIdp >= getMaxNumberUsersPerDomainAndIdp()) {
-            String errMsg = String.format("Cannot create more than %d federated users for an account within an identity provider.", getMaxNumberUsersPerDomainAndIdp());
-            throw new BadRequestException(errMsg);
-        }
-
         request.getUser().setDomainId(domain.getDomainId());
     }
 
@@ -307,10 +301,6 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
             }
             request.getUser().getRoles().addAll(roles.values());
         }
-    }
-
-    private int getMaxNumberUsersPerDomainAndIdp() {
-        return config.getInt("maxNumberOfFederatedUsersInDomainPerIdp", 1000);
     }
 
     /**
@@ -399,7 +389,7 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
         if (maxUserCount != null && maxUserCount > 0) {
             final String idpName = request.getIdentityProvider().getName();
             final String domainId = request.getUser().getDomainId();
-            final int count = federatedUserDao.getFederatedUsersByDomainIdAndIdentityProviderNameCount(domainId, idpName);
+            final int count = identityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(domainId, idpName);
             if (count >= maxUserCount) {
                 throw new BadRequestException("maximum number of users reached for this domain: " + domainId);
             }

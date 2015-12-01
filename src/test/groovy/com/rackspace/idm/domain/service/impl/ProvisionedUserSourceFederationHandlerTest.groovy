@@ -243,7 +243,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
 
     def "validate correct saml response" (){
         given:
-        mockConfig.getInt("maxNumberOfFederatedUsersInDomainPerIdp", _) >> 1000
+        reloadableConfig.getIdentityFederationMaxUserCountPerDomainForIdp(_) >> 1000
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
@@ -567,7 +567,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
                 "   </saml2:Assertion>\n" +
                 "</saml2p:Response>"
 
-        mockConfig.getInt("maxNumberOfFederatedUsersInDomainPerIdp", _) >> 1000
+        reloadableConfig.getIdentityFederationMaxUserCountPerDomainForIdp(_) >> 1000
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
@@ -738,7 +738,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
-        mockConfig.getInt("maxNumberOfFederatedUsersInDomainPerIdp", 1000) >> 1000
+        reloadableConfig.getIdentityFederationMaxUserCountPerDomainForIdp(_) >> 1000
         mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
         mockAuthorizationService.restrictUserAuthentication(_, _) >> false
         when:
@@ -768,7 +768,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
-        mockConfig.getInt("maxNumberOfFederatedUsersInDomainPerIdp", 1000) >> 1000
+        reloadableConfig.getIdentityFederationMaxUserCountPerDomainForIdp(_) >> 1000
         mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
         mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints)
         mockAuthorizationService.restrictUserAuthentication(_, _) >> false
@@ -802,7 +802,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> theIdentityProvider
         mockFederatedUserDao.getUserByUsernameForIdentityProviderName(USERNAME, IDP_NAME) >> existingUser
         mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
-        mockConfig.getInt("maxNumberOfFederatedUsersInDomainPerIdp", 1000) >> 1000
+        reloadableConfig.getIdentityFederationMaxUserCountPerDomainForIdp(_) >> 1000
         mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
 
         when:
