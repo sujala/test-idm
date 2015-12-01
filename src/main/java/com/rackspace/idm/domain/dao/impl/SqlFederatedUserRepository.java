@@ -25,7 +25,7 @@ import java.util.UUID;
 import static com.rackspace.idm.domain.dao.impl.LdapRepository.CONTAINER_ROLES;
 
 @SQLComponent
-public class SqlFederatedUserRepository  implements FederatedUserDao {
+public class SqlFederatedUserRepository implements FederatedUserDao {
 
     @Autowired
     private FederatedUserRaxMapper federatedUserRaxMapper;
