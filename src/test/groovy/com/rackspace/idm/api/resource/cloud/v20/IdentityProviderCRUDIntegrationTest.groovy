@@ -9,7 +9,9 @@ import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.exception.BadRequestException
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.commons.lang.StringUtils
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
@@ -21,6 +23,7 @@ import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
 
 import static org.apache.http.HttpStatus.*
+import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
 class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
@@ -148,6 +151,17 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE | _
         MediaType.APPLICATION_JSON_TYPE | _
     }
+
+    def "Deleting a non-existant domain returns appropriate error"() {
+        def idpManagerToken = utils.getServiceAdminToken()
+
+        when:
+        def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, "non-existant-idp-provider")
+
+        then:
+        assertOpenStackV2FaultResponse(deleteIdpResponse, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_NOT_FOUND, ErrorCodes.ERROR_MESSAGE_IDP_NOT_FOUND))
+    }
+
 
     def "Create a DOMAIN IDP with approvedDomains and single cert. Validate can immediately fed auth for user for approvedDomain"() {
         given:

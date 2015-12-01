@@ -13,6 +13,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.SignatureValidationException;
 import com.rackspace.idm.util.SamlSignatureValidator;
+import org.aspectj.weaver.ast.Not;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.opensaml.saml2.core.LogoutRequest;
@@ -185,7 +186,11 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
     @Override
     public void deleteIdentityProviderById(String id) {
-        identityProviderDao.deleteIdentityProviderById(id);
+        try {
+            identityProviderDao.deleteIdentityProviderById(id);
+        } catch (NotFoundException e) {
+            throw new NotFoundException(ErrorCodes.ERROR_MESSAGE_IDP_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND, e);
+        }
     }
 
     private IdentityProvider getIdentityProviderForResponse(SamlResponseDecorator samlResponseDecorator) {
