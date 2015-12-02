@@ -2,6 +2,8 @@ package testHelpers.saml
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.decorator.SAMLAuthContext
+import org.apache.commons.codec.binary.Base64
+import org.apache.commons.codec.binary.StringUtils
 import org.joda.time.DateTime
 import org.opensaml.saml2.core.LogoutRequest
 import org.opensaml.saml2.core.Response
@@ -74,6 +76,11 @@ class SamlFactory {
     def generateLogoutRequestStringForFederatedUser(issuer, subject, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY, issueInstant = new DateTime()) {
         LogoutRequest logoutRequest = generateLogoutRequestForFederatedUser(issuer, subject, privateKey, publicKey, issueInstant)
         return convertLogoutRequestToString(logoutRequest)
+    }
+
+    def generateLogoutRequestEncoded(issuer, subject, privateKey = DEFAULT_IDP_PRIVATE_KEY, publicKey = DEFAULT_IDP_PUBLIC_KEY, issueInstant = new DateTime()) {
+        String logoutRequest = generateLogoutRequestStringForFederatedUser(issuer, subject, privateKey, publicKey, issueInstant)
+        return org.apache.xml.security.utils.Base64.encode(StringUtils.getBytesUtf8(logoutRequest))
     }
 
     def convertLogoutRequestToString(LogoutRequest logoutRequest) {

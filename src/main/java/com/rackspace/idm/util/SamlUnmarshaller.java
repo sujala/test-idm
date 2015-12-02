@@ -5,6 +5,7 @@ import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.codec.binary.StringUtils;
 import org.opensaml.Configuration;
 import org.opensaml.saml2.core.LogoutRequest;
+import org.opensaml.saml2.core.LogoutResponse;
 import org.opensaml.saml2.core.Response;
 import org.opensaml.xml.XMLObject;
 import org.opensaml.xml.io.Unmarshaller;
@@ -17,7 +18,9 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 @Component
 public class SamlUnmarshaller {
@@ -31,16 +34,7 @@ public class SamlUnmarshaller {
 
         XMLObject responseXmlObj;
         try {
-            final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            documentBuilderFactory.setNamespaceAware(true);
-            final DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
-
-            final Document document = docBuilder.parse(is);
-            final Element element = document.getDocumentElement();
-
-            final UnmarshallerFactory unmarshallerFactory = Configuration.getUnmarshallerFactory();
-            final Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
-            responseXmlObj = unmarshaller.unmarshall(element);
+            responseXmlObj = unmarshallSamlObject(is);
         } catch (SAXException ex1) {
             throw new BadRequestException("Error parsing saml response", ex1);
         } catch (IllegalArgumentException ex2) {
@@ -58,23 +52,30 @@ public class SamlUnmarshaller {
         return (org.opensaml.saml2.core.Response) responseXmlObj;
     }
 
+    private XMLObject unmarshallSamlObject(ByteArrayInputStream is) throws ParserConfigurationException, SAXException, IOException, UnmarshallingException {
+        XMLObject responseXmlObj;
+        //chances are this is thread safe and could just create a single time. Something to look at later...
+        final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+        documentBuilderFactory.setNamespaceAware(true);
+        final DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
+
+        final Document document = docBuilder.parse(is);
+        final Element element = document.getDocumentElement();
+
+        final UnmarshallerFactory unmarshallerFactory = Configuration.getUnmarshallerFactory();
+        final Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
+        responseXmlObj = unmarshaller.unmarshall(element);
+        return responseXmlObj;
+    }
+
     public LogoutRequest unmarshallLogoutRequest(byte[] logoutRequestBytes) {
         ByteArrayInputStream is = new ByteArrayInputStream(logoutRequestBytes);
 
         XMLObject responseXmlObj;
         try {
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            documentBuilderFactory.setNamespaceAware(true);
-            DocumentBuilder docBuilder = documentBuilderFactory.newDocumentBuilder();
-
-            Document document = docBuilder.parse(is);
-            Element element = document.getDocumentElement();
-
-            UnmarshallerFactory unmarshallerFactory = Configuration.getUnmarshallerFactory();
-            Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
-            responseXmlObj = unmarshaller.unmarshall(element);
+            responseXmlObj = unmarshallSamlObject(is);
         } catch (SAXException sex) {
-            throw new BadRequestException("Error parsing saml logout request", sex);
+            throw new BadRequestException("Invalid saml logout request. Please check your syntax and try again.", sex);
         } catch (Exception t) {
             throw new IdmException("Error unmarshalling saml logout request", t);
         }
@@ -84,7 +85,25 @@ public class SamlUnmarshaller {
         }
 
         return (org.opensaml.saml2.core.LogoutRequest) responseXmlObj;
+    }
 
+    public LogoutResponse unmarshallLogoutRespone(byte[] logoutResponseBytes) {
+        ByteArrayInputStream is = new ByteArrayInputStream(logoutResponseBytes);
+
+        XMLObject responseXmlObj;
+        try {
+            responseXmlObj = unmarshallSamlObject(is);
+        } catch (SAXException sex) {
+            throw new BadRequestException("Invalid saml logout response. Please check your syntax and try again.", sex);
+        } catch (Exception t) {
+            throw new IdmException("Error unmarshalling saml logout response", t);
+        }
+
+        if (!(responseXmlObj instanceof LogoutResponse)) {
+            throw new BadRequestException("Invalid content for logout request.");
+        }
+
+        return (LogoutResponse) responseXmlObj;
     }
 
 }

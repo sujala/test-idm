@@ -55,6 +55,7 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS = "FED_IDP-004";
 
     //generic errors
+    public static final String ERROR_CODE_GENERIC_BAD_REQUEST = "GEN-000";
     public static final String ERROR_CODE_REQUIRED_ATTRIBUTE = "GEN-001";
     public static final String ERROR_CODE_MAX_LENGTH_EXCEEDED = "GEN-002";
     public static final String ERROR_CODE_MAX_SEARCH_RESULT_SIZE_EXCEEDED = "GEN-003";

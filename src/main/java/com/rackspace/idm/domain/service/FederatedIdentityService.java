@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.domain.entity.SamlAuthResponse;
+import com.rackspace.idm.domain.entity.SamlLogoutResponse;
 import org.opensaml.saml2.core.LogoutRequest;
 import org.opensaml.saml2.core.LogoutResponse;
 import org.opensaml.saml2.core.Response;
@@ -18,7 +19,7 @@ public interface FederatedIdentityService {
      * @param logoutRequest
      * @return
      */
-    void processLogoutRequest(LogoutRequest logoutRequest);
+    SamlLogoutResponse processLogoutRequest(LogoutRequest logoutRequest);
 
     /**
      * Add a new identity provider.

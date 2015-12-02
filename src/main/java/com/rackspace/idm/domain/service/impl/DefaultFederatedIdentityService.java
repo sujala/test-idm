@@ -12,12 +12,13 @@ import com.rackspace.idm.domain.service.FederatedIdentityService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.SignatureValidationException;
+import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
 import org.aspectj.weaver.ast.Not;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.opensaml.saml2.core.LogoutRequest;
-import org.opensaml.saml2.core.Response;
+import org.opensaml.saml2.core.*;
+import org.opensaml.saml2.core.impl.*;
 import org.opensaml.xml.signature.Signature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,30 +94,41 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
      * @param logoutRequest
      */
     @Override
-    public void processLogoutRequest(LogoutRequest logoutRequest) {
+    public SamlLogoutResponse processLogoutRequest(LogoutRequest logoutRequest) {
         LogoutRequestDecorator decoratedLogoutRequest = new LogoutRequestDecorator(logoutRequest);
+        SamlLogoutResponse logoutResponse;
 
         //before anything, validate the issuer and signature
-        IdentityProvider provider = getIdentityProviderForLogoutRequest(decoratedLogoutRequest);
-        validateSignatureForProvider(decoratedLogoutRequest.checkAndGetSignature(), provider);
+        IdentityProvider provider;
+        try {
+            provider = getIdentityProviderForLogoutRequest(decoratedLogoutRequest);
+            validateSignatureForProvider(decoratedLogoutRequest.checkAndGetSignature(), provider);
 
-        //sig valid. Now validate format of the request. Don't need to use results, just perform the validation
-        decoratedLogoutRequest.checkAndGetUsername();
+            //sig valid. Now validate format of the request. Don't need to use results, just perform the validation
+            decoratedLogoutRequest.checkAndGetUsername();
 
-        //validate the issueInstant is not older than the configure max age
-        DateTime issueInstant = decoratedLogoutRequest.checkAndGetIssueInstant();
-        validateIssueInstant(issueInstant);
+            //validate the issueInstant is not older than the configure max age
+            DateTime issueInstant = decoratedLogoutRequest.checkAndGetIssueInstant();
+            validateIssueInstant(issueInstant);
 
-        //Basic format is good. Now hand off request to handler for the user source
-        IdentityProviderFederationTypeEnum providerSource = provider.getFederationTypeAsEnum();
+            //Basic format is good. Now hand off request to handler for the user source
+            IdentityProviderFederationTypeEnum providerSource = provider.getFederationTypeAsEnum();
 
-        if (IdentityProviderFederationTypeEnum.DOMAIN == providerSource) {
-            provisionedUserSourceFederationHandler.processLogoutRequestForProvider(decoratedLogoutRequest, provider);
-        } else if (IdentityProviderFederationTypeEnum.RACKER == providerSource) {
-            rackerSourceFederationHandler.processLogoutRequestForProvider(decoratedLogoutRequest, provider);
-        } else {
-            throw new UnsupportedOperationException(String.format("Provider federation type '%s' not supported", providerSource));
+            if (IdentityProviderFederationTypeEnum.DOMAIN == providerSource) {
+                logoutResponse = provisionedUserSourceFederationHandler.processLogoutRequestForProvider(decoratedLogoutRequest, provider);
+            } else if (IdentityProviderFederationTypeEnum.RACKER == providerSource) {
+                logoutResponse = rackerSourceFederationHandler.processLogoutRequestForProvider(decoratedLogoutRequest, provider);
+            } else {
+                UnsupportedOperationException ex = new UnsupportedOperationException(String.format("Provider federation type '%s' not supported", providerSource));
+                logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequest.getID(), StatusCode.RESPONDER_URI, ex.getMessage(), ex);
+            }
+        } catch (BadRequestException e) {
+            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequest.getID(), StatusCode.REQUESTER_URI, e.getMessage(), e);
+        } catch (Exception e) {
+            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequest.getID(), StatusCode.RESPONDER_URI, "Error encountered processing LogoutRequest", e);
         }
+
+        return logoutResponse;
     }
 
     private void validateIssueInstant(DateTime issueInstant) {

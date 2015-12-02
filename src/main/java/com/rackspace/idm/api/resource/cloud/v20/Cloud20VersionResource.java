@@ -161,6 +161,7 @@ public class Cloud20VersionResource {
     @POST
     @Path("RAX-AUTH/federation/saml/auth")
     @Consumes({MediaType.APPLICATION_XML})
+    @Produces({MediaType.APPLICATION_XML})
     public Response federationSamlAuthenticationRawXML(@Context HttpHeaders httpHeaders, String samlResponse)  {
         if(!identityConfig.getReloadableConfig().isFederationAuthenticationSupported()){
             throw new NotFoundException("Service Not Found");

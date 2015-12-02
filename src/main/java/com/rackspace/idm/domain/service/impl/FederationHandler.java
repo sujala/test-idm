@@ -2,10 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
-import com.rackspace.idm.domain.entity.AuthData;
-import com.rackspace.idm.domain.entity.IdentityProvider;
-import com.rackspace.idm.domain.entity.SamlAuthResponse;
-import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.entity.*;
 import org.opensaml.saml2.core.LogoutResponse;
 
 /**
@@ -25,5 +22,5 @@ public interface FederationHandler {
      *
      * @throws com.rackspace.idm.exception.NotFoundException if the requested user does not exist
      */
-    void processLogoutRequestForProvider(LogoutRequestDecorator logoutRequestDecorator, IdentityProvider provider);
+    SamlLogoutResponse processLogoutRequestForProvider(LogoutRequestDecorator logoutRequestDecorator, IdentityProvider provider);
 }
