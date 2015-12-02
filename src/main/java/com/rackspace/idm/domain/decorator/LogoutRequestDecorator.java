@@ -14,6 +14,10 @@ public class LogoutRequestDecorator {
         this.logoutRequest = logoutRequest;
     }
 
+    public LogoutRequest getLogoutRequest() {
+        return logoutRequest;
+    }
+
     public String checkAndGetIssuer() {
         String issuer = getIssuer();
         if (StringUtils.isBlank(issuer)) {

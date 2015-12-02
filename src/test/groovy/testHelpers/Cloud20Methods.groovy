@@ -327,6 +327,20 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SAML_TOKENS).accept(accept).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
 
+    def federatedAuthenticate(request, accept = APPLICATION_XML) {
+        initOnUse()
+        MultivaluedMap<String, String> map = new MultivaluedMapImpl();
+        map.put("SAMLResponse", [request]);
+        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path("saml").path("auth").accept(accept).type(APPLICATION_XML).entity(map).post(ClientResponse)
+    }
+
+    def federatedLogout(request, accept = APPLICATION_XML) {
+        initOnUse()
+        MultivaluedMap<String, String> map = new MultivaluedMapImpl();
+        map.put("SAMLRequest", [request]);
+        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path("saml").path("logout").accept(accept).type(MediaType.APPLICATION_FORM_URLENCODED).entity(map).post(ClientResponse)
+    }
+
     def createIdentityProvider(token, identityProvider, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(identityProvider).post(ClientResponse)

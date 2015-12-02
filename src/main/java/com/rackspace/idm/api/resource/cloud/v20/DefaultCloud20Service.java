@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -27,6 +28,7 @@ import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlUnmarshaller;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
@@ -36,7 +38,14 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
+import org.opensaml.saml2.core.LogoutResponse;
+import org.opensaml.saml2.core.StatusCode;
+import org.opensaml.saml2.core.impl.LogoutRequestMarshaller;
+import org.opensaml.saml2.core.impl.LogoutResponseMarshaller;
+import org.opensaml.xml.io.*;
+import org.opensaml.xml.util.XMLHelper;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -50,15 +59,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.w3c.dom.*;
+import org.w3c.dom.Element;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
+import javax.xml.bind.*;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -235,6 +246,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     private SamlUnmarshaller samlUnmarshaller;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+
+    private LogoutResponseMarshaller marshaller = new LogoutResponseMarshaller();
 
     private Map<String, JAXBElement<Extension>> extensionMap;
 
@@ -1098,16 +1111,38 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder logoutFederatedUser(HttpHeaders httpHeaders, byte[] samlLogoutRequestBytes) {
+        SamlLogoutResponse logoutResponse = null;
         try {
             org.opensaml.saml2.core.LogoutRequest logoutRequest = samlUnmarshaller.unmarshallLogoutRequest(samlLogoutRequestBytes);
-            federatedIdentityService.processLogoutRequest(logoutRequest);
-            return Response.noContent();
+            logoutResponse = federatedIdentityService.processLogoutRequest(logoutRequest);
         } catch (BadRequestException ex) {
-            logger.debug("Received invalid Federation logout request", ex);
-            return exceptionHandler.exceptionResponse(ex);
+            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(null, StatusCode.REQUESTER_URI, ex.getMessage(), ex);
         } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
+            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(null, StatusCode.RESPONDER_URI, "Encountered an exception processing federation logout request", ex);
         }
+
+        try {
+            int status = HttpStatus.SC_OK;
+            if (logoutResponse.hasException()) {
+                logger.error("Encountered exception processing federation logout request", logoutResponse.getExceptionThrown());
+                status = exceptionHandler.exceptionToHttpStatus(logoutResponse.getExceptionThrown());
+            }
+
+            if (identityConfig.getReloadableConfig().returnLogoutResponse()) {
+                return buildFedLogoutResponseBuilder(logoutResponse.getLogoutResponse(), status);
+            } else {
+                return Response.noContent();
+            }
+
+        } catch (Exception e) {
+            logger.debug("Error generating error output. Returning 500", e);
+            return exceptionHandler.exceptionResponse(e);
+        }
+    }
+
+    private ResponseBuilder buildFedLogoutResponseBuilder(LogoutResponse logoutResponse, int status) throws MarshallingException {
+        Element element = marshaller.marshall(logoutResponse);;
+        return Response.status(status).entity(new GenericEntity<DOMSource>(new DOMSource(element), DOMSource.class));
     }
 
     @Override

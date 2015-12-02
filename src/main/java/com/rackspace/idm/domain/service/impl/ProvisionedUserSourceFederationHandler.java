@@ -20,6 +20,7 @@ import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.DateHelper;
+import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
 import com.rackspace.idm.util.predicate.UserEnabledPredicate;
 import com.rackspace.idm.validation.PrecedenceValidator;
@@ -29,6 +30,8 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
+import org.opensaml.saml2.core.LogoutResponse;
+import org.opensaml.saml2.core.StatusCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -137,13 +140,13 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
     }
 
     @Override
-    public void processLogoutRequestForProvider(LogoutRequestDecorator logoutRequestDecorator, IdentityProvider provider) {
+    public SamlLogoutResponse processLogoutRequestForProvider(LogoutRequestDecorator logoutRequestDecorator, IdentityProvider provider) {
         String username = logoutRequestDecorator.checkAndGetUsername();
 
         FederatedUser user = identityUserService.getFederatedUserByUsernameAndIdentityProviderName(username, provider.getName());
 
         if (user == null) {
-            throw new NotFoundException("Not Found");
+            throw new BadRequestException("Not Found");
         }
 
         identityUserService.deleteUser(user);
@@ -154,6 +157,8 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
 
         //send atom hopper feed showing deletion of this user
         atomHopperClient.asyncPost(user, AtomHopperConstants.DELETED);
+
+        return SamlLogoutResponseUtil.createSuccessfulLogoutResponse(logoutRequestDecorator.getLogoutRequest().getID());
     }
 
     /**

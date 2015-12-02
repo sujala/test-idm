@@ -3,6 +3,7 @@ package com.rackspace.idm.exception;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.http.protocol.HTTP;
 import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,6 +128,13 @@ public class ExceptionHandler {
 
         return Response.status(HttpServletResponse.SC_SERVICE_UNAVAILABLE).entity(
                 objFactories.getOpenStackIdentityV2Factory().createIdentityFault(fault).getValue());
+    }
+
+    public int exceptionToHttpStatus(Exception ex) {
+        //TODO: Refactor this cause shouldn't need to generate the whole response just to determine the status.
+        Response.ResponseBuilder builder = exceptionResponse(ex);
+        Response response = builder.build();
+        return response.getStatus();
     }
 
     public void setObjFactories(JAXBObjectFactories objFactories) {
