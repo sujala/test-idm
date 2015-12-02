@@ -729,7 +729,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     def "federated users are limited within each IDP"() {
         given:
         //set the user limit low for lower overhead
-        staticIdmConfiguration.setProperty("maxNumberOfFederatedUsersInDomainPerIdp", 2)
+        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, 2)
         def domainId = utils.createDomain()
         def username1 = testUtils.getRandomUUID("samlUser")
         def username2 = testUtils.getRandomUUID("samlUser")
@@ -746,6 +746,12 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
         then: "the response is a failure"
         samlResponse.status == 400
+
+        when: "auth with existing user under the current IDP"
+        samlResponse = cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username1, expDays, domainId, null));
+
+        then: "the response is a success"
+        samlResponse.status == 200
 
         when: "try to create the same user under a different IDP (the limit is per IDP per domain)"
         samlResponse = cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(IDP_2_URI, username3, expDays, domainId, null, DEFAULT_FED_EMAIL, IDP_2_PRIVATE_KEY, IDP_2_PUBLIC_KEY));
