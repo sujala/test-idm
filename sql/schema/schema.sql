@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.6.26, for osx10.10 (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.9, for osx10.11 (x86_64)
 --
 -- Host: 127.0.0.1    Database: keystone
 -- ------------------------------------------------------
@@ -117,43 +117,6 @@ CREATE TABLE `bypass_device_rax` (
   PRIMARY KEY (`id`),
   KEY `idx_bdr_user_id` (`user_id`),
   CONSTRAINT `fk_bdr_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `capability_rax`
---
-
-DROP TABLE IF EXISTS `capability_rax`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `capability_rax` (
-  `id` varchar(64) NOT NULL,
-  `capability_id` varchar(64) DEFAULT NULL,
-  `name` varchar(64) DEFAULT NULL,
-  `action` varchar(64) DEFAULT NULL,
-  `url` text,
-  `description` text,
-  `type` varchar(64) DEFAULT NULL,
-  `version` varchar(64) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_capability_rax_ctv` (`capability_id`,`type`,`version`),
-  KEY `idx_capability_rax_tv` (`type`,`version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `capability_resource_rax`
---
-
-DROP TABLE IF EXISTS `capability_resource_rax`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `capability_resource_rax` (
-  `capability_id` varchar(64) NOT NULL,
-  `resource` varchar(255) NOT NULL,
-  PRIMARY KEY (`capability_id`,`resource`),
-  CONSTRAINT `fk_crr_capability_id` FOREIGN KEY (`capability_id`) REFERENCES `capability_rax` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -502,24 +465,6 @@ CREATE TABLE `identity_provider` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `identity_provider_rax`
---
-
-DROP TABLE IF EXISTS `identity_provider_rax`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `identity_provider_rax` (
-  `id` varchar(64) NOT NULL,
-  `uri` varchar(255) NOT NULL,
-  `description` text,
-  `approved_domain_group` varchar(64),
-  `target_user_source` varchar(64) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_ipr_uri` (`uri`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `identity_provider_domain_rax`
 --
 
@@ -530,10 +475,30 @@ CREATE TABLE `identity_provider_domain_rax` (
   `identity_provider_id` varchar(64) NOT NULL,
   `domain_id` varchar(64) NOT NULL,
   PRIMARY KEY (`identity_provider_id`,`domain_id`),
+  KEY `idx_ipdr_domain_id` (`domain_id`),
+  KEY `idx_ipdr_provider_id` (`identity_provider_id`),
   CONSTRAINT `fk_identity_provider_domain_domain_id` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_identity_provider_domain_provider_id` FOREIGN KEY (`identity_provider_id`) REFERENCES `identity_provider_rax` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
+--
+-- Table structure for table `identity_provider_rax`
+--
+
+DROP TABLE IF EXISTS `identity_provider_rax`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `identity_provider_rax` (
+  `id` varchar(64) NOT NULL,
+  `uri` varchar(255) NOT NULL,
+  `description` text,
+  `approved_domain_group` varchar(64) DEFAULT NULL,
+  `target_user_source` varchar(64) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_ipr_uri` (`uri`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `idp_remote_ids`
@@ -605,7 +570,7 @@ DROP TABLE IF EXISTS `migrate_version`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `migrate_version` (
   `repository_id` varchar(250) NOT NULL,
-  `repository_path` mediumtext,
+  `repository_path` text,
   `version` int(11) DEFAULT NULL,
   PRIMARY KEY (`repository_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -698,41 +663,6 @@ CREATE TABLE `policy_association` (
   `region_id` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `endpoint_id` (`endpoint_id`,`service_id`,`region_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `policy_endpoint_rax`
---
-
-DROP TABLE IF EXISTS `policy_endpoint_rax`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `policy_endpoint_rax` (
-  `endpoint_id` varchar(64) NOT NULL,
-  `policy_id` varchar(64) NOT NULL,
-  PRIMARY KEY (`endpoint_id`,`policy_id`),
-  KEY `idx_poer_policy_id` (`policy_id`),
-  CONSTRAINT `fk_poer_policy_id` FOREIGN KEY (`policy_id`) REFERENCES `policy` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `policy_rax`
---
-
-DROP TABLE IF EXISTS `policy_rax`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `policy_rax` (
-  `id` varchar(64) NOT NULL,
-  `name` varchar(64) DEFAULT NULL,
-  `enabled` tinyint(1) DEFAULT NULL,
-  `global` tinyint(1) DEFAULT NULL,
-  `description` text,
-  PRIMARY KEY (`id`),
-  KEY `idx_por_name` (`name`),
-  CONSTRAINT `fk_por_policy` FOREIGN KEY (`id`) REFERENCES `policy` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1133,9 +1063,9 @@ CREATE TABLE `user` (
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET character_set_client  = latin1 */ ;
+/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET collation_connection  = latin1_swedish_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
@@ -1226,9 +1156,9 @@ CREATE TABLE `user_rax` (
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET character_set_client  = latin1 */ ;
+/*!50003 SET character_set_results = latin1 */ ;
+/*!50003 SET collation_connection  = latin1_swedish_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = '' */ ;
 DELIMITER ;;
@@ -1267,4 +1197,4 @@ CREATE TABLE `whitelisted_config` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-10-02 12:33:51
+-- Dump completed on 2015-12-03 10:42:08
