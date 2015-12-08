@@ -37,7 +37,7 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
     @Override
     public List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId) {
         //TODO - force failure when > max result
-        return mapper.fromSQL(repository.findByApprovedDomainId(domainId));
+        return mapper.fromSQL(repository.findByApprovedDomainIdsContains(domainId));
     }
 
     @Override
