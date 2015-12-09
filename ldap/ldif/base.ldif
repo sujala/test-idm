@@ -1112,6 +1112,7 @@ rsWeight: 500
 dn: rsId=8470c459cfa043ef989976a66ba4d74e,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
  4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole
+rsId: 8470c459cfa043ef989976a66ba4d74e
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 cn: identity:identity-provider-manager
 description: Identity Provider Manager
