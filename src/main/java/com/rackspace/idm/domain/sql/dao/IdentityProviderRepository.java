@@ -18,6 +18,6 @@ public interface IdentityProviderRepository extends JpaSpecificationExecutor<Sql
     @Query("select c.name from SqlIdentityProvider c where c.uri = :uri")
     String getIdpNameByURI(@Param("uri") String uri);
 
-    List<SqlIdentityProvider> findByApprovedDomainId(String approvedDomainId);
+    List<SqlIdentityProvider> findByApprovedDomainIdsContains(String approvedDomainId);
 
 }
