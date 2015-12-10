@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.OTPDeviceDao
+import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.UniqueId
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.migration.ChangeType
@@ -31,6 +32,9 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     UserDao userDao
+
+    @Autowired
+    TenantRoleDao tenantRoleDao
 
     @Shared
     def specificationServiceAdminToken
@@ -188,6 +192,42 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         deltaDao.deleteAll()
+    }
+
+    def "record change event for adding role to two different tenants for same user"() {
+        given:
+        //set up properties to record event
+        enableListenerForAllChangeTypes()
+        def beforeStart = new DateTime();
+        def user, users
+        (user, users) = utils.createUserAdmin()
+        def tenant1 = utils.createTenant()
+        def tenant2 = utils.createTenant()
+        def role = utils.createRole()
+
+        when: "add the role to the user on the tenant"
+        utils.addRoleToUserOnTenant(user, tenant1, role.id)
+        def roleEntity = tenantRoleDao.getTenantRoleForUser(userDao.getUserById(user.id), role.id)
+        def events = getEventsForEntity(roleEntity)
+
+        then: "an ADD event was recorded for the role"
+        events.size() == 1
+        verifyEvent(events.last(), ChangeType.ADD, roleEntity, beforeStart)
+
+        when: "add the role to the user on the other tenant"
+        utils.addRoleToUserOnTenant(user, tenant2, role.id)
+        events = getEventsForEntity(roleEntity)
+
+        then: "an "
+        events.size() == 2
+        verifyEvent(events.last(), ChangeType.MODIFY, roleEntity, beforeStart)
+
+        cleanup:
+        deltaDao.deleteAll()
+        utils.deleteUsers(user)
+        utils.deleteRole(role)
+        utils.deleteTenant(tenant1)
+        utils.deleteTenant(tenant2)
     }
 
     def void verifyEvent(Object event, ChangeType expectedChangeType, UniqueId expectedEntityRecorded, DateTime expectedOccurredOnOrAfter) {
