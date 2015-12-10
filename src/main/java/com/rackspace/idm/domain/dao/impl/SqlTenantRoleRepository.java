@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.migration.ChangeType;
 import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.FederatedRoleRepository;
+import com.rackspace.idm.domain.sql.dao.RoleRepository;
 import com.rackspace.idm.domain.sql.dao.TenantRoleRepository;
 import com.rackspace.idm.domain.sql.entity.SqlFederatedRoleRax;
 import com.rackspace.idm.domain.sql.entity.SqlTenantRole;
@@ -41,6 +42,9 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     private FederatedRoleRepository federatedRoleRepository;
 
     @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
     private FederatedRoleRaxMapper federatedRoleRaxMapper;
 
     @Autowired
@@ -54,7 +58,8 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     public void addTenantRoleToUser(BaseUser user, TenantRole tenantRole) {
         tenantRole.setUserId(user.getId());
 
-        TenantRole newTenantRole = null;
+        TenantRole newTenantRole;
+        boolean tenantRoleAdded = false;
         if(user instanceof FederatedUser) {
             SqlFederatedRoleRax federatedRoleRax = federatedRoleRepository.findOneByRoleRsIdAndUserId(tenantRole.getRoleRsId(), user.getId());
             if(federatedRoleRax != null) {
@@ -64,6 +69,7 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
                 federatedRoleRax.getTenantIds().addAll(tenantRole.getTenantIds());
                 federatedRoleRax = federatedRoleRepository.save(federatedRoleRax);
             } else {
+                tenantRoleAdded = true;
                 federatedRoleRax = federatedRoleRepository.save(federatedRoleRaxMapper.toSQL(tenantRole));
             }
 
@@ -78,11 +84,20 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
                 }
                 throw new ClientConflictException();
             }
-            final SqlTenantRole sqlTenantRole = tenantRoleRepository.save(mapper.toSQL(tenantRole));
+            tenantRoleAdded = getTenantRoleForUser(user, tenantRole.getRoleRsId()) == null;
+            SqlTenantRole sqlTenantRole = tenantRoleRepository.save(mapper.toSQL(tenantRole));
+            //manually set the role. This is not set by the repository because the transaction has not been flushed yet
+            //the transaction will flush after this method returns
+            sqlTenantRole.setSqlRole(roleRepository.getOne(tenantRole.getRoleRsId()));
+            sqlTenantRoles.add(sqlTenantRole);
 
-            newTenantRole = mapper.fromSQL(sqlTenantRole, tenantRole);
+            newTenantRole = mapper.fromSQL(sqlTenantRoles);
         }
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole)));
+        if(tenantRoleAdded) {
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole)));
+        } else {
+            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole)));
+        }
     }
 
     @Override

@@ -32,7 +32,7 @@ public class FederatedUserRaxMapper extends SqlMapper<FederatedUser, SqlFederate
     @Override
     protected Object[] getIds(SqlFederatedUserRax sqlFederatedUserRax) {
         final String idpName = identityProviderRepository.getIdpNameByURI(sqlFederatedUserRax.getFederatedIdpUri());
-        return new Object[] {sqlFederatedUserRax.getId(), idpName};
+        return new Object[] {sqlFederatedUserRax.getUsername(), idpName};
     }
 
     @Override
