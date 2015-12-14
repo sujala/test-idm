@@ -44,6 +44,7 @@ INSERT INTO `assignment` VALUES ('UserProject','10071819','StagingUS_e99825fd-b0
 INSERT INTO `assignment` VALUES ('UserProject','173189','983452','5',0);
 INSERT INTO `assignment` VALUES ('UserProject','173189','identity','1',0);
 INSERT INTO `assignment` VALUES ('UserProject','173190','identity','4',0);
+INSERT INTO `assignment` VALUES ('UserProject','173190','identity','8470c459cfa043ef989976a66ba4d74e',0);
 INSERT INTO `assignment` VALUES ('UserProject','173195','identity','10053955',0);
 INSERT INTO `assignment` VALUES ('UserProject','173195','identity','4',0);
 INSERT INTO `assignment` VALUES ('UserProject','1c5a89a8d99b4e34998f7143d76d99e2','78543990','6',0);

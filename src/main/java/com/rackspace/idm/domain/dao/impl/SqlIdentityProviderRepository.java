@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
+import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum;
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.domain.migration.ChangeType;
 import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
@@ -37,7 +38,7 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
     @Override
     public List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId) {
         //TODO - force failure when > max result
-        return mapper.fromSQL(repository.findByApprovedDomainIdsContains(domainId));
+        return mapper.fromSQL(repository.findByApprovedDomainIdsContainsOrApprovedDomainGroupEquals(domainId, ApprovedDomainGroupEnum.GLOBAL.getStoredVal()));
     }
 
     @Override

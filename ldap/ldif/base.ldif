@@ -4661,6 +4661,7 @@ dn: roleRsId=8470c459cfa043ef989976a66ba4d74e,cn=ROLES,rsId=173190,ou=users,o=ra
  m
 objectClass: top
 objectClass: tenantRole
+roleRsId: 8470c459cfa043ef989976a66ba4d74e
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
 dn: cn=TOKENS,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com
