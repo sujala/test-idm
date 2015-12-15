@@ -100,6 +100,11 @@ public class IdentityProviderConverterCloudV20 {
             }
         }
 
+        //convert empty strings to nulls since they can't be persisted to LDAP
+        if (StringUtils.isWhitespace(jaxbProvider.getDescription())) {
+            provider.setDescription(null);
+        }
+
         return provider;
     }
 
