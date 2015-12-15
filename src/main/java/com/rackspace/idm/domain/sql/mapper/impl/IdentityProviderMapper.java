@@ -24,28 +24,38 @@ public class IdentityProviderMapper extends SqlMapper<IdentityProvider, SqlIdent
         return new String[] {sqlIdentityProvider.getName()};
     }
 
-    public IdentityProvider fromSQL(SqlIdentityProvider sqlEntity) {
+    @Override
+    public IdentityProvider fromSQL(SqlIdentityProvider sqlEntity, IdentityProvider identityProvider, boolean ignoreNulls) {
         if (sqlEntity == null) {
             return null;
         }
 
-        IdentityProvider identityProvider = super.fromSQL(sqlEntity);
+        identityProvider = super.fromSQL(sqlEntity, identityProvider, ignoreNulls);
         identityProvider.setUserCertificates(new ArrayList<byte[]>());
 
-        for (SqlUserCertificate userCertificate : sqlEntity.getUserCertificates()) {
-            identityProvider.getUserCertificates().add(userCertificate.getCertificate());
+        if (sqlEntity.getUserCertificates() != null) {
+            for (SqlUserCertificate userCertificate : sqlEntity.getUserCertificates()) {
+                identityProvider.getUserCertificates().add(userCertificate.getCertificate());
+            }
+        }
+
+        identityProvider.setFederationType(sqlEntity.getTargetUserSource());
+
+        //set the list of approved domains to null if it is empty. This is to match the LDAP implementation and mapping
+        if (identityProvider.getApprovedDomainIds() != null && identityProvider.getApprovedDomainIds().isEmpty()) {
+            identityProvider.setApprovedDomainIds(null);
         }
 
         return identityProvider;
     }
 
     @Override
-    public SqlIdentityProvider toSQL(IdentityProvider identityProvider) {
+    public SqlIdentityProvider toSQL(IdentityProvider identityProvider, SqlIdentityProvider sqlIdentityProvider, boolean ignoreNulls) {
         if(identityProvider == null) {
             return null;
         }
 
-        SqlIdentityProvider sqlIdentityProvider = super.toSQL(identityProvider);
+        sqlIdentityProvider = super.toSQL(identityProvider, sqlIdentityProvider, ignoreNulls);
 
         if (identityProvider.getUserCertificates() != null) {
             for(byte[] cert : identityProvider.getUserCertificates()) {
