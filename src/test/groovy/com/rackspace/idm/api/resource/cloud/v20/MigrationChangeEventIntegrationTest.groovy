@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.OTPDeviceDao
 import com.rackspace.idm.domain.dao.UniqueId
 import com.rackspace.idm.domain.dao.UserDao
@@ -31,6 +32,9 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     UserDao userDao
+
+    @Autowired
+    DomainDao domainDao
 
     @Shared
     def specificationServiceAdminToken
@@ -188,6 +192,56 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         deltaDao.deleteAll()
+    }
+
+    def "add tenant to domain creates a change event to add the tenant to the domain"() {
+        given:
+        enableListenerForAllChangeTypes()
+        def domainId = utils.createDomain()
+        def beforeStart = new DateTime();
+
+        when: "create the user using the create user in one call logic"
+        def user, users
+        (user, users) = utils.createUserAdminWithTenants(domainId)
+        def domain = domainDao.getDomain(user.domainId)
+
+        then: "a change event was created to add the tenant to the user's domain"
+        def domainEvents = getEventsForEntity(domain)
+        verifyEvent(domainEvents.last(), ChangeType.MODIFY, domain, beforeStart)
+
+        cleanup:
+        deltaDao.deleteAll()
+        utils.deleteUsers(users)
+    }
+
+    def "create user in one call logic creates change event to add the tenant to the domain"() {
+        given:
+        enableListenerForAllChangeTypes()
+        def beforeStart = new DateTime();
+        def domainData = v2Factory.createDomain(utils.createDomain(), testUtils.getRandomUUID("domain"))
+        cloud20.addDomain(utils.getServiceAdminToken(), domainData)
+        def defaultDomain = domainDao.getDomain(identityConfig.getReloadableConfig().getTenantDefaultDomainId())
+        def provisionedDomain = domainDao.getDomain(domainData.id)
+
+        when: "create the tenant"
+        def tenant = utils.createTenant()
+
+        then: "a change event was created to add the tenant to the default domain"
+        def defaultDomainEvents = getEventsForEntity(defaultDomain)
+        verifyEvent(defaultDomainEvents.last(), ChangeType.MODIFY, defaultDomain, beforeStart)
+
+        when: "add the tenant to the domain"
+        utils.addTenantToDomain(domainData.id, tenant.id)
+
+        then: "a change event was created to add the tenant to the provisioned domain"
+        def provisionedDomainEvents = getEventsForEntity(provisionedDomain)
+        verifyEvent(provisionedDomainEvents.last(), ChangeType.MODIFY, provisionedDomain, beforeStart)
+
+        cleanup:
+        deltaDao.deleteAll()
+        utils.deleteTenant(tenant)
+        utils.deleteDomain(domainData.id)
+
     }
 
     def void verifyEvent(Object event, ChangeType expectedChangeType, UniqueId expectedEntityRecorded, DateTime expectedOccurredOnOrAfter) {
