@@ -35,7 +35,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         when: "create a DOMAIN IDP with no certs and approvedDomainGroup"
         IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
-        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
         IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
 
         then: "created successfully"
@@ -71,6 +71,119 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        utils.deleteUser(idpManager)
+
+        where:
+        requestContentType | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+
+    @Unroll
+    def "Error check create IDP with various empty strings - request: #requestContentType"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def domainId = utils.createDomain()
+        cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
+
+        when: "create a DOMAIN IDP with approvedDomainGroup, empty approvedDomainId list"
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, Collections.EMPTY_LIST)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE) //our json reader would send NULL rather than empty array so json would pass (appropriately)
+
+        then: "bad request"
+        response.status == SC_BAD_REQUEST
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+
+        when: "create a DOMAIN IDP with approvedDomainGroup, empty string approvedDomainId"
+        domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, [""])
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "bad request"
+        response.status == SC_BAD_REQUEST
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+
+        when: "create a DOMAIN IDP with empty string approvedDomainGroup, empty string approvedDomainId"
+        domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, "", [""])
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "bad request"
+        response.status == SC_BAD_REQUEST
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+
+        when: "create a DOMAIN IDP with empty string approvedDomainGroup and valid approvedDomainId"
+        IdentityProvider domainIdIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, "", [domainId])
+        response = cloud20.createIdentityProvider(idpManagerToken, domainIdIdp, requestContentType, requestContentType)
+
+        then: "bad request"
+        response.status == SC_BAD_REQUEST
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+
+        when: "create a DOMAIN IDP with null approvedDomainGroup, empty string approvedDomainId"
+        domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [""])
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "bad request"
+        response.status == SC_BAD_REQUEST
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN)
+
+        cleanup:
+        utils.deleteUser(idpManager)
+
+        where:
+        requestContentType | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Error check create Racker IDP with various empty strings - request: #requestContentType"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def domainId = utils.createDomain()
+        cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
+
+        when: "create a IDP with approvedDomainGroup, null list"
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "bad request"
+        response.status == SC_BAD_REQUEST
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+
+        when: "create a IDP with null approvedDomainGroup, entry in list"
+        domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, [domainId])
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "bad request"
+        response.status == SC_BAD_REQUEST
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+
+        cleanup:
+        utils.deleteUser(idpManager)
+
+        where:
+        requestContentType | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Create IDP with empty description - request: #requestContentType"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when: "create a DOMAIN IDP with approvedDomainGroup, empty string description"
+        def domainGroupIdp = v2Factory.createIdentityProvider("", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "successful"
+        response.status == SC_CREATED
+
+        cleanup:
         utils.deleteUser(idpManager)
 
         where:
@@ -310,7 +423,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "400"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
-        when: "Domain IDP with both approvedDomains or approvedDomainGroup"
+        when: "Domain IDP with both approvedDomains and approvedDomainGroup"
         invalid = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, [domainId])
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 

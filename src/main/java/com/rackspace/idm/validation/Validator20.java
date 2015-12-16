@@ -270,21 +270,24 @@ public class Validator20 {
             }
         }
 
-        //validate approvedDomainGroup/approvedDomains
+        //validate approvedDomainGroup/approvedDomains. Can only provide one element
         String providedApprovedDomainGroup = identityProvider.getApprovedDomainGroup();
-        List<String> providedApprovedDomains = identityProvider.getApprovedDomainIds() != null ? identityProvider.getApprovedDomainIds().getApprovedDomainId() : Collections.EMPTY_LIST;
+        ApprovedDomainIds providedApprovedDomainIds = identityProvider.getApprovedDomainIds();
 
         if (identityProvider.getFederationType() == IdentityProviderFederationTypeEnum.DOMAIN) {
-            if ((StringUtils.isNotBlank(providedApprovedDomainGroup) && CollectionUtils.isNotEmpty(providedApprovedDomains))
-                    || (StringUtils.isBlank(providedApprovedDomainGroup) && CollectionUtils.isEmpty(providedApprovedDomains))) {
+            if (providedApprovedDomainGroup != null && providedApprovedDomainIds != null) {
                 throw new BadRequestException(String.format("You must provide either %s or %s, but not both", APPROVED_DOMAIN_GROUP_NAME, APPROVED_DOMAINS), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS);
-            }
-
-            if (StringUtils.isNotBlank(providedApprovedDomainGroup)) {
+            } else if (providedApprovedDomainGroup == null && providedApprovedDomainIds == null) {
+                throw new BadRequestException(String.format("You must provide either %s or %s", APPROVED_DOMAIN_GROUP_NAME, APPROVED_DOMAINS), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS);
+            } else if (providedApprovedDomainGroup != null) {
                 if (ApprovedDomainGroupEnum.lookupByStoredValue(providedApprovedDomainGroup) == null) {
-                    throw new BadRequestException(String.format("The provided %s '%s' is not a supported group name", APPROVED_DOMAIN_GROUP_NAME, providedApprovedDomainGroup), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_GROUP);
+                    throw new BadRequestException(String.format("The provided value is not a supported %s", APPROVED_DOMAIN_GROUP_NAME), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_GROUP);
                 }
             } else {
+                List<String> providedApprovedDomains = providedApprovedDomainIds != null ? providedApprovedDomainIds.getApprovedDomainId() : Collections.EMPTY_LIST;
+                if (providedApprovedDomainIds != null && CollectionUtils.isEmpty(providedApprovedDomains)) {
+                    throw new BadRequestException(String.format("When providing %s, you must provide a valid domain id", APPROVED_DOMAINS), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS);
+                }
                 for (String providedApprovedDomain : providedApprovedDomains) {
                     Domain domain = domainService.getDomain(providedApprovedDomain);
                     if (domain == null) {
@@ -294,7 +297,7 @@ public class Validator20 {
             }
         } else {
             //racker provider don't contain approvedDomain stuff
-            if (StringUtils.isNotBlank(providedApprovedDomainGroup) || CollectionUtils.isNotEmpty(providedApprovedDomains)) {
+            if (providedApprovedDomainGroup != null || providedApprovedDomainIds != null) {
                 throw new BadRequestException(String.format("%s and %s are not valid attributes for this federation type", APPROVED_DOMAIN_GROUP_NAME, APPROVED_DOMAINS), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS);
             }
         }
