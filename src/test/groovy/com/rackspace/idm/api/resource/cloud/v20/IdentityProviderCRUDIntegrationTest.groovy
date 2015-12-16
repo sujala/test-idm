@@ -481,4 +481,27 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
     }
 
+    def "Create domain with dup domainIds ignores dups"() {
+        given:
+        def domainId = utils.createDomain()
+        cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when: "create a DOMAIN IDP with single certs and approvedDomains"
+        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId, domainId])
+        def response = cloud20.createIdentityProvider(idpManagerToken, approvedDomainsIdp)
+
+        then: "created successfully"
+        response.status == SC_CREATED
+        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
+        creationResultIdp.approvedDomainIds != null
+        creationResultIdp.approvedDomainIds.approvedDomainId.size() == 1
+        creationResultIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        utils.deleteUser(idpManager)
+    }
+
 }
