@@ -20,4 +20,7 @@ public interface IdentityProviderRepository extends JpaSpecificationExecutor<Sql
 
     List<SqlIdentityProvider> findByApprovedDomainIdsContains(String approvedDomainId);
 
+    @Query("select idp from SqlIdentityProvider idp where :domainId member of idp.approvedDomainIds or idp.approvedDomainGroup = :domainGroup")
+    List<SqlIdentityProvider> findByApprovedDomainIdsContainsOrApprovedDomainGroupEquals(@Param("domainId") String approvedDomainId, @Param("domainGroup") String approvedDomainGroup);
+
 }
