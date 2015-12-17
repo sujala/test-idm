@@ -28,4 +28,7 @@ public interface FederatedUserRepository extends JpaSpecificationExecutor<SqlFed
     @Query("select i.name from SqlIdentityProvider i where i.uri = (select u.federatedIdpUri from SqlFederatedUserRax u where u.id = :userId)")
     String getIdpNameByUserId(@Param("userId") String userId);
 
+    @Query("select u.username from SqlFederatedUserRax u where u.id = :userId")
+    String getUsernameByUserId(@Param("userId") String userId);
+
 }

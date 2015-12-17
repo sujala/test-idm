@@ -32,7 +32,8 @@ public class FederatedRoleRaxMapper extends SqlMapper<TenantRole, SqlFederatedRo
     @Override
     protected Object[] getIds(SqlFederatedRoleRax sqlFederatedRoleRax) {
         final String idpName = federatedUserRepository.getIdpNameByUserId(sqlFederatedRoleRax.getUserId());
-        return new Object[] {sqlFederatedRoleRax.getRoleRsId(), sqlFederatedRoleRax.getUserId(), idpName};
+        final String username = federatedUserRepository.getUsernameByUserId(sqlFederatedRoleRax.getUserId());
+        return new Object[] {sqlFederatedRoleRax.getRoleRsId(), username, idpName};
     }
 
     @Override
