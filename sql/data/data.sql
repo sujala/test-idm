@@ -44,6 +44,7 @@ INSERT INTO `assignment` VALUES ('UserProject','10071819','StagingUS_e99825fd-b0
 INSERT INTO `assignment` VALUES ('UserProject','173189','983452','5',0);
 INSERT INTO `assignment` VALUES ('UserProject','173189','identity','1',0);
 INSERT INTO `assignment` VALUES ('UserProject','173190','identity','4',0);
+INSERT INTO `assignment` VALUES ('UserProject','173190','identity','175f0c9040924c14a9aad81b7a3ec222',0);
 INSERT INTO `assignment` VALUES ('UserProject','173190','identity','8470c459cfa043ef989976a66ba4d74e',0);
 INSERT INTO `assignment` VALUES ('UserProject','173195','identity','10053955',0);
 INSERT INTO `assignment` VALUES ('UserProject','173195','identity','4',0);
@@ -1051,6 +1052,7 @@ INSERT INTO `role` VALUES ('7','identity:user-manage','{}');
 INSERT INTO `role` VALUES ('8','identity:multifactor_beta','{}');
 INSERT INTO `role` VALUES ('8470c459cfa043ef989976a66ba4d74e','identity:identity-provider-manager','{}');
 INSERT INTO `role` VALUES ('9','Racker','{}');
+INSERT INTO `role` VALUES ('175f0c9040924c14a9aad81b7a3ec222','identity:purge-federated','{}');
 
 --
 -- Dumping data for table `role_rax`
@@ -1083,6 +1085,7 @@ INSERT INTO `role_rax` VALUES ('7','User manage role',900,0,'bde1268ebabeeabb70a
 INSERT INTO `role_rax` VALUES ('8','Multi-Factor BETA',500,0,'bde1268ebabeeabb70a0e702a4626977c331d5c4');
 INSERT INTO `role_rax` VALUES ('8470c459cfa043ef989976a66ba4d74e','Identity Provider Manager',50,0,'bde1268ebabeeabb70a0e702a4626977c331d5c4');
 INSERT INTO `role_rax` VALUES ('9','Defines a user as being a Racker',100,0,'18e7a7032733486cd32f472d7bd58f709ac0d221');
+INSERT INTO `role_rax` VALUES ('175f0c9040924c14a9aad81b7a3ec222','Federation deletion',50,0,'bde1268ebabeeabb70a0e702a4626977c331d5c4');
 
 --
 -- Dumping data for table `sensitive_config`

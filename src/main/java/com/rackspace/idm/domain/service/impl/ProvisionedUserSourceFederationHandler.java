@@ -44,7 +44,7 @@ import java.util.*;
  * Handles SAML authentication requests against provisioned users. This means against a particular domain.
  */
 @Component
-public class ProvisionedUserSourceFederationHandler implements FederationHandler {
+public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFederationHandler {
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
     public static final String DUPLICATE_USERNAME_ERROR_MSG = "The username already exists under a different domainId for this identity provider";
     public static final String DISABLED_DOMAIN_ERROR_MESSAGE = "Domain %s is disabled.";
@@ -149,6 +149,12 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
             throw new BadRequestException("Not Found");
         }
 
+        deleteFederatedUser(user);
+
+        return SamlLogoutResponseUtil.createSuccessfulLogoutResponse(logoutRequestDecorator.getLogoutRequest().getID());
+    }
+
+    public void deleteFederatedUser(FederatedUser user) {
         identityUserService.deleteUser(user);
 
         //log deletion
@@ -157,8 +163,6 @@ public class ProvisionedUserSourceFederationHandler implements FederationHandler
 
         //send atom hopper feed showing deletion of this user
         atomHopperClient.asyncPost(user, AtomHopperConstants.DELETED);
-
-        return SamlLogoutResponseUtil.createSuccessfulLogoutResponse(logoutRequestDecorator.getLogoutRequest().getID());
     }
 
     /**

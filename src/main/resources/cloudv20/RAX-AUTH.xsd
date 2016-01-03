@@ -593,6 +593,24 @@
         <attribute name="status" type="RAX-AUTH:KeyVersionStatusEnum" use="required" />
     </complexType>
 
+    <element name="federatedUsersDeletionRequest" type="RAX-AUTH:FederatedUsersDeletionRequest" />
+
+    <complexType name="FederatedUsersDeletionRequest">
+        <attribute name="max" type="xsd:int" use="optional"/>
+        <attribute name="delay" type="xsd:int" use="optional"/>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+
+    <element name="federatedUsersDeletionResponse" type="RAX-AUTH:FederatedUsersDeletionResponse" />
+
+    <complexType name="FederatedUsersDeletionResponse">
+        <attribute name="id" type="xsd:int" use="required"/>
+        <attribute name="error" type="RAX-AUTH:StringList" use="optional" />
+        <attribute name="deleted" type="xsd:int" use="required"/>
+        <attribute name="errors" type="xsd:int" use="required"/>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+
     <complexType name="OTPDevice">
         <complexContent>
             <extension base="RAX-AUTH:MultiFactorDevice">

@@ -14,18 +14,23 @@ import com.rackspace.idm.domain.sql.entity.SqlFederatedUserRax;
 import com.rackspace.idm.domain.sql.mapper.impl.FederatedUserRaxMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.GroupMapper;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.UUID;
 
 import static com.rackspace.idm.domain.dao.impl.LdapRepository.CONTAINER_ROLES;
 
 @SQLComponent
 public class SqlFederatedUserRepository implements FederatedUserDao {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqlFederatedUserRepository.class);
 
     @Autowired
     private FederatedUserRaxMapper federatedUserRaxMapper;
@@ -121,6 +126,17 @@ public class SqlFederatedUserRepository implements FederatedUserDao {
     public void deleteUser(FederatedUser federatedUser) {
         federatedUserRepository.delete(federatedUser.getId());
         applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, federatedUser.getUniqueId(), null));
+    }
+
+    @Override
+    public FederatedUser getSingleExpiredFederatedUser() {
+        try {
+            final SqlFederatedUserRax user  = federatedUserRepository.findFirstByExpiredTimestampLessThanEqual(new Date());
+            return federatedUserRaxMapper.fromSQL(user);
+        } catch (Exception e) {
+            LOGGER.error("Error retrieving expired federated user", e);
+            return null;
+        }
     }
 
     private String getNextId() {

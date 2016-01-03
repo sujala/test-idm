@@ -53,4 +53,9 @@ public interface FederatedUserDao extends FederatedBaseUserDao<FederatedUser> {
      */
     void deleteUser(FederatedUser federatedUser);
 
+    /**
+     * Get one expired federated user
+     */
+    FederatedUser getSingleExpiredFederatedUser();
+
 }

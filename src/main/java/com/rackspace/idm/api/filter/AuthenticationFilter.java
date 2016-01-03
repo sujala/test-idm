@@ -118,7 +118,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         }
 
         //Cloud v1.0/v1.1/v2.0 checks
-        if (path.startsWith("cloud")) {
+        if (path.startsWith("cloud") || path.startsWith("devops")) {
             // Return if call is authentication or validation
             if (tokenValidationPathPattern.matcher(path).matches() && (!tokenEndpointPathPattern.matcher(path).matches())) {
                 //validate call. Don't replace impersonation token
