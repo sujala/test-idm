@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
@@ -190,4 +192,12 @@ public interface UserService {
      * @return TRUE if a user should be considered disabled based on the state of their tenants
      */
     boolean userDisabledByTenants(EndUser user);
+
+    /**
+     * [CIDMDEV-5312] Remove Federated Users eligible for deletion.
+     *
+     * @param request
+     * @param response
+     */
+    void expiredFederatedUsersDeletion(FederatedUsersDeletionRequest request, FederatedUsersDeletionResponse response);
 }

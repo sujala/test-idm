@@ -44,6 +44,26 @@ class DevOpsResourceTest extends RootIntegrationTest {
         assertTypeAndValueOfPropValue(staticConfig.get("feature.use.reloadable.docs").get(PropKey.value.toString()), true)
     }
 
+    def "test federation deletion call"() {
+        given:
+        def response = devops.getFederationDeletion(utils.getServiceAdminToken())
+
+        when:
+        def entity = new org.codehaus.jackson.map.ObjectMapper().readValue(response.getEntity(String), Map).federatedUsersDeletionResponse
+
+        then:
+        response.status == 200
+        entity.id != null
+    }
+
+    def "test federation deletion call cannot be done by who doesnt have role"() {
+        when:
+        def response = devops.getFederationDeletion(utils.getIdentityAdminToken())
+
+        then:
+        response.status == 403
+    }
+
     def assertFormat(configSection) {
         configSection.each { prop, propSection ->
             assert propSection.containsKey(PropKey.description.toString()) &&
