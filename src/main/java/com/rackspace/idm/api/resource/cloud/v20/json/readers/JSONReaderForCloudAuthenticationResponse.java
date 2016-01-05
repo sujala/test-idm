@@ -8,10 +8,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.openstack.docs.identity.api.v2.AuthenticateResponse;
-import org.openstack.docs.identity.api.v2.TenantForAuthenticateResponse;
-import org.openstack.docs.identity.api.v2.Token;
-import org.openstack.docs.identity.api.v2.UserForAuthenticateResponse;
+import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +29,9 @@ public class JSONReaderForCloudAuthenticationResponse {
 
         UserForAuthenticateResponse user = JSONReaderForCloudAuthenticationResponseUser.getAuthenticationResponseUserFromJSONString(jsonBody);
         response.setUser(user);
+
+        ServiceCatalog serviceCatalog = JSONReaderForCloudAuthenticationResponseServiceCatalog.parse(jsonBody);
+        response.setServiceCatalog(serviceCatalog);
 
         return response;
     }

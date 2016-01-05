@@ -649,7 +649,7 @@ class V2Factory {
             it.federationType = federationType
             it.publicCertificates
             it.approvedDomainGroup = approvedDomainGroup
-            if (CollectionUtils.isNotEmpty(approvedDomainIdsList)) {
+            if (approvedDomainIdsList != null) {
                 ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
                 approvedDomainIds.getApprovedDomainId().addAll(approvedDomainIdsList)
                 it.approvedDomainIds = approvedDomainIds
