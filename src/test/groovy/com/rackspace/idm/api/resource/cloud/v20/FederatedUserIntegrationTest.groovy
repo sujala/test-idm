@@ -452,6 +452,42 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
+    @Unroll
+    def "SAML authenticate produces - #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 500
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, Arrays.asList(role1000.name), email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+
+        when:
+        def samlResponse = cloud20.federatedAuthenticate(samlAssertion, accept)
+
+        then: "Response contains appropriate content"
+        samlResponse.status == HttpServletResponse.SC_OK
+        def authResponse
+        if(accept == APPLICATION_XML_TYPE) {
+            authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        } else {
+            authResponse = samlResponse.getEntity(AuthenticateResponse)
+        }
+        verifyResponseFromSamlRequestAndBackendRoles(authResponse, username, userAdminEntity, Arrays.asList(role1000))
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+
+        where:
+        accept                | _
+        APPLICATION_XML_TYPE  | _
+        APPLICATION_JSON_TYPE | _
+    }
+
     def "Can specify a role with a space in the name"() {
         given:
         def domainId = utils.createDomain()
