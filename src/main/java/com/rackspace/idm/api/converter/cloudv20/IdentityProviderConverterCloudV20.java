@@ -17,7 +17,9 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class IdentityProviderConverterCloudV20 {
@@ -89,15 +91,22 @@ public class IdentityProviderConverterCloudV20 {
             }
         }
 
-        //map approvedDomainIds
+        //map approvedDomainIds - only accepting unique vals
+        Set<String> domainIdSet = new LinkedHashSet<String>();
         ApprovedDomainIds approvedDomainIdsWrapper = jaxbProvider.getApprovedDomainIds();
         if (approvedDomainIdsWrapper != null && CollectionUtils.isNotEmpty(approvedDomainIdsWrapper.getApprovedDomainId())) {
+            for (String approvedDomainId : approvedDomainIdsWrapper.getApprovedDomainId()) {
+                domainIdSet.add(approvedDomainId);
+            }
             if (provider.getApprovedDomainIds() == null) {
                 provider.setApprovedDomainIds(new ArrayList<String>());
             }
-            for (String approvedDomainId : approvedDomainIdsWrapper.getApprovedDomainId()) {
-                provider.getApprovedDomainIds().add(approvedDomainId);
-            }
+            provider.getApprovedDomainIds().addAll(domainIdSet);
+        }
+
+        //convert empty strings to nulls since they can't be persisted to LDAP
+        if (StringUtils.isWhitespace(jaxbProvider.getDescription())) {
+            provider.setDescription(null);
         }
 
         return provider;
