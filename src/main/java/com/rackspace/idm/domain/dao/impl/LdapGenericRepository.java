@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.DaoGetEntityType;
 import com.rackspace.idm.domain.dao.GenericDao;
 import com.rackspace.idm.domain.dao.UniqueId;
@@ -26,10 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class LdapGenericRepository<T extends UniqueId> extends LdapRepository implements GenericDao<T> {
 
@@ -201,7 +199,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     private void emitMigrationAddEventIfNecessary(String dn) {
         if (shouldEmitEventForDN(dn)) {
             try {
-                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.ADD, dn, null));
+                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.ADD, dn, getAppInterface().getEntry(dn).toLDIFString()));
             } catch (Exception e) {
                 LOGGER.error("Cannot emmit 'ADD' change event (DN: " + dn + ")!", e);
             }
@@ -212,7 +210,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         final String dn = object.getUniqueId();
         if (shouldEmitEventForDN(dn)) {
             try {
-                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.MODIFY, dn, null));
+                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.MODIFY, dn, getAppInterface().getEntry(dn).toLDIFString()));
             } catch (Exception e) {
                 LOGGER.error("Cannot emmit 'MODIFY' change event (DN: " + dn + ")!", e);
             }

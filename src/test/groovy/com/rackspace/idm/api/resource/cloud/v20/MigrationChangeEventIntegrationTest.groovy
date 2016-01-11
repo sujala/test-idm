@@ -6,11 +6,13 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.OTPDeviceDao
+import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.UniqueId
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.migration.ChangeType
 import com.rackspace.idm.domain.migration.dao.DeltaDao
+import com.sun.jersey.api.spring.Autowire
 import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -38,6 +40,9 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
     TenantRoleDao tenantRoleDao
 
     @Autowired
+    TenantDao tenantDao
+
+    @Autowired
     DomainDao domainDao
 
     @Shared
@@ -45,6 +50,36 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
     def setupSpec() {
         specificationServiceAdminToken = cloud20.authenticatePassword(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD).getEntity(AuthenticateResponse).value.token.id
+    }
+
+    @Unroll
+    def "test migration change events: async - #async"() {
+        given:
+        enableListenerForAllChangeTypes()
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MIGRATION_SAVE_DELTA_ASYNC_PROP, async)
+
+        when: "create a tenant to trigger a change event"
+        def tenant = utils.createTenant()
+        def tenantEntity = tenantDao.getTenant(tenant.id)
+        if(async) {
+            sleep(1000) //sleep to allow the async method to finish
+        }
+        def tenantEvents = getEventsForEntity(tenantEntity)
+
+        then: "a change event was created"
+        tenantEvents.size() == 1
+        tenantEvents[0].id != null
+        tenantEvents[0].event == ChangeType.ADD
+
+        cleanup:
+        utils.deleteTenant(tenant)
+        deltaDao.deleteAll()
+        reloadableConfiguration.reset()
+
+        where:
+        async | _
+        true  | _
+        false | _
     }
 
     /**
