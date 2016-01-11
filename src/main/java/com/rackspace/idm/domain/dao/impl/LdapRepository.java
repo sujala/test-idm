@@ -583,6 +583,13 @@ public abstract class LdapRepository {
             return this;
         }
 
+        public LdapSearchBuilder addLessOrEqualAttribute(String attribute,
+                                                            String value) {
+            Filter filter = Filter.createLessOrEqualFilter(attribute, value);
+            filters.add(filter);
+            return this;
+        }
+
         public LdapSearchBuilder addGreaterOrEqualAttribute(String attribute,
             String value) {
             Filter filter = Filter.createGreaterOrEqualFilter(attribute, value);

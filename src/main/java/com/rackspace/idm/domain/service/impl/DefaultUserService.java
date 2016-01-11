@@ -1,9 +1,14 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.dao.*;
+import com.rackspace.idm.domain.dao.AuthDao;
+import com.rackspace.idm.domain.dao.FederatedUserDao;
+import com.rackspace.idm.domain.dao.RackerDao;
+import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -105,6 +110,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private IdentityUserService identityUserService;
+
+    @Autowired
+    private ProvisionedUserFederationHandler federationHandler;
 
     @Override
     public void addRacker(Racker racker) {
@@ -1172,6 +1180,52 @@ public class DefaultUserService implements UserService {
                 }
             }
         }
+    }
+
+    private static volatile Date FEDERATED_USERS_DELETION_LOCK;
+
+    @Override
+    public void expiredFederatedUsersDeletion(FederatedUsersDeletionRequest request, FederatedUsersDeletionResponse response) {
+        response.setId((int) (10000 * Math.random()));
+        int deleted = 0;
+        int errors = 0;
+
+        boolean check;
+        synchronized (this) {
+            check = FEDERATED_USERS_DELETION_LOCK == null || System.currentTimeMillis() - FEDERATED_USERS_DELETION_LOCK.getTime() > identityConfig.getReloadableConfig().getFederatedDeletionTimeout();
+            FEDERATED_USERS_DELETION_LOCK = check ? new Date() : FEDERATED_USERS_DELETION_LOCK;
+        }
+        if (check) {
+            final int repeat = request.getMax() == null || request.getMax() < 0 ? identityConfig.getReloadableConfig().getFederatedDeletionMaxCount() : request.getMax();
+            final long delay = request.getDelay() == null || request.getDelay() < 0 ? 0 : request.getDelay();
+
+            for (int i = 0; i < Math.min(repeat, identityConfig.getReloadableConfig().getFederatedDeletionMaxCount()); i++) {
+                try {
+                    Thread.sleep(Math.min(delay, identityConfig.getReloadableConfig().getFederatedDeletionMaxDelay()));
+                    final FederatedUser federatedUser = federatedUserDao.getSingleExpiredFederatedUser();
+                    if (federatedUser != null) {
+                        federationHandler.deleteFederatedUser(federatedUser);
+                        deleted++;
+                    } else {
+                        i = repeat;
+                    }
+                } catch (Exception e) {
+                    errors++;
+                    final String uuid = response.getId() + "-" + (UUID.randomUUID().toString().replaceAll("-", ""));
+                    response.getError().add(uuid);
+                    logger.error("[" + uuid + "] Error deleting expiring federated user.", e);
+                }
+            }
+            synchronized (this) {
+                FEDERATED_USERS_DELETION_LOCK = null;
+            }
+        } else {
+            logger.error("This node is already processing another federation users deletion since " + FEDERATED_USERS_DELETION_LOCK.toString());
+            errors = 1;
+        }
+
+        response.setErrors(errors);
+        response.setDeleted(deleted);
     }
 
     void validateUserStatus(UserAuthenticationResult authenticated ) {
