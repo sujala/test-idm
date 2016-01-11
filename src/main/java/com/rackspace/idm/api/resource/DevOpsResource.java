@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
 import com.rackspace.idm.api.resource.cloud.devops.DevOpsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -75,6 +76,12 @@ public class DevOpsResource {
     @Path("/props")
     public Response getIdmProps(@HeaderParam(X_AUTH_TOKEN) String authToken) {
         return devOpsService.getIdmProps(authToken).build();
+    }
+
+    @POST
+    @Path("/federation/deletion")
+    public Response expiredFederatedUsersDeletion(@HeaderParam(X_AUTH_TOKEN) String authToken, FederatedUsersDeletionRequest request) {
+        return devOpsService.expiredFederatedUsersDeletion(authToken, request).build();
     }
 
 }

@@ -1,6 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
 import com.rackspace.idm.api.filter.LdapLoggingFilter;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator;
@@ -41,6 +44,9 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Autowired
     private IdentityConfig identityConfig;
+
+    @Autowired
+    private RequestContextHolder requestContextHolder;
 
     @Autowired(required = false)
     private CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator;
@@ -103,6 +109,18 @@ public class DefaultDevOpsService implements DevOpsService {
         String idmProps = identityConfig.toJSONString();
         Response.ResponseBuilder response = Response.ok().entity(idmProps);
         return response;
+    }
+
+    @Override
+    public Response.ResponseBuilder expiredFederatedUsersDeletion(String authToken, FederatedUsersDeletionRequest request) {
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+        authorizationService.verifyEffectiveCallerHasRoleByName(identityConfig.getReloadableConfig().getFederatedDeletionRole());
+
+        final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
+        final FederatedUsersDeletionResponse response = factory.createFederatedUsersDeletionResponse();
+
+        userService.expiredFederatedUsersDeletion(request, response);
+        return Response.ok().entity(factory.createFederatedUsersDeletionResponse(response));
     }
 
     private File getLogParentDir() {

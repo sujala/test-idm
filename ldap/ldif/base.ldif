@@ -1091,6 +1091,15 @@ cn: identity:service-admin
 description: Super Admin Role.
 rsWeight: 0
 
+dn: rsId=175f0c9040924c14a9aad81b7a3ec222,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 175f0c9040924c14a9aad81b7a3ec222
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:purge-federated
+description: Federation deletion
+rsWeight: 50
+
 dn: rsId=7,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
  4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole
@@ -4655,6 +4664,13 @@ dn: roleRsId=4,cn=ROLES,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=co
 objectClass: top
 objectClass: tenantRole
 roleRsId: 4
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=175f0c9040924c14a9aad81b7a3ec222,cn=ROLES,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: top
+objectClass: tenantRole
+roleRsId: 175f0c9040924c14a9aad81b7a3ec222
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
 dn: roleRsId=8470c459cfa043ef989976a66ba4d74e,cn=ROLES,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=co

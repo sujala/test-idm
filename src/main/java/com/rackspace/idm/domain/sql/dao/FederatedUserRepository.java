@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
+import java.util.Date;
 
 @SQLRepository
 public interface FederatedUserRepository extends JpaSpecificationExecutor<SqlFederatedUserRax>, JpaRepository<SqlFederatedUserRax, String> {
@@ -30,5 +31,7 @@ public interface FederatedUserRepository extends JpaSpecificationExecutor<SqlFed
 
     @Query("select u.username from SqlFederatedUserRax u where u.id = :userId")
     String getUsernameByUserId(@Param("userId") String userId);
+
+    SqlFederatedUserRax findFirstByExpiredTimestampLessThanEqual(Date today);
 
 }

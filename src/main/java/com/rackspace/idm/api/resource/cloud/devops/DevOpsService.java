@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
+
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -51,5 +53,14 @@ public interface DevOpsService {
      * @return properties map.
      */
     Response.ResponseBuilder getIdmProps(String authToken);
+
+    /**
+     * Remove Federated Users eligible for deletion
+     *
+     * @param authToken
+     *
+     * @return properties map.
+     */
+    Response.ResponseBuilder expiredFederatedUsersDeletion(String authToken, FederatedUsersDeletionRequest request);
 
 }
