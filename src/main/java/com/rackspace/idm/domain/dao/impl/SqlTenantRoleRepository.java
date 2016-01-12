@@ -113,17 +113,27 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
         if(!CollectionUtils.isEmpty(existingSqlTenantRoles)) {
             List<SqlTenantRole> sqlTenantRoles = mapper.toSQLList(tenantRole);
 
+            //delete the role-to-tenant relationship if it exists in the DB but is being removed
             for (SqlTenantRole sqlTenantRole : existingSqlTenantRoles) {
                 if (!containsTenantRole(sqlTenantRoles, sqlTenantRole)) {
                     tenantRoleRepository.delete(sqlTenantRole);
 
-                    final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole);
-                    applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newTenantRole.getUniqueId(), null));
+                    //do not publish a DELETE event if the role is associated with more than just this tenant
+                    if (tenantRole.getTenantIds().size() != 0) {
+                        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, tenantRole.getUniqueId(), mapper.toLDIF(tenantRole)));
+                    } else {
+                        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, tenantRole.getUniqueId(), null));
+                    }
                 }
             }
 
+            List<SqlTenantRole> allTenantRolesForUser = existingSqlTenantRoles;
+            if(tenantId != null) {
+                allTenantRolesForUser = tenantRoleRepository.findByActorIdAndRoleId(tenantRole.getUserId(), tenantRole.getRoleRsId());
+            }
+            //save the tenant role if the tenant is being added to tenant role
             for (SqlTenantRole sqlTenantRole : sqlTenantRoles) {
-                if (!containsTenantRole(existingSqlTenantRoles, sqlTenantRole)) {
+                if (!containsTenantRole(allTenantRolesForUser, sqlTenantRole)) {
                     tenantRoleRepository.save(sqlTenantRole);
 
                     final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole, tenantRole);

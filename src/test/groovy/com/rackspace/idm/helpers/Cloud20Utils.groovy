@@ -533,6 +533,11 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
     }
 
+    def deleteRoleFromUserOnTenant(user, tenant, roleId) {
+        def response = methods.deleteRoleFromUserOnTenant(getServiceAdminToken(), tenant.id, user.id, roleId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
     def addRoleToUserOnTenantId(user, tenantId, roleId=MOSSO_ROLE_ID) {
         def response = methods.addRoleToUserOnTenant(getServiceAdminToken(), tenantId, user.id, roleId)
         assert (response.status == SC_OK)
