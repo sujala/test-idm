@@ -30,7 +30,7 @@ public class SqlIdentityProvider {
     private String description;
 
     @Column(name = "target_user_source")
-    private String targetUserSource;
+    private String federationType;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "identityProvider", orphanRemoval = true)
     private List<SqlUserCertificate> userCertificates = new ArrayList<SqlUserCertificate>();

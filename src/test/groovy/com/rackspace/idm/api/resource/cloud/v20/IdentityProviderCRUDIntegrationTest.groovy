@@ -45,6 +45,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         creationResultIdp.description == domainGroupIdp.description
         creationResultIdp.issuer == domainGroupIdp.issuer
         creationResultIdp.publicCertificates == null
+        creationResultIdp.federationType == IdentityProviderFederationTypeEnum.DOMAIN
         creationResultIdp.id != null
         response.headers.getFirst("Location") != null
         response.headers.getFirst("Location").contains(creationResultIdp.id)
@@ -59,6 +60,61 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getResultIdp.approvedDomainIds == null
         getResultIdp.description == domainGroupIdp.description
         getResultIdp.issuer == domainGroupIdp.issuer
+        getResultIdp.federationType == IdentityProviderFederationTypeEnum.DOMAIN
+        getResultIdp.publicCertificates == null
+        getResultIdp.id != null
+
+        when: "delete the provider"
+        def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
+
+        then: "idp deleted"
+        deleteIdpResponse.status == SC_NO_CONTENT
+        cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType).status == SC_NOT_FOUND
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        utils.deleteUser(idpManager)
+
+        where:
+        requestContentType | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "CRUD a RACKER IDP with certs - request: #requestContentType"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when: "create a RACKER IDP with no certs and approvedDomainGroup"
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
+
+        then: "created successfully"
+        response.status == SC_CREATED
+        creationResultIdp.approvedDomainGroup == null
+        creationResultIdp.approvedDomainIds == null
+        creationResultIdp.description == domainGroupIdp.description
+        creationResultIdp.issuer == domainGroupIdp.issuer
+        creationResultIdp.publicCertificates == null
+        creationResultIdp.id != null
+        creationResultIdp.federationType == IdentityProviderFederationTypeEnum.RACKER
+        response.headers.getFirst("Location") != null
+        response.headers.getFirst("Location").contains(creationResultIdp.id)
+
+        when: "get the DOMAIN group IDP"
+        def getIdpResponse = cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType)
+        IdentityProvider getResultIdp = getIdpResponse.getEntity(IdentityProvider)
+
+        then: "contains appropriate info"
+        getIdpResponse.status == SC_OK
+        getResultIdp.approvedDomainGroup == null
+        getResultIdp.approvedDomainIds == null
+        getResultIdp.description == domainGroupIdp.description
+        getResultIdp.issuer == domainGroupIdp.issuer
+        getResultIdp.federationType == IdentityProviderFederationTypeEnum.RACKER
         getResultIdp.publicCertificates == null
         getResultIdp.id != null
 
