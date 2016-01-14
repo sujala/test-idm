@@ -1,9 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.service.DomainService
 import org.openstack.docs.identity.api.v2.Tenant
+import org.springframework.beans.factory.annotation.Autowired
 import testHelpers.RootIntegrationTest
 
 class TenantIntegrationTest extends RootIntegrationTest {
+
+    @Autowired
+    DomainService domainService
 
     def "create tenant limits tenant name to 64 characters"() {
         given:
@@ -76,4 +81,28 @@ class TenantIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteTenant(tenant)
     }
+
+    def "delete tenant deletes the tenantId off of the domain"() {
+        given:
+        def tenant = utils.createTenant()
+        def domain = utils.createDomain(v2Factory.createDomain(utils.createDomain(), testUtils.getRandomUUID("domainName")))
+
+        when: "add the tenant to the domain"
+        utils.addTenantToDomain(domain.id, tenant.id)
+        def domainEnttiy = domainService.getDomain(domain.id)
+
+        then: "the tenant ID is on the domain"
+        domainEnttiy.tenantIds.find { it == tenant.id } == tenant.id
+
+        when: "delete the tenant"
+        utils.deleteTenant(tenant)
+        domainEnttiy = domainService.getDomain(domain.id)
+
+        then: "the tenant ID was deleted off of the domain"
+        domainEnttiy.tenantIds.find { it == tenant.id } == null
+
+        cleanup:
+        utils.deleteDomain(domain.id)
+    }
+
 }

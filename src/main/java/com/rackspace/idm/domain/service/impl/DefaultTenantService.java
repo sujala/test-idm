@@ -18,13 +18,13 @@ import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
-import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.*;
 
@@ -90,28 +90,39 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public void deleteTenant(String tenantId) {
-        logger.info("Deleting Tenant {}", tenantId);
+    public void deleteTenant(Tenant tenant) {
+        logger.info("Deleting Tenant {}", tenant.getTenantId());
 
         String defaultTenant =  identityConfig.getReloadableConfig().getIdentityRoleDefaultTenant();
-        if (tenantId.equalsIgnoreCase(defaultTenant)) {
+        if (tenant.getTenantId().equalsIgnoreCase(defaultTenant)) {
             String msg = String.format("Deleting '%s' tenant is not allowed.", defaultTenant);
             throw new BadRequestException(msg);
         }
 
         // Delete all tenant roles for this tenant
-        for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenant(tenantId)) {
+        for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenant(tenant.getTenantId())) {
             if (role.getTenantIds().size() == 1) {
-                this.tenantRoleDao.deleteTenantRole(role, tenantId);
+                this.tenantRoleDao.deleteTenantRole(role, tenant.getTenantId());
             } else {
-                role.getTenantIds().remove(tenantId);
-                this.tenantRoleDao.updateTenantRole(role, tenantId);
+                role.getTenantIds().remove(tenant.getTenantId());
+                this.tenantRoleDao.updateTenantRole(role, tenant.getTenantId());
             }
         }
 
-        this.tenantDao.deleteTenant(tenantId);
+        // Delete the tenantId off of the associated domain
+        if(!StringUtils.isBlank(tenant.getDomainId())) {
+            Domain domain = domainService.getDomain(tenant.getDomainId());
+            if(domain != null) {
+                List<String> tenantIds = new ArrayList<String>(Arrays.asList(domain.getTenantIds()));
+                tenantIds.remove(tenant.getTenantId());
+                domain.setTenantIds(tenantIds.toArray(new String[0]));
+                domainService.updateDomain(domain);
+            }
+        }
 
-        logger.info("Added Tenant {}", tenantId);
+        this.tenantDao.deleteTenant(tenant.getTenantId());
+
+        logger.info("Added Tenant {}", tenant.getTenantId());
     }
 
     @Override

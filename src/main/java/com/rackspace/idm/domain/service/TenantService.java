@@ -9,7 +9,7 @@ import java.util.List;
 public interface TenantService {
 
     void addTenant(Tenant tenant);
-    void deleteTenant(String tenantId);
+    void deleteTenant(Tenant tenant);
     Tenant getTenant(String tenantId);
     Tenant checkAndGetTenant(String tenantId);
     Tenant getTenantByName(String name);
