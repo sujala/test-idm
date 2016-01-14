@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.migration.sql.event;
 
 import com.rackspace.idm.annotation.SQLComponent;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.migration.dao.DeltaDao;
 import com.rackspace.idm.domain.migration.event.MigrationChangeEventListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +19,17 @@ public class SqlChangeEventRecorderListener extends MigrationChangeEventListener
     @Autowired(required = false)
     private DeltaDao changeEventDao;
 
+    @Autowired
+    private IdentityConfig identityConfig;
+
     @Override
     public void handleEvent(SqlMigrationChangeApplicationEvent event) {
         if (changeEventDao != null) {
-            changeEventDao.save(event.getChangeType(), event.getEntityUniqueIdentifier(), event.getLdif());
+            if(identityConfig.getReloadableConfig().migrationSaveAsyncEnabled()) {
+                changeEventDao.saveAsync(event);
+            } else {
+                changeEventDao.save(event);
+            }
         }
     }
 

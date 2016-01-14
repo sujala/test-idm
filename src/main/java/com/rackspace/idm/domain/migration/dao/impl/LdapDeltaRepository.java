@@ -5,7 +5,9 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
 import com.rackspace.idm.domain.migration.ChangeType;
 import com.rackspace.idm.domain.migration.dao.DeltaDao;
+import com.rackspace.idm.domain.migration.event.MigrationChangeEvent;
 import com.rackspace.idm.domain.migration.ldap.entity.LdapToSqlEntity;
+import com.rackspace.idm.domain.migration.ldap.event.LdapMigrationChangeApplicationEvent;
 import com.unboundid.ldap.sdk.LDAPInterface;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +16,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +34,8 @@ public class LdapDeltaRepository implements DeltaDao {
     private static final String EVENT_INSERT_SQL = "insert into delta_ldap_to_sql_rax (id, event, host, type, data) values (:id, :event, :host, :type, :data)";
     private static final String EVENT_DELETE_ALL_SQL = "delete from delta_ldap_to_sql_rax";
     private static final String EVENT_SELECT_ALL_BY_TYPE_SQL = "select * from delta_ldap_to_sql_rax where type = :type ORDER BY created";
+
+    private static final String PERSIST_DELTA_ERROR_LOG_FORMAT = "Error saving migration change event. UUID: %s, CHANGE TYPE: %s, ENTITY ID: %s, PERSISTENCE: %s";
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -51,29 +56,31 @@ public class LdapDeltaRepository implements DeltaDao {
 
     @Override
     @Transactional
-    public void save(ChangeType event, String type, String ldif) {
+    public void save(MigrationChangeEvent changeEvent) {
+        saveChangeEvent(changeEvent);
+    }
+
+    @Override
+    @Transactional
+    @Async("deltaMigrationExecutor")
+    public void saveAsync(MigrationChangeEvent changeEvent) {
+        saveChangeEvent(changeEvent);
+    }
+
+    private void saveChangeEvent(MigrationChangeEvent changeEvent) {
         try {
             Map namedParameters = new HashMap();
-            namedParameters.put("id", getId());
-            namedParameters.put("event", event.name());
-            namedParameters.put("type", type);
+            namedParameters.put("id", changeEvent.getId());
+            namedParameters.put("event", changeEvent.getChangeType().name());
+            namedParameters.put("type", changeEvent.getEntityUniqueIdentifier());
             namedParameters.put("host", identityConfig.getReloadableConfig().getAENodeNameForSignoff());
-
-            //ignoring what is passed in 'ldif' parameter and pulling fresh from CA
-            String refreshedLDIF = null;
-            if (event != ChangeType.DELETE) {
-                refreshedLDIF = getAppInterface().getEntry(type).toLDIFString();
-            }
-            namedParameters.put("data", refreshedLDIF);
+            namedParameters.put("data", changeEvent.getLdif());
 
             namedParameterJdbcTemplate.update(EVENT_INSERT_SQL, namedParameters);
         } catch (Exception e) {
-            LOGGER.error("Cannot save delta (LDAP->SQL)!", e);
+            LOGGER.error(String.format(PERSIST_DELTA_ERROR_LOG_FORMAT, changeEvent.getId(), changeEvent.getChangeType().name(),
+                    changeEvent.getEntityUniqueIdentifier(), changeEvent.getPersistenceTarget().name()), e);
         }
-    }
-
-    private String getId() {
-        return UUID.randomUUID().toString().replaceAll("-", "");
     }
 
     @Override

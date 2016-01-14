@@ -18,7 +18,7 @@ public class ChangeEventLoggerListener extends MigrationChangeEventListener<Migr
 
     public static final String LISTENER_NAME = "logger";
 
-    private static final String logFormat = "TIMESTAMP: %s, CHANGE TYPE: %s, ENTITY ID: %s, PERSISTENCE: %s";
+    private static final String logFormat = "UUID: %s, TIMESTAMP: %s, CHANGE TYPE: %s, ENTITY ID: %s, PERSISTENCE: %s";
     DateTimeFormatter df = ISODateTimeFormat.basicDateTime();
 
     @Override
@@ -32,7 +32,7 @@ public class ChangeEventLoggerListener extends MigrationChangeEventListener<Migr
     }
 
     private String formatChangeEventLog(MigrationChangeApplicationEvent event) {
-        return String.format(logFormat, df.print(new DateTime(event.getTimestamp())), event.getChangeType().name()
+        return String.format(logFormat, event.getId(), df.print(new DateTime(event.getTimestamp())), event.getChangeType().name()
                 , event.getEntityUniqueIdentifier(), event.getPersistenceTarget().name());
     }
 }

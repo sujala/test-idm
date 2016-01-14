@@ -6,6 +6,14 @@ import com.rackspace.idm.domain.migration.PersistenceTarget;
 import java.util.Date;
 
 public interface MigrationChangeEvent {
+
+    /**
+     * Get the UUID of the event
+     *
+     * @return
+     */
+    String getId();
+
     /**
      * Get the Type of change
      * @return

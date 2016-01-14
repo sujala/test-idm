@@ -273,6 +273,9 @@ public class IdentityConfig {
     public static final String FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP = "feature.migration.read.only.mode.enabled";
     public static final Boolean FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_DEFAULT = false;
 
+    public static final String FEATURE_MIGRATION_SAVE_DELTA_ASYNC_PROP = "feature.migration.save.async";
+    public static final Boolean FEATURE_MIGRATION_SAVE_DELTA_ASYNC_DEFAULT = false;
+
     public static final String MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP = "handle.migration.change.events.default";
     public static final Boolean MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_DEFAULT = false;
     public static final String MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP = "ignore.migration.change.events.of.type.default";
@@ -372,6 +375,7 @@ public class IdentityConfig {
         defaults.put(SQL_SHOW_SQL_PROP, SQL_SHOW_DEFAULT);
         defaults.put(FEATURE_PERSIST_RACKERS_PROP, FEATURE_PERSIST_RACKERS_DEFAULT);
         defaults.put(FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP, FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_DEFAULT);
+        defaults.put(FEATURE_MIGRATION_SAVE_DELTA_ASYNC_PROP, FEATURE_MIGRATION_SAVE_DELTA_ASYNC_DEFAULT);
         defaults.put(MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP, MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_DEFAULT);
         defaults.put(MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP, MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_DEFAULT);
         defaults.put(SQL_INITIAL_SIZE_PROP, SQL_INITIAL_SIZE_DEFAULT);
@@ -1182,6 +1186,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP, description = "Whether entities that can be switched to read-only should be switched", versionAdded = "3.0.0")
         public boolean migrationReadOnlyEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP);
+        }
+
+        @IdmProp(key = FEATURE_MIGRATION_SAVE_DELTA_ASYNC_PROP, description = "Whether the delta migration events should be recorded in an asynchronous fashion", versionAdded = "3.2.0")
+        public boolean migrationSaveAsyncEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_MIGRATION_SAVE_DELTA_ASYNC_PROP);
         }
 
         @IdmProp(key = IDENTITY_ROLE_TENANT_DEFAULT, description = "Identity role default tenant", versionAdded = "3.0.0")
