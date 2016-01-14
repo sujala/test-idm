@@ -39,7 +39,7 @@ public class IdentityProviderMapper extends SqlMapper<IdentityProvider, SqlIdent
             }
         }
 
-        identityProvider.setFederationType(sqlEntity.getTargetUserSource());
+        identityProvider.setFederationType(sqlEntity.getFederationType());
 
         //set the list of approved domains to null if it is empty. This is to match the LDAP implementation and mapping
         if (identityProvider.getApprovedDomainIds() != null && identityProvider.getApprovedDomainIds().isEmpty()) {
