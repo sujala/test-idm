@@ -222,9 +222,28 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
         utils.addRoleToUserOnTenant(user, tenant2, role.id)
         events = getEventsForEntity(roleEntity)
 
-        then: "an "
+        then: "a MODIFY event was recorded to add the tenant ID to the tenant role"
         events.size() == 2
         verifyEvent(events.last(), ChangeType.MODIFY, roleEntity, beforeStart)
+
+        when: "delete the tenant role from tenant1"
+        utils.deleteRoleFromUserOnTenant(user, tenant1, role.id)
+        events = getEventsForEntity(roleEntity)
+
+        then: "a MODIFY event was recorded to remove the tenant ID from the tenant role"
+        events.size() == 3
+        def modifyEventToRemoveTenant = events.last()
+        verifyEvent(modifyEventToRemoveTenant, ChangeType.MODIFY, roleEntity, beforeStart)
+        !modifyEventToRemoveTenant.data.contains(tenant1.id)
+        modifyEventToRemoveTenant.data.contains(tenant2.id)
+
+        when: "delete the tenant role from tenant2"
+        utils.deleteRoleFromUserOnTenant(user, tenant2, role.id)
+        events = getEventsForEntity(roleEntity)
+
+        then: "a DELETE event was recorded to delete the tenant role from the user"
+        events.size() == 4
+        verifyEvent(events.last(), ChangeType.DELETE, roleEntity, beforeStart)
 
         cleanup:
         deltaDao.deleteAll()
