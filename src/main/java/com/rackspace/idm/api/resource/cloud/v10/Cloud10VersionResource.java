@@ -4,17 +4,18 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
-import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
-import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.UserAuthenticationResult;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.ScopeAccessService;
+import com.rackspace.idm.domain.service.ServiceCatalogInfo;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.UserDisabledException;
 import com.rackspacecloud.docs.auth.api.v1.Endpoint;
 import com.rackspacecloud.docs.auth.api.v1.Service;
 import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -43,14 +43,11 @@ import java.util.List;
 @Component
 public class Cloud10VersionResource {
 
-    public static final String MFA_USER_AUTH_FORBIDDEN_MESSAGE = "Can not authenticate with credentials provided. This account has multi-factor authentication enabled and you must use version 2.0+ to authenticate.";
-
     public static final String HEADER_AUTH_TOKEN = "X-Auth-Token";
     public static final String HEADER_STORAGE_TOKEN = "X-Storage-Token";
     public static final String HEADER_STORAGE_URL = "X-Storage-Url";
     public static final String HEADER_CDN_URL = "X-CDN-Management-Url";
     public static final String HEADER_SERVER_MANAGEMENT_URL = "X-Server-Management-Url";
-    public static final String HEADER_STORAGE_INTERNAL_URL = "X-Storage-Internal-Url";
 
     public static final String HEADER_AUTH_USER = "X-Auth-User";
     public static final String HEADER_AUTH_KEY = "X-Auth-Key";
@@ -58,7 +55,6 @@ public class Cloud10VersionResource {
     public static final String HEADER_STORAGE_PASS = "X-Storage-Pass";
 
     public static final String AUTH_V1_0_FAILED_MSG = "Bad username or password";
-    public static final String AUTH_V1_0_USR_DISABLED_MSG = "Account disabled";
 
     public static final String SERVICENAME_CLOUD_FILES = "cloudFiles";
     public static final String SERVICENAME_CLOUD_FILES_CDN = "cloudFilesCDN";
@@ -66,35 +62,20 @@ public class Cloud10VersionResource {
 
     public static final String CACHE_CONTROL = "Cache-Control";
 
-    private final Configuration config;
     private final ScopeAccessService scopeAccessService;
     private final EndpointConverterCloudV11 endpointConverterCloudV11;
-    private final UserService userService;
-    private final MultiFactorCloud20Service multiFactorCloud20Service;
     private final AuthWithApiKeyCredentials authWithApiKeyCredentials;
-    private final TenantService tenantService;
     private final AuthorizationService authorizationService;
-    private final IdentityConfig identityConfig;
 
     @Autowired
-    public Cloud10VersionResource(Configuration config,
-        ScopeAccessService scopeAccessService,
+    public Cloud10VersionResource(ScopeAccessService scopeAccessService,
         EndpointConverterCloudV11 endpointConverterCloudV11,
-        UserService userService,
-        MultiFactorCloud20Service multiFactorCloud20Service,
         AuthWithApiKeyCredentials authWithApiKeyCredentials,
-        TenantService tenantService,
-        AuthorizationService authorizationService,
-        IdentityConfig identityConfig) {
-        this.config = config;
+        AuthorizationService authorizationService) {
         this.scopeAccessService = scopeAccessService;
         this.endpointConverterCloudV11 = endpointConverterCloudV11;
-        this.userService = userService;
-        this.multiFactorCloud20Service = multiFactorCloud20Service;
         this.authWithApiKeyCredentials = authWithApiKeyCredentials;
-        this.tenantService = tenantService;
         this.authorizationService = authorizationService;
-        this.identityConfig = identityConfig;
     }
 
     @GET
@@ -182,10 +163,6 @@ public class Cloud10VersionResource {
 
     }
 
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
-    }
-
     /**
      * Will add NON-empty value to header.
      * @param builder
@@ -196,4 +173,5 @@ public class Cloud10VersionResource {
             builder.header(headerName, value);
         }
     }
+
 }
