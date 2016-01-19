@@ -671,8 +671,8 @@ INSERT INTO `keyczar_metadata_rax` VALUES ('meta','2014-11-13 19:55:19.000000','
 -- Dumping data for table `keyczar_version_rax`
 --
 
-INSERT INTO `keyczar_version_rax` VALUES (1,'meta',NULL,'{\"aesKeyString\":\"NSPi6IekAxLHlJpmT7SXsg\",\"hmacKey\":{\"hmacKeyString\":\"NeVqkm1_ojpaOEm5zmi9X29tOHCXUtcHOOGE9puOapA\",\"size\":256},\"mode\":\"CBC\",\"size\":128}');
-INSERT INTO `keyczar_version_rax` VALUES (2,'meta',NULL,'{\"aesKeyString\":\"WwIWqM26_FKKhK8rqcjH1Q\",\"hmacKey\":{\"hmacKeyString\":\"tMrQg7WmCD4SFESMe7JibSelESrhRXZb0Ua3k_WBV-A\",\"size\":256},\"mode\":\"CBC\",\"size\":128}');
+INSERT INTO `keyczar_version_rax` VALUES (1,'meta',NULL,NULL,'{\"aesKeyString\":\"NSPi6IekAxLHlJpmT7SXsg\",\"hmacKey\":{\"hmacKeyString\":\"NeVqkm1_ojpaOEm5zmi9X29tOHCXUtcHOOGE9puOapA\",\"size\":256},\"mode\":\"CBC\",\"size\":128}');
+INSERT INTO `keyczar_version_rax` VALUES (2,'meta',NULL,NULL,'{\"aesKeyString\":\"WwIWqM26_FKKhK8rqcjH1Q\",\"hmacKey\":{\"hmacKeyString\":\"tMrQg7WmCD4SFESMe7JibSelESrhRXZb0Ua3k_WBV-A\",\"size\":256},\"mode\":\"CBC\",\"size\":128}');
 
 --
 -- Dumping data for table `mapping`
