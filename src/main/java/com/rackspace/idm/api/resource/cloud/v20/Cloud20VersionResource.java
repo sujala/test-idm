@@ -549,6 +549,15 @@ public class Cloud20VersionResource {
     }
 
     @GET
+    @Path("tenants/{tenantId}/RAX-AUTH/admins")
+    public Response listUserAdminsOnTenant(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("tenantId") String tenantId) {
+        return cloud20Service.getUserByTenantId(httpHeaders, authToken, tenantId).build();
+    }
+
+    @GET
     @Path("tenants/{tenantId}/users/{userId}/roles")
     public Response listRolesForUserOnTenant(
             @Context HttpHeaders httpHeaders,
@@ -564,7 +573,6 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken, UserForCreate user) {
-
         return cloud20Service.addUser(httpHeaders, uriInfo, authToken, user).build();
     }
 

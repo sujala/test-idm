@@ -53,6 +53,8 @@ public interface Cloud20Service {
 
     ResponseBuilder getExtension(HttpHeaders httpHeaders, String alias) ;
 
+    ResponseBuilder getUserByTenantId(HttpHeaders httpHeaders, String authToken, String tenantId) ;
+
     ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) ;
 
     ResponseBuilder getUsersByEmail(HttpHeaders httpHeaders, String authToken, String email) ;

@@ -813,7 +813,7 @@ class Cloud20Methods {
 
     def getAdminsForUser(String token, String userId) {
         initOnUse()
-        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path("admins").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(USERS).path(userId).path(RAX_AUTH).path(ADMINS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
     def createService(String token, service) {
@@ -847,5 +847,10 @@ class Cloud20Methods {
     def getEndpointsForToken(String authToken, String token) {
         initOnUse()
         resource.path(path20).path(TOKENS).path(token).path(ENDPOINTS).header(X_AUTH_TOKEN, authToken).accept(APPLICATION_XML).get(ClientResponse)
+    }
+
+    def getUserByTenantId(String token, String tenantId, MediaType mediaType = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(TENANTS).path(tenantId).path(RAX_AUTH).path(ADMINS).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 }

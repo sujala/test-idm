@@ -3125,6 +3125,41 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteDomain(serviceAdminToken, createUser.domainId)
     }
 
+    def "[CIDMDEV-5357] get user admin by tenant id"() {
+        given:
+        def nastId = "983452"
+        def mossoId = "StagingUS_ed361067-aebd-45b7-92a3-353edacb0e09"
+        def response, userObject
+
+        when:
+        response = cloud20.getUserByTenantId(serviceAdminToken, nastId)
+        userObject = response.getEntity(User).value
+
+        then:
+        response.status == 200
+        userObject != null
+        userObject.otherAttributes != null
+        userObject.otherAttributes.values().contains(nastId)
+        userObject.otherAttributes.values().contains(mossoId)
+
+        when:
+        response = cloud20.getUserByTenantId(serviceAdminToken, mossoId)
+        userObject = response.getEntity(User).value
+
+        then:
+        response.status == 200
+        userObject != null
+        userObject.otherAttributes != null
+        userObject.otherAttributes.values().contains(nastId)
+        userObject.otherAttributes.values().contains(mossoId)
+
+        when:
+        response = cloud20.getUserByTenantId(userAdminToken, nastId)
+
+        then:
+        response.status == 403
+    }
+
     def "Update a users domainId to null or a blank value should not update the domain" () {
         given:
         def password = "Password1"

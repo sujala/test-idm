@@ -7,7 +7,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -42,10 +41,8 @@ import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
 import org.opensaml.saml2.core.LogoutResponse;
 import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.core.impl.LogoutRequestMarshaller;
 import org.opensaml.saml2.core.impl.LogoutResponseMarshaller;
-import org.opensaml.xml.io.*;
-import org.opensaml.xml.util.XMLHelper;
+import org.opensaml.xml.io.MarshallingException;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -59,29 +56,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
-import org.w3c.dom.*;
 import org.w3c.dom.Element;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.xml.bind.*;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.namespace.QName;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Hector
- * Date: 9/14/11
- * Time: 5:14 PM
- */
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
@@ -99,6 +91,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String INVALID_DOMAIN_ERROR = "Invalid domain";
     public static final String CANNOT_SPECIFY_GROUPS_ERROR = "Cannot specify groups for sub-users";
+    public static final String V11_API_QNAME = "http://docs.rackspacecloud.com/auth/api/v1.1";
 
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
@@ -1975,6 +1968,34 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    @Override
+    public ResponseBuilder getUserByTenantId(HttpHeaders httpHeaders, String authToken, String tenantId) {
+        try {
+            if (identityConfig.getReloadableConfig().getV11LegacyEnabled()) {
+                final ScopeAccess requesterScopeAccess = getScopeAccessForValidToken(authToken);
+                authorizationService.verifyIdentityAdminLevelAccess(requesterScopeAccess);
+
+                final User user = userService.getUserByTenantId(tenantId);
+                if (user == null) {
+                    throw new NotFoundException(String.format("User with tenantId %s not found", tenantId));
+                }
+
+                final org.openstack.docs.identity.api.v2.User jaxbUser = userConverterCloudV20.toUser(user);
+                if (user.getNastId() != null) {
+                    jaxbUser.getOtherAttributes().put(new QName(V11_API_QNAME, "nastId"), user.getNastId());
+                }
+                if (user.getMossoId() != null) {
+                    jaxbUser.getOtherAttributes().put(new QName(V11_API_QNAME, "mossoId"), String.valueOf(user.getMossoId()));
+                }
+
+                return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(jaxbUser).getValue());
+            } else {
+                return Response.status(Response.Status.SERVICE_UNAVAILABLE);
+            }
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
 
     @Override
     public ResponseBuilder getUserByName(HttpHeaders httpHeaders, String authToken, String name) {
