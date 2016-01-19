@@ -820,6 +820,7 @@ class Cloud20Utils {
     def createDomain(Domain domain) {
         def response = methods.addDomain(getServiceAdminToken(), domain)
         assert (response.status == SC_CREATED)
+        response.getEntity(Domain)
     }
 
     def addUserToDomain(token = getServiceAdminToken(), userId, domainId) {

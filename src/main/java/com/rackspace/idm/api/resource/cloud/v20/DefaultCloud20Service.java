@@ -1604,7 +1604,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
-            tenantService.deleteTenant(tenant.getTenantId());
+            tenantService.deleteTenant(tenant);
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

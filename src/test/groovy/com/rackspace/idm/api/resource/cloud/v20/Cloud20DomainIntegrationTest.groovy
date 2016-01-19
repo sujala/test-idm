@@ -147,7 +147,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         assertDomainDoesNotContainTenant(defaultDomainId, tenant.id)
 
         cleanup:
-        tenantService.deleteTenant(tenant.id)
+        utils.deleteTenant(tenant)
         domainService.deleteDomain(domainId)
     }
 
@@ -177,7 +177,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         assertDomainContainsTenant(domainToUse, tenant.id)
 
         cleanup:
-        tenantService.deleteTenant(tenant.id)
+        utils.deleteTenant(tenant)
         if (!testWithDefaultDomain) {
             domainService.deleteDomain(domainToUse)
         }
@@ -212,7 +212,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         assertDomainDoesNotContainTenant(domainId, tenant.id)
 
         cleanup:
-        tenantService.deleteTenant(tenant.id)
+        utils.deleteTenant(tenant)
         domainService.deleteDomain(domainId)
     }
 
@@ -270,7 +270,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         assertDomainContainsTenant(domainId, tenant.id)
 
         cleanup:
-        tenantService.deleteTenant(tenant.id)
+        utils.deleteTenant(tenant)
         domainService.deleteDomain(domainId)
     }
 
