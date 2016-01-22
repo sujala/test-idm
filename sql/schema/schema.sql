@@ -542,6 +542,7 @@ CREATE TABLE `keyczar_version_rax` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `metadata_id` varchar(64) NOT NULL,
   `created` datetime(6) DEFAULT NULL,
+  `demoted` datetime(6) DEFAULT NULL,
   `data` text,
   PRIMARY KEY (`id`,`metadata_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;

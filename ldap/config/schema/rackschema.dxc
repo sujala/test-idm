@@ -920,6 +920,14 @@ schema set attribute (1.3.6.1.4.1.20988.3.1.6) = {
     description = "A link to the meta entry to which this signoff is associated"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.3.1.7) = {
+    name = rsKeyDemoted
+    ldap-names = rsKeyDemoted
+    equality = generalizedTimeMatch
+    syntax = generalizedTime
+    description = "The date the key was demoted from PRIMARY status"
+};
+
 schema set attribute (1.3.6.1.4.1.20988.2.1.118) = {
     name = rsOTPKey
     ldap-names = rsOTPKey
@@ -1595,7 +1603,8 @@ schema set object-class (1.3.6.1.4.1.20988.3.2.2) = {
                 rsKeyVersion,
                 rsKeyData
         may-contain
-                description
+                description,
+                rsKeyDemoted
 };
 
 schema set object-class (1.3.6.1.4.1.20988.3.2.3) = {
