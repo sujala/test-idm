@@ -1,10 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.DomainDao
+import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.dao.OTPDeviceDao
 import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
@@ -12,8 +15,8 @@ import com.rackspace.idm.domain.dao.UniqueId
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.migration.ChangeType
 import com.rackspace.idm.domain.migration.dao.DeltaDao
-import com.sun.jersey.api.spring.Autowire
 import org.apache.commons.lang.StringUtils
+import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
@@ -21,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+import testHelpers.saml.SamlCredentialUtils
 
 class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
@@ -44,6 +48,9 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     DomainDao domainDao
+
+    @Autowired
+    IdentityProviderDao identityProviderDao
 
     @Shared
     def specificationServiceAdminToken
@@ -335,7 +342,81 @@ class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
         deltaDao.deleteAll()
         utils.deleteTenant(tenant)
         utils.deleteDomain(domainData.id)
+    }
 
+    /**
+     * Test IDP add/delete and cert modification causes delta events
+     * @return
+     */
+    def "Record Change Event :: IDP modification"() {
+        given:
+        def idpManagerToken = utils.getServiceAdminToken()
+
+        //set up properties to record event
+        enableListenerForAllChangeTypes()
+
+        DateTime beforeStart = new DateTime();
+
+        def domainId = utils.createDomain()
+        cloud20.addDomain(idpManagerToken, v2Factory.createDomain(domainId, domainId))
+
+        def keyPair1 = SamlCredentialUtils.generateKeyPair()
+        def cert1 = SamlCredentialUtils.generateCertificate(keyPair1)
+        def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cert1)
+        def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)
+        def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
+
+        def keyPair2 = SamlCredentialUtils.generateKeyPair()
+        def cert2 = SamlCredentialUtils.generateCertificate(keyPair2)
+        def pubCertPemString2 = SamlCredentialUtils.getCertificateAsPEMString(cert2)
+        def pubCerts2 = v2Factory.createPublicCertificate(pubCertPemString2)
+        def publicCertificates2 = v2Factory.createPublicCertificates(pubCerts2)
+
+        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+
+        when: "create a DOMAIN IDP with single certs and approvedDomains"
+        def response = cloud20.createIdentityProvider(idpManagerToken, approvedDomainsIdp)
+        assert response.status == HttpStatus.SC_CREATED
+        def initialIdp = response.getEntity(IdentityProvider.class)
+        def idpEntity = identityProviderDao.getIdentityProviderByUri(approvedDomainsIdp.getIssuer())
+        assert idpEntity != null
+
+        then:
+        initialIdp != null
+        initialIdp.getPublicCertificates().getPublicCertificate().size() == 1
+        def idpCreateEvents = getEventsForEntity(idpEntity)
+        idpCreateEvents.size() == 1
+        verifyEvent(idpCreateEvents.last(), ChangeType.ADD, idpEntity, beforeStart)
+
+        when: "add key"
+        def addCertResponse = cloud20.createIdentityProviderCertificates(idpManagerToken, initialIdp.id, pubCerts2)
+        List<?> eventsAfterAddingCert = getEventsForEntity(idpEntity)
+
+        then: "IDP update event added"
+        assert eventsAfterAddingCert.size() == idpCreateEvents.size() + 1
+        verifyEvent(eventsAfterAddingCert.last(), ChangeType.MODIFY, idpEntity, beforeStart)
+
+        when: "Delete first cert"
+        def deleteCertResponse = cloud20.deleteIdentityProviderCertificates(idpManagerToken, initialIdp.id, initialIdp.getPublicCertificates().getPublicCertificate().get(0).id)
+        List<?> eventsAfterDeletingCert = getEventsForEntity(idpEntity)
+
+        then: "a modify ldap entry is recorded"
+        assert eventsAfterDeletingCert.size() == eventsAfterAddingCert.size() + 1
+        verifyEvent(eventsAfterDeletingCert.last(), ChangeType.MODIFY, idpEntity, beforeStart)
+
+        when: "Delete IDP"
+        def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, initialIdp.id)
+        List<?> eventsAfterDeletingIdp = getEventsForEntity(idpEntity)
+
+        then: "a delete ldap entry is recorded"
+        assert eventsAfterDeletingIdp.size() == eventsAfterDeletingCert.size() + 1
+        verifyEvent(eventsAfterDeletingIdp.last(), ChangeType.DELETE, idpEntity, beforeStart)
+
+        cleanup:
+        deltaDao.deleteAll()
     }
 
     def void verifyEvent(Object event, ChangeType expectedChangeType, UniqueId expectedEntityRecorded, DateTime expectedOccurredOnOrAfter) {
