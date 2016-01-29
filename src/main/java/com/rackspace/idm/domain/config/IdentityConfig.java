@@ -245,6 +245,9 @@ public class IdentityConfig {
     public static final String FEATURE_FEDERATION_DELETION_TIMEOUT_PROP = "feature.federation.deletion.timeout";
     public static final int FEATURE_FEDERATION_DELETION_TIMEOUT_DEFAULT = 3600000;
 
+    public static final String FEATURE_SUPPORT_V11_LEGACY_PROP = "feature.support.v11.legacy";
+    public static final boolean FEATURE_SUPPORT_V11_LEGACY_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -404,6 +407,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_FEDERATION_DELETION_MAX_COUNT_PROP, FEATURE_FEDERATION_DELETION_MAX_COUNT_DEFAULT);
         defaults.put(FEATURE_FEDERATION_DELETION_ROLE_PROP, FEATURE_FEDERATION_DELETION_ROLE_DEFAULT);
         defaults.put(FEATURE_FEDERATION_DELETION_TIMEOUT_PROP, FEATURE_FEDERATION_DELETION_TIMEOUT_DEFAULT);
+        defaults.put(FEATURE_SUPPORT_V11_LEGACY_PROP, FEATURE_SUPPORT_V11_LEGACY_DEFAULT);
 
         return defaults;
     }
@@ -1344,6 +1348,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_FEDERATION_DELETION_TIMEOUT_PROP, versionAdded = "3.1.1", description = "Timeout for federation deletion lock")
         public int getFederatedDeletionTimeout() {
             return getIntSafely(reloadableConfiguration, FEATURE_FEDERATION_DELETION_TIMEOUT_PROP);
+        }
+
+        @IdmProp(key = FEATURE_SUPPORT_V11_LEGACY_PROP, versionAdded = "3.1.1", description = "Enable v1.1 legacy calls")
+        public boolean getV11LegacyEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_V11_LEGACY_PROP);
         }
     }
 
