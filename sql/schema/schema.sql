@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.7.9, for osx10.11 (x86_64)
+-- MySQL dump 10.13  Distrib 5.6.25, for osx10.10 (x86_64)
 --
 -- Host: 127.0.0.1    Database: keystone
 -- ------------------------------------------------------
@@ -31,8 +31,8 @@ CREATE TABLE `access_token` (
   `consumer_id` varchar(64) NOT NULL,
   `expires_at` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `ix_access_token_authorizing_user_id` (`authorizing_user_id`),
   KEY `ix_access_token_consumer_id` (`consumer_id`),
+  KEY `ix_access_token_authorizing_user_id` (`authorizing_user_id`),
   CONSTRAINT `access_token_ibfk_1` FOREIGN KEY (`consumer_id`) REFERENCES `consumer` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -393,6 +393,7 @@ CREATE TABLE `federated_user_rax` (
   KEY `idx_fur_username` (`username`(255)),
   KEY `idx_fur_federated_idp_uri` (`federated_idp_uri`),
   CONSTRAINT `fk_fur_domain_id` FOREIGN KEY (`domain_id`) REFERENCES `domain` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_fur_identity_provider_id` FOREIGN KEY (`federated_idp_uri`) REFERENCES `identity_provider_rax` (`uri`) ON DELETE CASCADE,
   CONSTRAINT `fk_fur_region_id` FOREIGN KEY (`region_id`) REFERENCES `region` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -496,7 +497,7 @@ CREATE TABLE `identity_provider_rax` (
   `approved_domain_group` varchar(64) DEFAULT NULL,
   `target_user_source` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_ipr_uri` (`uri`)
+  UNIQUE KEY `uq_idp_uri` (`uri`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -1198,4 +1199,4 @@ CREATE TABLE `whitelisted_config` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2015-12-14 13:40:08
+-- Dump completed on 2016-01-29 15:33:53
