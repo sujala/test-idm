@@ -6,12 +6,17 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviders
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.exception.BadRequestException
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
+import org.springframework.core.io.ClassPathResource
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
@@ -22,6 +27,7 @@ import testHelpers.saml.SamlProducer
 import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
 
+import static com.rackspace.idm.Constants.getDEFAULT_IDP_URI
 import static org.apache.http.HttpStatus.*
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
@@ -558,6 +564,45 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
         utils.deleteUser(idpManager)
+    }
+
+
+    def "Deleting IDP, deletes all its fed users"() {
+        given:
+        def idpManagerToken = utils.getServiceAdminToken()
+        def domainId = utils.createDomain()
+
+        def (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        def username = testUtils.getRandomUUID("userForSaml")
+        def expDays = 500
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //create a new IDP
+        def pem = IOUtils.toString(new ClassPathResource(Constants.DEFAULT_IDP_PUBLIC_KEY).getInputStream()).replace("-----BEGIN CERTIFICATE-----", "").replace("-----END CERTIFICATE-----", "").replace("\n", "")
+        def pubCerts1 = v2Factory.createPublicCertificate(pem)
+        def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
+        IdentityProvider idp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        def response = cloud20.createIdentityProvider(idpManagerToken, idp)
+        assert response.status == SC_CREATED
+        IdentityProvider identityProvider = response.getEntity(IdentityProvider)
+
+        //create a fed user for that IDP
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expDays, domainId, null, email);
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        assert samlResponse.status == SC_OK
+        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def fedUserId = authResponse.user.id
+        utils.getUserById(fedUserId, idpManagerToken)
+
+        when: "delete the provider"
+        def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, identityProvider.id)
+
+        then: "All associated fed users are deleted"
+        assert cloud20.getUserById(idpManagerToken, fedUserId).status == SC_NOT_FOUND
     }
 
 }
