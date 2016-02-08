@@ -260,13 +260,13 @@ class RackerSourceFederationHandlerTest extends Specification {
 
         def existingRackerUsername = RACKER_USERNAME
         Racker existingRacker = entityFactory.createRacker(RACKER_USERNAME + "@" + IDP_URI)
-        def s1Password = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 1, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
-        def s1Token = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 1, SAMLConstants.TIMESYNCTOKEN_PROTECTED_AUTHCONTEXT_REF_CLASS)
+        def s1Password = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 100, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
+        def s1Token = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 100, SAMLConstants.TIMESYNCTOKEN_PROTECTED_AUTHCONTEXT_REF_CLASS)
 
         federatedRackerDao.getUserById(existingRacker.rackerId) >> existingRacker
         userService.getRackerByRackerId(Racker.asFederatedRackerId(existingRackerUsername, IDP_URI)) >> existingRacker
         tenantService.getEphemeralRackerTenantRoles(existingRackerUsername) >> Collections.EMPTY_LIST
-        def s1 = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 1)
+        def s1 = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 100)
 
         when: "Password based saml"
         SamlAuthResponse r1 = federationHandler.processRequestForProvider(new SamlResponseDecorator(s1Password), identityProvider)

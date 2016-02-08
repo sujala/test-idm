@@ -1,13 +1,15 @@
 package testHelpers.saml
 
 import com.rackspace.idm.SAMLConstants
-import com.rackspace.idm.domain.decorator.SAMLAuthContext;
 import org.joda.time.DateTime;
 import org.opensaml.DefaultBootstrap;
 import org.opensaml.common.SAMLVersion;
 import org.opensaml.saml2.core.*;
-import org.opensaml.saml2.core.impl.*;
-import org.opensaml.xml.schema.XSString;
+import org.opensaml.saml2.core.impl.*
+import org.opensaml.xml.XMLObject
+import org.opensaml.xml.schema.XSAny;
+import org.opensaml.xml.schema.XSString
+import org.opensaml.xml.schema.impl.XSAnyBuilder;
 import org.opensaml.xml.schema.impl.XSStringBuilder
 import org.opensaml.xml.security.credential.Credential;
 import org.opensaml.xml.signature.Signature;
@@ -35,7 +37,7 @@ public class SamlProducer {
     }
 
     public Response createSAMLResponse(final String subjectId, final DateTime authenticationTime,
-			                           final HashMap<String, List<String>> attributes, String issuer, Integer samlAssertionSeconds,
+			                           final Map<String, List<Object>> attributes, String issuer, Integer samlAssertionSeconds,
 									   String authnContextClassRef = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS, DateTime issueInstant = new DateTime()) {
 		
 		try {
@@ -225,22 +227,31 @@ public class SamlProducer {
 		return authnStatement;
 	}
 	
-	private AttributeStatement createAttributeStatement(HashMap<String, List<String>> attributes) {
+	private AttributeStatement createAttributeStatement(Map<String, List<Object>> attributes) {
 		// create authenticationstatement object
 		AttributeStatementBuilder attributeStatementBuilder = new AttributeStatementBuilder();
 		AttributeStatement attributeStatement = attributeStatementBuilder.buildObject();
 		
 		AttributeBuilder attributeBuilder = new AttributeBuilder();
 		if (attributes != null) {
-			for (Map.Entry<String, List<String>> entry : attributes.entrySet()) {
+			for (Map.Entry<String, List<Object>> entry : attributes.entrySet()) {
 				Attribute attribute = attributeBuilder.buildObject();
 				attribute.setName(entry.getKey());
 				
-				for (String value : entry.getValue()) {
-					XSStringBuilder stringBuilder = new XSStringBuilder();
-					XSString attributeValue = stringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME);
-					attributeValue.setValue(value);
-					attribute.getAttributeValues().add(attributeValue);
+				for (Object value : entry.getValue()) {
+					XMLObject xmlObject = null;
+					if (value instanceof String) {
+						XSStringBuilder stringBuilder = new XSStringBuilder();
+						XSString attributeValue = stringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME);
+						attributeValue.setValue(value);
+						xmlObject = attributeValue
+					} else {
+						XSAnyBuilder builder = new XSAnyBuilder();
+						XSAny attributeValue = builder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME);
+						attributeValue.setTextContent(value.toString());
+						xmlObject = attributeValue
+					}
+					attribute.getAttributeValues().add(xmlObject);
 				}
 				
 				attributeStatement.getAttributes().add(attribute);

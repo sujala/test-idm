@@ -7,6 +7,8 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.opensaml.saml2.core.*;
 import org.opensaml.xml.XMLObject;
+import org.opensaml.xml.schema.XSAny;
+import org.opensaml.xml.schema.XSInteger;
 import org.opensaml.xml.schema.XSString;
 import org.opensaml.xml.signature.Signature;
 
@@ -199,10 +201,24 @@ public class SamlResponseDecorator {
     private List<String> getAttributeValues(Attribute attribute) {
         List<String> values = new ArrayList<String>();
         for (XMLObject value : attribute.getAttributeValues()) {
-            XSString stringAttr = (XSString) value;
-            values.add(stringAttr.getValue());
+            values.add(getStringValueFromXMLObject(value));
         }
-
         return values;
+    }
+
+    /**
+     * Gets the XML value of an XML object as String
+     * @param xmlObj XML object
+     * @return XML value as String
+     */
+    public static String getStringValueFromXMLObject(XMLObject xmlObj) {
+        if (xmlObj instanceof XSString) {
+            return ((XSString) xmlObj).getValue();
+        } else if (xmlObj instanceof XSInteger) {
+            return ((XSInteger) xmlObj).getValue().toString();
+        } else if (xmlObj instanceof XSAny) {
+            return ((XSAny) xmlObj).getTextContent();
+        }
+        return null;
     }
 }
