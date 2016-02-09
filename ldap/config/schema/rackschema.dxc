@@ -1013,6 +1013,14 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.128) = {
     description = "Mark federated users as eligible for deletion"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.129) = {
+    name = rsAuthenticationUrl
+    ldap-names = rsAuthenticationUrl
+    equality = caseExactMatch
+    syntax = directoryString
+    description = "The authentication URL for identity provider login"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -1535,7 +1543,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.35) = {
         userCertificate,
         rsTargetUserSource,
         rsApprovedDomainGroup,
-        rsApprovedDomainIds
+        rsApprovedDomainIds,
+        rsAuthenticationUrl
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.36) = {

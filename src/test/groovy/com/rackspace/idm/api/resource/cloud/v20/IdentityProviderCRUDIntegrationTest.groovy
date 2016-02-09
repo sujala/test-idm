@@ -50,6 +50,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         creationResultIdp.approvedDomainIds == null
         creationResultIdp.description == domainGroupIdp.description
         creationResultIdp.issuer == domainGroupIdp.issuer
+        creationResultIdp.authenticationUrl == domainGroupIdp.authenticationUrl
         creationResultIdp.publicCertificates == null
         creationResultIdp.federationType == IdentityProviderFederationTypeEnum.DOMAIN
         creationResultIdp.id != null
@@ -66,6 +67,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getResultIdp.approvedDomainIds == null
         getResultIdp.description == domainGroupIdp.description
         getResultIdp.issuer == domainGroupIdp.issuer
+        getResultIdp.authenticationUrl == domainGroupIdp.authenticationUrl
         getResultIdp.federationType == IdentityProviderFederationTypeEnum.DOMAIN
         getResultIdp.publicCertificates == null
         getResultIdp.id != null
@@ -78,8 +80,10 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType).status == SC_NOT_FOUND
 
         cleanup:
-        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
-        utils.deleteUser(idpManager)
+        if (creationResultIdp) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        }
+        utils.deleteUserQuietly(idpManager)
 
         where:
         requestContentType | _
@@ -104,6 +108,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         creationResultIdp.approvedDomainIds == null
         creationResultIdp.description == domainGroupIdp.description
         creationResultIdp.issuer == domainGroupIdp.issuer
+        creationResultIdp.authenticationUrl == domainGroupIdp.authenticationUrl
         creationResultIdp.publicCertificates == null
         creationResultIdp.id != null
         creationResultIdp.federationType == IdentityProviderFederationTypeEnum.RACKER
@@ -120,6 +125,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getResultIdp.approvedDomainIds == null
         getResultIdp.description == domainGroupIdp.description
         getResultIdp.issuer == domainGroupIdp.issuer
+        getResultIdp.authenticationUrl == domainGroupIdp.authenticationUrl
         getResultIdp.federationType == IdentityProviderFederationTypeEnum.RACKER
         getResultIdp.publicCertificates == null
         getResultIdp.id != null
@@ -132,8 +138,10 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType).status == SC_NOT_FOUND
 
         cleanup:
-        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
-        utils.deleteUser(idpManager)
+        if (creationResultIdp) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        }
+        utils.deleteUserQuietly(idpManager)
 
         where:
         requestContentType | _
@@ -189,6 +197,28 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "bad request"
         response.status == SC_BAD_REQUEST
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN)
+
+        when: "create a DOMAIN IDP with null authenticationUrl"
+        domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
+            it.authenticationUrl = null
+            it
+        }
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "bad request"
+        response.status == SC_BAD_REQUEST
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
+
+        when: "create a RACKER IDP with null authenticationUrl"
+        def rackidp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, null).with {
+            it.authenticationUrl = null
+            it
+        }
+        response = cloud20.createIdentityProvider(idpManagerToken, rackidp, requestContentType, requestContentType)
+
+        then: "bad request"
+        response.status == SC_BAD_REQUEST
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
 
         cleanup:
         utils.deleteUser(idpManager)
@@ -318,8 +348,10 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType).status == SC_NOT_FOUND
 
         cleanup:
-        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
-        utils.deleteUser(idpManager)
+        if (creationResultIdp) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        }
+        utils.deleteUserQuietly(idpManager)
 
         where:
         requestContentType | _
@@ -380,9 +412,11 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         samlResponse.status == HttpServletResponse.SC_FORBIDDEN
 
         cleanup:
-        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
-        utils.deleteUser(idpManager)
-        utils.deleteUsers(users)
+        if (creationResultIdp) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        }
+        utils.deleteUserQuietly(idpManager)
+        utils.deleteUsersQuietly(users)
     }
 
     @Unroll
@@ -446,10 +480,18 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         domainSpecificIdps.identityProvider.find{it.id == idp4.id} == null
 
         cleanup:
-        utils.deleteIdentityProviderQuietly(idpManagerToken, idp1.id)
-        utils.deleteIdentityProviderQuietly(idpManagerToken, idp2.id)
-        utils.deleteIdentityProviderQuietly(idpManagerToken, idp3.id)
-        utils.deleteIdentityProviderQuietly(idpManagerToken, idp4.id)
+        if (idp1) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, idp1.id)
+        }
+        if (idp2) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, idp2.id)
+        }
+        if (idp3) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, idp3.id)
+        }
+        if (idp4) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, idp4.id)
+        }
 
         where:
         requestContentType | _
@@ -562,8 +604,10 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         creationResultIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
 
         cleanup:
-        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
-        utils.deleteUser(idpManager)
+        if (creationResultIdp) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        }
+        utils.deleteUserQuietly(idpManager)
     }
 
 

@@ -58,6 +58,7 @@ public class Validator20 {
     public static final int MAX_GROUP_DESC = 1000;
 
     public static final int MAX_IDENTITY_PROVIDER_ISSUER = Constants.MAX_255;
+    public static final int MAX_IDENTITY_PROVIDER_AUTH_URL = Constants.MAX_255;
     public static final int MAX_IDENTITY_PROVIDER_DESCRIPTION = Constants.MAX_255;
     public static final String APPROVED_DOMAIN_GROUP_NAME = "approvedDomainGroup";
     public static final String APPROVED_DOMAINS = "approvedDomains";
@@ -256,6 +257,9 @@ public class Validator20 {
         if (identityProvider.getFederationType() == null) {
             throwBadRequestForMissingAttrWithErrorCode("federationType");
         }
+
+        //validate the authenticationUrl is specified and under max length
+        validateStringNotNullWithMaxLength("authenticationUrl", identityProvider.getAuthenticationUrl(), MAX_IDENTITY_PROVIDER_AUTH_URL);
 
         validateStringMaxLength("description", identityProvider.getDescription(), MAX_IDENTITY_PROVIDER_DESCRIPTION);
 
