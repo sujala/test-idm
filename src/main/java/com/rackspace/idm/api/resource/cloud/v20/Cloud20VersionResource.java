@@ -235,12 +235,13 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @QueryParam("approvedDomainId") String approvedDomainId) {
+            @QueryParam("approvedDomainId") String approvedDomainId,
+            @QueryParam("idpType") String idpType) {
         if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
             throw new NotFoundException("Service Not Found");
         }
 
-        return cloud20Service.getIdentityProviders(httpHeaders, authToken, approvedDomainId).build();
+        return cloud20Service.getIdentityProviders(httpHeaders, authToken, approvedDomainId, idpType).build();
     }
 
     @DELETE

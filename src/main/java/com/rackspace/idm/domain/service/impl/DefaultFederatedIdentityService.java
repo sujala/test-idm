@@ -192,6 +192,16 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     }
 
     @Override
+    public List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForDomain(String domainId) {
+        return identityProviderDao.findIdentityProvidersExplicitlyApprovedForDomain(domainId);
+    }
+
+    @Override
+    public List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForAnyDomain() {
+        return identityProviderDao.findIdentityProvidersExplicitlyApprovedForAnyDomain();
+    }
+
+    @Override
     public List<IdentityProvider> findAllIdentityProviders() {
         return identityProviderDao.findAllIdentityProviders();
     }

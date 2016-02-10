@@ -7,6 +7,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.FederatedUser
+import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum
 import com.rackspace.idm.exception.BadRequestException
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
@@ -420,7 +421,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdentityProvider idp4 = utils.createIdentityProvider(idpManagerToken, idp4ToCreate)
 
         when: "get all idp"
-        def allIdp = cloud20.listIdentityProviders(idpManagerToken, null, requestContentType, requestContentType)
+        def allIdp = cloud20.listIdentityProviders(idpManagerToken, null, null, requestContentType, requestContentType)
 
         then:
         allIdp.status == SC_OK
@@ -432,11 +433,11 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         providers.identityProvider.find{it.id == idp3.id} != null
         providers.identityProvider.find{it.id == idp4.id} != null
 
-        when: "get all idps for specific domain "
-        def domainSpecificIdpResponse = cloud20.listIdentityProviders(idpManagerToken, domainId, requestContentType, requestContentType)
+        when: "get all idps for specific domain"
+        def domainSpecificIdpResponse = cloud20.listIdentityProviders(idpManagerToken, domainId, null, requestContentType, requestContentType)
 
         then: "get all idps for that domain and all global domain idps"
-        allIdp.status == SC_OK
+        domainSpecificIdpResponse.status == SC_OK
         IdentityProviders domainSpecificIdps = domainSpecificIdpResponse.getEntity(IdentityProviders.class)
         domainSpecificIdps != null
         domainSpecificIdps.identityProvider.size() >= 4
@@ -444,6 +445,30 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         domainSpecificIdps.identityProvider.find{it.id == idp2.id} == null
         domainSpecificIdps.identityProvider.find{it.id == idp3.id} != null
         domainSpecificIdps.identityProvider.find{it.id == idp4.id} == null
+
+        when: "get all idps that have an EXPLICIT domain mapping"
+        def onlyExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, null, IdentityProviderTypeFilterEnum.EXPLICIT.name(), requestContentType, requestContentType)
+
+        then: "all idps with an EXPLICIT domain mapping are returned"
+        onlyExplicitResponse.status == SC_OK
+        def onlyExplicitIdps = onlyExplicitResponse.getEntity(IdentityProviders.class)
+        onlyExplicitIdps != null
+        onlyExplicitIdps.identityProvider.find{it.id == idp1.id} != null
+        onlyExplicitIdps.identityProvider.find{it.id == idp2.id} != null
+        onlyExplicitIdps.identityProvider.find{it.id == idp3.id} == null
+        onlyExplicitIdps.identityProvider.find{it.id == idp4.id} == null
+
+        when: "get all idps that have an EXPLICIT domain mapping and for a specific domain"
+        def domainAndExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, domainId, IdentityProviderTypeFilterEnum.EXPLICIT.name(), requestContentType, requestContentType)
+
+        then: "all idps with an EXPLICIT domain mapping are returned"
+        domainAndExplicitResponse.status == SC_OK
+        def domainAndExplicitIdps = domainAndExplicitResponse.getEntity(IdentityProviders.class)
+        domainAndExplicitIdps != null
+        domainAndExplicitIdps.identityProvider.find{it.id == idp1.id} != null
+        domainAndExplicitIdps.identityProvider.find{it.id == idp2.id} == null
+        domainAndExplicitIdps.identityProvider.find{it.id == idp3.id} == null
+        domainAndExplicitIdps.identityProvider.find{it.id == idp4.id} == null
 
         cleanup:
         utils.deleteIdentityProviderQuietly(idpManagerToken, idp1.id)
@@ -455,7 +480,18 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         requestContentType | _
         MediaType.APPLICATION_XML_TYPE | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
 
+    def "list IDPs by type filter returns 400 for any value of 'idpType' other than EXPLICIT"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when:
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, "invalidTypeFilter")
+
+        then:
+        response.status == 400
     }
 
     def "Create Identity Provider returns errors appropriately"() {
