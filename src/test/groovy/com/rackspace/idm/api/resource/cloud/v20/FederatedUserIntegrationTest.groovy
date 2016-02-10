@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.decorator.SAMLAuthContext
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.FederatedUser
@@ -22,6 +23,7 @@ import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHand
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.rackspace.idm.util.SamlUnmarshaller
 import org.apache.commons.codec.binary.StringUtils
+import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.lang.BooleanUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
@@ -39,6 +41,7 @@ import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.junit.IgnoreByRepositoryProfile
+import testHelpers.saml.SamlAttributeFactory
 import testHelpers.saml.SamlFactory
 
 import javax.servlet.http.HttpServletResponse
@@ -132,6 +135,50 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         then: "Response contains appropriate content"
         samlResponse.status == HttpServletResponse.SC_OK
         AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
+
+        when: "retrieve user from backend"
+        FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
+
+        then: "reflects current state"
+        fedUser.id == authResponse.user.id
+        fedUser.username == username
+        fedUser.domainId == domainId
+        fedUser.email == email
+        fedUser.region == userAdminEntity.region
+        fedUser.expiredTimestamp != null
+        fedUser.expiredTimestamp.after(authResponse.token.expires.toGregorianCalendar().getTime())
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+    }
+
+    def "Can handle attribute values without datatype specified"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expSecs = 500
+        def email = "fedIntTest@invalid.rackspace.com"
+        def samlFactory = new SamlFactory()
+        //specify assertion with no roles
+        HashMap<String, List<Object>> attributes = new HashMap<String, List<Object>>()
+        attributes.put("email", [email])
+        attributes.put("domain", [Integer.valueOf(domainId)]) //make the domain a list so the xsany type is used
+        def samlResponse = samlFactory.generateSamlAssertion(DEFAULT_IDP_URI, username, expSecs, attributes, SAMLAuthContext.PASSWORD.samlAuthnContextClassRef)
+        def samlAssertion = samlFactory.convertResponseToString(samlResponse)
+
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+
+        when:
+        def samlAuthResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains appropriate content"
+        samlAuthResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = samlAuthResponse.getEntity(AuthenticateResponse).value
         verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
 
         when: "retrieve user from backend"
