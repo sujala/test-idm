@@ -93,6 +93,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String CANNOT_SPECIFY_GROUPS_ERROR = "Cannot specify groups for sub-users";
     public static final String V11_API_QNAME = "http://docs.rackspacecloud.com/auth/api/v1.1";
 
+    public static final String FEDERATION_IDP_TYPE_ERROR_MESSAGE = "%s is currently the only supported IDP type allowed for filtering.";
+
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -1178,7 +1180,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String approvedDomainId) {
+    public ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String approvedDomainId, String idpType) {
         try {
             //verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
@@ -1186,9 +1188,21 @@ public class DefaultCloud20Service implements Cloud20Service {
             //verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
 
+            IdentityProviderTypeFilterEnum idpFilter = null;
+            if (StringUtils.isNotBlank(idpType)) {
+                idpFilter = IdentityProviderTypeFilterEnum.parseIdpTypeFilter(idpType);
+                if(idpFilter == null) {
+                    throw new BadRequestException(String.format(FEDERATION_IDP_TYPE_ERROR_MESSAGE, IdentityProviderTypeFilterEnum.EXPLICIT.name()));
+                }
+            }
+
             List<com.rackspace.idm.domain.entity.IdentityProvider> providerEntities;
-            if (StringUtils.isNotBlank(approvedDomainId)) {
+            if (StringUtils.isNotBlank(approvedDomainId) && IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
+                providerEntities = federatedIdentityService.findIdentityProvidersExplicitlyApprovedForDomain(approvedDomainId);
+            } else if (StringUtils.isNotBlank(approvedDomainId)) {
                 providerEntities = federatedIdentityService.findIdentityProvidersApprovedForDomain(approvedDomainId);
+            } else if (IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
+                providerEntities = federatedIdentityService.findIdentityProvidersExplicitlyApprovedForAnyDomain();
             } else {
                 providerEntities = federatedIdentityService.findAllIdentityProviders();
             }

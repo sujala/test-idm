@@ -19,6 +19,23 @@ public interface IdentityProviderDao {
     List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId);
 
     /**
+     * Return the identity providers that have an EXPLICIT domain restriction for the given domainId.
+     *
+     * @param domainId
+     * @return
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException
+     */
+    List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForDomain(String domainId);
+
+    /**
+     * Return the identity providers that have any EXPLICIT domain restriction for a given domainId
+     *
+     * @return
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException
+     */
+    List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForAnyDomain();
+
+    /**
      * Find all identity providers
      * @return
      */

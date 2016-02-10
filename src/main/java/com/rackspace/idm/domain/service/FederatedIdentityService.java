@@ -60,13 +60,30 @@ public interface FederatedIdentityService {
     IdentityProvider getIdentityProviderByIssuer(String issuer);
 
     /**
-     * Return the identity provider that can received tokens for the given domainId
+     * Return the identity providers that can create tokens for the given domainId
      *
      * @param domainId
      * @return
      * @throws com.rackspace.idm.exception.SizeLimitExceededException
      */
     List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId);
+
+    /**
+     * Return the identity providers that have an EXPLICIT domain restriction for the given domainId.
+     *
+     * @param domainId
+     * @return
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException
+     */
+    List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForDomain(String domainId);
+
+    /**
+     * Return the identity providers that have any EXPLICIT domain restriction for a given domainId
+     *
+     * @return
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException
+     */
+    List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForAnyDomain();
 
     /**
      * Return all identity providers

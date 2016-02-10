@@ -33,7 +33,7 @@ public interface Cloud20Service {
 
     ResponseBuilder getIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId);
 
-    ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String domainId);
+    ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String domainId, String idpType);
 
     ResponseBuilder deleteIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId);
 

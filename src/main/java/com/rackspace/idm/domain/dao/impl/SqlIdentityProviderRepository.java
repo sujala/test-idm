@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.sql.entity.SqlIdentityProvider;
 import com.rackspace.idm.domain.sql.mapper.impl.IdentityProviderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.List;
 
@@ -39,6 +40,16 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
     public List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId) {
         //TODO - force failure when > max result
         return mapper.fromSQL(repository.findByApprovedDomainIdsContainsOrApprovedDomainGroupEquals(domainId, ApprovedDomainGroupEnum.GLOBAL.getStoredVal()));
+    }
+
+    @Override
+    public List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForDomain(String domainId) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public List<IdentityProvider> findIdentityProvidersExplicitlyApprovedForAnyDomain() {
+        throw new NotImplementedException();
     }
 
     @Override
