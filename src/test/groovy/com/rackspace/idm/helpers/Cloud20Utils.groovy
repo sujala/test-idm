@@ -817,6 +817,16 @@ class Cloud20Utils {
         }
     }
 
+    def deleteUsersQuietly(List<User> users, String token=getServiceAdminToken()) {
+        users.each {
+            try {
+                methods.destroyUser(token, it.getId())
+            } catch (all) {
+                //ignore
+            }
+        }
+    }
+
     def createDomain(Domain domain) {
         def response = methods.addDomain(getServiceAdminToken(), domain)
         assert (response.status == SC_CREATED)

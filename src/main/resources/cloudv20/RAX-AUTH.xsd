@@ -709,6 +709,16 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="authenticationUrl" type="xsd:anyURI" use="required">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The URL at which users will authenticate with the identity provider. For example, this is to where
+                        service providers should redirect to login.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
         <attribute name="federationType" type="RAX-AUTH:IdentityProviderFederationTypeEnum" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">

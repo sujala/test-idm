@@ -633,6 +633,7 @@ class V2Factory {
         new IdentityProvider().with {
             it.description = description
             it.issuer = issuerUri
+            it.authenticationUrl = "https://log.me.in"
             it.federationType = federationType
             it.publicCertificates
             if (federationType == IdentityProviderFederationTypeEnum.DOMAIN) {
@@ -646,6 +647,7 @@ class V2Factory {
         new IdentityProvider().with {
             it.description = description
             it.issuer = issuerUri
+            it.authenticationUrl = "http://random.url"
             it.federationType = federationType
             it.publicCertificates
             it.approvedDomainGroup = approvedDomainGroup
