@@ -1161,6 +1161,28 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public ResponseBuilder updateIdentityProvider(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String providerId, IdentityProvider provider) {
+        try {
+            //verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            //verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+
+            com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProvider(providerId);
+
+            validator20.validateIdentityProviderForUpdate(provider);
+            existingProvider.setAuthenticationUrl(provider.getAuthenticationUrl()); //copy over the only attribute allowed to be updated
+
+            federatedIdentityService.updateIdentityProvider(existingProvider); //update
+            ResponseBuilder builder = Response.ok(uriInfo.getRequestUriBuilder().path(existingProvider.getName()).build());
+            return builder.entity(identityProviderConverterCloudV20.toIdentityProvider(existingProvider));
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
     public ResponseBuilder getIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId) {
         try {
             //verify token exists and valid

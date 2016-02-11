@@ -73,6 +73,23 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getResultIdp.publicCertificates == null
         getResultIdp.id != null
 
+        when: "update the provider"
+        def newAuthUrl = RandomStringUtils.randomAlphanumeric(10)
+        IdentityProvider updateDomainGroupIdp = new IdentityProvider().with {
+            it.authenticationUrl = newAuthUrl
+            it
+        }
+        def updateIdpResponse = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp.id, updateDomainGroupIdp, requestContentType, requestContentType)
+
+        then: "idp updated"
+        updateIdpResponse.status == SC_OK
+        IdentityProvider updateResultIdp = updateIdpResponse.getEntity(IdentityProvider)
+        updateResultIdp.authenticationUrl == newAuthUrl
+
+        def getAfterUpdateIdpResponse = cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType)
+        IdentityProvider getAfterUpdateIdp = getAfterUpdateIdpResponse.getEntity(IdentityProvider)
+        getAfterUpdateIdp.authenticationUrl == newAuthUrl
+
         when: "delete the provider"
         def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
 
@@ -283,6 +300,43 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         requestContentType | _
         MediaType.APPLICATION_XML_TYPE | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Error if try to update IDP without specifying authenticationUrl - request: #requestContentType"() {
+        given:
+        def idpManagerToken = utils.getServiceAdminToken()
+        def domainGroupIdp = v2Factory.createIdentityProvider("", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+        def createdIdp = response.getEntity(IdentityProvider)
+        def updateIdp = new IdentityProvider()
+
+        when: "create a DOMAIN IDP with approvedDomainGroup, empty string description"
+        def updateIdpResponse = cloud20.updateIdentityProvider(idpManagerToken, createdIdp.id, updateIdp)
+
+        then: "successful"
+        updateIdpResponse.status == SC_BAD_REQUEST
+
+        where:
+        requestContentType | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Error if try to update IDP with any value other than authenticationUrl - property: #prop "() {
+        given:
+        def idpManagerToken = utils.getServiceAdminToken()
+
+        when: "create a DOMAIN IDP with approvedDomainGroup, empty string description"
+        def response = cloud20.createIdentityProvider(idpManagerToken, idp)
+
+        then: "successful"
+        response.status == SC_BAD_REQUEST
+
+        where:
+        prop | idp
+        "id"  | new IdentityProvider().with {it.authenticationUrl = "url"; it.id = "as"; it}
     }
 
     @Unroll
