@@ -94,6 +94,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String V11_API_QNAME = "http://docs.rackspacecloud.com/auth/api/v1.1";
 
     public static final String FEDERATION_IDP_TYPE_ERROR_MESSAGE = "%s is currently the only supported IDP type allowed for filtering.";
+    public static final String FEDERATION_IDP_FILTER_CONFLICT_ERROR_MESSAGE = "The provided IDP filters cannot be used together.";
+    public static final String FEDERATION_IDP_FILTER_TENANT_NO_DOMAIN_ERROR_MESSAGE = "The provided tenant is not associated with a domain";
 
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
@@ -1203,7 +1205,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String approvedDomainId, String idpType) {
+    public ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String approvedDomainId, String approvedTenantId, String idpType) {
         try {
             //verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
@@ -1218,6 +1220,19 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if(idpFilter == null) {
                     throw new BadRequestException(String.format(FEDERATION_IDP_TYPE_ERROR_MESSAGE, IdentityProviderTypeFilterEnum.EXPLICIT.name()));
                 }
+            }
+
+            if (StringUtils.isNotBlank(approvedDomainId) && StringUtils.isNotBlank(approvedTenantId)) {
+                throw new BadRequestException(FEDERATION_IDP_FILTER_CONFLICT_ERROR_MESSAGE);
+            }
+
+            if (StringUtils.isNotBlank(approvedTenantId)) {
+                Tenant tenantForFilter = tenantService.checkAndGetTenant(approvedTenantId);
+                if(StringUtils.isBlank(tenantForFilter.getDomainId()) ||
+                        identityConfig.getReloadableConfig().getTenantDefaultDomainId().equals(tenantForFilter.getDomainId())) {
+                    throw new BadRequestException(FEDERATION_IDP_FILTER_TENANT_NO_DOMAIN_ERROR_MESSAGE);
+                }
+                approvedDomainId = tenantForFilter.getDomainId();
             }
 
             List<com.rackspace.idm.domain.entity.IdentityProvider> providerEntities;

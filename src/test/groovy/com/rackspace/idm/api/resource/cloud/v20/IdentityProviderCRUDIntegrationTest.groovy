@@ -5,9 +5,11 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederatio
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviders
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum
+import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.exception.BadRequestException
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
@@ -17,6 +19,7 @@ import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -32,6 +35,12 @@ import static org.apache.http.HttpStatus.*
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
 class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
+
+    @Autowired
+    TenantService tenantService
+
+    @Autowired
+    TenantDao tenantDao
 
     @Unroll
     def "CRUD a DOMAIN IDP with approvedDomainGroup, but no certs - request: #requestContentType"() {
@@ -487,6 +496,10 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         }
         IdentityProvider idp1 = utils.createIdentityProvider(idpManagerToken, idp1ToCreate)
 
+        //create a tenant and add it to domain 1
+        def tenant = utils.createTenant()
+        utils.addTenantToDomain(domainId, tenant.id)
+
         def domainId2 = UUID.randomUUID().toString()
         cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId2, domainId2))
         IdentityProvider idp2ToCreate = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId2]).with {
@@ -508,7 +521,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdentityProvider idp4 = utils.createIdentityProvider(idpManagerToken, idp4ToCreate)
 
         when: "get all idp"
-        def allIdp = cloud20.listIdentityProviders(idpManagerToken, null, null, requestContentType, requestContentType)
+        def allIdp = cloud20.listIdentityProviders(idpManagerToken, null, null, null, requestContentType, requestContentType)
 
         then:
         allIdp.status == SC_OK
@@ -521,7 +534,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         providers.identityProvider.find{it.id == idp4.id} != null
 
         when: "get all idps for specific domain"
-        def domainSpecificIdpResponse = cloud20.listIdentityProviders(idpManagerToken, domainId, null, requestContentType, requestContentType)
+        def domainSpecificIdpResponse = cloud20.listIdentityProviders(idpManagerToken, domainId, null, null, requestContentType, requestContentType)
 
         then: "get all idps for that domain and all global domain idps"
         domainSpecificIdpResponse.status == SC_OK
@@ -534,7 +547,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         domainSpecificIdps.identityProvider.find{it.id == idp4.id} == null
 
         when: "get all idps that have an EXPLICIT domain mapping"
-        def onlyExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, null, IdentityProviderTypeFilterEnum.EXPLICIT.name(), requestContentType, requestContentType)
+        def onlyExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, null, IdentityProviderTypeFilterEnum.EXPLICIT.name(), null, requestContentType, requestContentType)
 
         then: "all idps with an EXPLICIT domain mapping are returned"
         onlyExplicitResponse.status == SC_OK
@@ -546,7 +559,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         onlyExplicitIdps.identityProvider.find{it.id == idp4.id} == null
 
         when: "get all idps that have an EXPLICIT domain mapping and for a specific domain"
-        def domainAndExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, domainId, IdentityProviderTypeFilterEnum.EXPLICIT.name(), requestContentType, requestContentType)
+        def domainAndExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, domainId, IdentityProviderTypeFilterEnum.EXPLICIT.name(), null, requestContentType, requestContentType)
 
         then: "all idps with an EXPLICIT domain mapping are returned"
         domainAndExplicitResponse.status == SC_OK
@@ -556,6 +569,30 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         domainAndExplicitIdps.identityProvider.find{it.id == idp2.id} == null
         domainAndExplicitIdps.identityProvider.find{it.id == idp3.id} == null
         domainAndExplicitIdps.identityProvider.find{it.id == idp4.id} == null
+
+        when: "get all idps that have a DOMAIN mapping and for a specific TENANT"
+        def tenantResponse = cloud20.listIdentityProviders(idpManagerToken, null, null, tenant.id, requestContentType, requestContentType)
+
+        then: "all idps with a domain mapping for the tenant are returned"
+        tenantResponse.status == SC_OK
+        def tenantIdps = tenantResponse.getEntity(IdentityProviders.class)
+        tenantIdps != null
+        tenantIdps.identityProvider.find{it.id == idp1.id} != null
+        tenantIdps.identityProvider.find{it.id == idp2.id} == null
+        tenantIdps.identityProvider.find{it.id == idp3.id} != null
+        tenantIdps.identityProvider.find{it.id == idp4.id} == null
+
+        when: "get all idps that have an EXPLICIT DOMAIN mapping and for a specific TENANT"
+        def tenantAndExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, null, IdentityProviderTypeFilterEnum.EXPLICIT.name(), tenant.id, requestContentType, requestContentType)
+
+        then: "all idps with an EXPLICIT domain mapping for the tenant are returned"
+        tenantAndExplicitResponse.status == SC_OK
+        def tenantAndExplicitIdps = tenantAndExplicitResponse.getEntity(IdentityProviders.class)
+        tenantAndExplicitIdps != null
+        tenantAndExplicitIdps.identityProvider.find{it.id == idp1.id} != null
+        tenantAndExplicitIdps.identityProvider.find{it.id == idp2.id} == null
+        tenantAndExplicitIdps.identityProvider.find{it.id == idp3.id} == null
+        tenantAndExplicitIdps.identityProvider.find{it.id == idp4.id} == null
 
         cleanup:
         if (idp1) {
@@ -584,6 +621,59 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         when:
         def response = cloud20.listIdentityProviders(idpManagerToken, null, "invalidTypeFilter")
+
+        then:
+        response.status == 400
+    }
+
+    def "list IDPs returns 404 is tenant and domain IDs are given as filters"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when:
+        def response = cloud20.listIdentityProviders(idpManagerToken, "someDomain", null, "someTenant")
+
+        then:
+        response.status == 400
+    }
+
+    def "list IDPs returns 404 if the tenant being filtered by does not exist"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when:
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, "someTenant")
+
+        then:
+        response.status == 404
+    }
+
+    def "list IDPs returns 400 if the tenant being filtered by belongs to the default domain"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def tenant = utils.createTenant()
+
+        when:
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, tenant.id)
+
+        then:
+        response.status == 400
+    }
+
+    def "list IDPs returns 400 if the tenant being filtered by has NULL as the associated domain"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def tenant = utils.createTenant()
+        def tenantEntity = tenantService.getTenant(tenant.id)
+        tenantEntity.domainId = null
+        tenantDao.updateTenantAsIs(tenantEntity)
+
+        when:
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, tenant.id)
 
         then:
         response.status == 400

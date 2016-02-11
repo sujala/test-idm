@@ -53,6 +53,11 @@ public class LdapTenantRepository extends LdapGenericRepository<Tenant> implemen
     }
 
     @Override
+    public void updateTenantAsIs(Tenant tenant) {
+        updateObjectAsIs(tenant);
+    }
+
+    @Override
     public String getSortAttribute() {
         return ATTR_ID;
     }
