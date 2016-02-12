@@ -28,7 +28,6 @@ import testHelpers.saml.SamlProducer
 import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.Constants.getDEFAULT_IDP_URI
 import static org.apache.http.HttpStatus.*
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
@@ -683,6 +682,132 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         then: "All associated fed users are deleted"
         assert cloud20.getUserById(idpManagerToken, fedUserId).status == SC_NOT_FOUND
+    }
+
+    def "test get IDP access" () {
+        given:
+        def user = utils.createIdentityAdmin()
+        def token = utils.getToken(user.username)
+        def idp = utils.createIdentityProvider()
+
+        when: "try to get IDP w/o any federation access role"
+        def response = cloud20.getIdentityProvider(token, idp.id)
+
+        then: "not authorized"
+        response.status == 403
+
+        when: "add the IDP manager role to the user"
+        utils.addRoleToUser(user, Constants.IDENTITY_PROVIDER_MANAGER_ROLE_ID)
+        response = cloud20.getIdentityProvider(token, idp.id)
+
+        then: "authorized"
+        response.status == 200
+
+        when: "add the IDP read only role to the user"
+        utils.deleteRoleOnUser(user, Constants.IDENTITY_PROVIDER_MANAGER_ROLE_ID)
+        utils.addRoleToUser(user, Constants.IDENTITY_PROVIDER_READ_ONLY_ROLE_ID)
+        response = cloud20.getIdentityProvider(token, idp.id)
+
+        then: "authorized"
+        response.status == 200
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteIdentityProvider(idp)
+    }
+
+    def "test list IDPs access" () {
+        given:
+        def user = utils.createIdentityAdmin()
+        def token = utils.getToken(user.username)
+
+        when: "try to get IDPs w/o any federation access role"
+        def response = cloud20.listIdentityProviders(token)
+
+        then: "not authorized"
+        response.status == 403
+
+        when: "add the IDP manager role to the user"
+        utils.addRoleToUser(user, Constants.IDENTITY_PROVIDER_MANAGER_ROLE_ID)
+        response = cloud20.listIdentityProviders(token)
+
+        then: "authorized"
+        response.status == 200
+
+        when: "add the IDP read only role to the user"
+        utils.deleteRoleOnUser(user, Constants.IDENTITY_PROVIDER_MANAGER_ROLE_ID)
+        utils.addRoleToUser(user, Constants.IDENTITY_PROVIDER_READ_ONLY_ROLE_ID)
+        response = cloud20.listIdentityProviders(token)
+
+        then: "authorized"
+        response.status == 200
+
+        cleanup:
+        utils.deleteUser(user)
+    }
+
+    def "test create IDP access" () {
+        given:
+        def user = utils.createIdentityAdmin()
+        def token = utils.getToken(user.username)
+        def idpRequest = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN)
+
+        when: "try to create the IDP w/o any federation access role"
+        def response = cloud20.createIdentityProvider(token, idpRequest)
+
+        then: "not authorized"
+        response.status == 403
+
+        when: "add the IDP manager role to the user"
+        utils.addRoleToUser(user, Constants.IDENTITY_PROVIDER_MANAGER_ROLE_ID)
+        response = cloud20.createIdentityProvider(token, idpRequest)
+
+        then: "authorized"
+        response.status == 201
+        def idp = response.getEntity(IdentityProvider)
+
+        when: "add the IDP read only role to the user"
+        utils.deleteRoleOnUser(user, Constants.IDENTITY_PROVIDER_MANAGER_ROLE_ID)
+        utils.addRoleToUser(user, Constants.IDENTITY_PROVIDER_READ_ONLY_ROLE_ID)
+        utils.deleteIdentityProvider(idp)
+        response = cloud20.createIdentityProvider(token, idpRequest)
+
+        then: "authorized"
+        response.status == 403
+
+        cleanup:
+        utils.deleteUser(user)
+    }
+
+    def "test delete IDP access"() {
+        given:
+        def user = utils.createIdentityAdmin()
+        def token = utils.getToken(user.username)
+        def idp = utils.createIdentityProvider()
+
+        when: "try to delete the IDP w/o any federation access role"
+        def response = cloud20.deleteIdentityProvider(token, idp.id)
+
+        then: "not authorized"
+        response.status == 403
+
+        when: "add the IDP manager role to the user"
+        utils.addRoleToUser(user, Constants.IDENTITY_PROVIDER_MANAGER_ROLE_ID)
+        response = cloud20.deleteIdentityProvider(token, idp.id)
+
+        then: "authorized"
+        response.status == 204
+
+        when: "add the IDP read only role to the user"
+        utils.deleteRoleOnUser(user, Constants.IDENTITY_PROVIDER_MANAGER_ROLE_ID)
+        utils.addRoleToUser(user, Constants.IDENTITY_PROVIDER_READ_ONLY_ROLE_ID)
+        response = cloud20.deleteIdentityProvider(token, idp.id)
+
+        then: "authorized"
+        response.status == 403
+
+        cleanup:
+        utils.deleteUser(user)
     }
 
 }

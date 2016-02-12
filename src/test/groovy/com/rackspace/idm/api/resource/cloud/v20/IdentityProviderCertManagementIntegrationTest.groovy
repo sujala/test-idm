@@ -132,7 +132,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         samlResponse.status == HttpServletResponse.SC_BAD_REQUEST
 
         cleanup:
-        utils.deleteIdentityProvider(idpManagerToken, idp.id)
+        utils.deleteIdentityProvider(idp)
         utils.deleteUser(idpManager)
         utils.deleteUsers(users)
 
@@ -182,7 +182,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         createdCert.id != null
 
         cleanup:
-        utils.deleteIdentityProvider(idpManagerToken, idp.id)
+        utils.deleteIdentityProvider(idp)
         utils.deleteUser(idpManager)
 
         where:
@@ -232,7 +232,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         response.status == 400
 
         cleanup:
-        utils.deleteIdentityProvider(idpManagerToken, idp.id)
+        utils.deleteIdentityProvider(idp)
         utils.deleteUser(idpManager)
 
         where:
@@ -257,7 +257,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         response.status == 400
 
         cleanup:
-        utils.deleteIdentityProvider(idpManagerToken, idp.id)
+        utils.deleteIdentityProvider(idp)
         utils.deleteUser(idpManager)
 
         where:
@@ -284,7 +284,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         response.status == 400
 
         cleanup:
-        utils.deleteIdentityProvider(idpManagerToken, idp.id)
+        utils.deleteIdentityProvider(idp)
         utils.deleteUser(idpManager)
 
         where:
@@ -326,7 +326,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
 //        samlResponse.status == HttpServletResponse.SC_BAD_REQUEST
 
         cleanup:
-        utils.deleteIdentityProvider(idpManagerToken, idp.id)
+        utils.deleteIdentityProvider(idp)
         utils.deleteUser(idpManager)
         utils.deleteUsers(users)
 
@@ -380,7 +380,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         deleteCertsResponse.status == 403
 
         cleanup:
-        utils.deleteIdentityProvider(idpManagerToken, idp.id)
+        utils.deleteIdentityProvider(idp)
         utils.deleteUser(idpManager)
 
         where:

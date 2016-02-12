@@ -21,6 +21,7 @@ class Constants {
     static def MOSSO_ROLE_ID = "6"
     static def USER_MANAGE_ROLE_ID = "7"
     static def IDENTITY_PROVIDER_MANAGER_ROLE_ID = "8470c459cfa043ef989976a66ba4d74e"
+    static def IDENTITY_PROVIDER_READ_ONLY_ROLE_ID = "33e5af5cbc1b45f897a09cf24fffcd74"
 
     static def DEFAULT_GROUP = "Default"
 

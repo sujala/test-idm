@@ -1127,6 +1127,15 @@ cn: identity:identity-provider-manager
 description: Identity Provider Manager
 rsWeight: 50
 
+dn: rsId=33e5af5cbc1b45f897a09cf24fffcd74,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 33e5af5cbc1b45f897a09cf24fffcd74
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:identity-provider-read-only
+description: Identity Provider Read Only
+rsWeight: 50
+
 dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicati
  ons,o=rackspace,dc=rackspace,dc=com
 objectClass: rsContainer

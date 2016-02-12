@@ -15,6 +15,7 @@ public enum IdentityRole {
     , GET_USER_GROUPS_GLOBAL("identity:get-user-groups-global")
     , REPOSE_STANDARD("identity:repose-standard")
     , IDENTITY_PROVIDER_MANAGER("identity:identity-provider-manager")
+    , IDENTITY_PROVIDER_READ_ONLY("identity:identity-provider-read-only")
     ;
 
     @Getter
