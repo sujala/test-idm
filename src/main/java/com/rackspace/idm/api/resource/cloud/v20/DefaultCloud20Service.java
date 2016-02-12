@@ -1167,7 +1167,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
             //verify user has appropriate role
-            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                    IdentityRole.IDENTITY_PROVIDER_READ_ONLY.getRoleName()));
 
             com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.checkAndGetIdentityProvider(providerId);
 
@@ -1186,7 +1187,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
             //verify user has appropriate role
-            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                    IdentityRole.IDENTITY_PROVIDER_READ_ONLY.getRoleName()));
 
             IdentityProviderTypeFilterEnum idpFilter = null;
             if (StringUtils.isNotBlank(idpType)) {
