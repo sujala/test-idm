@@ -31,6 +31,8 @@ public interface Cloud20Service {
 
     ResponseBuilder addIdentityProvider(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, IdentityProvider provider);
 
+    ResponseBuilder updateIdentityProvider(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String identityProviderId, IdentityProvider provider);
+
     ResponseBuilder getIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId);
 
     ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String domainId, String idpType);

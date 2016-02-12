@@ -64,6 +64,7 @@ public class Validator20 {
     public static final String APPROVED_DOMAINS = "approvedDomains";
 
     private static final String REQUIRED_ATTR_MESSAGE = "'%s' is a required attribute";
+    private static final String INVALID_ATTR_MESSAGE = "'%s' is not a valid attribute for this service";
 
     public static final String LENGTH_EXCEEDED_ERROR_MSG = "%s length cannot exceed %s characters";
 
@@ -307,6 +308,23 @@ public class Validator20 {
         }
     }
 
+    public void validateIdentityProviderForUpdate(IdentityProvider identityProvider) {
+        if (identityProvider == null) {
+            throw new BadRequestException("Must provide an identity provider");
+        }
+
+        validateAttributeisNull("issuer", identityProvider.getIssuer());
+        validateAttributeisNull("federationType", identityProvider.getFederationType());
+        validateAttributeisNull("description", identityProvider.getIssuer());
+        validateAttributeisNull("id", identityProvider.getId());
+        validateAttributeisNull("publicCertificates", identityProvider.getPublicCertificates());
+        validateAttributeisNull("approvedDomainGroup", identityProvider.getApprovedDomainGroup());
+        validateAttributeisNull("approvedDomainIds", identityProvider.getApprovedDomainIds());
+
+        //allowed
+        validateStringNotNullWithMaxLength("authenticationUrl", identityProvider.getAuthenticationUrl(), MAX_IDENTITY_PROVIDER_AUTH_URL);
+    }
+
     public void validatePublicCertificate(PublicCertificate publicCertificate) {
         if (publicCertificate == null || StringUtils.isBlank(publicCertificate.getPemEncoded())) {
             throw new BadRequestException("Public certificate is invalid");
@@ -361,6 +379,12 @@ public class Validator20 {
         throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE);
     }
 
+    private void throwBadRequestForProvidedAttrWithErrorCode(String attrName) {
+        String errMsg = String.format(INVALID_ATTR_MESSAGE, attrName);
+        logger.warn(errMsg);
+        throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+    }
+
     public void validateEndpointTemplateForUpdate(EndpointTemplate endpoint) {
         if(endpoint.isDefault() != null && endpoint.isDefault() && endpoint.isGlobal() != null && endpoint.isGlobal()) {
             throw new BadRequestException("An endpoint template cannot be both global and default.");
@@ -372,6 +396,12 @@ public class Validator20 {
             throwBadRequestForMissingAttrWithErrorCode(propertyName);
         }
         validateStringMaxLength(propertyName, value, maxLength);
+    }
+
+    private void validateAttributeisNull(String propertyName, Object value) {
+        if (value != null) {
+            throwBadRequestForProvidedAttrWithErrorCode(propertyName);
+        }
     }
 
     private void validateStringMaxLength(String propertyName, String value, int maxLength) {
