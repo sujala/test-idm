@@ -355,7 +355,7 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).get(ClientResponse)
     }
 
-    def listIdentityProviders(token, domainId = null, idpType = null, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def listIdentityProviders(token, domainId = null, idpType = null, tenantId = null, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         WebResource webResource = resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS)
         if (StringUtils.isNotBlank(domainId)) {
@@ -363,6 +363,9 @@ class Cloud20Methods {
         }
         if (StringUtils.isNotBlank(idpType)) {
             webResource = webResource.queryParam("idpType", idpType)
+        }
+        if (StringUtils.isNotBlank(tenantId)) {
+            webResource = webResource.queryParam("approvedTenantId", tenantId)
         }
         return webResource.header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).get(ClientResponse)
     }

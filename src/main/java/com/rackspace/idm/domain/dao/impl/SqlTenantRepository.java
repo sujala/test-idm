@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.sql.dao.ProjectRepository;
 import com.rackspace.idm.domain.sql.entity.SqlProject;
 import com.rackspace.idm.domain.sql.mapper.impl.DomainMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.ProjectMapper;
+import org.apache.commons.lang.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,6 +71,11 @@ public class SqlTenantRepository implements TenantDao {
 
         final Tenant newTenant = mapper.fromSQL(sqlProject, tenant);
         applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newTenant.getUniqueId(), mapper.toLDIF(newTenant)));
+    }
+
+    @Override
+    public void updateTenantAsIs(Tenant tenant) {
+        throw new NotImplementedException();
     }
 
     @Override

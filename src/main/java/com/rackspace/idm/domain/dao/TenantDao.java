@@ -14,4 +14,5 @@ public interface TenantDao {
     Iterable<Tenant> getTenants();
     PaginatorContext<Tenant> getTenantsPaged(int offset, int limit);
     void updateTenant(Tenant tenant);
+    void updateTenantAsIs(Tenant tenant);
 }
