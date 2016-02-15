@@ -254,6 +254,9 @@ public final class JSONConstants {
     public static final String USER_RAX_AUTH_MULTI_FACTOR_STATE_PATH = "user.RAX-AUTH:multiFactorState";
     public static final String USER_RAX_AUTH_MULTI_FACTOR_TYPE_PATH = "user.RAX-AUTH:factorType";
 
+    public static final String TENANT_DOMAIN_ID_PATH = "tenant.domainId";
+    public static final String TENANTS_DOMAIN_ID_PATH = "tenants.tenant.domainId";
+
     public static final String CONTACT_ID = "contactId";
     public static final String USER_CONTACT_ID_PATH = "user.contactId";
     public static final String USER_RAX_AUTH_CONTACT_ID_PATH = "user.RAX-AUTH:contactId";

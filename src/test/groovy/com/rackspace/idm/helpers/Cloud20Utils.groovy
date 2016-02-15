@@ -197,6 +197,11 @@ class Cloud20Utils {
         testUtils.getRandomIntegerString()
     }
 
+    def createDomainEntity() {
+        def domainEntity = factory.createDomain(createDomain(), testUtils.getRandomUUID("domain"))
+        createDomain(domainEntity)
+    }
+
     def updateDomain(domainId, domain, String token=getServiceAdminToken()) {
         def response = methods.updateDomain(token, domainId, domain)
         assert (response.status == SC_OK)
