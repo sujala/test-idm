@@ -9,6 +9,7 @@
     xmlns="http://www.w3.org/2001/XMLSchema"
     xmlns:identity="http://docs.openstack.org/identity/api/v2.0"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:RAX-AUTH="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0"
     xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
     xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
     xmlns:atom="http://www.w3.org/2005/Atom"
@@ -85,6 +86,17 @@
                     <p>
                         An ID uniquely identifying the tenant. This usually comes from the back-end store.
                         This value is guaranteed to be unique and immutable (it will never change).
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute ref="RAX-AUTH:domainId" use="optional">
+            <annotation>
+                <xsd:documentation
+                        xml:lang="EN"
+                        xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        An ID uniquely identifying the domain that the tenant is associated with.
                     </p>
                 </xsd:documentation>
             </annotation>

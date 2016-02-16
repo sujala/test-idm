@@ -160,9 +160,14 @@ class Cloud20Methods {
         resource.path(path20).path(TENANTS).path(tenantId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def getTenant(String token, String tenantId) {
+    def getTenant(String token, String tenantId, accept = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(TENANTS).path(tenantId).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        resource.path(path20).path(TENANTS).path(tenantId).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def listTenants(String token, accept = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(TENANTS).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def getUserApiKey(String token, String userId) {
@@ -687,14 +692,14 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(endpointTemplateId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addTenant(String token, Tenant tenant) {
+    def addTenant(String token, Tenant tenant, accept = APPLICATION_XML_TYPE, request = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(TENANTS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
+        resource.path(path20).path(TENANTS).header(X_AUTH_TOKEN, token).accept(accept).type(request).entity(tenant).post(ClientResponse)
     }
 
-    def updateTenant(String token, String tenantId, Tenant tenant) {
+    def updateTenant(String token, String tenantId, Tenant tenant, accept = APPLICATION_XML_TYPE, request = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(tenant).post(ClientResponse)
+        resource.path(path20).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(accept).type(request).entity(tenant).post(ClientResponse)
     }
 
     def getSecretQAs(String token, String userId){
@@ -762,9 +767,9 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
     }
 
-    def getDomainTenants(String token, String domainId, boolean enabled = true) {
+    def getDomainTenants(String token, String domainId, boolean enabled = true, accept = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(TENANTS).queryParam(ENABLED, enabled.toString()).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(TENANTS).queryParam(ENABLED, enabled.toString()).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
     }
 
     def getEndpointsByDomain(String token, String domainId) {

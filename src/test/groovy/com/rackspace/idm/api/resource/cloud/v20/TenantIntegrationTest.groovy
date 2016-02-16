@@ -1,14 +1,23 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.DomainService
+import groovy.json.JsonSlurper
 import org.openstack.docs.identity.api.v2.Tenant
+import org.openstack.docs.identity.api.v2.Tenants
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+
+import javax.ws.rs.core.MediaType
 
 class TenantIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     DomainService domainService
+
+    @Autowired
+    IdentityConfig identityConfig
 
     def "create tenant limits tenant name to 64 characters"() {
         given:
@@ -103,6 +112,157 @@ class TenantIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteDomain(domain.id)
+    }
+
+    @Unroll
+    def "test get tenant by ID returns domain ID - accept: #accept"() {
+        given:
+        def domain = utils.createDomainEntity()
+        def tenant = utils.createTenant()
+        utils.addTenantToDomain(domain.id, tenant.id)
+
+        when:
+        def response = cloud20.getTenant(utils.getServiceAdminToken(), tenant.id, accept)
+
+        then:
+        response.status == 200
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            def tenantResponse = response.getEntity(Tenant).value
+            assert tenantResponse.domainId == domain.id
+        } else {
+            def tenantResponse = new JsonSlurper().parseText(response.getEntity(String))
+            assert tenantResponse['tenant']['RAX-AUTH:domainId'] == domain.id
+        }
+
+        cleanup:
+        utils.deleteTenant(tenant)
+        utils.deleteDomain(domain.id)
+
+        where:
+        accept | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "test list tenants for domain returns domain ID on tenants - accept: #accept"() {
+        given:
+        def domain = utils.createDomainEntity()
+        def tenant = utils.createTenant()
+        utils.addTenantToDomain(domain.id, tenant.id)
+
+        when:
+        def response = cloud20.getDomainTenants(utils.getServiceAdminToken(), domain.id, true, accept)
+
+        then:
+        response.status == 200
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            def tenantsResponse = response.getEntity(Tenants).value
+            assert tenantsResponse.tenant.find { it.domainId == domain.id } != null
+        } else {
+            def tenantsResponse = new JsonSlurper().parseText(response.getEntity(String))
+            assert tenantsResponse['tenants'].find { it['RAX-AUTH:domainId'] == domain.id } != null
+        }
+
+        cleanup:
+        utils.deleteTenant(tenant)
+        utils.deleteDomain(domain.id)
+
+        where:
+        accept | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "test list tenants returns domain ID on tenants - accept: #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        when:
+        def response = cloud20.listTenants(utils.getToken(userAdmin.username), accept)
+
+        then:
+        response.status == 200
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            def tenantsResponse = response.getEntity(Tenants).value
+            assert tenantsResponse.tenant.find { it.domainId == domainId } != null
+        } else {
+            def tenantsResponse = new JsonSlurper().parseText(response.getEntity(String))
+            assert tenantsResponse['tenants'].find { it['RAX-AUTH:domainId'] == domainId } != null
+        }
+
+        cleanup:
+        utils.deleteUsers(users)
+
+        where:
+        accept | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "test create tenant returns domain ID - accept: #accept, request = #request"() {
+        when:
+        def tenant = v2Factory.createTenant(testUtils.getRandomIntegerString(), testUtils.getRandomUUID("tenant"))
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, accept, request)
+
+        then:
+        response.status == 201
+        def tenantId
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            def tenantResponse = response.getEntity(Tenant).value
+            assert tenantResponse.domainId == identityConfig.getReloadableConfig().getTenantDefaultDomainId()
+            tenantId = tenantResponse.id
+        } else {
+            def tenantResponse = new JsonSlurper().parseText(response.getEntity(String))
+            assert tenantResponse['tenant']['RAX-AUTH:domainId'] == identityConfig.getReloadableConfig().getTenantDefaultDomainId()
+            tenantId = tenantResponse['tenant']['id']
+        }
+
+        cleanup:
+        utils.deleteTenantById(tenantId)
+
+        where:
+        accept | request
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "test update tenant returns domain ID - accept: #accept, request = #request"() {
+        when:
+        def domain = utils.createDomainEntity()
+        def tenant = utils.createTenant()
+        utils.addTenantToDomain(domain.id, tenant.id)
+        tenant.domainId = null //set domainId to null b/c you cannot set that through the API
+        def response = cloud20.updateTenant(utils.getServiceAdminToken(), tenant.id, tenant, accept, request)
+
+        then:
+        response.status == 200
+        def tenantId
+        if(accept == MediaType.APPLICATION_XML_TYPE) {
+            def tenantResponse = response.getEntity(Tenant).value
+            assert tenantResponse.domainId == domain.id
+        } else {
+            def tenantResponse = new JsonSlurper().parseText(response.getEntity(String))
+            assert tenantResponse['tenant']['RAX-AUTH:domainId'] == domain.id
+        }
+
+        cleanup:
+        utils.deleteTenant(tenant)
+        utils.deleteDomain(domain.id)
+
+        where:
+        accept | request
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
 }

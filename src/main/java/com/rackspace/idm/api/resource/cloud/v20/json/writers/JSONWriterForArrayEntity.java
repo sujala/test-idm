@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.JsonArrayEntryTransformer;
 import com.rackspace.idm.api.resource.cloud.JsonArrayTransformer;
 import com.rackspace.idm.api.resource.cloud.JsonArrayTransformerHandler;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
@@ -40,10 +41,18 @@ public abstract class JSONWriterForArrayEntity<T> implements MessageBodyWriter<T
     }
 
     protected void write(T entity, String oldName, String newName, OutputStream entityStream) {
-        write(entity, oldName, newName, entityStream, null);
+        write(entity, oldName, newName, entityStream, null, null);
     }
 
     protected void write(T entity, String oldName, String newName, OutputStream entityStream, JsonArrayTransformerHandler handler) {
+        write(entity, oldName, newName, entityStream, handler, null);
+    }
+
+    protected void write(T entity, String oldName, String newName, OutputStream entityStream, JsonArrayEntryTransformer entryTransformer) {
+        write(entity, oldName, newName, entityStream, null, entryTransformer);
+    }
+
+    protected void write(T entity, String oldName, String newName, OutputStream entityStream, JsonArrayTransformerHandler handler, JsonArrayEntryTransformer entryTransformer) {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
             getMarshaller().marshallToJSON(entity, outputStream);
@@ -63,6 +72,9 @@ public abstract class JSONWriterForArrayEntity<T> implements MessageBodyWriter<T
                 for (Object jsonObject : (JSONArray)middle.get(key)) {
                     if (handler != null && jsonObject instanceof JSONObject) {
                         arrayTransformer.transformRemoveWrapper((JSONObject)jsonObject, null, handler);
+                    }
+                    if (entryTransformer != null && jsonObject instanceof JSONObject) {
+                        entryTransformer.transform((JSONObject) jsonObject);
                     }
                     jsonArray.add(jsonObject);
                 }
