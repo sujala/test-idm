@@ -8,6 +8,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum;
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationResponse;
 import com.rackspace.identity.multifactor.domain.Pin;
 import com.rackspace.idm.domain.entity.*;
+import org.springframework.util.Assert;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -302,4 +303,15 @@ public interface MultiFactorService {
      * @return
      */
     boolean isUserLocalLocked(User user);
+
+    /**
+     * Sets up a MobilePhone MFA device on the specified user. Can only be used on users that do not currently have MFA
+     * enabled or any existing MFA deviec. Will revoke existing tokens, but will NOT send out MFA email or feed event for user.
+     * This was added for MyRack MFA migration. Since MyRack only allows SMS, this method is
+     * being restricted to SMS to keep it simple.
+     *
+     * @param userId
+     * @param phoneNumber
+     */
+    void setupSmsForUser(String userId, Phonenumber.PhoneNumber phoneNumber);
 }

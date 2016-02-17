@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -63,4 +64,16 @@ public interface DevOpsService {
      */
     Response.ResponseBuilder expiredFederatedUsersDeletion(String authToken, FederatedUsersDeletionRequest request);
 
+    /**
+     * Setup SMS MFA on the specified user. Must specify the phone number. Will link user to phone and mark the phone
+     * as verified. May optionally enable MFA for the user as well.
+     *
+     * Caller must have the role "identity:mfa-admin"
+     *
+     * @param authToken
+     * @param userId
+     * @param mobilePhone
+     * @return
+     */
+    Response.ResponseBuilder setupSmsMfaOnUser(String authToken, String userId, MobilePhone mobilePhone);
 }

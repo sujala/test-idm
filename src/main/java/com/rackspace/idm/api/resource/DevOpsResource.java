@@ -1,7 +1,10 @@
 package com.rackspace.idm.api.resource;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
 import com.rackspace.idm.api.resource.cloud.devops.DevOpsService;
+import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +19,10 @@ import javax.ws.rs.core.UriInfo;
 @Component
 public class DevOpsResource {
     @Autowired
-    DevOpsService devOpsService;
+    private DevOpsService devOpsService;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     private static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
 
@@ -82,6 +88,15 @@ public class DevOpsResource {
     @Path("/federation/deletion")
     public Response expiredFederatedUsersDeletion(@HeaderParam(X_AUTH_TOKEN) String authToken, FederatedUsersDeletionRequest request) {
         return devOpsService.expiredFederatedUsersDeletion(authToken, request).build();
+    }
+
+    @POST
+    @Path("/users/{userId}/multi-factor/setupsms")
+    public Response setupSmsMfa(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("userId") String userId, MobilePhone mobilePhone) {
+        if (identityConfig.getReloadableConfig().areMfaMigrationServicesEnabled()) {
+            return devOpsService.setupSmsMfaOnUser(authToken, userId, mobilePhone).build();
+        }
+        throw new NotFoundException("Service Not Found");
     }
 
 }

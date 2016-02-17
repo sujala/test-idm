@@ -1,16 +1,25 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
+import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
+import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.api.filter.LdapLoggingFilter;
+import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.ExceptionHandler;
 import com.rackspace.idm.exception.NotAuthorizedException;
+import com.rackspace.idm.multifactor.service.MultiFactorService;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -47,6 +56,12 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Autowired
     private RequestContextHolder requestContextHolder;
+
+    @Autowired
+    private MultiFactorService multiFactorService;
+
+    @Autowired
+    private ExceptionHandler exceptionHandler;
 
     @Autowired(required = false)
     private CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator;
@@ -121,6 +136,43 @@ public class DefaultDevOpsService implements DevOpsService {
 
         userService.expiredFederatedUsersDeletion(request, response);
         return Response.ok().entity(factory.createFederatedUsersDeletionResponse(response));
+    }
+
+    @Override
+    public Response.ResponseBuilder setupSmsMfaOnUser(String authToken, String userId, MobilePhone phone) {
+        try {
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_MFA_ADMIN.getRoleName());
+
+            //if the target user is not a provisioned user (e.g. - a fed user), throw bad request cause fed users can't have MFA
+            EndUser endUser = requestContextHolder.getAndCheckTargetEndUser(userId);
+            if (!(endUser instanceof User)) {
+                throw new BadRequestException("Only provisioned users store multi-factor information within Identity");
+            }
+            User user = (User) endUser;
+
+            //Must not have any MFA devices.
+            if (multiFactorService.userHasMultiFactorDevices(user) || user.isMultiFactorEnabled()) {
+                throw new BadRequestException("You can not configure a user that already has mfa devices or has MFA enabled.");
+            }
+
+            if (StringUtils.isBlank(phone.getNumber() )) {
+                throw new BadRequestException("Phone must be provided to setup SMA for this user");
+            }
+
+            Phonenumber.PhoneNumber phoneNumber = null;
+            try {
+                phoneNumber = IdmPhoneNumberUtil.getInstance().parsePhoneNumber(phone.getNumber());
+            } catch (com.rackspace.identity.multifactor.exceptions.InvalidPhoneNumberException ex) {
+                throw new BadRequestException("Invalid phone", ex);
+            }
+
+            multiFactorService.setupSmsForUser(userId, phoneNumber);
+            return Response.status(Response.Status.NO_CONTENT);
+        } catch (Exception ex) {
+            LOG.error(String.format("Error setting up SMS MFA for user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     private File getLogParentDir() {
