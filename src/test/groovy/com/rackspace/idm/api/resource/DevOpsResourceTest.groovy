@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil
 import com.rackspace.idm.domain.dao.MobilePhoneDao
+import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.service.IdentityUserService
 import org.apache.http.HttpStatus
 import org.springframework.beans.factory.annotation.Autowired
@@ -142,7 +143,7 @@ class DevOpsResourceTest extends RootIntegrationTest {
         when: "try to upgrade non-existant user"
         def noUserResponse = devops.migrateSmsMfaOnUser(utils.serviceAdminToken, UUID.randomUUID().toString(), phone, requestContentMediaType, acceptMediaType)
 
-        then: "get 400"
+        then: "get 404"
         noUserResponse.status == HttpStatus.SC_NOT_FOUND
 
         where:
@@ -150,6 +151,58 @@ class DevOpsResourceTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
+
+    @Unroll
+    def "test ability to remove MFA from user under various scenarios: accept: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
+        def (user, users) = utils.createUserAdmin()
+        def phone = v2Factory.createMobilePhone()
+
+        def userToken = utils.getToken(user.username)
+
+        when: "try to remove user w/o MFA"
+        def resp1 = devops.removeSmsMfaFromUser(utils.serviceAdminToken, user.id, requestContentMediaType, acceptMediaType)
+
+        then: "get 400"
+        resp1.status == HttpStatus.SC_BAD_REQUEST
+
+        when: "try to remove using invalid caller"
+        def invalidCallerResponse = devops.removeSmsMfaFromUser(userToken, user.id, requestContentMediaType, acceptMediaType)
+
+        then: "get 403"
+        invalidCallerResponse.status == HttpStatus.SC_FORBIDDEN
+
+        when: "try to remove from non-existant user"
+        def resp2 = devops.removeSmsMfaFromUser(utils.serviceAdminToken, "abcd", requestContentMediaType, acceptMediaType)
+
+        then: "get 404"
+        resp2.status == HttpStatus.SC_NOT_FOUND
+
+        when: "remove mfa"
+        def setupResponse = devops.migrateSmsMfaOnUser(utils.serviceAdminToken, user.id, phone, requestContentMediaType, acceptMediaType)
+        assert setupResponse.status == HttpStatus.SC_NO_CONTENT
+        def resp3 = devops.removeSmsMfaFromUser(utils.serviceAdminToken, user.id, requestContentMediaType, acceptMediaType)
+
+        then: "is success"
+        resp3.status == HttpStatus.SC_NO_CONTENT
+
+        and: "user entity is reset"
+        def userEntity = identityUserService.getProvisionedUserById(user.id)
+        userEntity.isMultiFactorEnabled() == false
+        userEntity.isMultiFactorDeviceVerified() == false
+        userEntity.getMultiFactorTypeAsEnum() == null
+        userEntity.getExternalMultiFactorUserId() == null
+        userEntity.getMultiFactorMobilePhoneRsId() == null
+
+        and: "phone still exists"
+        def phoneEntity = mobilePhoneDao.getByTelephoneNumber(IdmPhoneNumberUtil.getInstance().canonicalizePhoneNumberToString(IdmPhoneNumberUtil.getInstance().parsePhoneNumber(phone.getNumber())));
+        phoneEntity.externalMultiFactorPhoneId != null
+
+        where:
+        requestContentMediaType | acceptMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
 
     def assertFormat(configSection) {
         configSection.each { prop, propSection ->

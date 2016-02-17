@@ -99,4 +99,12 @@ public class DevOpsResource {
         throw new NotFoundException("Service Not Found");
     }
 
+    @DELETE
+    @Path("/users/{userId}/multi-factor")
+    public Response removeMfa(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("userId") String userId) {
+        if (identityConfig.getReloadableConfig().areMfaMigrationServicesEnabled()) {
+            return devOpsService.removeMfaFromUser(authToken, userId).build();
+        }
+        throw new NotFoundException("Service Not Found");
+    }
 }

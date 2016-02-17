@@ -1,10 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.filter.LdapLoggingFilter;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
@@ -171,6 +173,34 @@ public class DefaultDevOpsService implements DevOpsService {
             return Response.status(Response.Status.NO_CONTENT);
         } catch (Exception ex) {
             LOG.error(String.format("Error setting up SMS MFA for user '%s'", userId), ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder removeMfaFromUser(String authToken, String userId) {
+        try {
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_MFA_ADMIN.getRoleName());
+
+            //if the target user is not a provisioned user (e.g. - a fed user), throw bad request cause fed users can't have MFA
+            EndUser endUser = requestContextHolder.getAndCheckTargetEndUser(userId);
+            if (!(endUser instanceof User)) {
+                throw new BadRequestException("Only provisioned users store multi-factor information within Identity");
+            }
+            User user = (User) endUser;
+
+            if (!user.isMultiFactorEnabled()) {
+                throw new BadRequestException("MFA must be enabled on user to use this service", ErrorCodes.ERROR_CODE_MFA_MIGRATION_MFA_NOT_ENABLED);
+            }
+            if (user.getMultiFactorTypeAsEnum() != FactorTypeEnum.SMS) {
+                throw new BadRequestException("User has OTP enabled. Can only remove SMS MFA", ErrorCodes.ERROR_CODE_MFA_MIGRATION_OTP_ENABLED);
+            }
+
+            multiFactorService.removeMultifactorFromUserWithoutNotifications(user);
+            return Response.status(Response.Status.NO_CONTENT);
+        } catch (Exception ex) {
+            LOG.error(String.format("Error removing MFA from user '%s'", userId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }
