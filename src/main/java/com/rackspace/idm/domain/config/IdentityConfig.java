@@ -291,7 +291,11 @@ public class IdentityConfig {
 
 
     /* ************************
+    MFA MIGRATION PROPS
      **************************/
+    public static final String FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP = "feature.enable.mfa.migration.services";
+    public static final Boolean FEATURE_ENABLE_MFA_MIGRATION_SERVICES_DEFAULT = true;
+
 
     /**
      * SQL debug property
@@ -408,6 +412,8 @@ public class IdentityConfig {
         defaults.put(FEATURE_FEDERATION_DELETION_ROLE_PROP, FEATURE_FEDERATION_DELETION_ROLE_DEFAULT);
         defaults.put(FEATURE_FEDERATION_DELETION_TIMEOUT_PROP, FEATURE_FEDERATION_DELETION_TIMEOUT_DEFAULT);
         defaults.put(FEATURE_SUPPORT_V11_LEGACY_PROP, FEATURE_SUPPORT_V11_LEGACY_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP, FEATURE_ENABLE_MFA_MIGRATION_SERVICES_DEFAULT);
 
         return defaults;
     }
@@ -1353,6 +1359,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_SUPPORT_V11_LEGACY_PROP, versionAdded = "3.1.1", description = "Enable v1.1 legacy calls")
         public boolean getV11LegacyEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_V11_LEGACY_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP, versionAdded = "3.1.1", description = "Enable MFA SMS Migration services")
+        public boolean areMfaMigrationServicesEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP);
         }
     }
 

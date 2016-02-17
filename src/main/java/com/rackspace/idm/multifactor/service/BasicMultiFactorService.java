@@ -164,21 +164,50 @@ public class BasicMultiFactorService implements MultiFactorService {
                 LOG.warn(errMsg);
                 throw new IllegalStateException(errMsg);
             } else {
-                return replacePhoneOnUser(user, phoneNumber);
+                return replacePhoneOnUserAndSaveUpdatedUser(user, phoneNumber);
             }
         } else {
-            return linkPhoneToUser(phoneNumber, user);
+            return linkPhoneToUserAndSaveUpdatedUser(phoneNumber, user);
         }
-
     }
 
     /**
-     * Replace the device on the user, resetting all verification of the device on the user. If the phone is already linked
-     * to the user, this is a NO-OP and just returns the existing device.
+     * Use this service to:
+     *
+     * 1. Setup a phone on a user and leave MFA inactive (phone + false)
+     * 2. Setup a phone on a user and enable MFA (phone + true)
+     *
+     * The goal is to specify the requested END state
+     * @param userId
+     * @param phoneNumber
+     */
+    @Override
+    public void setupSmsForUser(String userId, Phonenumber.PhoneNumber phoneNumber) {
+        Assert.notNull(phoneNumber);
+        Assert.notNull(userId);
+
+        User user = userService.checkAndGetUserById(userId);
+
+        if(user.isMultiFactorEnabled()) {
+            throw new IllegalArgumentException("User has MFA enabled. Can not use this method.");
+        }
+        if(user.getMultiFactorMobilePhoneRsId() != null) {
+            throw new IllegalArgumentException("User already has a phone. Can not use this method.");
+        }
+
+        MobilePhone phone = linkPhoneToUser(phoneNumber, user); //creates and saves the mobile phone, and sets link on user
+        user.setMultiFactorDeviceVerified(true);
+        user.setMultiFactorType(FactorTypeEnum.SMS.value()); //must set the factor type prior to enabling
+        enableMultiFactorForUser(user, true, false); //this includes saving the user
+    }
+
+    /**
+     * Replace the device on the user, resetting all verification of the device on the user, and saves the updated user.
+     * If the phone is already linked to the user, this is a NO-OP and just returns the existing device.
      * @param user
      * @param phoneNumber
      */
-    private MobilePhone replacePhoneOnUser(User user, Phonenumber.PhoneNumber phoneNumber) {
+    private MobilePhone replacePhoneOnUserAndSaveUpdatedUser(User user, Phonenumber.PhoneNumber phoneNumber) {
         MobilePhone oldPhone = null;
         MobilePhone newPhone = null;
 
@@ -194,7 +223,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             newPhone = oldPhone;
         } else {
             //create/link new phone (this updates the user state)
-            newPhone = linkPhoneToUser(phoneNumber, user);
+            newPhone = linkPhoneToUserAndSaveUpdatedUser(phoneNumber, user);
 
             /*
             Clean up the old phone if it exists. Double check that it's not the same as the newPhone just to be paranoid.
@@ -386,6 +415,9 @@ public class BasicMultiFactorService implements MultiFactorService {
      * either the specified factorType or a chosen default (whichever type has a verified device)
      * </p>
      *
+     * <p>If the user is enabling MFA from a disabled state, will revoke all protected tokens,
+     * send enablement email, and update user feed event.</p>
+     *
      * @param user
      * @param multiFactor
      */
@@ -424,9 +456,11 @@ public class BasicMultiFactorService implements MultiFactorService {
             throw new IllegalStateException(String.format("Unrecognized factorType '%s'", finalFactorType));
         }
 
-        //update the user
-        enableMultiFactorForUser(user);
-        userService.updateUserForMultiFactor(user);
+        /*
+        enable MFA and save the user. if user did NOT already have MFA enabled (e.g. - not just switching MFA factor types), then revoke outstanding
+        tokens and send feed events.
+         */
+        enableMultiFactorForUser(user, !userAlreadyHasMFAEnabled, !userAlreadyHasMFAEnabled);
 
         //at this point user is setup for new factor type. Duo is setup, etc.
 
@@ -598,6 +632,8 @@ public class BasicMultiFactorService implements MultiFactorService {
      * If the phone already exists it will then try to retrieve the phone from ldap and link the user to that phone.
      * If all attempts to link the user to the requested phone number, an exception will be thrown.
      *
+     * The user is updated, but NOT saved. The caller MUST save the updated user.
+     *
      */
     private MobilePhone linkPhoneToUser(Phonenumber.PhoneNumber phoneNumber, User user) {
         MobilePhone mobilePhone = null;
@@ -614,8 +650,19 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorDeviceVerified(null);
         user.setMultiFactorDevicePin(null);
         user.setMultiFactorDevicePinExpiration(null);
-        userService.updateUserForMultiFactor(user);
 
+        return mobilePhone;
+    }
+
+    /**
+     * Does everything that {@link #linkPhoneToUser(Phonenumber.PhoneNumber, User)} does, and saves user at end
+     * @param phoneNumber
+     * @param user
+     * @return
+     */
+    private MobilePhone linkPhoneToUserAndSaveUpdatedUser(Phonenumber.PhoneNumber phoneNumber, User user) {
+        MobilePhone mobilePhone = linkPhoneToUser(phoneNumber, user);
+        userService.updateUserForMultiFactor(user);
         return mobilePhone;
     }
 
@@ -981,15 +1028,45 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
     }
 
-    private void enableMultiFactorForUser(User user) {
-        if (isMultiFactorTypeOTP(user)) {
-            enableMultifactorAndPostFeed(user);
-        } else if (isMultiFactorTypePhone(user)) {
-            enableMultiFactorUsingPhoneForUser(user);
+    /**
+     * Configures the user and MFA devices as necessary to enable MFA. The user is updated in backend. Assumes the user
+     * has the multifactor type set appropriate already.
+     *
+     * @param user
+     */
+    private void enableMultiFactorForUser(User user, boolean revokeTokens, boolean sendNotifications) {
+        //not a fan of boolean parameters controlling behavior. However, in this case wanted to minimize changes due
+        //to temp service add. Such parameters on an internal (private) method are much easier to revert.
+
+        user.setMultifactorEnabled(true);
+        user.setMultiFactorState(MULTI_FACTOR_STATE_ACTIVE);
+
+        /*
+        if setting up SMS, must configure Duo profiles (User and Phone) and add links to local entries.
+        OTP doesn't require anything else to be done
+         */
+        if (isMultiFactorTypePhone(user)) {
+            setupDuoSmsProfilesOnUser(user);
+        }
+
+        userService.updateUserForMultiFactor(user);
+
+        if (revokeTokens) {
+            revokeAllMFAProtectedTokensForUser(user);
+        }
+        if (sendNotifications) {
+            atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+            emailClient.asyncSendMultiFactorEnabledMessage(user);
         }
     }
 
-    private void enableMultiFactorUsingPhoneForUser(User user) {
+    /**
+     * Configures Duo for the user. Creates user and phone profiles within Duo if necessary. The local phone entry is
+     * updated and saved if required. The user is updated, but NOT saved. The caller must save the user.
+     *
+     * @param user
+     */
+    private void setupDuoSmsProfilesOnUser(User user) {
         final MobilePhone phone = mobilePhoneDao.getById(user.getMultiFactorMobilePhoneRsId());
 
         final DuoPhone duoPhone = new DuoPhone();
@@ -1003,30 +1080,19 @@ public class BasicMultiFactorService implements MultiFactorService {
 
         try {
             ProviderPhone providerPhone = userManagement.linkMobilePhoneToUser(providerUser.getProviderId(), duoPhone);
-            phone.setExternalMultiFactorPhoneId(providerPhone.getProviderId());
+            if (!providerPhone.getProviderId().equals(phone.getExternalMultiFactorPhoneId())) {
+                //a Duo phone was created for this device that differs from what's recorded. Must update local phone entry
+                phone.setExternalMultiFactorPhoneId(providerPhone.getProviderId());
+                mobilePhoneDao.updateMobilePhone(phone);
+            }
         } catch (com.rackspace.identity.multifactor.exceptions.NotFoundException e) {
             // Translate to IDM not found exception.
             // Thrown if user does not exist in duo, though it should since was created above
             multiFactorConsistencyLogger.error(String.format("An error occurred enabling multifactor for user '%s'. Duo returned a NotFoundException for the user's duo profile '%s'.", user.getId(), providerUser.getProviderId()), e);
             throw new NotFoundException(e.getMessage(), e);
         }
-
-        mobilePhoneDao.updateMobilePhone(phone);
-        enableMultifactorAndPostFeed(user);
     }
 
-    private void enableMultifactorAndPostFeed(User user) {
-        final boolean alreadyEnabled = user.isMultiFactorEnabled();
-
-        user.setMultifactorEnabled(true);
-        user.setMultiFactorState(MULTI_FACTOR_STATE_ACTIVE);
-
-        if (!alreadyEnabled) {
-            revokeAllMFAProtectedTokensForUser(user);
-            atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
-            emailClient.asyncSendMultiFactorEnabledMessage(user);
-        }
-    }
 
     /**
      * Revokes all the non-mfa tokens for the user, skipping those tokens issued by credentials that are NOT protected

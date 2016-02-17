@@ -44,6 +44,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     public static final String MULTI_FACTOR_PATH_PART = "multi-factor";
     public static final String USERS_PATH_PART = "users";
     public static final String DOMAINS_PATH_PART = "domains";
+    public static final String DEVOPS_SERVICE_PATH_PART = "devops";
 
     /**
      * Pattern to recognize validate call against AE or UUID tokens
@@ -165,6 +166,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                     throwForbiddenErrorForMfaScopedToken();
                 }
 
+                //authorize MFA calls - except for devops services
                 if(path.contains(MULTI_FACTOR_PATH_PART)) {
                     authorizeMultiFactorServiceCall(path);
                 }
@@ -288,7 +290,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     private void authorizeMultiFactorServiceCall(String requestPath) {
         ScopeAccess effectiveToken = requestContextHolder.getRequestContext().getSecurityContext().getEffectiveCallerToken();
 
-        if (isDomainMfaTargetCall(requestPath)) {
+        if (requestPath.contains(DEVOPS_SERVICE_PATH_PART)) {
+            return;
+        } else if (isDomainMfaTargetCall(requestPath)) {
             if (scopeAccessService.isSetupMfaScopedToken(effectiveToken)) {
                 //setupmfa token only allows mfa calls with {userid} in path
                 throwForbiddenErrorForMfaScopedToken();

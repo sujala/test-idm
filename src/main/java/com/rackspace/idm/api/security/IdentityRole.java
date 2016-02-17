@@ -16,6 +16,7 @@ public enum IdentityRole {
     , REPOSE_STANDARD("identity:repose-standard")
     , IDENTITY_PROVIDER_MANAGER("identity:identity-provider-manager")
     , IDENTITY_PROVIDER_READ_ONLY("identity:identity-provider-read-only")
+    , IDENTITY_MFA_ADMIN("identity:mfa-admin")
     ;
 
     @Getter

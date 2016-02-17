@@ -46,6 +46,7 @@ INSERT INTO `assignment` VALUES ('UserProject','173189','identity','1',0);
 INSERT INTO `assignment` VALUES ('UserProject','173190','identity','175f0c9040924c14a9aad81b7a3ec222',0);
 INSERT INTO `assignment` VALUES ('UserProject','173190','identity','4',0);
 INSERT INTO `assignment` VALUES ('UserProject','173190','identity','8470c459cfa043ef989976a66ba4d74e',0);
+INSERT INTO `assignment` VALUES ('UserProject','173190','identity','c637d7153b7c41bf9153d46107dadcc7',0);
 INSERT INTO `assignment` VALUES ('UserProject','173195','identity','10053955',0);
 INSERT INTO `assignment` VALUES ('UserProject','173195','identity','4',0);
 INSERT INTO `assignment` VALUES ('UserProject','1c5a89a8d99b4e34998f7143d76d99e2','78543990','6',0);
@@ -1048,6 +1049,7 @@ INSERT INTO `role` VALUES ('7','identity:user-manage','{}');
 INSERT INTO `role` VALUES ('8','identity:multifactor_beta','{}');
 INSERT INTO `role` VALUES ('8470c459cfa043ef989976a66ba4d74e','identity:identity-provider-manager','{}');
 INSERT INTO `role` VALUES ('9','Racker','{}');
+INSERT INTO `role` VALUES ('c637d7153b7c41bf9153d46107dadcc7','identity:mfa-admin','{}');
 
 --
 -- Dumping data for table `role_rax`
@@ -1081,6 +1083,7 @@ INSERT INTO `role_rax` VALUES ('7','User manage role',900,0,'bde1268ebabeeabb70a
 INSERT INTO `role_rax` VALUES ('8','Multi-Factor BETA',500,0,'bde1268ebabeeabb70a0e702a4626977c331d5c4');
 INSERT INTO `role_rax` VALUES ('8470c459cfa043ef989976a66ba4d74e','Identity Provider Manager',50,0,'bde1268ebabeeabb70a0e702a4626977c331d5c4');
 INSERT INTO `role_rax` VALUES ('9','Defines a user as being a Racker',100,0,'18e7a7032733486cd32f472d7bd58f709ac0d221');
+INSERT INTO `role_rax` VALUES ('c637d7153b7c41bf9153d46107dadcc7','Role to provide additional MFA admin capabilities',50,0,'bde1268ebabeeabb70a0e702a4626977c331d5c4');
 
 --
 -- Dumping data for table `sensitive_config`

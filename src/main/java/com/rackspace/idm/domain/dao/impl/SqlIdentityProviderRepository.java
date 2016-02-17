@@ -9,9 +9,9 @@ import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicatio
 import com.rackspace.idm.domain.sql.dao.IdentityProviderRepository;
 import com.rackspace.idm.domain.sql.entity.SqlIdentityProvider;
 import com.rackspace.idm.domain.sql.mapper.impl.IdentityProviderMapper;
+import org.apache.commons.lang.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.List;
 
