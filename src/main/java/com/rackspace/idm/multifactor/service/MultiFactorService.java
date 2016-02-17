@@ -314,4 +314,12 @@ public interface MultiFactorService {
      * @param phoneNumber
      */
     void setupSmsForUser(String userId, Phonenumber.PhoneNumber phoneNumber);
+
+    /**
+     * Removes MFA from the user without sending email notifications or feed event. This was added for MyRack MFA migration.
+     * This is added to allow MyRack to reset MFA on users during migration if needed.
+     *
+     * @param user
+     */
+    void removeMultifactorFromUserWithoutNotifications(User user);
 }

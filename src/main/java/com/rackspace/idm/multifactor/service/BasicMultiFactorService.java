@@ -548,10 +548,20 @@ public class BasicMultiFactorService implements MultiFactorService {
     @Override
     public void removeMultiFactorForUser(String userId) {
         User user = userService.checkAndGetUserById(userId);
+        boolean enabled = user.isMultiFactorEnabled();
+
+        removeMultifactorFromUserWithoutNotifications(user);
+
+        if (enabled) {
+            atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
+            emailClient.asyncSendMultiFactorDisabledMessage(user);
+        }
+    }
+
+    @Override
+    public void removeMultifactorFromUserWithoutNotifications(User user) {
         String providerUserId = user.getExternalMultiFactorUserId();
         String phoneRsId = user.getMultiFactorMobilePhoneRsId();
-
-        boolean enabled = user.isMultiFactorEnabled();
 
         //reset user
         user.setMultifactorEnabled(null);
@@ -564,11 +574,6 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorType(null);
         userService.updateUserForMultiFactor(user);
         otpDeviceDao.deleteAllOTPDevicesFromParent(user);
-
-        if (enabled) {
-            atomHopperClient.asyncPost(user, AtomHopperConstants.MULTI_FACTOR);
-            emailClient.asyncSendMultiFactorDisabledMessage(user);
-        }
 
         if (StringUtils.hasText(phoneRsId)) {
             MobilePhone phone = mobilePhoneDao.getById(phoneRsId);

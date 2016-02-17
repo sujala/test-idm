@@ -45,4 +45,9 @@ class DevOpsMethods {
         resource.path("devops/users").path(userId).path("multi-factor/setupsms").accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).header("X-Auth-Token", token).entity(phone).post(ClientResponse)
     }
 
+    def removeSmsMfaFromUser(token, String userId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path("devops/users").path(userId).path("multi-factor").accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).header("X-Auth-Token", token).delete(ClientResponse)
+    }
+
 }

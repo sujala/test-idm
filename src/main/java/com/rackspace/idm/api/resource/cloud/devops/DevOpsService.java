@@ -76,4 +76,15 @@ public interface DevOpsService {
      * @return
      */
     Response.ResponseBuilder setupSmsMfaOnUser(String authToken, String userId, MobilePhone mobilePhone);
+
+    /**
+     * Remove SMS MFA from the specified user. Will error if user has OTP MFA enabled.
+     *
+     * Caller must have the role "identity:mfa-admin"
+     *
+     * @param authToken
+     * @param userId
+     * @return
+     */
+    Response.ResponseBuilder removeMfaFromUser(String authToken, String userId);
 }
