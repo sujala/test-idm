@@ -926,9 +926,8 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
     }
 
-    def "Deleting a Domain federated user returns logout response when configured"() {
+    def "Deleting a Domain federated user returns logout response"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_FEDERATION_LOGOUT_RETURNS_SAML_PROP, true)
         def domainId = utils.createDomain()
         def username1 = testUtils.getRandomUUID("samlUser")
         def expDays = 500
@@ -970,37 +969,6 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         logoutResponse.status == HttpStatus.SC_BAD_REQUEST
         LogoutResponse logoutResponseObj = samlUnmarshaller.unmarshallLogoutRespone(StringUtils.getBytesUtf8(logoutResponse.getEntity(String.class)))
         logoutResponseObj.getStatus().getStatusCode().value == StatusCode.REQUESTER_URI
-
-        cleanup:
-        deleteFederatedUserQuietly(username1)
-        utils.deleteUsers(users)
-        reloadableConfiguration.reset()
-    }
-
-    def "Deleting a Domain federated user returns correct logout response"() {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_FEDERATION_LOGOUT_RETURNS_SAML_PROP, false)
-        def domainId = utils.createDomain()
-        def username1 = testUtils.getRandomUUID("samlUser")
-        def expDays = 500
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username1, expDays, domainId, null)
-
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        assert samlResponse.status == HttpStatus.SC_OK
-        def samlAuthToken = samlResponse.getEntity(AuthenticateResponse).value.token.id
-        def validateSamlTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), samlAuthToken)
-        assert validateSamlTokenResponse.status == HttpStatus.SC_OK
-
-        when: "delete user"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_FEDERATION_LOGOUT_RETURNS_SAML_PROP, false)
-        def logoutRequest = new SamlFactory().generateLogoutRequestEncoded(DEFAULT_IDP_URI, username1)
-        def logoutResponse = cloud20.federatedLogout(logoutRequest);
-
-        then: "get 204 back"
-        logoutResponse.status == HttpStatus.SC_NO_CONTENT
 
         cleanup:
         deleteFederatedUserQuietly(username1)

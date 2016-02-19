@@ -230,9 +230,6 @@ public class IdentityConfig {
     public static final String FEDERATED_DELTA_EXPIRATION_SECONDS_PROP = "federated.deltaExpiration.seconds";
     public static final int FEDERATED_DELTA_EXPIRATION_SECONDS_DEFAULT = 43200;
 
-    public static final String FEATURE_FEDERATION_LOGOUT_RETURNS_SAML_PROP = "feature.federation.logout.returns.saml";
-    public static final boolean FEATURE_FEDERATION_LOGOUT_RETURNS_SAML_DEFAULT = true;
-
     public static final String FEATURE_FEDERATION_DELETION_MAX_DELAY_PROP = "feature.federation.deletion.max.delay";
     public static final int FEATURE_FEDERATION_DELETION_MAX_DELAY_DEFAULT = 1000;
 
@@ -406,7 +403,6 @@ public class IdentityConfig {
         defaults.put(IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT);
         defaults.put(IDP_MAX_SEACH_RESULT_SIZE_PROP, IDP_MAX_SEACH_RESULT_SIZE_DEFAULT);
         defaults.put(FEDERATED_DELTA_EXPIRATION_SECONDS_PROP, FEDERATED_DELTA_EXPIRATION_SECONDS_DEFAULT);
-        defaults.put(FEATURE_FEDERATION_LOGOUT_RETURNS_SAML_PROP, FEATURE_FEDERATION_LOGOUT_RETURNS_SAML_DEFAULT);
         defaults.put(FEATURE_FEDERATION_DELETION_MAX_DELAY_PROP, FEATURE_FEDERATION_DELETION_MAX_DELAY_DEFAULT);
         defaults.put(FEATURE_FEDERATION_DELETION_MAX_COUNT_PROP, FEATURE_FEDERATION_DELETION_MAX_COUNT_DEFAULT);
         defaults.put(FEATURE_FEDERATION_DELETION_ROLE_PROP, FEATURE_FEDERATION_DELETION_ROLE_DEFAULT);
@@ -1329,11 +1325,6 @@ public class IdentityConfig {
         @IdmProp(key = FEDERATED_DELTA_EXPIRATION_SECONDS_PROP, versionAdded = "3.1.0", description = "Delta time in seconds to be added for federated users deletion eligibility")
         public int getFederatedDeltaExpiration() {
             return getIntSafely(reloadableConfiguration, FEDERATED_DELTA_EXPIRATION_SECONDS_PROP);
-        }
-
-        @IdmProp(key = FEATURE_FEDERATION_LOGOUT_RETURNS_SAML_PROP, versionAdded = "3.1.0", description = "Whether or not federation logout should return standard SAML LogoutResponse")
-        public boolean returnLogoutResponse() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_FEDERATION_LOGOUT_RETURNS_SAML_PROP);
         }
 
         @IdmProp(key = FEATURE_FEDERATION_DELETION_MAX_DELAY_PROP, versionAdded = "3.1.1", description = "Maximum time for federation deletion delta in milliseconds")
