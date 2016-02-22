@@ -21,11 +21,14 @@ import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.env.AbstractEnvironment
+import org.springframework.test.annotation.IfProfileValue
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
 
+@IfProfileValue(name = AbstractEnvironment.ACTIVE_PROFILES_PROPERTY_NAME, values = ["LDAP,MIGRATION", "SQL"])
 class MigrationChangeEventIntegrationTest extends RootIntegrationTest {
 
     @Autowired
