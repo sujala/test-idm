@@ -1125,12 +1125,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 status = exceptionHandler.exceptionToHttpStatus(logoutResponse.getExceptionThrown());
             }
 
-            if (identityConfig.getReloadableConfig().returnLogoutResponse()) {
-                return buildFedLogoutResponseBuilder(logoutResponse.getLogoutResponse(), status);
-            } else {
-                return Response.noContent();
-            }
-
+            return buildFedLogoutResponseBuilder(logoutResponse.getLogoutResponse(), status);
         } catch (Exception e) {
             logger.debug("Error generating error output. Returning 500", e);
             return exceptionHandler.exceptionResponse(e);
