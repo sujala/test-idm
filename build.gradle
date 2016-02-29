@@ -196,7 +196,7 @@ task copyConfig(type: Copy) {
 task copyBaseConfig << {
     resourceDirs.each { destDir ->
         copy {
-            from ('src/main/config/base.idm.properties', 'src/main/config/log4j.xml')
+            from ('src/main/config/log4j.xml')
             into "build/config/$destDir"
             ant.property(name: 'version', value: featureVersion)
             ant.property(name: 'buildVersion', value: buildVersion)
