@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.email;
 
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 
 public interface EmailClient {
@@ -11,4 +12,8 @@ public interface EmailClient {
 
     boolean sendMultiFactorDisabledMessage(User user);
     void asyncSendMultiFactorDisabledMessage(User user);
+
+    boolean sendForgotPasswordMessage(User user, ScopeAccess token, String portal);
+    void asyncSendForgotPasswordMessage(User user, ScopeAccess token, String portal);
+
 }

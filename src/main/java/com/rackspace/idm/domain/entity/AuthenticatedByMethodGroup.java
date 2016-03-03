@@ -24,6 +24,7 @@ public final class AuthenticatedByMethodGroup {
     public static final AuthenticatedByMethodGroup RSAKEY = getGroup(AuthenticatedByMethodEnum.RSAKEY);
     public static final AuthenticatedByMethodGroup PASSWORD_PASSCODE = getGroup(AuthenticatedByMethodEnum.PASSWORD, AuthenticatedByMethodEnum.PASSCODE);
     public static final AuthenticatedByMethodGroup PASSWORD_OTPPASSCODE = getGroup(AuthenticatedByMethodEnum.PASSWORD, AuthenticatedByMethodEnum.OTPPASSCODE);
+    public static final AuthenticatedByMethodGroup EMAIL = getGroup(AuthenticatedByMethodEnum.EMAIL);
 
     private List<AuthenticatedByMethodEnum> authenticatedByMethods = new ArrayList<AuthenticatedByMethodEnum>();
     private boolean allAuthenticatedByMethods = true;

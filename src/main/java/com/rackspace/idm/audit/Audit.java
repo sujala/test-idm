@@ -1,7 +1,9 @@
 package com.rackspace.idm.audit;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.validation.Validator20;
 import com.unboundid.ldap.sdk.Modification;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -21,7 +23,7 @@ public class Audit {
     public static final String X_FORWARDED_FOR = "X_FORWARDED_FOR";
 
 	private enum ACTION {
-		USERAUTH, CLIENTAUTH, RACKERAUTH, ADD, DELETE, MODIFY, CLOUDADMINAUTH, IMPERSONATION, FEDERATEDAUTH
+		USERAUTH, CLIENTAUTH, RACKERAUTH, ADD, DELETE, MODIFY, CLOUDADMINAUTH, IMPERSONATION, FEDERATEDAUTH, FORGOTPWDAUTH
 	}
 
 	private enum RESULT {
@@ -89,6 +91,10 @@ public class Audit {
 		return new Audit(o.getAuditContext()).addEvent(ACTION.FEDERATEDAUTH);
 	}
 
+	public static Audit authForgotUser(User o) {
+		return new Audit(o.getAuditContext()).addEvent(ACTION.FORGOTPWDAUTH, String.format("userId='%s', email='%s'", o.getId(), o.getEmail()));
+	}
+
 	public static Audit authImpersonation(Auditable o) {
 		return new Audit(o.getAuditContext()).addEvent(ACTION.IMPERSONATION);
 	}
@@ -101,6 +107,32 @@ public class Audit {
 	public static void logSuccessfulImpersonation(ImpersonatedScopeAccess scopeAccess) {
 		Audit audit = authImpersonation(scopeAccess);
 		audit.succeed();
+	}
+
+	public static void logSuccessfulForgotPasswordRequest(ForgotPasswordCredentials forgotPasswordCredentials, User user) {
+		Audit audit = new Audit(user.getAuditContext()).addEvent(ACTION.FORGOTPWDAUTH, String.format("userId='%s', email='%s', portal='%s'", user.getId(), user.getEmail(),  StringUtils.left(forgotPasswordCredentials.getPortal(), 100)));
+		audit.succeed();
+	}
+
+	public static void logFailedForgotPasswordRequest(ForgotPasswordCredentials forgotPasswordCredentials, String failureReason) {
+		//defensive programming arround user supplied value which could be excessively long. Don't want to risk filling
+		//up logs
+		String finalPortal = StringUtils.left(forgotPasswordCredentials.getPortal(), Validator20.MAX_USERNAME + 10);
+		String finalUsername = StringUtils.left(forgotPasswordCredentials.getUsername(), Validator20.MAX_USERNAME + 10);
+		StringBuilder buf = new StringBuilder();
+		buf.append(String.format("failureReason=%s, portal='%s'", failureReason, finalPortal));
+
+		if (finalPortal != null && finalPortal.length() != forgotPasswordCredentials.getPortal().length()) {
+			buf.append(String.format(", portalTruncated from '%d' length", forgotPasswordCredentials.getPortal().length()));
+		}
+		if (finalUsername != null && finalUsername.length() != forgotPasswordCredentials.getUsername().length()) {
+			buf.append(String.format(", usernameTruncated from '%d' length", forgotPasswordCredentials.getUsername().length()));
+		}
+
+		String context = buf.toString();
+
+		Audit audit = new Audit(String.format("username=%s", finalUsername)).addEvent(ACTION.FORGOTPWDAUTH, context);
+		audit.fail();
 	}
 
 	public static Audit deleteOTP(String container) {

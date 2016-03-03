@@ -1098,14 +1098,13 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
     }
 
-
     /**
      * Revokes all the non-mfa tokens for the user, skipping those tokens issued by credentials that are NOT protected
      * via MFA.
      */
     private void revokeAllMFAProtectedTokensForUser(User user) {
         //only revoke password tokens
-        tokenRevocationService.revokeTokensForEndUser(user, TokenRevocationService.AUTH_BY_LIST_PASSWORD_TOKENS);
+        tokenRevocationService.revokeTokensForEndUser(user, TokenRevocationService.AUTH_BY_LIST_REVOKE_ON_MFA_ENABLE);
     }
 
     private void disableMultiFactorForUser(User user) {

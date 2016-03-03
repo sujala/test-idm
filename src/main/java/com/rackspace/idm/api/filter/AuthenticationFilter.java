@@ -140,6 +140,11 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken); //throws NotFoundException if not found
                 ScopeAccess effectiveToken = callerToken; //assume effective token will be same as caller.
 
+                //PWD-RESET tokens currently can not be used for any service
+                if (callerToken != null && TokenScopeEnum.PWD_RESET.getScope().equals(callerToken.getScope())) {
+                    throw new ForbiddenException("Not Authorized");
+                }
+
                 //check for impersonation
                 if(callerToken instanceof ImpersonatedScopeAccess){
                     // Check Expiration of impersonated token
@@ -243,16 +248,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
              //TODO: Move the no token error check up to this filter after verifying that all services except authenticate require an auth token to be provided
              */
         if (authToken != null) {
-            ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken); //throws NotFoundException if not found
-
-            /*
-            TODO: Verify whether we need to put in this code. Currently we don't do this for validate calls so don't want
-             to change the logic as part of this PR, but it is probably necessary. Assuming is, need to uncomment this
-             and test appropriately.
-             */
-//            if (scopeAccessService.isSetupMfaScopedToken(callerToken)) {
-//                throwForbiddenErrorForMfaScopedToken();
-//            }
+            ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken);
 
             //set the tokens in the security context
             securityContext.setCallerToken(callerToken);

@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
@@ -670,6 +671,14 @@ class V2Factory {
     def createPublicCertificates(PublicCertificate... certificates) {
         new PublicCertificates().with {
             it.publicCertificate.addAll(certificates)
+            it
+        }
+    }
+
+    def createForgotPasswordCredentials(String username, String portal) {
+        new ForgotPasswordCredentials().with {
+            it.username = username
+            it.portal = portal
             it
         }
     }

@@ -193,7 +193,8 @@ public class DefaultCloud11Service implements Cloud11Service {
 
             ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(tokeId);
 
-            if (scopeAccessService.isSetupMfaScopedToken(sa)) {
+            //can not currently validate any tokens that contain a scope
+            if (sa == null || StringUtils.isNotBlank(sa.getScope())) {
                 throw new NotFoundException("Token not found.");
             }
 

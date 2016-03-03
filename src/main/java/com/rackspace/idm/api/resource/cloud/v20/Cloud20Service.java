@@ -10,6 +10,7 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.*;
 
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
@@ -26,6 +27,8 @@ public interface Cloud20Service {
     ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest);
 
     ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponse);
+
+    Response.ResponseBuilder authenticateForForgotPassword(HttpHeaders httpHeaders, ForgotPasswordCredentials forgotPasswordCredentials);
 
     ResponseBuilder logoutFederatedUser(HttpHeaders httpHeaders, byte[] logoutRequest);
 

@@ -13,6 +13,7 @@ public enum AuthenticatedByMethodEnum {
     ,SYSTEM("SYSTEM") //auto created by system. Should not be exposed externally
     ,OTPPASSCODE("OTPPASSCODE")
     ,TOKEN("TOKEN") //when a NEW token is issued based on passing a previous token (v3 concept of scoping an unscoped token)
+    ,EMAIL("EMAIL") //user could only receive token via email. So by fact they know token, they must have access to user email
     ;
 
     String value;

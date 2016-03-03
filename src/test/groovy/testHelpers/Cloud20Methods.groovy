@@ -3,6 +3,7 @@ package testHelpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
@@ -71,6 +72,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_OTP_DEVICES = "otp-devices"
     static def SERVICE_PATH_MULTI_FACTOR_DEVICES = "devices"
     static def SERVICE_PATH_IDENTITY_PROVIDERS = "identity-providers"
+    static def SERVICE_PATH_FORGOT_PASSWORD = "forgot-pwd"
 
     static def ENDPOINTS = "endpoints"
 
@@ -875,4 +877,10 @@ class Cloud20Methods {
         initOnUse()
         resource.path(path20).path(TENANTS).path(tenantId).path(RAX_AUTH).path(ADMINS).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
+
+    def forgotPassword(ForgotPasswordCredentials forgotPasswordCredentials, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(RAX_AUTH).path(SERVICE_PATH_FORGOT_PASSWORD).type(requestContentMediaType).entity(forgotPasswordCredentials).post(ClientResponse)
+    }
+
 }

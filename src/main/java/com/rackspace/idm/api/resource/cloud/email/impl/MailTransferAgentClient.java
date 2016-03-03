@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.email.impl;
 
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.DocumentService;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -23,6 +24,11 @@ import java.util.Properties;
 
 @Component
 public class MailTransferAgentClient implements EmailClient {
+
+    private static final String MAIL_SMTP_HOST = "mail.smtp.host";
+    private static final String MAIL_SMTP_TIMEOUT = "mail.smtp.timeout";
+    private static final String MAIL_SMTP_CONNECTIONTIMEOUT = "smtp.connectiontimeout";
+    private static final String MAIL_SMTP_PORT = "mail.smtp.port";
 
     @Autowired
     IdentityConfig identityConfig;
@@ -51,12 +57,7 @@ public class MailTransferAgentClient implements EmailClient {
 
     @PostConstruct
     private void postConstruct() {
-        properties = System.getProperties();
-        properties.setProperty("mail.smtp.host", identityConfig.getEmailHost());
-        properties.setProperty("mail.smtp.timeout", ONE_MINUTE);
-        properties.setProperty("smtp.connectiontimeout", ONE_MINUTE);
-        properties.setProperty("mail.smtp.port", identityConfig.getStaticConfig().getEmailPort());
-
+        properties = getSessionProperties();
         session = Session.getDefaultInstance(properties);
 
         from = identityConfig.getEmailFromAddress();
@@ -77,7 +78,6 @@ public class MailTransferAgentClient implements EmailClient {
         Assert.notNull(enabledEmailSubject);
         Assert.notNull(disabledEmail);
         Assert.notNull(disabledEmailSubject);
-
     }
 
     @Override
@@ -116,7 +116,30 @@ public class MailTransferAgentClient implements EmailClient {
         return sendEmail(user, disabledEmailSubject, body, DISABLED_ERROR_MSG);
     }
 
+    @Override
+    public boolean sendForgotPasswordMessage(User user, ScopeAccess token, String portal) {
+        String body = String.format("%s", token.getAccessTokenString());
+        return sendEmail(user, "Hosting Password Reset Instructions", body, String.format("Error sending password reset token to portal '%s'", portal));
+    }
+
+    @Override
+    @Async
+    public void asyncSendForgotPasswordMessage(User user, ScopeAccess token, String portal) {
+        sendForgotPasswordMessage(user, token, portal);
+    }
+
     private boolean sendEmail(User user, String subject, String body, String errorMsg) {
+        Session localSession = session;
+
+        /*
+        Hack to allow changing the SMTP server at runtime during integration testing without impacting production
+        runtime by changing the presumably static properties.
+         */
+        if (identityConfig.getReloadableConfig().createEmailSessionPerEmail()) {
+            Properties emailServerProps = getSessionProperties();
+            localSession = Session.getInstance(emailServerProps);
+        }
+
         boolean success = true;
         try {
             String to = user.getEmail();
@@ -130,7 +153,7 @@ public class MailTransferAgentClient implements EmailClient {
                 }
             }
 
-            MimeMessage message = new MimeMessage(session);
+            MimeMessage message = new MimeMessage(localSession);
             message.setFrom(new InternetAddress(from));
             message.addRecipient(Message.RecipientType.TO,
                     new InternetAddress(to));
@@ -143,5 +166,14 @@ public class MailTransferAgentClient implements EmailClient {
             success = false;
         }
         return success;
+    }
+
+    private Properties getSessionProperties() {
+        Properties properties = System.getProperties();
+        properties.setProperty(MAIL_SMTP_HOST, identityConfig.getStaticConfig().getEmailHost());
+        properties.setProperty(MAIL_SMTP_TIMEOUT, ONE_MINUTE);
+        properties.setProperty(MAIL_SMTP_CONNECTIONTIMEOUT, ONE_MINUTE);
+        properties.setProperty(MAIL_SMTP_PORT, identityConfig.getStaticConfig().getEmailPort());
+        return properties;
     }
 }

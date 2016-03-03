@@ -231,6 +231,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     private AuthWithApiKeyCredentials authWithApiKeyCredentials;
 
     @Autowired
+    private AuthWithForgotPasswordCredentials authWithForgotPasswordCredentials;
+
+    @Autowired
     private MultiFactorCloud20Service multiFactorCloud20Service;
 
     @Autowired
@@ -977,6 +980,20 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
+    public Response.ResponseBuilder authenticateForForgotPassword(HttpHeaders httpHeaders, ForgotPasswordCredentials forgotPasswordCredentials) {
+        try {
+            //this will throw exception if auth does NOT succeed
+            AuthenticationRequest authRequestAdapter = objFactories.getOpenStackIdentityV2Factory().createAuthenticationRequest();
+            authRequestAdapter.setCredential(raxAuthObjectFactory.createForgotPasswordCredentials(forgotPasswordCredentials));
+
+            AuthResponseTuple auth = authWithForgotPasswordCredentials.authenticateForAuthResponse(authRequestAdapter);
+
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
     /*
     TODO: Refactor this method. It's getting messy. Wait till after MFA though to avoid making it too difficult to follow the mfa changes
@@ -3786,18 +3803,15 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            final ScopeAccess sa = checkAndGetToken(tokenId);
+            final ScopeAccess sa = checkAndGetToken(tokenId); //throws not found exception if token can't not be decrypted
 
-            if (scopeAccessService.isSetupMfaScopedToken(sa)) {
+            //no scoped tokens can currently be validated through the v2 validate call
+            if (sa.isAccessTokenExpired(new DateTime()) || StringUtils.isNotBlank(sa.getScope())) {
                 throw new NotFoundException("Token not found.");
             }
 
             AuthenticateResponse access = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
             access.setToken(this.tokenConverterCloudV20.toToken(sa, null));
-
-            if (sa.isAccessTokenExpired(new DateTime())) {
-                throw new NotFoundException("Token not found");
-            }
 
             if (sa instanceof RackerScopeAccess) {
                 RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) sa;

@@ -56,6 +56,7 @@ public class Validator20 {
     public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int MAX_GROUP_NAME = 64;
     public static final int MAX_GROUP_DESC = 1000;
+    public static final int MAX_USERNAME = 100;
 
     public static final int MAX_IDENTITY_PROVIDER_ISSUER = Constants.MAX_255;
     public static final int MAX_IDENTITY_PROVIDER_AUTH_URL = Constants.MAX_255;

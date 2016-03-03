@@ -82,12 +82,14 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
         AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.IMPERSONATION.getValue(), 6);
         AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.SYSTEM.getValue(), 7);
         AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.OTPPASSCODE.getValue(), 8);
+        AUTH_BY_MARSHALL.put(AuthenticatedByMethodEnum.EMAIL.getValue(), 9);
 
         for (String key : AUTH_BY_MARSHALL.keySet()) {
             AUTH_BY_UNMARSHALL.put(AUTH_BY_MARSHALL.get(key), key);
         }
 
         SCOPE_MARSHALL.put(GlobalConstants.SETUP_MFA_SCOPE, 1);
+        SCOPE_MARSHALL.put(TokenScopeEnum.PWD_RESET.getScope(), 2);
         for (String key : SCOPE_MARSHALL.keySet()) {
             SCOPE_UNMARSHALL.put(SCOPE_MARSHALL.get(key), key);
         }
