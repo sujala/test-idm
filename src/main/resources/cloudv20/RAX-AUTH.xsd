@@ -90,6 +90,7 @@
     <element name="secretqa" type="RAX-AUTH:SecretQA" />
     <element name="rsaCredentials" type="RAX-AUTH:RsaCredentials" substitutionGroup="identity:credential" />
     <element name="passcodeCredentials" type="RAX-AUTH:PasscodeCredentials" substitutionGroup="identity:credential" />
+    <element name="forgotPasswordCredentials" type="RAX-AUTH:ForgotPasswordCredentials" />
     <element name="bypassCodes" type="RAX-AUTH:BypassCodes"/>
     <element name="multiFactorDomain" type="RAX-AUTH:MultiFactorDomain"/>
     <element name="identityProvider" type="RAX-AUTH:IdentityProvider"/>
@@ -448,6 +449,15 @@
         <complexContent>
             <extension base="identity:CredentialType">
                 <attribute name="passcode" type="xsd:string" use="required" />
+            </extension>
+        </complexContent>
+    </complexType>
+
+    <complexType name="ForgotPasswordCredentials">
+        <complexContent>
+            <extension base="identity:CredentialType">
+                <attribute name="username" type="xsd:string" use="optional" />
+                <attribute name="portal" type="xsd:string" use="optional" />
             </extension>
         </complexContent>
     </complexType>

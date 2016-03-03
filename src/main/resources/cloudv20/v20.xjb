@@ -155,6 +155,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="rsaCredentials"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='ForgotPasswordCredentials']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="forgotPasswordCredentials"/>
+            </annox:annotate>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='DefaultRegionServices']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="defaultRegionServices"/>

@@ -813,13 +813,20 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
         // If the token is going to be scoped we create it directly, otherwise we'll go through the usual call
         if (StringUtils.isNotBlank(userAuthenticationResult.getScope())) {
-            int expirationSeconds = identityConfig.getScopedTokenExpirationSeconds();
+            TokenScopeEnum tokenScope = TokenScopeEnum.fromScope(userAuthenticationResult.getScope());
+
+            int expirationSeconds;
+            if (tokenScope == TokenScopeEnum.PWD_RESET) {
+                expirationSeconds = identityConfig.getReloadableConfig().getForgotPasswordTokenLifetime();
+            } else {
+                expirationSeconds = identityConfig.getStaticConfig().getSetupMfaScopedTokenExpirationSeconds();
+            }
+
             sa = (UserScopeAccess) addScopedScopeAccess(userAuthenticationResult.getUser(),
                     identityConfig.getCloudAuthClientId(),
                     userAuthenticationResult.getAuthenticatedBy(),
                     expirationSeconds,
                     userAuthenticationResult.getScope());
-
         }  else {
             sa = getValidUserScopeAccessForClientId((User) userAuthenticationResult.getUser(),
                     identityConfig.getCloudAuthClientId(),

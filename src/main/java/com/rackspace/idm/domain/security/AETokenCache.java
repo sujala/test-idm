@@ -83,8 +83,8 @@ public class AETokenCache implements RecreatableGuavaCache {
     public String marshallTokenForUserWithProvider(final BaseUser user, final ScopeAccess token, final TokenProvider provider) {
         String webSafeToken = null;
 
-        //only cache provisioned user regular tokens
-        if (user instanceof User && token instanceof UserScopeAccess) {
+        //only cache provisioned user regular non-scoped tokens
+        if (user instanceof User && token instanceof UserScopeAccess && StringUtils.isBlank(token.getScope())) {
             try {
                 String userId = user.getId();
                 String flatAuthBy = flattenAuthBy(token.getAuthenticatedBy());

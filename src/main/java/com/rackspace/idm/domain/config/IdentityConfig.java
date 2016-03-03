@@ -40,10 +40,15 @@ public class IdentityConfig {
     private static final String EMAIL_MFA_ENABLED_SUBJECT = "email.mfa.enabled.subject";
     private static final String EMAIL_MFA_DISABLED_SUBJECT = "email.mfa.disabled.subject";
     private static final String EMAIL_LOCKED_OUT_SUBJECT = "email.locked.out.email.subject";
-    private static final String EMAIL_HOST = "email.host";
-    private static final String EMAIL_PORT = "email.port";
+    public static final String EMAIL_HOST = "email.host";
+    public static final String EMAIL_PORT = "email.port";
     private static final String EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES = "email.send.to.only.rackspace.addresses.enabled";
-    private static final String SCOPED_TOKEN_EXPIRATION_SECONDS = "token.scoped.expirationSeconds";
+    private static final String SETUP_MFA_SCOPED_TOKEN_EXPIRATION_SECONDS = "token.scoped.expirationSeconds";
+    public static final String FEATURE_FORGOT_PWD_ENABLED_PROP_NAME = "feature.forgot.pwd.enabled";
+    private static final boolean FEATURE_FORGOT_PWD_ENABLED_DEFAULT = false;
+    public static final String FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME = "token.forgot.password.validity.length";
+    private static final int FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT = 600;
+
     private static final String CLOUD_AUTH_CLIENT_ID = "cloudAuth.clientId";
     public static final String IDENTITY_ACCESS_ROLE_NAMES_PROP = "cloudAuth.accessRoleNames";
     public static final String IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP = "cloudAuth.adminRole";
@@ -294,6 +299,13 @@ public class IdentityConfig {
     public static final Boolean FEATURE_ENABLE_MFA_MIGRATION_SERVICES_DEFAULT = true;
 
 
+    /* ********
+    TEST Helper Features
+    *********** */
+    public static final String FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_PROP = "feature.create.email.session.per.email";
+    public static final boolean FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_DEFAULT = false;
+
+
     /**
      * SQL debug property
      */
@@ -411,6 +423,10 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP, FEATURE_ENABLE_MFA_MIGRATION_SERVICES_DEFAULT);
 
+        defaults.put(FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT);
+        defaults.put(FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, FEATURE_FORGOT_PWD_ENABLED_DEFAULT);
+        defaults.put(FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_PROP, FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_DEFAULT);
+
         return defaults;
     }
 
@@ -430,7 +446,7 @@ public class IdentityConfig {
         verifyAndLogStaticProperty(EMAIL_HOST, OPTIONAL);
         verifyAndLogStaticProperty(EMAIL_PORT, OPTIONAL);
         verifyAndLogStaticProperty(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, OPTIONAL);
-        verifyAndLogStaticProperty(SCOPED_TOKEN_EXPIRATION_SECONDS, REQUIRED);
+        verifyAndLogStaticProperty(SETUP_MFA_SCOPED_TOKEN_EXPIRATION_SECONDS, REQUIRED);
         verifyAndLogStaticProperty(CLOUD_AUTH_CLIENT_ID, REQUIRED);
 
         verifyAndLogStaticProperty(IDENTITY_ACCESS_ROLE_NAMES_PROP, REQUIRED);
@@ -752,9 +768,9 @@ public class IdentityConfig {
             return getBooleanSafely(staticConfiguration, EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES);
         }
 
-        @IdmProp(key = SCOPED_TOKEN_EXPIRATION_SECONDS, description = "Expiration time for scoped tokens.", versionAdded = "2.9.0")
-        public int getScopedTokenExpirationSeconds() {
-            return getIntSafely(staticConfiguration, SCOPED_TOKEN_EXPIRATION_SECONDS);
+        @IdmProp(key = SETUP_MFA_SCOPED_TOKEN_EXPIRATION_SECONDS, description = "Expiration time for Setup-MFA scoped tokens.", versionAdded = "2.9.0")
+        public int getSetupMfaScopedTokenExpirationSeconds() {
+            return getIntSafely(staticConfiguration, SETUP_MFA_SCOPED_TOKEN_EXPIRATION_SECONDS);
         }
 
         @IdmProp(key = CLOUD_AUTH_CLIENT_ID, description = "Cloud Identity Application ID.", versionAdded = "1.0.14.8")
@@ -1356,6 +1372,24 @@ public class IdentityConfig {
         public boolean areMfaMigrationServicesEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP);
         }
+
+        @IdmProp(key = FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, versionAdded = "3.2.0", description = "Timeout for forgot password tokens")
+        public int getForgotPasswordTokenLifetime() {
+            return getIntSafely(reloadableConfiguration, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME);
+        }
+
+        @IdmProp(key = FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, versionAdded = "3.2.0", description = "Whether or not the forgot password flow is enabled")
+        public boolean isForgotPasswordEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_FORGOT_PWD_ENABLED_PROP_NAME);
+        }
+
+        @IdmProp(key = FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_PROP, versionAdded = "3.2.0", description = "Whether or not to " +
+                "create an email session per email. This was added to simplify email testing. For performance reasons, " +
+                "should always be set to 'false' in staging/production")
+        public boolean createEmailSessionPerEmail() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_PROP);
+        }
+
     }
 
     @Deprecated
@@ -1391,11 +1425,6 @@ public class IdentityConfig {
     @Deprecated
     public boolean isSendToOnlyRackspaceAddressesEnabled() {
         return getStaticConfig().isSendToOnlyRackspaceAddressesEnabled();
-    }
-
-    @Deprecated
-    public int getScopedTokenExpirationSeconds() {
-        return getStaticConfig().getScopedTokenExpirationSeconds();
     }
 
     @Deprecated

@@ -295,7 +295,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
                 , Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY)
         );
 
-        def expirationExceptions
+        List expirationExceptions
 
         def mfaSettings = v2Factory.createMultiFactorSettings(true)
 
@@ -324,8 +324,9 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         }
 
         1 * tokenRevocationService.revokeTokensForEndUser(user, _) >> { arguments -> expirationExceptions=arguments[1]}
-        expirationExceptions.size() == 1
-        AuthenticatedByMethodGroup.PASSWORD.matches(expirationExceptions.get(0))
+        expirationExceptions.size() == 2
+        expirationExceptions.find { it.matches(AuthenticatedByMethodGroup.PASSWORD); it} != null
+        expirationExceptions.find { it.matches(AuthenticatedByMethodGroup.EMAIL); it} != null
     }
 
     def "updateMultiFactorDomainSettings: appropriate user tokens are revoked when set to required"() {

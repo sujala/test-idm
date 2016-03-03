@@ -182,6 +182,13 @@ dependencies {
 
     compile group: 'com.google.zxing', name: 'javase', version: '3.1.0'
     testCompile 'com.warrenstrange:googleauth:0.4.3'
+
+    testCompile(group: 'org.subethamail', name: 'subethasmtp', version:'3.1.7') {
+        exclude(module: 'mail', group: 'javax.mail')
+        exclude(module: 'activation', group: 'javax.activation')
+        exclude(module: 'avalon-framework', group: 'org.slf4j')
+        exclude(module: 'slf4j-api', group: 'org.slf4j')
+    }
 }
 
 task copyConfig(type: Copy) {
