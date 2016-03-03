@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil
 import com.rackspace.idm.domain.dao.MobilePhoneDao
-import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.service.IdentityUserService
 import org.apache.http.HttpStatus
 import org.springframework.beans.factory.annotation.Autowired
@@ -55,10 +54,32 @@ class DevOpsResourceTest extends RootIntegrationTest {
         def reloadableConfig = data.get(ConfigSection.reloadableConfig.toString())
         assertFormat(staticConfig)
         assertFormat(reloadableConfig)
-        assertTypeAndValueOfPropValue(staticConfig.get("ga.username").get(PropKey.value.toString()), "auth")
-        assertTypeAndValueOfPropValue(staticConfig.get("reloadable.docs.cache.timeout").get(PropKey.value.toString()), 10)
-        assertTypeAndValueOfPropValue(staticConfig.get("feature.use.reloadable.docs").get(PropKey.value.toString()), true)
+        assertTypeAndValueOfPropValue(staticConfig.find{it.name == "ga.username"}.get(PropKey.value.toString()), "auth")
+        assertTypeAndValueOfPropValue(staticConfig.find{it.name == "reloadable.docs.cache.timeout"}.get(PropKey.value.toString()), 10)
+        assertTypeAndValueOfPropValue(staticConfig.find{it.name == "feature.use.reloadable.docs"}.get(PropKey.value.toString()), true)
     }
+
+    def "test get idm props can be called by user w/ role"() {
+        def ida = utils.createIdentityAdmin()
+        def idaToken = utils.getToken(ida.username)
+
+        when: "call w/ identity admin w/o role"
+        def response = devops.getIdmProps(idaToken)
+
+        then:
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "call w/ identity admin w role"
+        utils.addRoleToUser(ida, "b49a3fb2b8d148919b90abf395f9a1a2")
+        def responseWRole = devops.getIdmProps(idaToken)
+
+        then:
+        responseWRole.status == HttpStatus.SC_OK
+
+        cleanup:
+        utils.deleteUserQuietly(ida)
+    }
+
 
     def "test federation deletion call"() {
         given:
@@ -205,7 +226,7 @@ class DevOpsResourceTest extends RootIntegrationTest {
 
 
     def assertFormat(configSection) {
-        configSection.each { prop, propSection ->
+        configSection.each { propSection ->
             assert propSection.containsKey(PropKey.description.toString()) &&
                     propSection.containsKey(PropKey.defaultValue.toString()) &&
                     propSection.containsKey(PropKey.value.toString()) &&
@@ -214,9 +235,8 @@ class DevOpsResourceTest extends RootIntegrationTest {
         return true
     }
 
-    def assertTypeAndValueOfPropValue(value, expectedValue) {
+    def void assertTypeAndValueOfPropValue(value, expectedValue) {
         assert value.getClass() == expectedValue.getClass()
         assert value == expectedValue
-        return true
     }
 }

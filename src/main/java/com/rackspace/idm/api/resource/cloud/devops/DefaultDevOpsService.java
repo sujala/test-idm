@@ -12,21 +12,27 @@ import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.config.*;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator;
 import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ExceptionHandler;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -36,6 +42,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Component
 public class DefaultDevOpsService implements DevOpsService {
@@ -122,8 +131,54 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Override
     public Response.ResponseBuilder getIdmProps(String authToken) {
-        authorizationService.verifyServiceAdminLevelAccess(getScopeAccessForValidToken(authToken));
-        String idmProps = identityConfig.toJSONString();
+        return getIdmPropsByQuery(authToken, null, null);
+    }
+
+    @Override
+    public Response.ResponseBuilder getIdmPropsByQuery(String authToken, final List<String> versions, final String name) {
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_QUERY_PROPS.getRoleName());
+        Predicate<IdmProperty> reloadablePredicate = new Predicate<IdmProperty>() {
+                    @Override
+                    public boolean evaluate(IdmProperty object) {
+                        if (object.getType() != IdmPropertyType.RELOADABLE) return false;
+                        if (StringUtils.isNotBlank(name) && !StringUtils.contains(object.getName(), name)) return false;
+                        if (CollectionUtils.isNotEmpty(versions) && !versions.contains(object.getVersionAdded())) return false;
+
+                        return true;
+                    }
+                };
+
+        Predicate<IdmProperty> staticPredicate =  new Predicate<IdmProperty>() {
+                    @Override
+                    public boolean evaluate(IdmProperty object) {
+                        if (object.getType() != IdmPropertyType.STATIC) return false;
+                        if (StringUtils.isNotBlank(name) && !StringUtils.contains(object.getName(), name)) return false;
+                        if (CollectionUtils.isNotEmpty(versions) && !versions.contains(object.getVersionAdded())) return false;
+
+                        return true;
+                    }
+                };
+
+        return filterIdmProps(staticPredicate, reloadablePredicate);
+    }
+
+    private Response.ResponseBuilder filterIdmProps(Predicate<IdmProperty> staticPredicate, Predicate<IdmProperty> reloadablePredicate) {
+        List<IdmProperty> idmPropertyList = identityConfig.getPropertyInfoList();
+
+        List<IdmProperty> queriedReloadableIdmPropertyList = new ArrayList<IdmProperty>();
+        CollectionUtils.select(idmPropertyList, reloadablePredicate, queriedReloadableIdmPropertyList);
+        Collections.sort(queriedReloadableIdmPropertyList);
+
+        List<IdmProperty> queriedStaticIdmPropertyList = new ArrayList<IdmProperty>();
+        CollectionUtils.select(idmPropertyList, staticPredicate, queriedStaticIdmPropertyList);
+        Collections.sort(queriedStaticIdmPropertyList);
+
+        JSONObject props = new JSONObject();
+        props.put("configPath", identityConfig.getConfigRoot());
+        props.put(PropertyFileConfiguration.CONFIG_FILE_NAME, toJSONObject(queriedStaticIdmPropertyList));
+        props.put(PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME, toJSONObject(queriedReloadableIdmPropertyList));
+        String idmProps = props.toJSONString();
         Response.ResponseBuilder response = Response.ok().entity(idmProps);
         return response;
     }
@@ -202,6 +257,56 @@ public class DefaultDevOpsService implements DevOpsService {
         } catch (Exception ex) {
             LOG.error(String.format("Error removing MFA from user '%s'", userId), ex);
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    /**
+     * Return JSON representation of properties and their values, as annotated by {@link com.rackspace.idm.domain.config.IdmProp}.
+     *
+     * Uses reflection to discover getters that have been annotated with {@link com.rackspace.idm.domain.config.IdmProp}
+     * @return JSONObject properties
+     */
+    private JSONArray toJSONObject(List<IdmProperty> idmProperties) {
+        final String name = "name";
+        final String description = "description";
+        final String versionAdded= "versionAdded";
+        final String propValue = "value";
+        final String defaultValue = "defaultValue";
+
+        JSONArray propArr = new JSONArray();
+        for (IdmProperty idmProperty : idmProperties) {
+            JSONObject prop = new JSONObject();
+            try {
+                prop.put(name, idmProperty.getName());
+                prop.put(description, idmProperty.getDescription());
+                prop.put(versionAdded, idmProperty.getVersionAdded());
+
+                Object convertedDefaultValue = valueToAddToJSON(idmProperty.getDefaultValue());
+                prop.put(defaultValue, convertedDefaultValue);
+
+                Object convertedValue = valueToAddToJSON(idmProperty.getValue());
+                prop.put(propValue, convertedValue);
+                propArr.add(prop);
+            } catch (Exception e) {
+                LOG.error(String.format("error retrieving property '%s'", idmProperty.getName()), e);
+            }
+        }
+        return propArr;
+    }
+
+    private Object valueToAddToJSON(Object value) {
+        if (value == null || value instanceof String || value instanceof Number || value instanceof Boolean) {
+            return value;
+        } else if (value instanceof String[] ) {
+            JSONArray valueArray = new JSONArray();
+            for (String val : (String[])value) {
+                valueArray.add(val);
+            }
+            return valueArray;
+        } else if (value instanceof Enum) {
+            return ((Enum)value).name();
+        } else {
+            return value.toString();
         }
     }
 
