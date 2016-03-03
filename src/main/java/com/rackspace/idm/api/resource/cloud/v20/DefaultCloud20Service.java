@@ -17,6 +17,7 @@ import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCreden
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
 import com.rackspace.idm.domain.entity.Application;
@@ -987,6 +988,37 @@ public class DefaultCloud20Service implements Cloud20Service {
             authRequestAdapter.setCredential(raxAuthObjectFactory.createForgotPasswordCredentials(forgotPasswordCredentials));
 
             AuthResponseTuple auth = authWithForgotPasswordCredentials.authenticateForAuthResponse(authRequestAdapter);
+
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder passwordReset(HttpHeaders httpHeaders, String authToken, PasswordReset passwordReset) {
+
+        try {
+            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+
+            if(!(scopeAccess instanceof UserScopeAccess)) {
+                throw new NotFoundException("Only provisioned users can use password reset tokens");
+            }
+
+            UserScopeAccess usa = (UserScopeAccess) scopeAccess;
+            if(!TokenScopeEnum.PWD_RESET.getScope().equals(usa.getScope())) {
+                throw new ForbiddenException("Please provide a valid password reset token");
+            }
+
+            User user = userService.checkAndGetUserById(usa.getUserRsId());
+
+            validator.validatePasswordForCreateOrUpdate(passwordReset.getPassword());
+
+            user.setUserPassword(passwordReset.getPassword());
+            user.setPassword(passwordReset.getPassword());
+            this.userService.updateUser(user);
+
+            Audit.logSuccessfulPasswordResetRequest(user);
 
             return Response.noContent();
         } catch (Exception ex) {

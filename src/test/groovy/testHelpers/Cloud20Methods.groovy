@@ -73,6 +73,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_MULTI_FACTOR_DEVICES = "devices"
     static def SERVICE_PATH_IDENTITY_PROVIDERS = "identity-providers"
     static def SERVICE_PATH_FORGOT_PASSWORD = "forgot-pwd"
+    static def SERVICE_PATH_PASSWORD_RESET = "pwd-reset"
 
     static def ENDPOINTS = "endpoints"
 
@@ -881,6 +882,11 @@ class Cloud20Methods {
     def forgotPassword(ForgotPasswordCredentials forgotPasswordCredentials, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).path(RAX_AUTH).path(SERVICE_PATH_FORGOT_PASSWORD).type(requestContentMediaType).entity(forgotPasswordCredentials).post(ClientResponse)
+    }
+
+    def resetPassword(def token, def passwordReset, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(RAX_AUTH).path(SERVICE_PATH_PASSWORD_RESET).type(requestContentMediaType).entity(passwordReset).header(X_AUTH_TOKEN, token).post(ClientResponse)
     }
 
 }

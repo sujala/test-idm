@@ -11,6 +11,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordReset
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
@@ -679,6 +680,13 @@ class V2Factory {
         new ForgotPasswordCredentials().with {
             it.username = username
             it.portal = portal
+            it
+        }
+    }
+
+    def createPasswordReset(String password) {
+        new PasswordReset().with {
+            it.password = password
             it
         }
     }

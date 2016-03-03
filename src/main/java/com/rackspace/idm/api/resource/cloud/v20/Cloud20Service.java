@@ -173,6 +173,8 @@ public interface Cloud20Service {
     ResponseBuilder resetUserApiKeyCredentials(HttpHeaders httpHeaders,
         String authToken, String userId, String credentialType);
 
+    ResponseBuilder passwordReset(HttpHeaders httpHeaders, String authToken, PasswordReset passwordReset);
+
     ResponseBuilder getSecretQA(HttpHeaders httpHeaders, String authToken,
         String userId) ;
 
