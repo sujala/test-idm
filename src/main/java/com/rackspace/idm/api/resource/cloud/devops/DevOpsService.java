@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -87,4 +88,6 @@ public interface DevOpsService {
      * @return
      */
     Response.ResponseBuilder removeMfaFromUser(String authToken, String userId);
+
+    Response.ResponseBuilder getIdmPropsByQuery(String authToken, final List<String> versions, String name);
 }

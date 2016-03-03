@@ -13,6 +13,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.List;
 
 @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -80,8 +81,8 @@ public class DevOpsResource {
      */
     @GET
     @Path("/props")
-    public Response getIdmProps(@HeaderParam(X_AUTH_TOKEN) String authToken) {
-        return devOpsService.getIdmProps(authToken).build();
+    public Response getIdmProps(@HeaderParam(X_AUTH_TOKEN) String authToken, @QueryParam("versions") List<String> versions, @QueryParam("name") String name) {
+        return devOpsService.getIdmPropsByQuery(authToken, versions, name).build();
     }
 
     @POST

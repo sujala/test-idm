@@ -17,6 +17,7 @@ public enum IdentityRole {
     , IDENTITY_PROVIDER_MANAGER("identity:identity-provider-manager")
     , IDENTITY_PROVIDER_READ_ONLY("identity:identity-provider-read-only")
     , IDENTITY_MFA_ADMIN("identity:mfa-admin")
+    , IDENTITY_QUERY_PROPS("identity:query-props")
     ;
 
     @Getter

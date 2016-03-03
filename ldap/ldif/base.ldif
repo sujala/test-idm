@@ -1145,6 +1145,15 @@ cn: identity:mfa-admin
 description: MFA Admin
 rsWeight: 50
 
+dn: rsId=b49a3fb2b8d148919b90abf395f9a1a2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: b49a3fb2b8d148919b90abf395f9a1a2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:query-props
+description: Can query current state of properties
+rsWeight: 50
+
 dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicati
  ons,o=rackspace,dc=rackspace,dc=com
 objectClass: rsContainer
@@ -4703,6 +4712,13 @@ dn: roleRsId=c637d7153b7c41bf9153d46107dadcc7,cn=ROLES,rsId=173190,ou=users,o=ra
 objectClass: top
 objectClass: tenantRole
 roleRsId: c637d7153b7c41bf9153d46107dadcc7
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=b49a3fb2b8d148919b90abf395f9a1a2,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: top
+objectClass: tenantRole
+roleRsId: b49a3fb2b8d148919b90abf395f9a1a2
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
 dn: cn=TOKENS,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com

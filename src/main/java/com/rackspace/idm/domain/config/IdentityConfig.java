@@ -124,6 +124,8 @@ public class IdentityConfig {
     public static final String OTP_ISSUER = "feature.otp.issuer";
     public static final String OTP_ENTROPY = "feature.otp.entropy";
     public static final String OTP_CREATE_ENABLED = "feature.otp.create.enabled.flag";
+    public static final boolean OTP_CREATE_ENABLED_DEFAULT = true;
+
     public static final String FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP = "feature.user.disabled.by.tenants.enabled";
     public static final boolean FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT = false;
     public static final String FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP = "feature.identity.admin.create.subuser.enabled";
@@ -420,8 +422,8 @@ public class IdentityConfig {
         defaults.put(FEATURE_FEDERATION_DELETION_ROLE_PROP, FEATURE_FEDERATION_DELETION_ROLE_DEFAULT);
         defaults.put(FEATURE_FEDERATION_DELETION_TIMEOUT_PROP, FEATURE_FEDERATION_DELETION_TIMEOUT_DEFAULT);
         defaults.put(FEATURE_SUPPORT_V11_LEGACY_PROP, FEATURE_SUPPORT_V11_LEGACY_DEFAULT);
-
         defaults.put(FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP, FEATURE_ENABLE_MFA_MIGRATION_SERVICES_DEFAULT);
+        defaults.put(OTP_CREATE_ENABLED, OTP_CREATE_ENABLED_DEFAULT);
 
         defaults.put(FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT);
         defaults.put(FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, FEATURE_FORGOT_PWD_ENABLED_DEFAULT);
@@ -658,68 +660,37 @@ public class IdentityConfig {
     }
 
     /**
-     * Return JSON representation of properties and their values, as annotated by {@link com.rackspace.idm.domain.config.IdmProp}.
+     * Return properties and their values, as annotated by {@link com.rackspace.idm.domain.config.IdmProp}.
      *
      * Uses reflection to discover getters that have been annotated with {@link com.rackspace.idm.domain.config.IdmProp}
      * @return JSONObject properties
      */
-    private JSONObject toJSONObject(Object config) {
-        final String description = "description";
-        final String versionAdded= "versionAdded";
-        final String propValue = "value";
-        final String defaultValue = "defaultValue";
-        JSONObject props = new JSONObject();
-        for (Method m : config.getClass().getDeclaredMethods()) {
+    public List<IdmProperty> getPropertyInfoList() {
+        List<IdmProperty> props = getPropertyInfoList(staticConfig, IdmPropertyType.STATIC);
+        props.addAll(getPropertyInfoList(reloadableConfig, IdmPropertyType.RELOADABLE));
+
+        return props;
+    }
+
+    private List<IdmProperty> getPropertyInfoList(Object obj, IdmPropertyType propertyType) {
+        List<IdmProperty> props = new ArrayList<IdmProperty>();
+        for (Method m : obj.getClass().getDeclaredMethods()) {
             if (m.isAnnotationPresent(IdmProp.class)) {
                 final IdmProp a = m.getAnnotation(IdmProp.class);
                 final String msg = String.format("error getting the value of '%s'", a.key());
-                JSONObject prop = new JSONObject();
                 try {
-                    prop.put(description, a.description());
-                    prop.put(versionAdded, a.versionAdded());
-
-                    Object defaultValueValue = propertyDefaults.get(a.key());
-                    Object convertedDefaultValue = valueToAddToJSON(defaultValueValue);
-                    prop.put(defaultValue, convertedDefaultValue);
-
-                    Object value = m.invoke(config);
-                    Object convertedValue = valueToAddToJSON(value);
-                    prop.put(propValue, convertedValue);
-                    props.put(a.key(), prop);
+                    String description = a.description();
+                    String versionAdded = a.versionAdded();
+                    Object defaultValue = propertyDefaults.get(a.key());
+                    Object value = m.invoke(obj);
+                    String name = a.key();
+                    props.add(new IdmProperty(propertyType, name, description, value, defaultValue, versionAdded));
                 } catch (Exception e) {
                     logger.error(msg, e);
                 }
             }
         }
         return props;
-    }
-
-    private Object valueToAddToJSON(Object value) {
-        if (value == null || value instanceof String || value instanceof Number || value instanceof Boolean) {
-            return value;
-        } else if (value instanceof String[] ) {
-            JSONArray valueArray = new JSONArray();
-            for (String val : (String[])value) {
-                valueArray.add(val);
-            }
-            return valueArray;
-        } else if (value instanceof Enum) {
-            return ((Enum)value).name();
-        } else {
-            return value.toString();
-        }
-    }
-
-    /**
-     * Return serialized JSON representation of IdentityConfig for use by API calls.
-     * @return String JSON representation of IdentityConfig
-     */
-    public String toJSONString() {
-        JSONObject props = new JSONObject();
-        props.put("configPath", getConfigRoot());
-        props.put(PropertyFileConfiguration.CONFIG_FILE_NAME, toJSONObject(staticConfig));
-        props.put(PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME, toJSONObject(reloadableConfig));
-        return props.toJSONString();
     }
 
     /**
@@ -952,11 +923,6 @@ public class IdentityConfig {
         @IdmProp(key = BYPASS_MAXIMUM_NUMBER)
         public BigInteger getBypassMaximumNumber() {
             return getBigIntegerSafely(staticConfiguration, BYPASS_MAXIMUM_NUMBER);
-        }
-
-        @IdmProp(key = OTP_CREATE_ENABLED)
-        public boolean getOTPCreateEnabled() {
-            return getBooleanSafely(staticConfiguration, OTP_CREATE_ENABLED);
         }
 
         @IdmProp(key = RELOAD_AE_KEYS_FIXED_DELAY_SECONDS, description = "How often to check for AE key changes and reload if found. This is how long after the last time the check was made completes before checking again.", versionAdded = "2.16.0")
