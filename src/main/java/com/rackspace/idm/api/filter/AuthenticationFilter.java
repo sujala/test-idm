@@ -140,8 +140,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken); //throws NotFoundException if not found
                 ScopeAccess effectiveToken = callerToken; //assume effective token will be same as caller.
 
-                //PWD-RESET tokens currently can not be used for any service
-                if (callerToken != null && TokenScopeEnum.PWD_RESET.getScope().equals(callerToken.getScope())) {
+                //PWD-RESET tokens are only allowed to be used for the password reset call
+                if (callerToken != null && TokenScopeEnum.PWD_RESET.getScope().equals(callerToken.getScope()) && !path.startsWith("cloud/v2.0/users/RAX-AUTH/pwd-reset")) {
                     throw new ForbiddenException("Not Authorized");
                 }
 

@@ -101,6 +101,7 @@ public final class JSONConstants {
     public static final String USERS = "users";
     public static final String USERNAME = "username";
     public static final String USER_PASSWORD = "userPassword";
+    public static final String PASSWORD_RESET = "passwordReset";
     public static final String UTF_8 = "UTF-8";
     public static final String VALUES = "values";
     public static final String VERSION = "version";
@@ -226,6 +227,7 @@ public final class JSONConstants {
     public static final String AUTH_RSA_CREDENTIALS_PATH = "auth.rsaCredentials";
     public static final String RAX_AUTH_FORGOT_PWD_CREDENTIALS = "RAX-AUTH:forgotPasswordCredentials";
     public static final String AUTH_DOMAIN_PATH = "auth.domain";
+    public static final String RAX_AUTH_PASSWORD_RESET = "RAX-AUTH:passwordReset";
     public static final String AUTH_RAX_KSKEY_API_KEY_CREDENTIALS_PATH = "auth.RAX-KSKEY:apiKeyCredentials";
     public static final String AUTH_RAX_AUTH_RSA_CREDENTIALS_PATH = "auth.RAX-AUTH:rsaCredentials";
     public static final String AUTH_RAX_AUTH_DOMAIN_PATH = "auth.RAX-AUTH:domain";

@@ -97,6 +97,19 @@ public class Cloud20VersionResource {
         return cloud20Service.authenticateForForgotPassword(httpHeaders, forgotPasswordCredentials).build();
     }
 
+    @POST
+    @Path("/users/RAX-AUTH/pwd-reset")
+    public Response passwordReset(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            PasswordReset passwordReset) {
+        if(!identityConfig.getReloadableConfig().isForgotPasswordEnabled()){
+            throw new NotFoundException("Service Not Found");
+        }
+
+        return cloud20Service.passwordReset(httpHeaders, authToken, passwordReset).build();
+    }
+
     @DELETE
     @Path("tokens")
     public Response revokeToken(@Context HttpHeaders httpHeaders, @HeaderParam(X_AUTH_TOKEN) String authToken) throws IOException, JAXBException {

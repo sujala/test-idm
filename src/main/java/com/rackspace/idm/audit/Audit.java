@@ -12,6 +12,7 @@ import org.slf4j.MDC;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class Audit {
@@ -23,7 +24,17 @@ public class Audit {
     public static final String X_FORWARDED_FOR = "X_FORWARDED_FOR";
 
 	private enum ACTION {
-		USERAUTH, CLIENTAUTH, RACKERAUTH, ADD, DELETE, MODIFY, CLOUDADMINAUTH, IMPERSONATION, FEDERATEDAUTH, FORGOTPWDAUTH
+		USERAUTH,
+		CLIENTAUTH,
+		RACKERAUTH,
+		ADD,
+		DELETE,
+		MODIFY,
+		CLOUDADMINAUTH,
+		IMPERSONATION,
+		FEDERATEDAUTH,
+		FORGOTPWDAUTH,
+		PASSWORD_RESET,
 	}
 
 	private enum RESULT {
@@ -115,7 +126,7 @@ public class Audit {
 	}
 
 	public static void logFailedForgotPasswordRequest(ForgotPasswordCredentials forgotPasswordCredentials, String failureReason) {
-		//defensive programming arround user supplied value which could be excessively long. Don't want to risk filling
+		//defensive programming around user supplied value which could be excessively long. Don't want to risk filling
 		//up logs
 		String finalPortal = StringUtils.left(forgotPasswordCredentials.getPortal(), Validator20.MAX_USERNAME + 10);
 		String finalUsername = StringUtils.left(forgotPasswordCredentials.getUsername(), Validator20.MAX_USERNAME + 10);
@@ -133,6 +144,11 @@ public class Audit {
 
 		Audit audit = new Audit(String.format("username=%s", finalUsername)).addEvent(ACTION.FORGOTPWDAUTH, context);
 		audit.fail();
+	}
+
+	public static void logSuccessfulPasswordResetRequest(User user) {
+		Audit audit = new Audit(user.getAuditContext()).addEvent(ACTION.PASSWORD_RESET, String.format("userId='%s', pwdResetTokenUsed=%s", user.getId(), Boolean.TRUE));
+		audit.succeed();
 	}
 
 	public static Audit deleteOTP(String container) {
