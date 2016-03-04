@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.exception.BadRequestException
+import groovy.json.JsonSlurper
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang.RandomStringUtils
@@ -626,7 +627,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response.status == 400
     }
 
-    def "list IDPs returns 404 is tenant and domain IDs are given as filters"() {
+    def "list IDPs returns 400 is tenant and domain IDs are given as filters"() {
         given:
         def idpManager = utils.createIdentityProviderManager()
         def idpManagerToken = utils.getToken(idpManager.username)
@@ -638,16 +639,54 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response.status == 400
     }
 
-    def "list IDPs returns 404 if the tenant being filtered by does not exist"() {
+    @Unroll
+    def "list IDPs returns empty list if the tenant being filtered by does not exist, accept = #accept"() {
         given:
         def idpManager = utils.createIdentityProviderManager()
         def idpManagerToken = utils.getToken(idpManager.username)
 
         when:
-        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, "someTenant")
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, "someTenant", accept, accept)
 
         then:
-        response.status == 404
+        response.status == 200
+        if (accept == MediaType.APPLICATION_XML_TYPE) {
+            def idps = response.getEntity(IdentityProviders.class)
+            assert idps.identityProvider.size() == 0
+        } else {
+            def idps = new JsonSlurper().parseText(response.getEntity(String))['RAX-AUTH:identityProviders']
+            assert idps.size() == 0
+        }
+
+        where:
+        accept | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "list IDPs returns empty list if the domain being filtered by does not exist, accept = #accept"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when:
+        def response = cloud20.listIdentityProviders(idpManagerToken, "domainDoesNotExist", null, null, accept, accept)
+
+        then:
+        response.status == 200
+        if (accept == MediaType.APPLICATION_XML_TYPE) {
+            def idps = response.getEntity(IdentityProviders.class)
+            assert idps.identityProvider.size() == 0
+        } else {
+            def idps = new JsonSlurper().parseText(response.getEntity(String))['RAX-AUTH:identityProviders']
+            assert idps.size() == 0
+        }
+
+        where:
+        accept | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
     }
 
     def "list IDPs returns 400 if the tenant being filtered by belongs to the default domain"() {

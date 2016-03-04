@@ -1234,17 +1234,32 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
+            //prevent use of domain and tenant filter at the same time
             if (StringUtils.isNotBlank(approvedDomainId) && StringUtils.isNotBlank(approvedTenantId)) {
                 throw new BadRequestException(FEDERATION_IDP_FILTER_CONFLICT_ERROR_MESSAGE);
             }
 
             if (StringUtils.isNotBlank(approvedTenantId)) {
-                Tenant tenantForFilter = tenantService.checkAndGetTenant(approvedTenantId);
+                //verify that the tenant exists if trying to filter by tenant
+                Tenant tenantForFilter = tenantService.getTenant(approvedTenantId);
+                //return empty list if the tenant does not exist
+                if (tenantForFilter == null) {
+                    return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProviders(identityProviderConverterCloudV20.toIdentityProviderList(new ArrayList<com.rackspace.idm.domain.entity.IdentityProvider>())).getValue());
+                }
+                //do not allow for tenants assigned to the default domain to be used in the filter
                 if(StringUtils.isBlank(tenantForFilter.getDomainId()) ||
                         identityConfig.getReloadableConfig().getTenantDefaultDomainId().equals(tenantForFilter.getDomainId())) {
                     throw new BadRequestException(FEDERATION_IDP_FILTER_TENANT_NO_DOMAIN_ERROR_MESSAGE);
                 }
                 approvedDomainId = tenantForFilter.getDomainId();
+            }
+
+            //return an empty list if trying to filter by a domain that does not exist
+            if (StringUtils.isNotBlank(approvedDomainId)) {
+                Domain domain = domainService.getDomain(approvedDomainId);
+                if (domain == null) {
+                    return Response.ok(objFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProviders(identityProviderConverterCloudV20.toIdentityProviderList(new ArrayList<com.rackspace.idm.domain.entity.IdentityProvider>())).getValue());
+                }
             }
 
             List<com.rackspace.idm.domain.entity.IdentityProvider> providerEntities;
