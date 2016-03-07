@@ -999,10 +999,6 @@ class RootServiceTest extends Specification {
         scopeAccessService.getScopeAccessByAccessToken(_) >> scopeAccess
     }
 
-    def allowMultiFactorAccess() {
-        config.getBoolean("multifactor.services.enabled") >> true
-    }
-
     def m(String value){
         return value.multiply(100)
     }

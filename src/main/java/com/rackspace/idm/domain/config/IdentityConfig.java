@@ -133,14 +133,6 @@ public class IdentityConfig {
     public static final String MAX_OTP_DEVICE_PER_USER_PROP = "max.otp.device.per.user";
     public static final int MAX_OTP_DEVICE_PER_USER_DEFAULT = 5;
 
-    /**
-     * Name of the property that specifies the name of the identity role users are assigned to gain access to MFA during
-     * the beta period.
-     */
-    public static final String MULTIFACTOR_BETA_ROLE_NAME_PROP = "cloudAuth.multiFactorBetaRoleName";
-    public static final String MULTIFACTOR_BETA_ENABLED_PROP = "multifactor.beta.enabled";
-
-    public static final String MULTIFACTOR_SERVICES_ENABLED_PROP = "multifactor.services.enabled";
     public static final String BYPASS_DEFAULT_NUMBER = "multifactor.bypass.default.number";
     public static final String BYPASS_MAXIMUM_NUMBER = "multifactor.bypass.maximum.number";
     public static final String FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS = "feature.enable.local.multifactor.bypass";
@@ -370,8 +362,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_AE_TOKENS_DECRYPT, true);
         defaults.put(FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME, true);
         defaults.put(RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME, 60);
-        defaults.put(MULTIFACTOR_BETA_ENABLED_PROP, false);
-        defaults.put(MULTIFACTOR_SERVICES_ENABLED_PROP, false);
         defaults.put(BYPASS_DEFAULT_NUMBER, BigInteger.ONE);
         defaults.put(BYPASS_MAXIMUM_NUMBER, BigInteger.TEN);
         defaults.put(FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS, FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS_DEFAULT);
@@ -776,21 +766,6 @@ public class IdentityConfig {
         @IdmProp(key = IDENTITY_USER_MANAGE_ROLE_NAME_PROP, description = "User manager role name.", versionAdded = "1.0.14.8")
         public String getIdentityUserManagerRoleName() {
             return getStringSafely(staticConfiguration, IDENTITY_USER_MANAGE_ROLE_NAME_PROP);
-        }
-
-        @IdmProp(key = MULTIFACTOR_BETA_ROLE_NAME_PROP)
-        public String getMultiFactorBetaRoleName() {
-            return getStringSafely(staticConfiguration, MULTIFACTOR_BETA_ROLE_NAME_PROP);
-        }
-
-        @IdmProp(key = MULTIFACTOR_SERVICES_ENABLED_PROP)
-        public boolean getMultiFactorServicesEnabled() {
-            return getBooleanSafely(staticConfiguration, MULTIFACTOR_SERVICES_ENABLED_PROP);
-        }
-
-        @IdmProp(key = MULTIFACTOR_BETA_ENABLED_PROP)
-        public boolean getMultiFactorBetaEnabled() {
-            return getBooleanSafely(staticConfiguration, MULTIFACTOR_BETA_ENABLED_PROP);
         }
 
         @IdmProp(key = IDENTITY_PROVISIONED_TOKEN_FORMAT, description = "Defines the default token format for provisioned users tokens.", versionAdded = "2.12.0")

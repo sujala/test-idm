@@ -120,7 +120,7 @@ public final class JsonWriterHelper {
         return outer;
     }
 
-    public static JSONObject getUser(User user, boolean isMultiFactorGloballyEnabled) {
+    public static JSONObject getUser(User user) {
         JSONObject outer = new JSONObject();
         outer.put(JSONConstants.ID, user.getId());
         outer.put(JSONConstants.USERNAME, user.getUsername());
@@ -153,16 +153,14 @@ public final class JsonWriterHelper {
         }
 
         boolean mfaEnabledValue = user.isMultiFactorEnabled() == null ? false : user.isMultiFactorEnabled();
-        if (isMultiFactorGloballyEnabled || mfaEnabledValue) {
-            outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED, mfaEnabledValue);
-            if(mfaEnabledValue) {
-                //only set these if MFA enabled && not null
-                if (user.getMultiFactorState() != null) {
-                    outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_STATE, user.getMultiFactorState().toString());
-                }
-                if (user.getFactorType() != null) {
-                    outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_TYPE, user.getFactorType().name());
-                }
+        outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED, mfaEnabledValue);
+        if(mfaEnabledValue) {
+            //only set these if MFA enabled && not null
+            if (user.getMultiFactorState() != null) {
+                outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_STATE, user.getMultiFactorState().toString());
+            }
+            if (user.getFactorType() != null) {
+                outer.put(JSONConstants.RAX_AUTH_MULTI_FACTOR_TYPE, user.getFactorType().name());
             }
         }
 

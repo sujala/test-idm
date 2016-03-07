@@ -89,34 +89,6 @@ class DefaultMultifactorCloud20Test extends Specification {
         requestContext.getSecurityContext() >> securityContext
     }
 
-    def "authenticateSecondFactor calls multifactor service to determine whether user has access to MFA"() {
-        given:
-        def encodedSessionId = "encodedSessionId"
-        def cred = new PasscodeCredentials()
-        setupForMfaAuth(encodedSessionId, rolesWithoutMfaBetaRole)
-
-        when:
-        service.authenticateSecondFactor(encodedSessionId, cred)
-
-        then:
-        1 * multiFactorService.isMultiFactorEnabledForUser(_) >> true
-        noExceptionThrown()
-    }
-
-    def "authenticateSecondFactor throws BadRequestException when user does not have access to MFA"() {
-        given:
-        def encodedSessionId = "encodedSessionId"
-        def cred = new PasscodeCredentials()
-        setupForMfaAuth(encodedSessionId, rolesWithoutMfaBetaRole)
-
-        when:
-        service.authenticateSecondFactor(encodedSessionId, cred)
-
-        then:
-        1 * multiFactorService.isMultiFactorEnabledForUser(_) >> false
-        thrown(BadRequestException)
-    }
-
     def "updateMultifactor unlock - allow unlocking another account"() {
         User caller = new User().with {
             it.id = "callerId"

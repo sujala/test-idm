@@ -1265,20 +1265,12 @@ public class Cloud20VersionResource {
 
     @Path("users/{userId}/RAX-AUTH/multi-factor")
     public CloudMultifactorResource getMultifactorResource() {
-        if (multiFactorCloud20Service.isMultiFactorEnabled()) {
-            return multifactorResource;
-        } else {
-            return null;
-        }
+        return multifactorResource;
     }
 
     @Path("RAX-AUTH/domains/{domainId}/multi-factor")
     public CloudMultifactorDomainResource getMultifactorDomainResource() {
-        if (multiFactorCloud20Service.isMultiFactorEnabled()) {
-            return multifactorDomainResource;
-        } else {
-            return null;
-        }
+        return multifactorDomainResource;
     }
 
     protected int validateMarker(Integer offset) {

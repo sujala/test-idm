@@ -193,7 +193,6 @@ class ApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
                 , identityConfig.getStaticConfig().getIdentityUserManagerRoleName()
                 , identityConfig.getStaticConfig().getIdentityDefaultUserRoleName()
                 , identityConfig.getStaticConfig().getIdentityDefaultUserRoleName()
-                , identityConfig.getStaticConfig().getMultiFactorBetaRoleName()
         )
 
         when:

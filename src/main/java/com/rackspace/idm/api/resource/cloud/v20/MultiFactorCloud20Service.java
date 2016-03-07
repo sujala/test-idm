@@ -27,28 +27,6 @@ public interface MultiFactorCloud20Service {
     static final String X_SESSION_ID_HEADER_NAME = "X-SessionId";
 
     /**
-     * Whether or not multi-factor services are enabled or not.
-     *
-     * Returns true if multi-factor status is either FULL or BETA otherwise returns FALSE.
-     */
-    boolean isMultiFactorEnabled();
-
-    /**
-     * Whether or not multi-factor services are enabled and multi-factor beta is disabled.
-     *
-     * Returns true if multi-factor services are enabled and multi-factor beta is disabled. Returns false otherwise.
-     */
-    public boolean isMultiFactorGloballyEnabled();
-
-    /**
-     * Whether or not multi-factor services are enabled or not for a given user.
-     *
-     * Returns true if multi-factor status is FULL, true if multi-factor status is BETA and user has
-     * multi-factor beta role, and false otherwise.
-     */
-    boolean isMultiFactorEnabledForUser(BaseUser user);
-
-    /**
      * Associates the specified phone to the user specified by userId.
      *
      * Initially, the caller, represented by the provided authToken, can only associate a phone with his/her own account. Attempting to call this service

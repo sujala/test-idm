@@ -69,10 +69,8 @@ class DefaultAuthorizationServiceIntegrationTest extends Specification {
     def "Getting identity user type only recognizes user type roles"() {
         ImmutableClientRole uaRole = service.identityRoleNameToRoleMap.get(identityConfig.getStaticConfig().getIdentityUserAdminRoleName())
         ImmutableClientRole umRole = service.identityRoleNameToRoleMap.get(identityConfig.getStaticConfig().getIdentityUserManagerRoleName())
-        //chose this as the second role since it's weight is lower than the user-admin role so good test to make sure it's ignored
-        ImmutableClientRole mfaRole = service.identityRoleNameToRoleMap.get(identityConfig.getStaticConfig().getMultiFactorBetaRoleName())
 
-        List<TenantRole> tenantRoles = [createTenantRoleForClientRole(mfaRole), createTenantRoleForClientRole(umRole), createTenantRoleForClientRole(uaRole)]
+        List<TenantRole> tenantRoles = [createTenantRoleForClientRole(umRole), createTenantRoleForClientRole(uaRole)]
         ServiceCatalogInfo scInfo = new ServiceCatalogInfo(tenantRoles, null, null);
 
         expect:
@@ -80,9 +78,9 @@ class DefaultAuthorizationServiceIntegrationTest extends Specification {
     }
 
     def "Getting identity user type returns null when no identity type role provided"() {
-        ImmutableClientRole mfaRole = service.identityRoleNameToRoleMap.get(identityConfig.getStaticConfig().getMultiFactorBetaRoleName())
+        ImmutableClientRole rackerRole = service.identityRoleNameToRoleMap.get(GlobalConstants.ROLE_NAME_RACKER)
 
-        List<TenantRole> tenantRoles = [createTenantRoleForClientRole(mfaRole)]
+        List<TenantRole> tenantRoles = [createTenantRoleForClientRole(rackerRole)]
         ServiceCatalogInfo scInfo = new ServiceCatalogInfo(tenantRoles, null, null);
 
         expect:
@@ -96,7 +94,6 @@ class DefaultAuthorizationServiceIntegrationTest extends Specification {
                 , identityConfig.getStaticConfig().getIdentityUserAdminRoleName()
                 , identityConfig.getStaticConfig().getIdentityUserManagerRoleName()
                 , identityConfig.getStaticConfig().getIdentityDefaultUserRoleName()
-                , identityConfig.getStaticConfig().getMultiFactorBetaRoleName()
                 , GlobalConstants.ROLE_NAME_RACKER);
     }
 

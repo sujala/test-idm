@@ -381,51 +381,6 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         0 * domainService.updateDomain(optionalDomain)
     }
 
-    def "isMultiFactorEnabled checks multifactor feature flag"() {
-        when:
-        service.isMultiFactorEnabled()
-
-        then:
-        1 * staticConfig.getMultiFactorServicesEnabled()
-    }
-
-    def "isMultiFactorEnabledForUser returns false if multifactor services are disabled"() {
-        when:
-        def response = service.isMultiFactorEnabled()
-
-        then:
-        1 * staticConfig.getMultiFactorServicesEnabled() >> false
-        response == false
-    }
-
-    def "isMultiFactorEnabledForUser returns false if multifactor services are enabled and in beta and user does not have MFA beta role"() {
-        def user = new User()
-
-        when:
-        def response = service.isMultiFactorEnabledForUser(user)
-
-        then:
-        1 * staticConfig.getMultiFactorServicesEnabled() >> true
-        1 * staticConfig.getMultiFactorBetaEnabled() >> true
-        1 * staticConfig.getMultiFactorBetaRoleName() >> betaRoleName
-        1 * tenantService.getGlobalRolesForUser(user) >> rolesWithoutMfaBetaRole
-        response == false
-    }
-
-    def "isMultiFactorEnabledForUser returns true if multifactor services are enabled and in beta and user has MFA beta role"() {
-        def user = new User()
-
-        when:
-        def response = service.isMultiFactorEnabledForUser(user)
-
-        then:
-        1 * staticConfig.getMultiFactorServicesEnabled() >> true
-        1 * staticConfig.getMultiFactorBetaEnabled() >> true
-        1 * staticConfig.getMultiFactorBetaRoleName() >> betaRoleName
-        1 * tenantService.getGlobalRolesForUser(user) >> rolesWithMfaBetaRole
-        response == true
-    }
-
     /**
      * This tests deleting an OTP device from a user
      *

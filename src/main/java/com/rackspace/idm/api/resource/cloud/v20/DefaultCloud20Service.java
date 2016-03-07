@@ -1050,7 +1050,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
             }
 
-            if (multiFactorCloud20Service.isMultiFactorEnabled() && authenticationRequest.getCredential() != null && authenticationRequest.getCredential().getValue() instanceof PasscodeCredentials) {
+            if (authenticationRequest.getCredential() != null && authenticationRequest.getCredential().getValue() instanceof PasscodeCredentials) {
                 // Scoped tokens not supported here
                 if (authenticationRequest.getScope() != null) {
                     throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
@@ -1091,7 +1091,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 UserAuthenticationResult authResult = userAuthenticationFactor.authenticate(authenticationRequest);
 
-                if (canUseMfaWithCredential && multiFactorCloud20Service.isMultiFactorEnabled() && ((User)authResult.getUser()).isMultiFactorEnabled()) {
+                if (canUseMfaWithCredential && ((User)authResult.getUser()).isMultiFactorEnabled()) {
                     // Scoped tokens not supported here
                     if (authenticationRequest.getScope() != null) {
                         throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
@@ -4160,11 +4160,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
         }
 
-        // The User MUST have access to Multi-Factor
-        if (!multiFactorCloud20Service.isMultiFactorEnabledForUser(user)) {
-            throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
-        }
-
         // The User CAN NOT have a Multi-Factor Enforcement level of OPTIONAL
         if (GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equalsIgnoreCase(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())) {
             throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
@@ -4189,12 +4184,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
 
         User user = (User)baseUser;
-
-        // If the user does NOT have access to multi-factor, then we don't
-        // need to check for mfa enforcement and normal auth can proceed
-        if (!multiFactorCloud20Service.isMultiFactorEnabledForUser(user)) {
-            return;
-        }
 
         // If the user's mfa enforcement flag is OPTIONAL then normal auth
         // can proceed.

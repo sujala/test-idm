@@ -405,10 +405,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         User user = userService.getUserById(sessionId.getUserId());
         userService.validateUserIsEnabled(user);
 
-        if(!isMultiFactorEnabledForUser(user)) {
-            throw new BadRequestException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
-        }
-
         //TODO: FIXME: pass the user not the ID
         MfaAuthenticationResponse response = multiFactorService.verifyPasscode(sessionId.getUserId(), passcode);
         Audit mfaAudit = Audit.authUser(String.format("User(rsId=%s):(PASSCODE)", sessionId.getUserId()));
@@ -837,21 +833,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             LOG.debug(BAD_REQUEST_MSG_INVALID_DEVICE); //logged as debug because this is a bad request, not an error in app
             throw new NotFoundException(BAD_REQUEST_MSG_INVALID_DEVICE);
         }
-    }
-
-    @Override
-    public boolean isMultiFactorGloballyEnabled() {
-        return multiFactorService.isMultiFactorGloballyEnabled();
-    }
-
-    @Override
-    public boolean isMultiFactorEnabled() {
-        return multiFactorService.isMultiFactorEnabled();
-    }
-
-    @Override
-    public boolean isMultiFactorEnabledForUser(BaseUser user) {
-        return multiFactorService.isMultiFactorEnabledForUser(user);
     }
 
     /**

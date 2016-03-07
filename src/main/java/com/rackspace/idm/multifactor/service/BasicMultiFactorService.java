@@ -626,7 +626,7 @@ public class BasicMultiFactorService implements MultiFactorService {
                     || GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equals(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())
                     ||  (GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_DEFAULT.equals(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())
                     && GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equals(domain.getDomainMultiFactorEnforcementLevelIfNullWillReturnOptional()))
-            ) && isMultiFactorEnabledForUser(user)) {
+            )) {
                 revokeAllMFAProtectedTokensForUser(user);
             }
         }
@@ -1210,27 +1210,6 @@ public class BasicMultiFactorService implements MultiFactorService {
     }
 
     @Override
-    public boolean isMultiFactorGloballyEnabled() {
-        return isMultiFactorEnabled() && !isMultiFactorBetaEnabled();
-    }
-
-    @Override
-    public boolean isMultiFactorEnabled() {
-        return identityConfig.getStaticConfig().getMultiFactorServicesEnabled();
-    }
-
-    @Override
-    public boolean isMultiFactorEnabledForUser(BaseUser user) {
-        if(!isMultiFactorEnabled()) {
-            return false;
-        } else if(isMultiFactorBetaEnabled()) {
-            return userHasMultiFactorBetaRole(user);
-        } else {
-            return true;
-        }
-    }
-
-    @Override
     public OTPDevice addOTPDeviceToUser(String userId, String name) {
         Assert.notNull(name);
         Assert.notNull(userId);
@@ -1395,23 +1374,6 @@ public class BasicMultiFactorService implements MultiFactorService {
 
     private boolean userHasVerifiedMobilePhone(User user) {
         return StringUtils.hasText(user.getMultiFactorMobilePhoneRsId()) && user.isMultiFactorDeviceVerified();
-    }
-
-    private boolean isMultiFactorBetaEnabled() {
-        return identityConfig.getStaticConfig().getMultiFactorBetaEnabled();
-    }
-
-    private boolean userHasMultiFactorBetaRole(BaseUser user) {
-        List<TenantRole> userGlobalRoles = tenantService.getGlobalRolesForUser(user);
-
-        if(userGlobalRoles != null && !userGlobalRoles.isEmpty()) {
-            for(TenantRole role : userGlobalRoles) {
-                if(role.getName().equals(identityConfig.getStaticConfig().getMultiFactorBetaRoleName())) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
 }
