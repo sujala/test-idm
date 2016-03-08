@@ -23,7 +23,7 @@ class LdapApplicationRoleRepositoryTest extends Specification {
     @Shared userAdminWeightFilterString = "(&(objectClass=clientRole)(|(rsWeight=2000)(rsWeight=2500)))"
     @Shared specialWeightFilterString = "(&(objectClass=clientRole)(|(rsWeight=750)(rsWeight=900)(rsWeight=1000)(rsWeight=2000)(rsWeight=2500)))"
     @Shared adminWeightFilterString =  "(&(objectClass=clientRole)(|(rsWeight=500)(rsWeight=750)(rsWeight=900)(rsWeight=1000)(rsWeight=2000)(rsWeight=2500)))"
-    @Shared serviceAdminWeightFilterString = "(&(objectClass=clientRole)(|(rsWeight=100)(rsWeight=500)(rsWeight=750)(rsWeight=900)(rsWeight=1000)(rsWeight=2000)(rsWeight=2500)))"
+    @Shared serviceAdminWeightFilterString = "(&(objectClass=clientRole)(|(rsWeight=50)(rsWeight=100)(rsWeight=500)(rsWeight=750)(rsWeight=900)(rsWeight=1000)(rsWeight=2000)(rsWeight=2500)))"
 
     def setupSpec() {
         repo = new LdapApplicationRoleRepository()
@@ -64,7 +64,7 @@ class LdapApplicationRoleRepositoryTest extends Specification {
         listTwo.size() == 2
         listThree.size() == 5
         listFour.size() == 6
-        listFive.size() == 7
+        listFive.size() == 8
     }
 
     def "searchFilter by applicationId and available returns filter"() {
