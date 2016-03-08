@@ -46,7 +46,7 @@ public class JSONWriterForUsers implements MessageBodyWriter<UserList> {
         JSONObject outer = new JSONObject();
         JSONArray list = new JSONArray();
         for (User user : userList.getUser()) {
-            list.add(getUser(user, multiFactorCloud20Service.isMultiFactorGloballyEnabled()));
+            list.add(getUser(user));
         }
         outer.put(JSONConstants.USERS, list);
         String jsonText = JSONValue.toJSONString(outer);

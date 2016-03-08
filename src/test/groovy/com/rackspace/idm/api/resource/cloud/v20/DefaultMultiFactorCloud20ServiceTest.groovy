@@ -37,7 +37,6 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
 
     def "listDevicesForUser validates x-auth-token"() {
         when:
-        allowMultiFactorAccess()
         service.listMobilePhoneDevicesForUser(null, "token", null)
 
         then:

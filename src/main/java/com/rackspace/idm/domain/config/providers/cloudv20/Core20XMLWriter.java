@@ -133,12 +133,8 @@ public class Core20XMLWriter extends NamespacePrefixMapper implements MessageBod
 
     // Workaround to avoid null values from JAXB generated classes
     private void cleanNullBooleans(User user) {
-        if (multiFactorCloud20Service.isMultiFactorGloballyEnabled()) {
-            user.setMultiFactorEnabled(user.isMultiFactorEnabled() == null ? false : user.isMultiFactorEnabled());
-            user.setEnabled(user.isEnabled());
-        } else if (Boolean.FALSE.equals(user.isMultiFactorEnabled())) {
-            user.setMultiFactorEnabled(null);
-        }
+        user.setMultiFactorEnabled(user.isMultiFactorEnabled() == null ? false : user.isMultiFactorEnabled());
+        user.setEnabled(user.isEnabled());
     }
 
     public String getPreferredPrefix(String namespaceUri, String suggestion,  boolean requirePrefix) {

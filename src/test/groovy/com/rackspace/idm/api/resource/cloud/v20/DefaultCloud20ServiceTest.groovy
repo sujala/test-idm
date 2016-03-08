@@ -1811,7 +1811,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response2 = service.authenticate(headers, authRequestWithTenantId).build()
 
         then:
-        multiFactorCloud20Service.isMultiFactorEnabled() >> false
         1 * tenantService.hasTenantAccess(_, "tenantName") >> false
         1 * tenantService.hasTenantAccess(_, "tenantId") >> false
         response1.status == 401
@@ -1822,7 +1821,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockTokenConverter(service)
         mockAuthConverterCloudV20(service)
-        multiFactorCloud20Service.isMultiFactorEnabled() >> false
 
         def passwordCred = v2Factory.createJAXBPasswordCredentialsBase("username", "Password1")
         def apiKeyCred = v1Factory.createJAXBApiKeyCredentials("username", "apiKey")

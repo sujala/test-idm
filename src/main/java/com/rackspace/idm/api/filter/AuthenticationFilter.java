@@ -293,11 +293,6 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 //setupmfa token only allows mfa calls with {userid} in path
                 throwForbiddenErrorForMfaScopedToken();
             }
-
-            //not going against a user, so must look at the caller instead of the target.
-            if (!doesEffectiveCallerHaveAccessToMfa()) {
-                throw new WebApplicationException(HttpServletResponse.SC_NOT_FOUND);
-            }
         } else if (isUserMfaTargetCall(requestPath)) {
             //it's a user specific service call
             String userIdFromPath = parseUserIdFromPath(requestPath);
@@ -321,32 +316,6 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 }
             }
 
-            /*
-            for user specific service calls, the condition is that the user being acted upon must have access to MFA.
-            This allows identity admins, service-admins, user-admins, etc to act upon OTHER users without having to have
-            the beta role during the beta period. To verify the caller has access to MFA we:
-
-               1. First need to check if multifactor services are globally enabled. If so, then the target user will have access to MFA.
-               2. If not globally enabled, we check whether the beta is enabled.
-               3. If beta enabled, we verify whether the target user has the beta role
-
-             If MFA is neither globally enabled nor beta enabled, we allow the request to pass through in order for the
-             application server to return a 404. This is possible because the multifactor resource is not exposed when
-             mfa is completely turned off. When beta IS enabled but the target user does not have the role, we throw
-             a WebApp exception to mimic the application server 404.
-             */
-            if(!multiFactorCloud20Service.isMultiFactorGloballyEnabled()) {
-                //we need to check isMultiFactorEnabled here as well because the above call
-                //only checks for the case where mfa = true and beta = false. It could still be
-                //the case that mfa = true and beta = true.
-                if(multiFactorCloud20Service.isMultiFactorEnabled()) {
-                    // If multi-factor is in BETA then we need to verify that the user that we're
-                    // acting upon has the multi-factor beta role
-                    if (!doesUserHaveMFABetaRole(endUser)) {
-                        throw new WebApplicationException(HttpServletResponse.SC_NOT_FOUND);
-                    }
-                }
-            }
         } else {
             //throw exception because it's a mfa call we don't account for
             throw new WebApplicationException(HttpServletResponse.SC_NOT_FOUND);
@@ -367,71 +336,6 @@ public class AuthenticationFilter implements ContainerRequestFilter {
 
     private boolean isFoundationEnabled(){
         return config.getBoolean("feature.access.to.foundation.api", true);
-    }
-
-    private boolean doesUserHaveMFABetaRole(EndUser user) {
-        if (user == null) {
-            return false;
-        }
-        return multiFactorCloud20Service.isMultiFactorEnabledForUser(user);
-    }
-
-    private boolean doesEffectiveCallerHaveAccessToMfa() {
-        //see if globally enabled
-        if (multiFactorCloud20Service.isMultiFactorGloballyEnabled()) {
-            return true;
-        }
-
-        //see if globally disabled
-        if (!multiFactorCloud20Service.isMultiFactorEnabled()) {
-            return false; //not enabled for anyone
-        }
-
-        //need to retrieve the user
-        BaseUser baseUser = requestContextHolder.getRequestContext().getEffectiveCaller();
-        if (baseUser == null) {
-            logger.debug("User does not have access to MFA because retrieving caller from security context returned null.");
-            return false;
-        }
-
-        return doesUserHaveAccessToMFA(baseUser);
-    }
-
-    private boolean doesUserHaveAccessToMFA(BaseUser baseUser) {
-        //see if globally enabled
-        if (multiFactorCloud20Service.isMultiFactorGloballyEnabled()) {
-            return true;
-        }
-
-        //see if globally disabled
-        if (!multiFactorCloud20Service.isMultiFactorEnabled()) {
-            return false; //not enabled for anyone
-        }
-
-        if (baseUser == null) {
-            logger.debug("User does not have access to MFA because caller is null");
-            return false;
-        }
-
-        //rackers don't get access to mfa
-        if (!(baseUser instanceof EndUser)) {
-            logger.debug("User does not have access to MFA because not an end user");
-            return false;
-        }
-
-        //look for beta role on user
-        if (doesUserHaveMFABetaRole((EndUser) baseUser)) {
-            return true;
-        }
-
-        // identity/service admins are always considered to "have access" to MFA and are unaffected by beta role with respect to calling
-        // the services.
-        IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(baseUser);
-        if (userType == IdentityUserTypeEnum.SERVICE_ADMIN || userType == IdentityUserTypeEnum.IDENTITY_ADMIN) {
-            return true;
-        }
-
-        return false;
     }
 
     private EndUser setRequestContextTargetUser(String userId) {

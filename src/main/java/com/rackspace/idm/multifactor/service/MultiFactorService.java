@@ -177,28 +177,6 @@ public interface MultiFactorService {
     void updateMultiFactorDomainSettings(String domainId, MultiFactorDomain multiFactorDomain);
 
     /**
-     * Whether or not multi-factor services are enabled or not.
-     *
-     * Returns true if multi-factor status is either FULL or BETA otherwise returns FALSE.
-     */
-    boolean isMultiFactorEnabled();
-
-    /**
-     * Whether or not multi-factor services are enabled and multi-factor beta is disabled.
-     *
-     * Returns true if multi-factor services are enabled and multi-factor beta is disabled. Returns false otherwise.
-     */
-    public boolean isMultiFactorGloballyEnabled();
-
-    /**
-     * Whether or not multi-factor services are enabled or not for a given user.
-     *
-     * Returns true if multi-factor status is FULL, true if multi-factor status is BETA and user has
-     * multi-factor beta role, and false otherwise.
-     */
-    boolean isMultiFactorEnabledForUser(BaseUser user);
-
-    /**
      * Whether or not multi-factor devices exist for a given user.
      * @param user
      * @return

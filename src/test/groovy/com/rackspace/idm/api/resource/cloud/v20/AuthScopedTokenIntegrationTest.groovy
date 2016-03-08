@@ -429,7 +429,6 @@ class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
-        setFlagSettings(OFF_SETTINGS_FILE)
 
         when:
         def response = cloud20.authenticatePasswordWithScope(userAdmin.username, DEFAULT_PASSWORD, SCOPE_SETUP_MFA)
@@ -438,68 +437,8 @@ class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
         response.status == SC_FORBIDDEN
 
         cleanup:
-        setFlagSettings(FULL_SETTINGS_FILE)
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
     }
 
-    def "Auth with scope throws forbidden if Multi-Factor is in beta and user DOES NOT have beta role"() {
-        given:
-        def domainId = utils.createDomain()
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdmin(domainId)
-        setFlagSettings(BETA_SETTINGS_FILE)
-
-        when:
-        def response = cloud20.authenticatePasswordWithScope(userAdmin.username, DEFAULT_PASSWORD, SCOPE_SETUP_MFA)
-
-        then:
-        response.status == SC_FORBIDDEN
-
-        cleanup:
-        setFlagSettings(FULL_SETTINGS_FILE)
-        utils.deleteUsers(users)
-        utils.deleteDomain(domainId)
-    }
-
-    def "Auth with scope is ALLOWED if Multi-Factor is in beta and user DOES have beta role"() {
-        given:
-        def domainId = utils.createDomain()
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdmin(domainId)
-        User initialUserAdmin = userRepository.getUserById(userAdmin.id)
-        initialUserAdmin.userMultiFactorEnforcementLevel = GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED
-        userRepository.updateUserAsIs(initialUserAdmin)
-        def mfaBetaRole = roleService.getRoleByName(config.getString("cloudAuth.multiFactorBetaRoleName"))
-        cloud20.addUserRole(utils.getServiceAdminToken(), userAdmin.id, mfaBetaRole.id)
-        setFlagSettings(BETA_SETTINGS_FILE)
-
-        when:
-        def response = cloud20.authenticatePasswordWithScope(userAdmin.username, DEFAULT_PASSWORD, SCOPE_SETUP_MFA)
-
-        then:
-        response.status == SC_OK
-
-        cleanup:
-        setFlagSettings(FULL_SETTINGS_FILE)
-        utils.deleteUsers(users)
-        utils.deleteDomain(domainId)
-    }
-
-    def setFlagSettings(String flagSettingsFile) {
-        switch (flagSettingsFile) {
-            case OFF_SETTINGS_FILE:
-                staticIdmConfiguration.setProperty("multifactor.services.enabled", false)
-                staticIdmConfiguration.setProperty("multifactor.beta.enabled", false)
-                break;
-            case FULL_SETTINGS_FILE:
-                staticIdmConfiguration.setProperty("multifactor.services.enabled", true)
-                staticIdmConfiguration.setProperty("multifactor.beta.enabled", false)
-                break;
-            case BETA_SETTINGS_FILE:
-                staticIdmConfiguration.setProperty("multifactor.services.enabled", true)
-                staticIdmConfiguration.setProperty("multifactor.beta.enabled", true)
-                break;
-        }
-    }
 }

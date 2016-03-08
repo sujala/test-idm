@@ -32,7 +32,6 @@ class AuthMfaEnforcementIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
-        setFlagSettings(BETA_SETTINGS_FILE)
 
         when:
         def response = cloud20.authenticatePassword(userAdmin.username, DEFAULT_PASSWORD)
@@ -41,7 +40,6 @@ class AuthMfaEnforcementIntegrationTest extends RootIntegrationTest {
         response.status == SC_OK
 
         cleanup:
-        setFlagSettings(FULL_SETTINGS_FILE)
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
     }
@@ -132,20 +130,4 @@ class AuthMfaEnforcementIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
     }
 
-    def setFlagSettings(String flagSettingsFile) {
-        switch (flagSettingsFile) {
-            case OFF_SETTINGS_FILE:
-                staticIdmConfiguration.setProperty("multifactor.services.enabled", false)
-                staticIdmConfiguration.setProperty("multifactor.beta.enabled", false)
-                break;
-            case FULL_SETTINGS_FILE:
-                staticIdmConfiguration.setProperty("multifactor.services.enabled", true)
-                staticIdmConfiguration.setProperty("multifactor.beta.enabled", false)
-                break;
-            case BETA_SETTINGS_FILE:
-                staticIdmConfiguration.setProperty("multifactor.services.enabled", true)
-                staticIdmConfiguration.setProperty("multifactor.beta.enabled", true)
-                break;
-        }
-    }
 }
