@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.google.common.collect.ImmutableList;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -32,6 +33,8 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
 
     @Autowired
     private IdentityConfig identityConfig;
+
+    public static final ImmutableList<Integer> roleQueryWeights = ImmutableList.copyOf(Arrays.asList(0, 50, 100, 500, 750, 900, 1000, 2000, 2500));
 
     @Override
     public String getNextRoleId() {
@@ -144,8 +147,10 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     private List<Filter> getRoleWeightsOrFilter(int maxWeightAvailable) {
         List<Filter> orFilterList = new ArrayList<Filter>();
         //Todo: fix this hack
+        // Role weights are stored as strings in the directory.
+        // As a result we cannot filter roles with a weight greater than users' role weight
         //rsWeight role 2500 does not exist; added to prevent default user from getting all roles
-        for (Integer weight : Arrays.asList(0, 100, 500, 750, 900, 1000, 2000, 2500)) {
+        for (Integer weight : roleQueryWeights) {
             if (maxWeightAvailable < weight) {
                 orFilterList.add(Filter.createEqualityFilter("rsWeight", weight.toString()));
             }

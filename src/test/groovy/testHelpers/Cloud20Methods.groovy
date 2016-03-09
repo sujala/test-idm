@@ -816,7 +816,7 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def listRoles(String token, String serviceId, String masker, String limit) {
+    def listRoles(String token, String serviceId = null, String masker = null, String limit = null) {
         initOnUse()
         def queryParams = new MultivaluedMapImpl()
         if (serviceId != null) {
