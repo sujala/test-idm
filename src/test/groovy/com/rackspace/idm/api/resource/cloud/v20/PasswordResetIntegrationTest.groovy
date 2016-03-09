@@ -13,9 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.subethamail.wiser.WiserMessage
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.EmailUtils
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
+
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 
 
 class PasswordResetIntegrationTest extends RootIntegrationTest {
@@ -32,7 +35,12 @@ class PasswordResetIntegrationTest extends RootIntegrationTest {
     @Shared def wiserWrapper
 
     def setupSpec() {
-        wiserWrapper = WiserWrapper.startWiser(2525)
+        //start wiser server before grizzly so the static email port config properties can be updated
+        wiserWrapper = WiserWrapper.startWiser(10025)
+        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
+        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
+
+        this.resource = startOrRestartGrizzly("classpath:app-config.xml") //to pick up wiser changes
     }
 
     def cleanupSpec() {
@@ -40,9 +48,6 @@ class PasswordResetIntegrationTest extends RootIntegrationTest {
     }
 
     def setup() {
-        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
-        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_PROP, true)
         wiserWrapper.wiserServer.getMessages().clear()
     }
 
@@ -245,7 +250,7 @@ class PasswordResetIntegrationTest extends RootIntegrationTest {
         def creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
         cloud20.forgotPassword(creds)
         WiserMessage message = wiserWrapper.wiserServer.getMessages().get(0)
-        message.getMimeMessage().getContent().toString().replaceAll("\r", "").replaceAll("\n", "")
+        EmailUtils.extractTokenFromDefaultForgotPasswordEmail(message.getMimeMessage())
     }
 
 }

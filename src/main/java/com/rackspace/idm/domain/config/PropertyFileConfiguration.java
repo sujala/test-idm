@@ -51,7 +51,7 @@ public class PropertyFileConfiguration {
     @Bean(name = "staticConfiguration")
     @Scope(value = "singleton")
     public Configuration getConfig() {
-    	final String externalConfigFile = System.getProperty("idm.properties.location") + "/" + CONFIG_FILE_NAME;
+    	final String externalConfigFile = System.getProperty(IdentityConfig.CONFIG_FOLDER_SYS_PROP_NAME) + "/" + CONFIG_FILE_NAME;
         File configFile = new File(externalConfigFile);
         if (configFile.exists()) {
             return readConfigFile(externalConfigFile);
@@ -69,7 +69,7 @@ public class PropertyFileConfiguration {
     @Bean(name = "reloadableConfiguration")
     @Scope(value = "singleton")
     public Configuration getReloadableConfig(@Qualifier("staticConfiguration") Configuration staticConfiguration) {
-        final String externalConfigFile = System.getProperty("idm.properties.location") + "/" + RELOADABLE_CONFIG_FILE_NAME;
+        final String externalConfigFile = System.getProperty(IdentityConfig.CONFIG_FOLDER_SYS_PROP_NAME) + "/" + RELOADABLE_CONFIG_FILE_NAME;
         File configFile = new File(externalConfigFile);
         String filePath = configFile.exists() ? externalConfigFile : RELOADABLE_CONFIG_FILE_NAME;
         logger.debug(String.format("No config file found at %s. Loading from the classpath", externalConfigFile));

@@ -5,6 +5,10 @@ import com.rackspace.idm.domain.service.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+/**
+ * @deprecated Should use the velocity template for emails
+ */
+@Deprecated
 @Component
 public class DefaultDocumentService implements DocumentService {
 

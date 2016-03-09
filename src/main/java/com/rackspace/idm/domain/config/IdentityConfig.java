@@ -8,8 +8,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.lang.StringUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +39,22 @@ public class IdentityConfig {
     private static final String EMAIL_MFA_DISABLED_SUBJECT = "email.mfa.disabled.subject";
     private static final String EMAIL_LOCKED_OUT_SUBJECT = "email.locked.out.email.subject";
     public static final String EMAIL_HOST = "email.host";
+    public static final String EMAIL_HOST_DEFAULT = "localhost";
     public static final String EMAIL_PORT = "email.port";
+    public static final int EMAIL_PORT_DEFAULT = 25;
+    public static final String EMAIL_HOST_USERNAME_PROP = "email.username";
+    public static final String EMAIL_HOST_USERNAME_DEFAULT = "";
+    public static final String EMAIL_HOST_PASSWORD_PROP = "email.password";
+    public static final String EMAIL_HOST_PASSWORD_DEFAULT = "";
+
     private static final String EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES = "email.send.to.only.rackspace.addresses.enabled";
     private static final String SETUP_MFA_SCOPED_TOKEN_EXPIRATION_SECONDS = "token.scoped.expirationSeconds";
     public static final String FEATURE_FORGOT_PWD_ENABLED_PROP_NAME = "feature.forgot.pwd.enabled";
     private static final boolean FEATURE_FORGOT_PWD_ENABLED_DEFAULT = false;
     public static final String FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME = "token.forgot.password.validity.length";
     private static final int FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT = 600;
+    public static final String FORGOT_PWD_VALID_PORTALS_PROP_NAME = "forgot.password.valid.portals";
+    private static final List<String> FORGOT_PWD_VALID_PORTALS_DEFAULT = Collections.EMPTY_LIST;
 
     private static final String CLOUD_AUTH_CLIENT_ID = "cloudAuth.clientId";
     public static final String IDENTITY_ACCESS_ROLE_NAMES_PROP = "cloudAuth.accessRoleNames";
@@ -252,6 +259,10 @@ public class IdentityConfig {
     public static final String FEATURE_SUPPORT_V11_LEGACY_PROP = "feature.support.v11.legacy";
     public static final boolean FEATURE_SUPPORT_V11_LEGACY_DEFAULT = false;
 
+    public static final String FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP = "feature.use.velocity.for.mfa.emails";
+    public static final boolean FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_DEFAULT = false;
+
+
     /**
      * Required static prop
      */
@@ -299,14 +310,6 @@ public class IdentityConfig {
      **************************/
     public static final String FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP = "feature.enable.mfa.migration.services";
     public static final Boolean FEATURE_ENABLE_MFA_MIGRATION_SERVICES_DEFAULT = true;
-
-
-    /* ********
-    TEST Helper Features
-    *********** */
-    public static final String FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_PROP = "feature.create.email.session.per.email";
-    public static final boolean FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_DEFAULT = false;
-
 
     /**
      * SQL debug property
@@ -427,7 +430,13 @@ public class IdentityConfig {
 
         defaults.put(FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT);
         defaults.put(FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, FEATURE_FORGOT_PWD_ENABLED_DEFAULT);
-        defaults.put(FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_PROP, FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_DEFAULT);
+        defaults.put(FORGOT_PWD_VALID_PORTALS_PROP_NAME, FORGOT_PWD_VALID_PORTALS_DEFAULT);
+        defaults.put(EMAIL_HOST, EMAIL_HOST_DEFAULT);
+        defaults.put(EMAIL_PORT, EMAIL_PORT_DEFAULT);
+        defaults.put(EMAIL_HOST_USERNAME_PROP, EMAIL_HOST_USERNAME_DEFAULT);
+        defaults.put(EMAIL_HOST_PASSWORD_PROP, EMAIL_HOST_PASSWORD_DEFAULT);
+
+        defaults.put(FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_DEFAULT);
 
         return defaults;
     }
@@ -574,6 +583,40 @@ public class IdentityConfig {
             logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
             return (Boolean) defaultValue;
         }
+    }
+
+    /**
+     * Supports migration of properties from static to reloadable by using the prop if in reloadable, but falling back to
+     * value in static if not defined in reloadable.
+     *
+     * @param prop
+     * @return
+     */
+    private Boolean getBooleanSafelyWithStaticFallBack(String prop) {
+        Boolean val;
+        if (reloadableConfiguration.containsKey(prop)) {
+            val = reloadableConfiguration.getBoolean(prop);
+        } else {
+            val = getBooleanSafely(staticConfiguration, prop);
+        }
+        return val;
+    }
+
+    /**
+     * Supports migration of properties from static to reloadable by using the prop if in reloadable, but falling back to
+     * value in static if not defined in reloadable.
+     *
+     * @param prop
+     * @return
+     */
+    private String getStringSafelyWithStaticFallBack(String prop) {
+        String val;
+        if (reloadableConfiguration.containsKey(prop)) {
+            val = reloadableConfiguration.getString(prop);
+        } else {
+            val = getStringSafely(staticConfiguration, prop);
+        }
+        return val;
     }
 
     private <T extends Enum<T>> T getEnumSafely(Configuration config, String prop, Class<T> enumType) {
@@ -730,8 +773,19 @@ public class IdentityConfig {
         }
 
         @IdmProp(key=EMAIL_PORT, description = "Email port to use when sending emails.", versionAdded = "3.0.0")
-        public String getEmailPort() {
-            return getStringSafely(staticConfiguration, EMAIL_PORT);
+        public int getEmailPort() {
+            return getIntSafely(staticConfiguration, EMAIL_PORT);
+        }
+
+        @IdmProp(key=EMAIL_HOST_USERNAME_PROP, description = "Email username for authentication to email server.", versionAdded = "3.2.0")
+        public String getEmailUsername() {
+            return getStringSafely(staticConfiguration, EMAIL_HOST_USERNAME_PROP);
+        }
+
+        //comment out IDMProp cause this is secret info
+//        @IdmProp(key=EMAIL_HOST_PASSWORD_PROP, description = "Email password for authentication to email server.", versionAdded = "3.2.0")
+        public String getEmailPassword() {
+            return getStringSafely(staticConfiguration, EMAIL_HOST_PASSWORD_PROP);
         }
 
         @IdmProp(key=EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, description = "Flag that restricts outgoing emails to only rackspace.com emails. This will prevent any emails from being sent from staging.", versionAdded = "2.5.0")
@@ -1349,11 +1403,23 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_FORGOT_PWD_ENABLED_PROP_NAME);
         }
 
-        @IdmProp(key = FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_PROP, versionAdded = "3.2.0", description = "Whether or not to " +
-                "create an email session per email. This was added to simplify email testing. For performance reasons, " +
-                "should always be set to 'false' in staging/production")
-        public boolean createEmailSessionPerEmail() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_PROP);
+        @IdmProp(key = FORGOT_PWD_VALID_PORTALS_PROP_NAME, versionAdded = "3.2.0", description = "Comma delimited list of valid portal values for forgot password")
+        public Set<String> getForgotPasswordValidPortals() {
+            return getSetSafely(reloadableConfiguration, FORGOT_PWD_VALID_PORTALS_PROP_NAME);
+        }
+
+        @IdmProp(key = FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, versionAdded = "3.2.0", description = "Whether or not to use velocity templates for mfa emails. Will fall back to original if any error is encountered.")
+        public boolean useVelocityForMfaEmail() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP);
+        }
+
+        @IdmProp(key=EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, description = "(Migrated from static w/ fallback to static if not found in reloadable). Flag that restricts outgoing emails to only rackspace.com emails. This will prevent any emails from being sent from staging.", versionAdded = "3.2.0")
+        public boolean isSendToOnlyRackspaceAddressesEnabled() {
+            return getBooleanSafelyWithStaticFallBack(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES);
+        }
+        @IdmProp(key = EMAIL_FROM_EMAIL_ADDRESS, description = "(Migrated from static w/ fallback to static if not found in reloadable). Return email address to use when sending emails to customers.", versionAdded = "3.2.0")
+        public String getEmailFromAddress() {
+            return getStringSafelyWithStaticFallBack(EMAIL_FROM_EMAIL_ADDRESS);
         }
 
     }
@@ -1365,7 +1431,7 @@ public class IdentityConfig {
 
     @Deprecated
     public String getEmailFromAddress() {
-        return getStaticConfig().getEmailFromAddress();
+        return getReloadableConfig().getEmailFromAddress();
     }
 
     @Deprecated
