@@ -404,6 +404,40 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         deleteTenantQuietly(tenant)
     }
 
+    def "delete propagating role on sub-user before user admin - CIDMDEV-5364"() {
+        """
+           Steps to reproduce the defect:
+           1. create a user admin and a sub user under that user admin
+           2. create propagating Role R
+           3. create a Tenant T
+           4. add that Role R to the sub user on Tenant T
+           5. add Role R to the user admin on tenant T
+           6. delete Role R from the sub user on tenant T
+           7. delete Role R from the user admin on tenant T
+        """
+        given:
+        def domainId = utils.createDomain()
+        def users, identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        users = [userManage, defaultUser, userAdmin, identityAdmin]
+        def role = utils.createPropagatingRole()
+        def tenant = utils.createTenant()
+        utils.addRoleToUserOnTenant(defaultUser, tenant, role.id)
+        utils.addRoleToUserOnTenant(userAdmin, tenant, role.id)
+        utils.deleteRoleFromUserOnTenant(defaultUser, tenant, role.id)
+
+        when:
+        def response = cloud20.deleteRoleFromUserOnTenant(utils.getServiceAdminToken(), tenant.id, userAdmin.id, role.id)
+
+        then: "success"
+        response.status == 204
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteRole(role)
+        utils.deleteTenant(tenant)
+    }
+
     //Helper Methods
     def deleteRoleQuietly(role) {
         if (role != null) {
