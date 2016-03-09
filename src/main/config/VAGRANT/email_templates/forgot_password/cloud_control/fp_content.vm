@@ -1,0 +1,13 @@
+User: ${username}
+
+You have requested assistance with your password for The Rackspace Cloud.
+
+Please follow the link at the bottom of this message within the next ${token_validity_period} minutes (by $date.format('long', ${token_expiration})) to reset your password. You will be required to enter your username and this e-mail address.
+
+Please follow this link to reset your password:
+
+https://manage.rackspacecloud.com/NextgenResetPassword.do?key=${token_str}
+
+Some e-mail clients may wrap the link across multiple lines. This may keep the link from functioning properly. You may enter the reset key provided below in the box on the page if you experience this problem.
+
+Key: ${token_str}

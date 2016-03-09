@@ -1,0 +1,4 @@
+username=${username}
+token_str=${token_str}
+token_expiration=$date.format("yyyy-MM-dd'T'HH:mm:ss.SSSZ", ${token_expiration})
+token_validity_period=${token_validity_period}

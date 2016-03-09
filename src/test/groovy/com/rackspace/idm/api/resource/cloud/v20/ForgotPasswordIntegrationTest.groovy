@@ -6,23 +6,29 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.TokenScopeEnum
+import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.helpers.WiserWrapper
+import com.rackspace.idm.api.resource.cloud.email.EmailTemplateConstants
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
+import org.joda.time.format.DateTimeFormatter
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.Cloud20Methods
+import testHelpers.EmailUtils
 import testHelpers.RootIntegrationTest
 
 import javax.mail.internet.MimeMessage
 import javax.ws.rs.core.MediaType
 
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 import static org.apache.http.HttpStatus.SC_FORBIDDEN
 import static org.apache.http.HttpStatus.SC_NOT_FOUND
 import static org.apache.http.HttpStatus.SC_NO_CONTENT
@@ -50,13 +56,19 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
     @Shared def identityAdminToken
 
     def setupSpec() {
+        //start up wiser and set the properties BEFORE making first cloud20 call (which starts grizzly)
+        wiserWrapper = WiserWrapper.startWiser(10025)
+        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
+        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
+
+        this.resource = startOrRestartGrizzly("classpath:app-config.xml") //to pick up wiser changes
+
         def identityAdminAuthResponse = cloud20.authenticatePassword(Constants.IDENTITY_ADMIN_USERNAME, Constants.IDENTITY_ADMIN_PASSWORD).getEntity(AuthenticateResponse)
         assert identityAdminAuthResponse.value instanceof AuthenticateResponse
         identityAdminToken = identityAdminAuthResponse.value.token.id
 
         //create single user-admin/domain to test with
         userAdmin = createUserAdmin()
-        wiserWrapper = WiserWrapper.startWiser(2525)
     }
 
     def cleanupSpec() {
@@ -67,7 +79,6 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
     def setup() {
         staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
         staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_CREATE_EMAIL_SESSION_PER_EMAIL_PROP, true)
 
         wiserWrapper.wiserServer.getMessages().clear()
     }
@@ -129,24 +140,80 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(defaultUser)
     }
 
-    def "Sends an Email"() {
+    def "Sends an Email w/ defined dynamic properties"() {
         ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
+
         when:
         def response = methods.forgotPassword(creds)
 
         then: "an email was sent"
         wiserWrapper.wiserServer.getMessages() != null
         wiserWrapper.wiserServer.getMessages().size() == 1
+
+        and: "email contains appropriate dynamic props"
+        MimeMessage message = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage()
+        message.getFrom().length == 1
+        message.getFrom()[0].toString() == "no-reply@rackspace.com"
+        message.getSubject() == "Default Hosting Password Reset Instructions"
+
+        verifyDynamicEmailProps(userAdmin, message)
     }
 
-    def "Email contains an AE Token"() {
+    def "Sends an Email w/ cloud control formatting"() {
+        ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, "cloud_control")
+
+        when:
+        def response = methods.forgotPassword(creds)
+
+        then: "an email was sent"
+        wiserWrapper.wiserServer.getMessages() != null
+        wiserWrapper.wiserServer.getMessages().size() == 1
+
+        and: "email contains appropriate dynamic props"
+        String emailContent = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage().getContent()
+        emailContent.startsWith("User: " + userAdmin.username)
+    }
+
+    /**
+     * The default email content template simply lists all the explicitly supported dynamic values for emails. This tests
+     * that these are set appropriately.
+     *
+     * @param expectedUser
+     * @param expectedScopeAccess
+     * @param email
+     */
+    def void verifyDynamicEmailProps(User expectedUser, MimeMessage email) {
+        Map<String, String> dynamicProps = EmailUtils.extractDynamicPropsFromDefaultEmail(email)
+
+        //verify the username prop
+        assert expectedUser.username == dynamicProps.get(EmailTemplateConstants.FORGOT_PASSWORD_USER_NAME_PROP)
+
+        //verify the validity period prop
+        assert String.valueOf(identityConfig.getReloadableConfig().getForgotPasswordTokenLifetime()/60) == dynamicProps.get(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_VALIDITY_PERIOD_PROP)
+
+        //verify the token_str prop (and decrypt actual token)
+        def accessTokenString = dynamicProps.get(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_STRING_PROP)
+        assert accessTokenString != null
+        def tokenEntity = aeTokenService.unmarshallToken(accessTokenString)
+        assert tokenEntity != null
+
+        //verify the expiration date prop
+        DateTimeFormatter formatterForEmail = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ") //match the format specified in email
+
+        String expStr = dynamicProps.get(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_EXPIRATION_PROP)
+        DateTime expDateInEmail = formatterForEmail.parseDateTime(expStr);
+        DateTime expectedExpirationDate = new DateTime(tokenEntity.accessTokenExp)
+        assert expDateInEmail.equals(expectedExpirationDate)
+    }
+
+    def "Email contains an AE Token configured for user"() {
         ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
 
         when:
         def response = methods.forgotPassword(creds)
 
         then: "the email contains an AE token"
-        def tokenStr = extractTokenFromEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
         def tokenEntity = aeTokenService.unmarshallToken(tokenStr)
         tokenEntity != null
 
@@ -155,6 +222,8 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         tokenEntity.authenticatedBy.size() == 1
         tokenEntity.authenticatedBy.get(0) == AuthenticatedByMethodEnum.EMAIL.value
         tokenEntity.accessTokenExp != null
+        tokenEntity instanceof UserScopeAccess
+        ((UserScopeAccess)tokenEntity).getIssuedToUserId() == userAdmin.id
     }
 
     def "Reset token expiration based on config property"() {
@@ -164,7 +233,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         def expirationSeconds = 10 * 60
         reloadableConfiguration.setProperty(IdentityConfig.FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, expirationSeconds)
         def response = methods.forgotPassword(creds)
-        def tokenStr = extractTokenFromEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
         def tokenEntity = aeTokenService.unmarshallToken(tokenStr)
         DateTime expectedTokenExpireOnOrBefore = new DateTime().plusSeconds(expirationSeconds)
         DateTime expectedTokenExpireAfter = new DateTime().plusSeconds(expirationSeconds).minusSeconds(20) //20 seconds of padding in case method takes a while
@@ -178,7 +247,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         expirationSeconds = 100 * 60
         reloadableConfiguration.setProperty(IdentityConfig.FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, expirationSeconds)
         methods.forgotPassword(creds)
-        tokenStr = extractTokenFromEmail(wiserWrapper.wiserServer.getMessages().get(1).getMimeMessage()) //get the second email
+        tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(1).getMimeMessage()) //get the second email
         tokenEntity = aeTokenService.unmarshallToken(tokenStr)
         expectedTokenExpireOnOrBefore = new DateTime().plusSeconds(expirationSeconds)
         expectedTokenExpireAfter = new DateTime().plusSeconds(expirationSeconds).minusSeconds(20) //20 seconds of padding in case method takes a while
@@ -194,7 +263,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
 
         when: "get reset token"
         methods.forgotPassword(creds)
-        def tokenStr = extractTokenFromEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
 
         then: "the token can not be validated as self token"
         cloud20.validateToken(tokenStr, tokenStr).status == SC_NOT_FOUND
@@ -208,7 +277,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
 
         when: "get reset token"
         methods.forgotPassword(creds)
-        def tokenStr = extractTokenFromEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
 
         then: "the token can not be validated"
         cloud11.validateToken(tokenStr).status == SC_NOT_FOUND
@@ -217,14 +286,15 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
     def "Reset token can not be used to get user"() {
         ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
         methods.forgotPassword(creds)
-        def tokenStr = extractTokenFromEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
 
         expect: "try to get my user using tokens results in 403"
         cloud20.getUserById(tokenStr, userAdmin.id).status == SC_FORBIDDEN
     }
 
-    def extractTokenFromEmail(MimeMessage message) {
-        return StringUtils.trim(message.content);
+    def extractTokenFromDefaultEmail(MimeMessage message) {
+        def map = EmailUtils.extractDynamicPropsFromDefaultEmail(message)
+        return StringUtils.trim(map.get(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_STRING_PROP));
     }
 
     def void assertDateOnOrBefore(DateTime date1, DateTime date2) {

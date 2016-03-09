@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.IdentityUserService;
@@ -12,11 +13,16 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.Validator20;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.Iterator;
+import java.util.Set;
 
 @Component
 public class AuthWithForgotPasswordCredentials extends BaseUserAuthenticationFactor {
@@ -29,6 +35,9 @@ public class AuthWithForgotPasswordCredentials extends BaseUserAuthenticationFac
 
     @Autowired
     private AuthorizationService authorizationService;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     public AuthResponseTuple authenticateForAuthResponse(AuthenticationRequest authenticationRequest) {
         ForgotPasswordCredentials forgotPasswordCredentials = (ForgotPasswordCredentials) authenticationRequest.getCredential().getValue();
@@ -48,6 +57,8 @@ public class AuthWithForgotPasswordCredentials extends BaseUserAuthenticationFac
 
     public UserAuthenticationResult authenticate(AuthenticationRequest authenticationRequest) {
         ForgotPasswordCredentials creds = (ForgotPasswordCredentials) authenticationRequest.getCredential().getValue();
+        validateForgotPasswordRequest(creds);
+
         String username = creds.getUsername();
         User user = userService.getUser(username);
 
@@ -68,6 +79,26 @@ public class AuthWithForgotPasswordCredentials extends BaseUserAuthenticationFac
         }
 
         return new UserAuthenticationResult(user, true, AuthenticatedByMethodGroup.EMAIL.getAuthenticatedByMethodsAsValues(), TokenScopeEnum.PWD_RESET.getScope());
+    }
+
+    private void validateForgotPasswordRequest(ForgotPasswordCredentials creds) {
+        if (StringUtils.isBlank(creds.getPortal())) {
+            creds.setPortal("default");
+        } else {
+            //verify provided portal is valid (case insensitive)
+            creds.setPortal(creds.getPortal().toLowerCase());
+            Set<String> portals = identityConfig.getReloadableConfig().getForgotPasswordValidPortals();
+            boolean found = false;
+            for (Iterator<String> it = portals.iterator(); it.hasNext() && !found; ) {
+                if (it.next().equalsIgnoreCase(creds.getPortal())) {
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                throw new BadRequestException(String.format("Portal '%s' is not valid", creds.getPortal()));
+            }
+        }
     }
 
     private void sendForgotPasswordEmail(User user, ScopeAccess token, String portal) {

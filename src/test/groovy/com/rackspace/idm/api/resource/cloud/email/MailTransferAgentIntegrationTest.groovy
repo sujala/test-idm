@@ -1,16 +1,49 @@
 package com.rackspace.idm.api.resource.cloud.email
 
-import com.rackspace.idm.api.resource.cloud.email.impl.MailTransferAgentClient
+import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.helpers.WiserWrapper
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import spock.lang.Shared
 import testHelpers.RootIntegrationTest
+
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
 
     @Autowired MailTransferAgentClient client
+
+    @Shared def WiserWrapper wiserWrapper;
+
+    def setupSpec() {
+        //start up wiser and set the properties BEFORE making first cloud20 call (which starts grizzly)
+        wiserWrapper = WiserWrapper.startWiser(10025)
+        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
+        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
+
+        this.resource = startOrRestartGrizzly("classpath:app-config.xml") //to pick up wiser changes
+    }
+
+    def cleanupSpec() {
+        wiserWrapper.wiserServer.stop()
+    }
+
+    def setup() {
+        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
+        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
+
+        wiserWrapper.wiserServer.getMessages().clear()
+    }
+
+    def cleanup() {
+        reloadableConfiguration.reset()
+        staticIdmConfiguration.reset()
+    }
 
     def "Successfully send locked out email"() {
         given:

@@ -13,7 +13,20 @@ public interface EmailClient {
     boolean sendMultiFactorDisabledMessage(User user);
     void asyncSendMultiFactorDisabledMessage(User user);
 
+    /**
+     * Send the forgot password flow with the subject/content based on the templates for the specified portal.
+     *
+     * @param user
+     * @param token
+     * @param portal
+     */
     boolean sendForgotPasswordMessage(User user, ScopeAccess token, String portal);
-    void asyncSendForgotPasswordMessage(User user, ScopeAccess token, String portal);
 
+    /**
+     * Send the forgot password email asynchronously
+     * @param user
+     * @param token
+     * @param portal
+     */
+    void asyncSendForgotPasswordMessage(User user, ScopeAccess token, String portal);
 }
