@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.config;
 
 import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.tools.ToolContext;
 import org.apache.velocity.tools.ToolManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,8 @@ public class EmailConfiguration {
         props.put("file.resource.loader.modificationCheckInterval", "30");
         props.put("class.resource.loader.description", "Velocity Classpath Resource Loader");
         props.put("class.resource.loader.class", "org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
+        props.put(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.Log4JLogChute");
+        props.put("runtime.log.logsystem.log4j.logger", "VelocityEngine");
 
         return new VelocityEngine(props);
     }
