@@ -82,6 +82,9 @@ public class AuthWithForgotPasswordCredentials extends BaseUserAuthenticationFac
     }
 
     private void validateForgotPasswordRequest(ForgotPasswordCredentials creds) {
+        if (StringUtils.isBlank(creds.getUsername())) {
+            throw new BadRequestException("You must supply a username");
+        }
         if (StringUtils.isBlank(creds.getPortal())) {
             creds.setPortal("default");
         } else {

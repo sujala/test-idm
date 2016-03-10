@@ -90,6 +90,21 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "get 400 response when send '#username' username"() {
+        when:
+        ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(username, null)
+        def response = methods.forgotPassword(creds)
+
+        then:
+        response.status == SC_BAD_REQUEST
+
+        where:
+        username | _
+        null | _
+        "" | _
+    }
+
+    @Unroll
     def "get 204 response when sending request type: #requestType"() {
         ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
 
