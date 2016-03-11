@@ -88,6 +88,14 @@ public class ExceptionHandler {
                 objFactories.getOpenStackIdentityV2Factory().createBadRequest(fault).getValue());
     }
 
+    public Response.ResponseBuilder unrecoverableExceptionResponse(String message) {
+        IdentityFault fault = objFactories.getOpenStackIdentityV2Factory().createIdentityFault();
+        fault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        fault.setMessage(message);
+        return Response.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).entity(
+                objFactories.getOpenStackIdentityV2Factory().createIdentityFault(fault).getValue());
+    }
+
 
     public Response.ResponseBuilder serviceExceptionResponse() {
         IdentityFault fault = objFactories.getOpenStackIdentityV2Factory().createIdentityFault();
@@ -115,6 +123,8 @@ public class ExceptionHandler {
             return notImplementedExceptionResponse();
         } else if (ex instanceof MigrationReadOnlyIdmException) {
             return exceptionMigrationReadOnlyEnabledResponse((MigrationReadOnlyIdmException) ex);
+        } else if (ex instanceof UnrecoverableIdmException) {
+            return unrecoverableExceptionResponse(ex.getMessage());
         } else {
             LOGGER.error("Unexpected exception:", ex);
             return serviceExceptionResponse();

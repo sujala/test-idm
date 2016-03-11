@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.dao.EndpointDao
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
+import org.openstack.docs.identity.api.v2.IdentityFault
 import org.springframework.beans.factory.annotation.Autowired
 import testHelpers.RootIntegrationTest
 
@@ -99,6 +100,28 @@ class Cloud20BaseURLIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == 400
+    }
+
+    def "creating endpoint template with services with duplicate names returns error"() {
+        given:
+        def service1 = utils.createService()
+        def service2 = utils.createService()
+        //update service2 to have the same name as service 1
+        //have to use the dao directly b/c the API and service layers prevent this
+        def service2Entity = applicationDao.getApplicationByName(service2.getName())
+        service2Entity.name = service1.name
+        applicationDao.updateApplication(service2Entity)
+
+        when:
+        def response = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(testUtils.getRandomInteger().toString(), service1.type, "http://public.url", service1.name))
+
+        then:
+        response.status == 500
+        response.getEntity(IdentityFault).value.message == DefaultCloud20Service.DUPLICATE_SERVICE_NAME_ERROR_MESSAGE
+
+        cleanup:
+        utils.deleteService(service2)
+        utils.deleteService(service1)
     }
 
 }
