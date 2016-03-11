@@ -43,6 +43,10 @@
 		<level value="info" />
 	</logger>
 
+	<logger name="com.rackspace.idm.api.resource.cloud.email">
+		<level value="debug" />
+	</logger>
+
     <logger name="com.rackspace.idm.domain.config">
         <level value="info" />
     </logger>

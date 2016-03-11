@@ -4,6 +4,8 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.tools.ToolContext;
 import org.apache.velocity.tools.ToolManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +16,7 @@ import java.util.Properties;
 
 @Configuration
 public class EmailConfiguration {
+    private static final Logger logger = LoggerFactory.getLogger(EmailConfiguration.class);
 
     @Autowired
     public IdentityConfig identityConfig;

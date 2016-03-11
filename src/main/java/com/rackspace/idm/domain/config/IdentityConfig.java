@@ -1396,7 +1396,6 @@ public class IdentityConfig {
         public String getEmailFromAddress() {
             return getStringSafelyWithStaticFallBack(EMAIL_FROM_EMAIL_ADDRESS);
         }
-
     }
 
     @Deprecated

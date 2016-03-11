@@ -29,6 +29,7 @@ import javax.mail.internet.MimeMessage
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST
 import static org.apache.http.HttpStatus.SC_FORBIDDEN
 import static org.apache.http.HttpStatus.SC_NOT_FOUND
 import static org.apache.http.HttpStatus.SC_NO_CONTENT
@@ -290,6 +291,57 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
 
         expect: "try to get my user using tokens results in 403"
         cloud20.getUserById(tokenStr, userAdmin.id).status == SC_FORBIDDEN
+    }
+
+    def "get 400 when specify non-existant portal"() {
+        when:
+        ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, "non-existant")
+        def response = methods.forgotPassword(creds)
+
+        then:
+        response.status == SC_BAD_REQUEST
+    }
+
+    def "get 204 when specify acceptable portal"() {
+        ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, "cloud_control")
+
+        when: "exact match"
+        reloadableConfiguration.setProperty(IdentityConfig.FORGOT_PWD_VALID_PORTALS_PROP_NAME, "cloud_control")
+        def response = methods.forgotPassword(creds)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "difference case"
+        reloadableConfiguration.setProperty(IdentityConfig.FORGOT_PWD_VALID_PORTALS_PROP_NAME, "CLOUD_CONTROL")
+        response = methods.forgotPassword(creds)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "multiple "
+        reloadableConfiguration.setProperty(IdentityConfig.FORGOT_PWD_VALID_PORTALS_PROP_NAME, "CLOUD_CONTROL, asdf")
+        response = methods.forgotPassword(creds)
+
+        then:
+        response.status == SC_NO_CONTENT
+    }
+
+    def "get 204 when do not specify portal"() {
+        when: "empty string"
+        ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, "")
+        def response = methods.forgotPassword(creds)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "null"
+        creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
+        response = methods.forgotPassword(creds)
+
+        then:
+        response.status == SC_NO_CONTENT
+
     }
 
     def extractTokenFromDefaultEmail(MimeMessage message) {

@@ -7,6 +7,10 @@ import org.springframework.mail.MailSendException;
 
 import java.util.Map;
 
+/**
+ * Email service for sending Identity related emails. Supports Velocity templates and sending simple messages. Currently
+ * only sends text messages. HTML/Multipart messages are not currently supported.
+ */
 public interface EmailService {
 
     /**

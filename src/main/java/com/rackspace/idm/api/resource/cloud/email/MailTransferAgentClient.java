@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.DocumentService;
 import com.rackspace.idm.exception.ForbiddenException;
+import lombok.Setter;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.StringUtils;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailPreparationException;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
@@ -77,7 +79,10 @@ public class MailTransferAgentClient implements EmailClient {
     private static final Logger logger = LoggerFactory.getLogger(MailTransferAgentClient.class);
 
     private Properties properties;
+
+    @Setter
     private Session session;
+
     private String lockedOutEmail;
     private String lockedOutEmailSubject;
     private String enabledEmail;
@@ -92,7 +97,7 @@ public class MailTransferAgentClient implements EmailClient {
     @PostConstruct
     private void postConstruct() {
         properties = getSessionProperties();
-        session = Session.getDefaultInstance(properties);
+        session = Session.getInstance(properties);
 
         lockedOutEmail = documentService.getMFALockedOutEmail();
         lockedOutEmailSubject = identityConfig.getEmailLockedOutSubject();

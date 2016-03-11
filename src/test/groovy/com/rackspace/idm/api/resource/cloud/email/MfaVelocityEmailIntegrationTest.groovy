@@ -12,34 +12,35 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
-import javax.mail.Session
 import javax.mail.internet.MimeMessage
 
+import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
+
 /**
- * This test dirties the context by modifying the port the MailTransferAgentClient will send mail to in order to match that
+ * This test dirties the context by modifying the port the javamailsender will send mail to in order to match that
  * used by wiser
  */
-@DirtiesContext
 @ContextConfiguration(locations = "classpath:app-config.xml")
-class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
-    private static final Logger logger = LoggerFactory.getLogger(MailTransferAgentIntegrationTest.class);
+@DirtiesContext
+class MfaVelocityEmailIntegrationTest extends RootIntegrationTest {
+    private static final Logger logger = LoggerFactory.getLogger(MfaVelocityEmailIntegrationTest.class);
 
     @Autowired MailTransferAgentClient client
 
-    @Shared def WiserWrapper wiserWrapper = WiserWrapper.startWiser(10030)
+    @Shared def WiserWrapper wiserWrapper = WiserWrapper.startWiser(10040)
+    @Shared def originalPort;
 
     @Autowired
     JavaMailSenderImpl javaMailSender;
 
-    @Autowired
-    MailTransferAgentClient mailTransferAgentClient;
-
     def setupSpec() {
         //start up wiser and set the properties BEFORE making first cloud20 call (which starts grizzly)
         logger.warn("Wiser started on " + wiserWrapper.getPort())
+        originalPort = staticIdmConfiguration.getInt(IdentityConfig.EMAIL_PORT)
+
         staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
         staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, true)
     }
 
     def cleanupSpec() {
@@ -49,56 +50,22 @@ class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
     }
 
     def setup() {
-        mailTransferAgentClient.setSession(Session.getInstance(mailTransferAgentClient.getSessionProperties()))
         wiserWrapper.wiserServer.getMessages().clear()
+        javaMailSender.setPort(wiserWrapper.getPort())
     }
 
-    def "Successfully send locked out email using legacy embedded framework"() {
+    def cleanup() {
+        javaMailSender.setPort(originalPort)
+    }
+
+    def "Successfully send mfa disabled email using velocity framework"() {
         logger.warn("WiserWrapper on port " + wiserWrapper.getPort())
         logger.warn("javaMailSender on port " + javaMailSender.getPort())
 
         given:
         User user = new User()
-        user.username = "embedded.locked"
-        user.email = "embedded.locked@rackspace.com"
-
-        when:
-        def response = client.sendMultiFactorLockoutOutMessage(user)
-
-        then:
-        response == true
-
-        and:
-        wiserWrapper.wiserServer.getMessages().size() == 1
-        MimeMessage message = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage()
-        message.getContent().contains(user.username)
-        !message.getSubject().startsWith("(Velocity)")
-    }
-
-    def "Successfully send mfa enabled email using legacy embedded framework"() {
-        given:
-        User user = new User()
-        user.username = "embedded.enabled"
-        user.email = "embedded.enabled@rackspace.com"
-
-        when:
-        def response = client.sendMultiFactorEnabledMessage(user)
-
-        then:
-        response == true
-
-        and:
-        wiserWrapper.wiserServer.getMessages().size() == 1
-        MimeMessage message = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage()
-        message.getContent().contains(user.username)
-        !message.getSubject().startsWith("(Velocity)")
-    }
-
-    def "Successfully send mfa disabled email using legacy embedded framework"() {
-        given:
-        User user = new User()
-        user.username = "embedded.disabled"
-        user.email = "embedded.disabled@rackspace.com"
+        user.username = "velocity.disabled"
+        user.email = "velocity.disabled@rackspace.com"
 
         when:
         def response = client.sendMultiFactorDisabledMessage(user)
@@ -110,8 +77,47 @@ class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
         wiserWrapper.wiserServer.getMessages().size() == 1
         MimeMessage message = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage()
         message.getContent().contains(user.username)
-        !message.getSubject().startsWith("(Velocity)")
+        message.getSubject().startsWith("(Velocity)")
     }
+
+    def "Successfully send mfa enabled email using velocity framework"() {
+        given:
+        User user = new User()
+        user.username = "velocity.enabled"
+        user.email = "velocity.enabled@rackspace.com"
+
+        when:
+        def response = client.sendMultiFactorEnabledMessage(user)
+
+        then:
+        response == true
+
+        and:
+        wiserWrapper.wiserServer.getMessages().size() == 1
+        MimeMessage message = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage()
+        message.getContent().contains(user.username)
+        message.getSubject().startsWith("(Velocity)")
+    }
+
+    def "Successfully send locked out email using velocity framework"() {
+        given:
+        User user = new User()
+        user.username = "velocity.locked"
+        user.email = "velocity.locked@rackspace.com"
+
+        when:
+        def response = client.sendMultiFactorLockoutOutMessage(user)
+
+        then:
+        response == true
+
+        and:
+        wiserWrapper.wiserServer.getMessages().size() == 1
+        MimeMessage message = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage()
+        message.getContent().contains(user.username)
+        message.getSubject().startsWith("(Velocity)")
+    }
+
 
     def "Cannot send email to external account if send only to internal email feature enabled"() {
         given:
@@ -128,6 +134,7 @@ class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
         response == false
         response1 == false
         response2 == false
+
     }
 
     def "Exception thrown when no email address"() {
@@ -144,5 +151,6 @@ class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
         response == false
         response1 == false
         response2 == false
+
     }
 }

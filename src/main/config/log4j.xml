@@ -113,6 +113,10 @@
         <level value="info"/>
     </logger>
 
+    <logger name="com.rackspace.idm.api.resource.cloud.email">
+        <level value="debug"/>
+    </logger>
+
     <!-- Root Logger -->
     <root>
         <priority value="info"/>
