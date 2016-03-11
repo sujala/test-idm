@@ -29,36 +29,18 @@ public class EmailMetaProperties {
             throw new MailPreparationException("At least one recipient must be specified");
         }
         for (String recipient : recipients) {
-            if (!isValidEmailAddr(recipient)) {
-                throw new MailRecipientFormatException(recipient);
-            }
             this.recipients.add(recipient);
         }
 
         if (StringUtils.isBlank(sender)) {
             throw new MailPreparationException("Sender must be specified");
         }
-        if (!isValidEmailAddr(sender)) {
-            throw new MailSenderFormatException(sender);
-        }
         this.sender = sender;
 
         if (StringUtils.isNotBlank(replyTo)) {
-            if (!isValidEmailAddr(replyTo)) {
-                throw new MailReplyToFormatException(replyTo);
-            }
             this.replyTo = replyTo;
         }
 
-    }
-
-    public static boolean isValidEmailAddr(String emailAddr) {
-        try {
-            InternetAddress addr = new InternetAddress(emailAddr, true);
-        } catch (javax.mail.internet.AddressException ex) {
-            return false;
-        }
-        return true;
     }
 
     public List<String> getRecipients() {

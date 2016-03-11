@@ -30,13 +30,6 @@ public class EmailServiceImpl implements EmailService {
         String subject = resolveEmailTemplate(subjectTemplateRelativePath, velocityModel);
         String content = resolveEmailTemplate(contentTemplateRelativePath, velocityModel);
 
-        if (StringUtils.isBlank(subject)) {
-            throw new MailPreparationException("The email subject resolved to empty. Can not send an empty subject email.");
-        }
-        if (StringUtils.isBlank(content)) {
-            throw new MailPreparationException("The email content resolved to empty. Can not send an empty content email.");
-        }
-
         sendTextEmail(emailMetaProperties, subject, content);
     }
 
@@ -52,6 +45,13 @@ public class EmailServiceImpl implements EmailService {
      */
     @Override
     public void sendTextEmail(EmailMetaProperties emailMetaProperties, String subject, String message) {
+        if (StringUtils.isBlank(subject)) {
+            throw new MailPreparationException("Can not send an empty subject email.");
+        }
+        if (StringUtils.isBlank(message)) {
+            throw new MailPreparationException("Can not send an empty content email.");
+        }
+
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
         simpleMailMessage.setTo(emailMetaProperties.getRecipientsAsArray());
 
