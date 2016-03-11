@@ -27,6 +27,7 @@ import com.rackspace.idm.domain.entity.Domains;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlUnmarshaller;
@@ -3946,9 +3947,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String tokenId) throws IOException, JAXBException {
         ScopeAccess scopeAccessAdmin = getScopeAccessForValidToken(authToken);
 
+        //can expire your own token - regardless of type
         if (authToken.equals(tokenId)) {
             scopeAccessService.expireAccessToken(tokenId);
             return Response.status(204);
+        }
+
+        //if NOT expiring own token, the caller token MUST not be a scoped token.
+        if (StringUtils.isNotBlank(scopeAccessAdmin.getScope())) {
+            throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
         }
 
         authorizationService.verifyUserAdminLevelAccess(scopeAccessAdmin);
