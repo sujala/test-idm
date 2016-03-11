@@ -288,6 +288,34 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         cloud20.validateToken(identityAdminToken, tokenStr).status == SC_NOT_FOUND
     }
 
+    def "Reset token can not be used to revoke a different token"() {
+        ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
+        def pwdToken = utils.getToken(userAdmin.username)
+        methods.forgotPassword(creds)
+        def fpToken = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+
+        methods.forgotPassword(creds)
+        def fpToken2 = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(1).getMimeMessage())
+
+        when: "try to revoke pwd token"
+        def response = cloud20.revokeUserToken(fpToken, pwdToken)
+
+        then: "get 403"
+        response.status == SC_FORBIDDEN
+
+        when: "revoke own forgot password token"
+        response = cloud20.revokeUserToken(fpToken, fpToken)
+
+        then: "get 204"
+        response.status == SC_NO_CONTENT
+
+        when: "revoke forgot password token using pwd token"
+        response = cloud20.revokeUserToken(pwdToken, fpToken2)
+
+        then: "get 204"
+        response.status == SC_NO_CONTENT
+    }
+
     def "Reset token can not be validated in v1.1 validate"() {
         ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
 
