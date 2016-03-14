@@ -726,7 +726,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             User retrievedUser = userService.checkAndGetUserById(userId);
-            User caller = userService.getUserByAuthToken(authToken);
+            BaseUser caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
             boolean isDisabled = retrievedUser.isDisabled();
 

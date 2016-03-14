@@ -2581,7 +2581,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.enabled = true
         updateUser.id = 2
         userService.checkAndGetUserById(_) >> updateUser
-        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
 
         when:
@@ -2657,7 +2657,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         caller.getId() >> "123"
 
         userService.checkAndGetUserById("2") >> user;
-        userService.getUserByAuthToken(authToken) >> caller;
+        userService.getUserByScopeAccess(_) >> caller;
 
         when:
         service.updateUser(headers, authToken, "2", userInput)
@@ -2834,7 +2834,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.id = 2
 
         userService.checkAndGetUserById(_) >> updateUser
-        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
         service.userConverterCloudV20.fromUser(_) >> updatedUser
 
@@ -2865,7 +2865,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         updateUser.id = 2
 
         userService.checkAndGetUserById(_) >> updateUser
-        userService.getUserByAuthToken(_) >> entityFactory.createUser()
+        userService.getUserByScopeAccess(_) >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
         service.userConverterCloudV20.fromUser(_) >> updatedUser
 
@@ -2918,7 +2918,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.checkAndGetUserById(_) >> updateUser
         def caller = entityFactory.createUser()
         caller.id = "2"
-        userService.getUserByAuthToken(_) >> caller
+        userService.getUserByScopeAccess(_) >> caller
 
         when:
         def result = service.updateUser(headers, authToken, "2", user)
@@ -2969,7 +2969,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.checkAndGetUserById(_) >> updateUser
         def caller = entityFactory.createUser()
         caller.id = userId
-        userService.getUserByAuthToken(_) >> caller
+        userService.getUserByScopeAccess(_) >> caller
         authorizationService.authorizeCloudUser(_) >> true
 
         when:
@@ -3784,7 +3784,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             return it
         }
 
-        userService.getUserByAuthToken(_) >> caller
+        userService.getUserByScopeAccess(_) >> caller
         userService.checkAndGetUserById(_) >> retrievedUser
 
         //mock caller roles
