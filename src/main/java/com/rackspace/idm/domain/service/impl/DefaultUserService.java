@@ -42,6 +42,8 @@ public class DefaultUserService implements UserService {
     private static final String ERROR_MSG_TENANT_ALREADY_EXISTS = "Tenant with Id '%s' already exists";
     private static final String ERROR_MSG_TENANT_DOES_NOT_EXIST = "Tenant with Id '%s' does not exist";
 
+    public static final String ERROR_MSG_TOKEN_NOT_FOUND = "Token not found.";
+
     public static final String NAST_TENANT_PREFIX_PROP_NAME = "nast.tenant.prefix";
     public static final String NAST_TENANT_PREFIX_DEFAULT = "MossoCloudFS_";
     static final String MOSSO_BASE_URL_TYPE = "MOSSO";
@@ -988,7 +990,7 @@ public class DefaultUserService implements UserService {
             throw new BadRequestException("Invalid getUserByScopeAccess, scopeAccess cannot provide information to get a user");
         }
         if (user == null) {
-            throw new NotFoundException("User not found with scopeAccess: " + scopeAccess.toString());
+            throw new NotFoundException(ERROR_MSG_TOKEN_NOT_FOUND);
         }
 
         if ( checkUserDisabled ){

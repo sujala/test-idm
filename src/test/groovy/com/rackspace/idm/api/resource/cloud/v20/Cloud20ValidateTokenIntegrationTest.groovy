@@ -14,12 +14,14 @@ import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
+import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Ignore
@@ -675,6 +677,21 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
 
+    }
+
+    def "validate token for a deleted user does not expose user information"() {
+        given:
+        def user = utils.createIdentityAdmin()
+        def token = utils.getToken(user.username)
+        utils.deleteUser(user)
+
+        when:
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), token)
+
+        then:
+        response.status == 404
+        def fault = response.getEntity(IdentityFault).value
+        fault.message == DefaultUserService.ERROR_MSG_TOKEN_NOT_FOUND
     }
 
     def getContactIdFromValidateResponse(validateResponse, accept) {
