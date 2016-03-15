@@ -34,6 +34,8 @@ import com.rackspace.idm.util.SamlUnmarshaller;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldap.sdk.LDAPSearchException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.configuration.Configuration;
@@ -98,6 +100,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String FEDERATION_IDP_TYPE_ERROR_MESSAGE = "%s is currently the only supported IDP type allowed for filtering.";
     public static final String FEDERATION_IDP_FILTER_CONFLICT_ERROR_MESSAGE = "The provided IDP filters cannot be used together.";
     public static final String FEDERATION_IDP_FILTER_TENANT_NO_DOMAIN_ERROR_MESSAGE = "The provided tenant is not associated with a domain";
+
+    public static final String DUPLICATE_SERVICE_NAME_ERROR_MESSAGE = "More than one service exists with the given name. Please specify a different service name for the endpoint template.";
 
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
@@ -313,7 +317,15 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
         String serviceName = endpointTemplate.getName();
         if (serviceName != null) {
-            final Application application = applicationService.checkAndGetApplicationByName(serviceName);
+            Application application;
+            try {
+                application = applicationService.checkAndGetApplicationByName(serviceName);
+            } catch(IllegalStateException e) {
+                if (e.getCause() != null && e.getCause() instanceof LDAPException) {
+                    throw new UnrecoverableIdmException(DUPLICATE_SERVICE_NAME_ERROR_MESSAGE, e);
+                }
+                throw e;
+            }
             if (!endpointTemplate.getType().equalsIgnoreCase(application.getOpenStackType())) {
                 String msg = String.format("Incorrect type for %s service", application.getName());
                 throw new BadRequestException(msg);
