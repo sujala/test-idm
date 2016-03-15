@@ -1370,6 +1370,34 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
+    def "federated user is not able to update another user"() {
+        given:
+        def domainId = utils.createDomain()
+        def domainId2 = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expDays = 500
+        def email = "fedIntTest@invalid.rackspace.com"
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdmin2, users2
+        (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
+        sleep(1000)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def samlToken = authResponse.token.id
+
+        when: "try to update a different user"
+        def response = cloud20.updateUser(samlToken, userAdmin2.id, userAdmin2)
+
+        then: "bad request"
+        response.status == 403
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteUsers(users2)
+    }
+
     def deleteFederatedUserQuietly(username) {
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
