@@ -595,6 +595,15 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
+    def addEndpointTemplateToTenant(tenantId, endpointTemplateId) {
+        def endpointTemplate = new EndpointTemplate().with {
+            it.id = endpointTemplateId
+            it
+        }
+        def response = methods.addEndpoint(this.getServiceAdminToken(), tenantId, endpointTemplate)
+        assert (response.status == SC_OK)
+    }
+
     def authenticateUser(String username, String password = DEFAULT_PASSWORD) {
         def response = methods.authenticatePassword(username, password)
         assert (response.status == SC_OK)

@@ -291,4 +291,34 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteEndpointTemplate(endpointTemplate)
     }
+
+    def "explicitly assigning global endpoint to tenant does not cause endpoint to list twice"() {
+        given:
+        def endpointTemplateId = testUtils.getRandomInteger().toString()
+        def publicUrl = testUtils.getRandomUUID("http://public/")
+        def et = v1Factory.createEndpointTemplate(endpointTemplateId, "compute", publicUrl, "cloudServers", false, "ORD")
+        def endpointTemplate = utils.createEndpointTemplate(et)
+        endpointTemplate.enabled = true
+        endpointTemplate.global = true
+        utils.updateEndpointTemplate(endpointTemplate, endpointTemplate.id + "")
+        def tenant = utils.createTenant()
+
+        when: "list endpoints for tenant"
+        def endpoints = (EndpointList) utils.listEndpointsForTenant(utils.getServiceAdminToken(), tenant.id)
+
+        then: "only lists the global endpoint once"
+        endpoints.endpoint.count({ it -> it.id == endpointTemplate.id }) == 1
+
+        when: "explicitly assign the endpoint to the tenant"
+        utils.addEndpointTemplateToTenant(tenant.id, endpointTemplate.id)
+        endpoints = (EndpointList) utils.listEndpointsForTenant(utils.getServiceAdminToken(), tenant.id)
+
+        then: "still only lists the endpoint once"
+        endpoints.endpoint.count({ it -> it.id == endpointTemplate.id }) == 1
+
+        cleanup:
+        utils.deleteTenant(tenant)
+        utils.deleteEndpointTemplate(endpointTemplate)
+    }
+
 }
