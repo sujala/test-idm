@@ -2356,7 +2356,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 sa = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenId);
             }
 
-            if(sa == null) {
+            //do not allow for any type of scoped token to have endpoints listed for it
+            if(sa == null || StringUtils.isNotBlank(sa.getScope())) {
                 throw new NotFoundException("Valid token not found");
             }
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
