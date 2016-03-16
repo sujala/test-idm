@@ -146,6 +146,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
         FederatedUser user = identityUserService.getFederatedUserByUsernameAndIdentityProviderName(username, provider.getName());
 
         if (user == null) {
+            log.error(String.format("Unable to process federated user logout request. Domain federated user %s does not exist for provider %s.", username, provider.getName()));
             throw new BadRequestException("Not Found");
         }
 
