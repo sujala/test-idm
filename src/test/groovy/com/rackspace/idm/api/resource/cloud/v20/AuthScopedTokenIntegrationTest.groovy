@@ -441,4 +441,26 @@ class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
     }
 
+    def "list endpoints with MFA scoped token returns 404"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def initialUserAdmin = userRepository.getUserById(userAdmin.id)
+        initialUserAdmin.userMultiFactorEnforcementLevel = GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED
+        userRepository.updateUserAsIs(initialUserAdmin)
+        def scopedAuthResponse = cloud20.authenticatePasswordWithScope(userAdmin.username, DEFAULT_PASSWORD, SCOPE_SETUP_MFA)
+        def entity = scopedAuthResponse.getEntity(AuthenticateResponse).value
+        def scopedToken = entity.token.id
+
+        when:
+        def response = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), scopedToken)
+
+        then:
+        response.status == 404
+
+        cleanup:
+        utils.deleteUsers(users)
+    }
+
 }

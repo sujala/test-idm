@@ -387,6 +387,19 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
 
     }
 
+    def "list endpoints for password reset token returns 404"() {
+        given:
+        def creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
+        methods.forgotPassword(creds)
+        def fpToken = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+
+        when:
+        def response = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), fpToken)
+
+        then:
+        response.status == 404
+    }
+
     def extractTokenFromDefaultEmail(MimeMessage message) {
         def map = EmailUtils.extractDynamicPropsFromDefaultEmail(message)
         return StringUtils.trim(map.get(EmailTemplateConstants.FORGOT_PASSWORD_TOKEN_STRING_PROP));
