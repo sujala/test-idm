@@ -38,6 +38,7 @@ import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.LDAPSearchException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -2335,11 +2336,19 @@ public class DefaultCloud20Service implements Cloud20Service {
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
             List<CloudBaseUrl> baseUrls = this.endpointService.getGlobalBaseUrls();
+            Collection<String> globalBaseUrlIds = org.apache.commons.collections4.CollectionUtils.collect(baseUrls, new Transformer<CloudBaseUrl, String>() {
+                @Override
+                public String transform(CloudBaseUrl input) {
+                    return input.getBaseUrlId();
+                }
+            });
             if (tenant.getBaseUrlIds() != null) {
                 for (String id : tenant.getBaseUrlIds()) {
                     Integer baseUrlId = Integer.parseInt(id);
-                    //ToDo: Do not add if in global list also
-                    baseUrls.add(this.endpointService.getBaseUrlById(Integer.toString(baseUrlId)));
+                    //do not add a base URL to the list if it is already in the list b/c it is global
+                    if (!globalBaseUrlIds.contains(id)) {
+                        baseUrls.add(this.endpointService.getBaseUrlById(Integer.toString(baseUrlId)));
+                    }
                 }
             }
             return Response.ok(objFactories.getOpenStackIdentityV2Factory()
