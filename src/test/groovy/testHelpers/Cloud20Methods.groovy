@@ -143,6 +143,11 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).accept(accept).type(request).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
     }
 
+    def upgradeUserToCloud(String token, user, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(USERS).path(RAX_AUTH).path(UPGRADE_USER_TO_CLOUD).accept(accept).type(request).header(X_AUTH_TOKEN, token).entity(user).put(ClientResponse)
+    }
+
     def addApiKeyToUser(String token, String userId, credential) {
         initOnUse()
         resource.path(path20).path(USERS).path(userId).path(OS_KSADM).path(CREDENTIALS).path(RAX_KSKEY_API_KEY_CREDENTIALS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credential).post(ClientResponse)

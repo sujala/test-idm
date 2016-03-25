@@ -109,6 +109,8 @@ public interface UserService {
     
     void updateUser(User user) throws IOException, JAXBException;
 
+    User upgradeUserToCloud(User userCloudUpgrade);
+
     /**
      * Updates a user for multifactor. Assumes the passed in user was only modified for multifactor changes.
      *
@@ -200,4 +202,15 @@ public interface UserService {
      * @param response
      */
     void expiredFederatedUsersDeletion(FederatedUsersDeletionRequest request, FederatedUsersDeletionResponse response);
+
+    /**
+     * The format of the nast tenant id is XY, where X is determined by the configuration property NAST_TENANT_PREFIX_PROP_NAME
+     * and Y is the domainId.
+     *
+     * Returns null if the supplied domainId is null.
+     *
+     * @param domainId
+     * @return
+     */
+    String getNastTenantId(String domainId);
 }

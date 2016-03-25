@@ -55,7 +55,7 @@ class RootIntegrationTest extends Specification {
     @Shared SingletonMockUserManagement mockUserManagement = SingletonMockUserManagement.getInstance()
 
     @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
+    public ConditionalIgnoreRule conditionalIgnoreRule = new ConditionalIgnoreRule()
 
     def mediaTypeContext
 

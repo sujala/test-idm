@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.GlobalConstants;
@@ -24,6 +25,7 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Domains;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -681,46 +683,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    private void checkMaxNumberOfUsersInDomain(Iterable<User> users) {
-        int maxNumberOfUsersInDomain = config.getInt("maxNumberOfUsersInDomain");
-
-        //TODO: this does not work if domain has multiple user admins
-        int numberUsers = 0;
-        for (User user : users) {
-            numberUsers++;
-            if (numberUsers >= maxNumberOfUsersInDomain) {
-                String errMsg = String.format("User cannot create more than %d users in an account.", maxNumberOfUsersInDomain);
-                throw new BadRequestException(errMsg);
-            }
-        }
-    }
-
-    void assignDefaultRegionToDomainUser(User userDO) {
-        if (userDO.getRegion() == null) {
-            userDO.setRegion("default");
-        }
-    }
-
-    void assignProperRole(ScopeAccess scopeAccessByAccessToken, User userDO) {
-        ClientRole role = null;
-
-        //If caller is an Service admin, give user admin role
-        if (authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
-            role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
-        }
-        //if caller is an admin, give user user-admin role
-        if (authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken)) {
-            role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserAdminRole());
-        }
-        //if caller is a user admin, give user default role
-        if (authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken) ||
-            authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
-            role = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthUserRole());
-        }
-
-        assignRoleToUser(userDO, role);
-    }
-
     @Override
     public ResponseBuilder updateUser(HttpHeaders httpHeaders, String authToken, String userId, UserForCreate user) {
         try {
@@ -992,6 +954,100 @@ public class DefaultCloud20Service implements Cloud20Service {
         //Get the roles for the racker
         List<TenantRole> roleList =  tenantService.getEphemeralRackerTenantRoles(user.getId());
         return authConverterCloudV20.toAuthenticationResponse(user, rsa, roleList, new ArrayList());
+    }
+
+    public ResponseBuilder upgradeUserToCloud(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, org.openstack.docs.identity.api.v2.User upgradeUser) {
+        try {
+            //verify token exists and valid
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            User caller = (User) userService.getUserByScopeAccess(token);
+
+            //verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_UPGRADE_USER_TO_CLOUD.getRoleName());
+
+            //verify the data provided to upgrade the user
+            if (StringUtils.isBlank(upgradeUser.getId())) {
+                throw new BadRequestException("Must specify ID of user to upgrade");
+            }
+            if (upgradeUser.getSecretQA() == null) {
+                throw new BadRequestException("Missing secret Question and Answer");
+            }
+            if (upgradeUser.getSecretQA() != null) {
+                if (StringUtils.isBlank(upgradeUser.getSecretQA().getQuestion())) {
+                    throw new BadRequestException("Missing secret question");
+                }
+                if (StringUtils.isBlank(upgradeUser.getSecretQA().getAnswer())) {
+                    throw new BadRequestException("Missing secret answer");
+                }
+            }
+            if (upgradeUser.getRoles() != null) {
+                for (Role role : upgradeUser.getRoles().getRole()) {
+                    if (StringUtils.isBlank(role.getName())) {
+                        throw new BadRequestException("Role name cannot be blank");
+                    }
+                    if (roleService.isIdentityAccessRole(role.getName())) {
+                        throw new BadRequestException("Can not set Identity roles on upgraded user");
+                    }
+                    ClientRole clientRole = roleService.getRoleByName(role.getName());
+                    if (clientRole == null) {
+                        throw new BadRequestException(String.format("Role with name %s not found", role.getName()));
+                    }
+                    //need to try/catch here because we need to return a 400 for bad roles in the request, not a 403
+                    try {
+                        precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, clientRole);
+                    } catch (ForbiddenException e) {
+                        throw new BadRequestException(String.format("You do not have access to assign role %s", role.getName()));
+                    }
+                }
+            }
+            if (upgradeUser.getGroups() != null) {
+                for (com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group group : upgradeUser.getGroups().getGroup()) {
+                    if (StringUtils.isBlank(group.getName())) {
+                        throw new BadRequestException("Group name cannot be blank");
+                    }
+                    //have to try/catch here b/c groupService.getGroupByName breaks convention and throws an exception
+                    //when the group does not exist instead of returning null
+                    try {
+                        groupService.getGroupByName(group.getName());
+                    } catch(NotFoundException e) {
+                        throw new BadRequestException(String.format("Group with name %s not found", group.getName()));
+                    }
+                }
+            }
+            defaultRegionService.validateDefaultRegion(upgradeUser.getDefaultRegion());
+
+            //verify that the new domain ID is numeric and no domain must exist with this ID
+            try {
+                Integer.parseInt(upgradeUser.getDomainId());
+            } catch (NumberFormatException e) {
+                throw new BadRequestException(String.format("Must specify a numeric domain less than %s", Integer.MAX_VALUE));
+            }
+            Domain domain = domainService.getDomain(upgradeUser.getDomainId());
+            if (domain != null) {
+                throw new DuplicateException(String.format("Domain with ID %s already exists", domain.getDomainId()));
+            }
+
+            //verify that the mosso and nast tenants do not exist already
+            Tenant mossoTenant = tenantService.getTenant(upgradeUser.getDomainId());
+            if (mossoTenant != null) {
+                throw new DuplicateException(String.format("The MOSSO tenant for domain %s already exists.", upgradeUser.getDomainId()));
+            }
+            Tenant nastTenant = tenantService.getTenant(userService.getNastTenantId(upgradeUser.getDomainId()));
+            if (nastTenant != null) {
+                throw new DuplicateException(String.format("The NAST tenant for domain %s already exists.", upgradeUser.getDomainId()));
+            }
+
+            User upgradedUserEntity = this.userConverterCloudV20.fromUser(upgradeUser);
+
+            //Call the service to upgrade
+            User user = userService.upgradeUserToCloud(upgradedUserEntity);
+
+            org.openstack.docs.identity.api.v2.User userTO = this.userConverterCloudV20.toUser(user, true);
+
+            return Response.ok(uriInfo.getRequestUriBuilder().path(user.getId()).build()).entity(userTO);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     @Override
