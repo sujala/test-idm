@@ -152,7 +152,6 @@ public class IdentityConfig {
     public static final String FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP="feature.enable.validate.token.global.role";
     public static final String FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP="feature.enable.get.token.endpoints.global.role";
     public static final String FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP="feature.enable.get.user.roles.global.role";
-    public static final String FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP="feature.enable.get.user.groups.global.role";
     public static final String FEATURE_ENABLE_IMPLICIT_ROLE_PROP="feature.enable.implicit.roles";
     public static final String IMPLICIT_ROLE_PROP_PREFIX = "implicit.roles";
     public static final String IMPLICIT_ROLE_OVERRIDE_PROP_REG = IMPLICIT_ROLE_PROP_PREFIX + ".%s";
@@ -256,6 +255,8 @@ public class IdentityConfig {
     public static final String FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP = "feature.use.velocity.for.mfa.emails";
     public static final boolean FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_DEFAULT = false;
 
+    public static final String FEATURE_LIST_GROUPS_FOR_SELF_PROP = "feature.list.groups.for.self";
+    public static final boolean FEATURE_LIST_GROUPS_FOR_SELF_DEFAULT = false;
 
     /**
      * Required static prop
@@ -361,7 +362,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP, false);
         defaults.put(FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP, false);
         defaults.put(FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP, false);
-        defaults.put(FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP, false);
         defaults.put(FEATURE_ENABLE_IMPLICIT_ROLE_PROP, false);
         defaults.put(FEATURE_AE_TOKENS_ENCRYPT, true);
         defaults.put(FEATURE_AE_TOKENS_DECRYPT, true);
@@ -430,6 +430,7 @@ public class IdentityConfig {
         defaults.put(EMAIL_HOST_PASSWORD_PROP, EMAIL_HOST_PASSWORD_DEFAULT);
 
         defaults.put(FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_DEFAULT);
+        defaults.put(FEATURE_LIST_GROUPS_FOR_SELF_PROP, FEATURE_LIST_GROUPS_FOR_SELF_DEFAULT);
 
         return defaults;
     }
@@ -1091,11 +1092,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP)
-        public boolean isGetUserGroupsGlobalRoleEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GET_USER_GROUPS_GLOBAL_ROLE_PROP);
-        }
-
         @IdmProp(key = FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS, versionAdded = "2.14.0", description = "enable local multifactor bypass codes")
         public boolean getFeatureLocalMultifactorBypassEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS);
@@ -1400,10 +1396,17 @@ public class IdentityConfig {
         public boolean isSendToOnlyRackspaceAddressesEnabled() {
             return getBooleanSafelyWithStaticFallBack(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES);
         }
+
         @IdmProp(key = EMAIL_FROM_EMAIL_ADDRESS, description = "(Migrated from static w/ fallback to static if not found in reloadable). Return email address to use when sending emails to customers.", versionAdded = "3.2.0")
         public String getEmailFromAddress() {
             return getStringSafelyWithStaticFallBack(EMAIL_FROM_EMAIL_ADDRESS);
         }
+
+        @IdmProp(key = FEATURE_LIST_GROUPS_FOR_SELF_PROP, versionAdded = "3.3.0", description = "Whether or not the feature to allow for a user to list groups for self is enabled")
+        public boolean isListGroupsForSelfEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_LIST_GROUPS_FOR_SELF_PROP);
+        }
+
     }
 
     @Deprecated
