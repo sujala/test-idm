@@ -19,7 +19,8 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "fully upgrade a user to cloud (using all optional attributes): accept = #accept, request = #request"() {
         given:
-        def upgradeUser = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin"), testUtils.getRandomUUID("upgradeDomain"), "ORD")
+        def originalDomainId = testUtils.getRandomUUID("upgradeDomain")
+        def upgradeUser = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin"), originalDomainId, "ORD")
         def group = utils.createGroup()
         def role = utils.createRole()
         def newRegion = "DFW"
@@ -35,6 +36,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         userUpgradeData.domainId = newDomainId
         def identityAdmin = utils.createIdentityAdmin()
         utils.addRoleToUser(identityAdmin, Constants.UPGRADE_USER_TO_CLOUD_ROLE_ID)
+        utils.addRoleToUser(upgradeUser, Constants.UPGRADE_USER_ELIGIBILITY_ROLE_ID)
 
         /*
          create endpoint templates to look for in the service catalog
@@ -57,7 +59,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         endpointTemplate = utils.createAndUpdateEndpointTemplate(endpointTemplate, globalEndpointTemplateId)
         def globalEndpoint = endpointTemplate.publicURL + "/" + newDomainId
 
-        when:
+        when: "upgrade the user"
         def response = cloud20.upgradeUserToCloud(utils.getToken(identityAdmin.username), userUpgradeData, request, accept)
 
         then:
@@ -80,6 +82,10 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
             assert userResponse['secretQA']['question'] == secretQA.question
             assert userResponse['secretQA']['answer'] == secretQA.answer
         }
+
+        and: "the domain was deleted"
+        def getOriginalDomainResponse = cloud20.getDomain(utils.getServiceAdminToken(), originalDomainId)
+        getOriginalDomainResponse.status == 404
 
         when:
         def tenants = utils.listTenantsForToken(utils.getToken(upgradeUser.username))
@@ -161,6 +167,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         userUpgradeData.domainId = newDomainId
         def identityAdmin = utils.createIdentityAdmin()
         utils.addRoleToUser(identityAdmin, Constants.UPGRADE_USER_TO_CLOUD_ROLE_ID)
+        utils.addRoleToUser(upgradeUser, Constants.UPGRADE_USER_ELIGIBILITY_ROLE_ID)
 
         when:
         def response = cloud20.upgradeUserToCloud(utils.getToken(identityAdmin.username), userUpgradeData)
@@ -194,6 +201,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         userUpgradeData.domainId = newDomainId
         def identityAdmin = utils.createIdentityAdmin()
         utils.addRoleToUser(identityAdmin, Constants.UPGRADE_USER_TO_CLOUD_ROLE_ID)
+        utils.addRoleToUser(upgradeUser, Constants.UPGRADE_USER_ELIGIBILITY_ROLE_ID)
 
         when:
         def response = cloud20.upgradeUserToCloud(utils.getToken(identityAdmin.username), userUpgradeData)
@@ -229,6 +237,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         userUpgradeData.domainId = newDomainId
         def identityAdmin = utils.createIdentityAdmin()
         utils.addRoleToUser(identityAdmin, Constants.UPGRADE_USER_TO_CLOUD_ROLE_ID)
+        utils.addRoleToUser(upgradeUser, Constants.UPGRADE_USER_ELIGIBILITY_ROLE_ID)
 
         when:
         utils.addUserToGroup(group, upgradeUser)
@@ -410,6 +419,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         userUpgradeData.domainId = newDomainId
         def identityAdmin = utils.createIdentityAdmin()
         utils.addRoleToUser(identityAdmin, Constants.UPGRADE_USER_TO_CLOUD_ROLE_ID)
+        utils.addRoleToUser(upgradeUser, Constants.UPGRADE_USER_ELIGIBILITY_ROLE_ID)
 
         when:
         def response = cloud20.upgradeUserToCloud(utils.getToken(identityAdmin.username), userUpgradeData)
@@ -509,6 +519,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         userUpgradeData.domainId = newDomainId
         def identityAdmin = utils.createIdentityAdmin()
         utils.addRoleToUser(identityAdmin, Constants.UPGRADE_USER_TO_CLOUD_ROLE_ID)
+        utils.addRoleToUser(upgradeUser, Constants.UPGRADE_USER_ELIGIBILITY_ROLE_ID)
 
         when:
         utils.addRoleToUser(upgradeUser, role.id)
@@ -520,6 +531,69 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUser(upgradeUser)
         utils.deleteUser(identityAdmin)
+    }
+
+    def "upgrade service returns 403 when trying to upgrade a user that does not have the upgrade eligibility role"() {
+        given:
+        def upgradeUser = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin"), testUtils.getRandomUUID("upgradeDomain"), "ORD")
+        def group = utils.createGroup()
+        def newRegion = "DFW"
+        def userUpgradeData = v2Factory.createUserForCreate(null, null, null, true, newRegion, upgradeUser.domainId, null)
+        userUpgradeData.id = upgradeUser.id
+        def secretQA = v1Factory.createRaxKsQaSecretQA()
+        userUpgradeData.secretQA = secretQA
+        userUpgradeData.groups = new Groups()
+        userUpgradeData.groups.group.add(v1Factory.createGroup(group.name, null, null))
+        def newDomainId = testUtils.getRandomInteger()
+        userUpgradeData.domainId = newDomainId
+        def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.UPGRADE_USER_TO_CLOUD_ROLE_ID)
+
+        when:
+        def response = cloud20.upgradeUserToCloud(utils.getToken(identityAdmin.username), userUpgradeData)
+
+        then:
+        response.status == 403
+
+        cleanup:
+        utils.deleteUser(upgradeUser)
+        utils.deleteUser(identityAdmin)
+    }
+
+    def "upgrade service returns 503 when trying to upgrade a user and the eligibility role config is not defined"() {
+        given:
+        def upgradeUser = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin"), testUtils.getRandomUUID("upgradeDomain"), "ORD")
+        def group = utils.createGroup()
+        def newRegion = "DFW"
+        def userUpgradeData = v2Factory.createUserForCreate(null, null, null, true, newRegion, upgradeUser.domainId, null)
+        userUpgradeData.id = upgradeUser.id
+        def secretQA = v1Factory.createRaxKsQaSecretQA()
+        userUpgradeData.secretQA = secretQA
+        userUpgradeData.groups = new Groups()
+        userUpgradeData.groups.group.add(v1Factory.createGroup(group.name, null, null))
+        def newDomainId = testUtils.getRandomInteger()
+        userUpgradeData.domainId = newDomainId
+        def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.UPGRADE_USER_TO_CLOUD_ROLE_ID)
+        reloadableConfiguration.setProperty(IdentityConfig.UPGRADE_USER_ELIGIBLE_ROLE_PROP, null)
+
+        when: "the user DOES NOT have the role and the property is undefined"
+        def response = cloud20.upgradeUserToCloud(utils.getToken(identityAdmin.username), userUpgradeData)
+
+        then:
+        response.status == 503
+
+        when: "the user DOES have the role and the property is undefined"
+        utils.addRoleToUser(upgradeUser, Constants.UPGRADE_USER_ELIGIBILITY_ROLE_ID)
+        response = cloud20.upgradeUserToCloud(utils.getToken(identityAdmin.username), userUpgradeData)
+
+        then:
+        response.status == 503
+
+        cleanup:
+        utils.deleteUser(upgradeUser)
+        utils.deleteUser(identityAdmin)
+        reloadableConfiguration.reset()
     }
 
     def "upgrade service returns 400 when specifying invalid roles in request"() {
@@ -580,6 +654,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         userUpgradeData.domainId = newDomainId
         def identityAdmin = utils.createIdentityAdmin()
         utils.addRoleToUser(identityAdmin, Constants.UPGRADE_USER_TO_CLOUD_ROLE_ID)
+        utils.addRoleToUser(upgradeUser, Constants.UPGRADE_USER_ELIGIBILITY_ROLE_ID)
 
         when:
         def response = cloud20.upgradeUserToCloud(utils.getToken(identityAdmin.username), userUpgradeData)
@@ -606,6 +681,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         userUpgradeData.domainId = newDomainId
         def identityAdmin = utils.createIdentityAdmin()
         utils.addRoleToUser(identityAdmin, Constants.UPGRADE_USER_TO_CLOUD_ROLE_ID)
+        utils.addRoleToUser(upgradeUser, Constants.UPGRADE_USER_ELIGIBILITY_ROLE_ID)
 
         when:
         def response = cloud20.upgradeUserToCloud(utils.getToken(identityAdmin.username), userUpgradeData)
@@ -630,6 +706,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         def newDomainId = testUtils.getRandomInteger()
         userUpgradeData.domainId = newDomainId
         def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(upgradeUser, Constants.UPGRADE_USER_ELIGIBILITY_ROLE_ID)
 
         when:
         def response = cloud20.upgradeUserToCloud(utils.getToken(identityAdmin.username), userUpgradeData)

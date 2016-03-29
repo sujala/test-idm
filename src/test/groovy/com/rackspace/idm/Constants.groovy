@@ -25,6 +25,8 @@ class Constants {
     static def IDENTITY_PROVIDER_READ_ONLY_ROLE_ID = "33e5af5cbc1b45f897a09cf24fffcd74"
     static def UPGRADE_USER_TO_CLOUD_ROLE_ID = "1920567cf12511e5b888bf8c67992003"
     static def UPGRADE_USER_TO_CLOUD_ROLE_NAME = "identity:upgrade-user-to-cloud"
+    static def UPGRADE_USER_ELIGIBILITY_ROLE_ID = "a66e717ef5f011e5aa224f755bc52f48"
+    static def UPGRADE_USER_ELIGIBILITY_ROLE_NAME = "identity:eligible-for-upgrade"
 
     static def DEFAULT_GROUP = "Default"
 
