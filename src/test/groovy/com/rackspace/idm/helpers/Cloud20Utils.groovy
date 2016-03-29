@@ -126,8 +126,8 @@ class Cloud20Utils {
         return entity.token.id
     }
 
-    def createUser(token, username=testUtils.getRandomUUID(), domainId=null) {
-        def response = methods.createUser(token, factory.createUserForCreate(username, "display", "${username}@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
+    def createUser(token, username=testUtils.getRandomUUID(), domainId=null, defaultRegion=null) {
+        def response = methods.createUser(token, factory.createUserForCreate(username, "display", "${username}@rackspace.com", true, defaultRegion, domainId, DEFAULT_PASSWORD))
 
         assert (response.status == SC_CREATED)
 
@@ -197,8 +197,8 @@ class Cloud20Utils {
         testUtils.getRandomIntegerString()
     }
 
-    def createDomainEntity() {
-        def domainEntity = factory.createDomain(createDomain(), testUtils.getRandomUUID("domain"))
+    def createDomainEntity(domainId = testUtils.getRandomUUID("domain")) {
+        def domainEntity = factory.createDomain(domainId, testUtils.getRandomUUID("domain"))
         createDomain(domainEntity)
     }
 
@@ -873,6 +873,12 @@ class Cloud20Utils {
         response.getEntity(Tenant).value
     }
 
+    def listTenantsForToken(token) {
+        def response = methods.listTenants(token)
+        assert (response.status == SC_OK)
+        response.getEntity(Tenants).value
+    }
+
     def updateTenant(String tenantId, boolean enabled) {
         def tenant = getTenant(tenantId)
         tenant.enabled = enabled
@@ -909,8 +915,8 @@ class Cloud20Utils {
         response.getEntity(MobilePhones)
     }
 
-    def getNastTenant(String domainId){
-        return NAST_TENANT_PREFIX.concat(domainId)
+    def getNastTenant(domainId) {
+        return NAST_TENANT_PREFIX.concat("" + domainId)
     }
 
     def getEndpointsForToken(String token) {

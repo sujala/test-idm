@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.RackerDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
@@ -324,31 +325,7 @@ public class DefaultUserService implements UserService {
 
         boolean hasIdentityAdminRole = authorizationService.hasIdentityAdminRole(userForDefaults);
         if (hasIdentityAdminRole) {
-            if (StringUtils.isBlank(user.getDomainId())) {
-                throw new BadRequestException("User-admin cannot be created without a domain");
-            }
-
-            if (getDomainRestrictedToOneUserAdmin() && domainService.getDomainAdmins(user.getDomainId()).size() != 0) {
-                throw new BadRequestException("User-admin already exists for domain");
-            }
-
-            attachRoleToUser(roleService.getUserAdminRole(), user);
-
-            if (isCreateUserInOneCall) {
-                //HACK ALERT!!! The create user in one call logic allows for creating a user with an existing
-                //domain that has a domain ID that is non-numeric. This implies that the domain cannot have a
-                //mosso tenant (mosso tenant domain IDs must be numeric). Thus, we need to check to see if this
-                //condition is met and not assume that we can create mosso and nast tenants.
-                if(isNumeric(user.getDomainId())) {
-                    //original code had this. this is in place to help ensure the user has access to their
-                    //default tenants. currently the user-admin role is not tenant specific. don't want to
-                    //change existing behavior. Need to have business discussion to determine if a user
-                    //has a non tenant specific role, whether they have access to all tenants in domain.
-                    //if this turns out to be the case, then we need to change validateToken logic.
-                    attachRoleToUser(roleService.getComputeDefaultRole(), user, user.getDomainId());
-                    attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
-                }
-            }
+            configureNewUserAdmin(user, isCreateUserInOneCall);
         }
 
         //only identity admins and service admins can set the user's token format, but only if ae tokens are enabled (decryptable)
@@ -893,6 +870,135 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
+    public User upgradeUserToCloud(User userUpgrade) {
+        logger.info("Upgrading User: {} to cloud account", userUpgrade.getId());
+
+        //retrieve the user being upgraded
+        User user = identityUserService.getProvisionedUserById(userUpgrade.getId());
+        if (user == null) {
+            throw new ForbiddenException("User to upgrade not found.");
+        }
+        if (!authorizationService.hasUserAdminRole(user)) {
+            throw new ForbiddenException("Can only upgrade user admins");
+        }
+
+        /*
+         get user roles. We know, based on previous check that the user has user-admin role. This is the ONLY allowed
+         pre-existing role on a user in order to upgrade the user via this script.
+        */
+        List<TenantRole> roles = tenantService.getTenantRolesForUser(user);
+        if (roles.size() != 1) {
+            throw new ForbiddenException("Can only upgrade user admins w/o any other roles");
+        }
+
+        /*
+         Validate that the user does not have any groups.
+         */
+        if (!CollectionUtils.isEmpty(user.getRsGroupId())) {
+            throw new ForbiddenException("Can only upgrade a user admin w/o any groups");
+        }
+
+        /*
+         Validate the domain for which user is currently associated has no tenants and is not one of the default domains
+        */
+        if (StringUtils.isBlank(user.getDomainId()) || user.getDomainId().equals(identityConfig.getReloadableConfig().getGroupDefaultDomainId())
+                || user.getDomainId().equals(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
+            throw new ForbiddenException("Can only upgrade user admins associated with a non-default domain that has no tenants");
+        }
+
+        /*
+         Validate that the user's domain is a non-numeric domain
+        */
+        if (StringUtils.isNumeric(user.getDomainId())) {
+            throw new ForbiddenException("Can only upgrade user admins associated with a non-numeric domain");
+        }
+
+        /*
+         Validate that the user has no tenants
+        */
+        try {
+            tenantService.getTenantsByDomainId(user.getDomainId()).size();
+            throw new ForbiddenException("Can only upgrade user admins associated with a non-default domain that has no tenants");
+        } catch (NotFoundException ex) {
+            //eat. We don't want a domain with tenants. Should refactor the getTenantsByDomainId so doesn't throw an error,
+            //but lots of existing logic at this point...
+        }
+
+        /*
+         Validate the user's current domain only has the one user (the user-admin)
+        */
+        Iterable<User> users = getUsersWithDomain(user.getDomainId());
+        for (Iterator i = users.iterator(); i.hasNext();) {
+            User retrievedUser = (User) i.next();
+            //effectively, means user is the only one in domain
+            if (!user.getId().equals(retrievedUser.getId())) {
+                String errMsg = String.format("Can not upgrade users that are attached to a domain that has more than one user associated with it.");
+                throw new ForbiddenException(errMsg);
+            }
+        }
+
+        // update the user w/ info provided
+        user.setDomainId(userUpgrade.getDomainId());
+        user.setRegion(userUpgrade.getRegion());
+        configureNewUserAdmin(user, true);
+        user.getRoles().addAll(userUpgrade.getRoles()); //add roles
+        user.setRsGroupId(userUpgrade.getRsGroupId()); //add groups
+        user.setSecretQuestion(userUpgrade.getSecretQuestion());
+        user.setSecretAnswer(userUpgrade.getSecretAnswer());
+
+        //final verification before creating things
+        validator.validateUserForCloudUpgrade(user);
+        verifyUserTenantsDoNotExist(user); //only call AFTER user has all roles set (cause roles determine tenants user has access to)
+
+        //update user with appropriate values
+        user.setNastId(getNastTenantId(user.getDomainId()));
+        user.setMossoId(Integer.parseInt(user.getDomainId()));
+        setApiKeyIfNotProvided(user);
+        setRegionIfNotProvided(user);
+
+        //user ready to upgrade. Create the tenants and domain then update the user and assign roles
+        domainService.createNewDomain(user.getDomainId());
+        createDefaultDomainTenantsIfNecessary(user.getDomainId());
+        createTenantsIfNecessary(user);
+        userDao.updateUserAsIs(user);
+        assignUserRoles(user);
+
+        return user;
+    }
+
+    /**
+     * The boolean in the method signature to control logic is messing by necessary for now
+     * in order to share common code between create user one-call logic and upgrade user logic.
+     */
+    private void configureNewUserAdmin(User user, boolean assignMossoAndNastDefaultRoles) {
+        if (StringUtils.isBlank(user.getDomainId())) {
+            throw new BadRequestException("User-admin cannot be created without a domain");
+        }
+
+        if (getDomainRestrictedToOneUserAdmin() && domainService.getDomainAdmins(user.getDomainId()).size() != 0) {
+            throw new BadRequestException("User-admin already exists for domain");
+        }
+
+        attachRoleToUser(roleService.getUserAdminRole(), user);
+
+        if (assignMossoAndNastDefaultRoles) {
+            //HACK ALERT!!! The create user in one call logic allows for creating a user with an existing
+            //domain that has a domain ID that is non-numeric. This implies that the domain cannot have a
+            //mosso tenant (mosso tenant domain IDs must be numeric). Thus, we need to check to see if this
+            //condition is met and not assume that we can create mosso and nast tenants.
+            if(isNumeric(user.getDomainId())) {
+                //original code had this. this is in place to help ensure the user has access to their
+                //default tenants. currently the user-admin role is not tenant specific. don't want to
+                //change existing behavior. Need to have business discussion to determine if a user
+                //has a non tenant specific role, whether they have access to all tenants in domain.
+                //if this turns out to be the case, then we need to change validateToken logic.
+                attachRoleToUser(roleService.getComputeDefaultRole(), user, user.getDomainId());
+                attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
+            }
+        }
+    }
+
+    @Override
     public void updateUserForMultiFactor(User user) {
         logger.info("Updating User: {}", user);
         userDao.updateUserAsIs(user);
@@ -1371,12 +1477,12 @@ public class DefaultUserService implements UserService {
      * @param domainId
      * @return
      */
-    private String getNastTenantId(String domainId)  {
+    public String getNastTenantId(String domainId)  {
         String prefix = getNastTenantPrefix();
         return StringUtils.isNotBlank(domainId) ? prefix + domainId : null;
     }
 
-    public String getNastTenantPrefix() {
+    private String getNastTenantPrefix() {
         return config.getString(NAST_TENANT_PREFIX_PROP_NAME, NAST_TENANT_PREFIX_DEFAULT);
     }
 

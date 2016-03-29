@@ -20,8 +20,11 @@ class Constants {
     static def NAST_ROLE_ID = "5"
     static def MOSSO_ROLE_ID = "6"
     static def USER_MANAGE_ROLE_ID = "7"
+    static def USER_MANAGE_ROLE_NAME = "identity:user-manage"
     static def IDENTITY_PROVIDER_MANAGER_ROLE_ID = "8470c459cfa043ef989976a66ba4d74e"
     static def IDENTITY_PROVIDER_READ_ONLY_ROLE_ID = "33e5af5cbc1b45f897a09cf24fffcd74"
+    static def UPGRADE_USER_TO_CLOUD_ROLE_ID = "1920567cf12511e5b888bf8c67992003"
+    static def UPGRADE_USER_TO_CLOUD_ROLE_NAME = "identity:upgrade-user-to-cloud"
 
     static def DEFAULT_GROUP = "Default"
 

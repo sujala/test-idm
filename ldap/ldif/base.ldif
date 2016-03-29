@@ -1136,6 +1136,15 @@ cn: identity:identity-provider-read-only
 description: Identity Provider Read Only
 rsWeight: 50
 
+dn: rsId=1920567cf12511e5b888bf8c67992003,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 1920567cf12511e5b888bf8c67992003
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:upgrade-user-to-cloud
+description: Upgrade User to Full Cloud Account Role
+rsWeight: 50
+
 dn: rsId=c637d7153b7c41bf9153d46107dadcc7,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
  4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole

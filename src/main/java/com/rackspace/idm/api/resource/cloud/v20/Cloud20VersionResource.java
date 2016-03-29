@@ -97,6 +97,19 @@ public class Cloud20VersionResource {
         return cloud20Service.authenticateForForgotPassword(httpHeaders, forgotPasswordCredentials).build();
     }
 
+    @PUT
+    @Path("users/RAX-AUTH/upgradeUserToCloud")
+    public Response upgradeUserToCloud(@Context HttpHeaders httpHeaders,
+                                       @Context UriInfo uriInfo,
+                                       @HeaderParam(X_AUTH_TOKEN) String authToken,
+                                       User upgradeUser) {
+        if(!identityConfig.getReloadableConfig().isUpgradeUserToCloudEnabled()){
+            throw new NotFoundException("Service Not Found");
+        }
+
+        return cloud20Service.upgradeUserToCloud(httpHeaders, uriInfo, authToken, upgradeUser).build();
+    }
+
     @POST
     @Path("/users/RAX-AUTH/pwd-reset")
     public Response passwordReset(

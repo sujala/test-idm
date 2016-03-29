@@ -89,7 +89,15 @@ public class Validator {
         validateUsername(user.getUsername());
         validatePassword(user.getPassword());
         validateEmail(user.getEmail());
+        validateUserForCreateOrUpgrade(user);
+    }
 
+
+    public void validateUserForCloudUpgrade(com.rackspace.idm.domain.entity.User user) {
+        validateUserForCreateOrUpgrade(user);
+    }
+
+    private void validateUserForCreateOrUpgrade(com.rackspace.idm.domain.entity.User user) {
         /*
         don't validate the user's default region for subusers. This is required due to D-18002 https://www15.v1host.com/RACKSPCE/defect.mvc/Summary?oidToken=Defect:1066346
         where UK user-admins need to be able to create subusers on US IDM. In this case the defaultRegion on the UK admin
