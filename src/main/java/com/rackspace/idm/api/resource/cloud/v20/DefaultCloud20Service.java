@@ -2419,11 +2419,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) {
 
         try {
-            if (identityConfig.getReloadableConfig().isGetTokenEndpointsGlobalRoleEnabled()) {
-                requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken); //verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            boolean allowForSameToken = identityConfig.getReloadableConfig().isFeatureListEndpointsForOwnTokenEnabled();
+            boolean sameToken = StringUtils.equals(authToken, tokenId);
+
+            //skip authorization checks if the token being used is the same token to list endpionts for
+            if (!(allowForSameToken && sameToken)) {
                 authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.getRoleName());
-            } else {
-                authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             }
 
             ScopeAccess sa = checkAndGetToken(tokenId);
