@@ -150,7 +150,6 @@ public class IdentityConfig {
     public static final int LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_DEFAULT = 10000;
 
     public static final String FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP="feature.enable.validate.token.global.role";
-    public static final String FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP="feature.enable.get.token.endpoints.global.role";
     public static final String FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP="feature.enable.get.user.roles.global.role";
     public static final String FEATURE_ENABLE_IMPLICIT_ROLE_PROP="feature.enable.implicit.roles";
     public static final String IMPLICIT_ROLE_PROP_PREFIX = "implicit.roles";
@@ -257,6 +256,8 @@ public class IdentityConfig {
 
     public static final String FEATURE_LIST_GROUPS_FOR_SELF_PROP = "feature.list.groups.for.self";
     public static final boolean FEATURE_LIST_GROUPS_FOR_SELF_DEFAULT = false;
+    public static final String FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP = "feature.list.endpoints.for.own.token";
+    public static final boolean FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_DEFAULT = false;
 
     /**
      * Required static prop
@@ -360,7 +361,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP, false);
         defaults.put(FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, false);
         defaults.put(FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP, false);
-        defaults.put(FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP, false);
         defaults.put(FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP, false);
         defaults.put(FEATURE_ENABLE_IMPLICIT_ROLE_PROP, false);
         defaults.put(FEATURE_AE_TOKENS_ENCRYPT, true);
@@ -431,6 +431,7 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_DEFAULT);
         defaults.put(FEATURE_LIST_GROUPS_FOR_SELF_PROP, FEATURE_LIST_GROUPS_FOR_SELF_DEFAULT);
+        defaults.put(FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_DEFAULT);
 
         return defaults;
     }
@@ -1082,11 +1083,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_VALIDATE_TOKEN_GLOBAL_ROLE_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP)
-        public boolean isGetTokenEndpointsGlobalRoleEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP);
-        }
-
         @IdmProp(key = FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP)
         public boolean isGetUserRolesGlobalRoleEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP);
@@ -1405,6 +1401,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_LIST_GROUPS_FOR_SELF_PROP, versionAdded = "3.3.0", description = "Whether or not the feature to allow for a user to list groups for self is enabled")
         public boolean isListGroupsForSelfEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_LIST_GROUPS_FOR_SELF_PROP);
+        }
+
+        @IdmProp(key = FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, versionAdded = "3.3.0", description = "Whether or not to allow for a user to list endpoints for their own token")
+        public boolean isFeatureListEndpointsForOwnTokenEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP);
         }
 
     }

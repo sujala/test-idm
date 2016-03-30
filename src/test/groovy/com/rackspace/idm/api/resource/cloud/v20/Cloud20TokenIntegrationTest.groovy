@@ -85,7 +85,6 @@ class Cloud20TokenIntegrationTest extends RootIntegrationTest {
 
     def "identity:get-token-endpoint-global can be used to retrieve endpoints for tokens"() {
         //start with role enabled
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP, true)
         (userAdmin, users) = utils.createUserAdmin()
         AuthenticateResponse auth = utils.authenticate(userAdmin)
         UserScopeAccess token = scopeAccessService.getScopeAccessByAccessToken(auth.token.id)
@@ -94,8 +93,23 @@ class Cloud20TokenIntegrationTest extends RootIntegrationTest {
 
         def endpointRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.getRoleName())
 
-        when: "user admin tries to load own endpoints"
+        when: "user admin tries to load own endpoints w/ different tokens (feature flag enabled)"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, true)
         def uaResponse = cloud20.listEndpointsForToken(uaToken, iaToken)
+
+        then:
+        uaResponse.status == HttpStatus.SC_FORBIDDEN
+
+        when: "user admin tries to load own endpoints w/ same tokens (feature flag enabled)"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, true)
+        uaResponse = cloud20.listEndpointsForToken(uaToken, uaToken)
+
+        then:
+        uaResponse.status == HttpStatus.SC_OK
+
+        when: "user admin tries to load own endpoints w/ same token (feature flag disabled)"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, false)
+        uaResponse = cloud20.listEndpointsForToken(uaToken, uaToken)
 
         then:
         uaResponse.status == HttpStatus.SC_FORBIDDEN
@@ -112,15 +126,6 @@ class Cloud20TokenIntegrationTest extends RootIntegrationTest {
         def iaResponse = cloud20.listEndpointsForToken(iaToken, uaToken)
 
         then: "allowed"
-        iaResponse.status == HttpStatus.SC_OK
-
-        when: "disable endpoint global role feature"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GET_TOKEN_ENDPOINTS_GLOBAL_ROLE_PROP, false)
-        uaResponse = cloud20.listEndpointsForToken(uaToken, iaToken)
-        iaResponse = cloud20.listEndpointsForToken(iaToken, uaToken)
-
-        then: "user admin can no longer access token endpoints"
-        uaResponse.status == HttpStatus.SC_FORBIDDEN
         iaResponse.status == HttpStatus.SC_OK
 
         cleanup:
