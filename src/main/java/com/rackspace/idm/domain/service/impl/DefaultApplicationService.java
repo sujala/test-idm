@@ -12,6 +12,7 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.HashHelper;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -243,6 +244,18 @@ public class DefaultApplicationService implements ApplicationService {
             throw new NotFoundException(String.format("Client with id %s does not exit", clientId));
         }
         return this.applicationRoleDao.getClientRolesForApplication(application);
+    }
+
+    @Override
+    public PaginatorContext<ClientRole> getAvailableClientRolesByName(String roleName, int maxWeightAvailable, int offset, int limit) {
+        if (StringUtils.isBlank(roleName)) {
+            return null;
+        }
+
+        logger.debug("Getting ClientRole with name {} and weight {}", roleName, maxWeightAvailable);
+        PaginatorContext<ClientRole> context = applicationRoleDao.getAvailableClientRolesByName(roleName, maxWeightAvailable, offset, limit);
+        logger.debug("Got {} Client Roles", context.getTotalRecords());
+        return context;
     }
 
     @Override

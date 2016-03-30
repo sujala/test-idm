@@ -500,8 +500,7 @@ class Cloud20Utils {
         createRole(role)
     }
 
-    def createRole(service=null) {
-        def roleName = testUtils.getRandomUUID("role")
+    def createRole(service=null, roleName=testUtils.getRandomUUID("role")) {
         def role = factory.createRole(roleName)
         if(service != null){
             role.serviceId = service.id

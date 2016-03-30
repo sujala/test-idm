@@ -92,19 +92,6 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         1 * applicationDao.deleteApplication(_)
     }
 
-    def "getting available clientRoles paged calls applicationRoleDao method"() {
-        given:
-        def contextMock = Mock(PaginatorContext)
-
-        when:
-        service.getAvailableClientRolesPaged("applicationId", 0, 10, 1000)
-        service.getAvailableClientRolesPaged(0, 10, 1000)
-
-        then:
-        1 * applicationRoleDao.getAvailableClientRolesPaged(0, 10, 1000) >> contextMock
-        1 * applicationRoleDao.getAvailableClientRolesPaged("applicationId", 0, 10, 1000) >> contextMock
-    }
-
     def "getClientService gets list of ScopeAccess for application from ScopeAccessService"() {
         given:
         def application = entityFactory.createApplication()

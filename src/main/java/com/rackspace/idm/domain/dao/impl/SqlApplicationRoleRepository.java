@@ -12,6 +12,7 @@ import com.rackspace.idm.domain.sql.dao.RoleRepository;
 import com.rackspace.idm.domain.sql.dao.TenantRoleRepository;
 import com.rackspace.idm.domain.sql.entity.SqlRole;
 import com.rackspace.idm.domain.sql.mapper.impl.RoleMapper;
+import org.apache.commons.lang.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
@@ -90,6 +91,11 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
     @Override
     public Iterable<ClientRole> getClientRolesForApplication(Application application) {
         return mapper.fromSQL(repository.findByRaxClientId(application.getClientId()));
+    }
+
+    @Override
+    public PaginatorContext<ClientRole> getAvailableClientRolesByName(String roleName, int maxWeightAvailable, int offset, int limit) {
+        throw new NotImplementedException("Not implemented");
     }
 
     @Override
