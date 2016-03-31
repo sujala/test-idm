@@ -1308,6 +1308,57 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(localDefaultUser)
     }
 
+    def "impersonation tokens cannot be used to view API key credentials"() {
+        given:
+        def defaultUser = utils.createUser(userAdminToken)
+        def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
+        def rackerImpersonationToken = utils.impersonateWithToken(rackerToken, defaultUser).token.id
+        def identityAdminImpersonationToken = utils.impersonateWithToken(utils.getIdentityAdminToken(), defaultUser).token.id
+
+        when: "list credentials"
+        def rackerResponse = cloud20.listCredentials(rackerImpersonationToken, defaultUser.id)
+        def identityAdminResponse = cloud20.listCredentials(identityAdminImpersonationToken, defaultUser.id)
+
+        then:
+        rackerResponse.status == 403
+        identityAdminResponse.status == 200
+
+        when: "update API key"
+        rackerResponse = cloud20.addApiKeyToUser(rackerImpersonationToken, defaultUser.id, v1Factory.createApiKeyCredentials(defaultUser.username, "thisismykey"))
+        identityAdminResponse = cloud20.addApiKeyToUser(identityAdminImpersonationToken, defaultUser.id, v1Factory.createApiKeyCredentials(defaultUser.username, "thisismykey"))
+
+        then:
+        rackerResponse.status == 403
+        identityAdminResponse.status == 403
+
+        when: "delete API key"
+        rackerResponse = cloud20.deleteUserApiKey(rackerImpersonationToken, defaultUser.id)
+        identityAdminResponse = cloud20.deleteUserApiKey(identityAdminImpersonationToken, defaultUser.id)
+
+        then:
+        rackerResponse.status == 403
+        identityAdminResponse.status == 204
+
+        when: "reset API key"
+        rackerResponse = cloud20.resetUserApiKey(rackerImpersonationToken, defaultUser.id)
+        identityAdminResponse = cloud20.resetUserApiKey(identityAdminImpersonationToken, defaultUser.id)
+
+        then:
+        rackerResponse.status == 403
+        identityAdminResponse.status == 200
+
+        when: "get API key"
+        rackerResponse = cloud20.getUserApiKey(rackerImpersonationToken, defaultUser.id)
+        identityAdminResponse = cloud20.getUserApiKey(identityAdminImpersonationToken, defaultUser.id)
+
+        then:
+        rackerResponse.status == 403
+        identityAdminResponse.status == 200
+
+        cleanup:
+        utils.deleteUsers(defaultUser)
+    }
+
     /**
      * Impersonation tokens whose linked user tokens are expired, should return a 404 on validation
      */

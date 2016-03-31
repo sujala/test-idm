@@ -1,8 +1,6 @@
 package com.rackspace.idm.api.security;
 
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.Domain;
-import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import lombok.Getter;
 import lombok.Setter;
@@ -58,6 +56,14 @@ public class SecurityContext {
      */
     public boolean isImpersonatedRequest() {
         return callerToken != effectiveCallerToken;
+    }
+
+    /**
+     * Returns TRUE if the callerToken is an ImpersonationScopeAccess and the Impersonator is a Racker
+     * @return
+     */
+    public boolean isRackerImpersonatedRequest() {
+        return isImpersonatedRequest() && callerToken instanceof ImpersonatedScopeAccess && StringUtils.isNotBlank(((ImpersonatedScopeAccess) callerToken).getRackerId());
     }
 
     /**
