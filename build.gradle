@@ -120,7 +120,7 @@ dependencies {
     compile group: 'javax.mail', name: 'mail', version:'1.4.7'
     compile group: 'org.apache.velocity', name: 'velocity', version:'1.7'
     compile group: 'org.apache.velocity', name: 'velocity-tools', version:'2.0'
-    compile group: 'com.unboundid', name: 'unboundid-ldapsdk', version:'2.3.6'
+    compile group: 'com.unboundid', name: 'unboundid-ldapsdk', version:'3.1.1'
     compile group: 'commons-codec', name: 'commons-codec', version:'1.10'
     compile group: 'commons-configuration', name: 'commons-configuration', version:'1.9'
     compile group: 'commons-collections', name: 'commons-collections', version:'3.2.1'
