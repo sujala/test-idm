@@ -883,12 +883,21 @@ public class DefaultUserService implements UserService {
         }
 
         /*
-         get user roles. We know, based on previous check that the user has user-admin role. This is the ONLY allowed
-         pre-existing role on a user in order to upgrade the user via this script.
+         get user roles. We know, based on previous check that the user has the user-admin role. The user
+         must also have the upgrade eligibility role as the only other role on the user.
         */
         List<TenantRole> roles = tenantService.getTenantRolesForUser(user);
-        if (roles.size() != 1) {
-            throw new ForbiddenException("Can only upgrade user admins w/o any other roles");
+        //load the required properties before any role validation in case one is missing
+        List<String> allowedRoles = new ArrayList<String>();
+        allowedRoles.add(identityConfig.getStaticConfig().getIdentityUserAdminRoleName());
+        allowedRoles.add(identityConfig.getReloadableConfig().getUpgradeUserEligibleRole());
+        if (roles.size() < 2) {
+            throw new ForbiddenException(String.format("Cannot upgrade a user without role %s.", identityConfig.getReloadableConfig().getUpgradeUserEligibleRole()));
+        }
+        for (TenantRole role : roles) {
+            if (!allowedRoles.contains(role.getName())) {
+                throw new ForbiddenException(String.format("Cannot upgrade user with role %s.", role.getName()));
+            }
         }
 
         /*
@@ -937,6 +946,9 @@ public class DefaultUserService implements UserService {
             }
         }
 
+        //get the original domain ID of the user so we can delete it once the user is upgraded
+        String domainId = user.getDomainId();
+
         // update the user w/ info provided
         user.setDomainId(userUpgrade.getDomainId());
         user.setRegion(userUpgrade.getRegion());
@@ -962,6 +974,9 @@ public class DefaultUserService implements UserService {
         createTenantsIfNecessary(user);
         userDao.updateUserAsIs(user);
         assignUserRoles(user);
+
+        //the user is now upgrade, now delete the domain
+        domainService.deleteDomain(domainId);
 
         return user;
     }

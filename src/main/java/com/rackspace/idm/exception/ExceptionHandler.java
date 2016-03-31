@@ -121,8 +121,8 @@ public class ExceptionHandler {
             return conflictExceptionResponse(ex.getMessage());
         } else if (ex instanceof NotImplementedException) {
             return notImplementedExceptionResponse();
-        } else if (ex instanceof MigrationReadOnlyIdmException) {
-            return exceptionMigrationReadOnlyEnabledResponse((MigrationReadOnlyIdmException) ex);
+        } else if (ex instanceof MigrationReadOnlyIdmException || ex instanceof MissingRequiredConfigIdmException) {
+            return serviceUnavailableExceptionResponse(ex.getMessage());
         } else if (ex instanceof UnrecoverableIdmException) {
             return unrecoverableExceptionResponse(ex.getMessage());
         } else {
@@ -131,10 +131,10 @@ public class ExceptionHandler {
         }
     }
 
-    public Response.ResponseBuilder exceptionMigrationReadOnlyEnabledResponse(MigrationReadOnlyIdmException ex) {
+    public Response.ResponseBuilder serviceUnavailableExceptionResponse(String message) {
         IdentityFault fault = objFactories.getOpenStackIdentityV2Factory().createIdentityFault();
         fault.setCode(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-        fault.setMessage(ex.getMessage());
+        fault.setMessage(message);
 
         return Response.status(HttpServletResponse.SC_SERVICE_UNAVAILABLE).entity(
                 objFactories.getOpenStackIdentityV2Factory().createIdentityFault(fault).getValue());

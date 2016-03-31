@@ -4,6 +4,7 @@ import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdRe
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.migration.ChangeType;
 import com.rackspace.idm.domain.security.TokenFormat;
+import com.rackspace.idm.exception.MissingRequiredConfigIdmException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
@@ -55,8 +56,10 @@ public class IdentityConfig {
     private static final int FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT = 600;
     public static final String FORGOT_PWD_VALID_PORTALS_PROP_NAME = "forgot.password.valid.portals";
     private static final List<String> FORGOT_PWD_VALID_PORTALS_DEFAULT = Collections.EMPTY_LIST;
+
     public static final String FEATURE_UPGRADE_USER_TO_CLOUD_PROP_NAME = "feature.upgrade.user.to.cloud.enabled";
     private static final boolean FEATURE_UPGRADE_USER_TO_CLOUD_DEFAULT = false;
+    public static final String UPGRADE_USER_ELIGIBLE_ROLE_PROP = "upgrade.user.to.cloud.eligible.role";
 
     private static final String CLOUD_AUTH_CLIENT_ID = "cloudAuth.clientId";
     public static final String IDENTITY_ACCESS_ROLE_NAMES_PROP = "cloudAuth.accessRoleNames";
@@ -124,6 +127,8 @@ public class IdentityConfig {
     private static final String PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is NOT set but is required in '%s'";
 
     private static final String INVALID_PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is invalid";
+    private static final String MISSING_REQUIRED_PROPERTY_ERROR_LOG_MESSAGE = "Configuration Property '%s' is invalid";
+    private static final String MISSING_REQUIRED_PROPERTY_ERROR_RESPONSE_MESSAGE = "This service is currently unavailable in Identity.";
     public static final String FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP = "feature.allow.federated.impersonation";
     public static final String EXPOSE_V11_ADD_BASE_URL_PROP = "feature.v11.add.base.url.exposed";
     public static final String FEATURE_BASE_URL_RESPECT_ENABLED_FLAG = "feature.base.url.respect.enabled.flag";
@@ -549,6 +554,19 @@ public class IdentityConfig {
         } catch (NumberFormatException e) {
             logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
             return (BigInteger) defaultValue;
+        }
+    }
+
+    private String getRequiredString(Configuration config, String prop) {
+        try {
+            String propValue = config.getString(prop);
+            if (propValue == null) {
+                throw new MissingRequiredConfigIdmException(MISSING_REQUIRED_PROPERTY_ERROR_RESPONSE_MESSAGE);
+            }
+            return propValue;
+        } catch (ConversionException e) {
+            logger.error(String.format(MISSING_REQUIRED_PROPERTY_ERROR_LOG_MESSAGE, prop));
+            throw new MissingRequiredConfigIdmException(MISSING_REQUIRED_PROPERTY_ERROR_RESPONSE_MESSAGE);
         }
     }
 
@@ -1371,6 +1389,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_UPGRADE_USER_TO_CLOUD_PROP_NAME, versionAdded = "3.3.0", description = "Whether or not the upgrade user to cloud service is enabled")
         public boolean isUpgradeUserToCloudEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_UPGRADE_USER_TO_CLOUD_PROP_NAME);
+        }
+
+        @IdmProp(key = UPGRADE_USER_ELIGIBLE_ROLE_PROP, versionAdded = "3.3.0", description = "The role a user must have to be eligible to be upgraded")
+        public String getUpgradeUserEligibleRole() {
+            return getRequiredString(reloadableConfiguration, UPGRADE_USER_ELIGIBLE_ROLE_PROP);
         }
 
         @IdmProp(key = FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, versionAdded = "3.2.0", description = "Whether or not the forgot password flow is enabled")
