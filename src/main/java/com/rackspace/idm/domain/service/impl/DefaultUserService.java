@@ -17,7 +17,8 @@ import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.validation.Validator;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.Closure;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -874,7 +875,7 @@ public class DefaultUserService implements UserService {
         logger.info("Upgrading User: {} to cloud account", userUpgrade.getId());
 
         //retrieve the user being upgraded
-        User user = identityUserService.getProvisionedUserById(userUpgrade.getId());
+        final User user = identityUserService.getProvisionedUserById(userUpgrade.getId());
         if (user == null) {
             throw new ForbiddenException("User to upgrade not found.");
         }
@@ -974,6 +975,19 @@ public class DefaultUserService implements UserService {
         createTenantsIfNecessary(user);
         userDao.updateUserAsIs(user);
         assignUserRoles(user);
+
+        //remove any upgrade eligibilty roles from the user now that they hvae been upgraded.
+        final List<String> eligibilityRoleNames = new ArrayList<String>();
+        eligibilityRoleNames.add(identityConfig.getReloadableConfig().getUpgradeUserEligibleRole());
+        List<TenantRole> userGlobalRoles = this.tenantService.getGlobalRolesForUser(user);
+        CollectionUtils.forAllDo(userGlobalRoles, new Closure<TenantRole>() {
+            @Override
+            public void execute(TenantRole role) {
+                if (eligibilityRoleNames.contains(role.getName())) {
+                    tenantService.deleteTenantRoleForUser(user, role);
+                }
+            }
+        });
 
         //the user is now upgrade, now delete the domain
         domainService.deleteDomain(domainId);

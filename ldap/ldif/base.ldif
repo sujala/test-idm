@@ -1152,7 +1152,7 @@ rsId: a66e717ef5f011e5aa224f755bc52f48
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 cn: identity:eligible-for-upgrade
 description: Role to designate a user is eligible to upgrade to a full cloud account
-rsWeight: 50
+rsWeight: 500
 
 dn: rsId=c637d7153b7c41bf9153d46107dadcc7,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
  4,ou=applications,o=rackspace,dc=rackspace,dc=com
