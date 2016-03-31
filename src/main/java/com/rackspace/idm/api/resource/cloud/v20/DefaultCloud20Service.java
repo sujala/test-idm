@@ -2497,7 +2497,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, Integer marker, Integer limit) {
+    public ResponseBuilder listRoles(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String serviceId, String roleName, Integer marker, Integer limit) {
         try {
             authorizationService.verifyUserManagedLevelAccess(getScopeAccessForValidToken(authToken));
 
@@ -2505,10 +2505,16 @@ public class DefaultCloud20Service implements Cloud20Service {
             User caller = userService.getUserByAuthToken(authToken);
             ClientRole userIdentityRole = applicationService.getUserIdentityRole(caller);
 
-            if (StringUtils.isBlank(serviceId)) {
-                context = this.applicationService.getAvailableClientRolesPaged(marker, limit, userIdentityRole.getRsWeight());
-            } else {
+            if (StringUtils.isNotBlank(serviceId) && StringUtils.isNotBlank(roleName)) {
+                throw new BadRequestException("Cannot specify serviceId and roleName together");
+            }
+
+            if (StringUtils.isNotBlank(serviceId)) {
                 context = this.applicationService.getAvailableClientRolesPaged(serviceId, marker, limit, userIdentityRole.getRsWeight());
+            } else if (StringUtils.isNotBlank(roleName)) {
+                context = applicationService.getAvailableClientRolesByName(roleName, userIdentityRole.getRsWeight(), marker, limit);
+            } else {
+                context = this.applicationService.getAvailableClientRolesPaged(marker, limit, userIdentityRole.getRsWeight());
             }
 
             String linkHeader = applicationRolePaginator.createLinkHeader(uriInfo, context);

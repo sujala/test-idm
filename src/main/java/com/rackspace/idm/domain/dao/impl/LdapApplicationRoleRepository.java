@@ -88,6 +88,11 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     }
 
     @Override
+    public PaginatorContext<ClientRole> getAvailableClientRolesByName(String roleName, int maxWeightAvailable, int offset, int limit) {
+        return getObjectsPaged(searchFilter_roleNameAndWeight(roleName, maxWeightAvailable), offset, limit);
+    }
+
+    @Override
     public PaginatorContext<ClientRole> getAvailableClientRolesPaged(int offset, int limit, int maxWeightAvailable) {
         return getObjectsPaged(searchFilter_availableClientRoles(maxWeightAvailable), offset, limit);
     }
@@ -159,10 +164,12 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     }
 
     private Filter searchFilter_availableRolesByApplicationId(String applicationId, int maxWeightAvailable) {
+        List<Filter> orFilterList = getRoleWeightsOrFilter(maxWeightAvailable);
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
                 .addEqualAttribute(ATTR_CLIENT_ID, applicationId)
-                .addGreaterOrEqualAttribute(ATTR_RS_WEIGHT, String.valueOf(maxWeightAvailable)).build();
+                .addOrAttributes(orFilterList)
+                .build();
     }
 
     private Filter searchFilter_byApplicationId(String applicationId) {
@@ -174,6 +181,15 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
        return new LdapSearchBuilder()
                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
                .addEqualAttribute(ATTR_ID, roleId).build();
+    }
+
+    private Filter searchFilter_roleNameAndWeight(String roleName, int maxWeightAvailable) {
+        List<Filter> orFilterList = getRoleWeightsOrFilter(maxWeightAvailable);
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
+                .addOrAttributes(orFilterList)
+                .addEqualAttribute(ATTR_NAME, roleName)
+                .build();
     }
 
     private Filter searchFilter_applicationAndRoleName(String applicationId, String roleName) {

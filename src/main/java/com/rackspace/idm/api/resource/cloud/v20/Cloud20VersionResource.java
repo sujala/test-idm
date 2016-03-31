@@ -863,9 +863,10 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("serviceId") String serviceId,
+            @QueryParam("roleName") String roleName,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
-        return cloud20Service.listRoles(httpHeaders, uriInfo, authToken, serviceId, validateMarker(marker), validateLimit(limit)).build();
+        return cloud20Service.listRoles(httpHeaders, uriInfo, authToken, serviceId, roleName, validateMarker(marker), validateLimit(limit)).build();
     }
 
     @POST

@@ -45,7 +45,19 @@ public interface ApplicationService {
     ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName);
     
     ClientRole getClientRoleById(String id);
-    
+
+    /**
+     * Load the specified ClientRoles by name and maxWeight. The role is returned if the specified weight
+     * is LESS THAN the returned ClientRole's weight.
+     *
+     * Returns an empty paginator context if roleName is null.
+     *
+     * @param roleName
+     * @param maxWeightAvailable
+     * @return
+     */
+    PaginatorContext<ClientRole> getAvailableClientRolesByName(String roleName, int maxWeightAvailable, int offeset, int limit);
+
     PaginatorContext<ClientRole> getAvailableClientRolesPaged(int offset, int limit, int maxWeightAvailable);
 
     PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int offset, int limit, int maxWeightAvailable);
