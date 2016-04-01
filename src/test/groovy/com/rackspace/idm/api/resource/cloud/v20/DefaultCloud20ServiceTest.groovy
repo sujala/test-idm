@@ -11,6 +11,7 @@ import com.rackspace.idm.api.converter.cloudv20.GroupConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.AuthorizationService
@@ -75,6 +76,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         service.exceptionHandler = exceptionHandler
         service.objFactories = objFactories
+
+        mockRequestContextHolder(service)
     }
 
     def setup() {

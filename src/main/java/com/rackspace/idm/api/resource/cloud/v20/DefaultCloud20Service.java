@@ -1835,6 +1835,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("unsupported credential type");
             }
 
+            if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
+                throw new ForbiddenException("Impersonation tokens cannot be used to delete user API key credentials");
+            }
+
             User user = userService.checkAndGetUserById(userId);
 
             if (StringUtils.isEmpty(user.getApiKey())) {
@@ -2259,6 +2263,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
 
+            if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
+                throw new ForbiddenException("Impersonation tokens cannot be used to get user API key credentials");
+            }
+
             User user = this.userService.checkAndGetUserById(userId);
             User caller = getUser(scopeAccessByAccessToken);
 
@@ -2332,6 +2340,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess callerScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(callerScopeAccess);
+
+            if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
+                throw new ForbiddenException("Impersonation tokens cannot be used to view user credentials");
+            }
 
             User user = userService.checkAndGetUserById(userId);
             User caller = (User) userService.getUserByScopeAccess(callerScopeAccess);
@@ -3860,6 +3872,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(authScopeAccess);
+
+            if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
+                throw new ForbiddenException("Impersonation tokens cannot be used to reset user API key credentials");
+            }
+
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(authScopeAccess);
             boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(authScopeAccess);
 
