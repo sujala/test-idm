@@ -40,4 +40,5 @@ package com.rackspace.idm.api.resource.cloud;
  */
 public interface JsonArrayTransformerHandler {
     boolean pluralizeJSONArrayWithName(String elementName);
+    String getPluralizedNamed(String elementName);
 }

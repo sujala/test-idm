@@ -18,16 +18,11 @@ import java.lang.reflect.Type;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRaxAuthIdentityProviders extends JSONWriterForArrayEntity<IdentityProviders>  implements JsonArrayTransformerHandler {
+public class JSONWriterForRaxAuthIdentityProviders extends JSONWriterForArrayEntity<IdentityProviders> {
 
     @Override
     public void writeTo(IdentityProviders identityProviders, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
-        write(identityProviders, JSONConstants.IDENTITY_PROVIDERS, JSONConstants.RAX_AUTH_IDENTITY_PROVIDERS, entityStream, this);
-    }
-
-    @Override
-    public boolean pluralizeJSONArrayWithName(String elementName) {
-        return true;
+        write(identityProviders, JSONConstants.IDENTITY_PROVIDERS, JSONConstants.RAX_AUTH_IDENTITY_PROVIDERS, entityStream, new AlwaysPluralizeJsonArrayTransformerHandler());
     }
 
 }

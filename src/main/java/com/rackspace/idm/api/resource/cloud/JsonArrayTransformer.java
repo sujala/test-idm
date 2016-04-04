@@ -3,7 +3,10 @@ package com.rackspace.idm.api.resource.cloud;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Our Json representation for arrays does not map one to one to the underlying jaxb object.
@@ -79,7 +82,9 @@ public class JsonArrayTransformer {
     }
 
     public JSONObject transformRemoveWrapper(JSONObject object, JSONObject parent, JsonArrayTransformerHandler handler) {
-        for(Object key : object.keySet()){
+
+        List<Object> keys = new ArrayList<Object>(object.keySet());
+        for (Object key : keys) {
             Object value = object.get(key);
             if (value instanceof JSONObject) {
                 value = transformRemoveWrapper((JSONObject) value, object, handler);
@@ -90,8 +95,7 @@ public class JsonArrayTransformer {
                 //remove the wrapper element. following convention
                 //e.g roles.role
                 JSONArray array = (JSONArray) value;
-                String elementName = key.toString() + "s";
-                //object.put(elementName, array);
+                String elementName = handler.getPluralizedNamed(key.toString());
                 parent.put(elementName, array);
             }
         }

@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.Constants
+import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import groovy.json.JsonSlurper
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -79,12 +80,12 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
             assert userResponse.secretQA.answer == secretQA.answer
         } else {
             userResponse = new JsonSlurper().parseText(response.getEntity(String))['user']
-            assert userResponse['RAX-AUTH:domainId'] == "" + newDomainId
-            assert userResponse['roles'].name.contains(role.name)
-            assert userResponse['groups'].id.contains(group.id)
-            assert userResponse['RAX-AUTH:defaultRegion'] == newRegion
-            assert userResponse['secretQA']['question'] == secretQA.question
-            assert userResponse['secretQA']['answer'] == secretQA.answer
+            assert userResponse[JSONConstants.RAX_AUTH_DOMAIN_ID] == "" + newDomainId
+            assert userResponse[JSONConstants.ROLES].name.contains(role.name)
+            assert userResponse[JSONConstants.RAX_KSGRP_GROUPS].id.contains(group.id)
+            assert userResponse[JSONConstants.RAX_AUTH_DEFAULT_REGION] == newRegion
+            assert userResponse[JSONConstants.RAX_KSQA_SECRET_QA][JSONConstants.QUESTION] == secretQA.question
+            assert userResponse[JSONConstants.RAX_KSQA_SECRET_QA][JSONConstants.ANSWER] == secretQA.answer
         }
 
         and: "the domain was deleted"
@@ -128,6 +129,77 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE | MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "test feature flag for include/exclude prefixes on json user attributes: accept = #accept, request = #request, includePrefixes = #includePrefixes"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_INCLUDE_USER_ATTR_PREFIXES_PROP, includePrefixes)
+        def originalDomainId = testUtils.getRandomUUID("upgradeDomain")
+        def upgradeUser = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin"), originalDomainId, "ORD")
+        def group = utils.createGroup()
+        def role = utils.createRole()
+        def newRegion = "DFW"
+        def userUpgradeData = v2Factory.createUserForCreate(null, null, null, true, newRegion, upgradeUser.domainId, null)
+        userUpgradeData.id = upgradeUser.id
+        def secretQA = v1Factory.createRaxKsQaSecretQA()
+        userUpgradeData.secretQA = secretQA
+        userUpgradeData.groups = new Groups()
+        userUpgradeData.groups.group.add(v1Factory.createGroup(group.name, null, null))
+        userUpgradeData.roles = new RoleList()
+        userUpgradeData.roles.role.add(v1Factory.createRole(role.name))
+        def newDomainId = testUtils.getRandomInteger()
+        userUpgradeData.domainId = newDomainId
+        def identityAdmin = utils.createIdentityAdmin()
+        utils.addRoleToUser(identityAdmin, Constants.UPGRADE_USER_TO_CLOUD_ROLE_ID)
+        utils.addRoleToUser(upgradeUser, Constants.UPGRADE_USER_ELIGIBILITY_ROLE_ID)
+
+        when: "upgrade the user"
+        def response = cloud20.upgradeUserToCloud(utils.getToken(identityAdmin.username), userUpgradeData, request, accept)
+
+        then:
+        response.status == 200
+        def userResponse
+        if (accept == MediaType.APPLICATION_XML_TYPE) {
+            userResponse = response.getEntity(User).value
+            assert userResponse.domainId == "" + newDomainId
+            assert userResponse.roles.role.name.contains(role.name)
+            assert userResponse.groups.group.id.contains(group.id)
+            assert userResponse.defaultRegion == newRegion
+            assert userResponse.secretQA.question == secretQA.question
+            assert userResponse.secretQA.answer == secretQA.answer
+        } else if (includePrefixes) {
+            def stringResponse = response.getEntity(String)
+            userResponse = new JsonSlurper().parseText(stringResponse)['user']
+            assert userResponse[JSONConstants.RAX_AUTH_DOMAIN_ID] == "" + newDomainId
+            assert userResponse[JSONConstants.ROLES].name.contains(role.name)
+            assert userResponse[JSONConstants.RAX_KSGRP_GROUPS].id.contains(group.id)
+            assert userResponse[JSONConstants.RAX_AUTH_DEFAULT_REGION] == newRegion
+            assert userResponse[JSONConstants.RAX_KSQA_SECRET_QA][JSONConstants.QUESTION] == secretQA.question
+            assert userResponse[JSONConstants.RAX_KSQA_SECRET_QA][JSONConstants.ANSWER] == secretQA.answer
+        } else {
+            def stringResponse = response.getEntity(String)
+            userResponse = new JsonSlurper().parseText(stringResponse)['user']
+            assert userResponse[JSONConstants.RAX_AUTH_DOMAIN_ID] == "" + newDomainId
+            assert userResponse[JSONConstants.ROLES].name.contains(role.name)
+            assert userResponse[JSONConstants.GROUPS].id.contains(group.id)
+            assert userResponse[JSONConstants.RAX_AUTH_DEFAULT_REGION] == newRegion
+            assert userResponse[JSONConstants.SECRET_QA][JSONConstants.QUESTION] == secretQA.question
+            assert userResponse[JSONConstants.SECRET_QA][JSONConstants.ANSWER] == secretQA.answer
+        }
+
+        cleanup:
+        utils.deleteUser(upgradeUser)
+        utils.deleteUser(identityAdmin)
+
+        where:
+        request | accept | includePrefixes
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | false
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | true
     }
 
     def "upgrade service returns 400 when invalid default region is provided"() {

@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
-import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.IdentityConfigHolder;
+import com.rackspace.idm.api.resource.cloud.UserJsonAttributeNamesTransformHandler;
 import org.openstack.docs.identity.api.v2.User;
 
 import javax.ws.rs.Produces;
@@ -18,13 +19,6 @@ import java.util.LinkedHashMap;
 
 import static com.rackspace.idm.JSONConstants.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 8/8/13
- * Time: 3:25 PM
- * To change this template use File | Settings | File Templates.
- */
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForUser extends JSONWriterForEntity<User> implements MessageBodyWriter<User> {
@@ -41,6 +35,14 @@ public class JSONWriterForUser extends JSONWriterForEntity<User> implements Mess
         prefixValues.put(USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_PATH, RAX_AUTH_USER_MULTI_FACTOR_ENFORCEMENT_LEVEL);
         prefixValues.put(USER_TOKEN_FORMAT_PATH, RAX_AUTH_TOKEN_FORMAT);
         prefixValues.put(USER_CONTACT_ID_PATH, RAX_AUTH_CONTACT_ID);
-        write(user, entityStream, prefixValues);
+
+        if (IdentityConfigHolder.IDENTITY_CONFIG != null && IdentityConfigHolder.IDENTITY_CONFIG.getReloadableConfig().isIncludeUserAttributePrefixesEnabled()) {
+            prefixValues.put(USER_GROUPS_PATH, RAX_KSGRP_GROUPS);
+            prefixValues.put(USER_SECRET_QA_PATH, RAX_KSQA_SECRET_QA);
+
+            write(user, entityStream, prefixValues, new UserJsonAttributeNamesTransformHandler());
+        } else {
+            write(user, entityStream, prefixValues);
+        }
     }
 }

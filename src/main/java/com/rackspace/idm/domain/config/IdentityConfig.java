@@ -264,6 +264,9 @@ public class IdentityConfig {
     public static final String FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP = "feature.list.endpoints.for.own.token";
     public static final boolean FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_DEFAULT = false;
 
+    public static final String FEATURE_INCLUDE_USER_ATTR_PREFIXES_PROP = "feature.include.user.attr.prefixes";
+    public static final boolean FEATURE_INCLUDE_USER_ATTR_PREFIXES_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -437,6 +440,8 @@ public class IdentityConfig {
         defaults.put(FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_DEFAULT);
         defaults.put(FEATURE_LIST_GROUPS_FOR_SELF_PROP, FEATURE_LIST_GROUPS_FOR_SELF_DEFAULT);
         defaults.put(FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_DEFAULT);
+
+        defaults.put(FEATURE_INCLUDE_USER_ATTR_PREFIXES_PROP, FEATURE_INCLUDE_USER_ATTR_PREFIXES_DEFAULT);
 
         return defaults;
     }
@@ -1429,6 +1434,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, versionAdded = "3.3.0", description = "Whether or not to allow for a user to list endpoints for their own token")
         public boolean isFeatureListEndpointsForOwnTokenEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP);
+        }
+
+        @IdmProp(key = FEATURE_INCLUDE_USER_ATTR_PREFIXES_PROP, versionAdded = "3.3.0", description = "Whether or not to include prefixes for groups and secretQA on user object responses in JSON")
+        public boolean isIncludeUserAttributePrefixesEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_INCLUDE_USER_ATTR_PREFIXES_PROP);
         }
 
     }

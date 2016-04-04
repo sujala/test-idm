@@ -273,8 +273,13 @@ public final class JSONConstants {
     public static final String RAX_AUTH_TOKEN_FORMAT = "RAX-AUTH:tokenFormat";
 
     public static final String USER_PASSWORD_PATH = "user.password";
+
+    public static final String USER_SECRET_QA_PATH = "user.secretQA";
     public static final String USER_RAX_KSQA_SECRET_QA_PATH = "user.RAX-KSQA:secretQA";
+
+    public static final String USER_GROUPS_PATH = "user.groups";
     public static final String USER_RAX_KSGRP_GROUPS_PATH = "user.RAX-KSGRP:groups";
+
     public static final String USER_ROLES_PATH = "user.roles";
 
     public static final String RAX_AUTH_BYPASS_CODES = "RAX-AUTH:bypassCodes";

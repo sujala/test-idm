@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.service.EndpointService
@@ -960,7 +961,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         } else {
             userAdmin = new JsonSlurper().parseText(userAdminResponse.getEntity(String)).user
             assert userAdmin['RAX-AUTH:domainId'] == domainId
-            assert userAdmin.groups.name.contains(group.name)
+            assert userAdmin[JSONConstants.RAX_KSGRP_GROUPS].name.contains(group.name)
             assert userAdmin.roles.name.contains(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_USER_ADMIN_ROLE_NAME_PROP))
         }
 
