@@ -7,6 +7,7 @@ import groovy.json.JsonSlurper
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.User
+import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
@@ -15,6 +16,9 @@ import javax.ws.rs.core.MediaType
 
 
 class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
+
+    @Autowired
+    IdentityConfig identityConfig
 
     @Unroll
     def "fully upgrade a user to cloud (using all optional attributes): accept = #accept, request = #request"() {
@@ -107,6 +111,12 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         then:
         apiKeyResponse.username == upgradeUser.username
         apiKeyResponse.apiKey != null
+
+        when: "list roles for user"
+        def roles = utils.listUserGlobalRoles(utils.getServiceAdminToken(), upgradeUser.id)
+
+        then: "the user no longer has the eligibility role"
+        !roles.role.name.contains(identityConfig.getReloadableConfig().getUpgradeUserEligibleRole())
 
         cleanup:
         utils.deleteUser(upgradeUser)
