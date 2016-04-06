@@ -33,6 +33,8 @@ public class JSONReaderForUser extends JSONReaderForEntity<User> {
         prefixValues.put(USER_RAX_AUTH_MULTI_FACTOR_STATE_PATH, MULTI_FACTOR_STATE);
         prefixValues.put(USER_RAX_AUTH_TOKEN_FORMAT_PATH, TOKEN_FORMAT);
         prefixValues.put(USER_RAX_AUTH_MULTI_FACTOR_TYPE_PATH, MULTI_FACTOR_TYPE);
+        prefixValues.put(USER_RAX_KSQA_SECRET_QA_PATH, SECRET_QA);
+        prefixValues.put(USER_RAX_KSGRP_GROUPS_PATH, GROUPS);
 
         return read(inputStream, USER, prefixValues);
     }
