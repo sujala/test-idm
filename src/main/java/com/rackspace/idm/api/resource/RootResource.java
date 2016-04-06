@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource;
 
 import com.rackspace.idm.api.resource.cloud.CloudVersionsResource;
 import com.rackspace.idm.api.serviceprofile.ServiceProfileDescriptionBuilder;
+import com.rackspace.idm.domain.config.IdmVersion;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.configuration.Configuration;
 import org.json.simple.JSONObject;
@@ -29,10 +30,15 @@ public class RootResource {
 
     @Autowired
     private CloudVersionsResource cloudVersionsResource;
+
     @Autowired
     private DevOpsResource devOpsResource;
+
     @Autowired
     private ServiceProfileDescriptionBuilder serviceProfileDescriptionBuilder;
+
+    @Autowired
+    private IdmVersion idmVersion;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -92,8 +98,8 @@ public class RootResource {
     @Produces(MediaType.APPLICATION_JSON)
     public String getBuildInfo() {
         JSONObject version = new JSONObject();
-        version.put("version", config.getString("version"));
-        version.put("build", config.getString("buildVersion"));
+        version.put("version", idmVersion.getVersion().getValue());
+        version.put("build", idmVersion.getBuild().getValue());
         return version.toJSONString();
     }
 

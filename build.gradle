@@ -27,8 +27,8 @@ version = "$featureVersion-$buildVersion"
 
 description = """idm"""
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
 
 def srcJava = 'src/main/java'
 def generatedSrc = 'build/generated-src/jaxb/'
@@ -202,10 +202,24 @@ dependencies {
 task copyConfig(type: Copy) {
     from 'src/main/config'
     into 'build/config'
-    ant.property(name: 'version', value: featureVersion)
-    ant.property(name: 'buildVersion', value: buildVersion)
-    ant.property(name: 'gitRevision', value: gitRevision)
-    filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
+}
+
+task copyBuildInfo << {
+    ['src/test/resources', 'src/main/resources'].each { dest ->
+        copy {
+            from 'src/main/config/build_info.properties'
+            into dest
+            ant.property(name: 'version', value: featureVersion)
+            ant.property(name: 'buildVersion', value: buildVersion)
+            ant.property(name: 'gitRevision', value: gitRevision)
+            filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
+        }
+    }
+}
+
+task deleteBuildInfo(type: Delete) {
+    delete 'src/main/resources/build_info.properties'
+    delete 'src/test/resources/build_info.properties'
 }
 
 task copyBaseConfig << {
@@ -213,10 +227,6 @@ task copyBaseConfig << {
         copy {
             from ('src/main/config/log4j.xml')
             into "build/config/$destDir"
-            ant.property(name: 'version', value: featureVersion)
-            ant.property(name: 'buildVersion', value: buildVersion)
-            ant.property(name: 'gitRevision', value: gitRevision)
-            filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
         }
     }
 }
@@ -283,7 +293,7 @@ test {
     jvmArgs '-XX:MaxPermSize=1024m'
     systemProperties['idm.properties.location']  = System.getProperty('idm.properties.location', 'build/config/VAGRANT')
     systemProperties['jersey.test.port']  = System.getProperty('jersey.test.port', '9998')
-    systemProperties['spring.profiles.active'] = System.getProperty('spring.profiles.active', 'LDAP,MIGRATION')
+    systemProperties['spring.profiles.active'] = System.getProperty('spring.profiles.active', 'LDAP')
 
     jacoco {
         append = false
@@ -407,6 +417,7 @@ compileJava() {
 
 copyBaseConfig.dependsOn copyConfig
 test.dependsOn copyBaseConfig
+test.dependsOn copyBuildInfo
 zipConfig.dependsOn copyBaseConfig
 copyBaseConfig.dependsOn copyGeneratedSrc
 war.dependsOn zipConfig
@@ -414,7 +425,10 @@ war.dependsOn zipLdap
 war.dependsOn zipSql
 war.dependsOn zipEdirLdif
 war.dependsOn zipEdirConfig
+war.dependsOn copyBuildInfo
 jettyRun.dependsOn copyBaseConfig
+jettyRun.dependsOn copyBuildInfo
+clean.dependsOn deleteBuildInfo
 
 compileJava.dependsOn jaxb
 

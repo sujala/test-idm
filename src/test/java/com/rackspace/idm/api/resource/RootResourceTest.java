@@ -61,14 +61,6 @@ public class RootResourceTest {
     }
 
     @Test
-    public void getBuildInfo_callsConfig_getStringVersion() throws Exception {
-        when(config.getString("version")).thenReturn("version");
-        when(config.getString("buildVersion")).thenReturn("build");
-        String buildInfo = rootResource.getBuildInfo();
-        assertThat("version", buildInfo, equalTo("{\"build\":\"build\",\"version\":\"version\"}"));
-    }
-
-    @Test
     public void getInternalServiceProfile_callsServiceProfileDescriptionBuilder_buildInternalServiceProfile() throws Exception {
         rootResource.getInternalServiceProfile();
         verify(serviceProfileDescriptionBuilder).buildInternalServiceProfile(any(UriInfo.class));
