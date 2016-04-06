@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.AuthorizationService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import org.apache.commons.configuration.Configuration
@@ -122,8 +123,8 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         //create 2 roles to attach to default user
         def roleName1 = getNormalizedRandomString()
         def roleName2 = getNormalizedRandomString()
-        Role role1 = createPropagateRole(false, 500, roleName1)
-        Role role2 = createPropagateRole(false, 1000, roleName2)
+        Role role1 = createPropagateRole(false, IdentityUserTypeEnum.IDENTITY_ADMIN, roleName1)
+        Role role2 = createPropagateRole(false, IdentityUserTypeEnum.USER_MANAGER, roleName2)
 
         ClientRole cloudIdentityUserManageRole = getUserManageRole()
 
@@ -131,7 +132,7 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         addRoleToUser(userAdminToken, userManager, cloudIdentityUserManageRole)
 
         //add 2 roles to default user
-        addRoleToUser(specificationIdentityAdminToken, defaultUser, role1)  //identity admin must assign 500 weight role
+        addRoleToUser(specificationServiceAdminToken, defaultUser, role1)  //identity admin must assign 500 weight role
         addRoleToUser(userAdminToken, defaultUser, role2)
 
         when: "When list roles"
@@ -168,8 +169,8 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         //create 2 roles
         def roleName1 = getNormalizedRandomString()
         def roleName2 = getNormalizedRandomString()
-        Role role1 = createPropagateRole(false, 500, roleName1)
-        Role role2 = createPropagateRole(false, 1000, roleName2)
+        Role role1 = createPropagateRole(false, IdentityUserTypeEnum.IDENTITY_ADMIN, roleName1)
+        Role role2 = createPropagateRole(false, IdentityUserTypeEnum.USER_MANAGER, roleName2)
 
         ClientRole cloudIdentityUserManageRole = getUserManageRole()
 
@@ -328,10 +329,11 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         assert cloud20.deleteApplicationRoleFromUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status == HttpStatus.NO_CONTENT.value()
     }
 
-    def createPropagateRole(boolean propagate = true, int weight = STANDARD_PROPAGATING_ROLE_WEIGHT, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
+    def createPropagateRole(boolean propagate = true, IdentityUserTypeEnum adminRoleType, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
         def role = v2Factory.createRole(propagate).with {
             it.name = roleName
             it.propagate = propagate
+            it.administratorRole = adminRoleType.roleName
             it.otherAttributes = null
             return it
         }

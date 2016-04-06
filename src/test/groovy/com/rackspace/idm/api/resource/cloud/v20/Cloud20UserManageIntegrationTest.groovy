@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.User
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.Cloud20Utils
 import testHelpers.RootIntegrationTest
 
@@ -60,7 +62,10 @@ class Cloud20UserManageIntegrationTest extends RootIntegrationTest {
 
         //create global role and assign to default user
         //query param for application ID needs to be null in order for the role to be global
-        def globalRoleToCreate = v2Factory.createRole("globalRole$sharedRandom", null)
+        def globalRoleToCreate = v2Factory.createRole("globalRole$sharedRandom", null).with {
+            it.administratorRole = IdentityUserTypeEnum.USER_MANAGER.roleName
+            it
+        }
         globalRole = cloud20.createRole(serviceAdminToken, globalRoleToCreate).getEntity(Role).value
         cloud20.addApplicationRoleToUser(manageUserToken, globalRole.id, defaultUser.id)
 
@@ -88,7 +93,8 @@ class Cloud20UserManageIntegrationTest extends RootIntegrationTest {
         cloud20.deleteRole(serviceAdminToken, globalRole.id)
     }
 
-    def "list global roles for default user"() {
+    @Unroll
+    def "list global roles for default user for user type #userType"() {
         when:
         //list roles using user manage token
         def rolesList = cloud20.listUserGlobalRoles(token, userId.toString())
@@ -99,12 +105,12 @@ class Cloud20UserManageIntegrationTest extends RootIntegrationTest {
         roles.role.id.contains(globalRole.id)
 
         where:
-        token               | userId            | status
-        manageUserToken     | defaultUser.id    | 200
-        userAdminToken      | defaultUser.id    | 200
-        defaultUserToken    | defaultUser.id    | 200
-        identityAdminToken  | defaultUser.id    | 200
-        serviceAdminToken   | defaultUser.id    | 200
+        token               | userId            | status | userType
+        manageUserToken     | defaultUser.id    | 200    | "userManager"
+        userAdminToken      | defaultUser.id    | 200    | "userAdmin"
+        defaultUserToken    | defaultUser.id    | 200    | "defaultUser"
+        identityAdminToken  | defaultUser.id    | 200    | "identityAdmin"
+        serviceAdminToken   | defaultUser.id    | 200    | "serviceAdmin"
     }
 
     def "attempt to list global roles for user without proper permissions"() {

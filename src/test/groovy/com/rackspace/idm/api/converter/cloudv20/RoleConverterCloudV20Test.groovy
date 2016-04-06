@@ -1,12 +1,14 @@
 package com.rackspace.idm.api.converter.cloudv20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.domain.service.RoleLevelEnum
 import org.dozer.DozerBeanMapper
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 class RoleConverterCloudV20Test extends RootServiceTest {
     @Shared RoleConverterCloudV20 converter
-    @Shared def configWeight = 200
 
     def setupSpec() {
         converter = new RoleConverterCloudV20()
@@ -16,12 +18,10 @@ class RoleConverterCloudV20Test extends RootServiceTest {
 
     def setup() {
         mockConfiguration(converter)
-        config.getInt("default.rsWeight") >> configWeight
     }
 
     def "can convert tenantRole to jaxb role"() {
         given:
-        def weight = 100
         def propagate = true
         def serviceId = "serviceId"
         def tenantRole = entityFactory.createTenantRole().with {
@@ -60,32 +60,39 @@ class RoleConverterCloudV20Test extends RootServiceTest {
 
     def "can convert jaxb role to clientRole"() {
         given:
-        def weight = 200
         def propagate = false
         def serviceId = "serviceId"
 
         def jaxbRole = v2Factory.createRole()
         jaxbRole.propagate = propagate
         jaxbRole.serviceId = serviceId
+        jaxbRole.administratorRole = IdentityUserTypeEnum.USER_MANAGER.roleName
 
         when:
         def result = converter.fromRole(jaxbRole, serviceId);
 
         then:
-        result.rsWeight == weight
+        result.rsWeight == RoleLevelEnum.LEVEL_1000.levelAsInt
         result.propagate == propagate
         result.clientId == serviceId
     }
 
-    def "jaxb defaults to config role when converting from role to clientRole"() {
+    @Unroll
+    def "jaxb sets weight to #expectedWeight when administrator role set to #adminRole when converting from role to clientRole"() {
         given:
-        def jaxbRole = v2Factory.createRole()
+        def jaxbRole = v2Factory.createRole().with {it.administratorRole = adminRole; it}
 
         when:
         def result = converter.fromRole(jaxbRole, "clientId");
 
         then:
-        result.rsWeight == configWeight
+        result.rsWeight == expectedWeight.levelAsInt
+
+        where:
+        adminRole | expectedWeight
+        IdentityUserTypeEnum.SERVICE_ADMIN.roleName | RoleLevelEnum.LEVEL_50
+        IdentityUserTypeEnum.IDENTITY_ADMIN.roleName | RoleLevelEnum.LEVEL_500
+        IdentityUserTypeEnum.USER_MANAGER.roleName | RoleLevelEnum.LEVEL_1000
     }
 
     def "convert jaxb RoleList to TenantRoles"() {

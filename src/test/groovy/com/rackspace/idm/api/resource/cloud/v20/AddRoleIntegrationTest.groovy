@@ -1,28 +1,30 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.ApplicationService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
+import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
+import org.apache.commons.lang.RandomStringUtils
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
-class AddRoleIntegrationTest extends RootIntegrationTest {
-    private static final String SERVICE_ADMIN_USERNAME = "authQE";
-    private static final String SERVICE_ADMIN_PWD = "Auth1234"
+import javax.ws.rs.core.MediaType
 
+class AddRoleIntegrationTest extends RootIntegrationTest {
     public static final String IDENTITY_ADMIN_USERNAME_PREFIX = "identityAdmin"
     public static final String USER_ADMIN_USERNAME_PREFIX = "userAdmin"
     public static final String DEFAULT_USER_USERNAME_PREFIX = "defaultUser"
     public static final String ROLE_NAME_PREFIX = "role"
-
-    public static final String DEFAULT_PASSWORD = "Password1"
-    public static final String APPLICATION_ID = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
 
     /**
      * Random string generated for entire test class. Same for all feature methods.
@@ -49,6 +51,9 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     @Autowired
     Configuration config;
 
+    @Autowired
+    ApplicationRoleDao applicationRoleDao
+
     /**
      * Random string that is unique for each feature method
      */
@@ -63,15 +68,15 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         SPECIFICATION_RANDOM = getNormalizedRandomString()
 
         //login via the already existing service admin user
-        def serviceAdminAuthResponse = cloud20.authenticatePassword(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PWD).getEntity(AuthenticateResponse)
+        def serviceAdminAuthResponse = cloud20.authenticatePassword(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD).getEntity(AuthenticateResponse)
         //verify the authentication worked before retrieving the token
         assert serviceAdminAuthResponse.value instanceof AuthenticateResponse
         specificationServiceAdminToken = serviceAdminAuthResponse.value.token.id
-        specificationServiceAdmin = cloud20.getUserByName(specificationServiceAdminToken, SERVICE_ADMIN_USERNAME).getEntity(User).value
+        specificationServiceAdmin = cloud20.getUserByName(specificationServiceAdminToken, Constants.SERVICE_ADMIN_USERNAME).getEntity(User).value
 
         //create a new shared identity admin for these tests
         specificationIdentityAdmin = createIdentityAdmin(IDENTITY_ADMIN_USERNAME_PREFIX + SPECIFICATION_RANDOM)
-        def identityAdminAuthResponse = cloud20.authenticatePassword(specificationIdentityAdmin.getUsername(), DEFAULT_PASSWORD).getEntity(AuthenticateResponse)
+        def identityAdminAuthResponse = cloud20.authenticatePassword(specificationIdentityAdmin.getUsername(), Constants.DEFAULT_PASSWORD).getEntity(AuthenticateResponse)
         //verify the authentication worked before retrieving the token
         assert identityAdminAuthResponse.value instanceof AuthenticateResponse
         specificationIdentityAdminToken = identityAdminAuthResponse.value.token.id
@@ -85,27 +90,160 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(specificationIdentityAdmin)
     }
 
-    def "Service admin can assign identity role to user without any role"() {
+    @Unroll
+    def "Create Role: Role with weight #expectedRoleWeight created when administratorRole set to #administratorRole and called by #callerUserType using #requestType"() {
+        given:
+        def roleName = testUtils.getRandomUUID("role")
+        Role newRole = v2Factory.createRole(roleName).with {
+            if (administratorRole != null) {
+                it.administratorRole = administratorRole
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(callerToken, newRole, requestType, responseType)
+        def createdRole = responseType == MediaType.APPLICATION_XML_TYPE ? response.getEntity(Role).value : response.getEntity(Role)
+        def retrievedRole = applicationRoleDao.getClientRole(createdRole.id)
+
+        then:
+        response.status == 201
+        retrievedRole != null
+        retrievedRole.rsWeight == expectedRoleWeight
+
+        cleanup:
+        if (createdRole != null) {
+            utils.deleteRoleQuietly(createdRole)
+        }
+
+        where:
+        callerUserType | administratorRole | expectedRoleWeight | callerToken | requestType | responseType
+        IdentityUserTypeEnum.SERVICE_ADMIN.roleName | null | 50 | specificationServiceAdminToken | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN.roleName | IdentityUserTypeEnum.SERVICE_ADMIN.roleName | 50 | specificationServiceAdminToken | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN.roleName | IdentityUserTypeEnum.IDENTITY_ADMIN.roleName | 500 | specificationServiceAdminToken | MediaType.APPLICATION_XML_TYPE | MediaType.APPLICATION_XML_TYPE
+        IdentityUserTypeEnum.SERVICE_ADMIN.roleName | IdentityUserTypeEnum.USER_MANAGER.roleName | 1000 | specificationServiceAdminToken | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN.roleName | null | 500 | specificationIdentityAdminToken | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN.roleName | IdentityUserTypeEnum.IDENTITY_ADMIN.roleName | 500 | specificationIdentityAdminToken | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        IdentityUserTypeEnum.IDENTITY_ADMIN.roleName | IdentityUserTypeEnum.USER_MANAGER.roleName | 1000 | specificationIdentityAdminToken | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Create Role: Verify #callerUserType can not create role with administratorRole #administratorRole"() {
+        given:
+        def roleName = testUtils.getRandomUUID("role")
+        Role newRole = v2Factory.createRole(roleName).with {
+            if (administratorRole != null) {
+                it.administratorRole = administratorRole
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(callerToken, newRole)
+
+        then:
+        response.status == expectedStatus
+
+        where:
+        callerUserType | administratorRole | expectedStatus | callerToken
+        IdentityUserTypeEnum.SERVICE_ADMIN.roleName | IdentityUserTypeEnum.USER_ADMIN.roleName | HttpStatus.SC_BAD_REQUEST | specificationServiceAdminToken
+        IdentityUserTypeEnum.SERVICE_ADMIN.roleName | IdentityUserTypeEnum.DEFAULT_USER.roleName | HttpStatus.SC_BAD_REQUEST | specificationServiceAdminToken
+        IdentityUserTypeEnum.SERVICE_ADMIN.roleName | "nonExistantRoleName" | HttpStatus.SC_BAD_REQUEST | specificationServiceAdminToken
+        IdentityUserTypeEnum.IDENTITY_ADMIN.roleName | IdentityUserTypeEnum.SERVICE_ADMIN.roleName | HttpStatus.SC_FORBIDDEN | specificationIdentityAdminToken
+        IdentityUserTypeEnum.IDENTITY_ADMIN.roleName | IdentityUserTypeEnum.USER_ADMIN.roleName | HttpStatus.SC_BAD_REQUEST | specificationIdentityAdminToken
+        IdentityUserTypeEnum.IDENTITY_ADMIN.roleName | IdentityUserTypeEnum.DEFAULT_USER.roleName | HttpStatus.SC_BAD_REQUEST | specificationIdentityAdminToken
+    }
+
+    def "Create Role: User admin/managers/default users can not create new roles"() {
+        given:
+        Role newRole = v2Factory.createRole(testUtils.getRandomUUID("role"))
+
+        def userAdmin = createUserAdmin()
+        def userAdminToken = authenticate(userAdmin.username)
+
+        def userManager = createDefaultUser(userAdminToken)
+        def userManagerToken = authenticate(userManager.username)
+        ClientRole userManageRole = defaultAuthorizationService.getCloudUserManagedRole()
+        def status = addRoleToUser(specificationServiceAdminToken, userManager, userManageRole)
+        assert status == HttpStatus.SC_OK.intValue()
+        assertUserHasRole(userManager, userManageRole) //verify test state
+
+        def defaultUser = createDefaultUser(userAdminToken)
+        def defaultUserToken = authenticate(defaultUser.username)
+
+        when: "create role as user-admin"
+        def forbiddenStatus = cloud20.createRole(userAdminToken, newRole)
+
+        then: "forbidden"
+        assert forbiddenStatus.status == HttpStatus.SC_FORBIDDEN
+
+        when: "create role as user-manager"
+        forbiddenStatus = cloud20.createRole(userManagerToken, newRole)
+
+        then: "forbidden"
+        assert forbiddenStatus.status == HttpStatus.SC_FORBIDDEN
+
+        when: "create role as default user"
+        forbiddenStatus = cloud20.createRole(defaultUserToken, newRole)
+
+        then: "forbidden"
+        assert forbiddenStatus.status == HttpStatus.SC_FORBIDDEN
+
+        cleanup:
+        deleteUserQuietly(userManager)
+        deleteUserQuietly(defaultUser)
+        deleteUserQuietly(userAdmin)
+    }
+
+    @Unroll
+    def "Create Role: Verify naming convention enforcement. Attempt to create role with role name #roleName returns status #expectedStatus"() {
+        given:
+        Role newRole = v2Factory.createRole(roleName).with {
+            if (administratorRole != null) {
+                it.administratorRole = administratorRole
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(callerToken, newRole)
+
+        then:
+        response.status == expectedStatus
+
+        cleanup:
+        if (response.status == HttpStatus.SC_CREATED) {
+            def createdRole = response.getEntity(Role).value
+            utils.deleteRoleQuietly(createdRole)
+        }
+
+        where:
+        roleName | expectedStatus | callerToken
+        "identity:" + RandomStringUtils.randomAlphanumeric(10) | HttpStatus.SC_CREATED | specificationIdentityAdminToken //valid product role
+        RandomStringUtils.randomAlphanumeric(10) | HttpStatus.SC_CREATED | specificationIdentityAdminToken //valid global role
+        "identity:" + RandomStringUtils.randomAlphanumeric(10) + ":" | HttpStatus.SC_BAD_REQUEST | specificationIdentityAdminToken //trailing colon
+        RandomStringUtils.randomAlphanumeric(10) + "+" | HttpStatus.SC_BAD_REQUEST | specificationIdentityAdminToken //invalid character
+        "inva:li:d" + RandomStringUtils.randomAlphanumeric(10) | HttpStatus.SC_BAD_REQUEST | specificationIdentityAdminToken //multiple colons
+        ":invalid" + RandomStringUtils.randomAlphanumeric(10) | HttpStatus.SC_BAD_REQUEST | specificationIdentityAdminToken //leading colon
+        "invalid:-String" + RandomStringUtils.randomAlphanumeric(10) | HttpStatus.SC_BAD_REQUEST | specificationIdentityAdminToken //name not start w/ alphanum
+        "_invalid:String" + RandomStringUtils.randomAlphanumeric(10) | HttpStatus.SC_BAD_REQUEST | specificationIdentityAdminToken //prefix not start w/ alphanum
+        RandomStringUtils.randomAlphanumeric(Validator20.MAX_ROLE_NAME + 1) | HttpStatus.SC_BAD_REQUEST | specificationIdentityAdminToken //too big
+    }
+
+    def "Service admin can assign identity role to user that does not have an identity role"() {
         //create an identity-admin from which we'll remove the identity-admin role
         def identityAdmin = createIdentityAdmin()
 
-        /*
-        get the identity admin role. Calling explicitly here rather than using DefaultAuthorizationService because in master branch the code was changed
-        to no longer use static methods (required to avoid race conditions within tests). Rather than depend on something that will be changed once the code
-        is merged from 2.0.0 branch to master, making the call directly. Note - once merged to master this method can safely use the DefaultAuthorizationService
-        _instance_ method to retrieve the role.
-         */
-        //
-        ClientRole cloudIdentityAdminRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityAdminRole());
+        ClientRole cloudIdentityAdminRole = defaultAuthorizationService.getCloudIdentityAdminRole();
 
         removeRoleFromUser(specificationServiceAdminToken, identityAdmin, cloudIdentityAdminRole)
         assertUserDoesNotHaveRole(identityAdmin, cloudIdentityAdminRole)
 
         when: "Add role to user without any identity role"
         def status = addRoleToUser(specificationServiceAdminToken, identityAdmin, cloudIdentityAdminRole)
-        assert status == HttpStatus.OK.value()
+        assert status == HttpStatus.SC_OK
 
-        then: "user admin has role"
+        then: "user now has role"
         assertUserHasRole(identityAdmin, cloudIdentityAdminRole)
 
         cleanup:
@@ -121,14 +259,14 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
         when: "As user-admin, add 1000 weight role to default user within my domain"
         def status = addRoleToUser(userAdminToken, defaultUser, role)
-        assert status == HttpStatus.OK.value()
+        assert status == HttpStatus.SC_OK
 
         then: "default user now has user-manage role"
         assertUserHasRole(defaultUser, role)
 
         cleanup:
-        deleteUserQuietly(userAdmin)
         deleteUserQuietly(defaultUser)
+        deleteUserQuietly(userAdmin)
         deleteRoleQuietly(role)
     }
 
@@ -141,21 +279,21 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
         def defaultUser = createDefaultUser(userAdminToken)
 
-        ClientRole userManageRole = applicationService.getClientRoleByClientIdAndRoleName(getCloudAuthClientId(), getCloudAuthIdentityUserManageRole());
+        ClientRole userManageRole = defaultAuthorizationService.getCloudUserManagedRole()
         def status = addRoleToUser(specificationServiceAdminToken, userManager, userManageRole)
-        assert status == HttpStatus.OK.value()
+        assert status == HttpStatus.SC_OK
         assertUserHasRole(userManager, userManageRole) //verify test state
 
         when: "As user-manager, add user-manager role to default user within my domain"
         def forbiddenStatus = addRoleToUser(userManagerToken, defaultUser, userManageRole)
 
         then:
-        assert forbiddenStatus == HttpStatus.FORBIDDEN.value()
+        assert forbiddenStatus == HttpStatus.SC_FORBIDDEN
         assertUserDoesNotHaveRole(defaultUser, userManageRole)
 
         cleanup:
-        deleteUserQuietly(userAdmin)
         deleteUserQuietly(userManager)
+        deleteUserQuietly(userAdmin)
         deleteUserQuietly(defaultUser)
     }
 
@@ -164,7 +302,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         def roleName = testUtils.getRandomUUID("role")
         Role createRole = v2Factory.createRole().with {
             it.name = roleName
-            it.serviceId = APPLICATION_ID
+            it.serviceId = Constants.IDENTITY_SERVICE_ID
             it
         }
 
@@ -191,7 +329,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         def service = utils.createService()
         Role createRole1 = v2Factory.createRole().with {
             it.name = roleName
-            it.serviceId = APPLICATION_ID
+            it.serviceId = Constants.IDENTITY_SERVICE_ID
             it
         }
         Role createRole2 = v2Factory.createRole().with {
@@ -244,7 +382,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
             it.name = roleName
             it.propagate = propagate
             it.rsWeight = weight
-            it.clientId = APPLICATION_ID
+            it.clientId = Constants.IDENTITY_SERVICE_ID
             it
         }
 
@@ -259,11 +397,11 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def void assertUserHasRole(user, role) {
-        assert cloud20.getUserApplicationRole(specificationServiceAdminToken, role.getId(), user.getId()).status == HttpStatus.OK.value()
+        assert cloud20.getUserApplicationRole(specificationServiceAdminToken, role.getId(), user.getId()).status == HttpStatus.SC_OK
     }
 
     def void assertUserDoesNotHaveRole(user, role) {
-        assert cloud20.getUserApplicationRole(specificationServiceAdminToken, role.getId(), user.getId()).status == HttpStatus.NOT_FOUND.value()
+        assert cloud20.getUserApplicationRole(specificationServiceAdminToken, role.getId(), user.getId()).status == HttpStatus.SC_NOT_FOUND
     }
 
     def addRoleToUser(callerToken, userToAddRoleTo, roleToAdd) {
@@ -271,49 +409,33 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     }
 
     def void removeRoleFromUser(callerToken, userToRemoveRoleFrom, roleToRemove) {
-        assert cloud20.deleteApplicationRoleFromUser(callerToken, roleToRemove.getId(), userToRemoveRoleFrom.getId()).status == HttpStatus.NO_CONTENT.value()
+        assert cloud20.deleteApplicationRoleFromUser(callerToken, roleToRemove.getId(), userToRemoveRoleFrom.getId()).status == HttpStatus.SC_NO_CONTENT
     }
 
     def createIdentityAdmin(String identityAdminUsername = IDENTITY_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
-        cloud20.createUser(specificationServiceAdminToken, v2Factory.createUserForCreate(identityAdminUsername, "display", "test@rackspace.com", true, null, null, DEFAULT_PASSWORD))
+        cloud20.createUser(specificationServiceAdminToken, v2Factory.createUserForCreate(identityAdminUsername, "display", "test@rackspace.com", true, null, null, Constants.DEFAULT_PASSWORD))
         def userAdmin = cloud20.getUserByName(specificationServiceAdminToken, identityAdminUsername).getEntity(User).value
         return userAdmin;
     }
 
     def createUserAdmin(String callerToken = specificationIdentityAdminToken, String adminUsername = USER_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {
-        cloud20.createUser(callerToken, v2Factory.createUserForCreate(adminUsername, "display", "test@rackspace.com", true, null, domainId, DEFAULT_PASSWORD))
+        cloud20.createUser(callerToken, v2Factory.createUserForCreate(adminUsername, "display", "test@rackspace.com", true, null, domainId, Constants.DEFAULT_PASSWORD))
         def userAdmin = cloud20.getUserByName(callerToken, adminUsername).getEntity(User).value
         return userAdmin;
     }
 
     def createDefaultUser(String callerToken, String userName = DEFAULT_USER_USERNAME_PREFIX + getNormalizedRandomString()) {
-        cloud20.createUser(callerToken, v2Factory.createUserForCreate(userName, "display", "test@rackspace.com", true, null, null, DEFAULT_PASSWORD))
+        cloud20.createUser(callerToken, v2Factory.createUserForCreate(userName, "display", "test@rackspace.com", true, null, null, Constants.DEFAULT_PASSWORD))
         def user = cloud20.getUserByName(callerToken, userName).getEntity(User).value
         return user
     }
 
     def authenticate(String userName) {
-        def token = cloud20.authenticatePassword(userName, DEFAULT_PASSWORD).getEntity(AuthenticateResponse).value.token.id
+        def token = cloud20.authenticatePassword(userName, Constants.DEFAULT_PASSWORD).getEntity(AuthenticateResponse).value.token.id
         return token;
     }
 
     def String getNormalizedRandomString() {
         return UUID.randomUUID().toString().replaceAll('-', "")
-    }
-
-    def String getCloudAuthIdentityAdminRole() {
-        return config.getString("cloudAuth.adminRole");
-    }
-
-    def String getCloudAuthIdentityUserManageRole() {
-        return config.getString("cloudAuth.userManagedRole");
-    }
-
-    def String getCloudAuthDefaultUserRole() {
-        return config.getString("cloudAuth.userRole");
-    }
-
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
     }
 }

@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.User
@@ -458,9 +459,10 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
         assert cloud20.deleteApplicationRoleFromUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status == HttpStatus.NO_CONTENT.value()
     }
 
-    def createPropagateRole(boolean propagate = true, int weight = STANDARD_PROPAGATING_ROLE_WEIGHT, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
+    def createPropagateRole(boolean propagate = true, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
         def role = v2Factory.createRole(propagate).with {
             it.name = roleName
+            it.administratorRole = IdentityUserTypeEnum.IDENTITY_ADMIN.roleName
             it.otherAttributes = null
             return it
         }

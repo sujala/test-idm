@@ -28,6 +28,7 @@ public class JSONReaderForRole extends JSONReaderForEntity<Role> {
         throws IOException {
 
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put(ROLE_RAX_AUTH_ADMINISTRATOR_ROLE_PATH, ADMINISTRATOR_ROLE);
         prefixValues.put(ROLE_RAX_AUTH_WEIGHT_PATH, WEIGHT);
         prefixValues.put(ROLE_RAX_AUTH_PROPAGATE_PATH, PROPAGATE);
 

@@ -723,6 +723,11 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public void verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum identityType) {
+        verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(identityType, null);
+    }
+
+    @Override
     public void verifyEffectiveCallerHasRoleByName(String roleName) {
         Assert.hasText(roleName);
 

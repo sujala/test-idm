@@ -3,6 +3,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
@@ -63,16 +64,15 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mossoId2 == null
     }
 
-    def "delete rbac roles for user deletes all rbac roles (roles where weight=default.rsWeight)"() {
+    def "delete rbac roles for user deletes all user-managable rbac roles"() {
         given:
         def role = entityFactory.createTenantRole()
         role.roleRsId = "id"
-        def clientRole = entityFactory.createClientRole(1000)
+        def clientRole = entityFactory.createClientRole(RoleLevelEnum.LEVEL_1000.levelAsInt)
         def user = entityFactory.createUser()
 
         tenantRoleDao.getTenantRolesForUser(user) >> [ role ].asList()
         applicationService.getClientRoleById(_) >> clientRole
-        config.getInt("default.rsWeight") >> 1000
 
         when:
         service.deleteRbacRolesForUser(user)

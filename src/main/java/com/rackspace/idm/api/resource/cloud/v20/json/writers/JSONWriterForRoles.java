@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones;
 import com.rackspace.idm.JSONConstants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -23,26 +24,10 @@ import static com.rackspace.idm.api.resource.cloud.JsonWriterHelper.getRole;
 
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
-public class JSONWriterForRoles implements MessageBodyWriter<RoleList> {
-    @Override
-    public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return type == RoleList.class;
-    }
+public class JSONWriterForRoles extends JSONWriterForArrayEntity<RoleList> {
 
     @Override
-    public long getSize(RoleList roleList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
-        return -1;
-    }
-
-    @Override
-    public void writeTo(RoleList roleList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream outputStream) throws IOException, WebApplicationException {
-        JSONObject outer = new JSONObject();
-        JSONArray list = new JSONArray();
-        for (Role role : roleList.getRole()) {
-            list.add(getRole(role));
-        }
-        outer.put(JSONConstants.ROLES, list);
-        String jsonText = JSONValue.toJSONString(outer);
-        outputStream.write(jsonText.getBytes(JSONConstants.UTF_8));
+    public void writeTo(RoleList roleList, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
+        write(roleList, JSONConstants.ROLES, JSONConstants.ROLES, entityStream);
     }
 }

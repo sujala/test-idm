@@ -5,10 +5,12 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.exception.NotFoundException;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
@@ -64,7 +66,7 @@ public class RequestContext {
 
         if (domain == null) {
             BaseUser effectiveCaller = getEffectiveCaller();
-            domain = effectiveCaller != null ? domainService.getDomain(effectiveCaller.getDomainId()) : null;
+            domain = effectiveCaller != null && StringUtils.isNotBlank(effectiveCaller.getDomainId()) ? domainService.getDomain(effectiveCaller.getDomainId()) : null;
             securityContext.setEffectiveCallerDomain(domain);
         }
 
@@ -92,6 +94,25 @@ public class RequestContext {
 
         return effectiveCaller;
     }
+
+    /**
+     * Helper method to retrieve the effective caller and verify the caller and the caller's domain are enabled. This
+     * call mirrors the {@link com.rackspace.idm.domain.service.impl.DefaultUserService#getUserByScopeAccess(ScopeAccess)}
+     * which loads the user from a token and verifies the user is enabled.
+     *
+     * The NotFoundException message also mirrors the call.
+     *
+     * @return
+     * @throws com.rackspace.idm.exception.NotFoundException if the effective caller is disabled or the callers domain is disabled
+     */
+    public BaseUser getAndVerifyEffectiveCallerIsEnabled() {
+        BaseUser effectiveCaller = getEffectiveCaller();
+        if (effectiveCaller == null || effectiveCaller.isDisabled() || (getEffectiveCallerDomain() != null && !getEffectiveCallerDomain().getEnabled())) {
+            throw new NotFoundException("Token not found.");
+        }
+        return effectiveCaller;
+    }
+
 
     /**
      * Helper method to lazily load the effective caller's roles.

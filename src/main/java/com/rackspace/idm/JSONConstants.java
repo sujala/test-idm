@@ -176,6 +176,9 @@ public final class JSONConstants {
     public static final String TOKEN_KEY = "tokenKey";
     public static final String RAX_AUTH_PROPAGATE = "RAX-AUTH:propagate";
     public static final String PROPAGATE = "propagate";
+    public static final String RAX_AUTH_ADMINISTRATOR_ROLE = "RAX-AUTH:administratorRole";
+    public static final String ADMINISTRATOR_ROLE = "administratorRole";
+
     public static final String RAX_AUTH_WEIGHT = "RAX-AUTH:weight";
     public static final String WEIGHT = "weight";
     public static final String RAX_AUTH_AUTHENTICATED_BY = "RAX-AUTH:authenticatedBy";
@@ -242,8 +245,10 @@ public final class JSONConstants {
     public static final String ENDPOINT_TEMPLATE_RAX_AUTH_TENANT_ALIAS_PATH = "endpointTemplate.RAX-AUTH:tenantAlias";
     public static final String GROUPS_LIST_PATH = "groups.group";
     public static final String ROLE_PROPAGATE_PATH = "role.propagate";
+    public static final String ROLE_ADMINISTRATOR_ROLE_PATH = "role.administratorRole";
     public static final String ROLE_RAX_AUTH_WEIGHT_PATH = "role.RAX-AUTH:weight";
     public static final String ROLE_RAX_AUTH_PROPAGATE_PATH = "role.RAX-AUTH:propagate";
+    public static final String ROLE_RAX_AUTH_ADMINISTRATOR_ROLE_PATH = "role.RAX-AUTH:administratorRole";
     public static final String ROLE_WEIGHT_PATH = "role.weight";
     public static final String TOKEN_AUTHENTICATED_BY = "token.authenticatedBy";
     public static final String USER_DEFAULT_REGION_PATH = "user.defaultRegion";

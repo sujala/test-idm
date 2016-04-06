@@ -19,7 +19,7 @@ public interface ApplicationRoleDao {
     void deleteClientRole(ClientRole role);
 
     ClientRole getClientRole(ClientRole role);
-    ClientRole getClientRole(String applicationId);
+    ClientRole getClientRole(String roleId);
     ClientRole getClientRoleByApplicationAndName(Application application, ClientRole role);
     ClientRole getClientRoleByApplicationAndName(String applicationId, String roleName);
     ClientRole getRoleByName(String roleName);

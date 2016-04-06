@@ -84,9 +84,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockServices()
         mockMisc()
 
-        def weights = [ "0", "100", "500", "1000", "2000" ].asList()
-        config.getList("cloudAuth.allowedRoleWeights") >> weights
-
         headers = Mock(HttpHeaders)
         jaxbMock = Mock(JAXBElement)
     }
@@ -936,7 +933,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addRole(headers, uriInfo(), authToken, v2Factory.createRole())
 
         then:
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
     }
 
     def "addRole verifies racker does not have access"() {
@@ -955,8 +952,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         response.build().status == 403
-        1 * scopeAccessService.getScopeAccessByAccessToken(_) >> sa
-        1 * authorizationService.verifyIdentityAdminLevelAccess(_) >> { throw new ForbiddenException() }
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN) >> { throw new ForbiddenException() }
     }
 
     def "addRole sets serviceId"() {
@@ -975,38 +971,26 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * roleMock.setServiceId(_)
     }
 
-    def "addRole verifies service admin access when adding identity:* roles"() {
-        given:
-        mockRoleConverter(service)
-        allowUserAccess()
-
-        when:
-        service.addRole(headers, uriInfo(), authToken, v2Factory.createRole("identity:role", "serviceId", null))
-
-        then:
-        1 * authorizationService.authorizeCloudServiceAdmin(_)
-    }
-
     def "addRole gets service"() {
         given:
         mockRoleConverter(service)
         allowUserAccess()
-        authorizationService.authorizeCloudServiceAdmin(_) >> true
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.IDENTITY_ADMIN
 
         when:
         service.addRole(headers, uriInfo(), authToken, v2Factory.createRole("identity:role", "serviceId", null))
 
         then:
-        1 * applicationService.checkAndGetApplication(_)
+        1 * applicationService.checkAndGetApplication("serviceId")
     }
 
     def "addRole adds role and returns location"() {
         given:
         mockRoleConverter(service)
         allowUserAccess()
-        authorizationService.authorizeCloudServiceAdmin(_) >> true
-
         applicationService.checkAndGetApplication(_) >> entityFactory.createApplication()
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken) >> createUserScopeAccess()
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.IDENTITY_ADMIN
 
         when:
         def response = service.addRole(headers, uriInfo(), authToken, v2Factory.createRole("identity:role", null, null)).build()
@@ -1017,54 +1001,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.getMetadata().get("location") != null
     }
 
-    def "addRole verifies role is not null"() {
-        given:
-        allowUserAccess()
-        def scopeAccessMock = Mock(ScopeAccess)
-        def role = v2Factory.createRole("role", "service", null)
-        def namelessRole = v2Factory.createRole(null, null, null)
-        def identityRole = v2Factory.createRole("identity:role", null, null)
-        def roleWithService = v2Factory.createRole("role", "serviceId", null)
-        config.getString("cloudAuth.clientId") >> "bde1268ebabeeabb70a0e702a4626977c331d5c4"
-        config.getString("idm.clientId") >> "18e7a7032733486cd32f472d7bd58f709ac0d221"
-        config.getString("cloudAuth.globalRoles.clientId") >> "6ae999552a0d2dca14d62e2bc8b764d377b1dd6c"
-
+    def "addRole calls validator to validate role for creation"() {
         when:
         def response = service.addRole(headers, uriInfo(), authToken, null).build()
 
         then:
-        response.status == 400
-    }
-
-    def "addRole verifies that name is not blank"() {
-        given:
-        allowUserAccess()
-        def role = v2Factory.createRole("", "serviceId", "tenantId")
-
-        when:
-        def response = service.addRole(headers, uriInfo(), authToken, role).build()
-
-        then:
-        response.status == 400
-    }
-
-    def "addRole handles DuplicateException being trown"() {
-        given:
-        mockRoleConverter(service)
-        allowUserAccess()
-        def role = v2Factory.createRole("role", "serviceId", "tenantId")
-        applicationService.addClientRole(_) >> {throw new DuplicateException()}
-        def app = new Application()
-        app.setClientId("clientId")
-        applicationService.checkAndGetApplication(_) >> app
-        def clientRole = new ClientRole()
-        roleConverter.fromRole(role, app.getClientId()) >> clientRole
-
-        when:
-        def response = service.addRole(headers, uriInfo(), authToken, role).build()
-
-        then:
-        response.status == 409
+        1 * validator20.validateRoleForCreation(_)
     }
 
     def "deleteRole verifies admin level access"() {
@@ -2436,26 +2378,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUserAdmin(_) >> false
     }
 
-    def "isRoleWeightAllowed verifies that the specified weight is allowed"() {
-        given:
-        def exceptionThrown = false
-
-        when:
-        try {
-            service.isRoleWeightValid(value)
-        } catch(BadRequestException) {
-            exceptionThrown = true
-        }
-
-        then:
-        exceptionThrown == expectedResult
-
-        where:
-        value || expectedResult
-        500   || false
-        3     || true
-    }
-
     def "authenticateFederatedDomain sets token authenticatedBy with password credentials"() {
         given:
         mockDomainConverter(service)
@@ -3043,22 +2965,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 201
     }
 
-    def "validate role for create - throws BadRequestException"(){
-        when:
-        def role = null;
-        if (name != null || serviceId != null){
-            role = v2Factory.createRole(name, serviceId, null)
-        }
-        service.validateRole(role)
 
-        then:
-        thrown(ex)
-
-        where:
-        name    | serviceId | ex
-        null    | null      | BadRequestException
-        null    | "service" | BadRequestException
-    }
 
     @Unroll("service admin deleting product roles on #userRole returns #expectedResult")
     def "service admin CAN delete a users product roles"() {

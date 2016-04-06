@@ -14,6 +14,7 @@ import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
@@ -203,20 +204,20 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         Role createRole = v2Factory.createRole()
         createRole.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
         createRole.name = "sharedRole1$sharedRandom"
-        def responseRole = cloud20.createRole(serviceAdminToken, createRole)
+        def responseRole = cloud20.createRole(identityAdminToken, createRole)
         sharedRole = responseRole.getEntity(Role).value
 
         Role createRole2 = v2Factory.createRole()
         createRole2.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
         createRole2.name = "sharedRole2$sharedRandom"
-        def responseRole2 = cloud20.createRole(serviceAdminToken, createRole2)
+        def responseRole2 = cloud20.createRole(identityAdminToken, createRole2)
         sharedRoleTwo = responseRole2.getEntity(Role).value
 
         //create product role
-        Role createProductRole = v2Factory.createRole()
+        Role createProductRole = v2Factory.createRole().with {it.administratorRole = IdentityUserTypeEnum.USER_MANAGER.roleName; it}
         createProductRole.serviceId = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
         createProductRole.name = "productRole2$sharedRandom"
-        def responseProductRole = cloud20.createRole(serviceAdminToken, createProductRole)
+        def responseProductRole = cloud20.createRole(identityAdminToken, createProductRole)
         productRole = responseProductRole.getEntity(Role).value
 
         def role = v2Factory.createRole(true).with {
@@ -225,7 +226,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
             it.otherAttributes = null
             return it
         }
-        def responsePropagateRole = cloud20.createRole(serviceAdminToken, role)
+        def responsePropagateRole = cloud20.createRole(identityAdminToken, role)
         propagatingRole = responsePropagateRole.getEntity(Role).value
 
         if (tenant == null) {
@@ -716,9 +717,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     def "user admin able to list and query for created role"() {
+        def role = v2Factory.createRole("userAdminGlobalRole$sharedRandom", null).with {it.administratorRole = IdentityUserTypeEnum.USER_MANAGER.roleName; it}
 
         when:
-        def createdRole = cloud20.createRole(identityAdminToken, v2Factory.createRole("userAdminGlobalRole$sharedRandom", null)).getEntity(Role).value
+        def createdRole = cloud20.createRole(identityAdminToken, role).getEntity(Role).value
         def roleListResponse = cloud20.listRoles(userAdminToken, null, "0", "500")
         def roleResponse = cloud20.getRole(userAdminToken, createdRole.id)
 
@@ -1094,13 +1096,13 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     def "a list of users can be retrieved by email"() {
         when:
-        def user1 = v2Factory.createUserForCreate("user1$sharedRandom", "user1$sharedRandom", email, true, "ORD", null, "Password1")
-        def user2 = v2Factory.createUserForCreate("user2$sharedRandom", "user2$sharedRandom", email, true, "ORD", null, "Password1")
+        def user1 = v2Factory.createUserForCreate("user10$sharedRandom", "user1$sharedRandom", email, true, "ORD", null, "Password1")
+        def user2 = v2Factory.createUserForCreate("user20$sharedRandom", "user2$sharedRandom", email, true, "ORD", null, "Password1")
         def createdUser1 = cloud20.createUser(serviceAdminToken, user1).getEntity(User).value
         def createUser2 = cloud20.createUser(serviceAdminToken, user2).getEntity(User).value
+        def response = cloud20.getUsersByEmail(serviceAdminToken, email)
         cloud20.destroyUser(serviceAdminToken, createdUser1.getId())
         cloud20.destroyUser(serviceAdminToken, createUser2.getId())
-        def response = cloud20.getUsersByEmail(serviceAdminToken, email)
 
         then:
         response.status == expected
@@ -2370,26 +2372,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         serviceEntity.type == serviceType
         deleteServiceIdentityAdminTokenResponse.status == 403
         deleteServiceResponse.status == 204
-    }
-
-    def "Service admin should be the only one to add Identity roles"() {
-        when:
-        String roleName = "identity:someRole" + sharedRandom
-        def result = cloud20.createRole((String)token, v2Factory.createRole(roleName, serviceId))
-        if (result.status == 201){
-            cloud20.deleteRole(serviceAdminToken, result.getEntity(Role).value.id)
-        }
-
-        then:
-        result.status == expectedResult
-
-        where:
-        token                | serviceId                                  | expectedResult
-        identityAdminToken   | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
-        userAdminToken       | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
-        defaultUserToken     | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 403
-        serviceAdminToken    | "bde1268ebabeeabb70a0e702a4626977c331d5c4" | 201
-
     }
 
     def "Service admin should be the only one to add roles in CI/Foundation"() {

@@ -148,44 +148,6 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         deleteFederatedUser(username)
     }
 
-    def "federated user cannot get a duplicate role by specifying propagating role in saml assertion that is on user-admin"() {
-        given:
-        def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
-            it.propagate = true
-            return it
-        }
-        def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
-        def propagatingRole = responsePropagateRole.getEntity(Role).value
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("samlUser")
-        def expDays = 500
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, [propagatingRole.name].asList());
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        utils.addRoleToUser(userAdmin, propagatingRole.id)
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
-
-        def fedUser = federatedUserRepository.getUserById(samlResponse.user.id)
-        assert fedUser != null
-
-        when: "adding role to user-admin with federated sub-users"
-        def federatedUserRoles = tenantRoleDao.getTenantRolesForUser(fedUser)
-
-        then: "federated sub-user have propagating role assigned only once"
-        def roleCount = 0
-        for(curTenantRole in federatedUserRoles) {
-            if(curTenantRole.roleRsId.equals(propagatingRole.id)) {
-                roleCount++
-            }
-        }
-        roleCount == 1
-
-        cleanup:
-        utils.deleteUsers(users)
-        utils.deleteRole(propagatingRole)
-        deleteFederatedUser(username)
-    }
-
     def "new federated users get global propagating roles"() {
         given:
         def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {

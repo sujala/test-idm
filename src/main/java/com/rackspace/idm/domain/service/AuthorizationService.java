@@ -146,6 +146,15 @@ public interface AuthorizationService {
     void verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum identityType, String roleName);
 
     /**
+     * Verifies that the effective caller has the specified identity type (or higher). If so, the method returns;
+     * otherwise, throws a ForbiddenException.
+     *
+     * @param identityType
+     * @throws com.rackspace.idm.exception.ForbiddenException
+     */
+    void verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum identityType);
+
+    /**
      * Verifies that the effective caller has the specified identity type (or higher) and/or a role with the
      * specified name. If so, the method returns. Otherwise, throws a ForbiddenException.
      *
