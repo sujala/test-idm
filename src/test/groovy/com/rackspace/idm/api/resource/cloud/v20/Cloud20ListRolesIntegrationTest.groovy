@@ -124,35 +124,35 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
 
         when: "service admin lists roles"
-        def response = cloud20.listRoles(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD))
+        def response = cloud20.listRoles(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), null, null, "1000")
         def roleList = response.getEntity(RoleList).value
 
         then: "found"
         roleList.role.find { it -> it.name == role50.name}.id == role50.id
 
         when: "identity admin lists roles"
-        response = cloud20.listRoles(utils.getToken(identityAdmin.username))
+        response = cloud20.listRoles(utils.getToken(identityAdmin.username), null, null, "1000")
         roleList = response.getEntity(RoleList).value
 
         then: "not found"
         roleList.role.find { it -> it.name == role50.name} == null
 
         when: "user admin lists roles"
-        response = cloud20.listRoles(utils.getToken(userAdmin.username))
+        response = cloud20.listRoles(utils.getToken(userAdmin.username), null, null, "1000")
         roleList = response.getEntity(RoleList).value
 
         then: "not found"
         roleList.role.find { it -> it.name == role50.name} == null
 
         when: "user manage lists roles"
-        response = cloud20.listRoles(utils.getToken(userManage.username))
+        response = cloud20.listRoles(utils.getToken(userManage.username), null, null, "1000")
         roleList = response.getEntity(RoleList).value
 
         then: "not found"
         roleList.role.find { it -> it.name == role50.name} == null
 
         when: "default user lists roles"
-        def responseDefaultUser = cloud20.listRoles(utils.getToken(defaultUser.username))
+        def responseDefaultUser = cloud20.listRoles(utils.getToken(defaultUser.username), null, null, "1000")
 
         then: "not found"
         responseDefaultUser.status == 403
@@ -215,7 +215,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
 
         when: "service admin lists roles"
-        def response = cloud20.listRoles(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), Constants.IDENTITY_SERVICE_ID)
+        def response = cloud20.listRoles(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), Constants.IDENTITY_SERVICE_ID, null, "1000")
         def roleList = response.getEntity(RoleList).value
 
         then:
@@ -230,7 +230,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         roleList.role.find { it -> it.name == role2500.name}.id == role2500.id
 
         when: "identity admin lists roles"
-        response = cloud20.listRoles(utils.getToken(identityAdmin.username), Constants.IDENTITY_SERVICE_ID)
+        response = cloud20.listRoles(utils.getToken(identityAdmin.username), Constants.IDENTITY_SERVICE_ID, null, "1000")
         roleList = response.getEntity(RoleList).value
 
         then:
@@ -245,7 +245,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         roleList.role.find { it -> it.name == role2500.name}.id == role2500.id
 
         when: "user admin lists roles"
-        response = cloud20.listRoles(utils.getToken(userAdmin.username), Constants.IDENTITY_SERVICE_ID)
+        response = cloud20.listRoles(utils.getToken(userAdmin.username), Constants.IDENTITY_SERVICE_ID, null, "1000")
         roleList = response.getEntity(RoleList).value
 
         then:
@@ -260,7 +260,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         roleList.role.find { it -> it.name == role2500.name}.id == role2500.id
 
         when: "user manage lists roles"
-        response = cloud20.listRoles(utils.getToken(userManage.username), Constants.IDENTITY_SERVICE_ID)
+        response = cloud20.listRoles(utils.getToken(userManage.username), Constants.IDENTITY_SERVICE_ID, null, "1000")
         roleList = response.getEntity(RoleList).value
 
         then:
@@ -275,7 +275,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         roleList.role.find { it -> it.name == role2500.name}.id == role2500.id
 
         when: "default user lists roles"
-        def responseDefaultUser = cloud20.listRoles(utils.getToken(defaultUser.username), Constants.IDENTITY_SERVICE_ID)
+        def responseDefaultUser = cloud20.listRoles(utils.getToken(defaultUser.username), Constants.IDENTITY_SERVICE_ID, null, "1000")
 
         then:
         responseDefaultUser.status == 403

@@ -8,6 +8,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
@@ -43,6 +44,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
@@ -376,40 +378,36 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addRole(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Role role) {
         try {
-            ScopeAccess tokenScopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyIdentityAdminLevelAccess(tokenScopeAccess);
-            User caller = (User) userService.getUserByScopeAccess(tokenScopeAccess);
+            ScopeAccess tokenScopeAccess = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
+            BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            validateRole(role);
-
-            if (StringUtils.isBlank(role.getServiceId())) {
-                String msg = String.format("Setting default service to role %s",role.getName());
-                logger.warn(msg);
+            //set defaults when optional params not specified
+            if (role != null && StringUtils.isBlank(role.getServiceId())) {
                 role.setServiceId(config.getString("cloudAuth.globalRoles.clientId"));
             }
-
-            ClientRole dirClientRole = this.roleService.getRoleByName(role.getName());
-            if(dirClientRole != null) {
-                String errMsg = "role with name " + role.getName() + " already exists";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
+            if (role != null && role.isPropagate() == null) {
+                role.setPropagate(Boolean.FALSE);
+            }
+            if (role != null && StringUtils.isBlank(role.getAdministratorRole())) {
+                IdentityUserTypeEnum callerUserType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+                role.setAdministratorRole(callerUserType.getRoleName());
             }
 
-            if (!authorizationService.authorizeCloudServiceAdmin(tokenScopeAccess)) {
-                /*if(role.getServiceId().equals(config.getString("cloudAuth.clientId"))
-                        || role.getServiceId().equals(config.getString("idm.clientId"))) {
-                    String errMsg = "Cannot add roles to identity/Foundation service accounts";
-                    throw new ForbiddenException(errMsg);
-                }*/
-                if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-                    throw new ForbiddenException(NOT_AUTHORIZED);
-                }
-            }
+            validator20.validateRoleForCreation(role);
 
             Application service = applicationService.checkAndGetApplication(role.getServiceId());
 
-            ClientRole clientRole = roleConverterCloudV20.fromRole(role, service.getClientId());
-            isRoleWeightValid(clientRole.getRsWeight());
+            ClientRole clientRole = null;
+            try {
+                clientRole = roleConverterCloudV20.fromRole(role, service.getClientId());
+            } catch (IdmException ex) {
+                if (ex.getErrorCode().equals(ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE)) {
+                    throw new BadRequestException(ex.getMessage()); //translate invalid data to invalid request
+                } else {
+                    throw ex; //just rethrow
+                }
+            }
             precedenceValidator.verifyCallerRolePrecedenceForAssignment((User) caller, clientRole);
 
             applicationService.addClientRole(clientRole);
@@ -425,28 +423,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             return exceptionHandler.conflictExceptionResponse(bre.getMessage());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
-        }
-    }
-
-    private void isRoleWeightValid(int weight) {
-        List<Object> validWeights = config.getList("cloudAuth.allowedRoleWeights");
-        if (!validWeights.contains(Integer.toString(weight))) {
-            String errMsg = String.format("Allowed values for Weight field: %s", StringUtils.join(validWeights, " "));
-            throw new BadRequestException(errMsg);
-        }
-    }
-
-    private void validateRole(Role role) {
-        if (role == null) {
-            String errMsg = "role cannot be null";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
-        }
-
-        if (StringUtils.isBlank(role.getName())) {
-            String errMsg = "Expecting name";
-            logger.warn(errMsg);
-            throw new BadRequestException(errMsg);
         }
     }
 

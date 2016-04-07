@@ -59,6 +59,7 @@
         <attribute name="tenantId" type="xsd:string" use="optional"/>
         <!-- used for development -->
         <attribute ref="RAX-AUTH:propagate"/>
+        <attribute ref="RAX-AUTH:administratorRole"/>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
     

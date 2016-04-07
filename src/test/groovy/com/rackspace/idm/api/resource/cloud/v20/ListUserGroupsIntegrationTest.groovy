@@ -184,14 +184,6 @@ class ListUserGroupsIntegrationTest extends RootIntegrationTest {
         return UUID.randomUUID().toString().replaceAll('-', "")
     }
 
-    def String getCloudAuthUserManageRole() {
-        return config.getString("cloudAuth.userManagedRole");
-    }
-
-    def String getCloudAuthDefaultUserRole() {
-        return config.getString("cloudAuth.userRole");
-    }
-
     public class JSONReaderForRoles extends JSONReaderForArrayEntity<RoleList> {
         @Override
         public RoleList readFrom(Class<RoleList> type,

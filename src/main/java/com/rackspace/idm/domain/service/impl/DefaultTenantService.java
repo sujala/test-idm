@@ -282,10 +282,6 @@ public class DefaultTenantService implements TenantService {
         logger.info("Deleted Global Role {}", role);
     }
 
-    private int getDefaultRsWeight() {
-        return config.getInt("default.rsWeight");
-    }
-
     @Override
     public void deleteRbacRolesForUser(EndUser user) {
         logger.info("Deleting Product Roles for {}", user);
@@ -294,7 +290,7 @@ public class DefaultTenantService implements TenantService {
         for (TenantRole role : tenantRoles) {
             if (role != null) {
                 ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
-                if (cRole != null && cRole.getRsWeight() == getDefaultRsWeight()) {
+                if (cRole != null && cRole.getRsWeight() == RoleLevelEnum.LEVEL_1000.getLevelAsInt()) {
                     deleteTenantRoleForUser(user, role);
                 }
             }

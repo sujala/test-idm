@@ -495,13 +495,17 @@ class Cloud20Utils {
             it.name = testUtils.getRandomUUID("role")
             it.propagate = true
             it.serviceId = service == null ? null : service.id
+            it.administratorRole="identity:admin"
             it
         }
         createRole(role)
     }
 
-    def createRole(service=null, roleName=testUtils.getRandomUUID("role")) {
-        def role = factory.createRole(roleName)
+    def createRole(service=null, roleName=testUtils.getRandomUUID("role"), String administratorRole = "identity:user-manage") {
+        def role = factory.createRole(roleName).with {
+            it.administratorRole = administratorRole
+            it
+        }
         if(service != null){
             role.serviceId = service.id
         }
@@ -517,6 +521,14 @@ class Cloud20Utils {
     def deleteRole(role) {
         def response = methods.deleteRole(getServiceAdminToken(), role.id)
         assert (response.status == SC_NO_CONTENT)
+    }
+
+    def deleteRoleQuietly(role) {
+        try {
+            methods.deleteRole(getServiceAdminToken(), role.id)
+        } catch (Exception ex) {
+            //eat. deleting quietly
+        }
     }
 
     def createTenant(name=testUtils.getRandomUUID("tenant"), enabled=true, displayName=testUtils.getRandomUUID("tenant")) {

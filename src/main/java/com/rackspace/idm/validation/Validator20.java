@@ -4,25 +4,27 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum;
+import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.service.DomainService;
-import com.rackspace.idm.domain.service.FederatedIdentityService;
-import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.entity.Constants;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.impl.EmailValidator;
 import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
+import org.openstack.docs.identity.api.v2.Role;
 import org.openstack.docs.identity.api.v2.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,12 +53,24 @@ public class Validator20 {
     public static final String EXPIRE_IN_ELEMENT_LESS_ONE_IMPERSONATION_ERROR_MSG = "Expire in element cannot be less than 1.";
     public static final String EXPIRE_IN_ELEMENT_EXCEEDS_MAX_IMPERSONATION_ERROR_MSG = "Expire in element cannot be more than %s";
     public static final String TOKEN_CLOUD_AUTH_EXPIRATION_SECONDS_PROP_NAME = "token.cloudAuthExpirationSeconds";
+    public static final String ROLE_NAME_INVALID = "Invalid role name. Naming convention is <product prefix>:<role name> " +
+            "where both the prefix and role name must start with an alphanumeric character.  The rest of the prefix and " +
+            "role name can be comprised of alphanumeric characters, '-', and '_'.";
+    public static final Pattern ROLE_NAME_REGEX = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9_\\-]*(?:\\:[a-zA-Z0-9][a-zA-Z0-9_\\-]*)?$");
+
     private EmailValidator emailValidator = new EmailValidator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    public static final int MAX_LENGTH_64 = 64;
+    public static final int MAX_LENGTH_255 = 255;
+
     public static final int PASSWORD_MIN_LENGTH = 8;
-    public static final int MAX_GROUP_NAME = 64;
+    public static final int MAX_GROUP_NAME = MAX_LENGTH_64;
     public static final int MAX_GROUP_DESC = 1000;
     public static final int MAX_USERNAME = 100;
+
+    public static final int MAX_ROLE_NAME = MAX_LENGTH_255;
+    public static final int MAX_ROLE_DESC = MAX_LENGTH_255;
 
     public static final int MAX_IDENTITY_PROVIDER_ISSUER = Constants.MAX_255;
     public static final int MAX_IDENTITY_PROVIDER_AUTH_URL = Constants.MAX_255;
@@ -80,6 +94,9 @@ public class Validator20 {
 
     @Autowired
     Configuration config;
+
+    @Autowired
+    private RoleService roleService;
 
     public void validateUsername(String username) {
         if (StringUtils.isBlank(username)) {
@@ -363,6 +380,47 @@ public class Validator20 {
         }
     }
 
+    public void validateRoleForCreation(Role role) {
+        if (role == null) {
+            throwBadRequestForMissingAttrWithErrorCode("role");
+        }
+
+        String proposedName = role.getName();
+        validateStringNotNullWithMaxLength("name", proposedName, MAX_ROLE_NAME);
+
+        //validate name constraints
+        if (!ROLE_NAME_REGEX.matcher(proposedName).matches()) {
+            //invalid role name
+            throw new BadRequestException(ROLE_NAME_INVALID, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+        }
+
+        //TODO: Validate name matches character set and other reqs
+        validateStringMaxLength("description", role.getDescription(), MAX_ROLE_DESC);
+
+        String adminRoleName = role.getAdministratorRole();
+        IdentityUserTypeEnum administratorUserTypeRole = IdentityUserTypeEnum.fromRoleName(adminRoleName);
+
+        if (administratorUserTypeRole != null) {
+            //role must be user-admin, identity:admin, or service-admin
+            if (!(administratorUserTypeRole == IdentityUserTypeEnum.USER_MANAGER
+                    || administratorUserTypeRole == IdentityUserTypeEnum.IDENTITY_ADMIN
+                    || administratorUserTypeRole == IdentityUserTypeEnum.SERVICE_ADMIN)) {
+                throw new BadRequestException("Invalid administrator role");
+            }
+        }
+
+        ClientRole dirClientRole = roleService.getRoleByName(role.getName());
+        if(dirClientRole != null) {
+            String errMsg = "Role with name " + role.getName() + " already exists";
+            throw new BadRequestException(errMsg);
+        }
+
+        //roles can only be propagating if roleAdministrator is identity:admin or identity:service-admin
+        if (BooleanUtils.isTrue(role.isPropagate()) && administratorUserTypeRole == IdentityUserTypeEnum.USER_MANAGER) {
+            throw new BadRequestException("User Managers are not allowed to manage propagating roles");
+        }
+    }
+
     private X509Certificate convertPublicCertificateToX509(PublicCertificate publicCertificate) throws CertificateException {
         byte[] certBytes = Base64.decodeBase64(publicCertificate.getPemEncoded());
         return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(certBytes));
@@ -370,13 +428,13 @@ public class Validator20 {
 
     private void throwBadRequestForMissingAttr(String attrName) {
         String errMsg = String.format(REQUIRED_ATTR_MESSAGE, attrName);
-        logger.warn(errMsg);
+        logger.debug(errMsg);
         throw new BadRequestException(errMsg);
     }
 
     private void throwBadRequestForMissingAttrWithErrorCode(String attrName) {
         String errMsg = String.format(REQUIRED_ATTR_MESSAGE, attrName);
-        logger.warn(errMsg);
+        logger.debug(errMsg);
         throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE);
     }
 
@@ -406,10 +464,8 @@ public class Validator20 {
     }
 
     private void validateStringMaxLength(String propertyName, String value, int maxLength) {
-        if (value != null) {
-            if (value.length() > maxLength) {
-                throw new BadRequestException(generateLengthExceededMsg(propertyName, maxLength), ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED);
-            }
+        if (StringUtils.isNotBlank(value) && value.length() > maxLength) {
+           throw new BadRequestException(generateLengthExceededMsg(propertyName, maxLength), ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED);
         }
     }
 

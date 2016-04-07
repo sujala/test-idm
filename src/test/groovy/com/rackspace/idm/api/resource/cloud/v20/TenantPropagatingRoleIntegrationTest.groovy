@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.util.JSONReaderForRoles
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
@@ -527,6 +528,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def role = v2Factory.createRole(propagate).with {
             it.name = roleName
             it.propagate = propagate
+            it.administratorRole = IdentityUserTypeEnum.IDENTITY_ADMIN.roleName
             it.otherAttributes = null
             return it
         }
