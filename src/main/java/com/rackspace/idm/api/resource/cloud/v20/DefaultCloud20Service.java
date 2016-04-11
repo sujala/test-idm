@@ -3930,6 +3930,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
+            ScopeAccess callerToken = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            if (StringUtils.isNotBlank(callerToken.getScope())) {
+                throw new ForbiddenException("Cannot use scoped tokens to validate tokens.");
+            }
+
             final ScopeAccess sa = checkAndGetToken(tokenId); //throws not found exception if token can't not be decrypted
 
             //no scoped tokens can currently be validated through the v2 validate call

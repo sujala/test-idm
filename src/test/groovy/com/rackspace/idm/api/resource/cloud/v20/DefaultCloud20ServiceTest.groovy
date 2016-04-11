@@ -78,6 +78,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.objFactories = objFactories
 
         mockRequestContextHolder(service)
+        service.requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(_) >> new ScopeAccess()
     }
 
     def setup() {
