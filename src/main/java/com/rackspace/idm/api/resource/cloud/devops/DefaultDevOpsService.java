@@ -142,7 +142,7 @@ public class DefaultDevOpsService implements DevOpsService {
                     @Override
                     public boolean evaluate(IdmProperty object) {
                         if (object.getType() != IdmPropertyType.RELOADABLE) return false;
-                        if (StringUtils.isNotBlank(name) && !StringUtils.contains(object.getName(), name)) return false;
+                        if (StringUtils.isNotBlank(name) && !StringUtils.containsIgnoreCase(object.getName(), name)) return false;
                         if (CollectionUtils.isNotEmpty(versions) && !versions.contains(object.getVersionAdded())) return false;
 
                         return true;
@@ -153,7 +153,7 @@ public class DefaultDevOpsService implements DevOpsService {
                     @Override
                     public boolean evaluate(IdmProperty object) {
                         if (object.getType() != IdmPropertyType.STATIC) return false;
-                        if (StringUtils.isNotBlank(name) && !StringUtils.contains(object.getName(), name)) return false;
+                        if (StringUtils.isNotBlank(name) && !StringUtils.containsIgnoreCase(object.getName(), name)) return false;
                         if (CollectionUtils.isNotEmpty(versions) && !versions.contains(object.getVersionAdded())) return false;
 
                         return true;

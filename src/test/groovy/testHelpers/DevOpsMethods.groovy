@@ -3,6 +3,7 @@ package testHelpers
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
+import org.apache.commons.lang.StringUtils
 import org.springframework.stereotype.Component
 import spock.lang.Shared
 
@@ -30,9 +31,13 @@ class DevOpsMethods {
         resource.path("devops/keystore/meta").accept(APPLICATION_JSON).type(APPLICATION_JSON).header("X-Auth-Token", token).put(ClientResponse)
     }
 
-    def getIdmProps(token) {
+    def getIdmProps(token, String name = null) {
         initOnUse()
-        resource.path("devops/props").accept(APPLICATION_JSON).type(APPLICATION_JSON).header("X-Auth-Token", token).get(ClientResponse)
+        WebResource wr = resource.path("devops/props")
+        if (StringUtils.isNotBlank(name)) {
+            wr = wr.queryParam("name", name)
+        }
+        wr.accept(APPLICATION_JSON).type(APPLICATION_JSON).header("X-Auth-Token", token).get(ClientResponse)
     }
 
     def getFederationDeletion(token, request = "{\"federatedUsersDeletionRequest\":{\"max\": 1000}}", accept = APPLICATION_JSON, type = APPLICATION_JSON) {

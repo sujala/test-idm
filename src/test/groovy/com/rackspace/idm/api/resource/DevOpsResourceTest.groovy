@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.service.IdentityUserService
 import org.apache.http.HttpStatus
@@ -19,6 +20,9 @@ class DevOpsResourceTest extends RootIntegrationTest {
 
     @Autowired
     MobilePhoneDao mobilePhoneDao
+
+    @Autowired
+    IdentityConfig identityConfig
 
     enum ConfigSection {
         configRoot("configPath"), staticConfig("idm.properties"), reloadableConfig("idm.reloadable.properties")
@@ -78,6 +82,36 @@ class DevOpsResourceTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUserQuietly(ida)
+    }
+
+    def "test case-insensitive search for Identity properties"() {
+        when: "static config is case-insensitive"
+        def response = devops.getIdmProps(utils.getServiceAdminToken(), IdentityConfig.EMAIL_HOST.toUpperCase())
+        def stringResp = response.getEntity(String)
+        def data = new ObjectMapper().readValue(stringResp, Map)
+        def staticConfig = data.get(ConfigSection.staticConfig.toString())
+        def reloadableConfig = data.get(ConfigSection.reloadableConfig.toString())
+
+        then:
+        staticConfig.size() == 1
+        reloadableConfig.size() == 0
+        assertFormat(staticConfig)
+        assertFormat(reloadableConfig)
+        assertTypeAndValueOfPropValue(staticConfig.find{it.name == IdentityConfig.EMAIL_HOST}.get(PropKey.value.toString()), identityConfig.getStaticConfig().getEmailHost())
+
+        when: "reloadable config is case-insensitive"
+        response = devops.getIdmProps(utils.getServiceAdminToken(), IdentityConfig.AE_NODE_NAME_FOR_SIGNOFF_PROP.toUpperCase())
+        stringResp = response.getEntity(String)
+        data = new ObjectMapper().readValue(stringResp, Map)
+        staticConfig = data.get(ConfigSection.staticConfig.toString())
+        reloadableConfig = data.get(ConfigSection.reloadableConfig.toString())
+
+        then:
+        staticConfig.size() == 0
+        reloadableConfig.size() == 1
+        assertFormat(staticConfig)
+        assertFormat(reloadableConfig)
+        assertTypeAndValueOfPropValue(reloadableConfig.find{it.name == IdentityConfig.AE_NODE_NAME_FOR_SIGNOFF_PROP}.get(PropKey.value.toString()), identityConfig.getReloadableConfig().getAENodeNameForSignoff())
     }
 
 
