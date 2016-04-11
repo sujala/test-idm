@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.sql.dao.GroupRepository;
 import com.rackspace.idm.domain.sql.entity.SqlFederatedUserRax;
 import com.rackspace.idm.domain.sql.mapper.impl.FederatedUserRaxMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.GroupMapper;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +74,11 @@ public class SqlFederatedUserRepository implements FederatedUserDao {
 
         final FederatedUser federatedUser = federatedUserRaxMapper.fromSQL(sqlFederatedUserRax, user);
         applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, federatedUser.getUniqueId(), federatedUserRaxMapper.toLDIF(federatedUser)));
+    }
+
+    @Override
+    public void updateUserAsIs(FederatedUser user) {
+        throw new NotImplementedException("Not Implemented");
     }
 
     @Override

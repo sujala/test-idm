@@ -274,24 +274,29 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def username2 = testUtils.getRandomUUID("userAdminForSaml2")
+        def username3 = testUtils.getRandomUUID("userAdminForSaml3")
         def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
         def email2 = "fedIntTest2@invalid.rackspace.com"
+        def email3 = "fedIntTest3@invalid.rackspace.com"
 
         //specify assertion with no roles
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expDays, domainId, null, email2);
+        def samlAssertion3 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username3, expDays, domainId, null, email3);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def authResponse, authResponse2, fedUser, fedUser2, samlResponse, samlResponse2, deletionResponse, deletionEntity
+        def authResponse, authResponse2, authResponse3, fedUser, fedUser2, fedUser3, samlResponse, samlResponse2, samlResponse3, deletionResponse, deletionEntity
 
         when: "Auth first (creates the users)"
         samlResponse = cloud20.samlAuthenticate(samlAssertion)
         samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
+        samlResponse3 = cloud20.samlAuthenticate(samlAssertion3)
 
         then: "Response contains appropriate content"
         samlResponse.status == HttpServletResponse.SC_OK
         samlResponse2.status == HttpServletResponse.SC_OK
+        samlResponse3.status == HttpServletResponse.SC_OK
 
         when: "force change the users expiration"
         authResponse = samlResponse.getEntity(AuthenticateResponse).value
@@ -306,11 +311,18 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         federatedUserRepository.updateUser(fedUser2)
         fedUser2 = federatedUserRepository.getUserById(authResponse2.user.id)
 
+        authResponse3 = samlResponse3.getEntity(AuthenticateResponse).value
+        fedUser3 = federatedUserRepository.getUserById(authResponse3.user.id)
+        fedUser3.expiredTimestamp = null
+        federatedUserRepository.updateUserAsIs(fedUser3)
+        fedUser3 = federatedUserRepository.getUserById(authResponse3.user.id)
+
         then: "date should not match previous tokens"
         fedUser.expiredTimestamp != null
         fedUser.expiredTimestamp.before(authResponse.token.expires.toGregorianCalendar().getTime())
         fedUser2.expiredTimestamp != null
         fedUser2.expiredTimestamp.before(authResponse2.token.expires.toGregorianCalendar().getTime())
+        fedUser3.expiredTimestamp == null
 
         when: "request user deletion"
         deletionResponse = devops.getFederationDeletion(utils.getServiceAdminToken())
@@ -324,10 +336,12 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         deleteFederatedUserQuietly(username)
         deleteFederatedUserQuietly(username2)
+        deleteFederatedUserQuietly(username3)
         utils.deleteUsers(users)
 
         where:
         max | expected
+        3   | 3
         2   | 2
         1   | 1
     }

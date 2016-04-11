@@ -32,6 +32,11 @@ public abstract class LdapFederatedGenericRepository<T extends FederatedBaseUser
     }
 
     @Override
+    public void updateUserAsIs(T user) {
+        updateObjectAsIs(user);
+    }
+
+    @Override
     public T getUserByToken(BaseUserToken token) {
         return getUserById(token.getIssuedToUserId());
     }
