@@ -58,7 +58,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
 
     def setupSpec() {
         //start up wiser and set the properties BEFORE making first cloud20 call (which starts grizzly)
-        wiserWrapper = WiserWrapper.startWiser(10025)
+        wiserWrapper = WiserWrapper.startWiser(11025)
         staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
         staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
 
@@ -282,7 +282,7 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
 
         then: "the token can not be validated as self token"
-        cloud20.validateToken(tokenStr, tokenStr).status == SC_NOT_FOUND
+        cloud20.validateToken(tokenStr, tokenStr).status == SC_FORBIDDEN
 
         and: "the token can not be validated as the target token"
         cloud20.validateToken(identityAdminToken, tokenStr).status == SC_NOT_FOUND
