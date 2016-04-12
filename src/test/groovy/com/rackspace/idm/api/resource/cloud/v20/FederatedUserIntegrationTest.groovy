@@ -1389,14 +1389,12 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdmin2, users2
         (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
-        sleep(1000)
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, 5000, domainId, null, email);
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
         def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
         def samlToken = authResponse.token.id
