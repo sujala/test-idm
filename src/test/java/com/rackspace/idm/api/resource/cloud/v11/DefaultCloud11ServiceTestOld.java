@@ -135,7 +135,6 @@ public class DefaultCloud11ServiceTestOld {
         com.rackspace.idm.domain.entity.User user1 = new com.rackspace.idm.domain.entity.User();
         user1.setId("userId");
         when(userConverterCloudV11.fromUser(user)).thenReturn(user1);
-        when(config.getBoolean("nast.xmlrpc.enabled")).thenReturn(true);
         when(config.getString("serviceName.cloudServers")).thenReturn("cloudServers");
         when(config.getString("serviceName.cloudFiles")).thenReturn("cloudFiles");
         application.setOpenStackType("foo");
