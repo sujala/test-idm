@@ -11,6 +11,7 @@ import com.unboundid.util.StaticUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -106,7 +107,10 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
 
     private Filter searchFilterExpired() {
         return new LdapSearchBuilder()
-                .addLessOrEqualAttribute(ATTR_FEDERATED_USER_EXPIRED_TIMESTAMP,  StaticUtils.encodeGeneralizedTime(new Date()))
+                .addOrAttributes(Arrays.asList(
+                        Filter.createLessOrEqualFilter(ATTR_FEDERATED_USER_EXPIRED_TIMESTAMP,  StaticUtils.encodeGeneralizedTime(new Date())),
+                        Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_FEDERATED_USER_EXPIRED_TIMESTAMP))
+                ))
                 .addEqualAttribute(ATTR_OBJECT_CLASS, getLdapEntityClass()).build();
     }
 

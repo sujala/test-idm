@@ -49,4 +49,12 @@ public interface FederatedBaseUserDao<T extends BaseUser> {
      * @param user
      */
     void updateUser(T user);
+
+    /**
+     * Update the user. This will update ALL values that have changed from the previous value. Not all
+     * FederatedDaos may support this.
+     *
+     * @param user
+     */
+    void updateUserAsIs(T user);
 }
