@@ -185,8 +185,6 @@ public class IdentityConfig {
     public static final String FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP = "feature.mfa.return.immediate.error.when.account.locked";
     public static final boolean FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_DEFAULT_VALUE = true;
 
-    public static final String FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP = "feature.differentiate.otp.in.www.auth.header.enabled";
-    public static final boolean FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_DEFAULT_VALUE = true;
     public static final String AE_NODE_NAME_FOR_SIGNOFF_PROP = "ae.node.name.for.signoff"; //no default
 
     public static final String FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP = "feature.ae.sync.signoff.enabled";
@@ -389,7 +387,6 @@ public class IdentityConfig {
         defaults.put(AE_TOKEN_STORAGE_TYPE_PROP, AE_TOKEN_STORAGE_TYPE_DEFAULT_VALUE);
         defaults.put(SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP, FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_DEFAULT_VALUE);
-        defaults.put(FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_DEFAULT_VALUE);
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
         defaults.put(FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP, FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_DEFAULT);
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
@@ -1154,11 +1151,6 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP, description = "Whether to throw an error on initial password auth when a user is locally locked. If true, a 401 will be returned; otherwise a sessionId will be returned.", versionAdded = "2.16.0")
         public boolean getThrowErrorOnInitialAuthWhenLocked() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP);
-        }
-
-        @IdmProp(key = FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, description = "Whether or not to differentiate OTP factor from SMS factor in WWW-Authenticate header on initial login", versionAdded = "2.16.0")
-        public boolean differentiateOTPInWWWAuthHeader() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP);
         }
 
         @IdmProp(key = AE_NODE_NAME_FOR_SIGNOFF_PROP, description = "The unique name for this API Node. This is used for both signoff on the AE keys loaded into cache by this node, and to record the node making changes", versionAdded = "2.16.0")
