@@ -1,12 +1,11 @@
 package com.rackspace.idm.api.resource.cloud
 
 import com.google.gson.GsonBuilder
-import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
+import com.sun.jersey.core.util.Base64
 import org.apache.commons.configuration.Configuration
-import org.apache.ws.commons.util.Base64
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -405,7 +404,7 @@ class DefaultAnalyticsLoggerTest extends Specification {
     private String createBasicAuth(String username, String password) {
         String usernamePassword = (new StringBuffer(username).append(":").append(password)).toString();
         byte[] base = usernamePassword.getBytes();
-        return (new StringBuffer("Basic ").append(Base64.encode(base))).toString();
+        return (new StringBuffer("Basic ").append(new String(Base64.encode(base), "utf-8"))).toString();
     }
 
     def gsonBuilder() {

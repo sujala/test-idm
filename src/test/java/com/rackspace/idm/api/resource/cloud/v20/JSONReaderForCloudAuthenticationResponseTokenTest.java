@@ -23,7 +23,8 @@ public class JSONReaderForCloudAuthenticationResponseTokenTest {
     public void getAuthenticationResponseTokenFromJSONString_withCloudAuthResponse_returnsCorrectToken() throws Exception {
         Token token = JSONReaderForCloudAuthenticationResponseToken.getAuthenticationResponseTokenFromJSONString(testString);
         assertThat("token id", token.getId(), equalTo("1319b190-9527-46e7-9c0e-4fc3ca032e57"));
-        assertThat("token expires", token.getExpires().toString(), equalTo("2012-08-03T14:56:25.000-05:00"));
+        token.getExpires().setTimezone(0);
+        assertThat("token expires", token.getExpires().toString(), equalTo("2012-08-03T19:56:25.000Z"));
     }
 
     @Test

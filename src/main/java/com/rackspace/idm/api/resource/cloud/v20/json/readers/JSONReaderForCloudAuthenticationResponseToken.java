@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.AuthenticatedBy;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.exception.IdmException;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -44,8 +45,12 @@ public class JSONReaderForCloudAuthenticationResponseToken {
                     }
 
                     if(tokenExpiration != null){
-                        token.setExpires(DatatypeFactory.newInstance().newXMLGregorianCalendar(
-                                            new DateTime(tokenExpiration.toString()).toGregorianCalendar()));
+                        DateTime expDateTime = new DateTime(tokenExpiration.toString());
+                        //we have to manually set the timezone here after parsing the exp string
+                        //this is because DateTime will correctly parse the timezone but the resulting object
+                        //will have the timezone of the default timezone of the JVM
+                        expDateTime = expDateTime.toDateTime(DateTimeZone.UTC);
+                        token.setExpires(DatatypeFactory.newInstance().newXMLGregorianCalendar(expDateTime.toGregorianCalendar()));
                     }
 
                     if (tokenAuthenticatedByArray != null) {
