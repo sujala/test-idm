@@ -160,8 +160,6 @@ public class IdentityConfig {
     public static final String IMPLICIT_ROLE_PROP_PREFIX = "implicit.roles";
     public static final String IMPLICIT_ROLE_OVERRIDE_PROP_REG = IMPLICIT_ROLE_PROP_PREFIX + ".%s";
 
-    public static final String FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP = "feature.multifactor.locking.enabled";
-    public static final boolean FEATURE_MULTIFACTOR_LOCKING_ENABLED_DEFAULT = false;
     public static final String FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP = "feature.multifactor.locking.login.failure.ttl.in.seconds";
     public static final int FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_DEFAULT = 1800;
     public static final String FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP = "feature.multifactor.locking.attempts.maximumNumber";
@@ -376,7 +374,6 @@ public class IdentityConfig {
         defaults.put(BYPASS_DEFAULT_NUMBER, BigInteger.ONE);
         defaults.put(BYPASS_MAXIMUM_NUMBER, BigInteger.TEN);
         defaults.put(FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS, FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS_DEFAULT);
-        defaults.put(FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP, FEATURE_MULTIFACTOR_LOCKING_ENABLED_DEFAULT);
         defaults.put(FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_DEFAULT);
         defaults.put(FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_DEFAULT);
         defaults.put(LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_PROP, LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_DEFAULT);
@@ -1111,11 +1108,6 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS, versionAdded = "2.14.0", description = "enable local multifactor bypass codes")
         public boolean getFeatureLocalMultifactorBypassEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS);
-        }
-
-        @IdmProp(key = FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP, versionAdded = "2.15.0", description = "enable local multifactor locking")
-        public boolean getFeatureMultifactorLockingEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP);
         }
 
         @IdmProp(key = FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, versionAdded = "2.15.0", description = "How long, in seconds, after which the last invalid MFA logic attempt will be ignored. This affects when an account will be automatically unlocked when using local locking")

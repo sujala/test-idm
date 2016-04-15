@@ -335,12 +335,11 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         MediaType.APPLICATION_XML_TYPE | _
     }
 
-    def "locked mfa user should have mfa state updated to 'ACTIVE' when unlock mfa call is made"() {
+    def "locked mfa user should have dynamic mfa state changed to 'ACTIVE' when unlock mfa call is made"() {
         given:
         reloadableConfiguration.reset()
         def maxAttempts = 3
         def autoUnlockSeconds = 1800
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ENABLED_PROP, localLocking)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, maxAttempts)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, autoUnlockSeconds)
 
@@ -357,21 +356,10 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         then: "the user's mfa state is 'ACTIVE'"
         userById.multiFactorState == MultiFactorStateEnum.ACTIVE
 
-        when: "loading the user from the directory"
-        def directoryUser = userDao.getUserById(user.id)
-
-        then: "the user's mfa state is 'ACTIVE'"
-        directoryUser.multiFactorState == BasicMultiFactorService.MULTI_FACTOR_STATE_ACTIVE
-
         when: "user mfa state is updated to 'LOCKED'"
-        directoryUser = userDao.getUserById(user.id)
-        if (localLocking) {
-            directoryUser.setMultiFactorFailedAttemptCount(maxAttempts)
-            directoryUser.setMultiFactorLastFailedTimestamp(new Date())
-        } else {
-            //directly update state to show it's unset
-            directoryUser.multiFactorState = BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED
-        }
+        def directoryUser = userDao.getUserById(user.id)
+        directoryUser.setMultiFactorFailedAttemptCount(maxAttempts)
+        directoryUser.setMultiFactorLastFailedTimestamp(new Date())
         userDao.updateUserAsIs(directoryUser)
         userById = utils.getUserById(user.id)
 
@@ -389,15 +377,15 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
-
-        where:
-        localLocking | _
-        true | _
-        false | _
     }
 
     def "user-admin and user-manage should be able to mfa unlock user's in their domain"() {
         given:
+        def maxAttempts = 3
+        def autoUnlockSeconds = 1800
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, maxAttempts)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, autoUnlockSeconds)
+
         def domainId = utils.createDomain()
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
 
@@ -425,6 +413,8 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
 
         when: "user mfa state is updated to 'LOCKED'"
         directoryUser = userDao.getUserById(defaultUser.id)
+        directoryUser.setMultiFactorFailedAttemptCount(maxAttempts)
+        directoryUser.setMultiFactorLastFailedTimestamp(new Date())
         directoryUser.multiFactorState = BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED
         userDao.updateUserAsIs(directoryUser)
         userById = utils.getUserById(defaultUser.id)
@@ -442,6 +432,8 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
 
         when: "user mfa stat is updated back to 'LOCKED'"
         directoryUser = userDao.getUserById(defaultUser.id)
+        directoryUser.setMultiFactorFailedAttemptCount(maxAttempts)
+        directoryUser.setMultiFactorLastFailedTimestamp(new Date())
         directoryUser.multiFactorState = BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED
         userDao.updateUserAsIs(directoryUser)
         userById = utils.getUserById(defaultUser.id)
