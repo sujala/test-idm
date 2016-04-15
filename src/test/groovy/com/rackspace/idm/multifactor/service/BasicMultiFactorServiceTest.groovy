@@ -241,42 +241,6 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         result.size() == 0
     }
 
-    @Unroll("unlock mfa - mfa unlock service called #unlockUserCallCount time(s) when user mfa status is #mfaEnabled; mfaSettingsUnlock: #mfaSettingsUnlock")
-    def "unlock mfa - mfa service called to unlock when user has external id regardless of mfa enabled setting"() {
-        def providerUserId = "extUserId"
-        def user = entityFactory.createUser().with {
-            it.multiFactorMobilePhoneRsId = "id"
-            it.externalMultiFactorUserId = providerUserId
-            it.multifactorEnabled = userMfaEnabledState
-            it.multiFactorMobilePhoneRsId = "id"
-            it.multiFactorDeviceVerified = true
-            it
-        }
-        //set enable to whatever it is on user so a state change is not triggered.
-        def mfaSettings = v2Factory.createMultiFactorSettings(null, mfaSettingsUnlock)
-
-        when:
-        service.updateMultiFactorSettings(user.id, mfaSettings)
-
-        then: "mfa sdk called to unlock user with providerUserId"
-        userService.checkAndGetUserById(user.id) >> user
-        unlockUserCallCount * multiFactorUserManagement.unlockUser(providerUserId)
-
-        where:
-        userMfaEnabledState | mfaSettingsUnlock | unlockUserCallCount
-        true                | true              | 1
-        true                | true              | 1
-        true                | true              | 1
-
-        false                | true              | 1
-        false                | true              | 1
-        false                | true              | 1
-
-        null                | true              | 1
-        null                | true              | 1
-        null                | true              | 1
-    }
-
     def "when enable mfa appropriate tokens are expired on user"() {
         def user = entityFactory.createUser().with {
             it.multiFactorMobilePhoneRsId = "id"
@@ -803,7 +767,7 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
     }
 
     @Unroll
-    def "test auto-unlock on Duo when local locking is: #localLocking"() {
+    def "test auto-unlock on Duo when local locking is enabled"() {
         given:
         def userId = "123"
         def phoneId = "234"
@@ -827,7 +791,6 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         }
         mobilePhoneDao.getById(phoneId) >> phone
 
-        identityConfig.getReloadableConfig().getFeatureMultifactorLockingEnabled() >> localLocking
         mockBypassDeviceDao.getAllBypassDevices(user) >> []
 
         def responses = [
@@ -851,9 +814,8 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         response == responses[responseIndex]
 
         where:
-        localLocking | duoCalls | unlockCalls | responseIndex
-        true         | 2        | 1           | 1
-        false        | 1        | 0           | 0
+        duoCalls | unlockCalls | responseIndex
+        2        | 1           | 1
     }
 
 }
