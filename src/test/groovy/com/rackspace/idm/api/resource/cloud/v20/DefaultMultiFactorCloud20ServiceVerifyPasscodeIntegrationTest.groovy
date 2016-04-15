@@ -556,20 +556,11 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         directoryUser.multiFactorLastFailedTimestamp != null
 
         when: "perform first factor auth again"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP, true)
         def oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
 
         then: "get 401 without sessionId"
         oneFactorResponse.status == 401
         oneFactorResponse.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE) == null
-
-        when: "perform first factor auth again"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MFA_RETURN_IMMEDIATE_ERROR_WHEN_ACCOUNT_LOCKED_ENABLED_PROP, false)
-        oneFactorResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
-
-        then: "get 401 with sessionId"
-        oneFactorResponse.status == 401
-        oneFactorResponse.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE) != null
 
         cleanup:
         reloadableConfiguration.reset()
