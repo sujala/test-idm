@@ -116,7 +116,6 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     @Unroll
     def "Initial auth returns 401 with encrypted sessionId and factor in in www-authenticate header: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, true)
         setUpAndEnableMultiFactor(factorType == FactorTypeEnum.SMS)
 
         when:
@@ -147,27 +146,6 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.OTP
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.SMS
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE | FactorTypeEnum.SMS
-    }
-
-    def "Initial auth www-authenticate header maintains backwards compatibility when feature flag is disabled"() {
-        setup:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_DIFFERENTIATE_OTP_IN_WWW_AUTH_HEADER_PROP, false)
-        setUpAndEnableMultiFactor(false) //set up for OTP
-
-        when:
-        def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD, requestContentMediaType, acceptMediaType)
-        String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
-
-        then: "sessionId can be decrypted"
-        response.getStatus() == HttpStatus.SC_UNAUTHORIZED
-        utils.extractFactorFromWwwAuthenticateHeader(wwwHeader) == AuthenticatedByMethodEnum.PASSCODE.getValue()
-
-        cleanup:
-        reloadableConfiguration.reset()
-
-        where:
-        requestContentMediaType | acceptMediaType
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
     }
 
     @Unroll("Successful passcode authentication: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")

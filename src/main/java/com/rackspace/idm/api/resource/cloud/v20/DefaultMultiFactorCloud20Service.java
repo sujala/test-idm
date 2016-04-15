@@ -346,9 +346,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         String encodedSessionId = sessionIdReaderWriter.writeEncoded(sessionId);
 
         //now send the passcode (if SMS used)
-        String secondFactor = AuthenticatedByMethodEnum.PASSCODE.getValue();
+        String secondFactor;
         if (multiFactorService.isMultiFactorTypePhone(user)) {
             LOG.debug(String.format("Sending SMS challenge to user '%s'", user.getId()));
+            secondFactor = AuthenticatedByMethodEnum.PASSCODE.getValue();
             try {
                 multiFactorService.sendSmsPasscode(user.getId());
             } catch (DuoLockedOutException lockedOutException) {
@@ -359,9 +360,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             }
         } else {
             LOG.debug(String.format("User '%s' requires OTP MFA", user.getId()));
-            if (identityConfig.getReloadableConfig().differentiateOTPInWWWAuthHeader()) {
-                secondFactor = AuthenticatedByMethodEnum.OTPPASSCODE.getValue();
-            }
+            secondFactor = AuthenticatedByMethodEnum.OTPPASSCODE.getValue();
         }
 
         /*
