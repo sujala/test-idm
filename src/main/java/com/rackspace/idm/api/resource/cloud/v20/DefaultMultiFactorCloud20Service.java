@@ -328,7 +328,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     @Override
     public Response.ResponseBuilder performMultiFactorChallenge(User user, List<String> alreadyAuthenticatedBy) {
-        if (identityConfig.getReloadableConfig().getThrowErrorOnInitialAuthWhenLocked() && multiFactorService.isUserLocalLocked(user)) {
+        if (multiFactorService.isUserLocalLocked(user)) {
             throw new NotAuthorizedException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
         }
 
