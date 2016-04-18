@@ -18,14 +18,15 @@ buildscript {
     }
 }
 
-def group = 'com.rackspace'
+
 def featureVersion = '3.4.0'
 def buildVersion = System.currentTimeMillis()
 def gitRevision = "git rev-parse HEAD".execute().text.trim()
 
-def version = "$featureVersion-$buildVersion"
+project.group = 'com.rackspace'
+project.version = "$featureVersion" + "-" + "$buildVersion"
 
-def description = """idm"""
+project.description = """idm"""
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
@@ -502,6 +503,3 @@ sourceSets {
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.8'
-}
