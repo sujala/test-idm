@@ -1169,23 +1169,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    /**
-     * Throws NotAuthenticatedException if the authRequest specifies a tenant and the user does not have access
-     * to that tenant. Access, in this case, is defined by both having a role on that tenant AND that the tenant is
-     * enabled.
-     *
-     * @param authenticationRequest
-     * @param user
-     */
-    private void restrictTenantInAuthentication(AuthenticationRequest authenticationRequest, EndUser user) {
-        if (!StringUtils.isBlank(authenticationRequest.getTenantName()) && !tenantService.hasTenantAccess(user, authenticationRequest.getTenantName())) {
-            throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, authenticationRequest.getTenantName());
-        }
-        if (!StringUtils.isBlank(authenticationRequest.getTenantId()) && !tenantService.hasTenantAccess(user, authenticationRequest.getTenantId())) {
-            throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, authenticationRequest.getTenantId());
-        }
-    }
-
     @Override
     public ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponseBytes) {
         try {
@@ -1442,14 +1425,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, EndUser user, AuthenticationRequest authenticationRequest) {
-        if (!identityConfig.getReloadableConfig().getTerminatorSupportedForAuthWithToken()) {
-            /*
-            if feature is disabled, then this call must be made prior to any other checks (which was done pre-terminator)
-            for auth w/ token calls
-             */
-            restrictTenantInAuthentication(authenticationRequest, user);
-        }
-
         /*
         common case will be a successful auth, so get the service catalog assuming the user has access to specified tenant.
         The user would have successfully authenticated prior to reaching this point

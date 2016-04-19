@@ -1752,13 +1752,13 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             return it
         }
 
+        scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
+
         when:
         def response1 = service.authenticate(headers, authRequestWithTenantName).build()
         def response2 = service.authenticate(headers, authRequestWithTenantId).build()
 
         then:
-        1 * tenantService.hasTenantAccess(_, "tenantName") >> false
-        1 * tenantService.hasTenantAccess(_, "tenantId") >> false
         response1.status == 401
         response2.status == 401
     }
@@ -1860,7 +1860,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         given:
         mockAuthConverterCloudV20(service)
         mockTokenConverter(service)
-        reloadableConfig.getTerminatorSupportedForAuthWithToken() >> true
 
         def userScopeAccess = createUserScopeAccess()
         def user = entityFactory.createUser()
