@@ -437,7 +437,6 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         setup:
         staticConfig.getBypassDefaultNumber() >> BigInteger.ONE
         staticConfig.getBypassMaximumNumber() >> BigInteger.TEN
-        reloadableConfig.getFeatureLocalMultifactorBypassEnabled() >> true
         reloadableConfig.getLocalBypassCodeIterationCount() >> 1000
         def setOfCodes = ["1", "2"] as Set
 
@@ -468,68 +467,6 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
 
         codes.size() == 2
         codes == setOfCodes.toList()
-
-        where:
-        type | _
-        FactorTypeEnum.OTP | _
-        FactorTypeEnum.SMS | _
-    }
-
-    /**
-     * Duo bypass codes are unavailable for OTP, but can be used for SMS
-     * @return
-     */
-    @Unroll
-    def "test duo bypass code logic for type=#type"() {
-        setup:
-        staticConfig.getBypassDefaultNumber() >> BigInteger.ONE
-        staticConfig.getBypassMaximumNumber() >> BigInteger.TEN
-        reloadableConfig.getFeatureLocalMultifactorBypassEnabled() >> false
-
-        def arrayOfCodes = ["1", "2"]
-        List<String> fakeCodes = arrayOfCodes.asList()
-
-        User user = entityFactory.createUser().with {
-            it.multifactorEnabled = true
-            it.multiFactorType = type.value()
-            return it
-        }
-        OTPDevice otpDevice = new OTPDevice().with {
-            it.id = "1"
-            it.multiFactorDeviceVerified = true
-            return it
-        }
-
-        userService.checkAndGetUserById(user.id) >> user
-        mockOTPDeviceDao.getOTPDeviceByParentAndId(user, otpDevice.id) >> otpDevice
-        mockOTPDeviceDao.countVerifiedOTPDevicesByParent(user) >> 1
-
-        when: "try to add bypass codes"
-        def exception = null
-        def codes = null
-        try {
-            codes = service.getSelfServiceBypassCodes(user, 120, 2)
-        } catch (Exception e) {
-            exception = e
-        }
-
-        then:
-        0 * mockBypassDeviceDao.deleteAllBypassDevices(user)
-        0 * mockBypassDeviceDao.addBypassDevice(user, _)
-        interaction {
-            def userManagementInteractionCount = 0
-            if (type == FactorTypeEnum.SMS) {
-                userManagementInteractionCount = 1
-            }
-            userManagementInteractionCount * multiFactorUserManagement.getBypassCodes(_, _, _) >> arrayOfCodes
-        }
-
-        if (type == FactorTypeEnum.SMS) {
-            assert codes == fakeCodes
-            assert codes.size() == 2
-        } else if (type == FactorTypeEnum.OTP) {
-            assert exception instanceof BadRequestException
-        }
 
         where:
         type | _
