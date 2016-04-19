@@ -166,10 +166,6 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/federation/saml/auth")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     public Response federationSamlAuthenticationFormEncoded(@Context HttpHeaders httpHeaders, @FormParam("SAMLResponse") String samlResponse)  {
-        if(!identityConfig.getReloadableConfig().isFederationAuthenticationSupported()){
-            throw new NotFoundException("Service Not Found");
-        }
-
         Response response;
         if (org.apache.commons.lang.StringUtils.isBlank(samlResponse)) {
             response = exceptionHandler.exceptionResponse(new BadRequestException("Missing SAMLResponse field")).build();
@@ -198,10 +194,6 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/federation/saml/auth")
     @Consumes({MediaType.APPLICATION_XML})
     public Response federationSamlAuthenticationRawXML(@Context HttpHeaders httpHeaders, String samlResponse)  {
-        if(!identityConfig.getReloadableConfig().isFederationAuthenticationSupported()){
-            throw new NotFoundException("Service Not Found");
-        }
-
         Response response;
         if (org.apache.commons.lang.StringUtils.isBlank(samlResponse)) {
             response = exceptionHandler.exceptionResponse(new BadRequestException("Must provide SAMLResponse XML in body")).build();
