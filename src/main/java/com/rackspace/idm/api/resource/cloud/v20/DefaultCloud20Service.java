@@ -3920,23 +3920,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             final boolean sameToken = StringUtils.equals(authToken, tokenId);
 
             // User can validate his own token (B-80571:TK-165775).
+            ScopeAccess callerToken = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             if (!(selfValidate && sameToken)) {
                 //TODO: This token can be a Racker, Service or User of Proper Level
-                if (identityConfig.getReloadableConfig().isValidateTokenGlobalRoleEnabled()) {
-                    requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken); //verify token exists and valid
-                    authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.VALIDATE_TOKEN_GLOBAL.getRoleName());
-                } else {
-                    authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-                }
+                authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.VALIDATE_TOKEN_GLOBAL.getRoleName());
             }
 
-            ScopeAccess callerToken = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             if (StringUtils.isNotBlank(callerToken.getScope())) {
                 throw new ForbiddenException("Cannot use scoped tokens to validate tokens.");
             }
 
             final ScopeAccess sa = checkAndGetToken(tokenId); //throws not found exception if token can't not be decrypted
-
             //no scoped tokens can currently be validated through the v2 validate call
             if (sa.isAccessTokenExpired(new DateTime()) || StringUtils.isNotBlank(sa.getScope())) {
                 throw new NotFoundException("Token not found.");
