@@ -2967,7 +2967,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException(GlobalConstants.ERROR_MSG_DELETE_ENABLED_DOMAIN);
             }
 
-            Iterable<User> users = domainService.getUsersByDomainId(domainId);
+            Iterable<EndUser> users = identityUserService.getEndUsersByDomainId(domainId);
             if (users.iterator().hasNext()) {
                 throw new BadRequestException(GlobalConstants.ERROR_MSG_DELETE_DOMAIN_WITH_USERS);
             }
