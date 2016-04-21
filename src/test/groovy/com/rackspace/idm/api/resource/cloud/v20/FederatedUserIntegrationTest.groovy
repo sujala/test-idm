@@ -1410,6 +1410,34 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users2)
     }
 
+    def "domain cannot be deleted if a federated user exists in the domain"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def email = "fedIntTest@invalid.rackspace.com"
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, 5000, domainId, null, email);
+        cloud20.samlAuthenticate(samlAssertion)
+
+        when: "delete the user-admin and try to delete the domain"
+        utils.deleteUser(userAdmin)
+        def response = cloud20.deleteDomain(utils.getServiceAdminToken(), domainId)
+
+        then: "bad request"
+        response.status == 400
+
+        when: "logout the federated user (deletes the federated user) and then try again"
+        utils.logoutFederatedUser(username)
+        response = cloud20.deleteDomain(utils.getServiceAdminToken(), domainId)
+
+        then: "success"
+        response.status == 204
+
+        cleanup:
+        utils.deleteUsersQuietly(users)
+    }
+
     def deleteFederatedUserQuietly(username) {
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)

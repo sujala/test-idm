@@ -16,14 +16,16 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
-import com.rackspace.idm.util.JSONReaderForRoles
 import com.rackspace.idm.util.OTPHelper
+import com.rackspace.idm.util.SamlUnmarshaller
 import com.sun.jersey.api.client.ClientResponse
 import com.unboundid.util.Base32
 import groovy.json.JsonSlurper
+import org.apache.commons.codec.binary.StringUtils
 import org.apache.http.HttpStatus
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.apache.http.client.utils.URLEncodedUtils
+import org.opensaml.saml2.core.LogoutResponse
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
@@ -39,6 +41,7 @@ import spock.lang.Shared
 import testHelpers.Cloud20Methods
 import testHelpers.V1Factory
 import testHelpers.V2Factory
+import testHelpers.saml.SamlFactory
 
 import javax.annotation.PostConstruct
 import javax.ws.rs.core.MediaType
@@ -64,6 +67,9 @@ class Cloud20Utils {
 
     @Autowired
     OTPHelper otpHelper
+
+    @Autowired
+    SamlUnmarshaller samlUnmarshaller
 
     @Shared
     def serviceAdminToken
@@ -352,18 +358,12 @@ class Cloud20Utils {
         return [defaultUser, [defaultUser, userAdmin, identityAdmin].asList()]
     }
 
-    def createFederatedUser(domainId) {
-        def identityAdmin = createIdentityAdmin()
-
-        def identityAdminToken = getToken(identityAdmin.username)
-
-        def userAdmin = createUser(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
-
-        def userAdminToken  = getToken(userAdmin.username)
-
-        def defaultUser = createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), domainId)
-
-        return [defaultUser, [defaultUser, userAdmin, identityAdmin].asList()]
+    def logoutFederatedUser(username) {
+        def logoutRequest = new SamlFactory().generateLogoutRequestEncoded(DEFAULT_IDP_URI, username)
+        def response = methods.federatedLogout(logoutRequest);
+        assert response.status == HttpStatus.SC_OK
+        LogoutResponse logoutResponse = samlUnmarshaller.unmarshallLogoutRespone(StringUtils.getBytesUtf8(response.getEntity(String.class)))
+        return logoutResponse
     }
 
 
