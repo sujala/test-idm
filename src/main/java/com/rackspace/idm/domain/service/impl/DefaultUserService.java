@@ -133,7 +133,7 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void addUser(User user) {
+    public void addUserv11(User user) {
         logger.info("Adding User: {}", user);
 
         validator.validateUser(user);
@@ -170,8 +170,6 @@ public class DefaultUserService implements UserService {
         logger.info("Adding User: {}", user);
 
         validator.validateUser(user);
-
-        provisionMossoAndNast = provisionMossoAndNast && isNumeric(user.getDomainId());
 
         createDomainIfItDoesNotExist(user.getDomainId());
         if (isCreateUserInOneCall) {
@@ -298,62 +296,6 @@ public class DefaultUserService implements UserService {
         }
     }
 
-    /**
-     * sets default parameters on the user e.g domain id, roles, etc based on
-     * characteristics of the given user.
-     *
-     * @param user
-     * @param userForDefaults
-     * @param isCreateUserInOneCall
-     */
-    @Override
-    public void setUserDefaultsBasedOnUser(User user, User userForDefaults, boolean isCreateUserInOneCall) {
-        //
-        // Based on the caller making the call, apply the following rules to the user being created.
-        // We will revisit these rules later on, so they are more simplified. Don't want to change for now.
-        // Also logic to determine the type of caller should be defined, when a user could have multiple conflicting roles.
-        // e.g if you have identity:admin and identity:user-admin, you automatically are an identity:admin.
-        // This doesn't happen today because there is business logic to ensure these cases don't happen.
-        // We want to eventually remove that. A user should be able to be assigned any role.
-        //
-        final boolean hasServiceAdminRole = authorizationService.hasServiceAdminRole(userForDefaults);
-        if (hasServiceAdminRole) {
-            if (StringUtils.isBlank(user.getDomainId())) {
-                user.setDomainId(getDomainUUID());
-            }
-            attachRoleToUser(roleService.getIdentityAdminRole(), user);
-        }
-
-        boolean hasIdentityAdminRole = authorizationService.hasIdentityAdminRole(userForDefaults);
-        if (hasIdentityAdminRole) {
-            configureNewUserAdmin(user, isCreateUserInOneCall);
-        }
-
-        //only identity admins and service admins can set the user's token format, but only if ae tokens are enabled (decryptable)
-        if (!(hasIdentityAdminRole || hasServiceAdminRole) || !identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
-            user.setTokenFormat(null);
-        }
-
-        if (authorizationService.hasUserAdminRole(userForDefaults) || authorizationService.hasUserManageRole(userForDefaults)) {
-            if (StringUtils.isBlank(userForDefaults.getDomainId())) {
-                throw new BadRequestException("Default user cannot be created if caller does not have a domain");
-            }
-
-            String callerDefaultRegion = getRegionBasedOnCaller(userForDefaults);
-            List<TenantRole> callerRoles = getAssignableCallerRoles(userForDefaults);
-            Iterable<Group> callerGroups = getGroupsForUser(userForDefaults.getId());
-
-            user.setMossoId(userForDefaults.getMossoId());
-            user.setNastId(userForDefaults.getNastId());
-            user.setDomainId(userForDefaults.getDomainId());
-            user.setRegion(callerDefaultRegion);
-
-            attachRoleToUser(roleService.getDefaultRole(), user);
-            attachRolesToUser(callerRoles, user);
-            attachGroupsToUser(callerGroups, user);
-        }
-    }
-
     private boolean isNumeric(String domainId) {
         try {
             Integer.parseInt(domainId);
@@ -361,22 +303,6 @@ public class DefaultUserService implements UserService {
             return false;
         }
         return true;
-    }
-
-    private String getDomainUUID() {
-        return UUID.randomUUID().toString().replace("-", "");
-    }
-
-    /**
-     * sets default parameters on the user e.g domain id, roles, etc based on
-     * characteristics of the given user.
-     *
-     * @param user
-     * @param userForDefaults
-     */
-    @Override
-    public void setUserDefaultsBasedOnUser(User user, User userForDefaults) {
-        setUserDefaultsBasedOnUser(user, userForDefaults, true);
     }
 
     //TODO: consider removing this method. Just here so code doesn't break
@@ -996,10 +922,11 @@ public class DefaultUserService implements UserService {
     }
 
     /**
-     * The boolean in the method signature to control logic is messing by necessary for now
+     * The boolean in the method signature to control logic is messy but necessary for now
      * in order to share common code between create user one-call logic and upgrade user logic.
      */
-    private void configureNewUserAdmin(User user, boolean assignMossoAndNastDefaultRoles) {
+    @Override
+    public void configureNewUserAdmin(User user, boolean assignMossoAndNastDefaultRoles) {
         if (StringUtils.isBlank(user.getDomainId())) {
             throw new BadRequestException("User-admin cannot be created without a domain");
         }
@@ -1515,14 +1442,6 @@ public class DefaultUserService implements UserService {
         return config.getString(NAST_TENANT_PREFIX_PROP_NAME, NAST_TENANT_PREFIX_DEFAULT);
     }
 
-    private void attachRolesToUser(List<TenantRole> tenantRoles, User user) {
-        for (TenantRole tenantRole : tenantRoles) {
-            if (!user.getRoles().contains(tenantRole)) {
-                user.getRoles().add(tenantRole);
-            }
-        }
-    }
-
     private void attachRoleToUser(ClientRole role, User user) {
         attachRoleToUser(role, user, null);
     }
@@ -1537,67 +1456,6 @@ public class DefaultUserService implements UserService {
         if (!user.getRoles().contains(tenantRole)) {
             user.getRoles().add(tenantRole);
         }
-    }
-
-    private void attachGroupsToUser(Iterable<Group> groups, User user) {
-        for (Group group : groups) {
-            user.getRsGroupId().add(group.getGroupId());
-        }
-    }
-
-    /**
-     * Gets all the roles from the caller that can be assignable to users that the caller creates.
-     * This is temporary. Roles that a user gets by default should not be based on the caller. It
-     * will be based on some sort of domain template.
-     */
-    private List<TenantRole> getAssignableCallerRoles(User caller) {
-        List<TenantRole> assignableTenantRoles = new ArrayList<TenantRole> ();
-
-        List<TenantRole> tenantRoles = tenantService.getTenantRolesForUser(caller);
-        for (TenantRole tenantRole : tenantRoles) {
-            if (isExcludedAssignableCallerRole(tenantRole) && tenantRole.getPropagate()) {
-                TenantRole assignableTenantRole = new TenantRole();
-                assignableTenantRole.setClientId(tenantRole.getClientId());
-                assignableTenantRole.setDescription(tenantRole.getDescription());
-                assignableTenantRole.setName(tenantRole.getName());
-                assignableTenantRole.setRoleRsId(tenantRole.getRoleRsId());
-                assignableTenantRole.setTenantIds(tenantRole.getTenantIds());
-                assignableTenantRoles.add(assignableTenantRole);
-            }
-        }
-
-        return assignableTenantRoles;
-    }
-
-    /**
-     * [1] When an identity:user-admin or identity:user-manage creates a new user, that new user should get the same
-     * RAX-AUTH:defaultRegion that the identity:user-admin of that domain has regardless of the user that creating user.
-     * [2] if there is more than 1 user-admin of an account (which should be very, very unlikely) then the default
-     * region is the same as the user that created them.
-     * [3] If for some completely unknown reason, there is no user-admin for the domain (which technically is an invalid
-     * state), set the default region to the same as the user that created them.
-     * @param caller
-     * @return
-     */
-    private String getRegionBasedOnCaller(User caller) {
-        List<User> admins = this.domainService.getDomainAdmins(caller.getDomainId());
-        if (admins.size() == 1) {
-            return admins.get(0).getRegion();
-        } else if (getDomainRestrictedToOneUserAdmin() && admins.size() > 1) {
-            throw new IllegalStateException("Can't retrieve single user-admin for domain " + caller.getDomainId());
-        }
-        else {
-            //either 0 admins or > 1 admins
-            return caller.getRegion();
-        }
-    }
-
-    private boolean isExcludedAssignableCallerRole(TenantRole tenantRole) {
-       return !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.adminRole"))
-               && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.serviceAdminRole"))
-               && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userAdminRole"))
-               && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userRole"))
-               && !tenantRole.getName().equalsIgnoreCase(config.getString("cloudAuth.userManagedRole"));
     }
 
     int getMaxNumberOfUsersInDomain() {

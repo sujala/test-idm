@@ -127,12 +127,6 @@ public class Validator20 {
         }
     }
 
-    public void validateUserForCreate(User user) {
-        validateUsername(user.getUsername());
-        validateUsernameForUpdateOrCreate(user.getUsername());
-        validateEmail(user.getEmail());
-    }
-
     public void validatePasswordCredentials(PasswordCredentialsBase passwordCredentials) {
         String username = passwordCredentials.getUsername();
         String password = passwordCredentials.getPassword();

@@ -32,4 +32,9 @@ public interface DomainService {
     String createNewDomain(String domainId);
     Iterable<Domain> getDomainsForTenants(List<Tenant> tenants);
     void expireAllTokenInDomain(String domainId);
+
+    /**
+     * Generates a UUID for a new domain
+     */
+    String getDomainUUID();
 }

@@ -19,6 +19,7 @@ import org.springframework.util.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -294,6 +295,11 @@ public class DefaultDomainService implements DomainService {
     @Override
     public List<User> getEnabledDomainAdmins(String domainId) {
         return filterUserAdmins(userService.getUsersWithDomainAndEnabledFlag(domainId, true));
+    }
+
+    @Override
+    public String getDomainUUID() {
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
     private List<User> filterSuperAdmins(Iterable<User> userList) {

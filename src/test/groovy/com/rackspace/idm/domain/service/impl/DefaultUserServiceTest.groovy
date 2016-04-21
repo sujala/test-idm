@@ -239,7 +239,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         cryptHelper.generateSalt() >> salt
 
         when:
-        service.addUser(user)
+        service.addUserv11(user)
 
         then:
         1 * mockValidator.validateUser(user)
@@ -283,7 +283,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         cryptHelper.generateSalt() >> salt
 
         when:
-        service.addUser(user)
+        service.addUserv11(user)
 
         then:
         1 * mockValidator.validateUser(user)
@@ -308,7 +308,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         user.password = "mypassword"
 
         when:
-        service.addUser(user)
+        service.addUserv11(user)
 
         then:
         userDao.addUser(_) >> { arg1 ->
@@ -321,7 +321,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         minimumMocksForAddUser()
 
         when:
-        service.addUser(createUser("region", true, "id", "email@email.com", 1, "nast"))
+        service.addUserv11(createUser("region", true, "id", "email@email.com", 1, "nast"))
 
         then:
         userDao.addUser(_) >> { arg1 ->
@@ -336,7 +336,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         user.apiKey = "apiKey"
 
         when:
-        service.addUser(user)
+        service.addUserv11(user)
 
         then:
         userDao.addUser(_) >> { arg1 ->
@@ -353,7 +353,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         config.getBoolean("generate.apiKey.userForCreate") >> false
 
         when:
-        service.addUser(user)
+        service.addUserv11(user)
 
         then:
         userDao.addUser(_) >> { arg1 ->
@@ -370,7 +370,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         user.domainId = "domainId"
 
         when:
-        service.addUser(user)
+        service.addUserv11(user)
 
         then:
         thrown(BadRequestException)
@@ -385,7 +385,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         domainService.getDomain(domainId) >> entityFactory.createDomain()
 
         when:
-        service.addUser(user)
+        service.addUserv11(user)
 
         then:
         0 * domainService.createNewDomain(domainId)
@@ -401,267 +401,11 @@ class DefaultUserServiceTest extends RootServiceTest {
         domainService.getDomainAdmins(domainId) >> [new User()].asList()
 
         when:
-        service.addUser(user)
+        service.addUserv11(user)
 
         then:
         0 * tenantService.addTenant(_)
         0 * domainService.addTenantToDomain(_,_)
-    }
-
-    def "Token format is reset if the caller is not service or identity admin"() {
-        given:
-        def caller = Mock(User)
-        def user = Mock(User)
-        authorizationService.hasIdentityAdminRole(caller) >> false
-        authorizationService.hasServiceAdminRole(caller) >> false
-
-        when:
-        service.setUserDefaultsBasedOnUser(user, caller, false)
-
-        then:
-        1 * user.setTokenFormat(null)
-    }
-
-    def "Token format is not reset if the caller is service admin"() {
-        given:
-        def caller = Mock(User)
-        def user = Mock(User)
-        authorizationService.hasServiceAdminRole(caller) >> true
-        reloadableConfig.getFeatureAETokensDecrypt() >> true
-
-        mockRoleService.getIdentityAdminRole() >> new ClientRole()
-        user.getRoles() >> new ArrayList<TenantRole>()
-        reloadableConfig.getFeatureAETokensDecrypt() >> true
-
-        when:
-        service.setUserDefaultsBasedOnUser(user, caller, false)
-
-        then:
-        0 * user.setTokenFormat(null)
-    }
-
-    def "Token format is not reset if the caller is identity admin"() {
-        given:
-        def caller = Mock(User)
-        def user = Mock(User)
-        authorizationService.hasIdentityAdminRole(caller) >> true
-        reloadableConfig.getFeatureAETokensDecrypt() >> true
-
-        user.getDomainId() >> "123"
-        mockRoleService.getUserAdminRole() >> new ClientRole()
-        user.getRoles() >> new ArrayList<TenantRole>()
-        reloadableConfig.getFeatureAETokensDecrypt() >> true
-
-        when:
-        service.setUserDefaultsBasedOnUser(user, caller, false)
-
-        then:
-        0 * user.setTokenFormat(null)
-    }
-
-    def "Set user defaults based on caller if caller is identity:service-admin (super-admin)"() {
-        given:
-        def caller = this.createUser(null, true, domainId)
-        def user = this.createUser(null, true, null)
-        mockRoles()
-
-        authorizationService.hasServiceAdminRole(_) >> true
-
-        when:
-        service.setUserDefaultsBasedOnUser(user, caller)
-
-        then:
-        assert(user.roles.size() == 1)
-        for (tenantRole in user.roles) {
-            assert(tenantRole.name == "identity:admin")
-        }
-    }
-
-    def "Set user defaults based on caller if caller is identity:admin"() {
-        given:
-        def caller = this.createUser(null, true, null)
-        def user = this.createUser(null, true, domainId)
-        mockRoles()
-
-        authorizationService.hasIdentityAdminRole(_) >> true
-        domainService.getDomainAdmins(domainId) >> [].asList()
-
-        when:
-        service.setUserDefaultsBasedOnUser(user, caller, false)
-
-        then:
-        def userAdminRoleFound = false
-        def computeDefaultRoleFound = false
-        def objectStoreRoleFound = false
-
-        assert(user.roles.size() == 1)
-        for (tenantRole in user.roles) {
-            if (tenantRole.name == "identity:user-admin") {
-                userAdminRoleFound = true
-            }
-
-            if (tenantRole.name == "compute:default") {
-                computeDefaultRoleFound = true
-            }
-
-            if (tenantRole.name == "object-store:default") {
-                objectStoreRoleFound = true
-            }
-        }
-
-        userAdminRoleFound == true
-        computeDefaultRoleFound == false
-        objectStoreRoleFound == false
-    }
-
-    def "Set user defaults based on caller if caller is identity:admin and is create user in one call"() {
-        given:
-        def domainId = "1234"
-        def caller = this.createUser(null, true, null)
-        def user = this.createUser(null, true, domainId)
-        mockRoles()
-
-        authorizationService.hasIdentityAdminRole(_) >> true
-        domainService.getDomainAdmins(domainId) >> [].asList()
-
-        when:
-        service.setUserDefaultsBasedOnUser(user, caller)
-
-        then:
-        def userAdminRoleFound = false
-        def computeDefaultRoleFound = false
-        def objectStoreRoleFound = false
-
-        assert(user.roles.size() == 3)
-        for (tenantRole in user.roles) {
-            if (tenantRole.name == "identity:user-admin") {
-                userAdminRoleFound = true
-            }
-
-            if (tenantRole.name == "compute:default") {
-                computeDefaultRoleFound = true
-            }
-
-            if (tenantRole.name == "object-store:default") {
-                objectStoreRoleFound = true
-            }
-        }
-
-        userAdminRoleFound == true
-        computeDefaultRoleFound == true
-        objectStoreRoleFound == true
-    }
-
-    def "Set user defaults based on caller throws exception if caller is identity:admin and user does not have domainId"() {
-        given:
-        def caller = this.createUser(null, true, null)
-        def user = this.createUser(null, true, null)
-        mockRoles()
-
-        authorizationService.hasIdentityAdminRole(_) >> true
-
-        when:
-        service.setUserDefaultsBasedOnUser(user, caller)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "Set user defaults based on caller throws exception if caller is identity:admin and user domain already has an identity:user-admin"() {
-        given:
-        config.getBoolean("domain.restricted.to.one.user.admin.enabled", false) >> true
-        def caller = this.createUser(null, true, null)
-        def user = this.createUser(null, true, domainId)
-        mockRoles()
-
-        authorizationService.hasIdentityAdminRole(_) >> true
-        domainService.getDomainAdmins(domainId) >> [user].asList()
-
-        when:
-        service.setUserDefaultsBasedOnUser(user, caller)
-
-        then:
-        thrown(BadRequestException)
-    }
-
-    def "Set user defaults based on caller if caller is identity:user-admin or identity:user-manage"() {
-        given:
-        def caller = this.createUser("DFW", true, "callerId", "user@email.com", 12345, "nastId")
-        caller.domainId = domainId
-        def user = this.createUser(null, true, null)
-        mockRoles()
-
-        def tenantRole1 = entityFactory.createTenantRole("identity:user-admin", false)
-        def tenantRole2 = entityFactory.createTenantRole("observer", true)
-        def tenantRole3 = entityFactory.createTenantRole("anotherOne", false)
-        def group = entityFactory.createGroup("thegroup", "thegroup", "the good group")
-
-        authorizationService.hasUserAdminRole(_) >> userAdminRole
-        authorizationService.hasUserManageRole(_) >> userManageRole
-        domainService.getDomainAdmins(domainId) >> [ caller ].asList()
-        tenantService.getTenantRolesForUser(caller) >> [ tenantRole1, tenantRole2, tenantRole3 ].asList()
-        userDao.getGroupsForUser(caller.id) >> [ group ].asList()
-        mockRoleService.getRoleByName("observer") >> entityFactory.createClientRole("observer")
-
-        when:
-        service.setUserDefaultsBasedOnUser(user, caller)
-
-        then:
-        def defaultRoleFound = false
-        def observerRoleFound = false
-
-        assert(user.roles.size() == 2)
-        for (tenantRole in user.roles) {
-            if (tenantRole.name == "observer") {
-                observerRoleFound = true
-            }
-
-            if (tenantRole.name == "identity:default") {
-                defaultRoleFound = true
-            }
-        }
-
-        assert(user.rsGroupId.size() == 1)
-        for (groupId in user.rsGroupId) {
-            assert(groupId == "thegroup")
-        }
-
-        assert(defaultRoleFound == true)
-        assert(observerRoleFound == true)
-
-        user.mossoId == 12345
-        user.nastId == "nastId"
-        user.domainId == "domainId"
-        user.region == "DFW"
-
-        where:
-        userAdminRole       | userManageRole    | result
-        true                | false             | true
-        false               | true              | true
-    }
-
-    def "Set user defaults based on caller throws Exception if caller is identity:user-admin or identity:user-manage and caller does not have a domain"() {
-        given:
-        def caller = this.createUser("DFW", true, "callerId", "user@email.com", 12345, "nastId").with {
-            it.domainId = null
-            return it
-        }
-        def user = this.createUser(null, true, null)
-        mockRoles()
-
-        authorizationService.hasUserAdminRole(_) >> userAdminRole
-        authorizationService.hasUserManageRole(_) >> userManageRole
-
-        when:
-        service.setUserDefaultsBasedOnUser(user, caller)
-
-        then:
-        thrown(BadRequestException)
-
-        where:
-        userAdminRole       | userManageRole    | result
-        true                | false             | true
-        false               | true              | true
     }
 
     def "checkAndGetUserByName gets user"() {

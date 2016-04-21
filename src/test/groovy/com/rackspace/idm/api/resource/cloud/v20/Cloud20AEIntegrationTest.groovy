@@ -2,10 +2,12 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
@@ -128,6 +130,72 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         ae_enabled  | _
         false       | _
         true        | _
+    }
+
+    def "create user - setting token format only allowed to be set by service or identity admins"() {
+        given:
+        utils.resetServiceAdminToken()
+
+        when: "service admin create user"
+        User userForCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("identityAdmin"), "display", "email@email.com", true, null, null, "Password1")
+        userForCreate.setTokenFormat(TokenFormatEnum.UUID)
+        def response = cloud20.createUser(utils.getServiceAdminToken(), userForCreate)
+        assert response.status == SC_CREATED
+        def userResponse = response.getEntity(User).value
+        def identityAdmin = cloud20.getUserByName(utils.getServiceAdminToken(), userResponse.username).getEntity(User).value
+
+        then:
+        identityAdmin.tokenFormat == TokenFormatEnum.UUID
+
+        when: "identity admin create user-admin"
+        def domainId = utils.createDomain()
+        userForCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, Constants.DEFAULT_PASSWORD)
+        userForCreate.setTokenFormat(TokenFormatEnum.UUID)
+        response = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
+        assert response.status == SC_CREATED
+        userResponse = response.getEntity(User).value
+        def userAdmin = cloud20.getUserByName(utils.getIdentityAdminToken(), userResponse.username).getEntity(User).value
+
+        then: "token format set"
+        userAdmin.tokenFormat == TokenFormatEnum.UUID
+
+        when: "identity admin create user-manage"
+        userForCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userManage"), "display", "email@email.com", true, null, userAdmin.domainId, Constants.DEFAULT_PASSWORD)
+        userForCreate.roles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.USER_MANAGER.getRoleName())].asList())
+        userForCreate.setTokenFormat(TokenFormatEnum.UUID)
+        response = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
+        assert response.status == SC_CREATED
+        userResponse = response.getEntity(User).value
+        def userManage = cloud20.getUserByName(utils.getIdentityAdminToken(), userResponse.username).getEntity(User).value
+
+        then: "token format set"
+        userManage.tokenFormat == TokenFormatEnum.UUID
+
+        when: "identity admin create default user"
+        userForCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userManage"), "display", "email@email.com", true, null, userAdmin.domainId, Constants.DEFAULT_PASSWORD)
+        userForCreate.roles = v2Factory.createRoleList([v2Factory.createRole(IdentityUserTypeEnum.DEFAULT_USER.getRoleName())].asList())
+        userForCreate.setTokenFormat(TokenFormatEnum.UUID)
+        response = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
+        assert response.status == SC_CREATED
+        userResponse = response.getEntity(User).value
+        def defaultUser = cloud20.getUserByName(utils.getIdentityAdminToken(), userResponse.username).getEntity(User).value
+
+        then: "token format set"
+        defaultUser.tokenFormat == TokenFormatEnum.UUID
+
+        when: "user admin create default user"
+        userForCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userManage"), "display", "email@email.com", true, null, userAdmin.domainId, Constants.DEFAULT_PASSWORD)
+        userForCreate.setTokenFormat(TokenFormatEnum.UUID)
+        response = cloud20.createUser(utils.getToken(userAdmin.username), userForCreate)
+        assert response.status == SC_CREATED
+        userResponse = response.getEntity(User).value
+        def defaultUser2 = cloud20.getUserByName(utils.getIdentityAdminToken(), userResponse.username).getEntity(User).value
+
+        then: "token format NOT set"
+        defaultUser2.tokenFormat == null
+
+        cleanup:
+        utils.deleteUsers(defaultUser2, defaultUser, userManage, userAdmin, identityAdmin)
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)

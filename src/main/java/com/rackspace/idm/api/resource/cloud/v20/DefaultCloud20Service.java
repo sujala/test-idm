@@ -5,7 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
-import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.ErrorCodes;
@@ -16,6 +15,8 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
+import com.rackspace.idm.domain.service.impl.*;
+import com.rackspace.idm.validation.Cloud20CreateUserValidator;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
@@ -30,7 +31,6 @@ import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlUnmarshaller;
@@ -38,13 +38,13 @@ import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
 import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.LDAPSearchException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
@@ -64,7 +64,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import org.w3c.dom.Element;
 
 import javax.servlet.http.HttpServletResponse;
@@ -255,6 +254,18 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private SamlUnmarshaller samlUnmarshaller;
+
+    @Autowired
+    private Cloud20CreateUserValidator createUserValidator;
+
+    @Autowired
+    private CreateIdentityAdminService createIdentityAdminService;
+
+    @Autowired
+    private CreateUserAdminService createUserAdminService;
+
+    @Autowired
+    private CreateSubUserService createSubUserService;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -568,84 +579,31 @@ public class DefaultCloud20Service implements Cloud20Service {
                 usr.setContactId(null);
             }
 
-            boolean isCreateUserInOneCall = false;
-            boolean provisionMossoAndNast = false;
-            User userForDefaults = null;
-            if (config.getBoolean("createUser.fullPayload.enabled") == false) {
-                if (usr.getSecretQA() != null ||
-                        usr.getGroups() != null ||
-                        usr.getRoles() != null) {
-                    throw new BadRequestException("Can't specify secret qa, groups, or roles in body");
-                }
+            User userForDefaults = createUserValidator.validateCreateUserAndGetUserForDefaults(usr, caller);
+
+            User user;
+            IdentityUserTypeEnum userForDefaultsUserType = authorizationService.getIdentityTypeRoleAsEnum(userForDefaults);
+            if (IdentityUserTypeEnum.SERVICE_ADMIN == userForDefaultsUserType) {
+                user = createIdentityAdminService.setDefaultsAndCreateUser(usr, userForDefaults);
+            } else if (IdentityUserTypeEnum.IDENTITY_ADMIN == userForDefaultsUserType) {
+                user = createUserAdminService.setDefaultsAndCreateUser(usr, userForDefaults);
+            } else if (IdentityUserTypeEnum.USER_ADMIN == userForDefaultsUserType ||
+                        IdentityUserTypeEnum.USER_MANAGER == userForDefaultsUserType) {
+                user = createSubUserService.setDefaultsAndCreateUser(usr, userForDefaults);
             } else {
-                if (usr.getSecretQA() != null ||
-                        usr.getGroups() != null ||
-                        usr.getRoles() != null) {
-                    // Only identity:admin should be able to create a user including roles, groups and secret QA.
-                    if (!authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(identityConfig.getStaticConfig().getIdentityIdentityAdminRoleName()))) {
-                        throw new ForbiddenException(NOT_AUTHORIZED);
-                    }
-
-                    // If secretQA, groups or roles are populated then it's a createUserInOneCall call
-                    isCreateUserInOneCall = true;
-                    provisionMossoAndNast = true;
-
-                    if (usr.getRoles() != null) {
-                        for (Role role : usr.getRoles().getRole()) {
-                            if (StringUtils.isBlank(role.getName())) {
-                                throw new BadRequestException("Role name cannot be blank");
-                            }
-                            if (roleService.isIdentityAccessRole(role.getName())) {
-                                //identity admins can create sub-users and the user defaults are set based on the user admin for the domain
-                                if(identityConfig.getReloadableConfig().getIdentityAdminCreateSubuserEnabled() &&
-                                        (identityConfig.getStaticConfig().getIdentityDefaultUserRoleName().equalsIgnoreCase(role.getName()) ||
-                                        identityConfig.getStaticConfig().getIdentityUserManagerRoleName().equalsIgnoreCase(role.getName()))) {
-                                    Domain domain = domainService.getDomain(usr.getDomainId());
-                                    if(domain == null || !domain.getEnabled()) {
-                                        throw new BadRequestException(INVALID_DOMAIN_ERROR);
-                                    }
-                                    List<User> domainAdmins = domainService.getEnabledDomainAdmins(usr.getDomainId());
-                                    userForDefaults = CollectionUtils.isEmpty(domainAdmins) ? null : domainAdmins.get(0);
-                                    provisionMossoAndNast = false;
-                                    if(usr.getGroups() != null) {
-                                        throw new BadRequestException(CANNOT_SPECIFY_GROUPS_ERROR);
-                                    }
-                                    if(userForDefaults == null) {
-                                        throw new BadRequestException(INVALID_DOMAIN_ERROR);
-                                    }
-                                } else {
-                                    throw new ForbiddenException(NOT_AUTHORIZED);
-                                }
-                            }
-                        }
-                    }
-                }
-                if (usr.getSecretQA() != null) {
-                    if (StringUtils.isBlank(usr.getSecretQA().getQuestion())) {
-                        throw new BadRequestException("Missing secret question");
-                    }
-                    if (StringUtils.isBlank(usr.getSecretQA().getAnswer())) {
-                        throw new BadRequestException("Missing secret answer");
-                    }
-                }
+                //cannot create user with the given user for default
+                throw new NotAuthorizedException("Cannot create user with data provided.");
             }
-
-            userForDefaults = userForDefaults == null ? caller : userForDefaults;
-            boolean passwordProvided = !StringUtils.isBlank(usr.getPassword());
-            User user = this.userConverterCloudV20.fromUser(usr);
-            precedenceValidator.verifyCallerRolePrecedenceForAssignment(caller, getRoleNames(user.getRoles()));
-            userService.setUserDefaultsBasedOnUser(user, userForDefaults, isCreateUserInOneCall);
-            userService.addUserV20(user, isCreateUserInOneCall, provisionMossoAndNast);
 
             org.openstack.docs.identity.api.v2.User userTO = this.userConverterCloudV20.toUser(user, true);
 
-            if(passwordProvided) {
+            if (!StringUtils.isBlank(usr.getPassword())) {
                 userTO.setPassword(null);
             }
 
             // This hack is to ensure backward compatibility for the original create user call that did
             // not return roles or groups
-            if (!isCreateUserInOneCall) {
+            if (!CreateUserUtil.isCreateUserOneCall(usr)) {
                 userTO.setRoles(null);
                 userTO.setGroups(null);
             }

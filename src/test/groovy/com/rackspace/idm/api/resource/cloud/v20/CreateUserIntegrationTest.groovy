@@ -30,9 +30,6 @@ import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 
 class CreateUserIntegrationTest extends RootIntegrationTest {
 
-    static final String IDM_CLIENT_ID = "idm.clientId"
-    static final String CLOUD_AUTH_CLIENT_ID = "cloudAuth.clientId"
-
     @Shared def identityAdminToken
 
     @Autowired def ScopeAccessService scopeAccessService
@@ -695,40 +692,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users1)
         utils.deleteUsers(users2[0])
         staticIdmConfiguration.reset()
-    }
-
-    def "test feature flag for identity admin creating sub-users"() {
-        given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUID("defaultUser")
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        users = users.reverse()
-        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
-        def userForCreate = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
-            it.roles = defaultUserRoles
-            it
-        }
-
-        when:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP, false)
-        def userResponse = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
-
-        then:
-        userResponse.status == 403
-
-        when:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP, true)
-        userResponse = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate)
-
-        then:
-        userResponse.status == 201
-
-        cleanup:
-        reloadableConfiguration.reset()
-        def userId = userResponse.getEntity(User).value.id
-        cloud20.deleteUser(utils.getServiceAdminToken(), userId)
-        utils.deleteUsers(users)
     }
 
     @Unroll
