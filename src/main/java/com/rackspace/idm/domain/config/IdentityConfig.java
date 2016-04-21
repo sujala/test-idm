@@ -182,8 +182,6 @@ public class IdentityConfig {
     public static final String FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP = "feature.ae.sync.signoff.enabled";
     public static final boolean FEATURE_AE_SYNC_SIGNOFF_ENABLED = true;
 
-    public static final String FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP = "feature.terminator.support.for.auth.with.tenant.enabled";
-    public static final boolean FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_DEFAULT = true;
     public static final String RACKER_IMPERSONATE_ROLE_NAME_PROP = "racker.impersonate.role";
     public static final String RACKER_IMPERSONATE_ROLE_NAME_DEFAULT = "cloud-identity-impersonate";
 
@@ -372,7 +370,6 @@ public class IdentityConfig {
         defaults.put(AE_TOKEN_STORAGE_TYPE_PROP, AE_TOKEN_STORAGE_TYPE_DEFAULT_VALUE);
         defaults.put(SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
-        defaults.put(FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP, FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_DEFAULT);
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
         defaults.put(SQL_SHOW_SQL_PROP, SQL_SHOW_DEFAULT);
         defaults.put(FEATURE_PERSIST_RACKERS_PROP, FEATURE_PERSIST_RACKERS_DEFAULT);
@@ -1128,11 +1125,6 @@ public class IdentityConfig {
 
         public String getNodeName() {
             return getAENodeNameForSignoff();
-        }
-
-        @IdmProp(key = FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP, description = "Whether or not terminator is active for authentication requests where a tenant is provided", versionAdded = "2.16.0")
-        public boolean getTerminatorSupportedForAuthWithToken() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_TERMINATOR_AUTH_WITH_TENANT_SUPPORT_PROP);
         }
 
         public TokenFormat getIdentityFederationRequestTokenFormatForIdp(String idpLabeledUri) {
