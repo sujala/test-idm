@@ -215,10 +215,6 @@ public class IdentityConfig {
     public static final String CACHED_AE_TOKEN_CACHE_RECORD_STATS_PROP = "cached.ae.token.cache.record.stats";
     public static final boolean CACHED_AE_TOKEN_CACHE_RECORD_STATS_DEFAULT = true;
 
-
-    public static final String FEATURE_SUPPORT_SAML_AUTH_PROP = "feature.support.saml.authentication";
-    public static final boolean FEATURE_SUPPORT_SAML_AUTH_DEFAULT = true;
-
     public static final String FEATURE_SUPPORT_SAML_LOGOUT_PROP = "feature.support.saml.logout";
     public static final boolean FEATURE_SUPPORT_SAML_LOGOUT_DEFAULT = true;
 
@@ -400,7 +396,6 @@ public class IdentityConfig {
         defaults.put(FEDERATED_RESPONSE_MAX_AGE, FEDERATED_RESPONSE_MAX_AGE_DEFAULT);
         defaults.put(FEDERATED_RESPONSE_MAX_SKEW, FEDERATED_RESPONSE_MAX_SKEW_DEFAULT);
         defaults.put(FEATURE_SUPPORT_SAML_LOGOUT_PROP, FEATURE_SUPPORT_SAML_LOGOUT_DEFAULT);
-        defaults.put(FEATURE_SUPPORT_SAML_AUTH_PROP, FEATURE_SUPPORT_SAML_AUTH_DEFAULT);
         defaults.put(FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP, FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_DEFAULT);
         defaults.put(IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT);
         defaults.put(IDP_MAX_SEACH_RESULT_SIZE_PROP, IDP_MAX_SEACH_RESULT_SIZE_DEFAULT);
@@ -1294,11 +1289,6 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_SUPPORT_SAML_LOGOUT_PROP, versionAdded = "3.1.0", description = "Whether or not to support SAML Federation Logout")
         public boolean isFederationLogoutSupported() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_SAML_LOGOUT_PROP);
-        }
-
-        @IdmProp(key = FEATURE_SUPPORT_SAML_AUTH_PROP, versionAdded = "3.1.0", description = "Whether or not to support SAML Federation Authentication")
-        public boolean isFederationAuthenticationSupported() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_SAML_AUTH_PROP);
         }
 
         @IdmProp(key = FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP, versionAdded = "3.1.0", description = "Whether or not to support Identity Provider Management services")

@@ -23,6 +23,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.SearchScope
 import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.apache.commons.configuration.Configuration
+import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.joda.time.DateTime
 import org.joda.time.Seconds
@@ -3357,21 +3358,15 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "saml api call returns #expectedStatus when saml feature flag is #samlEnabled and given an empty payload"() {
+    def "saml api call returns 400 when given an empty payload"() {
         given:
         org.opensaml.saml2.core.Response res = null;
 
         when:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_SAML_AUTH_PROP, samlEnabled)
         def response = cloud20.samlAuthenticate(res)
 
         then:
-        assert response.status == expectedStatus
-
-        where:
-        samlEnabled | expectedStatus
-        false       | 404
-        true        | 400
+        assert response.status == HttpStatus.SC_BAD_REQUEST
     }
 
     @Unroll
