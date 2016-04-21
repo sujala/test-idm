@@ -131,12 +131,11 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         multiFactorService.mobilePhoneVerification = mobilePhoneVerification //reset to original service
     }
 
-    def "performMultiFactorChallenge: Fail with 403 when account is locked out"() {
+    def "performMultiFactorChallenge: Fail with 403 when Duo reports account is locked out"() {
         setup:
         addPhone()
 
         BasicMultiFactorService mockedBasicMultiFactorService = Mock(BasicMultiFactorService)
-        mockedBasicMultiFactorService.sendSmsPasscode(_) >> {throw new DuoLockedOutException(new FailureResult(0, "status", "message"))}
         multiFactorCloud20Service.multiFactorService = mockedBasicMultiFactorService
 
         SessionIdReaderWriter mockedSessionIdReaderWriter = Mock(SessionIdReaderWriter)
@@ -152,12 +151,9 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
         Response.ResponseBuilder result = multiFactorCloud20Service.performMultiFactorChallenge(userAdminUser, ["PASSWORD"].asList())
 
         then:
+        1 * mockedBasicMultiFactorService.sendSmsPasscode(_) >> {throw new DuoLockedOutException(new FailureResult(0, "status", "message"))}
         1 * mockedBasicMultiFactorService.isMultiFactorTypePhone(_) >> true
-        1 * mockUserService.updateUserForMultiFactor(_) >> { User userArg ->
-            assert (userArg.multiFactorState == BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED)
-        }
         thrown(ForbiddenException)
-
 
         cleanup:
         multiFactorCloud20Service.multiFactorService = multiFactorService

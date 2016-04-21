@@ -62,12 +62,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         then: "the user's mfa state is 'ACTIVE'"
         userById.multiFactorState == MultiFactorStateEnum.ACTIVE
 
-        when: "loading the user from the directory"
-        def directoryUser = userDao.getUserById(user.id)
-
-        then: "the user's mfa state is 'ACTIVE'"
-        directoryUser.multiFactorState == BasicMultiFactorService.MULTI_FACTOR_STATE_ACTIVE
-
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
@@ -96,12 +90,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         then: "removes the multifactor state attribute when loading the user through the api"
         userById.multiFactorState == null
 
-        when: "loading a non-multifactor user from the directory"
-        def directoryUser = userDao.getUserById(user.id)
-
-        then: "the user does not have the multifactor state attribute"
-        directoryUser.multiFactorState == null
-
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
@@ -129,18 +117,12 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         then: "removes the multifactor state attribute when loading the user through the api"
         userById.multiFactorState == null
 
-        when: "loading a non-multifactor user from the directory"
-        def directoryUser = userDao.getUserById(user.id)
-
-        then: "the user does not have the multifactor state attribute"
-        directoryUser.multiFactorState == null
-
         cleanup:
         multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
         deleteUserQuietly(user)
     }
 
-    def "mfa user with null mfa state will show as 'ACTIVE' in api calls"() {
+    def "enabled and active mfa user will show as 'ACTIVE' in api calls"() {
         given:
         def settings = v2Factory.createMultiFactorSettings(true)
         def user = createUserAdmin()
@@ -148,9 +130,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         def token = utils.authenticateApiKey(user.username).token.id
         def responsePhone = addPhone(token, user)
         cloud20.updateMultiFactorSettings(token, user.id, settings)
-        def directoryUser = userDao.getUserById(user.id)
-        directoryUser.multiFactorState = null
-        userDao.updateUserAsIs(directoryUser)
 
         when: "user by ID call"
         def userById = cloud20.getUserById(utils.getServiceAdminToken(), user.id, acceptContentType).getEntity(User)
@@ -236,105 +215,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         MediaType.APPLICATION_XML_TYPE | _
     }
 
-    def "user with invalid mfa state in directory gets 500 on get user calls"() {
-         given:
-        def settings = v2Factory.createMultiFactorSettings(true)
-        def user = createUserAdmin()
-        utils.addApiKeyToUser(user)
-        def token = utils.authenticateApiKey(user.username).token.id
-        def responsePhone = addPhone(token, user)
-        cloud20.updateMultiFactorSettings(token, user.id, settings)
-        def directoryUser = userDao.getUserById(user.id)
-        directoryUser.multiFactorState = 'INVALID'
-        userDao.updateUserAsIs(directoryUser)
-
-        when: "user by ID call"
-        def userByIdRequest = cloud20.getUserById(token, user.id)
-
-        then:
-        userByIdRequest.status == 500
-
-        when: "get users by domain id call"
-        def usersByDomainIdRequest = cloud20.getUsersByDomainId(utils.getServiceAdminToken(), user.domainId)
-
-        then:
-        usersByDomainIdRequest.status == 500
-
-        when: "get user by username call"
-        def userByUsernameRequest = cloud20.getUserByName(utils.getServiceAdminToken(), user.username)
-
-        then:
-        userByUsernameRequest.status == 500
-
-        when: "get user by email address call"
-        def userByEmailAddressRequest = cloud20.getUsersByEmail(utils.getServiceAdminToken(), user.email)
-
-        then:
-        userByEmailAddressRequest.status == 500
-
-        when: "list users call"
-        def userListRequest = cloud20.listUsers(token)
-
-        then:
-        userListRequest.status == 500
-
-        cleanup:
-        multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
-        deleteUserQuietly(user)
-    }
-
-    def "user with mfaEnabled == false and a non-null mfa state in directory do not show mfa state on get user calls"() {
-        given:
-        def settings = v2Factory.createMultiFactorSettings(true)
-        def user = createUserAdmin()
-        utils.addApiKeyToUser(user)
-        def token = utils.authenticateApiKey(user.username).token.id
-        def responsePhone = addPhone(token, user)
-        cloud20.updateMultiFactorSettings(token, user.id, settings)
-        def directoryUser = userDao.getUserById(user.id)
-        directoryUser.multifactorEnabled = Boolean.FALSE
-        userDao.updateUserAsIs(directoryUser)
-
-        when: "user by ID call"
-        def userById = cloud20.getUserById(utils.getServiceAdminToken(), user.id, acceptContentType).getEntity(User)
-
-        then:
-        verifyMfaStateForUser(userById, acceptContentType, null)
-
-        when: "get users by domain id call"
-        def usersByDomainId = cloud20.getUsersByDomainId(utils.getServiceAdminToken(), user.domainId, acceptContentType)
-
-        then:
-        verifyMfaStateForUsers(usersByDomainId, acceptContentType, null)
-
-        when: "get user by username call"
-        def userByUsername = cloud20.getUserByName(utils.getServiceAdminToken(), user.username, acceptContentType).getEntity(User)
-
-        then:
-        verifyMfaStateForUser(userByUsername, acceptContentType, null)
-
-        when: "get user by email address call"
-        def usersByEmail = cloud20.getUsersByEmail(utils.getServiceAdminToken(), user.email, acceptContentType)
-
-        then:
-        verifyMfaStateForUsers(usersByEmail, acceptContentType, null)
-
-        when: "list users call"
-        def userList = cloud20.listUsers(token, acceptContentType)
-
-        then:
-        verifyMfaStateForUsers(userList, acceptContentType, null)
-
-        cleanup:
-        multiFactorService.removeMultiFactorForUser(user.id)  //remove duo profile
-        deleteUserQuietly(user)
-
-        where:
-        acceptContentType | _
-        MediaType.APPLICATION_JSON_TYPE | _
-        MediaType.APPLICATION_XML_TYPE | _
-    }
-
     def "locked mfa user should have dynamic mfa state changed to 'ACTIVE' when unlock mfa call is made"() {
         given:
         reloadableConfiguration.reset()
@@ -405,17 +285,10 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         then: "the user's mfa state is 'ACTIVE'"
         userById.multiFactorState == MultiFactorStateEnum.ACTIVE
 
-        when: "loading the user from the directory"
-        def directoryUser = userDao.getUserById(defaultUser.id)
-
-        then: "the user's mfa state is 'ACTIVE'"
-        directoryUser.multiFactorState == BasicMultiFactorService.MULTI_FACTOR_STATE_ACTIVE
-
         when: "user mfa state is updated to 'LOCKED'"
-        directoryUser = userDao.getUserById(defaultUser.id)
+        def directoryUser = userDao.getUserById(defaultUser.id)
         directoryUser.setMultiFactorFailedAttemptCount(maxAttempts)
         directoryUser.setMultiFactorLastFailedTimestamp(new Date())
-        directoryUser.multiFactorState = BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED
         userDao.updateUserAsIs(directoryUser)
         userById = utils.getUserById(defaultUser.id)
 
@@ -434,7 +307,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
         directoryUser = userDao.getUserById(defaultUser.id)
         directoryUser.setMultiFactorFailedAttemptCount(maxAttempts)
         directoryUser.setMultiFactorLastFailedTimestamp(new Date())
-        directoryUser.multiFactorState = BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED
         userDao.updateUserAsIs(directoryUser)
         userById = utils.getUserById(defaultUser.id)
 

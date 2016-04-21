@@ -479,8 +479,6 @@ public class BasicMultiFactorService implements MultiFactorService {
     }
 
     private void setMultiFactorUnlockState(User user) {
-        user.setMultiFactorState(MULTI_FACTOR_STATE_ACTIVE);
-        //local locking is used, so reset the counters
         user.setMultiFactorFailedAttemptCount(null);
         user.setMultiFactorLastFailedTimestamp(null);
     }
@@ -563,7 +561,6 @@ public class BasicMultiFactorService implements MultiFactorService {
         user.setMultiFactorDevicePin(null);
         user.setMultiFactorDeviceVerified(null);
         user.setMultiFactorDevicePinExpiration(null);
-        user.setMultiFactorState(null);
         user.setMultiFactorType(null);
         userService.updateUserForMultiFactor(user);
         otpDeviceDao.deleteAllOTPDevicesFromParent(user);
@@ -716,6 +713,14 @@ public class BasicMultiFactorService implements MultiFactorService {
         multiFactorAuthenticationService.sendSmsPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId());
     }
 
+    /**
+     * Saves the user as necessary. For example, when a valid passcode is provided, the invalid counters on the user are
+     * reset and the user is saved. When an invalid passcode is provided, the counters are incremented, and the user is saved.
+     *
+     * @param userId
+     * @param passcode
+     * @return
+     */
     @Override
     public MfaAuthenticationResponse verifyPasscode(String userId, String passcode) {
         User user = userService.checkAndGetUserById(userId);
@@ -758,6 +763,7 @@ public class BasicMultiFactorService implements MultiFactorService {
                     && MfaAuthenticationDecision.DENY.equals(response.getDecision())
                     && MfaAuthenticationDecisionReason.LOCKEDOUT.equals(response.getDecisionReason())
                     && response.getProviderResponse() != null) {
+                LOG.warn(String.format("User '%s' is locked in Duo. Will unlock user in Duo and try again.", userId));
                 userManagement.unlockUser(user.getExternalMultiFactorUserId());
                 response =  multiFactorAuthenticationService.verifyPasscodeChallenge(user.getExternalMultiFactorUserId(), phone.getExternalMultiFactorPhoneId(), passcode);
             }
@@ -775,7 +781,7 @@ public class BasicMultiFactorService implements MultiFactorService {
             }
         }
 
-        // If none worked and local locking is enabled, count one fail
+        // If none worked, count one fail, and send locked message if account is locked (or becomes locked)
         if ((response == null || MfaAuthenticationDecision.DENY.equals(response.getDecision())) &&
                 incrementAndCheckLocalLockingOnUser(user)) {
             response = new GenericMfaAuthenticationResponse(
@@ -785,7 +791,7 @@ public class BasicMultiFactorService implements MultiFactorService {
                     null);
         }
 
-        // If none worked and the response was not pre-populated by anything
+        // If none worked, but account is not locked after incrementing failure count, return general error.
         if (response == null) {
             response = new GenericMfaAuthenticationResponse(
                     MfaAuthenticationDecision.DENY,
@@ -1020,9 +1026,7 @@ public class BasicMultiFactorService implements MultiFactorService {
     private void enableMultiFactorForUser(User user, boolean revokeTokens, boolean sendNotifications) {
         //not a fan of boolean parameters controlling behavior. However, in this case wanted to minimize changes due
         //to temp service add. Such parameters on an internal (private) method are much easier to revert.
-
         user.setMultifactorEnabled(true);
-        user.setMultiFactorState(MULTI_FACTOR_STATE_ACTIVE);
 
         /*
         if setting up SMS, must configure Duo profiles (User and Phone) and add links to local entries.
@@ -1091,7 +1095,6 @@ public class BasicMultiFactorService implements MultiFactorService {
         boolean enabled = user.isMultiFactorEnabled();
 
         user.setMultifactorEnabled(false);
-        user.setMultiFactorState(null);
         user.setExternalMultiFactorUserId(null);
         user.setMultiFactorType(null);
         user.setMultiFactorFailedAttemptCount(null);

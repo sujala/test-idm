@@ -351,11 +351,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             LOG.debug(String.format("Sending SMS challenge to user '%s'", user.getId()));
             secondFactor = AuthenticatedByMethodEnum.PASSCODE.getValue();
             try {
+                //TODO: Implement CID-84 to unlock in Duo and retry call if Duo fails call due to Duo locking
                 multiFactorService.sendSmsPasscode(user.getId());
             } catch (DuoLockedOutException lockedOutException) {
                 emailClient.asyncSendMultiFactorLockedOutMessage(user);
-                user.setMultiFactorState(BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED);
-                userService.updateUserForMultiFactor(user);
                 throw new ForbiddenException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
             }
         } else {
@@ -410,14 +409,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         if (response.getDecision() == MfaAuthenticationDecision.ALLOW) {
             mfaAudit.succeed();
             return createSuccessfulSecondFactorResponse(user, response, sessionId);
-        } else if (response.getDecisionReason() == MfaAuthenticationDecisionReason.LOCKEDOUT) {
-            user = userService.getUserById(user.getId());
-            emailClient.asyncSendMultiFactorLockedOutMessage(user);
-            user.setMultiFactorState(BasicMultiFactorService.MULTI_FACTOR_STATE_LOCKED);
-            userService.updateUserForMultiFactor(user);
-            mfaAudit.fail();
-            throw createFailedSecondFactorException(response, sessionId);
         } else {
+            if (response.getDecisionReason() == MfaAuthenticationDecisionReason.LOCKEDOUT) {
+                emailClient.asyncSendMultiFactorLockedOutMessage(user);
+            }
             //2-factor request denied. Determine appropriate exception/message for user
             mfaAudit.fail();
             throw createFailedSecondFactorException(response, sessionId);

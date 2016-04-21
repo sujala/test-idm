@@ -185,16 +185,6 @@ public class User implements EndUser {
     @LDAPField(attribute = LdapRepository.ATTR_EXTERNAL_MULTIFACTOR_USER_ID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     private String externalMultiFactorUserId;
 
-    /**
-     * Whether the user is "ACTIVE" or "LOCKED". Note, when local locking (with auto expiration) is used this attribute is irrelevant as it is not used for determining the state
-     * of local locking at all.
-     *
-     * @deprecated - only valid when using Duo locking and even then it's not really accurate since Duo auto unlocks accounts after certain period which does NOTT update this value
-     */
-    @Deprecated
-    @LDAPField(attribute = LdapRepository.ATTR_MULTI_FACTOR_STATE, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
-    private String multiFactorState;
-
     @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_USER_ENFORCEMENT_LEVEL, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String userMultiFactorEnforcementLevel;
 

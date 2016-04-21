@@ -270,7 +270,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         then:
         assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG)
         def directoryUser = userDao.getUserById(userAdmin.id)
-        directoryUser.multiFactorState == 'LOCKED'
+        directoryUser.multiFactorFailedAttemptCount == 1
 
         where:
         requestContentMediaType         | acceptMediaType
@@ -439,8 +439,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
 
         then:
         assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG)
-        directoryUser.multiFactorState == 'LOCKED'
-        directoryUser.multiFactorFailedAttemptCount != null
+        directoryUser.multiFactorFailedAttemptCount == maxAttempts
         directoryUser.multiFactorLastFailedTimestamp != null
 
         when: "unlock user"
@@ -449,7 +448,6 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
 
         then: "user is unlocked"
         response.status == 204
-        directoryUser.multiFactorState == 'ACTIVE'
         directoryUser.multiFactorFailedAttemptCount == null
         directoryUser.multiFactorLastFailedTimestamp == null
         0 * mockUserManagement.unlockUser(userAdmin.id)
@@ -462,7 +460,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         org.openstack.docs.identity.api.v2.User retrievedUserAdmin = utils.getUserById(userAdmin.id)
         directoryUser = userDao.getUserById(userAdmin.id)
 
-        then: "get 403"
+        then: "get 403 and state of user is locked"
         response.status == 403
         retrievedUserAdmin.getMultiFactorState() == MultiFactorStateEnum.LOCKED
         directoryUser.multiFactorFailedAttemptCount == maxAttempts
@@ -472,7 +470,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         retrievedUserAdmin = utils.getUserById(userAdmin.id)
         directoryUser = userDao.getUserById(userAdmin.id)
 
-        then: "still get 403"
+        then: "still get 403 and state of user is locked"
         response.status == 403
         retrievedUserAdmin.getMultiFactorState() == MultiFactorStateEnum.LOCKED
 
@@ -549,8 +547,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         }
         directoryUser = userDao.getUserById(userAdmin.id)
         assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG)
-        directoryUser.multiFactorState == 'LOCKED'
-        directoryUser.multiFactorFailedAttemptCount != null
+        directoryUser.multiFactorFailedAttemptCount == maxAttempts
         directoryUser.multiFactorLastFailedTimestamp != null
 
         when: "perform first factor auth again"
