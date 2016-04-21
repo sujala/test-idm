@@ -149,8 +149,6 @@ public class IdentityConfig {
 
     public static final String BYPASS_DEFAULT_NUMBER = "multifactor.bypass.default.number";
     public static final String BYPASS_MAXIMUM_NUMBER = "multifactor.bypass.maximum.number";
-    public static final String FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS = "feature.enable.local.multifactor.bypass";
-    public static final boolean FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS_DEFAULT = false;
     public static final String LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_PROP = "local.multifactor.bypass.num.iterations";
     public static final int LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_DEFAULT = 10000;
 
@@ -368,7 +366,6 @@ public class IdentityConfig {
         defaults.put(RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME, 60);
         defaults.put(BYPASS_DEFAULT_NUMBER, BigInteger.ONE);
         defaults.put(BYPASS_MAXIMUM_NUMBER, BigInteger.TEN);
-        defaults.put(FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS, FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS_DEFAULT);
         defaults.put(FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_DEFAULT);
         defaults.put(FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_DEFAULT);
         defaults.put(LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_PROP, LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_DEFAULT);
@@ -1092,11 +1089,6 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP)
         public boolean isGetUserRolesGlobalRoleEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP);
-        }
-
-        @IdmProp(key = FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS, versionAdded = "2.14.0", description = "enable local multifactor bypass codes")
-        public boolean getFeatureLocalMultifactorBypassEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_LOCAL_MULTIFACTOR_BYPASS);
         }
 
         @IdmProp(key = FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, versionAdded = "2.15.0", description = "How long, in seconds, after which the last invalid MFA logic attempt will be ignored. This affects when an account will be automatically unlocked when using local locking")
