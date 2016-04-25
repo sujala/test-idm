@@ -227,6 +227,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         try {
             samlSignatureValidator.validateSignatureForIdentityProvider(signature, provider);
         } catch (SignatureValidationException t) {
+            log.debug("Received fed request with invalid signature", t);
             throw new BadRequestException(ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_FEDERATION_INVALID_SIGNATURE, "Signature is invalid"), t);
         }
     }

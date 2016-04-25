@@ -152,7 +152,6 @@ public class IdentityConfig {
     public static final String LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_PROP = "local.multifactor.bypass.num.iterations";
     public static final int LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_DEFAULT = 10000;
 
-    public static final String FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP="feature.enable.get.user.roles.global.role";
     public static final String FEATURE_ENABLE_IMPLICIT_ROLE_PROP="feature.enable.implicit.roles";
     public static final String IMPLICIT_ROLE_PROP_PREFIX = "implicit.roles";
     public static final String IMPLICIT_ROLE_OVERRIDE_PROP_REG = IMPLICIT_ROLE_PROP_PREFIX + ".%s";
@@ -352,7 +351,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT);
         defaults.put(FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP, false);
         defaults.put(FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, false);
-        defaults.put(FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP, false);
         defaults.put(FEATURE_ENABLE_IMPLICIT_ROLE_PROP, false);
         defaults.put(FEATURE_AE_TOKENS_ENCRYPT, true);
         defaults.put(FEATURE_AE_TOKENS_DECRYPT, true);
@@ -1076,11 +1074,6 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP)
         public boolean getIdentityAdminCreateSubuserEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_IDENTITY_ADMIN_CREATE_SUBUSER_ENABLED_PROP);
-        }
-
-        @IdmProp(key = FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP)
-        public boolean isGetUserRolesGlobalRoleEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP);
         }
 
         @IdmProp(key = FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, versionAdded = "2.15.0", description = "How long, in seconds, after which the last invalid MFA logic attempt will be ignored. This affects when an account will be automatically unlocked when using local locking")

@@ -222,7 +222,6 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
 
     def "identity:get-user-roles-global can be used to retrieve roles for users"() {
         //start with role enabled
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP, true)
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin()
         AuthenticateResponse auth = utils.authenticate(userAdmin)
@@ -253,17 +252,7 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         then: "allowed"
         iaResponse.status == org.apache.http.HttpStatus.SC_OK
 
-        when: "disable endpoint global role feature"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_GET_USER_ROLES_GLOBAL_ROLE_PROP, false)
-        uaResponse = cloud20.listUserGlobalRoles(uaToken, users[0].id)
-        iaResponse = cloud20.listUserGlobalRoles(iaToken, userAdmin.id)
-
-        then: "user admin can no longer access token endpoints"
-        uaResponse.status == org.apache.http.HttpStatus.SC_FORBIDDEN
-        iaResponse.status == org.apache.http.HttpStatus.SC_OK
-
         cleanup:
-        reloadableConfiguration.reset()
         try {
             utils.deleteUsers(users)
         } catch (Exception ex) {/*ignore*/

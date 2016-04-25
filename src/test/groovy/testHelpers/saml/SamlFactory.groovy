@@ -83,6 +83,12 @@ class SamlFactory {
         return org.apache.xml.security.utils.Base64.encode(StringUtils.getBytesUtf8(logoutRequest))
     }
 
+    def generateLogoutRequestEncodedForSamlProducer(issuer, subject, producer, issueInstant = new DateTime()) {
+        LogoutRequest logoutRequest = producer.createSAMLLogoutRequest(subject, issuer, issueInstant);
+        def requestString = convertLogoutRequestToString(logoutRequest)
+        return org.apache.xml.security.utils.Base64.encode(StringUtils.getBytesUtf8(requestString))
+    }
+
     def convertLogoutRequestToString(LogoutRequest logoutRequest) {
         LogoutRequestMarshaller marshaller = new LogoutRequestMarshaller();
         Element element = marshaller.marshall(logoutRequest);

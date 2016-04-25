@@ -57,7 +57,7 @@ public class SamlSignatureValidator {
 
         if (CollectionUtils.isEmpty(idpCerts)) {
             //if no certs for identity provider, signature obviously won't validate. Just throw standard error message.
-            throw new SignatureValidationException(INVALID_SIGNATURE_ERROR_MSG);
+            throw new SignatureValidationException("No certificates for IDP");
         }
 
         /*
@@ -70,6 +70,7 @@ public class SamlSignatureValidator {
                 validateSignature(signature, x509Certificate);
                 validated = true;
             } catch (SignatureValidationException ex) {
+                logger.debug(String.format("Validation error for signature '%s' w/ cert '%s'", signature, x509Certificate));
                 lastException = ex;
             }
         }
