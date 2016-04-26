@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
@@ -9,6 +11,7 @@ import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.decorator.SAMLAuthContext
+import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.FederatedUser
@@ -23,7 +26,6 @@ import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHand
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.rackspace.idm.util.SamlUnmarshaller
 import org.apache.commons.codec.binary.StringUtils
-import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.lang.BooleanUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
@@ -32,17 +34,19 @@ import org.joda.time.DateTime
 import org.opensaml.saml2.core.LogoutResponse
 import org.opensaml.saml2.core.Response
 import org.opensaml.saml2.core.StatusCode
-import org.opensaml.saml2.core.impl.LogoutResponseMarshaller
 import org.opensaml.xml.signature.Signature
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.IdentityFault
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.junit.IgnoreByRepositoryProfile
-import testHelpers.saml.SamlAttributeFactory
+import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
+import testHelpers.saml.SamlProducer
 
 import javax.servlet.http.HttpServletResponse
 
@@ -72,11 +76,18 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     @Autowired
     ConfigurableTokenFormatSelector configurableTokenFormatSelector
 
+    /**
+     * An identity provider created for this class. No code should modify this provider.
+     */
     @Autowired
     IdentityConfig identityConfig
 
     @Autowired
     SamlUnmarshaller samlUnmarshaller
+
+    @Shared String specificationServiceAdminToken;
+    @Shared IdentityProvider sharedIdentityProvider
+    @Shared SamlProducer samlProducerForSharedIdp
 
     private static final String RBACROLE1_NAME = "rbacRole1"
     private static final String RBACROLE2_NAME = "rbacRole2"
@@ -93,7 +104,33 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     def globalEndpointTemplateRegion = "ORD"
     def lonGlobalEndpointTemplateRegion = "LON"
 
+    def setupSpec() {
+        def serviceAdminAuthResponse = cloud20.authenticatePassword(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD).getEntity(AuthenticateResponse)
+        //verify the authentication worked before retrieving the token
+        if (serviceAdminAuthResponse.value instanceof IdentityFault) {
+            def fault = (IdentityFault)serviceAdminAuthResponse.value
+            LOG.error("Error authenticating service admin to setup test run. '" + fault.getMessage() + "'", fault)
+        }
+        assert serviceAdminAuthResponse.value instanceof AuthenticateResponse
+        specificationServiceAdminToken = serviceAdminAuthResponse.value.token.id
+
+        def keyPair1 = SamlCredentialUtils.generateKeyPair()
+        def cert1 = SamlCredentialUtils.generateCertificate(keyPair1)
+        def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cert1)
+        def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)
+        def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
+        samlProducerForSharedIdp = new SamlProducer(SamlCredentialUtils.generateX509Credential(cert1, keyPair1))
+        sharedIdentityProvider = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL, null).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        cloud20.createIdentityProvider(specificationServiceAdminToken, sharedIdentityProvider)
+    }
+
     def setup() {
+        reloadableConfiguration.reset()
+        staticIdmConfiguration.reset()
+
         //expected to be pre-existing 1000 weight roles in default ldif
         rbacRole1 = roleService.getRoleByName(RBACROLE1_NAME)
         rbacRole2 = roleService.getRoleByName(RBACROLE2_NAME)
@@ -1417,8 +1454,13 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def email = "fedIntTest@invalid.rackspace.com"
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, 5000, domainId, null, email);
-        cloud20.samlAuthenticate(samlAssertion)
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(sharedIdentityProvider.issuer, username, 5000, domainId, null, email, samlProducerForSharedIdp);
+        def fedAddResponse =  cloud20.samlAuthenticate(samlAssertion)
+        def fedAddResponseEntity = fedAddResponse.getEntity(String)
+        if (fedAddResponse.status != HttpStatus.SC_OK) {
+            LOG.error(String.format("Failed to add fed user. Test will fail. Add Request: '%s', Add response: '%s'", samlAssertion, fedAddResponseEntity))
+            assert fedAddResponse.status == HttpStatus.SC_OK //force the failure
+        }
 
         when: "delete the user-admin and try to delete the domain"
         utils.deleteUser(userAdmin)
@@ -1428,7 +1470,8 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         response.status == 400
 
         when: "logout the federated user (deletes the federated user) and then try again"
-        utils.logoutFederatedUser(username)
+        utils.logoutFederatedUser(username, sharedIdentityProvider.issuer, samlProducerForSharedIdp)
+
         response = cloud20.deleteDomain(utils.getServiceAdminToken(), domainId)
 
         then: "success"

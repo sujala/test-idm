@@ -25,6 +25,7 @@ import org.apache.commons.codec.binary.StringUtils
 import org.apache.http.HttpStatus
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.apache.http.client.utils.URLEncodedUtils
+import org.apache.log4j.Logger
 import org.opensaml.saml2.core.LogoutResponse
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
@@ -52,6 +53,7 @@ import static org.apache.http.HttpStatus.*
 
 @Component
 class Cloud20Utils {
+    private static final Logger LOG = Logger.getLogger(Cloud20Utils.class)
 
     @Autowired
     Cloud20Methods methods
@@ -358,11 +360,23 @@ class Cloud20Utils {
         return [defaultUser, [defaultUser, userAdmin, identityAdmin].asList()]
     }
 
-    def logoutFederatedUser(username) {
-        def logoutRequest = new SamlFactory().generateLogoutRequestEncoded(DEFAULT_IDP_URI, username)
+    def logoutFederatedUser(username, idpUri = DEFAULT_IDP_URI, samlProducer = null) {
+        def logoutRequest
+        if (samlProducer) {
+            logoutRequest = new SamlFactory().generateLogoutRequestEncodedForSamlProducer(idpUri, username, samlProducer)
+        } else {
+            logoutRequest = new SamlFactory().generateLogoutRequestEncoded(idpUri, username)
+        }
         def response = methods.federatedLogout(logoutRequest);
+        def responseStr = response.getEntity(String.class)
+
+        if (response.status != HttpStatus.SC_OK) {
+            def unencodedRequest = org.apache.xml.security.utils.Base64.decode(logoutRequest)
+            LOG.error(String.format("Failed to logout fed user. Logout Request: '%s', Logout response: '%s'", unencodedRequest, responseStr))
+        }
+
         assert response.status == HttpStatus.SC_OK
-        LogoutResponse logoutResponse = samlUnmarshaller.unmarshallLogoutRespone(StringUtils.getBytesUtf8(response.getEntity(String.class)))
+        LogoutResponse logoutResponse = samlUnmarshaller.unmarshallLogoutRespone(StringUtils.getBytesUtf8(responseStr))
         return logoutResponse
     }
 

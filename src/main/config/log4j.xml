@@ -72,7 +72,7 @@
 
     <!-- Application Loggers -->
     <logger name="com.rackspace.idm">
-        <level value="info"/>
+        <level value="debug"/>
     </logger>
 
     <logger name="audit" additivity="false">
@@ -119,7 +119,7 @@
 
     <!-- Root Logger -->
     <root>
-        <priority value="info"/>
+        <priority value="debug"/>
         <appender-ref ref="file"/>
     </root>
 

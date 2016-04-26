@@ -2599,18 +2599,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             3. default users can get only their own roles
             */
             boolean mustVerifyDomainAndPrecedence = true;
-            if (identityConfig.getReloadableConfig().isGetUserRolesGlobalRoleEnabled()) {
-                if (authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN
-                        , IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName()) || user.getId().equals(caller.getId())) {
-                    mustVerifyDomainAndPrecedence = false;
-                }
-            } else {
-                if (authorizationService.authorizeCloudServiceAdmin(callersScopeAccess)
-                        || authorizationService.authorizeCloudIdentityAdmin(callersScopeAccess)
-                        || user.getId().equals(caller.getId())) {
-                    ////caller is a service admin, identity admin, or the user is requesting own roles
-                    mustVerifyDomainAndPrecedence = false;
-                }
+            if (authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN
+                    , IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName()) || user.getId().equals(caller.getId())) {
+                mustVerifyDomainAndPrecedence = false;
             }
 
             if (mustVerifyDomainAndPrecedence) {
@@ -2621,7 +2612,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 } else if(!caller.getDomainId().equals(user.getDomainId())) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
-
                 precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             }
             List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
