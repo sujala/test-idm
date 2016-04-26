@@ -427,11 +427,11 @@ class DefaultUserServiceTest extends RootServiceTest {
         def caller = Mock(User)
         def user = Mock(User)
         authorizationService.hasServiceAdminRole(caller) >> true
-        identityConfig.getFeatureAETokensDecrypt() >> true
+        reloadableConfig.getFeatureAETokensDecrypt() >> true
 
         mockRoleService.getIdentityAdminRole() >> new ClientRole()
         user.getRoles() >> new ArrayList<TenantRole>()
-        staticConfig.getFeatureAETokensDecrypt() >> true
+        reloadableConfig.getFeatureAETokensDecrypt() >> true
 
         when:
         service.setUserDefaultsBasedOnUser(user, caller, false)
@@ -445,12 +445,12 @@ class DefaultUserServiceTest extends RootServiceTest {
         def caller = Mock(User)
         def user = Mock(User)
         authorizationService.hasIdentityAdminRole(caller) >> true
-        identityConfig.getFeatureAETokensDecrypt() >> true
+        reloadableConfig.getFeatureAETokensDecrypt() >> true
 
         user.getDomainId() >> "123"
         mockRoleService.getUserAdminRole() >> new ClientRole()
         user.getRoles() >> new ArrayList<TenantRole>()
-        staticConfig.getFeatureAETokensDecrypt() >> true
+        reloadableConfig.getFeatureAETokensDecrypt() >> true
 
         when:
         service.setUserDefaultsBasedOnUser(user, caller, false)

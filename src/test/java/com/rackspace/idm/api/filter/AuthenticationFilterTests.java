@@ -5,6 +5,7 @@ import com.rackspace.idm.api.security.RequestContext;
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.AuthenticationService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.UserService;
@@ -142,7 +143,10 @@ public class AuthenticationFilterTests {
         impersonatedScopeAccess.setAccessTokenString("authToken");
         impersonatedScopeAccess.setImpersonatingToken("impToken");
         impersonatedScopeAccess.setAccessTokenExp(new DateTime().plusMinutes(10).toDate());
+        ScopeAccess sa = new UserScopeAccess();
+        when(scopeAccessServiceMock.isSetupMfaScopedToken(sa)).thenReturn(false);
         when(scopeAccessServiceMock.getScopeAccessByAccessToken("authToken")).thenReturn(impersonatedScopeAccess);
+        when(scopeAccessServiceMock.getScopeAccessByAccessToken("impToken")).thenReturn(sa);
         MultivaluedMapImpl multivaluedMap = new MultivaluedMapImpl();
         when(requestMock.getRequestHeaders()).thenReturn(multivaluedMap);
         authenticationFilterWithMock.filter(requestMock);

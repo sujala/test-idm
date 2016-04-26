@@ -29,7 +29,6 @@ import javax.ws.rs.core.Context;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.regex.*;
 import java.util.regex.Pattern;
 
 /**
@@ -131,13 +130,18 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             }
 
             final String authToken = request.getHeaderValue(AuthenticationService.AUTH_TOKEN_HEADER);
+
             /*
-             We only do checks here when authToken is provided. Underlying service implementations are expected to throw
-             exception if no auth token is provided and it's required.
+             We only do checks here when authToken is provided and results in a found auth token (UUID exists, AE can be
+             decrypted).
+
+             Underlying service implementations are expected to throw exception if no auth token is provided (or found given provided token string)
+             and it's required.
+
              //TODO: Move the no token error check up to this filter after verifying that all services except authenticate require an auth token to be provided
              */
             if (!StringUtils.isEmpty(authToken)) {
-                ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken); //throws NotFoundException if not found
+                ScopeAccess callerToken = scopeAccessService.getScopeAccessByAccessToken(authToken); //throws NotFoundException token string is empty/null
                 ScopeAccess effectiveToken = callerToken; //assume effective token will be same as caller.
 
                 //PWD-RESET tokens are only allowed to be used for the password reset call
@@ -158,17 +162,20 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                     request.getRequestHeaders().putSingle(AuthenticationService.AUTH_TOKEN_HEADER.toLowerCase(), impersonatedTokenStr);
                     logger.info("Impersonating token {} with token {} ", authToken, impersonatedTokenStr);
 
-                    //replace effective token with the token being impersonated
-                    effectiveToken = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenStr); //throws NotFoundException if not found
+                    /*
+                    replace effective token with the token being impersonated.
+                     */
+                    effectiveToken = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenStr); //
                 }
 
                 //set the tokens in the security context
                 securityContext.setCallerToken(callerToken);
                 securityContext.setEffectiveCallerToken(effectiveToken);
 
-                if (scopeAccessService.isSetupMfaScopedToken(effectiveToken) &&
-                        !path.contains(MULTI_FACTOR_PATH_PART)) {
-                    throwForbiddenErrorForMfaScopedToken();
+                if (effectiveToken != null && ((scopeAccessService.isSetupMfaScopedToken(effectiveToken) &&
+                        !path.contains(MULTI_FACTOR_PATH_PART)) || TokenScopeEnum.fromScope(effectiveToken.getScope()) == TokenScopeEnum.MFA_SESSION_ID)) {
+                    //mfa session scope tokens can only be used to auth w/ passcode. SETUP-MFA, only to set up MFA
+                    throwForbiddenErrorForScopedToken();
                 }
 
                 //authorize MFA calls - except for devops services
@@ -291,7 +298,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         } else if (isDomainMfaTargetCall(requestPath)) {
             if (scopeAccessService.isSetupMfaScopedToken(effectiveToken)) {
                 //setupmfa token only allows mfa calls with {userid} in path
-                throwForbiddenErrorForMfaScopedToken();
+                throwForbiddenErrorForScopedToken();
             }
         } else if (isUserMfaTargetCall(requestPath)) {
             //it's a user specific service call
@@ -300,19 +307,19 @@ public class AuthenticationFilter implements ContainerRequestFilter {
             if (scopeAccessService.isSetupMfaScopedToken(effectiveToken)) {
                 if (endUser == null || !(endUser instanceof User)) {
                     //only applicable against existing provisioned users
-                    throwForbiddenErrorForMfaScopedToken();
+                    throwForbiddenErrorForScopedToken();
                 }
 
                 if (!(effectiveToken instanceof UserScopeAccess)) {
                     //really an invalid state
-                    throwForbiddenErrorForMfaScopedToken();
+                    throwForbiddenErrorForScopedToken();
                 }
 
                 User user = (User)endUser;
                 UserScopeAccess userScopeAccess = (UserScopeAccess)effectiveToken;
 
                 if (user.isMultiFactorEnabled() || !user.getId().equalsIgnoreCase(userScopeAccess.getUserRsId())) {
-                    throwForbiddenErrorForMfaScopedToken();
+                    throwForbiddenErrorForScopedToken();
                 }
             }
 
@@ -386,7 +393,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         return false;
     }
 
-    private void throwForbiddenErrorForMfaScopedToken() {
+    private void throwForbiddenErrorForScopedToken() {
         String errMsg = "The scope of this token does not allow access to this resource";
         logger.warn(errMsg);
         throw new ForbiddenException(errMsg);

@@ -90,7 +90,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ID_MISMATCH = "Id in url does not match id in body.";
     public static final String USER_AND_USER_ID_MIS_MATCHED = "User and UserId mis-matched";
     public static final String RBAC = "rbac";
-    public static final String SETUP_MFA_SCOPE_FORBIDDEN = "SETUP-MFA SCOPE not supported";
+    public static final String FORBIDDEN_DUE_TO_SCOPE = "The scope of this token does not allow access to this resource";
     public static final String MUST_SETUP_MFA = "User must setup multi-factor";
 
     public static final String FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED = "feature.return.full.service.catalog.when.mosso.tenant.specified.in.v2.auth";
@@ -699,7 +699,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean callerIsSubUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
 
             // Just identity admins and service admins can update 'tokenFormat', but only when ae tokens are enabled
-            if (!(callerIsIdentityAdmin || callerIsServiceAdmin) || !identityConfig.getStaticConfig().getFeatureAETokensDecrypt()) {
+            if (!(callerIsIdentityAdmin || callerIsServiceAdmin) || !identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
                 user.setTokenFormat(null);
             }
 
@@ -1089,7 +1089,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if(domain != null) {
                 // Scoped tokens not supported here
                 if (authenticationRequest.getScope() != null) {
-                    throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+                    throw new ForbiddenException(FORBIDDEN_DUE_TO_SCOPE);
                 }
 
                 AuthenticateResponse auth = authenticateFederatedDomain(authenticationRequest, domain);
@@ -1099,7 +1099,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (authenticationRequest.getCredential() != null && authenticationRequest.getCredential().getValue() instanceof PasscodeCredentials) {
                 // Scoped tokens not supported here
                 if (authenticationRequest.getScope() != null) {
-                    throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+                    throw new ForbiddenException(FORBIDDEN_DUE_TO_SCOPE);
                 }
 
                 //performing 2 factor auth. User must supply session-id header or request is invalid
@@ -1117,7 +1117,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             else if (authenticationRequest.getToken() != null) {
                 // Scoped tokens not supported here
                 if (authenticationRequest.getScope() != null) {
-                    throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+                    throw new ForbiddenException(FORBIDDEN_DUE_TO_SCOPE);
                 }
 
                 authResponseTuple = authWithToken.authenticate(authenticationRequest);
@@ -1140,7 +1140,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (canUseMfaWithCredential && ((User)authResult.getUser()).isMultiFactorEnabled()) {
                     // Scoped tokens not supported here
                     if (authenticationRequest.getScope() != null) {
-                        throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+                        throw new ForbiddenException(FORBIDDEN_DUE_TO_SCOPE);
                     }
 
                     //only perform MFA challenge when MFA is enabled, the user has mfa enabled, and user is using a credential that is protected by mfa (password for now)
@@ -4207,12 +4207,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         // The User CAN NOT already be Multi-Factor Enabled
         if (user.isMultiFactorEnabled()) {
-            throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+            throw new ForbiddenException(FORBIDDEN_DUE_TO_SCOPE);
         }
 
         // The User CAN NOT have a Multi-Factor Enforcement level of OPTIONAL
         if (GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equalsIgnoreCase(user.getUserMultiFactorEnforcementLevelIfNullWillReturnDefault())) {
-            throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+            throw new ForbiddenException(FORBIDDEN_DUE_TO_SCOPE);
         }
 
         // If a User has a Multi-Factor Enforcement level of DEFAULT then the user's
@@ -4222,7 +4222,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Domain domain = domainService.getDomain(user.getDomainId());
 
             if (domain != null && GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL.equalsIgnoreCase(domain.getDomainMultiFactorEnforcementLevelIfNullWillReturnOptional())) {
-                throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
+                throw new ForbiddenException(FORBIDDEN_DUE_TO_SCOPE);
             }
         }
     }

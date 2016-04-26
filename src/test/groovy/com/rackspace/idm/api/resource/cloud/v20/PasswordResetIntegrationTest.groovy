@@ -18,9 +18,6 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-
-
 class PasswordResetIntegrationTest extends RootIntegrationTest {
 
     @Autowired
@@ -32,28 +29,10 @@ class PasswordResetIntegrationTest extends RootIntegrationTest {
     @Autowired
     IdentityUserService identityUserService
 
-    @Shared def wiserWrapper
-
-    def setupSpec() {
-        //start wiser server before grizzly so the static email port config properties can be updated
-        wiserWrapper = WiserWrapper.startWiser(10025)
-        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
-        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
-
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml") //to pick up wiser changes
-    }
-
-    def cleanupSpec() {
-        wiserWrapper.wiserServer.stop()
-    }
-
-    def setup() {
-        wiserWrapper.wiserServer.getMessages().clear()
-    }
-
     def cleanup() {
         reloadableConfiguration.reset()
         staticIdmConfiguration.reset()
+        clearEmailServerMessages()
     }
 
     @Unroll

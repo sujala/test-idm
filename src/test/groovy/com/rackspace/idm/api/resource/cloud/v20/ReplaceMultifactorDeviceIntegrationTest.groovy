@@ -9,15 +9,8 @@ import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.core.io.ClassPathResource
-import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
 
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-
-
-@ContextConfiguration(locations = ["classpath:app-config.xml"
-        , "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
@@ -29,14 +22,6 @@ class ReplaceMultifactorDeviceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     private IdentityUserService userService
-
-    @Override
-    public void doSetupSpec() {
-        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
-        resource.exists()
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
-    }
 
     public void setup() {
         utils.resetServiceAdminToken()

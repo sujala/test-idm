@@ -27,6 +27,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.apache.http.client.utils.URLEncodedUtils
 import org.apache.log4j.Logger
 import org.opensaml.saml2.core.LogoutResponse
+import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
@@ -46,6 +47,7 @@ import testHelpers.saml.SamlFactory
 
 import javax.annotation.PostConstruct
 import javax.ws.rs.core.MediaType
+import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
@@ -838,6 +840,14 @@ class Cloud20Utils {
     def updateMultiFactor(token, userId, MultiFactor settings) {
         def response = methods.updateMultiFactorSettings(token, userId, settings)
         assert (response.status == HttpStatus.SC_NO_CONTENT)
+        if (settings.isEnabled()) {
+            /*
+            put this in here because when enable MFA, all PWD based tokens are disabled. Due to only second level precision,
+            any MFA sessionId's generated as restricted AE tokens within the same second would be considered invalid. So sleep
+             till the next second
+             */
+            System.sleep(1001-new DateTime().getMillisOfSecond())
+        }
     }
 
     def updateMultiFactorDomainSettings(token, domainId, MultiFactorDomain settings) {
@@ -922,6 +932,10 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
         response.getEntity(EndpointList).value
 
+    }
+
+    def extractSessionIdFromFirstWwwAuthenticateHeader(MultivaluedMap<String, String> headers) {
+        return extractSessionIdFromWwwAuthenticateHeader(headers.getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE));
     }
 
     def extractSessionIdFromWwwAuthenticateHeader(String headerValue) {

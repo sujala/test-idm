@@ -50,13 +50,10 @@ public class RepositoryKeyCzarCrypterLocator implements CacheableKeyCzarCrypterL
 
     @PostConstruct
     public void init() {
-        //only load (and fail if can't load) keys on startup if AE is enabled
-        if (identityConfig.getStaticConfig().getFeatureAETokensDecrypt()) {
-            resetCache(); //load the cache with the keys on node start
-            if (memoizedCrypterCache == null) {
-                //if the cache can't be loaded, throw a hard error. The node must not start if we can't load the keys
-                throw new CrypterCacheCreationException("Error initializing Crypter. Please see error logs for more information");
-            }
+        resetCache(); //load the cache with the keys on node start
+        if (memoizedCrypterCache == null) {
+            //if the cache can't be loaded, throw a hard error. The node must not start if we can't load the keys
+            throw new CrypterCacheCreationException("Error initializing Crypter. Please see error logs for more information");
         }
     }
 

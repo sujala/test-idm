@@ -1,11 +1,14 @@
 package com.rackspace.idm.domain.security.tokenproviders.globalauth;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
+import com.rackspace.idm.domain.security.WebSafeTokenCoder;
 import com.rackspace.idm.domain.security.encrypters.AuthenticatedMessageProvider;
 import com.rackspace.idm.domain.security.tokenproviders.BaseAETokenProvider;
 import com.rackspace.idm.domain.security.tokenproviders.TokenDataPacker;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +29,9 @@ public class GlobalAuthTokenProvider extends BaseAETokenProvider {
 
     @Autowired
     private AuthenticatedMessageProvider authenticatedMessageProvider;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Override
     public byte getTokenScheme() {
@@ -54,13 +60,38 @@ public class GlobalAuthTokenProvider extends BaseAETokenProvider {
         final boolean isRackerToken = scopeAccess instanceof RackerScopeAccess;
         
         // AE service supports
-        // - federated and provisioned user "regular" tokens
+        // - federated and provisioned user "unrestricted" tokens
+        // - provision user "restricted" and "un tokens
         // - provisioned users & rackers creating "impersonation" tokens (against fed/provisioned users)
         // - racker users creating "racker" tokens
+
+        if (!identityConfig.getReloadableConfig().getFeatureAETokensEncrypt() && TokenScopeEnum.fromScope(scopeAccess.getScope()) != TokenScopeEnum.MFA_SESSION_ID) {
+            return false; //if ae tokens are disabled then only support mfa session ids
+        }
 
         return (isProvisionedUser && (isImpersonationToken || isUserToken))
                 || (isFederatedUser && isUserToken)
                 || (isRackerUser && (isImpersonationToken || isRackerToken));
+    }
+
+    @Override
+    public ScopeAccess unmarshallToken(String webSafeToken) {
+        ScopeAccess sa;
+        if (!identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
+            //decrypting all ae tokens except mfa session ids is disabled, so catch any exceptions
+            try {
+                sa = super.unmarshallToken(webSafeToken);
+                if (TokenScopeEnum.fromScope(sa.getScope()) != TokenScopeEnum.MFA_SESSION_ID) {
+                    sa = null;
+                }
+            } catch (Exception ex) {
+                LOG.warn("Decrypting potential AE token when AE tokens are disabled through exception. Returning null.", ex);
+                sa =  null;
+            }
+        } else {
+            sa =  super.unmarshallToken(webSafeToken);
+        }
+        return sa;
     }
 
     @Override

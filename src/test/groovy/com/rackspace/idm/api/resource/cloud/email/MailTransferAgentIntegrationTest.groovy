@@ -19,14 +19,10 @@ import javax.mail.internet.MimeMessage
  * This test dirties the context by modifying the port the MailTransferAgentClient will send mail to in order to match that
  * used by wiser
  */
-@DirtiesContext
-@ContextConfiguration(locations = "classpath:app-config.xml")
 class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(MailTransferAgentIntegrationTest.class);
 
     @Autowired MailTransferAgentClient client
-
-    @Shared def WiserWrapper wiserWrapper = WiserWrapper.startWiser(10030)
 
     @Autowired
     JavaMailSenderImpl javaMailSender;
@@ -35,22 +31,17 @@ class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
     MailTransferAgentClient mailTransferAgentClient;
 
     def setupSpec() {
-        //start up wiser and set the properties BEFORE making first cloud20 call (which starts grizzly)
-        logger.warn("Wiser started on " + wiserWrapper.getPort())
-        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
-        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, false)
     }
 
     def cleanupSpec() {
-        wiserWrapper.wiserServer.stop()
         reloadableConfiguration.reset()
         staticIdmConfiguration.reset()
     }
 
     def setup() {
         mailTransferAgentClient.setSession(Session.getInstance(mailTransferAgentClient.getSessionProperties()))
-        wiserWrapper.wiserServer.getMessages().clear()
+        clearEmailServerMessages()
     }
 
     def "Successfully send locked out email using legacy embedded framework"() {

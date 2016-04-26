@@ -77,6 +77,14 @@ public interface ScopeAccessService {
 
     ScopeAccess getScopeAccessByAccessToken(String accessToken);
 
+    /**
+     * Converts the token into a ScopeAccess object, returning null if the provided tokenString is invalid, doesn't resolve
+     * to a real identity token, is expire, or is revoked.
+     * @param tokenString
+     * @return
+     */
+    ScopeAccess unmarshallScopeAccess(String tokenString);
+
     ScopeAccess getScopeAccessForUser(User user);
 
     Iterable<ScopeAccess> getScopeAccessListByUserId(String userId);

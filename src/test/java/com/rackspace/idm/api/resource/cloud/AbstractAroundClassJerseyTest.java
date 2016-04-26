@@ -8,7 +8,6 @@ import com.sun.jersey.spi.spring.container.servlet.SpringServlet;
 import com.sun.jersey.test.framework.AppDescriptor;
 import com.sun.jersey.test.framework.JerseyTest;
 import com.sun.jersey.test.framework.WebAppDescriptor;
-import org.junit.AfterClass;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
@@ -32,7 +31,6 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
 
     private static JerseyTest jerseyTest;
     private static WebResource resource;
-
 
     static synchronized public boolean isGrizzlyStarted() {
         return jerseyTest != null;
@@ -136,10 +134,8 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
         if (isGrizzlyStarted()) {
             stopGrizzly();
         }
-        return startGrizzly(contextConfigLocation, clientConfigProviderClasses);
+        return ensureGrizzlyStarted(contextConfigLocation, clientConfigProviderClasses);
     }
-
-
 
     static synchronized public void stopGrizzly() throws Exception {
         if (jerseyTest != null) {

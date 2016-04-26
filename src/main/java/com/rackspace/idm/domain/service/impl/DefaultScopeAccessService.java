@@ -562,6 +562,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     }
 
     @Override
+    public ScopeAccess unmarshallScopeAccess(String accessToken) {
+        if (accessToken == null || accessToken.length() < 1) {
+            return null;
+        }
+        final ScopeAccess scopeAccess = this.scopeAccessDao.getScopeAccessByAccessToken(accessToken);
+        return scopeAccess;
+    }
+
+    @Override
     public ScopeAccess getScopeAccessForUser(User user) {
         logger.debug("Getting ScopeAccess by user id {}", user);
         if (user == null) {
@@ -818,6 +827,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             int expirationSeconds;
             if (tokenScope == TokenScopeEnum.PWD_RESET) {
                 expirationSeconds = identityConfig.getReloadableConfig().getForgotPasswordTokenLifetime();
+            } else if (tokenScope == TokenScopeEnum.MFA_SESSION_ID) {
+                expirationSeconds = identityConfig.getReloadableConfig().getMfaSessionIdLifetime() * 60; //prop is in minutes; need in seconds
             } else {
                 expirationSeconds = identityConfig.getStaticConfig().getSetupMfaScopedTokenExpirationSeconds();
             }

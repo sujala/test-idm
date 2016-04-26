@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20.multifactor;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.exception.MultiFactorInitializationException;
 import com.rackspace.idm.exception.MultiFactorSessionIdEncryptionException;
 import com.rackspace.idm.exception.MultiFactorSessionIdFormatException;
@@ -19,6 +20,10 @@ import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * @deprecated - This is the legacy SessionId generation mechanism to be replaced with MFA-SESSION-ID AE Restricted token
+ */
+@Deprecated
 @Component
 public class EncryptedSessionIdReaderWriter implements SessionIdReaderWriter {
     public static final DateTimeFormatter RFC822DATEFORMAT = DateTimeFormat.forPattern("EEE', 'dd' 'MMM' 'yyyy' 'HH:mm:ss' 'Z").withLocale(Locale.US).withZone(DateTimeZone.UTC);
@@ -33,7 +38,7 @@ public class EncryptedSessionIdReaderWriter implements SessionIdReaderWriter {
     private List<SessionIdVersion> versions;
 
     @Autowired
-    private Configuration config;
+    IdentityConfig identityConfig;
 
     @Override
     public SessionId readEncoded(String encodedFormat) {
@@ -112,7 +117,7 @@ public class EncryptedSessionIdReaderWriter implements SessionIdReaderWriter {
 
     private Crypter initCrypter() {
         try {
-            String keyLocation = config.getString(MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT);
+            String keyLocation = identityConfig.getStaticConfig().getMfaKeyLocation();
             try {
                 keyLocation = ResourceUtils.getURL(keyLocation).getPath();
             } catch (FileNotFoundException e) {

@@ -1,8 +1,13 @@
 package testHelpers;
 
+import com.rackspace.idm.Constants;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import lombok.Delegate;
 import org.apache.commons.configuration.Configuration;
+import org.springframework.core.io.ClassPathResource;
+
+import java.io.IOException;
 
 /**
 A JVM singleton wrapper around the property file configuration used in the IDM app. By using a JVM singleton we ensure
@@ -34,5 +39,18 @@ public final class SingletonConfiguration implements Configuration {
      */
     public synchronized void reset() {
         idmPropertiesConfig = pfConfig.getConfig();
+
+        //Regardless of setting, tests require the Classpath MFA keys (for legacy)
+        try {
+            ClassPathResource resource = new ClassPathResource(Constants.TEST_KEYS_LOCATION);
+            String pathLocation = resource.getFile().getAbsolutePath();
+            idmPropertiesConfig.setProperty(IdentityConfig.MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME, pathLocation);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        //set the wiser email info
+        idmPropertiesConfig.setProperty(IdentityConfig.EMAIL_HOST, SingletonWiserEmailServer.getInstance().getHost());
+        idmPropertiesConfig.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(SingletonWiserEmailServer.getInstance().getPort()));
     }
 }

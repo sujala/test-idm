@@ -330,7 +330,7 @@ public class DefaultUserService implements UserService {
         }
 
         //only identity admins and service admins can set the user's token format, but only if ae tokens are enabled (decryptable)
-        if (!(hasIdentityAdminRole || hasServiceAdminRole) || !identityConfig.getStaticConfig().getFeatureAETokensDecrypt()) {
+        if (!(hasIdentityAdminRole || hasServiceAdminRole) || !identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
             user.setTokenFormat(null);
         }
 

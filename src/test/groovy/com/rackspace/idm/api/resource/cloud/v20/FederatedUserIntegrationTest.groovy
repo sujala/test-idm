@@ -384,7 +384,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "test response age validation for fedreation: secToAddToAge == #secToAddToAge, expectedResponse == #expectedResponse"() {
+    def "test response age validation for federation: secToAddToAge == #secToAddToAge, expectedResponse == #expectedResponse"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
@@ -1431,9 +1431,21 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdmin2, users2
         (userAdmin2, users2) = utils.createUserAdminWithTenants(domainId2)
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, 5000, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(sharedIdentityProvider.issuer, username, 5000, domainId, null, email, samlProducerForSharedIdp);
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        def AuthenticateResponse authResponse
+
+        def resp = samlResponse.getEntity(AuthenticateResponse).value
+        if (resp instanceof AuthenticateResponse) {
+            authResponse = (AuthenticateResponse) resp
+        } else {
+            //bad request?
+            if (resp instanceof IdentityFault) {
+                LOG.error(String.format("Setup SAML Authentication failed with %s", ((IdentityFault)resp).getMessage()));
+                throw new RuntimeException(String.format("Setup SAML Authentication failed with %s", ((IdentityFault)resp).getMessage()))
+            }
+        }
+
         def samlToken = authResponse.token.id
 
         when: "try to update a different user"

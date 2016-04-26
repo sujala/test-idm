@@ -132,8 +132,4 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
     def String getNormalizedRandomString() {
         return UUID.randomUUID().toString().replaceAll('-', "")
     }
-
-
-
-
 }

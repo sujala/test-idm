@@ -250,11 +250,21 @@ public class IdentityConfig {
     public static final String FEATURE_INCLUDE_USER_ATTR_PREFIXES_PROP = "feature.include.user.attr.prefixes";
     public static final boolean FEATURE_INCLUDE_USER_ATTR_PREFIXES_DEFAULT = false;
 
+    public static final String FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP = "feature.issue.restricted.token.session.ids";
+    public static final boolean FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_DEFAULT = false;
+
+    public static final String SESSION_ID_LIFETIME_PROP = "multifactor.sessionid.lifetime";
+    public static final Integer SESSION_ID_LIFETIME_DEFAULT = 5;
+
     /**
      * Required static prop
      */
     public static final String ROLE_ID_RACKER_PROP = "cloudAuth.rackerRoleRsId";
     public static final String CLIENT_ID_FOUNDATION_PROP = "idm.clientId";
+
+    public static final String MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME = "multifactor.key.location";
+    public static final String MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT = "/etc/idm/config/keys";
+
 
     /**
      * SQL config properties
@@ -417,6 +427,11 @@ public class IdentityConfig {
         defaults.put(FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_DEFAULT);
 
         defaults.put(FEATURE_INCLUDE_USER_ATTR_PREFIXES_PROP, FEATURE_INCLUDE_USER_ATTR_PREFIXES_DEFAULT);
+
+        defaults.put(FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_DEFAULT);
+        defaults.put(SESSION_ID_LIFETIME_PROP, SESSION_ID_LIFETIME_DEFAULT);
+
+        defaults.put(MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT);
 
         return defaults;
     }
@@ -863,22 +878,6 @@ public class IdentityConfig {
             return getStringSafely(staticConfiguration, KEYCZAR_DN_CONFIG);
         }
 
-        @IdmProp(key = FEATURE_AE_TOKENS_ENCRYPT)
-        public boolean getFeatureAETokensEncrypt() {
-            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                return FEATURE_AE_TOKENS_ENCRYPT_SQL_OVERRIDE;
-            }
-            return getBooleanSafely(staticConfiguration, FEATURE_AE_TOKENS_ENCRYPT);
-        }
-
-        @IdmProp(key = FEATURE_AE_TOKENS_DECRYPT)
-        public boolean getFeatureAETokensDecrypt() {
-            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                return FEATURE_AE_TOKENS_DECRYPT_SQL_OVERRIDE;
-            }
-            return getFeatureAETokensEncrypt() || staticConfiguration.getBoolean(FEATURE_AE_TOKENS_DECRYPT);
-        }
-
         @IdmProp(key = FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP)
         public boolean allowFederatedImpersonation() {
             return getBooleanSafely(staticConfiguration, FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP);
@@ -1028,6 +1027,16 @@ public class IdentityConfig {
         @IdmProp(key = SQL_MIN_IDLE_PROP, versionAdded = "3.0.1")
         public int getSqlMinIdle() {
             return getIntSafely(staticConfiguration, SQL_MIN_IDLE_PROP);
+        }
+
+        /**
+         * @deprecated
+         * @return
+         */
+        @Deprecated
+        @IdmProp(key = MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME, versionAdded = "2.5.0", description="The location of the legacy encryption keys")
+        public String getMfaKeyLocation() {
+            return getStringSafely(staticConfiguration, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME);
         }
     }
 
@@ -1376,16 +1385,36 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_INCLUDE_USER_ATTR_PREFIXES_PROP);
         }
 
+        @IdmProp(key = FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, versionAdded = "3.4.0", description = "Whether or not to issued restricted AE Tokens w/ a sessionid scope for MFA X-Session-Ids")
+        public boolean issueRestrictedTokenSessionIds() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP);
+        }
+
+        @IdmProp(key = SESSION_ID_LIFETIME_PROP, versionAdded = "3.4.0", description = "Lifetime, in minutes, of MFA sessionIds. Was added as static prop in 2.2.0, but switched from to reloadable prop in version 3.4.0")
+        public int getMfaSessionIdLifetime() {
+            return getIntSafely(reloadableConfiguration, SESSION_ID_LIFETIME_PROP);
+        }
+
+        @IdmProp(key = FEATURE_AE_TOKENS_ENCRYPT, versionAdded = "3.4.0", description = "Whether or not new AE Tokens can be issued. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0")
+        public boolean getFeatureAETokensEncrypt() {
+            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                return FEATURE_AE_TOKENS_ENCRYPT_SQL_OVERRIDE;
+            }
+            return getBooleanSafely(reloadableConfiguration, FEATURE_AE_TOKENS_ENCRYPT);
+        }
+
+        @IdmProp(key = FEATURE_AE_TOKENS_DECRYPT, versionAdded = "3.4.0", description = "Whether or not existing AE Tokens can be received. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0")
+        public boolean getFeatureAETokensDecrypt() {
+            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
+                return FEATURE_AE_TOKENS_DECRYPT_SQL_OVERRIDE;
+            }
+            return getFeatureAETokensEncrypt() || reloadableConfiguration.getBoolean(FEATURE_AE_TOKENS_DECRYPT);
+        }
     }
 
     @Deprecated
     public String getGaUsername() {
         return getStaticConfig().getGaUsername();
-    }
-
-    @Deprecated
-    public String getEmailFromAddress() {
-        return getReloadableConfig().getEmailFromAddress();
     }
 
     @Deprecated
@@ -1401,16 +1430,6 @@ public class IdentityConfig {
     @Deprecated
     public String getEmailMFADisabledSubject() {
         return getStaticConfig().getEmailMFADisabledSubject();
-    }
-
-    @Deprecated
-    public String getEmailHost() {
-        return getStaticConfig().getEmailHost();
-    }
-
-    @Deprecated
-    public boolean isSendToOnlyRackspaceAddressesEnabled() {
-        return getStaticConfig().isSendToOnlyRackspaceAddressesEnabled();
     }
 
     @Deprecated
@@ -1466,16 +1485,6 @@ public class IdentityConfig {
     @Deprecated
     public String getKeyCzarDN() {
         return getStaticConfig().getKeyCzarDN();
-    }
-
-    @Deprecated
-    public boolean getFeatureAETokensEncrypt() {
-        return getStaticConfig().getFeatureAETokensEncrypt();
-    }
-
-    @Deprecated
-    public boolean getFeatureAETokensDecrypt() {
-        return getStaticConfig().getFeatureAETokensDecrypt();
     }
 
     @Deprecated

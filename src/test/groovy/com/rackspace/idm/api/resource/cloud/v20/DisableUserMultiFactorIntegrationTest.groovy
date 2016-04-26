@@ -16,17 +16,11 @@ import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.core.io.ClassPathResource
-import org.springframework.test.context.ContextConfiguration
-
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 
 /**
  * Tests to verify that when a user is disabled, they are not able to
  * conduct multi-factor functions on their account
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml",
-        "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class DisableUserMultiFactorIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired BasicMultiFactorService multiFactorService;
@@ -42,14 +36,6 @@ class DisableUserMultiFactorIntegrationTest extends RootConcurrentIntegrationTes
     @Autowired UserManagement<DuoUser, DuoPhone> userManagement
 
     @Autowired UserService userService
-
-    @Override
-    public void doSetupSpec() {
-        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
-        resource.exists()
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
-    }
 
     def "when a MFA user with a passcode is disabled, they cannot finish authN with the passcode"() {
         given:

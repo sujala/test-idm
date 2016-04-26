@@ -86,7 +86,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
 
         amProvider = new KeyCzarAuthenticatedMessageProvider()
         amProvider.keyCzarCrypterLocator = crypterLocator
-        amProvider.identityConfig = identityConfig
 
         //init global auth ae provider
         globalAuthTokenDataPacker = new MessagePackTokenDataPacker()
@@ -98,6 +97,7 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         globalAuthTokenProvider = new GlobalAuthTokenProvider()
         globalAuthTokenProvider.authenticatedMessageProvider = amProvider
         globalAuthTokenProvider.tokenDataPacker = globalAuthTokenDataPacker
+        globalAuthTokenProvider.identityConfig = identityConfig
 
         //init keystone ae provider
         keystoneAEMessagePackTokenDataPacker = new KeystoneAEMessagePackTokenDataPacker()

@@ -64,11 +64,12 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
 
     @Unroll
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
-    def "update user - setting token format on user only allowed if ae tokens disabled. Testing with ae tokens enabled: #ae_enabled"() {
+    def "update user - setting token format on user only allowed if ae tokens enabled. Testing with ae tokens enabled: #ae_enabled"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, ae_enabled ? "AE" : "UUID")
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, ae_enabled)
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, ae_enabled)
+        //set default token format to opposite of what will be setting user to
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, !ae_enabled ? "AE" : "UUID")
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, ae_enabled)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, ae_enabled)
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
 
@@ -89,6 +90,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
         staticIdmConfiguration.reset()
+        reloadableConfiguration.reset()
 
         where:
         ae_enabled  | _
@@ -100,9 +102,9 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "create user - setting token format on user creation only allowed if ae tokens enabled. Testing with ae tokens enabled: #ae_enabled"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, ae_enabled ? "AE" : "UUID")
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, ae_enabled)
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, ae_enabled)
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, !ae_enabled ? "AE" : "UUID")
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, ae_enabled)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, ae_enabled)
         utils.resetServiceAdminToken()
 
         def username = testUtils.getRandomUUID()
@@ -120,6 +122,7 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(user)
         staticIdmConfiguration.reset()
+        reloadableConfiguration.reset()
 
         where:
         ae_enabled  | _
@@ -578,56 +581,52 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         retrievedUser.tokenFormat = TokenFormatEnum.AE
         utils.updateUser(retrievedUser)
 
-        def aeTokenOriginal, aeToken, aeTokenValidateOriginal, aeTokenValidate, response
+        def aeTokenOriginal, uuidToken, aeTokenValidateOriginal, uuidTokenValidate, response
 
         when: "all features are enabled"
-        staticIdmConfiguration.setProperty('feature.ae.tokens.encrypt', 'true')
-        staticIdmConfiguration.setProperty('feature.ae.tokens.decrypt', 'true')
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, true)
         aeTokenOriginal = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
         aeTokenValidateOriginal = utils.validateToken(aeTokenOriginal.token.id)
 
         then: "should be bigger then 32 characters (UUID tokens)"
-        config.getFeatureAETokensEncrypt() == true
-        config.getFeatureAETokensDecrypt() == true
         aeTokenOriginal.token.id.length() > 32
         aeTokenValidateOriginal.token.id == aeTokenOriginal.token.id
 
-        when: "creation of tokens is disable (but reading is enable)"
-        staticIdmConfiguration.setProperty('feature.ae.tokens.encrypt', 'false')
-        aeToken = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
-        aeTokenValidate = utils.validateToken(aeToken.token.id)
+        when: "creation of ae tokens is disable (but reading is enable)"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, false)
+        uuidToken = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
+        uuidTokenValidate = utils.validateToken(uuidToken.token.id)
         aeTokenValidateOriginal = utils.validateToken(aeTokenOriginal.token.id)
 
-        then: "should be equal to 32 (UUID tokens) but it still decrypt the original one"
-        config.getFeatureAETokensEncrypt() == false
-        aeToken.token.id.length() == 32
-        aeTokenValidate.token.id == aeToken.token.id
+        then: "should be equal to 32 (UUID tokens) but can still validate the original one"
+        uuidToken.token.id.length() == 32
+        uuidTokenValidate.token.id == uuidToken.token.id
         aeTokenValidateOriginal.token.id == aeTokenOriginal.token.id
 
-        when: "creation and reading of tokens is disable"
-        staticIdmConfiguration.setProperty('feature.ae.tokens.decrypt', 'false')
-        aeToken = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
+        when: "creation and reading of ae tokens is disable"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, false)
+        uuidToken = utils.authenticateUser(userAdmin.username, DEFAULT_PASSWORD)
         utils.resetServiceAdminToken()
-        aeTokenValidate = utils.validateToken(aeToken.token.id)
+        uuidTokenValidate = utils.validateToken(uuidToken.token.id)
         response = methods.validateToken(utils.getServiceAdminToken(), aeTokenOriginal.token.id)
 
         then:
-        config.getFeatureAETokensDecrypt() == false
         response.status != SC_OK
-        aeToken.token.id.length() == 32
-        aeTokenValidate.token.id == aeToken.token.id
+        uuidToken.token.id.length() == 32
+        uuidTokenValidate.token.id == uuidToken.token.id
 
-        when: "creation is enable, reading is always enable"
-        staticIdmConfiguration.setProperty('feature.ae.tokens.encrypt', 'true')
-        staticIdmConfiguration.setProperty('feature.ae.tokens.decrypt', 'false')
+        when: "when creation is enabled, reading is always enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, false)
 
         then:
-        config.getFeatureAETokensEncrypt() == true
-        config.getFeatureAETokensDecrypt() == true
+        config.getReloadableConfig().getFeatureAETokensDecrypt()
 
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+        reloadableConfiguration.reset()
     }
 
 }

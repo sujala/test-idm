@@ -146,6 +146,7 @@
     <simpleType name="ScopeEnum">
         <restriction base="xsd:string">
             <enumeration value="SETUP-MFA"/>
+            <enumeration value="MFA-SESSION-ID"/>
         </restriction>
     </simpleType>
 
