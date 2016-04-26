@@ -406,10 +406,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             //if resolves as an unrevoked AE token must validate as "correct" restricted token for this use
             if (!(restrictedToken instanceof UserScopeAccess)) {
                 LOG.debug("Invalid sessionid. Not a user scope restricted token!");
-                throw new NotAuthenticatedException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+                throw new ForbiddenException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
             } else if (TokenScopeEnum.fromScope(restrictedToken.getScope()) != TokenScopeEnum.MFA_SESSION_ID) {
                 LOG.debug("Invalid sessionid. Not a MFA SessionId restricted token!");
-                throw new NotAuthenticatedException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+                throw new ForbiddenException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
             } else if (restrictedToken.isAccessTokenExpired()) {
                 LOG.debug("Invalid sessionid. Expired restricted token sessionid!");
                 throw new NotAuthenticatedException(INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG);

@@ -165,7 +165,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                     /*
                     replace effective token with the token being impersonated.
                      */
-                    effectiveToken = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenStr); //
+                    effectiveToken = scopeAccessService.getScopeAccessByAccessToken(impersonatedTokenStr);
                 }
 
                 //set the tokens in the security context

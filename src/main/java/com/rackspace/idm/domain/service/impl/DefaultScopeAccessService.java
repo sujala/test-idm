@@ -827,10 +827,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             int expirationSeconds;
             if (tokenScope == TokenScopeEnum.PWD_RESET) {
                 expirationSeconds = identityConfig.getReloadableConfig().getForgotPasswordTokenLifetime();
-            } else if (tokenScope == TokenScopeEnum.MFA_SESSION_ID) {
-                expirationSeconds = identityConfig.getReloadableConfig().getMfaSessionIdLifetime() * 60; //prop is in minutes; need in seconds
-            } else {
+            } else if (tokenScope == TokenScopeEnum.SETUP_MFA) {
                 expirationSeconds = identityConfig.getStaticConfig().getSetupMfaScopedTokenExpirationSeconds();
+            } else {
+                throw new UnsupportedOperationException(
+                        String.format("Token scope '%s' is not supported as a response to UserAuthenticationResult", tokenScope));
             }
 
             sa = (UserScopeAccess) addScopedScopeAccess(userAuthenticationResult.getUser(),

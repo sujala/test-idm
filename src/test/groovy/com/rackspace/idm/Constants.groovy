@@ -82,6 +82,5 @@ class Constants {
 
     public static String IDENTITY_SERVICE_ID = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
 
-    public static final String TEST_KEYS_LOCATION = "/com/rackspace/idm/api/resource/cloud/v20/keys";
-
+    public static final String TEST_KEYS_LOCATION = "/keys";
 }

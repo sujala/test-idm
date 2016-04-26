@@ -79,7 +79,7 @@ public interface ScopeAccessService {
 
     /**
      * Converts the token into a ScopeAccess object, returning null if the provided tokenString is invalid, doesn't resolve
-     * to a real identity token, is expire, or is revoked.
+     * to a real identity token, is expired, or is revoked.
      * @param tokenString
      * @return
      */
