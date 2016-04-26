@@ -1140,7 +1140,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         validateResponse.status == 200
 
         cleanup:
-        deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
     }

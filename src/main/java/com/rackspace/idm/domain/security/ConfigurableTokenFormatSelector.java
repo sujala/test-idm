@@ -27,7 +27,7 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
 
     @Override
     public TokenFormat formatForNewToken(BaseUser user) {
-        if (!identityConfig.getFeatureAETokensEncrypt()) {
+        if (!identityConfig.getReloadableConfig().getFeatureAETokensEncrypt()) {
             return TokenFormat.UUID;
         }
 
@@ -74,9 +74,12 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
 
     @Override
     public TokenFormat formatForExistingToken(String accessToken) {
-        if (!identityConfig.getFeatureAETokensDecrypt() || UUID_PATTERN.matcher(accessToken).matches()) {
+        if (UUID_PATTERN.matcher(accessToken).matches()) {
             return TokenFormat.UUID;
         } else {
+            /*
+            we now consider any token that doesn't match UUID format to be an AE token.
+             */
             return TokenFormat.AE;
         }
     }

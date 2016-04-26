@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.TokenScopeEnum;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.security.TokenFormatSelector;
@@ -24,14 +25,6 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
     public RouterScopeAccessRepository(AEScopeAccessDao aeScopeAccessDao, UUIDScopeAccessDao uuidScopeAccessDao) {
         this.aeScopeAccessDao = aeScopeAccessDao;
         this.uuidScopeAccessDao = uuidScopeAccessDao;
-    }
-
-    private ScopeAccessDao getRouteByUniqueIdAndScopeAccess(UniqueId object, ScopeAccess scopeAccess) {
-        if (aeScopeAccessDao.supportsCreatingTokenFor(object, scopeAccess)) {
-            return getRouteByUniqueId(object);
-        } else {
-            return uuidScopeAccessDao;
-        }
     }
 
     private ScopeAccessDao getRouteByUniqueId(UniqueId object) {
@@ -71,7 +64,17 @@ public class RouterScopeAccessRepository implements ScopeAccessDao {
 
     @Override
     public void addScopeAccess(UniqueId object, ScopeAccess scopeAccess) {
-        getRouteByUniqueIdAndScopeAccess(object, scopeAccess).addScopeAccess(object, scopeAccess);
+        ScopeAccessDao daoToUse;
+        if (TokenScopeEnum.fromScope(scopeAccess.getScope()) == TokenScopeEnum.MFA_SESSION_ID) {
+            //mfa sessionids ALWAYS use AE
+            daoToUse = aeScopeAccessDao;
+        } else if (aeScopeAccessDao.supportsCreatingTokenFor(object, scopeAccess)) {
+            //system supports ae tokens for specified types, but a user has overrides as to which type to use for that user
+            daoToUse = getRouteByUniqueId(object);
+        } else {
+            daoToUse = uuidScopeAccessDao;
+        }
+        daoToUse.addScopeAccess(object, scopeAccess);
     }
 
     @Override

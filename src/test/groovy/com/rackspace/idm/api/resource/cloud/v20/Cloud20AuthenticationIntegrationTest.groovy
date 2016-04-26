@@ -8,15 +8,9 @@ import org.apache.commons.httpclient.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Tenants
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ClassPathResource
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-
-@ContextConfiguration(locations = ["classpath:app-config.xml"
-        , "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
     @Autowired
@@ -25,16 +19,6 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
     @Shared def userAdmin, users
     @Shared def domainId
     @Shared def serviceAdminToken
-
-    /**
-     * Override the grizzly start because we want to add additional context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec() {
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
-    }
 
     def void setup() {
         domainId = utils.createDomain()

@@ -199,8 +199,8 @@ class IdentityConfigIntegrationTest  extends Specification {
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.LDAP)
     def "force AE token use for SQL profile"() {
         expect:
-        config.getStaticConfig().getFeatureAETokensDecrypt() == IdentityConfig.FEATURE_AE_TOKENS_DECRYPT_SQL_OVERRIDE
-        config.getStaticConfig().getFeatureAETokensEncrypt() == IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT_SQL_OVERRIDE
+        config.getReloadableConfig().getFeatureAETokensDecrypt() == IdentityConfig.FEATURE_AE_TOKENS_DECRYPT_SQL_OVERRIDE
+        config.getReloadableConfig().getFeatureAETokensEncrypt() == IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT_SQL_OVERRIDE
         config.getStaticConfig().getIdentityRackerTokenFormat() == IdentityConfig.IDENTITY_RACKER_TOKEN_SQL_OVERRIDE
         config.getStaticConfig().getIdentityProvisionedTokenFormat() == IdentityConfig.IDENTITY_PROVISIONED_TOKEN_SQL_OVERRIDE
         config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp() == IdentityConfig.IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE

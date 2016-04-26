@@ -25,6 +25,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.MultiFactorDevice;
+import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.exception.*;
@@ -76,8 +77,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
     public static final String NOT_AUTHORIZED_ERROR_MSG = "Not Authorized";
 
-    private static final Integer SESSION_ID_LIFETIME_DEFAULT = 5;
-    private static final String SESSION_ID_LIFETIME_PROP_NAME = "multifactor.sessionid.lifetime";
     private static final String SESSION_ID_PRIMARY_VERSION_PROP_NAME = "multifactor.primary.sessionid.version";
     public static final String MFA_ADDITIONAL_AUTH_CREDENTIALS_REQUIRED_MSG = "Additional authentication credentials required";
     public static final String HEADER_WWW_AUTHENTICATE = "WWW-Authenticate";
@@ -333,17 +332,29 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
 
         DateTime created = new DateTime();
-        DateTime expiration = created.plusMinutes(getSessionIdLifetime());
 
-        V1SessionId sessionId = new V1SessionId();
-        sessionId.setVersion(getPrimarySessionIdVersion());
-        sessionId.setUserId(user.getId());
-        sessionId.setCreatedDate(created);
-        sessionId.setExpirationDate(expiration);
-        sessionId.setAuthenticatedBy(alreadyAuthenticatedBy);
+        int sessionIdLifetimeMinutes = identityConfig.getReloadableConfig().getMfaSessionIdLifetime();
+        String encodedSessionId;
+        if (identityConfig.getReloadableConfig().issueRestrictedTokenSessionIds()) {
+            ScopeAccess sa = scopeAccessService.addScopedScopeAccess(user,
+                    identityConfig.getCloudAuthClientId(),
+                    alreadyAuthenticatedBy,
+                    sessionIdLifetimeMinutes * 60,
+                    TokenScopeEnum.MFA_SESSION_ID.getScope());
+            encodedSessionId = sa.getAccessTokenString();
+        } else {
+            DateTime expiration = created.plusMinutes(sessionIdLifetimeMinutes);
 
-        //generate the new sessionId
-        String encodedSessionId = sessionIdReaderWriter.writeEncoded(sessionId);
+            V1SessionId sessionId = new V1SessionId();
+            sessionId.setVersion(getPrimarySessionIdVersion());
+            sessionId.setUserId(user.getId());
+            sessionId.setCreatedDate(created);
+            sessionId.setExpirationDate(expiration);
+            sessionId.setAuthenticatedBy(alreadyAuthenticatedBy);
+
+            //generate the new sessionId
+            encodedSessionId = sessionIdReaderWriter.writeEncoded(sessionId);
+        }
 
         //now send the passcode (if SMS used)
         String secondFactor;
@@ -385,46 +396,80 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         PasscodeCredentials passcodeCredentials = (PasscodeCredentials) credential;
 
         String passcode = passcodeCredentials.getPasscode();
-        SessionId sessionId;
 
-        try {
-            sessionId = sessionIdReaderWriter.readEncoded(encodedSessionId);
+        String userId;
+        List<String> authenticatedBy;
+
+        //first try to decode as an AE token. If fails, try session id
+        ScopeAccess restrictedToken = scopeAccessService.unmarshallScopeAccess(encodedSessionId);
+        if (restrictedToken != null) {
+            //if resolves as an unrevoked AE token must validate as "correct" restricted token for this use
+            if (!(restrictedToken instanceof UserScopeAccess)) {
+                LOG.debug("Invalid sessionid. Not a user scope restricted token!");
+                throw new ForbiddenException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+            } else if (TokenScopeEnum.fromScope(restrictedToken.getScope()) != TokenScopeEnum.MFA_SESSION_ID) {
+                LOG.debug("Invalid sessionid. Not a MFA SessionId restricted token!");
+                throw new ForbiddenException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+            } else if (restrictedToken.isAccessTokenExpired()) {
+                LOG.debug("Invalid sessionid. Expired restricted token sessionid!");
+                throw new NotAuthenticatedException(INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG);
+            }
+
+            //is valid restricted token.
+            UserScopeAccess token = (UserScopeAccess)restrictedToken;
+            authenticatedBy = restrictedToken.getAuthenticatedBy();
+            userId = token.getIssuedToUserId();
         }
-        catch (Exception ex) {
-            LOG.info("Invalid sessionId provided", ex);
-            throw new NotAuthenticatedException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+        else {
+            /*
+            if session id did not resolve to unrevoked AE token, try to resolve as legacy sessionId. A
+            sessionId could be a revoked token, at which point we'd try to decode as sessionId - which would fail
+             */
+            SessionId sessionId;
+            try {
+                sessionId = sessionIdReaderWriter.readEncoded(encodedSessionId);
+            }
+            catch (Exception ex) {
+                LOG.debug("Invalid sessionId", ex);
+                throw new NotAuthenticatedException(INVALID_CREDENTIALS_GENERIC_ERROR_MSG);
+            }
+            if (sessionId.getExpirationDate() == null || sessionId.getExpirationDate().isBefore(new DateTime())) {
+                throw new NotAuthenticatedException(INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG);
+            }
+
+            //is valid legacy sessionId
+            authenticatedBy = sessionId.getAuthenticatedBy();
+            userId = sessionId.getUserId();
         }
 
-        if (sessionId.getExpirationDate() == null || sessionId.getExpirationDate().isBefore(new DateTime())) {
-            throw new NotAuthenticatedException(INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG);
-        }
+        LOG.debug("Session ID Validated");
 
         //verify user is valid
-        User user = userService.getUserById(sessionId.getUserId());
+        User user = userService.getUserById(userId);
         userService.validateUserIsEnabled(user);
 
         //TODO: FIXME: pass the user not the ID
-        MfaAuthenticationResponse response = multiFactorService.verifyPasscode(sessionId.getUserId(), passcode);
-        Audit mfaAudit = Audit.authUser(String.format("User(rsId=%s):(PASSCODE)", sessionId.getUserId()));
+        MfaAuthenticationResponse response = multiFactorService.verifyPasscode(userId, passcode);
+        Audit mfaAudit = Audit.authUser(String.format("User(rsId=%s):(PASSCODE)", userId));
         if (response.getDecision() == MfaAuthenticationDecision.ALLOW) {
             mfaAudit.succeed();
-            return createSuccessfulSecondFactorResponse(user, response, sessionId);
+            return createSuccessfulSecondFactorResponse(user, response, authenticatedBy);
         } else {
             if (response.getDecisionReason() == MfaAuthenticationDecisionReason.LOCKEDOUT) {
                 emailClient.asyncSendMultiFactorLockedOutMessage(user);
             }
             //2-factor request denied. Determine appropriate exception/message for user
             mfaAudit.fail();
-            throw createFailedSecondFactorException(response, sessionId);
+            throw createFailedSecondFactorException(response, userId);
         }
     }
 
-    private AuthResponseTuple createSuccessfulSecondFactorResponse(User user, MfaAuthenticationResponse mfaResponse, SessionId sessionId) {
+    private AuthResponseTuple createSuccessfulSecondFactorResponse(User user, MfaAuthenticationResponse mfaResponse, List<String> authenticatedBy) {
         //return a token with the necessary authenticated by to reflect 2 factor authentication
         Set<String> authBySet = new HashSet<String>();
 
-        if (!CollectionUtils.isEmpty(sessionId.getAuthenticatedBy())) {
-            authBySet.addAll(sessionId.getAuthenticatedBy());
+        if (!CollectionUtils.isEmpty(authenticatedBy)) {
+            authBySet.addAll(authenticatedBy);
         }
 
         /*
@@ -451,10 +496,10 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     /**
      * Throws appropriately formatted exception that
      * @param mfaResponse
-     * @param sessionId
+     * @param userId
      * @return
      */
-    private RuntimeException createFailedSecondFactorException(MfaAuthenticationResponse mfaResponse, SessionId sessionId) {
+    private RuntimeException createFailedSecondFactorException(MfaAuthenticationResponse mfaResponse, String userId) {
         //2-factor request denied. Determine appropriate exception/message for user
         RuntimeException exceptionToThrow;
         switch (mfaResponse.getDecisionReason()) {
@@ -465,7 +510,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
                 exceptionToThrow = new ForbiddenException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
                 break;
             default:
-                String msg = String.format(NON_STANDARD_MFA_DENY_ERROR_MSG_FORMAT, sessionId.getUserId(), mfaResponse.getDecisionReason(), mfaResponse.getMessage());
+                String msg = String.format(NON_STANDARD_MFA_DENY_ERROR_MSG_FORMAT, userId, mfaResponse.getDecisionReason(), mfaResponse.getMessage());
                 LOG.error(msg);
                 exceptionToThrow = new MultiFactorDeniedException();
         }
@@ -852,10 +897,6 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
             throw new IllegalStateException(String.format("Configuration is missing property '%s'", SESSION_ID_PRIMARY_VERSION_PROP_NAME));
         }
         return version;
-    }
-
-    public int getSessionIdLifetime() {
-        return config.getInt(SESSION_ID_LIFETIME_PROP_NAME, SESSION_ID_LIFETIME_DEFAULT);
     }
 
     private Integer getValidSecs(Duration duration, boolean isSelfService) {

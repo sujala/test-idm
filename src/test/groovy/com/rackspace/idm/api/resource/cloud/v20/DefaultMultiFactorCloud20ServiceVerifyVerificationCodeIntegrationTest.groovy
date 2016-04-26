@@ -13,21 +13,15 @@ import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ClassPathResource
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
 /**
  * Tests the multifactor sendVerificationCode REST service
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml"
-        , "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired
@@ -41,23 +35,6 @@ class DefaultMultiFactorCloud20ServiceVerifyVerificationCodeIntegrationTest exte
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone
     OTPDevice responseOTP
     VerificationCode constantVerificationCode
-
-    /**
-     * Override the grizzly start because we want to add additional context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec() {
-        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
-        resource.exists()
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly()
-    }
 
     /**
      * Sets up a new user with a phone that has the verification code sent.

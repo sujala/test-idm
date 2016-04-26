@@ -17,19 +17,13 @@ import groovy.json.JsonSlurper
 import org.apache.http.client.utils.URLEncodedUtils
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ClassPathResource
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static com.rackspace.idm.domain.service.IdentityUserTypeEnum.*
 
-@ContextConfiguration(locations = ["classpath:app-config.xml"
-        , "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
@@ -41,25 +35,8 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
     @Autowired
     OTPHelper otpHelper
 
-    /**
-     * Override the grizzly start because we want to add additional context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec() {
-        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
-        resource.exists()
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
-    }
-
     public void setup() {
         utils.resetServiceAdminToken()
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly();
     }
 
     @Unroll

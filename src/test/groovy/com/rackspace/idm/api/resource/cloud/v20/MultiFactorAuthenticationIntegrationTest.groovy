@@ -1,33 +1,34 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter
+import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
+import com.rackspace.idm.domain.entity.TokenScopeEnum
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.util.OTPHelper
 import com.unboundid.util.Base32
 import org.apache.http.client.utils.URLEncodedUtils
+import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ClassPathResource
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
-
 /**
  * Tests verifying multifactor authentication. In lieu of using real Duo provider, which sends SMS messages, it subsitutes
- * a simulated mfa phone versificatino and authentication provider. It also modifies the config to use encryption keys for the sessionid located
+ * a simulated mfa phone verification and authentication provider. It also modifies the config to use encryption keys for the sessionid located
  * in the classpath.
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml"
-, "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired
@@ -42,6 +43,15 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
     @Autowired
     private OTPHelper otpHelper
 
+    @Autowired
+    private SessionIdReaderWriter sessionIdReaderWriter;
+
+    @Autowired
+    private ScopeAccessService scopeAccessService
+
+    @Autowired
+    private IdentityConfig identityConfig
+
     org.openstack.docs.identity.api.v2.User userAdmin
     String userAdminToken
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone
@@ -49,23 +59,6 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
     def constantVerificationCode = new VerificationCode().with {
         it.code = Constants.MFA_DEFAULT_PIN
         it
-    }
-
-    /**
-     * Override the grizzly start because we want to add additional context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec() {
-        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
-        resource.exists()
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly();
     }
 
     /**
@@ -83,6 +76,8 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
             if (multiFactorService.removeMultiFactorForUser(userAdmin.id))  //remove duo profile
             deleteUserQuietly(userAdmin)
         }
+        reloadableConfiguration.reset()
+        staticIdmConfiguration.reset()
     }
 
     /**
@@ -91,9 +86,9 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
      * @return
      */
     @Unroll
-    def "When successfully enable multifactor appropriate v1.0/v1.1/v2.0 api key auth behavior: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
+    def "When enable multifactor appropriate v1.0/v1.1/v2.0 api key auth behavior: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
-        setUpAndEnableMultiFactor(phone)
+        setUpAndEnableMultiFactor(factorType)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
 
         when: "try to auth via 1.0 with correct API key"
@@ -129,15 +124,11 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         auth20ResponseWrongApi.status == com.rackspace.identity.multifactor.util.HttpStatus.SC_UNAUTHORIZED
 
         where:
-        requestContentMediaType         | acceptMediaType                 | phone
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | true
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | true
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | false
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | false
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | false
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | false
+        requestContentMediaType         | acceptMediaType                 | factorType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | FactorTypeEnum.SMS
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.SMS
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | FactorTypeEnum.OTP
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.OTP
     }
 
     /**
@@ -146,9 +137,9 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
      * @return
      */
     @Unroll
-    def "When successfully enable multifactor appropriate v2.0 pwd auth behavior: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
+    def "When enable multifactor appropriate v2.0 pwd auth behavior: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
-        setUpAndEnableMultiFactor(phone)
+        setUpAndEnableMultiFactor(factorType)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
 
         when: "try to auth via 2.0 with correct pwd"
@@ -166,24 +157,56 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         auth20ResponseWrongPwd.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE) == null
 
         where:
-        requestContentMediaType         | acceptMediaType                 | phone
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | true
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | true
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | false
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | false
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | false
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | false
+        requestContentMediaType         | acceptMediaType                 | factorType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | FactorTypeEnum.SMS
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.SMS
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | FactorTypeEnum.OTP
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.OTP
     }
 
-    def void setUpAndEnableMultiFactor(def phone = true) {
-        setUpMultiFactorWithoutEnable(phone)
+    def "Legacy sessionId generated when so configured"() {
+        setup:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, false)
+        setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
+        User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+
+        when: "auth via 2.0 with correct pwd"
+        def auth20ResponseCorrectPwd = cloud20.authenticate(finalUserAdmin.getUsername(), Constants.DEFAULT_PASSWORD)
+
+        then: "Get a legacy sessionId"
+        def sessionId = utils.extractSessionIdFromFirstWwwAuthenticateHeader(auth20ResponseCorrectPwd.getHeaders())
+        sessionId != null
+        sessionIdReaderWriter.readEncoded(sessionId) //verify is legacy sessionid by decrypting as legacy and doesn't throw exception
+    }
+
+    def "AE Restricted Token sessionId generated when so configured"() {
+        setup:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, true)
+        setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
+        User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+
+        when: "auth via 2.0 with correct pwd"
+        def auth20ResponseCorrectPwd = cloud20.authenticate(finalUserAdmin.getUsername(), Constants.DEFAULT_PASSWORD)
+
+        then: "Get an ae token sessionId"
+        def sessionId = utils.extractSessionIdFromFirstWwwAuthenticateHeader(auth20ResponseCorrectPwd.getHeaders())
+        sessionId != null
+        def restrictedToken = scopeAccessService.unmarshallScopeAccess(sessionId)
+        restrictedToken != null
+        restrictedToken.scope == TokenScopeEnum.MFA_SESSION_ID.scope
+        restrictedToken.authenticatedBy.contains(AuthenticatedByMethodEnum.PASSWORD.value)
+        restrictedToken.accessTokenExp != null
+        //token should expire after configured lifetime. Add a ms to time checking against to make sure it's after what should be the expiration
+        new DateTime(restrictedToken.accessTokenExp).isBefore(new DateTime().plusMinutes(identityConfig.getReloadableConfig().getMfaSessionIdLifetime()).plusMillis(1))
+    }
+
+    def void setUpAndEnableMultiFactor(def factorType = FactorTypeEnum.SMS) {
+        setUpMultiFactorWithoutEnable(factorType)
         utils.updateMultiFactor(userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))
     }
 
-    def void setUpMultiFactorWithoutEnable(def phone = true) {
-        if (phone) {
+    def void setUpMultiFactorWithoutEnable(def factorType = FactorTypeEnum.SMS) {
+        if (factorType == FactorTypeEnum.SMS) {
             setUpMultiFactorWithUnverifiedPhone()
             utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
             constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN);

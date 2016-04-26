@@ -12,9 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
-
 /**
  * This tests useradmins from Cloud A being able to create subusers on Cloud B.
  */

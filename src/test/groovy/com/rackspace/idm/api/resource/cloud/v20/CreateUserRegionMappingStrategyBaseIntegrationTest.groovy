@@ -1,23 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.service.EndpointService
-import com.rackspace.idm.domain.service.ScopeAccessService
-import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
-import com.rackspace.idm.domain.service.impl.DefaultEndpointService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
-import com.rackspacecloud.docs.auth.api.v1.User
 import org.apache.commons.configuration.Configuration
-import org.apache.commons.lang.math.RandomUtils
 import org.openstack.docs.identity.api.v2.EndpointList
 import org.openstack.docs.identity.api.v2.Tenants
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
-import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
 abstract class CreateUserRegionMappingStrategyBaseIntegrationTest extends RootIntegrationTest {
     @Shared def identityAdminToken

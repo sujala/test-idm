@@ -3,7 +3,7 @@ package com.rackspace.idm.domain.entity;
 import org.apache.commons.lang.StringUtils;
 
 public enum TokenScopeEnum {
-    SETUP_MFA("SETUP-MFA"), PWD_RESET("PWD-RESET");
+    SETUP_MFA("SETUP-MFA"), PWD_RESET("PWD-RESET"), MFA_SESSION_ID("MFA-SESSION-ID");
 
     private String scope;
 

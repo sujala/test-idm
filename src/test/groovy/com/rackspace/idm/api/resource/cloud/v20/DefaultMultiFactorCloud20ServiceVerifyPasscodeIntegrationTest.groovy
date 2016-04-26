@@ -34,26 +34,19 @@ import org.openstack.docs.identity.api.v2.Token
 import org.openstack.docs.identity.api.v2.UnauthorizedFault
 import org.openstack.docs.identity.api.v2.UserDisabledFault
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ClassPathResource
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponseWithMessagePattern
 
 import static org.mockito.Mockito.*;
 
 /**
- * Tests verifying multifactor authentication. In lieu of using real Duo provider, which sends SMS messages, it subsitutes
- * a simulated mfa phone versificatino and authentication provider. It also modifies the config to use encryption keys for the sessionid located
- * in the classpath.
+ * Tests verifying multifactor authentication. In lieu of using real Duo provider, which sends SMS messages, it substitutes
+ * a simulated mfa phone verification and authentication provider.
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml"
-, "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired
@@ -74,28 +67,14 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     @Autowired
     TokenFormatSelector tokenFormatSelector
 
+    @Autowired
+    IdentityConfig identityConfig
+
     org.openstack.docs.identity.api.v2.User userAdmin
     String userAdminToken
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone
     VerificationCode constantVerificationCode
     OTPDevice responseOTP
-
-    /**
-     * Override the grizzly start because we want to add additional context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec() {
-        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
-        resource.exists()
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly()
-    }
 
     /**
      * Sets up a new user
@@ -114,9 +93,9 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     }
 
     @Unroll
-    def "Initial auth returns 401 with encrypted sessionId and factor in in www-authenticate header: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
+    def "Initial auth returns 401 with encrypted sessionId and factor in in www-authenticate header: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType; factorType=#factorType"() {
         setup:
-        setUpAndEnableMultiFactor(factorType == FactorTypeEnum.SMS)
+        setUpAndEnableMultiFactor(factorType)
 
         when:
         def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD, requestContentMediaType, acceptMediaType)
@@ -132,7 +111,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         //verify the provided sessionid can be decrypted and contains appropriate info
         plaintextSessionId.userId == userAdmin.id
         plaintextSessionId.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
-        Minutes.minutesBetween(plaintextSessionId.getCreatedDate(), plaintextSessionId.getExpirationDate()).getMinutes() == defaultMultiFactorCloud20Service.getSessionIdLifetime()
+        Minutes.minutesBetween(plaintextSessionId.getCreatedDate(), plaintextSessionId.getExpirationDate()).getMinutes() ==  identityConfig.getReloadableConfig().getMfaSessionIdLifetime()
 
         and: "auth header shows appropriate value"
         utils.extractFactorFromWwwAuthenticateHeader(wwwHeader) == expectedFactor
@@ -144,21 +123,22 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         requestContentMediaType | acceptMediaType | factorType
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE | FactorTypeEnum.OTP
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.OTP
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.SMS
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE | FactorTypeEnum.SMS
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE | FactorTypeEnum.SMS
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.SMS
     }
 
-    @Unroll("Successful passcode authentication: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
+    @Unroll("Successful passcode authentication: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType; mfaDecisionReason: #mfaDecisionReason; factorType=#factorType; restrictedTokenSessionId=#restrictedTokenSessionId")
     def "Successful passcode authentication"() {
         setup:
-        setUpAndEnableMultiFactor(phone)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, restrictedTokenSessionId)
+        setUpAndEnableMultiFactor(factorType)
         def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
         String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
         String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
 
         when:
         def passcode
-        if(phone) {
+        if(factorType == FactorTypeEnum.SMS) {
             passcode = "1234"
             def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, mfaDecisionReason, null, null)
             when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
@@ -176,7 +156,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         then:
         mfaAuthResponse.getStatus() == HttpStatus.SC_OK
         token.id != null
-        if (phone) {
+        if (factorType == FactorTypeEnum.SMS) {
             token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.PASSCODE.getValue())
             token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
         } else {
@@ -184,32 +164,31 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
             token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
         }
 
+        cleanup:
+        reloadableConfiguration.reset()
+
         where:
-        requestContentMediaType         | acceptMediaType                 | mfaDecisionReason                       | phone
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.ALLOW   | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.ALLOW   | true
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.ALLOW   | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.ALLOW   | true
+        requestContentMediaType         | acceptMediaType                 | mfaDecisionReason                       | factorType          | restrictedTokenSessionId
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.ALLOW   | FactorTypeEnum.SMS  | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.ALLOW   | FactorTypeEnum.SMS  | false
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.BYPASS  | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.BYPASS  | true
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.BYPASS  | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.BYPASS  | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.BYPASS  | FactorTypeEnum.SMS  | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.BYPASS  | FactorTypeEnum.SMS  | false
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.UNKNOWN | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.UNKNOWN | true
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.UNKNOWN | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.UNKNOWN | true
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.UNKNOWN | FactorTypeEnum.SMS  | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.UNKNOWN | FactorTypeEnum.SMS  | false
 
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | null                                    | false
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | null                                    | false
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | null                                    | false
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | null                                    | false
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | null                                    | FactorTypeEnum.OTP  | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | null                                    | FactorTypeEnum.OTP  | false
+
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | null                                    | FactorTypeEnum.OTP  | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.ALLOW   | FactorTypeEnum.SMS  | true
+
     }
 
     def "Successful mobile passcode authentication with AE token sets OTP_PASSCODE auth by"() {
         setup:
-        setUpAndEnableMultiFactor(false)
+        setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
         userAdmin.setTokenFormat(TokenFormatEnum.AE)
         utils.updateUser(userAdmin)
         def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
@@ -250,8 +229,6 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         requestContentMediaType         | acceptMediaType
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
     @Unroll("Fail with 403 when account locked: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
@@ -276,8 +253,6 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         requestContentMediaType         | acceptMediaType
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
     @Unroll("Fail with 401 when sessionid expired: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
@@ -303,8 +278,6 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         requestContentMediaType         | acceptMediaType
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
     @Unroll("Fail with 500 when passcode denied for nonstandard reason: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType")
@@ -327,23 +300,15 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         requestContentMediaType         | acceptMediaType                 | mfaDecisionReason
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.PROVIDER_FAILURE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.PROVIDER_FAILURE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.PROVIDER_FAILURE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.PROVIDER_FAILURE
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.PROVIDER_UNAVAILABLE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.PROVIDER_UNAVAILABLE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.PROVIDER_UNAVAILABLE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.PROVIDER_UNAVAILABLE
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.TIMEOUT
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.TIMEOUT
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.TIMEOUT
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.TIMEOUT
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.UNKNOWN
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.UNKNOWN
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.UNKNOWN
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | MfaAuthenticationDecisionReason.UNKNOWN
     }
 
     /**
@@ -413,7 +378,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     }
 
     @Unroll
-    def "Check if local locking is working: requestContentType: #requestContentMediaType; acceptMediaType=#acceptMediaType; sms=#isSMS"() {
+    def "Check if local locking is working: requestContentType: #requestContentMediaType; acceptMediaType=#acceptMediaType; factorType=#factorType"() {
         setup:
         def maxAttempts = 3
         def autoUnlockSeconds = 1800
@@ -421,8 +386,8 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, maxAttempts)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, autoUnlockSeconds)
 
-        setUpAndEnableMultiFactor(isSMS)
-        if (isSMS) {
+        setUpAndEnableMultiFactor(factorType)
+        if (factorType == FactorTypeEnum.SMS) {
             //need to mock the response as we don't use Duo for real
             def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, null, null)
             when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
@@ -511,15 +476,11 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         directoryUser.multiFactorLastFailedTimestamp != null
 
         where:
-        requestContentMediaType         | acceptMediaType                 | isSMS
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | true
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | true
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | false
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | false
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | false
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | false
+        requestContentMediaType         | acceptMediaType                 | factorType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | FactorTypeEnum.SMS
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.SMS
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | FactorTypeEnum.OTP
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | FactorTypeEnum.OTP
     }
 
     @Unroll
@@ -531,7 +492,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, maxAttempts)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, autoUnlockSeconds)
 
-        setUpAndEnableMultiFactor(factorType == FactorTypeEnum.SMS)
+        setUpAndEnableMultiFactor(factorType)
         if (factorType == FactorTypeEnum.SMS) {
             //need to mock the response as we don't use Duo for real
             def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, null, null)
@@ -567,7 +528,7 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     }
 
         @Unroll
-    def "Check local locking resets failed counter when ttl of last failure passes: sms=#useSmsDevice"() {
+    def "Check local locking resets failed counter when ttl of last failure passes: factorType=#factorType"() {
         setup:
         def maxAttempts = 3
         def loginFailureTTL = 1800
@@ -575,8 +536,8 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_ATTEMPTS_MAX_PROP, maxAttempts)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, loginFailureTTL)
 
-        setUpAndEnableMultiFactor(useSmsDevice)
-        if (useSmsDevice) {
+        setUpAndEnableMultiFactor(factorType)
+        if (factorType == FactorTypeEnum.SMS) {
             //need to mock the response as we don't use Duo for real
             def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, null, null)
             when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
@@ -612,8 +573,8 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         retrievedUserAdmin.getMultiFactorState() == MultiFactorStateEnum.ACTIVE
 
         where:
-        useSmsDevice | _
-        true | _
+        factorType | _
+        FactorTypeEnum.SMS | _
     }
 
     def String getSessionId(username, pwd = DEFAULT_PASSWORD) {
@@ -623,13 +584,13 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         return encryptedSessionId;
     }
 
-    def void setUpAndEnableMultiFactor(def phone = true) {
-        setUpMultiFactorWithoutEnable(phone)
+    def void setUpAndEnableMultiFactor(def factorType = FactorTypeEnum.SMS) {
+        setUpMultiFactorWithoutEnable(factorType)
         utils.updateMultiFactor(userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))
     }
 
-    def void setUpMultiFactorWithoutEnable(def phone = true) {
-        if (phone) {
+    def void setUpMultiFactorWithoutEnable(def factorType = FactorTypeEnum.SMS) {
+        if (factorType == FactorTypeEnum.SMS) {
             setUpMultiFactorWithUnverifiedPhone()
             utils.sendVerificationCodeToPhone(userAdminToken, userAdmin.id, responsePhone.id)
             constantVerificationCode = v2Factory.createVerificationCode(Constants.MFA_DEFAULT_PIN);

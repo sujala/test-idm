@@ -20,8 +20,6 @@ import spock.lang.Shared
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
 class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
 
@@ -39,14 +37,6 @@ class MultiFactorStateIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Shared def identityAdmin, userAdmin, userManage, defaultUser
     @Shared def domainId
-
-    def void doSetupSpec() {
-        startOrRestartGrizzly("classpath:app-config.xml ")
-    }
-
-    def void doCleanupSpec() {
-        stopGrizzly()
-    }
 
     def "when enabling mfa for user multiFactorState is updated to 'ACTIVE'"() {
         given:

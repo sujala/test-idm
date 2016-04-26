@@ -8,7 +8,6 @@ import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.TokenScopeEnum
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.AETokenService
-import com.rackspace.idm.helpers.WiserWrapper
 import com.rackspace.idm.api.resource.cloud.email.EmailTemplateConstants
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang.RandomStringUtils
@@ -28,7 +27,6 @@ import testHelpers.RootIntegrationTest
 import javax.mail.internet.MimeMessage
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST
 import static org.apache.http.HttpStatus.SC_FORBIDDEN
 import static org.apache.http.HttpStatus.SC_NOT_FOUND
@@ -50,20 +48,11 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
     @Autowired
     IdentityConfig identityConfig
 
-    @Shared def WiserWrapper wiserWrapper;
-
     @Shared def userAdmin;
 
     @Shared def identityAdminToken
 
     def setupSpec() {
-        //start up wiser and set the properties BEFORE making first cloud20 call (which starts grizzly)
-        wiserWrapper = WiserWrapper.startWiser(11025)
-        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
-        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
-
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml") //to pick up wiser changes
-
         def identityAdminAuthResponse = cloud20.authenticatePassword(Constants.IDENTITY_ADMIN_USERNAME, Constants.IDENTITY_ADMIN_PASSWORD).getEntity(AuthenticateResponse)
         assert identityAdminAuthResponse.value instanceof AuthenticateResponse
         identityAdminToken = identityAdminAuthResponse.value.token.id
@@ -74,19 +63,12 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
 
     def cleanupSpec() {
         deleteUserQuietly(userAdmin)
-        wiserWrapper.wiserServer.stop()
-    }
-
-    def setup() {
-        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_HOST, wiserWrapper.getHost())
-        staticIdmConfiguration.setProperty(IdentityConfig.EMAIL_PORT, String.valueOf(wiserWrapper.getPort()))
-
-        wiserWrapper.wiserServer.getMessages().clear()
     }
 
     def cleanup() {
         reloadableConfiguration.reset()
         staticIdmConfiguration.reset()
+        clearEmailServerMessages()
     }
 
     @Unroll

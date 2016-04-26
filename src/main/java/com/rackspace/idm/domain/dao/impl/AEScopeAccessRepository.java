@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.dao.AEScopeAccessDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.ScopeAccess;
+import com.rackspace.idm.domain.entity.TokenScopeEnum;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.security.MarshallTokenException;
@@ -31,11 +32,7 @@ public class AEScopeAccessRepository implements AEScopeAccessDao {
 
     @Override
     public boolean supportsCreatingTokenFor(UniqueId object, ScopeAccess scopeAccess) {
-        if (identityConfig.getFeatureAETokensEncrypt()) {
-            return aeTokenService.supportsCreatingTokenFor(object, scopeAccess);
-        } else {
-            return false;
-        }
+        return aeTokenService.supportsCreatingTokenFor(object, scopeAccess);
     }
 
     @Override

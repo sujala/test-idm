@@ -4,6 +4,7 @@ import com.rackspace.idm.helpers.Cloud10Utils
 import com.rackspace.idm.helpers.Cloud11Utils
 import com.rackspace.idm.helpers.Cloud20Utils
 import com.rackspace.idm.helpers.CloudTestUtils
+import com.rackspace.idm.helpers.WiserWrapper
 import com.sun.jersey.api.client.WebResource
 import org.apache.commons.lang.math.RandomUtils
 import org.joda.time.DateTime
@@ -16,13 +17,6 @@ import testHelpers.junit.ConditionalIgnoreRule
 
 import javax.ws.rs.core.MediaType
 
-/**
- * Created with IntelliJ IDEA.
- * User: jacob
- * Date: 6/26/13
- * Time: 1:08 PM
- * To change this template use File | Settings | File Templates.
- */
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class RootIntegrationTest extends Specification {
 
@@ -46,6 +40,8 @@ class RootIntegrationTest extends Specification {
     @Shared Cloud20Methods cloud20 = new Cloud20Methods()
     @Shared DevOpsMethods devops = new DevOpsMethods()
 
+    @Shared wiserWrapper = SingletonWiserEmailServer.getInstance();
+
     @Shared SingletonConfiguration staticIdmConfiguration = SingletonConfiguration.getInstance();
     @Shared SingletonReloadableConfiguration reloadableConfiguration = SingletonReloadableConfiguration.getInstance();
 
@@ -62,6 +58,7 @@ class RootIntegrationTest extends Specification {
     public setupSpec(){
         staticIdmConfiguration.reset()
         reloadableConfiguration.reset()
+        clearEmailServerMessages()
         mockMobilePhoneVerification.reset()
         mockMultiFactorAuthenticationService.reset()
         mockUserManagement.reset()
@@ -75,9 +72,14 @@ class RootIntegrationTest extends Specification {
         doCleanupSpec()
         staticIdmConfiguration.reset()
         reloadableConfiguration.reset()
+        clearEmailServerMessages()
         mockMobilePhoneVerification.reset()
         mockMultiFactorAuthenticationService.reset()
         mockUserManagement.reset()
+    }
+
+    def clearEmailServerMessages() {
+        wiserWrapper.getWiser().getMessages().clear()
     }
 
     /**

@@ -9,15 +9,10 @@ import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ClassPathResource
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
-import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import static com.rackspace.idm.Constants.*
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 
 class Cloud20TokenIntegrationTest extends RootIntegrationTest {
 

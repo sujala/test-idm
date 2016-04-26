@@ -23,42 +23,19 @@ import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Token
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ClassPathResource
-import org.springframework.test.context.ContextConfiguration
 import spock.lang.Unroll
 
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.startOrRestartGrizzly
-import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.stopGrizzly
 import static org.apache.http.HttpStatus.*
 
 /**
  * Tests the multifactor domain enforcement level
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml"
-, "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml"])
 class MultiFactorCloud20ServiceDomainEnforcementIntegrationTest extends RootConcurrentIntegrationTest {
 
     @Autowired
     UserDao userRepository;
-
-    /**
-     * Override the grizzly start because we want to add additional context file.
-     * @return
-     */
-    @Override
-    public void doSetupSpec() {
-        ClassPathResource resource = new ClassPathResource("/com/rackspace/idm/api/resource/cloud/v20/keys");
-        resource.exists()
-        this.resource = startOrRestartGrizzly("classpath:app-config.xml " +
-                "classpath:com/rackspace/idm/api/resource/cloud/v20/MultifactorSessionIdKeyLocation-context.xml")
-    }
-
-    @Override
-    public void doCleanupSpec() {
-        stopGrizzly();
-    }
 
     /**
      * Tests the full "baseline" transition state for domain enforcement such that a user-admin/user-manager can set the
