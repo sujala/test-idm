@@ -19,6 +19,7 @@ import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
+import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.util.OTPHelper
@@ -28,6 +29,7 @@ import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 import org.joda.time.Minutes
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.Token
@@ -35,6 +37,7 @@ import org.openstack.docs.identity.api.v2.UnauthorizedFault
 import org.openstack.docs.identity.api.v2.UserDisabledFault
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 
 import javax.ws.rs.core.MediaType
 
@@ -66,6 +69,9 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
 
     @Autowired
     TokenFormatSelector tokenFormatSelector
+
+    @Autowired
+    private ScopeAccessService scopeAccessService
 
     @Autowired
     IdentityConfig identityConfig
@@ -183,7 +189,121 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
 
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | null                                    | FactorTypeEnum.OTP  | true
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | MfaAuthenticationDecisionReason.ALLOW   | FactorTypeEnum.SMS  | true
+    }
 
+    @Unroll
+    def "Successful OTP passcode authentication when using encryptAEToken: #encryptAEToken; decryptAEToken:#decryptAEToken; issueRestrictedTokenSessionId:#issueRestrictedTokenSessionId"() {
+        setup:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, issueRestrictedTokenSessionId)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, decryptAEToken)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, encryptAEToken)
+
+        //reauth so admin token is of right formart (e.g. don't want to have an AE token, when ae decryption is disabled...)
+        userAdminToken = authenticate(userAdmin.username)
+        setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
+        def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+
+        when: "initially authenticate"
+        String sessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+
+        then: "get the proper sessionId"
+        if (issueRestrictedTokenSessionId) {
+            scopeAccessService.unmarshallScopeAccess(sessionId) != null
+        } else {
+            encryptedSessionIdReaderWriter.readEncoded(sessionId) != null
+        }
+
+        when: "auth w/ passcode"
+        def passcode = getOTPCode()
+        def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(sessionId, passcode)
+        Token token = mfaAuthResponse.getEntity(AuthenticateResponse).value.token
+
+        then: "get a 'real' token back"
+        mfaAuthResponse.getStatus() == HttpStatus.SC_OK
+        token.id != null
+        token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.OTPPASSCODE.getValue())
+        token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        encryptAEToken | decryptAEToken | issueRestrictedTokenSessionId
+        true           | true           | true
+        true           | true           | false
+        true           | false          | true
+        true           | false          | false
+        false          | false          | true
+        false          | false          | false
+        false          | true           | true
+        false          | true           | false
+    }
+
+    @Unroll
+    def "Successful OTP passcode authentication when 'old' sessionId is used compared to what's currently generated; issueRestrictedTokenSessionId:#issueRestrictedTokenSessionId"() {
+        setup:
+        //get the sessionId in Format A
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, !sessionIdInLegacyFormat)
+
+        setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
+        def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+
+        when: "initially authenticate"
+        String sessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+
+        then: "get the proper sessionId"
+        if (!sessionIdInLegacyFormat) {
+            scopeAccessService.unmarshallScopeAccess(sessionId) != null
+        } else {
+            encryptedSessionIdReaderWriter.readEncoded(sessionId) != null
+        }
+
+        when: "auth w/ passcode switching to new format"
+        //set new session ids to be generated in format B
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, sessionIdInLegacyFormat)
+        def passcode = getOTPCode()
+        def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(sessionId, passcode)
+        Token token = mfaAuthResponse.getEntity(AuthenticateResponse).value.token
+
+        then: "get a 'real' token back"
+        mfaAuthResponse.getStatus() == HttpStatus.SC_OK
+        token.id != null
+        token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.OTPPASSCODE.getValue())
+        token.getAuthenticatedBy().credential.contains(AuthenticatedByMethodEnum.PASSWORD.getValue())
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        sessionIdInLegacyFormat | _
+        true | _
+        false | _
+    }
+
+    @Unroll
+    def "Can not auth with passcode using regular token as sessionId regardless of sessionIdFormat. issueRestrictedTokenSessionId: #issueRestrictedTokenSessionId"() {
+        setup:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, issueRestrictedTokenSessionId)
+        def apiToken = utils.getTokenFromApiKeyAuth(userAdmin.username, DEFAULT_APIKEY)
+
+        setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
+
+        when: "auth w/ passcode switching to new format"
+        def passcode = getOTPCode()
+        def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(apiToken, passcode)
+
+        then: "get error"
+        IdmAssert.assertOpenStackV2FaultResponseWithMessagePattern(mfaAuthResponse, ForbiddenFault, HttpStatus.SC_FORBIDDEN, IdmAssert.PATTERN_ALL)
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        issueRestrictedTokenSessionId | _
+        true | _
+        false | _
     }
 
     def "Successful mobile passcode authentication with AE token sets OTP_PASSCODE auth by"() {

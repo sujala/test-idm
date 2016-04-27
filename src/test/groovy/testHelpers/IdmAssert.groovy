@@ -13,6 +13,8 @@ import java.util.regex.Pattern
  */
 class IdmAssert {
 
+    def static PATTERN_ALL = Pattern.compile(".*")
+
     static def <T extends com.rackspace.api.common.fault.v1.Fault> void assertRackspaceCommonFaultResponse(ClientResponse clientResponse, Class<T> expectedTypeClazz, int expectedStatus, String expectedMessage) {
         T fault = clientResponse.getEntity(expectedTypeClazz)
         assert clientResponse.status == expectedStatus
