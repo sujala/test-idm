@@ -9,6 +9,7 @@ import org.apache.commons.lang.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -146,7 +147,7 @@ public class PrecedenceValidator {
         compareWeights(callerWeight, role.getRsWeight());
     }
 
-    public void verifyCallerRolePrecedenceForAssignment(User user, List<String> roleNames) {
+    public void verifyCallerRolePrecedenceForAssignment(User user, Collection<String> roleNames) {
         ClientRole callerIdentityRole = applicationService.getUserIdentityRole(user);
         if (callerIdentityRole == null) {
             throw new ForbiddenException(NOT_AUTHORIZED);
@@ -155,13 +156,13 @@ public class PrecedenceValidator {
         verifyRolePrecedenceForAssignment(callerIdentityRole, roleNames);
     }
 
-    public void verifyRolePrecedenceForAssignment(ClientRole clientRole, List<String> roleNames) {
+    public void verifyRolePrecedenceForAssignment(ClientRole clientRole, Collection<String> roleNames) {
         if (clientRole != null && roleNames != null) {
             verifyRolePrecedenceForAssignment(clientRole.getRsWeight(), roleNames);
         }
     }
 
-    public void verifyRolePrecedenceForAssignment(int roleWeight, List<String> roleNames) {
+    public void verifyRolePrecedenceForAssignment(int roleWeight, Collection<String> roleNames) {
         for (String roleName : roleNames) {
             ClientRole role = roleService.getRoleByName(roleName);
             if (role != null) {

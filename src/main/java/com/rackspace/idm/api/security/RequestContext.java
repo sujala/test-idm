@@ -1,10 +1,7 @@
 package com.rackspace.idm.api.security;
 
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.DomainService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotFoundException;
 import lombok.Data;
 import lombok.Getter;
@@ -113,6 +110,16 @@ public class RequestContext {
         return effectiveCaller;
     }
 
+    /**
+     * Helper method to retrieve the effective caller's user type
+     *
+     * @return
+     */
+    public IdentityUserTypeEnum getEffectiveCallersUserType() {
+        BaseUser effectiveCaller = getEffectiveCaller();
+
+        return effectiveCaller == null ? null : authorizationService.getIdentityTypeRoleAsEnum(effectiveCaller);
+    }
 
     /**
      * Helper method to lazily load the effective caller's roles.

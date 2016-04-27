@@ -15,26 +15,7 @@ import java.util.List;
 
 public interface UserService {
 
-    /**
-     * sets default parameters on the user e.g domain id, roles, etc based on
-     * characteristics of the given user.
-     *
-     * @param user
-     * @param userForDefaults
-     */
-    void setUserDefaultsBasedOnUser(User user, User userForDefaults);
-
-    /**
-     * sets default parameters on the user e.g domain id, roles, etc based on
-     * characteristics of the given user.
-     *
-     * @param user
-     * @param userForDefaults
-     * @param isCreateUserInOneCall
-     */
-    void setUserDefaultsBasedOnUser(User user, User userForDefaults, boolean isCreateUserInOneCall);
-
-    void addUser(User user);
+    void addUserv11(User user);
 
     void addUserV20(User user);
 
@@ -213,4 +194,14 @@ public interface UserService {
      * @return
      */
     String getNastTenantId(String domainId);
+
+    /**
+     * Given a User object, configures the user to be a user admin for their domain. This method does the following:
+     * - Verifies that the user will be the only user in the domain
+     * - Attaches the user-admin role to the user
+     * - Attaches the mosso and nast roles to the user if assignMossoAndNastDefaultRoles == true && user.domainId is numeric
+     * @param user
+     * @param assignMossoAndNastDefaultRoles
+     */
+    void configureNewUserAdmin(User user, boolean assignMossoAndNastDefaultRoles);
 }

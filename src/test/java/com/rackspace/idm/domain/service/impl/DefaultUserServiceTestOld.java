@@ -216,7 +216,7 @@ public class DefaultUserServiceTestOld {
         when(patternDao.getPattern(anyString())).thenReturn(pat);
         User user = new User();
         user.setEmail("badEmail");
-        defaultUserService.addUser(user);
+        defaultUserService.addUserv11(user);
     }
 
     @Test
