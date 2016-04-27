@@ -80,9 +80,9 @@ public class DefaultAETokenService implements AETokenService {
         TokenProvider provider = findFirstTokenProviderThatSupportsTokenScheme(webSafeToken);
 
         ScopeAccess access = provider.unmarshallToken(webSafeToken);
-        if (aeTokenRevocationService.isTokenRevoked(access)) {
+        if (access != null && aeTokenRevocationService.isTokenRevoked(access)) {
             LOG.debug(String.format("Token '%s' was revoked at some point and is no longer valid", webSafeToken));
-            return null;
+            access = null;
         }
         return access;
     }

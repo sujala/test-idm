@@ -16,6 +16,7 @@ import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.util.OTPHelper
 import com.unboundid.util.Base32
+import org.apache.http.HttpStatus
 import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
@@ -198,6 +199,39 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         restrictedToken.accessTokenExp != null
         //token should expire after configured lifetime. Add a ms to time checking against to make sure it's after what should be the expiration
         new DateTime(restrictedToken.accessTokenExp).isBefore(new DateTime().plusMinutes(identityConfig.getReloadableConfig().getMfaSessionIdLifetime()).plusMillis(1))
+    }
+
+    def "AE Restricted Token sessionId can not be validated or used to get endpoints"() {
+        setup:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, true)
+        setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
+        User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
+        def auth20ResponseCorrectPwd = cloud20.authenticate(finalUserAdmin.getUsername(), Constants.DEFAULT_PASSWORD)
+        def sessionId = utils.extractSessionIdFromFirstWwwAuthenticateHeader(auth20ResponseCorrectPwd.getHeaders())
+
+        when: "self validate restricted token sessionId"
+        def response = cloud20.validateToken(sessionId, sessionId)
+
+        then: "get 403"
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "validate restricted token sessionId using authorized token"
+        response = cloud20.validateToken(specificationIdentityAdminToken, sessionId)
+
+        then: "get 404"
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "self get endpoints w/ restricted token sessionId"
+        response = cloud20.getEndpointsForToken(sessionId, sessionId)
+
+        then: "get 403"
+        response.status == HttpStatus.SC_FORBIDDEN
+
+        when: "get endpoints for restricted token sessionId using authorized token"
+        response = cloud20.getEndpointsForToken(specificationIdentityAdminToken, sessionId)
+
+        then: "get 404"
+        response.status == HttpStatus.SC_NOT_FOUND
     }
 
     def void setUpAndEnableMultiFactor(def factorType = FactorTypeEnum.SMS) {
