@@ -2,23 +2,15 @@ package com.rackspace.idm.api.resource.cloud.email
 
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.helpers.WiserWrapper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mail.javamail.JavaMailSenderImpl
-import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.context.ContextConfiguration
-import spock.lang.Shared
 import testHelpers.RootIntegrationTest
 
 import javax.mail.Session
 import javax.mail.internet.MimeMessage
 
-/**
- * This test dirties the context by modifying the port the MailTransferAgentClient will send mail to in order to match that
- * used by wiser
- */
 class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(MailTransferAgentIntegrationTest.class);
 

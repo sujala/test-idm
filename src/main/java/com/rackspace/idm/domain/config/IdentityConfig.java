@@ -35,7 +35,9 @@ public class IdentityConfig {
 
     //REQUIRED PROPERTIES
     private static final String GA_USERNAME = "ga.username";
-    private static final String EMAIL_FROM_EMAIL_ADDRESS = "email.return.email.address";
+    public static final String EMAIL_FROM_EMAIL_ADDRESS = "email.return.email.address";
+    public static final String EMAIL_FROM_EMAIL_ADDRESS_DEFAULT = "no-reply@rackspace.com";
+
     private static final String EMAIL_MFA_ENABLED_SUBJECT = "email.mfa.enabled.subject";
     private static final String EMAIL_MFA_DISABLED_SUBJECT = "email.mfa.disabled.subject";
     private static final String EMAIL_LOCKED_OUT_SUBJECT = "email.locked.out.email.subject";
@@ -430,6 +432,7 @@ public class IdentityConfig {
         defaults.put(SESSION_ID_LIFETIME_PROP, SESSION_ID_LIFETIME_DEFAULT);
 
         defaults.put(MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT);
+        defaults.put(EMAIL_FROM_EMAIL_ADDRESS, EMAIL_FROM_EMAIL_ADDRESS_DEFAULT);
 
         return defaults;
     }
@@ -443,7 +446,6 @@ public class IdentityConfig {
         // Verify and Log Required Values
         verifyAndLogStaticProperty(GA_USERNAME, REQUIRED);
 
-        verifyAndLogStaticProperty(EMAIL_FROM_EMAIL_ADDRESS, REQUIRED);
         verifyAndLogStaticProperty(EMAIL_LOCKED_OUT_SUBJECT, REQUIRED);
         verifyAndLogStaticProperty(EMAIL_MFA_ENABLED_SUBJECT, REQUIRED);
         verifyAndLogStaticProperty(EMAIL_MFA_DISABLED_SUBJECT, REQUIRED);
@@ -476,6 +478,7 @@ public class IdentityConfig {
         verifyAndLogReloadableProperty(FEATURE_PERSIST_RACKERS_PROP, OPTIONAL);
         verifyAndLogReloadableProperty(IDENTITY_ROLE_TENANT_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(ENDPOINT_REGIONID_DEFAULT, REQUIRED);
+        verifyAndLogReloadableProperty(EMAIL_FROM_EMAIL_ADDRESS, OPTIONAL);
     }
 
     private void verifyAndLogStaticProperty(String property, boolean required) {
@@ -597,30 +600,16 @@ public class IdentityConfig {
      *
      * @param prop
      * @return
+     * @deprecated - don't use this anymore. just causes confusion. Migrate the property and require the change to be
+     * made in deployments
      */
+    @Deprecated
     private Boolean getBooleanSafelyWithStaticFallBack(String prop) {
         Boolean val;
         if (reloadableConfiguration.containsKey(prop)) {
             val = reloadableConfiguration.getBoolean(prop);
         } else {
             val = getBooleanSafely(staticConfiguration, prop);
-        }
-        return val;
-    }
-
-    /**
-     * Supports migration of properties from static to reloadable by using the prop if in reloadable, but falling back to
-     * value in static if not defined in reloadable.
-     *
-     * @param prop
-     * @return
-     */
-    private String getStringSafelyWithStaticFallBack(String prop) {
-        String val;
-        if (reloadableConfiguration.containsKey(prop)) {
-            val = reloadableConfiguration.getString(prop);
-        } else {
-            val = getStringSafely(staticConfiguration, prop);
         }
         return val;
     }
@@ -751,11 +740,6 @@ public class IdentityConfig {
         @IdmProp(key = GA_USERNAME, description = "Cloud Identity Admin user", versionAdded = "1.0.14.8")
         public String getGaUsername() {
             return getStringSafely(staticConfiguration, GA_USERNAME);
-        }
-
-        @IdmProp(key = EMAIL_FROM_EMAIL_ADDRESS, description = "Return email address to use when sending emails to customers.", versionAdded = "2.5.0")
-        public String getEmailFromAddress() {
-            return getStringSafely(staticConfiguration, EMAIL_FROM_EMAIL_ADDRESS);
         }
 
         @IdmProp(key = EMAIL_LOCKED_OUT_SUBJECT, description = "Subject to use when sending MFA locked out email to customer.", versionAdded = "2.5.0")
@@ -1358,9 +1342,9 @@ public class IdentityConfig {
             return getBooleanSafelyWithStaticFallBack(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES);
         }
 
-        @IdmProp(key = EMAIL_FROM_EMAIL_ADDRESS, description = "(Migrated from static w/ fallback to static if not found in reloadable). Return email address to use when sending emails to customers.", versionAdded = "3.2.0")
+        @IdmProp(key = EMAIL_FROM_EMAIL_ADDRESS, description = "Return email address to use when sending emails to customers. Was added as a static property in version 2.5.0, but was migrated to be a reloadable in this version.", versionAdded = "3.2.0")
         public String getEmailFromAddress() {
-            return getStringSafelyWithStaticFallBack(EMAIL_FROM_EMAIL_ADDRESS);
+            return getStringSafely(reloadableConfiguration, EMAIL_FROM_EMAIL_ADDRESS);
         }
 
         @IdmProp(key = FEATURE_LIST_GROUPS_FOR_SELF_PROP, versionAdded = "3.3.0", description = "Whether or not the feature to allow for a user to list groups for self is enabled")
