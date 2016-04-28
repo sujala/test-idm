@@ -570,19 +570,6 @@ openStackType: image
 RCN: RACKSPACE
 useForDefaultRegion: FALSE
 
-dn: clientId=502bef771ca24744a948596bcb99530c,ou=applications,o=rackspace,d
- c=rackspace,dc=com
-objectClass: top
-objectClass: rsApplication
-clientId: 502bef771ca24744a948596bcb99530c
-cn: cloudServersOpenStack
-userPassword: {SSHA512}9kSiRKMd5k7ZNO0C6g8jxbBQyEk2RUQdlFCzL7vRvrHWtIEe+4JZk
- wvt9R2MHT1ZqQc1wDUhp/z0KU62m3qbxnT+uC0=
-enabled: TRUE
-openStackType: undefined
-RCN: RACKSPACE
-useForDefaultRegion: FALSE
-
 dn: clientId=5cae4c279ff54aeb8589d5fdc24a48df,ou=applications,o=rackspace,d
  c=rackspace,dc=com
 objectClass: top
@@ -2694,7 +2681,7 @@ openStackType: undefined
 rsGlobal: FALSE
 rsRegion: DFW
 service: cloudServersOpenStack
-clientId: 502bef771ca24744a948596bcb99530c
+clientId: 778280ee70664371a0100a1938d8dafe
 rsPublicUrlId: eb9a2c22c2934b8ea948b95333dce09d
 
 dn: rsId=22,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
@@ -2709,7 +2696,7 @@ openStackType: undefined
 rsGlobal: FALSE
 rsRegion: ORD
 service: cloudServersOpenStack
-clientId: 502bef771ca24744a948596bcb99530c
+clientId: 778280ee70664371a0100a1938d8dafe
 rsPublicUrlId: 66010784bfbd49fea7576023a8abef06
 
 dn: rsId=23,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com
@@ -2724,7 +2711,7 @@ openStackType: undefined
 rsGlobal: FALSE
 rsRegion: LON
 service: cloudServersOpenStack
-clientId: 502bef771ca24744a948596bcb99530c
+clientId: 778280ee70664371a0100a1938d8dafe
 rsPublicUrlId: 7e26cc7a25fb42e48902dfe1a54a89e5
 
 dn: rsId=24,ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com

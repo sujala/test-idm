@@ -185,4 +185,9 @@ public interface IdentityUserService {
      * @param baseUser
      */
     void deleteUser(BaseUser baseUser);
+
+    /**
+     * Gets the count of federated and provisioned users within a given region (by name)
+     */
+    int getUsersWithinRegionCount(String regionName);
 }

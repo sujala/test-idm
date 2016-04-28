@@ -105,6 +105,11 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         return (Iterable) getObjects(searchFilterGetEnabledEndUsersByGroupId(groupId));
     }
 
+    @Override
+    public int getUsersWithinRegionCount(String regionName) {
+        return countUsersWithinRegion(regionName, ENDUSER_CLASS_FILTERS);
+    }
+
     private <T extends BaseUser> T searchForUserById(String userId, List<Filter> userClassFilterList, Class<T> clazz) {
         return (T) getObject(searchFilterGetUserById(userId, userClassFilterList), SearchScope.SUB);
     }
@@ -123,6 +128,10 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
 
     private <T extends EndUser> PaginatorContext<T> searchForEnabledUsersPaged(List<Filter> userClassFilterList, Class<T> clazz, int offset, int limit) {
         return (PaginatorContext) getObjectsPaged(searchFilterGetEnabledUsers(userClassFilterList), offset, limit);
+    }
+
+    private int countUsersWithinRegion(String regionName, List<Filter> userClassFilterList) {
+        return countObjects(searchFilterGetEndUsersByRegionName(regionName, userClassFilterList));
     }
 
     @Override
@@ -241,6 +250,13 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
                 Filter.createEqualityFilter(ATTR_GROUP_ID, groupId),
                 Filter.createANDFilter(FEDERATED_USER_CLASS_FILTER)
                 );
+    }
+
+    private Filter searchFilterGetEndUsersByRegionName(String regionName,  List<Filter> userClassFilterList) {
+        return Filter.createANDFilter(
+                Filter.createORFilter(userClassFilterList),
+                Filter.createEqualityFilter(ATTR_REGION, regionName)
+        );
     }
 
     private Filter searchFilterGetEnabledUsers(List<Filter> userClassFilterList) {

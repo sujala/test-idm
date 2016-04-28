@@ -187,4 +187,9 @@ public class DefaultIdentityUserService implements IdentityUserService {
         }
         identityUserRepository.deleteIdentityUser(user);
     }
+
+    @Override
+    public int getUsersWithinRegionCount(String regionName) {
+        return identityUserRepository.getUsersWithinRegionCount(regionName);
+    }
 }

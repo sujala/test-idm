@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.sql.dao.IdentityUserRepository;
+import org.apache.commons.lang.NotImplementedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -183,4 +184,10 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
             throw new UnsupportedOperationException("Not supported");
         }
     }
+
+    @Override
+    public int getUsersWithinRegionCount(String regionName) {
+        throw new NotImplementedException("Not Implemented");
+    }
+
 }
