@@ -18,6 +18,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
@@ -607,7 +608,7 @@ class V2Factory {
         }
     }
 
-    def createSecretQA(String secretQuestion, String secretAnswer) {
+    def createSecretQA(String secretQuestion = Constants.DEFAULT_RAX_KSQA_SECRET_QUESTION, String secretAnswer = Constants.DEFAULT_RAX_KSQA_SECRET_ANWSER) {
         new SecretQA().with {
             it.question = secretQuestion
             it.answer = secretAnswer

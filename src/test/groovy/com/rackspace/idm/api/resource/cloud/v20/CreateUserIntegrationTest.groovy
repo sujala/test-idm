@@ -1,9 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.idm.Constants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -22,7 +25,6 @@ import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 import javax.ws.rs.core.MediaType
 
@@ -988,6 +990,273 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
         utils.deleteRole(role)
         utils.deleteTenant(tenant)
+    }
+
+    def "service admins cannot create identity admins with roles"() {
+        given:
+        def role = utils.createRole()
+        def userRoles = v2Factory.createRoleList([v2Factory.createRole(Constants.IDENTITY_PROVIDER_MANAGER_ROLE_NAME)].asList())
+        def identityAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("idmAdmin"), "display", "email@email.com", true, null, null, DEFAULT_PASSWORD).with {
+            it.roles = userRoles
+            it
+        }
+
+        when: "try to create the identity admin with an identity access role"
+        def response = cloud20.createUser(utils.getServiceAdminToken(), identityAdminToCreate)
+
+        then: "403 not authorized"
+        response.status == 403
+
+        when: "try to create the identity admin with an NON-identity access role"
+        identityAdminToCreate.roles = v2Factory.createRoleList([v2Factory.createRole(role.name)].asList())
+        response = cloud20.createUser(utils.getServiceAdminToken(), identityAdminToCreate)
+
+        then: "403 not authorized"
+        response.status == 403
+    }
+
+    def "service admins cannot create identity admins with groups"() {
+        given:
+        def group = utils.createGroup()
+        def identityAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("idmAdmin"), "display", "email@email.com", true, null, null, DEFAULT_PASSWORD).with {
+            it.groups = v2Factory.createGroups([group].asList())
+            it
+        }
+
+        when: "try to create the identity admin with a group"
+        def response = cloud20.createUser(utils.getServiceAdminToken(), identityAdminToCreate)
+
+        then: "403 not authorized"
+        response.status == 403
+    }
+
+    @Ignore("This test should no longer be ignored once CID-97 is fixed")
+    def "users cannot be created with multifactorEnabled"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("idmAdmin"), "display", "email@email.com", true, null, null, DEFAULT_PASSWORD).with {
+            it.multiFactorEnabled = true
+            it
+        }
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.multiFactorEnabled = true
+            it
+        }
+        def defaultUserToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("defaultUser"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.multiFactorEnabled = true
+            it
+        }
+
+        when: "try to create the identity admin with mfa enabled"
+        def response = cloud20.createUser(utils.getServiceAdminToken(), identityAdminToCreate)
+
+        then: "identity admin created but multifactor not enabled"
+        response.status == 201
+        def idmAdmin = response.getEntity(User).value
+        idmAdmin.multiFactorEnabled == false
+
+        when: "now verify that the user can authenticate (would be prevented if mfa was enabled)"
+        def authResponse = cloud20.authenticate(idmAdmin.username, DEFAULT_PASSWORD)
+
+        then: "success"
+        authResponse.status == 200
+
+        when: "try to create the user admin with mfa enabled"
+        response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+
+        then: "user admin created but multifactor not enabled"
+        response.status == 201
+        def userAdmin = response.getEntity(User).value
+        userAdmin.multiFactorEnabled == false
+
+        when: "now verify that the user can authenticate (would be prevented if mfa was enabled)"
+        authResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+
+        then: "success"
+        authResponse.status == 200
+
+        when: "try to create the default user with mfa enabled"
+        response = cloud20.createUser(utils.getToken(userAdmin.username), defaultUserToCreate)
+
+        then: "default user created but multifactor not enabled"
+        response.status == 201
+        def defaultUser = response.getEntity(User).value
+        defaultUser.multiFactorEnabled == false
+
+        when: "now verify that the user can authenticate (would be prevented if mfa was enabled)"
+        authResponse = cloud20.authenticate(defaultUser.username, DEFAULT_PASSWORD)
+
+        then: "success"
+        authResponse.status == 200
+
+        cleanup:
+        utils.deleteUsersQuietly(defaultUser, userAdmin, idmAdmin)
+    }
+
+    @Ignore("This test should no longer be ignored once CID-97 is fixed")
+    def "users cannot be created with multiFactorEnforcementLevel"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("idmAdmin"), "display", "email@email.com", true, null, null, DEFAULT_PASSWORD).with {
+            it.userMultiFactorEnforcementLevel = UserMultiFactorEnforcementLevelEnum.REQUIRED
+            it
+        }
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.userMultiFactorEnforcementLevel = UserMultiFactorEnforcementLevelEnum.REQUIRED
+            it
+        }
+        def defaultUserToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("defaultUser"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.userMultiFactorEnforcementLevel = UserMultiFactorEnforcementLevelEnum.REQUIRED
+            it
+        }
+
+        when: "try to create the identity admin with mfa enforcement level"
+        def response = cloud20.createUser(utils.getServiceAdminToken(), identityAdminToCreate)
+
+        then: "identity admin created but mfa enforcement level not set"
+        response.status == 201
+        def idmAdmin = response.getEntity(User).value
+        idmAdmin.userMultiFactorEnforcementLevel == null
+
+        when: "now try to auth as the user, this would be prevented if the mfa enforcement level was actually set"
+        def authResponse = cloud20.authenticate(idmAdmin.username, DEFAULT_PASSWORD)
+
+        then: "success"
+        authResponse.status == 200
+
+        when: "try to create the user admin with mfa enforcement level"
+        response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+
+        then: "user admin created but mfa enforcement level not set"
+        response.status == 201
+        def userAdmin = response.getEntity(User).value
+        userAdmin.userMultiFactorEnforcementLevel == null
+
+        when: "now try to auth as the user, this would be prevented if the mfa enforcement level was actually set"
+        authResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+
+        then: "success"
+        authResponse.status == 200
+
+        when: "try to create the defualt user with mfa enforcement level"
+        response = cloud20.createUser(utils.getToken(userAdmin.username), defaultUserToCreate)
+
+        then: "default user created but mfa enforcement level not set"
+        response.status == 201
+        def defaultUser = response.getEntity(User).value
+        defaultUser.userMultiFactorEnforcementLevel == null
+
+        when: "now try to auth as the user, this would be prevented if the mfa enforcement level was actually set"
+        authResponse = cloud20.authenticate(defaultUser.username, DEFAULT_PASSWORD)
+
+        then: "success"
+        authResponse.status == 200
+
+        cleanup:
+        utils.deleteUsersQuietly(defaultUser, userAdmin, idmAdmin)
+    }
+
+    @Ignore("This test should no longer be ignored once CID-97 is fixed")
+    def "users cannot be created with factorType"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("idmAdmin"), "display", "email@email.com", true, null, null, DEFAULT_PASSWORD).with {
+            it.factorType = FactorTypeEnum.OTP
+            it
+        }
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.factorType = FactorTypeEnum.OTP
+            it
+        }
+        def defaultUserToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("defaultUser"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.factorType = FactorTypeEnum.OTP
+            it
+        }
+
+        when: "try to create the identity admin with factor type"
+        def response = cloud20.createUser(utils.getServiceAdminToken(), identityAdminToCreate)
+
+        then: "identity admin created but mfa enforcement level not set"
+        response.status == 201
+        def idmAdmin = response.getEntity(User).value
+        idmAdmin.factorType == null
+
+        when:
+        def authResponse = cloud20.authenticate(idmAdmin.username, DEFAULT_PASSWORD)
+
+        then: "success"
+        authResponse.status == 200
+
+        when: "try to create the user admin with mfa factor type"
+        response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+
+        then: "user admin created but mfa enforcement level not set"
+        response.status == 201
+        def userAdmin = response.getEntity(User).value
+        userAdmin.factorType == null
+
+        when:
+        authResponse = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+
+        then: "success"
+        authResponse.status == 200
+
+        when: "try to create the defualt user with mfa factor type"
+        response = cloud20.createUser(utils.getToken(userAdmin.username), defaultUserToCreate)
+
+        then: "default user created but mfa enforcement level not set"
+        response.status == 201
+        def defaultUser = response.getEntity(User).value
+        defaultUser.factorType == null
+
+        when:
+        authResponse = cloud20.authenticate(defaultUser.username, DEFAULT_PASSWORD)
+
+        then: "success"
+        authResponse.status == 200
+
+        cleanup:
+        utils.deleteUsersQuietly(defaultUser, userAdmin, idmAdmin)
+    }
+
+    def "create user without specifying enabled creates an enabled user"() {
+        when:
+        def identityAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("idmAdmin"), "display", "email@email.com", null, null, null, DEFAULT_PASSWORD)
+        def response = cloud20.createUser(utils.getServiceAdminToken(), identityAdminToCreate)
+
+        then:
+        response.status == 201
+        def idmAdmin = response.getEntity(User).value
+        idmAdmin.enabled == true
+
+        cleanup:
+        utils.deleteUserQuietly(idmAdmin)
+    }
+
+    def "cannot create user admin in one call if mosso or nast tenants already exist"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.secretQA = v2Factory.createSecretQA()
+            it
+        }
+        def mossoTenantId = domainId
+        def nastTenantId = utils.getNastTenant(domainId)
+
+        when: "create the mosso tenant and try to create the user in one-call"
+        utils.createTenant(mossoTenantId)
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+
+        then: "error"
+        response.status == 400
+
+        when: "delete the mosso tenant, create the nast tenant, and try to create the user again"
+        utils.deleteTenant(mossoTenantId)
+        utils.createTenant(nastTenantId)
+        response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+
+        then: "error"
+        response.status == 400
     }
 
 }
