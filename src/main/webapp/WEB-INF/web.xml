@@ -199,8 +199,4 @@
 		<servlet-name>Jersey Spring Web Application</servlet-name>
 		<url-pattern>/*</url-pattern>
 	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>DelegatePassThroughServlet</servlet-name>
-		<url-pattern>/docs/*</url-pattern>
-	</servlet-mapping>
 </web-app>
