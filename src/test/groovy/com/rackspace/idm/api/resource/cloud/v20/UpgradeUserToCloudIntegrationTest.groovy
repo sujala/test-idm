@@ -78,6 +78,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
             assert userResponse.defaultRegion == newRegion
             assert userResponse.secretQA.question == secretQA.question
             assert userResponse.secretQA.answer == secretQA.answer
+            assert userResponse.multiFactorEnabled == false
         } else {
             userResponse = new JsonSlurper().parseText(response.getEntity(String))['user']
             assert userResponse[JSONConstants.RAX_AUTH_DOMAIN_ID] == "" + newDomainId
@@ -86,6 +87,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
             assert userResponse[JSONConstants.RAX_AUTH_DEFAULT_REGION] == newRegion
             assert userResponse[JSONConstants.RAX_KSQA_SECRET_QA][JSONConstants.QUESTION] == secretQA.question
             assert userResponse[JSONConstants.RAX_KSQA_SECRET_QA][JSONConstants.ANSWER] == secretQA.answer
+            assert userResponse[JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED] == false
         }
 
         and: "the domain was deleted"
