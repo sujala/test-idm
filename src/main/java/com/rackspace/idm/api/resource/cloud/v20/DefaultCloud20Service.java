@@ -107,6 +107,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String DUPLICATE_SERVICE_NAME_ERROR_MESSAGE = "More than one service exists with the given name. Please specify a different service name for the endpoint template.";
 
+    public static final String ERROR_CANNOT_DELETE_USER_TYPE_ROLE_MESSAGE = "Cannot delete identity user-type roles from a user.";
+
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -1849,6 +1851,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             precedenceValidator.verifyCallerRolePrecedence(caller, role);
+
+            //the only user-type role you can delete on a user is the "identity:user-manage" role
+            IdentityUserTypeEnum userTypeEnum = IdentityUserTypeEnum.fromRoleName(role.getName());
+            if (userTypeEnum != null && userTypeEnum != IdentityUserTypeEnum.USER_MANAGER) {
+                throw new ForbiddenException(ERROR_CANNOT_DELETE_USER_TYPE_ROLE_MESSAGE);
+            }
 
             this.tenantService.deleteTenantRoleForUser(user, role);
             return Response.noContent();
