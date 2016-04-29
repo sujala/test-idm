@@ -48,6 +48,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
     public static final String DUPLICATE_USERNAME_ERROR_MSG = "The username already exists under a different domainId for this identity provider";
     public static final String DISABLED_DOMAIN_ERROR_MESSAGE = "Domain %s is disabled.";
+    public static final String NO_USER_ADMIN_FOR_DOMAIN_ERROR_MESSAGE = "The specified domain can not be used for federation. It does not have an owner.";
 
     @Autowired
     SamlSignatureValidator samlSignatureValidator;
@@ -251,7 +252,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
 
         if(userAdmins.size() == 0) {
             log.error("Unable to get roles for saml assertion due to no user admin for domain {}", domain.getDomainId());
-            throw new IllegalStateException("no user admin exists for domain " + domain.getDomainId());
+            throw new ForbiddenException(NO_USER_ADMIN_FOR_DOMAIN_ERROR_MESSAGE);
         }
 
         if(userAdmins.size() > 1 && identityConfig.getStaticConfig().getDomainRestrictedToOneUserAdmin()) {

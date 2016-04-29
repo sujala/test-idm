@@ -383,33 +383,6 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.reset()
     }
 
-    def "trying to pass a saml assertion for a domain with no user admin returns 500"() {
-        given:
-        def domainId = utils.createDomain()
-        Domain domain = new Domain();
-        domain.setDomainId(domainId);
-        domain.setEnabled(true);
-        domain.setName(domainId);
-        domain.setDescription("Domain for saml " + domainId);
-        domainDao.addDomain(domain)
-        def tenant = utils.createTenant()
-        utils.addTenantToDomain(domainId, tenant.id)
-        def username = testUtils.getRandomUUID("samlUser")
-        def expDays = 500
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
-
-        when:
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-
-        then:
-        samlResponse.status == 500
-
-        cleanup:
-        staticIdmConfiguration.reset()
-        utils.deleteTenant(tenant.id)
-        utils.deleteDomain(domainId)
-    }
-
     def "identity access roles can not be provided in saml assertions"() {
         given:
         def domainId = utils.createDomain()
