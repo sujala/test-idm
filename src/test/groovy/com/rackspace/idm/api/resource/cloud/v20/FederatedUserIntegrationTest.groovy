@@ -1493,6 +1493,20 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsersQuietly(users)
     }
 
+    def "forbidden (403) returned when trying to auth federated user in a domain without a user admin"() {
+        given:
+        def domainId = utils.createDomain()
+        utils.createDomainEntity(domainId)
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(sharedIdentityProvider.issuer, testUtils.getRandomUUID("fedUser"), 5000, domainId, null, "feduser@invalid.rackspace.com", samlProducerForSharedIdp);
+
+        when:
+        def response =  cloud20.samlAuthenticate(samlAssertion)
+
+        then:
+        response.status == 403
+        response.getEntity(IdentityFault).value.message == ProvisionedUserSourceFederationHandler.NO_USER_ADMIN_FOR_DOMAIN_ERROR_MESSAGE
+    }
+
     def deleteFederatedUserQuietly(username) {
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
