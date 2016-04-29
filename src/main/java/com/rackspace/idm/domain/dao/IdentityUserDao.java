@@ -18,7 +18,7 @@ public interface IdentityUserDao {
      * @param userId
      * @return
      */
-    public User getProvisionedUserById(String userId);
+    User getProvisionedUserById(String userId);
 
     /**
      * Search for a federated user with the specified userId
@@ -26,7 +26,7 @@ public interface IdentityUserDao {
      * @param userId
      * @return
      */
-    public FederatedUser getFederatedUserById(String userId);
+    FederatedUser getFederatedUserById(String userId);
 
     /**
      * Search for a federated user with the specified username and idpName
@@ -117,4 +117,9 @@ public interface IdentityUserDao {
      * Delete the user
      */
     void deleteIdentityUser(BaseUser baseUser);
+
+    /**
+     * Gets the count of federated and provisioned users within a given region (by name)
+     */
+    int getUsersWithinRegionCount(String regionName);
 }

@@ -418,9 +418,9 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(REGIONS).path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(region).put(ClientResponse)
     }
 
-    def deleteRegion(String token, String regionId) {
+    def deleteRegion(String token, String regionName) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(REGIONS).path(regionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(REGIONS).path(regionName).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def listUsersWithRole(String token, String roleId) {

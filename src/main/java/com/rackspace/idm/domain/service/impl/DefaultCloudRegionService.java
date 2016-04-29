@@ -3,9 +3,8 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.domain.dao.RegionDao;
 import com.rackspace.idm.domain.entity.Region;
 import com.rackspace.idm.domain.service.CloudRegionService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.exception.*;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +26,9 @@ public class DefaultCloudRegionService implements CloudRegionService {
     @Autowired
     private RegionDao regionDao;
 
+    @Autowired
+    private IdentityUserService identityUserService;
+
     public static final String REGION_CANNOT_BE_NULL = "Region cannot be null";
     public static final String REGIONID_CANNOT_BE_NULL = "Region id cannot be null";
     public static final String REGIONID_MUST_BE_ALPHA_NUMERIC = "Region id must be alpha numeric";
@@ -39,6 +41,7 @@ public class DefaultCloudRegionService implements CloudRegionService {
     public static final String DEFAULT_REGION_CANNOT_BE_SET_NONDEFAULT = "Default region cannot be set to non default";
     public static final String DEFAULT_REGION_CANNOT_BE_DELETED = "Default region cannot be deleted";
     public static final String DEFAULT_REGION_CANNOT_BE_DISABLED = "Default region cannot be disabled";
+    public static final String ERROR_USERS_WITHIN_REGION_MESSAGE = "Cannot delete a region that is linked to a user";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
@@ -128,6 +131,10 @@ public class DefaultCloudRegionService implements CloudRegionService {
         Region region = checkAndGetRegion(name);
         if (region.getIsDefault() && region.getIsEnabled()) {
             throw new BadRequestException(DEFAULT_REGION_CANNOT_BE_DELETED);
+        }
+
+        if (identityUserService.getUsersWithinRegionCount(region.getName()) > 0) {
+            throw new ForbiddenException(ERROR_USERS_WITHIN_REGION_MESSAGE);
         }
 
         logger.info("Deleting Region: {}", name);

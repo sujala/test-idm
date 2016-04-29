@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.domain.dao.impl.LdapRegionRepository
 import com.rackspace.idm.domain.entity.Region
 import com.rackspace.idm.domain.service.CloudRegionService
+import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.impl.DefaultCloudRegionService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotFoundException
@@ -257,6 +258,7 @@ class DefaultCloudRegionServiceTest extends Specification {
     def setupMocks() {
         regionDao = Mock()
         cloudRegionService.regionDao = regionDao
+        cloudRegionService.identityUserService = Mock(IdentityUserService)
     }
 
     def region() {
