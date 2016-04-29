@@ -54,7 +54,7 @@ public class EmailConfigBuilder {
 
         //set a default from if one is not provided
         if (StringUtils.isBlank(config.getString(EmailConfig.EXTRA_PROP_FROM))) {
-            config.addProperty(EmailConfig.EXTRA_PROP_FROM, identityConfig.getStaticConfig().getEmailFromAddress());
+            config.setProperty(EmailConfig.EXTRA_PROP_FROM, identityConfig.getReloadableConfig().getEmailFromAddress());
         }
 
         return config;

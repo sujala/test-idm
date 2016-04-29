@@ -5,16 +5,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.mail.javamail.JavaMailSenderImpl
-import org.springframework.test.annotation.DirtiesContext
-import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
 
 import javax.mail.internet.MimeMessage
 
-/**
- * This test dirties the context by modifying the port the javamailsender will send mail to in order to match that
- * used by wiser
- */
 class MfaVelocityEmailIntegrationTest extends RootIntegrationTest {
     private static final Logger logger = LoggerFactory.getLogger(MfaVelocityEmailIntegrationTest.class);
 

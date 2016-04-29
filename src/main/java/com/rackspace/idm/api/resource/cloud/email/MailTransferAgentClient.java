@@ -90,10 +90,6 @@ public class MailTransferAgentClient implements EmailClient {
     private String disabledEmail;
     private String disabledEmailSubject;
 
-    public String getDefaultFrom() {
-        return identityConfig.getStaticConfig().getEmailFromAddress();
-    }
-
     @PostConstruct
     private void postConstruct() {
         properties = getSessionProperties();
