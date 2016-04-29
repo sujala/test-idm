@@ -1259,4 +1259,32 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         response.status == 400
     }
 
+    @Unroll
+    def "when creating a user the response contains the mfa enabled attribute: request = #request, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
+
+        when:
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate, request, accept)
+
+        then:
+        response.status == 201
+        def userResponse
+        if (accept == MediaType.APPLICATION_XML_TYPE) {
+            userResponse = response.getEntity(User).value
+            assert userResponse.multiFactorEnabled == false
+        } else {
+            userResponse = new JsonSlurper().parseText(response.getEntity(String))['user']
+            assert userResponse[JSONConstants.RAX_AUTH_MULTI_FACTOR_ENABLED] == false
+        }
+
+        where:
+        request | accept
+        MediaType.APPLICATION_XML_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
 }
