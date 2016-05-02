@@ -492,7 +492,7 @@ class Cloud20Methods {
 
     def deleteApplicationRoleFromUser(String token, String roleId, String userId) {
         initOnUse()
-        resource.path(path20).path(USERS).path(userId).path(ROLES).path(OS_KSADM).path(roleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+        resource.path(path20).path(USERS).path(userId).path(ROLES).path(OS_KSADM).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def addRoleToUserOnTenant(String token, String tenantId, String userId, String roleId) {

@@ -5,6 +5,9 @@ import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
+import com.rackspace.idm.domain.service.RoleService
+import com.rackspace.idm.domain.service.TenantService
+import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
@@ -53,6 +56,12 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     ApplicationRoleDao applicationRoleDao
+
+    @Autowired
+    TenantService tenantService
+
+    @Autowired
+    UserService userService
 
     /**
      * Random string that is unique for each feature method
@@ -236,7 +245,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
         ClientRole cloudIdentityAdminRole = defaultAuthorizationService.getCloudIdentityAdminRole();
 
-        removeRoleFromUser(specificationServiceAdminToken, identityAdmin, cloudIdentityAdminRole)
+        def identityAdminEntity = userService.getUserById(identityAdmin.id)
+        tenantService.deleteTenantRoleForUser(identityAdminEntity, tenantService.getTenantRoleForUserById(identityAdminEntity, Constants.IDENTITY_ADMIN_ROLE_ID))
         assertUserDoesNotHaveRole(identityAdmin, cloudIdentityAdminRole)
 
         when: "Add role to user without any identity role"
@@ -406,10 +416,6 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
     def addRoleToUser(callerToken, userToAddRoleTo, roleToAdd) {
         return cloud20.addApplicationRoleToUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status
-    }
-
-    def void removeRoleFromUser(callerToken, userToRemoveRoleFrom, roleToRemove) {
-        assert cloud20.deleteApplicationRoleFromUser(callerToken, roleToRemove.getId(), userToRemoveRoleFrom.getId()).status == HttpStatus.SC_NO_CONTENT
     }
 
     def createIdentityAdmin(String identityAdminUsername = IDENTITY_ADMIN_USERNAME_PREFIX + getNormalizedRandomString(), String domainId = getNormalizedRandomString()) {

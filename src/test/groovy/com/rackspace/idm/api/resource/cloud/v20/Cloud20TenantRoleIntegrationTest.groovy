@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
+import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
 import spock.lang.Shared
@@ -212,4 +214,49 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
         utils.deleteTenant(tenantB)
     }
 
+    def "test deleting identity user-type roles from a user"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when: "try to delete the identity:admin role from the user"
+        def response = cloud20.deleteApplicationRoleFromUser(utils.getServiceAdminToken(), Constants.IDENTITY_ADMIN_ROLE_ID, identityAdmin.id)
+
+        then: "forbidden"
+        response.status == 403
+        response.getEntity(IdentityFault).value.message == DefaultCloud20Service.ERROR_CANNOT_DELETE_USER_TYPE_ROLE_MESSAGE
+
+        when: "try to delete the identity:user-admin role from the user"
+        response = cloud20.deleteApplicationRoleFromUser(utils.getServiceAdminToken(), Constants.USER_ADMIN_ROLE_ID, userAdmin.id)
+
+        then: "forbidden"
+        response.status == 403
+        response.getEntity(IdentityFault).value.message == DefaultCloud20Service.ERROR_CANNOT_DELETE_USER_TYPE_ROLE_MESSAGE
+
+        when: "try to delete the identity:user-manage role from the user"
+        response = cloud20.deleteApplicationRoleFromUser(utils.getServiceAdminToken(), Constants.USER_MANAGE_ROLE_ID, userManage.id)
+
+        then: "success"
+        response.status == 204
+
+        when: "try to delete the identity:default role from the user"
+        response = cloud20.deleteApplicationRoleFromUser(utils.getServiceAdminToken(), Constants.DEFAULT_USER_ROLE_ID, defaultUser.id)
+
+        then: "forbidden"
+        response.status == 403
+        response.getEntity(IdentityFault).value.message == DefaultCloud20Service.ERROR_CANNOT_DELETE_USER_TYPE_ROLE_MESSAGE
+
+        cleanup:
+        utils.deleteUsersQuietly([defaultUser, userManage, userAdmin, identityAdmin].asList())
+    }
+
+    def "users without precedence to delete user-type role do not see user-type role error message"() {
+        when:
+        def response = cloud20.deleteApplicationRoleFromUser(utils.getIdentityAdminToken(), Constants.SERVICE_ADMIN_ROLE_ID, Constants.SERVICE_ADMIN_ID)
+
+        then:
+        response.status == 403
+        response.getEntity(IdentityFault).value.message == DefaultAuthorizationService.NOT_AUTHORIZED_MSG
+    }
 }
