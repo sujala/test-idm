@@ -4,14 +4,10 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import org.apache.commons.lang.ArrayUtils;
 import org.dozer.Mapper;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
-import org.openstack.docs.identity.api.v2.Endpoint;
-import org.openstack.docs.identity.api.v2.EndpointList;
-import org.openstack.docs.identity.api.v2.ServiceCatalog;
-import org.openstack.docs.identity.api.v2.VersionForService;
+import org.openstack.docs.identity.api.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
@@ -30,17 +26,16 @@ public class EndpointConverterCloudV20 {
     @Autowired
     private IdentityConfig identityConfig;
 
-    private OpenStackServiceCatalogFactory sf = new OpenStackServiceCatalogFactory();
-
     public ServiceCatalog toServiceCatalog(List<OpenstackEndpoint> endpoints) {
-        ServiceCatalog catalog = objFactories.getOpenStackIdentityV2Factory()
-            .createServiceCatalog();
+        ServiceCatalog catalog;
 
         if (endpoints == null || endpoints.size() == 0) {
+            catalog = objFactories.getOpenStackIdentityV2Factory()
+                    .createServiceCatalog();
             return catalog;
+        } else {
+            catalog = createNew(endpoints);
         }
-
-        catalog = sf.createNew(endpoints);
 
         return catalog;
     }
@@ -64,6 +59,10 @@ public class EndpointConverterCloudV20 {
                     version.setInfo(baseUrl.getVersionInfo());
                     version.setList(baseUrl.getVersionList());
                     endpoint.setVersion(version);
+                }
+
+                if (baseUrl.getRegion() != null && baseUrl.getRegion().equals(identityConfig.getReloadableConfig().getEndpointDefaultRegionId())) {
+                    endpoint.setRegion(null);
                 }
 
                 list.getEndpoint().add(endpoint);
@@ -185,6 +184,63 @@ public class EndpointConverterCloudV20 {
             }
         }
         return false;
+    }
+
+    public IdentityConfig getIdentityConfig() {
+        return identityConfig;
+    }
+
+    public void setIdentityConfig(IdentityConfig identityConfig) {
+        this.identityConfig = identityConfig;
+    }
+
+    ServiceCatalog createNew(List<OpenstackEndpoint> endPoints) {
+        if (endPoints == null) {
+            throw new IllegalArgumentException("endPoints can not be null");
+        }
+
+        ServiceCatalog serviceCatalog = new ServiceCatalog();
+
+        for (OpenstackEndpoint endPoint : endPoints) {
+            processEndpoint(serviceCatalog, endPoint);
+        }
+
+        return serviceCatalog;
+    }
+
+    void processEndpoint(ServiceCatalog serviceCatalog,
+                                OpenstackEndpoint endPoint) {
+
+        for (CloudBaseUrl baseUrl : endPoint.getBaseUrls()) {
+
+            ServiceForCatalog currentService = new OpenStackServiceCatalogHelper(serviceCatalog)
+                    .getEndPointService(baseUrl.getServiceName(), baseUrl.getOpenstackType());
+
+            VersionForService version = new VersionForService();
+            version.setId(baseUrl.getVersionId());
+            version.setInfo(baseUrl.getVersionInfo());
+            version.setList(baseUrl.getVersionList());
+
+            EndpointForService endpointItem = new EndpointForService();
+
+            endpointItem.setAdminURL(baseUrl.getAdminUrl());
+            endpointItem.setInternalURL(baseUrl.getInternalUrl());
+            endpointItem.setPublicURL(baseUrl.getPublicUrl());
+            endpointItem.setTenantId(endPoint.getTenantId());
+
+            if (baseUrl.getRegion() != null && !baseUrl.getRegion().equalsIgnoreCase(identityConfig.getReloadableConfig().getEndpointDefaultRegionId())) {
+                endpointItem.setRegion(baseUrl.getRegion());
+            }
+
+            if (!org.apache.commons.lang.StringUtils.isBlank(version.getId())) {
+                endpointItem.setVersion(version);
+            }
+            if (baseUrl.getV1Default()) {
+                currentService.getEndpoint().add(0, endpointItem);
+            } else {
+                currentService.getEndpoint().add(endpointItem);
+            }
+        }
     }
 
 }
