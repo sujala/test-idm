@@ -1,7 +1,10 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.openstack.docs.identity.api.v2.EndpointForService;
@@ -13,24 +16,30 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: kurt
- * Date: 6/14/12
- * Time: 9:29 AM
- * To change this template use File | Settings | File Templates.
- */
+//TODO: Refactor this test class as the functionality of openstackservicecatalog was combined with EndpointConvertor.
+// Need to refactor how endpoints are converted to responses
 public class OpenStackServiceCatalogFactoryTest {
 
-    OpenStackServiceCatalogFactory openStackServiceCatalogFactory;
+    EndpointConverterCloudV20 openStackServiceCatalogFactory;
     ServiceCatalog serviceCatalog;
+
+    private Configuration reloadableConfiguration;
+    private Configuration staticConfiguration;
+    private IdentityConfig identityConfig;
 
     @Before
     public void setUp() throws Exception {
-        openStackServiceCatalogFactory = new OpenStackServiceCatalogFactory();
+        reloadableConfiguration = new PropertiesConfiguration();
+        staticConfiguration = new PropertiesConfiguration();
+        identityConfig = new IdentityConfig(staticConfiguration, reloadableConfiguration);
+
+        openStackServiceCatalogFactory = new EndpointConverterCloudV20();
+        openStackServiceCatalogFactory.setIdentityConfig(identityConfig);
+
+        reloadableConfiguration.setProperty(IdentityConfig.ENDPOINT_REGIONID_DEFAULT, "DEFAULT");
+
         serviceCatalog = mock(ServiceCatalog.class);
     }
 
@@ -63,7 +72,7 @@ public class OpenStackServiceCatalogFactoryTest {
         OpenstackEndpoint endPoint = new OpenstackEndpoint();
         endPoint.setBaseUrls(new ArrayList<CloudBaseUrl>());
         ServiceCatalog serviceCatalog = mock(ServiceCatalog.class);
-        OpenStackServiceCatalogFactory.processEndpoint(serviceCatalog, endPoint);
+        openStackServiceCatalogFactory.processEndpoint(serviceCatalog, endPoint);
         verify(serviceCatalog, never()).getService();
     }
 
@@ -81,7 +90,7 @@ public class OpenStackServiceCatalogFactoryTest {
 
         when(serviceCatalog.getService()).thenReturn(new ArrayList<ServiceForCatalog>());
 
-        OpenStackServiceCatalogFactory.processEndpoint(serviceCatalog, endPoint);
+        openStackServiceCatalogFactory.processEndpoint(serviceCatalog, endPoint);
         assertThat("service name", serviceCatalog.getService().get(0).getName(), equalTo("serviceName"));
         assertThat("endpoint list size", serviceCatalog.getService().get(0).getEndpoint().size(), equalTo(2));
     }
@@ -106,7 +115,7 @@ public class OpenStackServiceCatalogFactoryTest {
         endPoint.setTenantId("tenantId");
 
         when(serviceCatalog.getService()).thenReturn(new ArrayList<ServiceForCatalog>());
-        OpenStackServiceCatalogFactory.processEndpoint(serviceCatalog, endPoint);
+        openStackServiceCatalogFactory.processEndpoint(serviceCatalog, endPoint);
         EndpointForService endpointForService = serviceCatalog.getService().get(0).getEndpoint().get(0);
         assertThat("version id", endpointForService.getVersion().getId(), equalTo("versionId"));
         assertThat("version list", endpointForService.getVersion().getList(), equalTo("versionList"));

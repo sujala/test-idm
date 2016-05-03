@@ -5,7 +5,10 @@ import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.Endpoint
 import org.openstack.docs.identity.api.v2.EndpointList
+import org.openstack.docs.identity.api.v2.ServiceCatalog
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -20,7 +23,7 @@ import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 
 class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
-    @Shared def identityAdmin, userAdmin, userManage, defaultUser
+    @Shared def identityAdmin, userAdmin, userManage, defaultUser, users
     @Shared def domainId
 
     @Autowired
@@ -275,20 +278,51 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         IdentityUserTypeEnum.IDENTITY_ADMIN | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
-    def "Endpoints created do not display DEFAULT region"() {
+    def "Regionless endpoints do not display 'DEFAULT' region"() {
         given:
-        def endpointTemplate = utils.createEndpointTemplate(true, "", true, "compute", "DEFAULT", )
-
-        when:
+        def pubUrl = "http://regionless.test"
+        def endpointTemplate = utils.createEndpointTemplate(false, "", true, "compute", null, testUtils.getRandomIntegerString(), pubUrl)
         String endpointTemplateId = String.valueOf(endpointTemplate.id)
-        def createdEndpointTemplate = utils.getEndpointTemplate(endpointTemplateId)
+
+        //create a user and explicitly assign regionless endpoint to it.
+        def domainId = utils.createDomain()
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        utils.addEndpointTemplateToTenant(userAdmin.domainId, Integer.parseInt(endpointTemplateId)) //rely on fact that domainId == mosso tenant id
+
+        when: "get endpoint by id directly from the directory"
         def daoEndpoint = endpointDao.getBaseUrlById(endpointTemplateId)
 
-        then:
-        daoEndpoint.region == "DEFAULT"
-        createdEndpointTemplate.region == null
+        then: "region was set to the 'default' value"
+        daoEndpoint.region == reloadableConfiguration.getString(IdentityConfig.ENDPOINT_REGIONID_DEFAULT)
+
+        when: "get endpoint by id via service"
+        def endpointById = utils.getEndpointTemplate(endpointTemplateId)
+
+        then: "region is null"
+        endpointById.region == null
+
+        when: "authenticate as user"
+        AuthenticateResponse ar = utils.authenticate(userAdmin)
+        ServiceCatalog sc = ar.serviceCatalog
+
+        then: "service catalog contains endpoint and region is null"
+        def computeCatalog = sc.service.find() {it.name == "cloudServers"}
+        computeCatalog != null
+        def regionLessEndpoint = computeCatalog.endpoint.find() {it.publicURL.startsWith(pubUrl)}
+        regionLessEndpoint != null
+        regionLessEndpoint.region == null
+
+        when: "get endpoints for the token"
+        EndpointList tokenEndpoints = utils.getEndpointsForToken(ar.token.id)
+
+        then: "endpoint returned without region"
+        Endpoint foundEndpoint = tokenEndpoints.endpoint.find() {it.id == endpointTemplate.id}
+        foundEndpoint != null
+        foundEndpoint.region == null
 
         cleanup:
+        utils.deleteUsersQuietly(users)
+        utils.deleteTenant(userAdmin.domainId)
         utils.deleteEndpointTemplate(endpointTemplate)
     }
 

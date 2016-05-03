@@ -30,7 +30,6 @@ class EndpointConverterCloudV20Test extends Specification {
         converterCloudV20 = new EndpointConverterCloudV20().with {
             it.objFactories = new JAXBObjectFactories()
             it.mapper = new DozerBeanMapper()
-            it.sf = new OpenStackServiceCatalogFactory()
             it.identityConfig = Mock(IdentityConfig)
             return it
         }
