@@ -1854,7 +1854,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             //the only user-type role you can delete on a user is the "identity:user-manage" role
             IdentityUserTypeEnum userTypeEnum = IdentityUserTypeEnum.fromRoleName(role.getName());
-            if (userTypeEnum != null && userTypeEnum != IdentityUserTypeEnum.USER_MANAGER) {
+            if (identityConfig.getReloadableConfig().isDeleteIdentityAccessRolePreventionEnabled() &&
+                    userTypeEnum != null && userTypeEnum != IdentityUserTypeEnum.USER_MANAGER) {
                 throw new ForbiddenException(ERROR_CANNOT_DELETE_USER_TYPE_ROLE_MESSAGE);
             }
 

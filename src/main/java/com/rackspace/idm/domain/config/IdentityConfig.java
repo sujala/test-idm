@@ -257,6 +257,9 @@ public class IdentityConfig {
     public static final String SESSION_ID_LIFETIME_PROP = "multifactor.sessionid.lifetime";
     public static final Integer SESSION_ID_LIFETIME_DEFAULT = 5;
 
+    public static final String FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_PROP = "feature.delete.identity.role.prevention.enabled";
+    public static final boolean FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -433,6 +436,8 @@ public class IdentityConfig {
 
         defaults.put(MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(EMAIL_FROM_EMAIL_ADDRESS, EMAIL_FROM_EMAIL_ADDRESS_DEFAULT);
+
+        defaults.put(FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_PROP, FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_DEFAULT);
 
         return defaults;
     }
@@ -1370,6 +1375,11 @@ public class IdentityConfig {
         @IdmProp(key = SESSION_ID_LIFETIME_PROP, versionAdded = "3.4.0", description = "Lifetime, in minutes, of MFA sessionIds. Was added as static prop in 2.2.0, but switched from to reloadable prop in version 3.4.0")
         public int getMfaSessionIdLifetime() {
             return getIntSafely(reloadableConfiguration, SESSION_ID_LIFETIME_PROP);
+        }
+
+        @IdmProp(key = FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_PROP, versionAdded = "3.4.0", description = "Whether or not to prevent a user from being able to delete the identity access role from another user. The user is still able to delete the identity:user-manage if this feature is enabled.")
+        public boolean isDeleteIdentityAccessRolePreventionEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_PROP);
         }
 
         @IdmProp(key = FEATURE_AE_TOKENS_ENCRYPT, versionAdded = "3.4.0", description = "Whether or not new AE Tokens can be issued. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0")
