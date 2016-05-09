@@ -102,7 +102,7 @@ public class PropertyFileConfiguration {
         } catch (ConfigurationException e) {
             logger.error(String.format("Could not load config file:\n %s", e));
             throw new IllegalStateException(String.format(
-                "Could not load configuration file %s", filePath));
+                "Could not load configuration file %s", filePath), e);
         }
     }
 
