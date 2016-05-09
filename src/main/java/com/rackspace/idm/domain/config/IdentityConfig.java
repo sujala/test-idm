@@ -260,6 +260,9 @@ public class IdentityConfig {
     public static final String FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_PROP = "feature.delete.identity.role.prevention.enabled";
     public static final boolean FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_DEFAULT = true;
 
+    public static final String FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP = "feature.prevent.racker.impersonate.api.key.access";
+    public static final boolean FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -430,6 +433,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_DEFAULT);
 
         defaults.put(FEATURE_INCLUDE_USER_ATTR_PREFIXES_PROP, FEATURE_INCLUDE_USER_ATTR_PREFIXES_DEFAULT);
+        defaults.put(FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP, FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_DEFAULT);
 
         defaults.put(FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_DEFAULT);
         defaults.put(SESSION_ID_LIFETIME_PROP, SESSION_ID_LIFETIME_DEFAULT);
@@ -1397,6 +1401,12 @@ public class IdentityConfig {
             }
             return getFeatureAETokensEncrypt() || reloadableConfiguration.getBoolean(FEATURE_AE_TOKENS_DECRYPT);
         }
+
+        @IdmProp(key = FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP, versionAdded = "3.3.1", description = "Whether or not to allow racker impersonation requests to see user's API key credentials.")
+        public boolean preventRackerImpersonationApiKeyAccess() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP);
+        }
+
     }
 
     @Deprecated

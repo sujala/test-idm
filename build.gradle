@@ -18,7 +18,6 @@ buildscript {
     }
 }
 
-
 def featureVersion = '3.4.0'
 def buildVersion = System.currentTimeMillis()
 def gitRevision = "git rev-parse HEAD".execute().text.trim()
@@ -116,7 +115,6 @@ dependencies {
     compile group: 'log4j', name: 'apache-log4j-extras', version:'1.1'
     compile group: 'org.tuckey', name: 'urlrewritefilter', version:'3.1.0'
     compile group: 'org.apache.commons', name: 'commons-email', version:'1.2'
-    compile group: 'javax.servlet', name: 'jstl', version:'1.2'
     compile group: 'javax.mail', name: 'mail', version:'1.4.7'
     compile group: 'org.apache.velocity', name: 'velocity', version:'1.7'
     compile group: 'org.apache.velocity', name: 'velocity-tools', version:'2.0'
@@ -152,13 +150,11 @@ dependencies {
         exclude(module: 'servlet-api', group: 'javax.servlet')
     }
     compile group: 'org.tinyradius', name: 'tinyradius', version:'1.0'
-    compile group: 'org.mortbay.jetty', name: 'jetty', version:'7.0.0pre0'
     compile group: 'com.google.code.gson', name: 'gson', version:'2.2.2'
     runtime group: 'org.slf4j', name: 'jcl-over-slf4j', version:'1.5.10'
 
     compile group: 'org.projectlombok', name: 'lombok', version:'0.11.4'
-    compile group: 'javax.servlet', name: 'servlet-api', version:'2.5'
-    compile group: 'javax.servlet.jsp', name: 'jsp-api', version:'2.1'
+    providedCompile group: 'javax.servlet', name: 'javax.servlet-api', version:'3.0.1'
 
     compile group: 'org.jasypt', name: 'jasypt', version:'1.9.0'
     compile group: 'org.jasypt', name: 'jasypt-spring3', version:'1.9.0'
@@ -202,10 +198,14 @@ dependencies {
     testCompile group: 'org.hamcrest', name: 'hamcrest-all', version:'1.3'
     testCompile 'org.apache.servicemix.bundles:org.apache.servicemix.bundles.not-yet-commons-ssl:0.3.11_1'
     testCompile 'com.h2database:h2:1.4.187'
+    testCompile(group: 'org.mortbay.jetty', name: 'jetty', version:'7.0.0pre0') {
+        exclude(module: 'servlet-api-3.0', group: 'org.mortbay.jetty')
+    }
 
     compile (group: 'com.rackspace.identity', name: 'multifactor-sdk', version: '1.0.0-1407178553210-SNAPSHOT') {
         exclude(module: 'jersey-client', group: 'com.sun.jersey')
         exclude(group: 'org.springframework')
+        exclude(group: 'javax.servlet')
     }
 
     compile group: 'com.google.zxing', name: 'javase', version: '3.1.0'

@@ -1307,24 +1307,27 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(localDefaultUser)
     }
 
-    def "impersonation tokens cannot be used to view API key credentials"() {
+    @Unroll
+    def "impersonation tokens cannot be used to view API key credentials : preventAccess = #preventAccess"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP, preventAccess)
         def defaultUser = utils.createUser(userAdminToken)
+        def defaultUser2 = utils.createUser(userAdminToken)
         def rackerToken = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD).token.id
         def rackerImpersonationToken = utils.impersonateWithToken(rackerToken, defaultUser).token.id
-        def identityAdminImpersonationToken = utils.impersonateWithToken(utils.getIdentityAdminToken(), defaultUser).token.id
+        def identityAdminImpersonationToken = utils.impersonateWithToken(utils.getIdentityAdminToken(), defaultUser2).token.id
 
         when: "list credentials"
         def rackerResponse = cloud20.listCredentials(rackerImpersonationToken, defaultUser.id)
-        def identityAdminResponse = cloud20.listCredentials(identityAdminImpersonationToken, defaultUser.id)
+        def identityAdminResponse = cloud20.listCredentials(identityAdminImpersonationToken, defaultUser2.id)
 
         then:
-        rackerResponse.status == 403
+        rackerResponse.status == (preventAccess ? 403 : 200)
         identityAdminResponse.status == 200
 
         when: "update API key"
         rackerResponse = cloud20.addApiKeyToUser(rackerImpersonationToken, defaultUser.id, v1Factory.createApiKeyCredentials(defaultUser.username, "thisismykey"))
-        identityAdminResponse = cloud20.addApiKeyToUser(identityAdminImpersonationToken, defaultUser.id, v1Factory.createApiKeyCredentials(defaultUser.username, "thisismykey"))
+        identityAdminResponse = cloud20.addApiKeyToUser(identityAdminImpersonationToken, defaultUser2.id, v1Factory.createApiKeyCredentials(defaultUser.username, "thisismykey"))
 
         then:
         rackerResponse.status == 403
@@ -1332,30 +1335,35 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         when: "delete API key"
         rackerResponse = cloud20.deleteUserApiKey(rackerImpersonationToken, defaultUser.id)
-        identityAdminResponse = cloud20.deleteUserApiKey(identityAdminImpersonationToken, defaultUser.id)
+        identityAdminResponse = cloud20.deleteUserApiKey(identityAdminImpersonationToken, defaultUser2.id)
 
         then:
-        rackerResponse.status == 403
+        rackerResponse.status == (preventAccess ? 403 : 204)
         identityAdminResponse.status == 204
 
         when: "reset API key"
         rackerResponse = cloud20.resetUserApiKey(rackerImpersonationToken, defaultUser.id)
-        identityAdminResponse = cloud20.resetUserApiKey(identityAdminImpersonationToken, defaultUser.id)
+        identityAdminResponse = cloud20.resetUserApiKey(identityAdminImpersonationToken, defaultUser2.id)
 
         then:
-        rackerResponse.status == 403
+        rackerResponse.status == (preventAccess ? 403 : 200)
         identityAdminResponse.status == 200
 
         when: "get API key"
         rackerResponse = cloud20.getUserApiKey(rackerImpersonationToken, defaultUser.id)
-        identityAdminResponse = cloud20.getUserApiKey(identityAdminImpersonationToken, defaultUser.id)
+        identityAdminResponse = cloud20.getUserApiKey(identityAdminImpersonationToken, defaultUser2.id)
 
         then:
-        rackerResponse.status == 403
+        rackerResponse.status == (preventAccess ? 403 : 200)
         identityAdminResponse.status == 200
 
         cleanup:
+        reloadableConfiguration.reset()
         utils.deleteUsers(defaultUser)
+        utils.deleteUsers(defaultUser2)
+
+        where:
+        preventAccess << [true, false]
     }
 
     /**

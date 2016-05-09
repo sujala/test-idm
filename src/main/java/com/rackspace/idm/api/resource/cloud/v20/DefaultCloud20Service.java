@@ -1746,7 +1746,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new BadRequestException("unsupported credential type");
             }
 
-            if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
+            if (identityConfig.getReloadableConfig().preventRackerImpersonationApiKeyAccess() &&
+                    requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
                 throw new ForbiddenException("Impersonation tokens cannot be used to delete user API key credentials");
             }
 
@@ -2181,7 +2182,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(scopeAccessByAccessToken);
 
-            if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
+            if (identityConfig.getReloadableConfig().preventRackerImpersonationApiKeyAccess() &&
+                    requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
                 throw new ForbiddenException("Impersonation tokens cannot be used to get user API key credentials");
             }
 
@@ -2259,7 +2261,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess callerScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(callerScopeAccess);
 
-            if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
+            if (identityConfig.getReloadableConfig().preventRackerImpersonationApiKeyAccess() &&
+                    requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
                 throw new ForbiddenException("Impersonation tokens cannot be used to view user credentials");
             }
 
@@ -3781,7 +3784,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess authScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(authScopeAccess);
 
-            if (requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
+            if (identityConfig.getReloadableConfig().preventRackerImpersonationApiKeyAccess() &&
+                    requestContextHolder.getRequestContext().getSecurityContext().isRackerImpersonatedRequest()) {
                 throw new ForbiddenException("Impersonation tokens cannot be used to reset user API key credentials");
             }
 
