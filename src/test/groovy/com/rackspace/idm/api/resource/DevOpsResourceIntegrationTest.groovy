@@ -13,7 +13,7 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
-class DevOpsResourceTest extends RootIntegrationTest {
+class DevOpsResourceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     IdentityUserService identityUserService

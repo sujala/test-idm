@@ -1,11 +1,9 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
 import com.rackspace.idm.domain.entity.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.*;
 
@@ -14,7 +12,7 @@ import java.util.*;
  *
  * Threadsafe due to synchronization, but obviously, not very performant in a concurrent thread situation...
  */
-public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevocationRecordPersistenceStrategy {
+public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevocationRecordPersistenceStrategy<TokenRevocationRecord> {
 
     private Map<String, TokenRevocationRecord> tokenTRRs = new HashMap<String, TokenRevocationRecord>();
     private Map<String, List<TokenRevocationRecord>> userTRRs = new HashMap<String, List<TokenRevocationRecord>>();
@@ -47,7 +45,7 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
     }
 
     @Override
-    public synchronized Iterable<? extends TokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(Token token) {
+    public synchronized Iterable<TokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(Token token) {
         List<TokenRevocationRecord> trrList = new ArrayList<TokenRevocationRecord>();
 
         boolean isTokenImpersonation = token != null && token.getAuthenticatedBy() != null && token.getAuthenticatedBy().contains(AuthenticatedByMethodEnum.IMPERSONATION.getValue()) ? true : false;
@@ -120,5 +118,15 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
             }
             return trr;
         }
+    }
+
+    @Override
+    public List<TokenRevocationRecord> findObsoleteTrrs(int max) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteTokenRevocationRecord(TokenRevocationRecord record) {
+        throw new UnsupportedOperationException();
     }
 }

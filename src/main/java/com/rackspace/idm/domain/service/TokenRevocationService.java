@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionResponse;
 import com.rackspace.idm.domain.entity.*;
 
 import java.util.Arrays;
@@ -184,4 +186,11 @@ public interface TokenRevocationService {
      * @return
      */
     boolean supportsRevokingFor(Token sa);
+
+    /**
+     * Purge up to the specified number of obsolete TRRs. Delay the specified amount of ms between delete requests.
+     *
+     * @return
+     */
+    TokenRevocationRecordDeletionResponse purgeObsoleteTokenRevocationRecords(int limit, int delay);
 }

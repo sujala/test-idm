@@ -45,6 +45,11 @@ class DevOpsMethods {
         resource.path("devops/federation/deletion").accept(accept).type(type).header("X-Auth-Token", token).entity(request).post(ClientResponse)
     }
 
+    def purgeObsoleteTrrs(token, request = "{\"tokenRevocationRecordDeletionRequest\":{\"limit\": 100}}", accept = APPLICATION_JSON, type = APPLICATION_JSON) {
+        initOnUse()
+        resource.path("devops/token-revocation-record/deletion").accept(accept).type(type).header("X-Auth-Token", token).entity(request).post(ClientResponse)
+    }
+
     def migrateSmsMfaOnUser(token, String userId, MobilePhone phone, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path("devops/users").path(userId).path("multi-factor/setupsms").accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).header("X-Auth-Token", token).entity(phone).post(ClientResponse)

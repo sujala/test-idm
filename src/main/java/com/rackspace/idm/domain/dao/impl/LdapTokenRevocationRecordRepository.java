@@ -1,16 +1,19 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.LDAPComponent;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.SearchScope;
+import com.rackspace.idm.exception.IdmException;
+import com.rackspace.idm.exception.SizeLimitExceededException;
+import com.unboundid.ldap.sdk.*;
+import com.unboundid.ldap.sdk.controls.SimplePagedResultsControl;
 import com.unboundid.util.StaticUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.*;
 
@@ -18,7 +21,15 @@ import java.util.*;
  * Responsible for storing and retrieving TRRs to/from CA LDAP repository
  */
 @LDAPComponent("tokenRevocationRecordPersistenceStrategy")
-public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<LdapTokenRevocationRecord> implements TokenRevocationRecordPersistenceStrategy {
+public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<LdapTokenRevocationRecord> implements TokenRevocationRecordPersistenceStrategy<LdapTokenRevocationRecord> {
+
+    @Autowired
+    private IdentityConfig identityConfig;
+
+    @Override
+    public void deleteTokenRevocationRecord(LdapTokenRevocationRecord record) {
+        deleteObject(record);
+    }
 
     @Override
     public Iterable<LdapTokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(Token token) {
@@ -31,7 +42,43 @@ public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<L
     }
 
     @Override
-    public TokenRevocationRecord addTokenTrrRecord(String tokenStr) {
+    public List<LdapTokenRevocationRecord> findObsoleteTrrs(int max) {
+        if(max > LdapPagingIterator.PAGE_SIZE) {
+            getLogger().debug("Aborting search request due to requested max results of {} exceeding maximum limit of {}", max, LdapPagingIterator.PAGE_SIZE);
+            throw new IllegalArgumentException("Max results must not exceed " + LdapPagingIterator.PAGE_SIZE);
+        }
+
+        Filter filter = searchForObsoleteTokenRevocationRecords();
+        SearchResult searchResult;
+        SearchRequest searchRequest = new SearchRequest(getBaseDn(), SearchScope.SUB, filter);
+        searchRequest.setSizeLimit(max);
+
+        List<SearchResultEntry> searchResultEntries;
+        try {
+            searchResult = getAppInterface().search(searchRequest);
+            searchResultEntries = searchResult.getSearchEntries();
+        } catch (LDAPSearchException ldapEx) {
+            if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
+                //who cares. we only want the specified limit and don't care that there are more results
+                searchResultEntries = ldapEx.getSearchEntries();
+            } else {
+                String loggerMsg = String.format("Error searching for obsolete TRRs - %s",  filter);
+                getLogger().error(loggerMsg);
+                throw new IdmException("Error retrieving obsolete TRRs", "TRRP-0001");
+            }
+        }
+
+        List<LdapTokenRevocationRecord> objects;
+        if (CollectionUtils.isNotEmpty(searchResultEntries)) {
+            objects = processSearchResult(searchResultEntries);
+        } else {
+            objects = Collections.EMPTY_LIST;
+        }
+        return objects;
+    }
+
+    @Override
+    public LdapTokenRevocationRecord addTokenTrrRecord(String tokenStr) {
         LdapTokenRevocationRecord trr = new LdapTokenRevocationRecord();
         trr.setId(getNextId());
         trr.setTargetToken(tokenStr);
@@ -42,7 +89,7 @@ public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<L
     }
 
     @Override
-    public TokenRevocationRecord addUserTrrRecord(String targetUserId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
+    public LdapTokenRevocationRecord addUserTrrRecord(String targetUserId, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
         LdapTokenRevocationRecord trr = new LdapTokenRevocationRecord();
         trr.setId(getNextId());
         trr.setTargetIssuedToId(targetUserId);
@@ -57,7 +104,7 @@ public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<L
     }
 
     @Override
-    public TokenRevocationRecord getTokenRevocationRecord(String id) {
+    public LdapTokenRevocationRecord getTokenRevocationRecord(String id) {
         return getObject(searchByIdFilter(id));
     }
 
@@ -82,6 +129,14 @@ public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<L
     @Override
     public String getNextId() {
         return super.getUuid();
+    }
+
+
+    private Filter searchForObsoleteTokenRevocationRecords() {
+        DateTime obsoleteTrrCreationDate = new DateTime().minusHours(identityConfig.getReloadableConfig().getPurgeTokenRevocationRecordsObsoleteAfterHours());
+        return new LdapSearchBuilder()
+                .addLessOrEqualAttribute(ATTR_ACCESS_TOKEN_EXP, StaticUtils.encodeGeneralizedTime(obsoleteTrrCreationDate.toDate()))
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TOKEN_REVOCATION_RECORD).build();
     }
 
     private Filter searchForRevokedToken(Token accessToken) {

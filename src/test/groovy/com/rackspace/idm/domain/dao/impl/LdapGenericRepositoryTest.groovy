@@ -32,7 +32,7 @@ class LdapGenericRepositoryTest extends Specification {
     }
 
     public class DummyRepository extends LdapGenericRepository<Dummy> {
-        private List<Dummy> processSearchResult(List<SearchResultEntry> searchResultList) {
+        protected List<Dummy> processSearchResult(List<SearchResultEntry> searchResultList) {
             return super.processSearchResult(searchResultList);
         }
     }

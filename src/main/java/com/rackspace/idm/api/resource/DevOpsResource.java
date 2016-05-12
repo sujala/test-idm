@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest;
 import com.rackspace.idm.api.resource.cloud.devops.DevOpsService;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.exception.NotFoundException;
@@ -89,6 +90,12 @@ public class DevOpsResource {
     @Path("/federation/deletion")
     public Response expiredFederatedUsersDeletion(@HeaderParam(X_AUTH_TOKEN) String authToken, FederatedUsersDeletionRequest request) {
         return devOpsService.expiredFederatedUsersDeletion(authToken, request).build();
+    }
+
+    @POST
+    @Path("/token-revocation-record/deletion")
+    public Response purgeObsoleteTrrs(@HeaderParam(X_AUTH_TOKEN) String authToken, TokenRevocationRecordDeletionRequest request) {
+        return devOpsService.purgeObsoleteTrrs(authToken, request).build();
     }
 
     @POST
