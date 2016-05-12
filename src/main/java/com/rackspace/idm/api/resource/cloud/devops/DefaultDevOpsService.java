@@ -1,10 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
 import com.google.i18n.phonenumbers.Phonenumber;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.filter.LdapLoggingFilter;
@@ -16,10 +13,7 @@ import com.rackspace.idm.domain.config.*;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator;
-import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
-import com.rackspace.idm.domain.service.ScopeAccessService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ExceptionHandler;
 import com.rackspace.idm.exception.NotAuthorizedException;
@@ -76,6 +70,11 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Autowired(required = false)
     private CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator;
+
+    @Autowired
+    private TokenRevocationService tokenRevocationService;
+
+    final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory v1ObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     @Override
     @Async
@@ -188,11 +187,33 @@ public class DefaultDevOpsService implements DevOpsService {
         requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
         authorizationService.verifyEffectiveCallerHasRoleByName(identityConfig.getReloadableConfig().getFederatedDeletionRole());
 
-        final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory factory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
-        final FederatedUsersDeletionResponse response = factory.createFederatedUsersDeletionResponse();
+        final FederatedUsersDeletionResponse response = v1ObjectFactory.createFederatedUsersDeletionResponse();
 
         userService.expiredFederatedUsersDeletion(request, response);
-        return Response.ok().entity(factory.createFederatedUsersDeletionResponse(response));
+        return Response.ok().entity(v1ObjectFactory.createFederatedUsersDeletionResponse(response));
+    }
+
+    @Override
+    public Response.ResponseBuilder purgeObsoleteTrrs(String authToken, TokenRevocationRecordDeletionRequest request) {
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+        authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PURGE_TOKEN_REVOCATION_RECORDS.getRoleName());
+
+        //if not provided use default delay.
+        int requestedDelay = request.getDelay() == null ? IdentityConfig.PURGE_TRRS_DEFAULT_DELAY : request.getDelay();
+        if (requestedDelay < 0 || requestedDelay > identityConfig.getReloadableConfig().getPurgeTokenRevocationRecordsMaxDelay()) {
+            throw new BadRequestException(String.format("When provided, the requested delay must be >= 0 and <= %d"
+                    , identityConfig.getReloadableConfig().getPurgeTokenRevocationRecordsMaxDelay()));
+        }
+
+        //if not provided or provided is not valid (e.g. negative, > max allowed), use max allowed.
+        int requestedLimit = request.getLimit() == null ? identityConfig.getReloadableConfig().getPurgeTokenRevocationRecordsMaxLimit() : request.getLimit();
+        if (requestedLimit <= 0 || requestedLimit > identityConfig.getReloadableConfig().getPurgeTokenRevocationRecordsMaxLimit()) {
+            throw new BadRequestException(String.format("When provided, the requested limit must be > 0 and <= %d"
+                    , identityConfig.getReloadableConfig().getPurgeTokenRevocationRecordsMaxLimit()));
+        }
+
+        TokenRevocationRecordDeletionResponse tokenRevocationRecordDeletionResponse = tokenRevocationService.purgeObsoleteTokenRevocationRecords(requestedLimit, requestedDelay);
+        return Response.ok().entity(v1ObjectFactory.createTokenRevocationRecordDeletionResponse(tokenRevocationRecordDeletionResponse));
     }
 
     @Override

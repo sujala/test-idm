@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.annotation.LDAPComponent;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionResponse;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.security.TokenFormatSelector;
@@ -9,7 +9,6 @@ import com.rackspace.idm.domain.service.TokenRevocationService;
 import com.rackspace.idm.domain.service.UUIDTokenRevocationService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -116,5 +115,11 @@ public class RouterTokenRevocationService implements TokenRevocationService {
     @Override
     public boolean isTokenRevoked(Token token) {
         return getRouteForExistingScopeAccess(token).isTokenRevoked(token);
+    }
+
+    @Override
+    public TokenRevocationRecordDeletionResponse purgeObsoleteTokenRevocationRecords(int limit, int delay) {
+        //only ae token service stores TRRs. So just return it
+        return aeTokenRevocationService.purgeObsoleteTokenRevocationRecords(limit, delay);
     }
 }

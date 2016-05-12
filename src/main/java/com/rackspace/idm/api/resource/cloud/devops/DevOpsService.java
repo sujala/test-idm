@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.devops;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -64,6 +65,15 @@ public interface DevOpsService {
      * @return properties map.
      */
     Response.ResponseBuilder expiredFederatedUsersDeletion(String authToken, FederatedUsersDeletionRequest request);
+
+    /**
+     * Remove obsolete TRRs. Must have "identity:purge-trr" role
+     *
+     * @param authToken
+     *
+     * @return properties map.
+     */
+    Response.ResponseBuilder purgeObsoleteTrrs(String authToken, TokenRevocationRecordDeletionRequest request);
 
     /**
      * Setup SMS MFA on the specified user. Must specify the phone number. Will link user to phone and mark the phone

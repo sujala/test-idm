@@ -625,6 +625,23 @@
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
 
+    <element name="tokenRevocationRecordDeletionRequest" type="RAX-AUTH:TokenRevocationRecordDeletionRequest" />
+
+    <complexType name="TokenRevocationRecordDeletionRequest">
+        <attribute name="limit" type="xsd:int" use="optional"/>
+        <attribute name="delay" type="xsd:int" use="optional"/>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+
+    <element name="tokenRevocationRecordDeletionResponse" type="RAX-AUTH:TokenRevocationRecordDeletionResponse" />
+
+    <complexType name="TokenRevocationRecordDeletionResponse">
+        <attribute name="id" type="xsd:string" use="required"/>
+        <attribute name="deleted" type="xsd:int" use="required"/>
+        <attribute name="errors" type="xsd:int" use="required"/>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+
     <complexType name="OTPDevice">
         <complexContent>
             <extension base="RAX-AUTH:MultiFactorDevice">

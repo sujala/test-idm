@@ -1,7 +1,10 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionResponse;
 import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.dao.ScopeAccessDao;
 import com.rackspace.idm.domain.dao.UUIDScopeAccessDao;
 import com.rackspace.idm.domain.entity.*;
@@ -18,12 +21,14 @@ import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Simple in the sense that it goes against a single backend persistence mechanism for UUID token revocation.
@@ -200,6 +205,21 @@ public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationServ
         }
 
         return token.isAccessTokenExpired();
+    }
+
+    @Override
+    public TokenRevocationRecordDeletionResponse purgeObsoleteTokenRevocationRecords(int limit, int delay) {
+        String id = MDC.get(Audit.GUUID); //use request audit id if provided
+        if (StringUtils.isBlank(id)) {
+            id = UUID.randomUUID().toString();
+        }
+
+        TokenRevocationRecordDeletionResponse response = new TokenRevocationRecordDeletionResponse(); //UUIDs don't have TRRs. Just the tokens themselves.
+        response.setId(UUID.randomUUID().toString());
+        response.setDeleted(0);
+        response.setErrors(0);
+
+        return response;
     }
 
     private void sendRevokeTokenFeedEvent(User user, String tokenString) {

@@ -19,6 +19,7 @@ public enum IdentityRole {
     , IDENTITY_MFA_ADMIN("identity:mfa-admin")
     , IDENTITY_QUERY_PROPS("identity:query-props")
     , IDENTITY_UPGRADE_USER_TO_CLOUD("identity:upgrade-user-to-cloud")
+    , IDENTITY_PURGE_TOKEN_REVOCATION_RECORDS("identity:purge-trr")
     ;
 
     @Getter

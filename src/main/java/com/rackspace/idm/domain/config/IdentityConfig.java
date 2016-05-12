@@ -263,6 +263,16 @@ public class IdentityConfig {
     public static final String FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP = "feature.prevent.racker.impersonate.api.key.access";
     public static final boolean FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_DEFAULT = false;
 
+    public static final String PURGE_TRRS_MAX_DELAY_PROP = "purge.trrs.max.delay";
+    public static final int PURGE_TRRS_MAX_DELAY_DEFAULT = 1000;
+    public static final int PURGE_TRRS_DEFAULT_DELAY = 0;
+
+    public static final String PURGE_TRRS_MAX_LIMIT_PROP = "purge.trrs.max.limit";
+    public static final int PURGE_TRRS_MAX_LIMIT_DEFAULT = 1000;
+
+    public static final String PURGE_TRRS_OBSOLETE_AFTER_PROP = "purge.trrs.after.lifetime.hours";
+    public static final int PURGE_TRRS_OBSOLETE_AFTER_DEFAULT = 25;
+
     /**
      * Required static prop
      */
@@ -442,6 +452,10 @@ public class IdentityConfig {
         defaults.put(EMAIL_FROM_EMAIL_ADDRESS, EMAIL_FROM_EMAIL_ADDRESS_DEFAULT);
 
         defaults.put(FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_PROP, FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_DEFAULT);
+        defaults.put(PURGE_TRRS_MAX_DELAY_PROP, PURGE_TRRS_MAX_DELAY_DEFAULT);
+
+        defaults.put(PURGE_TRRS_MAX_LIMIT_PROP, PURGE_TRRS_MAX_LIMIT_DEFAULT);
+        defaults.put(PURGE_TRRS_OBSOLETE_AFTER_PROP, PURGE_TRRS_OBSOLETE_AFTER_DEFAULT);
 
         return defaults;
     }
@@ -1279,6 +1293,21 @@ public class IdentityConfig {
         @IdmProp(key = IDP_MAX_SEACH_RESULT_SIZE_PROP, versionAdded = "3.1.0", description = "Maximum numbers of identity providers allowed to be returned in list providers call")
         public int getMaxListIdentityProviderSize() {
             return getIntSafely(reloadableConfiguration, IDP_MAX_SEACH_RESULT_SIZE_PROP);
+        }
+
+        @IdmProp(key = PURGE_TRRS_MAX_DELAY_PROP, versionAdded = "3.4.0", description = "Maximum time, in ms, caller can specify to delay between deleting token revocations records")
+        public int getPurgeTokenRevocationRecordsMaxDelay() {
+            return getIntSafely(reloadableConfiguration, PURGE_TRRS_MAX_DELAY_PROP);
+        }
+
+        @IdmProp(key = PURGE_TRRS_MAX_LIMIT_PROP, versionAdded = "3.4.0", description = "Maximum number of TRRs that will be deleted in the call")
+        public int getPurgeTokenRevocationRecordsMaxLimit() {
+            return getIntSafely(reloadableConfiguration, PURGE_TRRS_MAX_LIMIT_PROP);
+        }
+
+        @IdmProp(key = PURGE_TRRS_OBSOLETE_AFTER_PROP, versionAdded = "3.4.0", description = "Number of hours after creation, based on accessTokenExp attribute, that a TRR can be purged")
+        public int getPurgeTokenRevocationRecordsObsoleteAfterHours() {
+            return getIntSafely(reloadableConfiguration, PURGE_TRRS_OBSOLETE_AFTER_PROP);
         }
 
         @IdmProp(key = FEDERATED_DELTA_EXPIRATION_SECONDS_PROP, versionAdded = "3.1.0", description = "Delta time in seconds to be added for federated users deletion eligibility")

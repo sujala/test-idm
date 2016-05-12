@@ -1,6 +1,9 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
+import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
 import com.rackspace.idm.domain.entity.*;
@@ -17,14 +20,16 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Simple in the sense that it goes against a single backend persistence mechanism for ae token revocation.
@@ -183,6 +188,56 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
             throw new UnsupportedOperationException(String.format("Revocation service does not support revoking tokens of type '%s'", token.getClass().getSimpleName()));
         }
         return tokenRevocationRecordPersistenceStrategy.doesActiveTokenRevocationRecordExistMatchingToken(token);
+    }
+
+    @Override
+    public TokenRevocationRecordDeletionResponse purgeObsoleteTokenRevocationRecords(int limit, int delay) {
+        Assert.isTrue(limit >= 0 && limit <= identityConfig.getReloadableConfig().getPurgeTokenRevocationRecordsMaxLimit());
+        Assert.isTrue(delay >= 0 && delay <= identityConfig.getReloadableConfig().getPurgeTokenRevocationRecordsMaxDelay());
+
+        List<TokenRevocationRecord> records = tokenRevocationRecordPersistenceStrategy.findObsoleteTrrs(limit);
+
+        LOG.info(String.format("Searching for up to '%d' obsolete TRRs. Found '%d'", limit, records.size()));
+
+        int deletions = 0;
+        int errors = 0;
+        int counter = 0;
+        for (; counter<records.size(); counter++) {
+            TokenRevocationRecord record = records.get(counter);
+            try {
+                //sleep ms between deletion attempts
+                if (counter > 0) {
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException e) {
+                        //ignore interrupt during sleep and just process next deletion
+                    }
+                }
+                tokenRevocationRecordPersistenceStrategy.deleteTokenRevocationRecord(record);
+                deletions++;
+            } catch (Exception e) {
+                errors++;
+                LOG.error(String.format("Error deleting obsolete TRR w/ id '%s'. Skipping", record.getId()), e);
+            }
+            //do a log every 100 records
+            if (counter % 100 == 0) {
+                LOG.info(String.format("Processed '%d' of '%d' obsolete TRRs with '%d' successful deletions and '%d' errors'", counter, records.size(), deletions, errors));
+            }
+
+        }
+        LOG.info(String.format("Finished processing '%d' obsolete TRRs with '%d' successful deletions and '%d' errors'", counter, deletions, errors));
+
+        String id = MDC.get(Audit.GUUID); //use request audit id if provided
+        if (StringUtils.isBlank(id)) {
+            id = UUID.randomUUID().toString();
+        }
+
+        TokenRevocationRecordDeletionResponse response = new TokenRevocationRecordDeletionResponse();
+        response.setId(id);
+        response.setErrors(errors);
+        response.setDeleted(deletions);
+
+        return response;
     }
 
     private void sendRevokeTokenFeedEvent(User user, String tokenString) {

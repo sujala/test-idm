@@ -140,7 +140,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         return getObjectsPaged(searchFilter, getBaseDn(), SearchScope.SUB, offset, limit);
     }
 
-    private List<T> processSearchResult(List<SearchResultEntry> searchResultList) {
+    protected List<T> processSearchResult(List<SearchResultEntry> searchResultList) {
         List<T> objects = new ArrayList<T>();
         for (SearchResultEntry entry : searchResultList) {
             getLogger().debug("Getting % entry", entityType.toString());

@@ -7,11 +7,9 @@ import com.rackspace.idm.domain.migration.ChangeType;
 import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.TokenRevocationRecordRepository;
 import com.rackspace.idm.domain.sql.entity.SqlTokenRevocationRecord;
-import com.rackspace.idm.domain.sql.entity.SqlTokenRevocationRecordAuthenticatedByRax;
 import com.rackspace.idm.domain.sql.mapper.impl.TokenRevocationMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Calendar;
@@ -20,7 +18,7 @@ import java.util.List;
 
 
 @SQLComponent("tokenRevocationRecordPersistenceStrategy")
-public class SqlTokenRevocationRecordRepository implements TokenRevocationRecordPersistenceStrategy {
+public class SqlTokenRevocationRecordRepository implements TokenRevocationRecordPersistenceStrategy<TokenRevocationRecord> {
 
     @Autowired
     private TokenRevocationRecordRepository tokenRevocationRecordRepository;
@@ -75,7 +73,7 @@ public class SqlTokenRevocationRecordRepository implements TokenRevocationRecord
     }
 
     @Override
-    public Iterable<? extends TokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(Token token) {
+    public Iterable<TokenRevocationRecord> getActiveTokenRevocationRecordsMatchingToken(Token token) {
         return tokenRevocationRecordRepository.listTokenRevocationRecordsForToken(token);
     }
 
@@ -84,4 +82,13 @@ public class SqlTokenRevocationRecordRepository implements TokenRevocationRecord
         return tokenRevocationRecordRepository.listTokenRevocationRecordsForTokenCount(token) > 0;
     }
 
+    @Override
+    public List findObsoleteTrrs(int max) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteTokenRevocationRecord(TokenRevocationRecord record) {
+        throw new UnsupportedOperationException();
+    }
 }

@@ -299,4 +299,7 @@ public final class JSONConstants {
     public static final String AUTHENTICATE_RESPONSE_AUTHENTICATED_BY_PATH = "access.token.authenticatedBy";
     public static final String AUTHENTICATE_RESPONSE_RAX_AUTH_AUTHENTICATED_BY_PATH = "access.token.RAX-AUTH:authenticatedBy";
 
+    public static final String TOKEN_REVOCATION_RECORD_DELETION_RESPONSE = "tokenRevocationRecordDeletionResponse";
+    public static final String TOKEN_REVOCATION_RECORD_DELETION_REQUEST = "tokenRevocationRecordDeletionRequest";
+
 }

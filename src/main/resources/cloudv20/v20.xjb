@@ -276,6 +276,16 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="publicCertificate"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='TokenRevocationRecordDeletionResponse']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="tokenRevocationRecordDeletionResponse"/>
+            </annox:annotate>
+        </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='TokenRevocationRecordDeletionRequest']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="tokenRevocationRecordDeletionRequest"/>
+            </annox:annotate>
+        </jaxb:bindings>
     </jaxb:bindings>
 
     <jaxb:bindings schemaLocation="RAX-KSGRP-groups.xsd" node="/xs:schema">
