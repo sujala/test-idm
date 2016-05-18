@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v11
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.validation.Validator
@@ -224,7 +225,8 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         service.updateUser(request, "jmunoz", null, user)
 
         then:
-        1 * atomHopperClient.asyncPost(_,_)
+        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.DISABLED)
+        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.UPDATE)
 
     }
 
@@ -250,7 +252,7 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         service.updateUser(request, "jmunoz", null, user)
 
         then:
-        0 * atomHopperClient.asyncPost(_,_)
+        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.UPDATE)
 
     }
 

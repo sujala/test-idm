@@ -7,6 +7,7 @@ import com.rackspace.docs.core.event.V1Element;
 import com.rackspace.docs.event.identity.trr.user.ValuesEnum;
 import com.rackspace.docs.event.identity.user.CloudIdentityType;
 import com.rackspace.docs.event.identity.user.ResourceTypes;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.UserService;
@@ -69,9 +70,6 @@ public class AtomHopperClient {
     public static final int DEFAULT_MAX_PER_ROUTE = 200;
 
     @Autowired
-    private Configuration config;
-
-    @Autowired
     private UserService userService;
 
     @Autowired
@@ -82,6 +80,9 @@ public class AtomHopperClient {
 
     @Autowired
     private AtomHopperHelper atomHopperHelper;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     private HttpClient httpClient;
 
@@ -143,7 +144,7 @@ public class AtomHopperClient {
             String authToken = atomHopperHelper.getAuthToken();
             final UsageEntry entry = createUserTrrEntry(user, trr);
             final Writer writer = marshalEntry(entry);
-            final HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+            final HttpResponse response = executePostRequest(authToken, writer, identityConfig.getReloadableConfig().getAtomHopperUrl());
             if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
                 logger.warn("Failed to create feed for user TRR: " + errorMsg);
@@ -171,11 +172,13 @@ public class AtomHopperClient {
                 entry = createEntryForUser(user, EventType.UNSUSPEND, false);
             } else if (userStatus.equals(AtomHopperConstants.MULTI_FACTOR)) {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
+            } else if (userStatus.equals(AtomHopperConstants.UPDATE)) {
+                entry = createEntryForUser(user, EventType.UPDATE, false);
             }
 
             HttpResponse response = null;
             if (entry != null) {
-                response = executePostRequest(authToken, marshalEntry(entry), config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+                response = executePostRequest(authToken, marshalEntry(entry), identityConfig.getReloadableConfig().getAtomHopperUrl());
             }
 
             if (response != null) {
@@ -197,7 +200,7 @@ public class AtomHopperClient {
         try {
             final UsageEntry entry = createEntryForRevokeToken(user, revokedToken);
             final Writer writer = marshalEntry(entry);
-            final HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+            final HttpResponse response = executePostRequest(authToken, writer, identityConfig.getReloadableConfig().getAtomHopperUrl());
             if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
                 logger.warn("Failed to create feed for revoked token: " + revokedToken);
@@ -368,8 +371,8 @@ public class AtomHopperClient {
         v1Element.setResourceId(resourceId);
         v1Element.setResourceName(resourceName);
         v1Element.setTenantId(tenantId);
-        v1Element.setRegion(Region.fromValue(config.getString("atom.hopper.region")));
-        v1Element.setDataCenter(DC.fromValue(config.getString("atom.hopper.dataCenter")));
+        v1Element.setRegion(Region.fromValue(identityConfig.getReloadableConfig().getAtomHopperRegion()));
+        v1Element.setDataCenter(DC.fromValue(identityConfig.getReloadableConfig().getAtomHopperDataCenter()));
         v1Element.setVersion(AtomHopperConstants.VERSION);
         v1Element.getAny().add(cloudIdentityType);
 
@@ -399,10 +402,6 @@ public class AtomHopperClient {
         usageEntry.setTitle(entryTitle);
 
         return usageEntry;
-    }
-
-    public void setConfig(Configuration config) {
-        this.config = config;
     }
 
     public void setDefaultTenantService(DefaultTenantService defaultTenantService) {

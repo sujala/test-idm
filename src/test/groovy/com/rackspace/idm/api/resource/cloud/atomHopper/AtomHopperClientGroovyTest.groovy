@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.atomHopper
 import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.event.identity.trr.user.CloudIdentityType
 import com.rackspace.docs.event.identity.trr.user.ValuesEnum
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.MemoryTokenRevocationRecordPersistenceStrategy
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
@@ -41,10 +42,8 @@ class AtomHopperClientGroovyTest extends Specification {
     @Shared DefaultIdentityUserService identityUserService
 
     @Shared DefaultTenantService defaultTenantService
-    @Shared Configuration config
     @Shared HttpClient httpClient
     @Shared org.openstack.docs.identity.api.v2.ObjectFactory objectFactory;
-    @Shared CryptHelper cryptHelper
     @Shared AtomHopperHelper atomHopperHelper
 
     def setupSpec(){
@@ -62,7 +61,6 @@ class AtomHopperClientGroovyTest extends Specification {
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
@@ -87,7 +85,6 @@ class AtomHopperClientGroovyTest extends Specification {
         def groupId = 1
         identityUserService.getGroupsForEndUser(_) >> [createGroup(groupName, groupId,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
@@ -98,84 +95,6 @@ class AtomHopperClientGroovyTest extends Specification {
         then:
         !groupInfo.equals(groupName)
         Integer.parseInt(groupInfo) == groupId
-    }
-
-    def "Post deleted user" () {
-        given:
-        setupMock()
-        User user = new User()
-        user.username = "testUser"
-        user.id = "1"
-        user.region = "DFW"
-        user.roles = [createTenantRole("someRole", "1", "desc")].asList()
-        identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
-        config.getString(_) >> "DFW" >> "DFW1" >> "http://10.4.39.67:8888/namespace/feed"
-        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
-
-        when:
-        client.postUser(user, "someToken", AtomHopperConstants.DELETED)
-
-        then:
-        1 * httpClient.execute(_)
-    }
-
-    def "Post disabled user" () {
-        given:
-        setupMock()
-        User user = new User()
-        user.username = "testUser"
-        user.id = "1"
-        user.region = "DFW"
-        user.roles = [createTenantRole("someRole", "1", "desc")].asList()
-        identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
-        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
-        defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
-
-        when:
-        client.postUser(user, "someToken", AtomHopperConstants.DISABLED)
-
-        then:
-        1 * httpClient.execute(_)
-    }
-
-    def "Post migrated user" () {
-        given:
-        setupMock()
-        User user = new User()
-        user.username = "testUser"
-        user.id = "1"
-        user.region = "DFW"
-        user.roles = [createTenantRole("someRole", "1", "desc")].asList()
-        identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
-        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
-        defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
-
-        when:
-        client.postUser(user, "someToken", AtomHopperConstants.MIGRATED)
-
-        then:
-        1 * httpClient.execute(_)
-    }
-
-    def "Post revoked token" () {
-        given:
-        setupMock()
-        User user = new User()
-        user.username = "testUser"
-        user.id = "1"
-        user.region = "DFW"
-        user.roles = [createTenantRole("someRole", "1", "desc")].asList()
-        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >>"GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
-
-        when:
-        client.postToken(user, "someToken", "revokedToken")
-
-        then:
-        1 * httpClient.execute(_)
     }
 
     def "create atom entry - make sure entry is consume" () {
@@ -193,7 +112,6 @@ class AtomHopperClientGroovyTest extends Specification {
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
@@ -220,7 +138,6 @@ class AtomHopperClientGroovyTest extends Specification {
         user.roles = [createTenantRole("someRole", "1", "desc")].asList()
         identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
         when:
         client.postToken(user, "someToken", "revokedToken")
@@ -241,9 +158,6 @@ class AtomHopperClientGroovyTest extends Specification {
 
         identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
         defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
-        config.getString("atom.hopper.region") >> "GLOBAL"
-        config.getString("atom.hopper.dataCenter") >> "GLOBAL"
-        config.getString(AtomHopperConstants.ATOM_HOPPER_URL) >> "http://10.4.39.67:8888/namespace/feed"
 
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
@@ -314,14 +228,14 @@ class AtomHopperClientGroovyTest extends Specification {
         client.identityUserService = identityUserService
         defaultTenantService = Mock()
         client.defaultTenantService = defaultTenantService
-        config = Mock()
-        client.config = config
+        client.identityConfig = Mock(IdentityConfig)
+        client.identityConfig.getReloadableConfig() >> Mock(IdentityConfig.ReloadableConfig)
+        client.identityConfig.getReloadableConfig().getAtomHopperUrl() >> "http://localhost:8888/namespace/feed"
+        client.identityConfig.getReloadableConfig().getAtomHopperDataCenter() >> "GLOBAL"
+        client.identityConfig.getReloadableConfig().getAtomHopperRegion() >> "GLOBAL"
         httpClient = Mock()
         client.httpClient = httpClient
         atomHopperHelper = Mock()
         client.atomHopperHelper = atomHopperHelper
-
-        config.getString("atom.hopper.crypto.password") >> "password"
-        config.getString("atom.hopper.crypto.salt") >> "c8 99"
     }
 }

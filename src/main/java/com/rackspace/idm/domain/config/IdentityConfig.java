@@ -273,6 +273,10 @@ public class IdentityConfig {
     public static final String PURGE_TRRS_OBSOLETE_AFTER_PROP = "purge.trrs.after.lifetime.hours";
     public static final int PURGE_TRRS_OBSOLETE_AFTER_DEFAULT = 25;
 
+    public static final String ATOM_HOPPER_URL_PROP = "atom.hopper.url";
+    public static final String ATOM_HOPPER_DATA_CENTER_PROP = "atom.hopper.dataCenter";
+    public static final String ATOM_HOPPER_REGION_PROP = "atom.hopper.region";
+
     /**
      * Required static prop
      */
@@ -1043,6 +1047,7 @@ public class IdentityConfig {
         public String getMfaKeyLocation() {
             return getStringSafely(staticConfiguration, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME);
         }
+
     }
 
     /**
@@ -1434,6 +1439,21 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP, versionAdded = "3.3.1", description = "Whether or not to allow racker impersonation requests to see user's API key credentials.")
         public boolean preventRackerImpersonationApiKeyAccess() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP);
+        }
+
+        @IdmProp(key = ATOM_HOPPER_URL_PROP, versionAdded = "3.5.0", description = "The URL to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.")
+        public String getAtomHopperUrl() {
+            return reloadableConfiguration.getString(ATOM_HOPPER_URL_PROP);
+        }
+
+        @IdmProp(key = ATOM_HOPPER_DATA_CENTER_PROP, versionAdded = "3.5.0", description = "The data center to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.")
+        public String getAtomHopperDataCenter() {
+            return reloadableConfiguration.getString(ATOM_HOPPER_DATA_CENTER_PROP);
+        }
+
+        @IdmProp(key = ATOM_HOPPER_REGION_PROP, versionAdded = "3.5.0", description = "The region to use when posting events to atom hopper. This property was introduced as a static property in version 1.0.14.8 and migrated to a reloadable property in version 3.5.0.")
+        public String getAtomHopperRegion() {
+            return reloadableConfiguration.getString(ATOM_HOPPER_REGION_PROP);
         }
 
     }

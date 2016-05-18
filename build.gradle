@@ -167,6 +167,10 @@ dependencies {
     compile group: 'org.keyczar', name: 'keyczar', version: '0.71g'
     compile group: 'org.msgpack', name: 'msgpack', version: '0.6.11'
 
+    testCompile(group: 'org.mock-server', name: 'mockserver-netty', version: '3.10.4') {
+        exclude(group: 'org.slf4j')
+        exclude(group: 'junit')
+    }
     testCompile(group: 'org.spockframework', name: 'spock-spring', version:'0.7-groovy-1.8') {
         exclude(group: 'junit')
         exclude(group: 'org.hamcrest')
