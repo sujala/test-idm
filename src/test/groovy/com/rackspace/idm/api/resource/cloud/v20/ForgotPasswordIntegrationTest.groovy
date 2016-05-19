@@ -1,7 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
@@ -12,10 +14,12 @@ import com.rackspace.idm.api.resource.cloud.email.EmailTemplateConstants
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.commons.lang.StringUtils
+import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -31,6 +35,7 @@ import static org.apache.http.HttpStatus.SC_BAD_REQUEST
 import static org.apache.http.HttpStatus.SC_FORBIDDEN
 import static org.apache.http.HttpStatus.SC_NOT_FOUND
 import static org.apache.http.HttpStatus.SC_NO_CONTENT
+import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
 class ForgotPasswordIntegrationTest extends RootIntegrationTest {
     @Autowired(required = false)
@@ -316,6 +321,23 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
 
         expect: "try to get my user using tokens results in 403"
         cloud20.getUserById(tokenStr, userAdmin.id).status == SC_FORBIDDEN
+    }
+
+    def "Reset token can not be used to auth w/ token"() {
+        setup:
+        def domainId = utils.createDomain()
+        def users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
+        methods.forgotPassword(creds)
+        def tokenStr = extractTokenFromDefaultEmail(wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage())
+
+        when: "try to auth w/ token using restricted token session id"
+        def authResponse = cloud20.authenticateTokenAndTenant(tokenStr, userAdmin.domainId)
+
+        then: "get 403"
+        assertOpenStackV2FaultResponse(authResponse, ForbiddenFault, HttpStatus.SC_FORBIDDEN, GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN)
     }
 
     def "get 400 when specify non-existant portal"() {

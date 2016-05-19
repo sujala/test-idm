@@ -11,7 +11,9 @@ import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.RoleService
 import org.apache.commons.configuration.Configuration
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import testHelpers.RootIntegrationTest
@@ -23,6 +25,7 @@ import static org.apache.http.HttpStatus.SC_FORBIDDEN
 import static org.apache.http.HttpStatus.SC_NOT_FOUND
 import static org.apache.http.HttpStatus.SC_NO_CONTENT
 import static org.apache.http.HttpStatus.SC_OK
+import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
 
 class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
 
@@ -286,7 +289,7 @@ class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def userAdmin, users
-        (userAdmin, users) = utils.createUserAdmin(domainId)
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         User initialUserAdmin = userRepository.getUserById(userAdmin.id)
         initialUserAdmin.userMultiFactorEnforcementLevel = GlobalConstants.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL_REQUIRED
         userRepository.updateUserAsIs(initialUserAdmin)
@@ -302,6 +305,12 @@ class AuthScopedTokenIntegrationTest extends RootIntegrationTest {
         then:
         nonMfaResponse.status == SC_FORBIDDEN
 
+        when:
+        def authWTokenResponse = cloud20.authenticateTokenAndTenant(entity.token.id, domainId)
+
+        then: "get 403"
+        assertOpenStackV2FaultResponse(authWTokenResponse, ForbiddenFault, HttpStatus.SC_FORBIDDEN, GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN)
+        
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
