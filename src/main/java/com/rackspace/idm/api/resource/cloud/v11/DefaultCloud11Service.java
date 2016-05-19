@@ -28,6 +28,7 @@ import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import lombok.Setter;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
@@ -869,6 +870,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             } else if (!gaUser.isDisabled() && isDisabled) {
                 atomHopperClient.asyncPost(gaUser, AtomHopperConstants.ENABLED);
             }
+
+            atomHopperClient.asyncPost(gaUser, AtomHopperConstants.UPDATE);
 
             List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForUser(gaUser);
 

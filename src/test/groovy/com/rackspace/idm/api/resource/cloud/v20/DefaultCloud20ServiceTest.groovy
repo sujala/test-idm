@@ -11,6 +11,7 @@ import com.rackspace.idm.api.converter.cloudv20.GroupConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
@@ -2513,7 +2514,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.updateUser(headers, authToken, "2", user)
 
         then:
-        1 * atomHopperClient.asyncPost(_,_)
+        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.DISABLED)
+        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.UPDATE)
     }
 
     def "Update token format as a identity admin when ae tokens enabled doesn't reset the data"() {
@@ -2767,7 +2769,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.updateUser(headers, authToken, "2", user)
 
         then:
-        1 * atomHopperClient.asyncPost(_,_)
+        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.ENABLED)
+        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.UPDATE)
     }
 
     def "Disabling a enabled user does send an atom feed"(){
@@ -2798,7 +2801,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.updateUser(headers, authToken, "2", user)
 
         then:
-        1 * atomHopperClient.asyncPost(_,_)
+        1 * atomHopperClient.asyncPost(_, AtomHopperConstants.UPDATE)
     }
 
     def "updateUser does not allow a user to enable their own account"() {

@@ -1,6 +1,9 @@
 package com.rackspace.idm
 
 class Constants {
+    static def X_AUTH_TOKEN = "X-Auth-Token"
+    static def POST = "POST"
+
     static def SERVICE_ADMIN_ID = "173190"
     static def SERVICE_ADMIN_USERNAME = "AuthQE"
     static def SERVICE_ADMIN_PASSWORD = "Auth1234"
@@ -92,4 +95,8 @@ class Constants {
     public static String IDENTITY_SERVICE_ID = "bde1268ebabeeabb70a0e702a4626977c331d5c4"
 
     public static final String TEST_KEYS_LOCATION = "/keys";
+
+    public static final int TEST_MOCK_FEEDS_PORT = 8887
+    public static final String TEST_MOCK_FEEDS_PATH = "/namespace/feed"
+    public static final String TEST_MOCK_FEEDS_URL = "http://localhost:" + TEST_MOCK_FEEDS_PORT + TEST_MOCK_FEEDS_PATH
 }

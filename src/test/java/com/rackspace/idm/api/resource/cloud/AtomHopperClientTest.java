@@ -55,7 +55,6 @@ public class AtomHopperClientTest {
 
 
         //Setters
-        atomHopperClient.setConfig(config);
         atomHopperClient.setHttpClient(httpClient);
     }
 

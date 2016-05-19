@@ -1,5 +1,7 @@
 package testHelpers;
 
+import com.rackspace.idm.Constants;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.PropertyFileConfiguration;
 import lombok.Delegate;
 import org.apache.commons.configuration.Configuration;
@@ -23,7 +25,7 @@ public final class SingletonReloadableConfiguration implements Configuration {
 
     private PropertyFileConfiguration pfConfig = new PropertyFileConfiguration();
 
-    private SingletonReloadableConfiguration(){
+    private SingletonReloadableConfiguration() {
         pfConfig = new PropertyFileConfiguration();
         reset();
     }
@@ -35,6 +37,8 @@ public final class SingletonReloadableConfiguration implements Configuration {
      */
     public synchronized void reset() {
         idmPropertiesConfig = pfConfig.getReloadableConfig(pfConfig.getConfig());
+
+        idmPropertiesConfig.setProperty(IdentityConfig.ATOM_HOPPER_URL_PROP, Constants.TEST_MOCK_FEEDS_URL);
     }
 
 }

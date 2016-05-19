@@ -1,14 +1,17 @@
 package testHelpers
 
+import com.rackspace.idm.Constants
 import com.rackspace.idm.helpers.Cloud10Utils
 import com.rackspace.idm.helpers.Cloud11Utils
 import com.rackspace.idm.helpers.Cloud20Utils
 import com.rackspace.idm.helpers.CloudTestUtils
-import com.rackspace.idm.helpers.WiserWrapper
 import com.sun.jersey.api.client.WebResource
 import org.apache.commons.lang.math.RandomUtils
 import org.joda.time.DateTime
 import org.junit.Rule
+import org.mockserver.integration.ClientAndServer
+import org.mockserver.model.HttpRequest
+import org.mockserver.model.HttpResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -16,6 +19,8 @@ import spock.lang.Specification
 import testHelpers.junit.ConditionalIgnoreRule
 
 import javax.ws.rs.core.MediaType
+
+import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class RootIntegrationTest extends Specification {
@@ -50,6 +55,8 @@ class RootIntegrationTest extends Specification {
     @Shared SingletonMockMultiFactorAuthenticationService mockMultiFactorAuthenticationService = SingletonMockMultiFactorAuthenticationService.getInstance()
     @Shared SingletonMockUserManagement mockUserManagement = SingletonMockUserManagement.getInstance()
 
+    @Shared ClientAndServer cloudFeedsMock;
+
     @Rule
     public ConditionalIgnoreRule conditionalIgnoreRule = new ConditionalIgnoreRule()
 
@@ -59,6 +66,7 @@ class RootIntegrationTest extends Specification {
         staticIdmConfiguration.reset()
         reloadableConfiguration.reset()
         clearEmailServerMessages()
+        startCloudFeedsMock()
         mockMobilePhoneVerification.reset()
         mockMultiFactorAuthenticationService.reset()
         mockUserManagement.reset()
@@ -76,10 +84,21 @@ class RootIntegrationTest extends Specification {
         mockMobilePhoneVerification.reset()
         mockMultiFactorAuthenticationService.reset()
         mockUserManagement.reset()
+        cloudFeedsMock.stop()
     }
 
     def clearEmailServerMessages() {
         wiserWrapper.getWiser().getMessages().clear()
+    }
+
+    def startCloudFeedsMock() {
+        cloudFeedsMock = startClientAndServer(Constants.TEST_MOCK_FEEDS_PORT)
+        resetCloudFeedsMock()
+    }
+
+    def resetCloudFeedsMock() {
+        cloudFeedsMock.reset()
+        cloudFeedsMock.when(new HttpRequest().withMethod("POST")).respond(new HttpResponse().withStatusCode(201))
     }
 
     /**
