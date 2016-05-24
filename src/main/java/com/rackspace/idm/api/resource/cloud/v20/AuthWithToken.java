@@ -1,14 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.UserService;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.NotAuthenticatedException;
-import com.rackspace.idm.exception.NotAuthorizedException;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.*;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
@@ -44,6 +42,11 @@ public class AuthWithToken {
 
         AuthResponseTuple authResponseTuple = new AuthResponseTuple();
         ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
+
+        //restricted (scoped) tokens can not be used for auth w/ token
+        if (StringUtils.isNotBlank(sa.getScope())) {
+            throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN);
+        }
 
         // Check for impersonated token
         if (sa instanceof ImpersonatedScopeAccess) {

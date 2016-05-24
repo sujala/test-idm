@@ -306,6 +306,30 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         false | _
     }
 
+    def "Can not auth with token using restricted token session id"() {
+        setup:
+        def domainId = utils.createDomain()
+        def users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, true)
+        userAdminToken = authenticate(userAdmin.username)
+        setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
+        def response = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        String sessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
+        assert sessionId != null
+
+        when: "try to auth w/ token using restricted token session id"
+        def authResponse = cloud20.authenticateTokenAndTenant(sessionId, userAdmin.domainId)
+
+        then: "get 403"
+        assertOpenStackV2FaultResponse(authResponse, ForbiddenFault, HttpStatus.SC_FORBIDDEN, GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN)
+
+        cleanup:
+        reloadableConfiguration.reset()
+    }
+
     def "Successful mobile passcode authentication with AE token sets OTP_PASSCODE auth by"() {
         setup:
         setUpAndEnableMultiFactor(FactorTypeEnum.OTP)
