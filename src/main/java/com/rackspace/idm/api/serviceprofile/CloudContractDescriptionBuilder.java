@@ -23,7 +23,11 @@ public class CloudContractDescriptionBuilder extends AbstractContractDescription
     	return getFileContent("/docs/cloud/versions.xml");
     }
 
-    public String buildVersion11Page() {
+	public String buildInternalRootPageJson() {
+		return getFileContent("/docs/cloud/versions.json");
+	}
+
+	public String buildVersion11Page() {
     	return  getFileContent("/docs/cloud/v1.1/version11.xml");
     }
 
