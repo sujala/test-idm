@@ -273,6 +273,9 @@ public class IdentityConfig {
     public static final String PURGE_TRRS_OBSOLETE_AFTER_PROP = "purge.trrs.after.lifetime.hours";
     public static final int PURGE_TRRS_OBSOLETE_AFTER_DEFAULT = 25;
 
+    public static final String FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP = "feature.return.json.specific.cloud.version";
+    public static final boolean FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -456,6 +459,8 @@ public class IdentityConfig {
 
         defaults.put(PURGE_TRRS_MAX_LIMIT_PROP, PURGE_TRRS_MAX_LIMIT_DEFAULT);
         defaults.put(PURGE_TRRS_OBSOLETE_AFTER_PROP, PURGE_TRRS_OBSOLETE_AFTER_DEFAULT);
+
+        defaults.put(FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT);
 
         return defaults;
     }
@@ -1436,6 +1441,10 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP);
         }
 
+        @IdmProp(key = FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, versionAdded = "3.3.2", description = "Whether or not to return the custom versions.json when GET /cloud is called and json is requested or translate the versions.xml to json")
+        public boolean returnJsonSpecificCloudVersionResource() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP);
+        }
     }
 
     @Deprecated

@@ -4,6 +4,7 @@ import com.rackspace.idm.api.resource.cloud.v10.Cloud10VersionResource;
 import com.rackspace.idm.api.resource.cloud.v11.Cloud11VersionResource;
 import com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import org.openstack.docs.common.api.v1.VersionChoiceList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,18 +33,22 @@ public class CloudVersionsResource {
     private final Cloud11VersionResource cloud11VersionResource;
     private final Cloud20VersionResource cloud20VersionResource;
     private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
+    private IdentityConfig identityConfig;
 
     @Autowired
     public CloudVersionsResource(Cloud10VersionResource cloud10VersionResource,
                                  Cloud11VersionResource cloud11VersionResource,
                                  Cloud20VersionResource cloud20VersionResource,
-                                 CloudContractDescriptionBuilder cloudContractDescriptionBuilder) {
+                                 CloudContractDescriptionBuilder cloudContractDescriptionBuilder,
+                                 IdentityConfig identityConfig) {
         this.cloud10VersionResource = cloud10VersionResource;
         this.cloud11VersionResource = cloud11VersionResource;
         this.cloud20VersionResource = cloud20VersionResource;
         this.cloudContractDescriptionBuilder = cloudContractDescriptionBuilder;
+        this.identityConfig = identityConfig;
     }
 
+    @Produces({MediaType.APPLICATION_XML})
     @GET
     public Response getInternalCloudVersionsInfo() throws JAXBException {
         final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage();
@@ -51,6 +56,19 @@ public class CloudVersionsResource {
         Unmarshaller unmarshaller = context.createUnmarshaller();
         JAXBElement<VersionChoiceList> versionChoice = (JAXBElement<VersionChoiceList>) unmarshaller.unmarshal(new StringReader(responseXml));
         return Response.ok(versionChoice.getValue()).build();
+    }
+
+    @Produces({MediaType.APPLICATION_JSON})
+    @GET
+    public Response getInternalCloudVersionsInfoJson() throws JAXBException {
+        Response response;
+        if (!identityConfig.getReloadableConfig().returnJsonSpecificCloudVersionResource()) {
+            response = getInternalCloudVersionsInfo(); //return the legacy way if feature disabled
+        } else {
+            String responseJson = cloudContractDescriptionBuilder.buildInternalRootPageJson();
+            response = Response.ok(responseJson).build();
+        }
+        return response;
     }
 
     @Path("auth")
