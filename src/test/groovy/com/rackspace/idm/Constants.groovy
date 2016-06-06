@@ -77,6 +77,7 @@ class Constants {
     static def IDP_2_PUBLIC_KEY = "saml-qe-idp.crt"
     static def IDP_2_PRIVATE_KEY = "saml-qe-idp.pkcs8"
     static def DEFAULT_FED_EMAIL = "federated@rackspace.com"
+    static def DEFAULT_SAML_EXP_SECS = 1 * 60 * 60 //1 hour
 
     static def RACKER_IDP_NAME = "rackertest"
     static def RACKER_IDP_URI = "http://racker.rackspace.com"

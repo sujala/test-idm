@@ -157,11 +157,11 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdminEntity = userService.getUserById(userAdmin.id)
@@ -240,11 +240,11 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdminEntity = userService.getUserById(userAdmin.id)
@@ -312,15 +312,15 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def username2 = testUtils.getRandomUUID("userAdminForSaml2")
         def username3 = testUtils.getRandomUUID("userAdminForSaml3")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
         def email2 = "fedIntTest2@invalid.rackspace.com"
         def email3 = "fedIntTest3@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
-        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expDays, domainId, null, email2);
-        def samlAssertion3 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username3, expDays, domainId, null, email3);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
+        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expSecs, domainId, null, email2);
+        def samlAssertion3 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username3, expSecs, domainId, null, email3);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def authResponse, authResponse2, authResponse3, fedUser, fedUser2, fedUser3, samlResponse, samlResponse2, samlResponse3, deletionResponse, deletionEntity
@@ -487,11 +487,11 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdminEntity = userService.getUserById(userAdmin.id)
@@ -535,11 +535,11 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdminEntity = userService.getUserById(userAdmin.id)
@@ -586,10 +586,10 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, Arrays.asList(rbacRole1.name), email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, Arrays.asList(rbacRole1.name), email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdminEntity = userService.getUserById(userAdmin.id)
@@ -622,10 +622,10 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, Arrays.asList(role1000.name), email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, Arrays.asList(role1000.name), email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdminEntity = userService.getUserById(userAdmin.id)
@@ -657,10 +657,10 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, Arrays.asList(role1000.name), email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, Arrays.asList(role1000.name), email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdminEntity = userService.getUserById(userAdmin.id)
@@ -683,12 +683,12 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         List<String> roleNames = Arrays.asList(delimitedRoleNames.split(","))
 
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, roleNames, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, roleNames, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdminEntity = userService.getUserById(userAdmin.id)
@@ -716,13 +716,13 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
-        def samlAssertionNone = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
-        def samlAssertionRbac1 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, Arrays.asList(rbacRole1.name), email);
-        def samlAssertionRbac1And2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, Arrays.asList(rbacRole1.name, rbacRole2.name), email);
-        def samlAssertionRbac2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, Arrays.asList(rbacRole2.name), email);
+        def samlAssertionNone = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
+        def samlAssertionRbac1 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, Arrays.asList(rbacRole1.name), email);
+        def samlAssertionRbac1And2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, Arrays.asList(rbacRole1.name, rbacRole2.name), email);
+        def samlAssertionRbac2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, Arrays.asList(rbacRole2.name), email);
 
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
@@ -768,8 +768,8 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
-        def expDays = 500
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
         def userAdmin1, userAdmin2, users1, users2
         def disabledDomainErrorMessage = String.format(ProvisionedUserSourceFederationHandler.DISABLED_DOMAIN_ERROR_MESSAGE, domainId)
         (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
@@ -797,7 +797,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         samlResponse.getEntity(BadRequestFault).value.message == disabledDomainErrorMessage
 
         when: "try to pass a saml assertion for a new user in the same domain"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, testUtils.getRandomUUID(), expDays, domainId, null);
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, testUtils.getRandomUUID(), expSecs, domainId, null);
         samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then: "the request returns an error that matches that of a disabled domain"
@@ -816,8 +816,8 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
-        def expDays = 500
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
         def userAdmin1, users1
         (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
 
@@ -893,8 +893,8 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
-        def expDays = 500
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
         def userAdmin1, userAdmin2, users1, users2
         (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
         (userAdmin2, users2) = utils.createUserAdmin(domainId)
@@ -944,27 +944,27 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def username1 = testUtils.getRandomUUID("samlUser")
         def username2 = testUtils.getRandomUUID("samlUser")
         def username3 = testUtils.getRandomUUID("samlUser")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         //fill the domain with the max allowed number of users
-        assert cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username1, expDays, domainId, null)).status == 200
-        assert cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expDays, domainId, null)).status == 200
+        assert cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username1, expSecs, domainId, null)).status == 200
+        assert cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username2, expSecs, domainId, null)).status == 200
 
         when: "try to exceed the limit under the current IDP"
-        def samlResponse = cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username3, expDays, domainId, null));
+        def samlResponse = cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username3, expSecs, domainId, null));
 
         then: "the response is a failure"
         samlResponse.status == 400
 
         when: "auth with existing user under the current IDP"
-        samlResponse = cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username1, expDays, domainId, null));
+        samlResponse = cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username1, expSecs, domainId, null));
 
         then: "the response is a success"
         samlResponse.status == 200
 
         when: "try to create the same user under a different IDP (the limit is per IDP per domain)"
-        samlResponse = cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(IDP_2_URI, username3, expDays, domainId, null, DEFAULT_FED_EMAIL, IDP_2_PRIVATE_KEY, IDP_2_PUBLIC_KEY));
+        samlResponse = cloud20.samlAuthenticate(new SamlFactory().generateSamlAssertionStringForFederatedUser(IDP_2_URI, username3, expSecs, domainId, null, DEFAULT_FED_EMAIL, IDP_2_PRIVATE_KEY, IDP_2_PUBLIC_KEY));
 
         then: "the request succeeds"
         samlResponse.status == 200
@@ -981,12 +981,12 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username1 = testUtils.getRandomUUID("samlUser")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def saToken = utils.getServiceAdminToken()
 
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username1, expDays, domainId, null)
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username1, expSecs, domainId, null)
 
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
         assert samlResponse.status == HttpStatus.SC_OK
@@ -1122,8 +1122,8 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
-        def expDays = 500
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 
@@ -1149,9 +1149,9 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def domainId2 = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
-        def expDays = 500
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null);
-        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId2, null);
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId2, null);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdmin2, users2
@@ -1176,12 +1176,12 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
         def adminToken = utils.getIdentityAdminToken()
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 
@@ -1247,13 +1247,13 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     def "Invalid SAML signature results in 400"() {
         given:
         def username = Constants.RACKER_NOGROUP
-        def expDays = 5
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def samlFactor = new SamlFactory()
         def domainId = utils.createDomain()
         def email = "fedIntTest@invalid.rackspace.com"
 
-        Response samlAssertion = samlFactor.generateSamlAssertionResponseForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
-        Response samlAssertion2 = samlFactor.generateSamlAssertionResponseForFederatedUser(DEFAULT_IDP_URI, username, 6, domainId, null, email);
+        Response samlAssertion = samlFactor.generateSamlAssertionResponseForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
+        Response samlAssertion2 = samlFactor.generateSamlAssertionResponseForFederatedUser(DEFAULT_IDP_URI, username, expSecs+100, domainId, null, email);
 
         //replace first assertion with second to make an invalid assertion
         Signature sig = samlAssertion2.getSignature()
@@ -1273,13 +1273,13 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUIDOfLength("userAdminForSaml", 100)
         def email = testUtils.getRandomUUIDOfLength("email", 255)
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def adminToken = utils.getIdentityAdminToken()
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
 
         when: "authenticate the token"
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -1300,11 +1300,11 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         samlAssertion = samlAssertion.replaceAll("IssueInstant=\"([^\"]+)\"", "IssueInstant=\"\"")
 
         def userAdmin, users
@@ -1325,11 +1325,11 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         samlAssertion = samlAssertion.replaceAll("Version=\"([^\"]+)\"", "Version=\"\"")
 
         def userAdmin, users
@@ -1350,11 +1350,11 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         samlAssertion = samlAssertion.replaceAll("NotOnOrAfter=\"([^\"]+)\"", "NotOnOrAfter=\"test\"")
 
         def userAdmin, users
@@ -1375,11 +1375,11 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         samlAssertion = samlAssertion.replaceAll("AuthnInstant=\"([^\"]+)\"", "AuthnInstant=\"test\"")
 
         def userAdmin, users
@@ -1400,11 +1400,11 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         samlAssertion = samlAssertion.replaceAll("Algorithm=\"([^\"]+)\"", "Algorithm=\"\"")
 
         def userAdmin, users

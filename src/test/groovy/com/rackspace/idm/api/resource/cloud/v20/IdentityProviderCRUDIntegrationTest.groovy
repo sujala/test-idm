@@ -437,7 +437,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     def "Create a DOMAIN IDP with approvedDomains and single cert. Validate can immediately fed auth for user for approvedDomain"() {
         given:
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
         def domainId = utils.createDomain()
         cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
@@ -462,14 +462,14 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdentityProvider creationResultIdp = utils.createIdentityProvider(idpManagerToken, approvedDomainsIdp)
 
         when: "auth user in domain with IDP"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(creationResultIdp.issuer, username, expDays, domainId, null, email, samlProducer1);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(creationResultIdp.issuer, username, expSecs, domainId, null, email, samlProducer1);
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then: "success"
         samlResponse.status == HttpServletResponse.SC_OK
 
         when: "auth user in different domain for IDP"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(creationResultIdp.issuer, username, expDays, "otherdomain", null, email, samlProducer1);
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(creationResultIdp.issuer, username, expSecs, "otherdomain", null, email, samlProducer1);
         samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then: "failure"
@@ -837,7 +837,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 
         def username = testUtils.getRandomUUID("userForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         //create a new IDP
@@ -853,7 +853,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdentityProvider identityProvider = response.getEntity(IdentityProvider)
 
         //create a fed user for that IDP
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email);
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
         assert samlResponse.status == SC_OK
         AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value

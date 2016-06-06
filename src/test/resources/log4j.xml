@@ -87,7 +87,7 @@
 	</logger>
 
 	<logger name="org.apache.xml.security">
-		<level value="warn" />
+		<level value="debug" />
 	</logger>
 
 	<logger name="org.hibernate">
