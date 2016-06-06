@@ -163,7 +163,7 @@ dependencies {
     compile 'org.eclipse.persistence:eclipselink:2.5.0'
 
     compile group: 'com.google.guava', name: 'guava', version: '17.0'
-    compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '5.9'
+    compile group: 'com.googlecode.libphonenumber', name: 'libphonenumber', version: '7.4.2'
     compile group: 'org.keyczar', name: 'keyczar', version: '0.71g'
     compile group: 'org.msgpack', name: 'msgpack', version: '0.6.11'
 
@@ -210,6 +210,7 @@ dependencies {
         exclude(module: 'jersey-client', group: 'com.sun.jersey')
         exclude(group: 'org.springframework')
         exclude(group: 'javax.servlet')
+        exclude(module: 'libphonenumber')
     }
 
     compile group: 'com.google.zxing', name: 'javase', version: '3.1.0'
