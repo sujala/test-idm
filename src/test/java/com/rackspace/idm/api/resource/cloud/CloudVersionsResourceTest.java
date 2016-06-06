@@ -47,8 +47,7 @@ public class CloudVersionsResourceTest {
         cloud20VersionResource = mock(Cloud20VersionResource.class);
         config = mock(Configuration.class);
         cloudContractDescriptionBuilder = new CloudContractDescriptionBuilder(fileSystemApiDocRepository, serviceDescriptionTemplateUtil);
-
-        cloudVersionsResource = new CloudVersionsResource(cloud10VersionResource, cloud11VersionResource, cloud20VersionResource, cloudContractDescriptionBuilder);
+        cloudVersionsResource = new CloudVersionsResource(cloud10VersionResource, cloud11VersionResource, cloud20VersionResource, cloudContractDescriptionBuilder, identityConfig);
     }
 
     @Test

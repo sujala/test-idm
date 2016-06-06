@@ -40,6 +40,7 @@ class RootIntegrationTest extends Specification {
     @Shared def v2Factory = new V2Factory()
     @Shared def entityFactory = new EntityFactory()
 
+    @Shared CloudMethods cloud = new CloudMethods()
     @Shared Cloud10Methods cloud10 = new Cloud10Methods()
     @Shared Cloud11Methods cloud11 = new Cloud11Methods()
     @Shared Cloud20Methods cloud20 = new Cloud20Methods()
