@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.Constants
 import org.joda.time.DateTime
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -17,7 +18,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
         def idpManager = utils.createIdentityProviderManager()
         def idpManagerToken = utils.getToken(idpManager.username)
@@ -53,7 +54,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         createdCert.id != null
 
         when: "auth user for IDP"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expDays, domainId, null, email, samlProducer1);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email, samlProducer1);
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then: "success"
@@ -77,7 +78,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         createdCert.id != null
 
         when: "auth user for IDP using second cert"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expDays, domainId, null, email, samlProducer2);
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email, samlProducer2);
         samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then: "success"
@@ -99,14 +100,14 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         identityProviderResponse.publicCertificates.publicCertificate.find {it.pemEncoded == pubCertPemString2} != null
 
         when: "auth user for IDP using first cert"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expDays, domainId, null, email, samlProducer1);
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email, samlProducer1);
         samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then: "error, invalid cert"
         samlResponse.status == HttpServletResponse.SC_BAD_REQUEST
 
         when: "auth user for IDP using second cert"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expDays, domainId, null, email, samlProducer2);
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email, samlProducer2);
         samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then: "success"
@@ -125,7 +126,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         identityProviderResponse.publicCertificates == null
 
         when: "auth user for IDP using second cert"
-        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expDays, domainId, null, email, samlProducer2);
+        samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email, samlProducer2);
         samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then: "error, invalid cert"
@@ -298,7 +299,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
         def idpManager = utils.createIdentityProviderManager()
         def idpManagerToken = utils.getToken(idpManager.username)
@@ -319,7 +320,7 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
 
         //TODO: uncomment this once the story to prevent auth with future certs is implemented
 //        when: "auth user for IDP using cert"
-//        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expDays, domainId, null, email, samlProducer);
+//        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, username, expSecs, domainId, null, email, samlProducer);
 //        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
 //
 //        then: "success"

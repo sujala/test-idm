@@ -832,9 +832,9 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)

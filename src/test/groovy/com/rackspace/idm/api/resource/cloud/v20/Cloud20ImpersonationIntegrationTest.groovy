@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
+import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
@@ -173,9 +174,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -226,9 +227,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -459,9 +460,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -657,9 +658,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -714,9 +715,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -754,9 +755,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -815,9 +816,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -871,9 +872,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -933,9 +934,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.setProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -996,9 +997,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
@@ -1040,9 +1041,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.setProperty(DefaultScopeAccessService.LIMIT_IMPERSONATED_TOKEN_CLEANUP_TO_IMPERSONATEE_PROP_NAME, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userForSaml")
-        def expDays = 500
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expDays, domainId, null, email);
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)

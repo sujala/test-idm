@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -80,18 +81,18 @@ class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest
 
         def domainId = userAdmin.domainId
         def username = testUtils.getRandomUUID("samlUser")
-        def expDays = 5
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def email = "fedIntTest@invalid.rackspace.com"
 
         when: "Generate samlResponse using first certificate"
-        def samlAssertion = cred1Factory.generateSamlAssertion(provider.name, username, expDays, domainId, null, email);
+        def samlAssertion = cred1Factory.generateSamlAssertion(provider.name, username, expSecs, domainId, null, email);
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then: "Was processed successfully"
         samlResponse.status == HttpServletResponse.SC_OK
 
         when: "Generate samlResponse using second certificate"
-        def samlAssertion2 = cred2Factory.generateSamlAssertion(provider.name, username, expDays, domainId, null, email);
+        def samlAssertion2 = cred2Factory.generateSamlAssertion(provider.name, username, expSecs, domainId, null, email);
         def samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
 
         then: "Was processed successfully"
