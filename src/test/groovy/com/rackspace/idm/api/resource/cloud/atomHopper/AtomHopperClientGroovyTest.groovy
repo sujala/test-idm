@@ -114,7 +114,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
-        client.postUser(user, "someToken", AtomHopperConstants.DELETED)
+        client.postUser(user, AtomHopperConstants.DELETED)
 
         then:
         1 * httpClient.execute(_)
@@ -134,7 +134,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
-        client.postUser(user, "someToken", AtomHopperConstants.DISABLED)
+        client.postUser(user, AtomHopperConstants.DISABLED)
 
         then:
         1 * httpClient.execute(_)
@@ -154,7 +154,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
-        client.postUser(user, "someToken", AtomHopperConstants.MIGRATED)
+        client.postUser(user, AtomHopperConstants.MIGRATED)
 
         then:
         1 * httpClient.execute(_)
@@ -172,7 +172,7 @@ class AtomHopperClientGroovyTest extends Specification {
         config.getString(_) >> "GLOBAL" >>"GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
         when:
-        client.postToken(user, "someToken", "revokedToken")
+        client.postToken(user, "revokedToken")
 
         then:
         1 * httpClient.execute(_)
@@ -197,7 +197,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
-        client.postUser(user, "someToken", AtomHopperConstants.DISABLED)
+        client.postUser(user, AtomHopperConstants.DISABLED)
 
         then:
         1 * httpClient.execute(_) >> response
@@ -223,7 +223,7 @@ class AtomHopperClientGroovyTest extends Specification {
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
         when:
-        client.postToken(user, "someToken", "revokedToken")
+        client.postToken(user, "revokedToken")
 
         then:
         1 * httpClient.execute(_) >> response

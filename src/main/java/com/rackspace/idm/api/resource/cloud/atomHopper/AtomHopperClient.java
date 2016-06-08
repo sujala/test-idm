@@ -19,14 +19,17 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -113,10 +116,18 @@ public class AtomHopperClient {
         }
     }
 
+    /**
+     * Used to shutdown the connection manager
+     */
+    public void destroy() {
+        //has a finalize as well, but this allows spring to shut down on application context closing
+        httpClient.getConnectionManager().shutdown();
+    }
+
     @Async
     public void asyncPost(EndUser user, String userStatus) {
         try {
-            postUser(user, atomHopperHelper.getAuthToken(), userStatus);
+            postUser(user, userStatus);
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception: " + e);
         }
@@ -125,7 +136,7 @@ public class AtomHopperClient {
     @Async
     public void asyncTokenPost(EndUser user, String revokedToken) {
         try {
-            postToken(user, atomHopperHelper.getAuthToken(), revokedToken);
+            postToken(user, revokedToken);
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception: " + e);
         }
@@ -139,11 +150,13 @@ public class AtomHopperClient {
 
     public void postUserTrr(BaseUser user, TokenRevocationRecord trr) {
         Validate.isTrue(user.getId().equals(trr.getTargetIssuedToId()));
+        HttpPost httpPost = null;
         try {
-            String authToken = atomHopperHelper.getAuthToken();
             final UsageEntry entry = createUserTrrEntry(user, trr);
-            final Writer writer = marshalEntry(entry);
-            final HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+
+            httpPost = generatePostRequest(marshalEntry(entry));
+            HttpResponse response = httpClient.execute(httpPost);
+
             if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
                 logger.warn("Failed to create feed for user TRR: " + errorMsg);
@@ -151,10 +164,13 @@ public class AtomHopperClient {
             atomHopperHelper.entityConsume(response.getEntity());
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception posting User TRR: " + e);
+        } finally {
+            resetHttpPostQuietly(httpPost);
         }
     }
 
-    public void postUser(EndUser user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+    public void postUser(EndUser user, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+        HttpPost httpPost = null;
         try {
             UsageEntry entry = null;
             if (userStatus.equals(AtomHopperConstants.DELETED)) {
@@ -175,7 +191,8 @@ public class AtomHopperClient {
 
             HttpResponse response = null;
             if (entry != null) {
-                response = executePostRequest(authToken, marshalEntry(entry), config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+                httpPost = generatePostRequest(marshalEntry(entry));
+                response = httpClient.execute(httpPost);
             }
 
             if (response != null) {
@@ -190,14 +207,17 @@ public class AtomHopperClient {
             }
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception: " + e);
+        } finally {
+            resetHttpPostQuietly(httpPost);
         }
     }
 
-    public void postToken(EndUser user, String authToken, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
+    public void postToken(EndUser user, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
+        HttpPost httpPost = null;
         try {
             final UsageEntry entry = createEntryForRevokeToken(user, revokedToken);
-            final Writer writer = marshalEntry(entry);
-            final HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+            httpPost = generatePostRequest(marshalEntry(entry));
+            HttpResponse response = httpClient.execute(httpPost);
             if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
                 logger.warn("Failed to create feed for revoked token: " + revokedToken);
@@ -206,15 +226,25 @@ public class AtomHopperClient {
             atomHopperHelper.entityConsume(response.getEntity());
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception: " + e);
+        } finally {
+            resetHttpPostQuietly(httpPost);
         }
     }
 
-    public HttpResponse executePostRequest(String authToken, Writer writer, String url) throws IOException {
-        final HttpPost httpPost = new HttpPost(url);
+    private HttpPost generatePostRequest(Writer writer) throws IOException {
+        String authToken = atomHopperHelper.getAuthToken();
+
+        final HttpPost httpPost = new HttpPost(config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
         httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_ATOM_XML);
         httpPost.setHeader("X-Auth-Token", authToken);
         httpPost.setEntity(createRequestEntity(writer.toString()));
-        return httpClient.execute(httpPost);
+        return httpPost;
+    }
+
+    private void resetHttpPostQuietly(HttpPost httpPost) {
+        if (httpPost != null) {
+            httpPost.reset();
+        }
     }
 
     public Writer marshalEntry(UsageEntry entry) throws JAXBException {
