@@ -335,7 +335,7 @@ public class IdentityConfig {
     public static final int FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_DEFAULT = 20000;
 
     /**
-     * Configures the time waiting for data – after the connection was established; maximum time of inactivity between two data packets
+     * Configures the time waiting for data after the connection was established; maximum time of inactivity between two data packets
      */
     public static final String FEEDS_SOCKET_TIMEOUT_MS_PROP = "feeds.socket.timeout.ms";
     public static final int FEEDS_SOCKET_TIMEOUT_DEFAULT = 20000;

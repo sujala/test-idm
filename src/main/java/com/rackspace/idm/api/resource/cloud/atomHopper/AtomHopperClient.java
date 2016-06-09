@@ -16,9 +16,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.Validate;
 import org.apache.http.*;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -303,15 +301,17 @@ public class AtomHopperClient {
             httpPost = generatePostRequest(marshalEntry(entry));
             response = httpClient.execute(httpPost);
 
-            if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-                logger.warn("Failed to create feed for user TRR: " + errorMsg);
+                logger.warn(String.format("Failed to post user TRR feed event for userId: %s. Returned status code: %s with body %s", user.getId(), statusCode, errorMsg));
             }
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception posting User TRR: ", e);
         } finally {
             if (response != null) {
                 //always close the stream to release connection back to pool
+                logger.debug("Consuming entity to release connection back to pool");
                 atomHopperHelper.entityConsume(response.getEntity());
             }
         }
@@ -344,10 +344,10 @@ public class AtomHopperClient {
             }
 
             if (response != null) {
-                if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode != HttpServletResponse.SC_CREATED) {
                     final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-                    logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
-                    logger.warn(errorMsg);
+                    logger.warn(String.format("Failed to post User Feed event for user: %s with Id: %s. StatusCode: %s; ResponseBody: %s", user.getUsername(), user.getId(), statusCode, errorMsg));
                 }
             } else {
                 logger.warn("AtomHopperClient: Response was null");
@@ -357,6 +357,7 @@ public class AtomHopperClient {
         } finally {
             if (response != null) {
                 //always close the stream to release connection back to pool
+                logger.debug("Consuming entity to release connection back to pool");
                 atomHopperHelper.entityConsume(response.getEntity());
             }
         }
@@ -369,16 +370,17 @@ public class AtomHopperClient {
             final UsageEntry entry = createEntryForRevokeToken(user, revokedToken);
             httpPost = generatePostRequest(marshalEntry(entry));
             response = httpClient.execute(httpPost);
-            if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-                logger.warn("Failed to create feed for revoked token: " + revokedToken);
-                logger.warn(errorMsg);
+                logger.warn(String.format("Failed to post Token TRR event for revoked token: %s. Returned status code: %s; responseBody: %s", revokedToken, statusCode, errorMsg));
             }
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception posting Token TRR", e);
         } finally {
             if (response != null) {
                 //always close the stream to release connection back to pool
+                logger.debug("Consuming entity to release connection back to pool");
                 atomHopperHelper.entityConsume(response.getEntity());
             }
         }
@@ -417,7 +419,7 @@ public class AtomHopperClient {
     }
 
     public UsageEntry createEntryForUser(EndUser user, EventType eventType, Boolean migrated) throws DatatypeConfigurationException {
-        logger.warn("Creating user entry ...");
+        logger.debug("Creating user entry ...");
 
         final CloudIdentityType cloudIdentityType = new CloudIdentityType();
 
@@ -455,12 +457,12 @@ public class AtomHopperClient {
 
         final String id = UUID.randomUUID().toString();
         final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, user.getId(), username, AtomHopperConstants.IDENTITY_EVENT, tenantId);
-        logger.warn("Created Identity user entry with id: " + id);
+        logger.debug("Created Identity user entry with id: " + id);
         return usageEntry;
     }
 
     public UsageEntry createEntryForRevokeToken(EndUser user, String token) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
-        logger.warn("Creating revoke token entry ...");
+        logger.debug("Creating revoke token entry ...");
 
         final com.rackspace.docs.event.identity.token.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.token.CloudIdentityType();
         cloudIdentityType.setResourceType(com.rackspace.docs.event.identity.token.ResourceTypes.TOKEN);
@@ -478,7 +480,7 @@ public class AtomHopperClient {
 
         final String id = UUID.randomUUID().toString();
         final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, EventType.DELETE, id, token, null, AtomHopperConstants.IDENTITY_TOKEN_EVENT, null);
-        logger.warn("Created Identity token entry with id: " + id);
+        logger.debug("Created Identity token entry with id: " + id);
         return usageEntry;
     }
 

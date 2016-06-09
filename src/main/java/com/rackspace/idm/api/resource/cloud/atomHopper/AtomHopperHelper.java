@@ -37,7 +37,7 @@ public class AtomHopperHelper {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public String getAuthToken() {
-        logger.warn("Getting admin token ...");
+        logger.debug("Getting admin token ...");
         User user = userService.getUser(identityConfig.getGaUsername());
         ScopeAccess access = scopeAccessService.getValidUserScopeAccessForClientId(user,
                 identityConfig.getCloudAuthClientId(), AUTH_BY_SYSTEM_LIST);
