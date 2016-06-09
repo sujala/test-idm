@@ -526,6 +526,7 @@ public class IdentityConfig {
         defaults.put(FEEDS_EVICTION_STRATEGY_PROP, FEEDS_EVICTION_STRATEGY_DEFAULT);
         defaults.put(FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP, FEEDS_DAEMON_EVICTION_FREQUENCY_MS_DEFAULT);
         defaults.put(FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP, FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_DEFAULT);
+        defaults.put(FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP, FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_DEFAULT);
 
         return defaults;
     }
@@ -1149,9 +1150,9 @@ public class IdentityConfig {
             return getIntSafely(staticConfiguration, FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP);
         }
 
-        @IdmProp(key = FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP, versionAdded = "3.3.0"
+        @IdmProp(key = FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP, versionAdded = "3.3.3"
                 , description = "Whether or not to configure the http client used to establish feed connections using " +
-                "the other 'FEEDS*' properties ")
+                "the other 'feeds*' properties")
         public boolean useFeedsConfigurableHttpClient() {
             return getBooleanSafely(staticConfiguration, FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP);
         }
@@ -1161,7 +1162,7 @@ public class IdentityConfig {
             return getIntSafely(staticConfiguration, FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_PROP);
         }
 
-        @IdmProp(key = FEEDS_EVICTION_STRATEGY_PROP, versionAdded = "3.3.3", description = "The strategy to use to evict expired connections from the feeds connection pool")
+        @IdmProp(key = FEEDS_EVICTION_STRATEGY_PROP, versionAdded = "3.3.3", description = "The strategy to use to evict expired connections from the feeds connection pool. Options are 'DAEMON' or 'ON_USE'")
         public HttpClientConnectionEvictionStrategyType getFeedsEvictionStrategy() {
             String name = getStringSafely(staticConfiguration, FEEDS_EVICTION_STRATEGY_PROP);
 
