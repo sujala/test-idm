@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.config;
 
+import com.rackspace.idm.api.resource.cloud.atomHopper.HttpClientConnectionEvictionStrategyType;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.migration.ChangeType;
@@ -315,6 +316,67 @@ public class IdentityConfig {
     public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX = "ignore.migration.change.events.of.type.for.listener";
     public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_REG = MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX + ".%s";
 
+    /* ************************
+    FEEDS Connection Props. Feed calls are asynchronous so a larger default timeout is acceptable
+     ************************** */
+    public static final String FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP = "feeds.use.configurable.httpclient";
+    public static final boolean FEEDS_USE_CONFIGURABLE_HTTPCLIENT_DEFAULT = true;
+
+    public static final String FEEDS_MAX_CONNECTIONS_PROP = "feeds.max.connections";
+    public static final int FEEDS_MAX_CONNECTIONS_DEFAULT = 200;
+
+    public static final String FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP = "feeds.max.connections.per.route";
+    public static final int FEEDS_MAX_CONNECTIONS_PER_ROUTE_DEFAULT = 100;
+
+    /**
+     * Configures the time to  the connection was established; maximum time of inactivity between two data packets
+     */
+    public static final String FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_PROP = "feeds.new.connection.socket.timeout.ms";
+    public static final int FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_DEFAULT = 20000;
+
+    /**
+     * Configures the time waiting for data – after the connection was established; maximum time of inactivity between two data packets
+     */
+    public static final String FEEDS_SOCKET_TIMEOUT_MS_PROP = "feeds.socket.timeout.ms";
+    public static final int FEEDS_SOCKET_TIMEOUT_DEFAULT = 20000;
+
+    /**
+     * Configures the maximum time to establish the connection with the remote host
+     */
+    public static final String FEEDS_CONNECTION_TIMEOUT_MS_PROP = "feeds.connection.timeout.ms";
+    public static final int FEEDS_CONNECTION_TIMEOUT_MS_DEFAULT = 10000;
+
+    /**
+     * Configures the maximum time to wait to receive a connection from the connection pool before timing out
+     */
+    public static final String FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_PROP = "feeds.connection.request.timeout.ms";
+    public static final int FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_DEFAULT = 30000;
+
+    /**
+     * Configures the keep-alive setting for connections if the server (feeds) does not explicitly specify a Keep-Alive value
+     * for the connection
+     */
+    public static final String FEEDS_CONNECTION_KEEP_ALIVE_DEFAULT_MS_PROP = "feeds.connection.keep.alive.timeout.ms";
+    public static final int FEEDS_CONNECTION_KEEP_ALIVE_DEFAULT_MS_DEFAULT = 30000;
+
+    public static final String FEEDS_EVICTION_STRATEGY_PROP = "feeds.eviction.strategy";
+    public static final String FEEDS_EVICTION_STRATEGY_DEFAULT = HttpClientConnectionEvictionStrategyType.DAEMON.name();
+
+    /**
+     * Configures how often the eviction daemon runs to remove expired/idle connections
+     */
+    public static final String FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP = "feeds.daemon.eviction.frequency.ms";
+    public static final int FEEDS_DAEMON_EVICTION_FREQUENCY_MS_DEFAULT = 10000;
+
+    public static final String FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP = "feeds.daemon.eviction.close.idle.after.ms";
+    public static final int FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_DEFAULT = 30000;
+
+    /**
+     * When the feeds pool will check for connection validity before use, how long a connection must be idle before it is
+     * checked for validity.
+     */
+    public static final String FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP = "feeds.on.use.eviction.validate.after.ms";
+    public static final int FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_DEFAULT = 10000;
 
     /* ************************
     MFA MIGRATION PROPS
@@ -452,6 +514,18 @@ public class IdentityConfig {
         defaults.put(FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP, FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_DEFAULT);
 
         defaults.put(FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT);
+
+        defaults.put(FEEDS_MAX_CONNECTIONS_PROP, FEEDS_MAX_CONNECTIONS_DEFAULT);
+        defaults.put(FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP, FEEDS_MAX_CONNECTIONS_PER_ROUTE_DEFAULT);
+        defaults.put(FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_PROP, FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_DEFAULT);
+        defaults.put(FEEDS_SOCKET_TIMEOUT_MS_PROP, FEEDS_SOCKET_TIMEOUT_DEFAULT);
+        defaults.put(FEEDS_CONNECTION_TIMEOUT_MS_PROP, FEEDS_CONNECTION_TIMEOUT_MS_DEFAULT);
+        defaults.put(FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_PROP, FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_DEFAULT);
+        defaults.put(FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP, FEEDS_USE_CONFIGURABLE_HTTPCLIENT_DEFAULT);
+        defaults.put(FEEDS_CONNECTION_KEEP_ALIVE_DEFAULT_MS_PROP, FEEDS_CONNECTION_KEEP_ALIVE_DEFAULT_MS_DEFAULT);
+        defaults.put(FEEDS_EVICTION_STRATEGY_PROP, FEEDS_EVICTION_STRATEGY_DEFAULT);
+        defaults.put(FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP, FEEDS_DAEMON_EVICTION_FREQUENCY_MS_DEFAULT);
+        defaults.put(FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP, FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_DEFAULT);
 
         return defaults;
     }
@@ -1064,6 +1138,47 @@ public class IdentityConfig {
         public int getSqlMinIdle() {
             return getIntSafely(staticConfiguration, SQL_MIN_IDLE_PROP);
         }
+
+        @IdmProp(key = FEEDS_MAX_CONNECTIONS_PROP, versionAdded = "3.3.3", description = "The total http connections allowed by the HttpClient used to post feed events")
+        public int getFeedsMaxTotalConnections() {
+            return getIntSafely(staticConfiguration, FEEDS_MAX_CONNECTIONS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP, versionAdded = "3.3.3", description = "The total http connections allowed by the HttpClient for each route used to post feed events")
+        public int getFeedsMaxConnectionsPerRoute() {
+            return getIntSafely(staticConfiguration, FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP);
+        }
+
+        @IdmProp(key = FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP, versionAdded = "3.3.0"
+                , description = "Whether or not to configure the http client used to establish feed connections using " +
+                "the other 'FEEDS*' properties ")
+        public boolean useFeedsConfigurableHttpClient() {
+            return getBooleanSafely(staticConfiguration, FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP);
+        }
+
+        @IdmProp(key = FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_PROP, versionAdded = "3.3.3", description = "The timeout to establish a new socket for non-blocking I/O operations ")
+        public int getFeedsNewConnectionSocketTimeout() {
+            return getIntSafely(staticConfiguration, FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_EVICTION_STRATEGY_PROP, versionAdded = "3.3.3", description = "The strategy to use to evict expired connections from the feeds connection pool")
+        public HttpClientConnectionEvictionStrategyType getFeedsEvictionStrategy() {
+            String name = getStringSafely(staticConfiguration, FEEDS_EVICTION_STRATEGY_PROP);
+
+            HttpClientConnectionEvictionStrategyType val = HttpClientConnectionEvictionStrategyType.byName(name);
+
+            //if val returned null, means configured value not acceptable, go back to default.
+            if (val == null) {
+                logger.warn(String.format("The configured val for '%s' was invalid. Using default", FEEDS_EVICTION_STRATEGY_PROP));
+                val = HttpClientConnectionEvictionStrategyType.byName(FEEDS_EVICTION_STRATEGY_DEFAULT);
+            }
+            return val;
+        }
+
+        @IdmProp(key = FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP, versionAdded = "3.3.3", description = "When the feeds pool is using ON_USE eviction strategy, after how long of inactivity a connection will be checked.")
+        public int getFeedsOnUseEvictionValidateAfterInactivity() {
+            return getIntSafely(reloadableConfiguration, FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP);
+        }
     }
 
     /**
@@ -1456,9 +1571,54 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP);
         }
 
-        @IdmProp(key = FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, versionAdded = "3.3.2", description = "Whether or not to return the custom versions.json when GET /cloud is called and json is requested or translate the versions.xml to json")
+        @IdmProp(key = FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, versionAdded = "3.3.2"
+                , description = "Whether or not to return the custom versions.json when GET /cloud is called and json " +
+                "is requested or translate the versions.xml to json")
         public boolean returnJsonSpecificCloudVersionResource() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP);
+        }
+
+        @IdmProp(key = FEEDS_SOCKET_TIMEOUT_MS_PROP, versionAdded = "3.3.3"
+                , description = "The timeout for waiting for data when sending feed requests - or, put differently, " +
+                "a maximum period inactivity between two consecutive data packets. A timeout value of zero is " +
+                "interpreted as an infinite")
+        public int getFeedsSocketTimeout() {
+            return getIntSafely(reloadableConfiguration, FEEDS_SOCKET_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_CONNECTION_TIMEOUT_MS_PROP, versionAdded = "3.3.3"
+                , description = "The timeout in milliseconds until a connection is established. A timeout value of " +
+                "zero is interpreted as an infinite")
+        public int getFeedsConnectionTimeout() {
+            return getIntSafely(reloadableConfiguration, FEEDS_CONNECTION_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_PROP, versionAdded = "3.3.3"
+                , description = "The timeout in milliseconds until a connection is retrieve from the connection pool.")
+        public int getFeedsConnectionRequestTimeout() {
+            return getIntSafely(reloadableConfiguration, FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_CONNECTION_KEEP_ALIVE_DEFAULT_MS_PROP, versionAdded = "3.3.3"
+                , description = "When the feeds server does not specify a keep-alive header, the connection will be " +
+                "kept alive for this length of time. A value of zero means no keep alive will be set.")
+        public int getFeedsConnectionKeepAliveDefault() {
+            return getIntSafely(reloadableConfiguration, FEEDS_CONNECTION_KEEP_ALIVE_DEFAULT_MS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP, versionAdded = "3.3.3"
+                , description = "When the feeds pool is using DAEMON eviction strategy, how often expired connections " +
+                "are removed from the pool.")
+        public int getFeedsDaemonEvictionFrequency() {
+            return getIntSafely(reloadableConfiguration, FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP, versionAdded = "3.3.3"
+                , description = "When the feeds pool is using DAEMON eviction strategy, connections will be removed " +
+                "from the pool if they have been idle for this this many ms. A value <= 0 indicates idle connections " +
+                "will not be removed")
+        public int getFeedsDaemonEvictionCloseIdleConnectionsAfter() {
+            return getIntSafely(reloadableConfiguration, FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP);
         }
     }
 

@@ -117,6 +117,10 @@
         <level value="debug"/>
     </logger>
 
+    <!--<logger name="org.apache.http">-->
+        <!--<level value="debug" />-->
+    <!--</logger>-->
+
     <!-- Root Logger -->
     <root>
         <priority value="info"/>

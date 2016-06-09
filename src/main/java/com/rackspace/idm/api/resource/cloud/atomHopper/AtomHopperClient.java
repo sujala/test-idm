@@ -7,6 +7,7 @@ import com.rackspace.docs.core.event.V1Element;
 import com.rackspace.docs.event.identity.trr.user.ValuesEnum;
 import com.rackspace.docs.event.identity.user.CloudIdentityType;
 import com.rackspace.docs.event.identity.user.ResourceTypes;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.UserService;
@@ -14,21 +15,32 @@ import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.Validate;
-import org.apache.http.HttpException;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
+import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.*;
 import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.message.BasicHeaderElementIterator;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.protocol.HttpContext;
 import org.bouncycastle.crypto.InvalidCipherTextException;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +50,10 @@ import org.w3._2005.atom.Title;
 import org.w3._2005.atom.UsageContent;
 import org.w3._2005.atom.UsageEntry;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
@@ -49,9 +65,13 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by IntelliJ IDEA.
@@ -72,6 +92,9 @@ public class AtomHopperClient {
     private Configuration config;
 
     @Autowired
+    private IdentityConfig identityConfig;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
@@ -83,11 +106,46 @@ public class AtomHopperClient {
     @Autowired
     private AtomHopperHelper atomHopperHelper;
 
-    private HttpClient httpClient;
+    private CloseableHttpClient httpClient;
+    private IdleConnectionMonitorThread idleConnectionMonitorThread;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public AtomHopperClient() {
+    }
+
+    /**
+     * Initialize the client
+     */
+    @PostConstruct
+    public void init() {
+        if (identityConfig.getStaticConfig().useFeedsConfigurableHttpClient()) {
+            httpClient = createHttpClient();
+        } else {
+            httpClient = createLegacyHttpClient();
+        }
+    }
+
+    /**
+     * Used to shutdown the connection manager
+     */
+    @PreDestroy
+    public void destroy() {
+        if (idleConnectionMonitorThread != null) {
+            //shutdown the daemon just to help clean threads up. Since daemon, shouldn't technically be necessary.
+            idleConnectionMonitorThread.shutdown();
+        }
+
+        //the connection manager has a finalize as well, but this allows spring to shut down on application context
+        // closing without relying on iffy finalizers
+        try {
+            httpClient.close();
+        } catch (Exception e) {
+            logger.debug("Error closing httpclient. Ignoring since closing", e);
+        }
+    }
+
+    private CloseableHttpClient createLegacyHttpClient() {
         try {
             final SSLSocketFactory sslsf = new SSLSocketFactory(new TrustStrategy() {
                 @Override
@@ -101,60 +159,167 @@ public class AtomHopperClient {
             schemeRegistry.register(new Scheme("https", PORT443, sslsf));
 
             final PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
+
             // Increase max total connection to 200
             cm.setMaxTotal(MAX_TOTAL_CONNECTION);
             // Increase default max connection per route to 20
             cm.setDefaultMaxPerRoute(DEFAULT_MAX_PER_ROUTE);
 
-            httpClient = new DefaultHttpClient(cm);
+            return new DefaultHttpClient(cm);
         } catch (Exception e) {
             logger.error("unable to setup SSL trust manager: {}", e.getMessage());
-            httpClient = new DefaultHttpClient();
+            return new DefaultHttpClient();
         }
+    }
+
+    private CloseableHttpClient createHttpClient() {
+        SSLContext sslContext = null;
+        try {
+            //TODO - we should not trust all certs and hosts like this...
+            sslContext = org.apache.http.ssl.SSLContextBuilder.create().loadTrustMaterial(new TrustStrategy() {
+                public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+                    return true;
+                }
+            }).build();
+        } catch (NoSuchAlgorithmException|KeyManagementException|KeyStoreException ex) {
+            logger.error("Unable to setup SSL trust manager for cloud feeds client", ex);
+            throw new IllegalStateException("Unable to setup SSL trust manager for cloud feeds client. Can not run without Cloud Feeds secure connection", ex);
+        }
+
+        HostnameVerifier hostnameVerifier = NoopHostnameVerifier.INSTANCE;
+
+        //create the connection factor to use weak trust strategy/verifier, then register it for use for https connections
+        SSLConnectionSocketFactory sslFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier);
+        Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                .register("https", sslFactory)
+                .build();
+
+        /*
+        create pooling connection manager to reuse connections across threads and initialize with custom registry for
+        custom ssl trusts, and custom timeout to check for connection validity before use
+         */
+        PoolingHttpClientConnectionManager poolingHttpClientConnectionManager = new PoolingHttpClientConnectionManager(registry);
+
+        poolingHttpClientConnectionManager.setMaxTotal(identityConfig.getStaticConfig().getFeedsMaxTotalConnections());
+        poolingHttpClientConnectionManager.setDefaultMaxPerRoute(identityConfig.getStaticConfig().getFeedsMaxConnectionsPerRoute());
+
+        HttpClientConnectionEvictionStrategyType evictionStrategyType = identityConfig.getStaticConfig().getFeedsEvictionStrategy();
+        if (evictionStrategyType == HttpClientConnectionEvictionStrategyType.ON_USE) {
+            poolingHttpClientConnectionManager.setValidateAfterInactivity(identityConfig.getStaticConfig().getFeedsOnUseEvictionValidateAfterInactivity());
+        } else if (evictionStrategyType == HttpClientConnectionEvictionStrategyType.DAEMON) {
+            idleConnectionMonitorThread = new IdleConnectionMonitorThread(poolingHttpClientConnectionManager, identityConfig);
+        }
+
+        //set default connection params based on settings when started
+        SocketConfig socketConfig = SocketConfig.copy(SocketConfig.DEFAULT)
+                .setSoTimeout(identityConfig.getStaticConfig().getFeedsNewConnectionSocketTimeout())
+                .build();
+
+        //set default connection params used for post socket creation based on settings during app launch. The settings
+        //will be overridden at request time.
+        RequestConfig requestConfig = RequestConfig.copy(RequestConfig.DEFAULT)
+                .setSocketTimeout(identityConfig.getReloadableConfig().getFeedsSocketTimeout())
+                .setConnectTimeout(identityConfig.getReloadableConfig().getFeedsConnectionTimeout())
+                .setConnectionRequestTimeout(identityConfig.getReloadableConfig().getFeedsConnectionRequestTimeout())
+                .build();
+
+        /*
+        custom keep alive strategy. See 2.6 https://hc.apache.org/httpcomponents-client-4.5.x/tutorial/html/connmgmt.html
+         */
+        ConnectionKeepAliveStrategy autoCloseKeepAliveStrategy = new ConnectionKeepAliveStrategy() {
+            @Override
+            public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
+                HeaderElementIterator it = new BasicHeaderElementIterator
+                        (response.headerIterator(HTTP.CONN_KEEP_ALIVE));
+                while (it.hasNext()) {
+                    HeaderElement he = it.nextElement();
+                    String param = he.getName();
+                    String value = he.getValue();
+                    if (value != null && param.equalsIgnoreCase
+                            ("timeout")) {
+                        return Long.parseLong(value) * 1000;
+                    }
+                }
+                return identityConfig.getReloadableConfig().getFeedsConnectionKeepAliveDefault();
+            }
+        };
+
+        //create the client and set the custom context
+        HttpClientBuilder b = HttpClientBuilder.create()
+                .setSSLContext(sslContext)
+                .setConnectionManager(poolingHttpClientConnectionManager)
+                .setDefaultRequestConfig(requestConfig)
+                .setDefaultSocketConfig(socketConfig)
+                .setKeepAliveStrategy(autoCloseKeepAliveStrategy)
+                ;
+
+        CloseableHttpClient client = b.build();
+
+        //start eviction daemon
+        if (idleConnectionMonitorThread != null) {
+            idleConnectionMonitorThread.setDaemon(true);
+            idleConnectionMonitorThread.start();
+        }
+
+        return client;
     }
 
     @Async
     public void asyncPost(EndUser user, String userStatus) {
         try {
-            postUser(user, atomHopperHelper.getAuthToken(), userStatus);
+            postUser(user, userStatus);
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception: " + e);
+            logger.warn("AtomHopperClient Exception posting user change: ", e);
         }
     }
 
     @Async
     public void asyncTokenPost(EndUser user, String revokedToken) {
         try {
-            postToken(user, atomHopperHelper.getAuthToken(), revokedToken);
+            postToken(user, revokedToken);
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception: " + e);
+            logger.warn("AtomHopperClient Exception posting token trr: ", e);
         }
     }
 
     @Async
     public void asyncPostUserTrr(BaseUser user, TokenRevocationRecord trr) {
         Validate.isTrue(user.getId().equals(trr.getTargetIssuedToId()));
-        postUserTrr(user, trr);
+        try {
+            postUserTrr(user, trr);
+        } catch (Exception e) {
+            logger.warn("AtomHopperClient Exception posting user trr: ", e);
+        }
     }
 
-    public void postUserTrr(BaseUser user, TokenRevocationRecord trr) {
+    public void postUserTrr(BaseUser user, TokenRevocationRecord trr) throws IOException {
         Validate.isTrue(user.getId().equals(trr.getTargetIssuedToId()));
+        HttpPost httpPost = null;
+        HttpResponse response = null;
         try {
-            String authToken = atomHopperHelper.getAuthToken();
             final UsageEntry entry = createUserTrrEntry(user, trr);
-            final Writer writer = marshalEntry(entry);
-            final HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+
+            httpPost = generatePostRequest(marshalEntry(entry));
+            response = httpClient.execute(httpPost);
+
             if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
                 logger.warn("Failed to create feed for user TRR: " + errorMsg);
             }
-            atomHopperHelper.entityConsume(response.getEntity());
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception posting User TRR: " + e);
+            logger.warn("AtomHopperClient Exception posting User TRR: ", e);
+        } finally {
+            if (response != null) {
+                //always close the stream to release connection back to pool
+                atomHopperHelper.entityConsume(response.getEntity());
+            }
         }
     }
 
-    public void postUser(EndUser user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+    public void postUser(EndUser user, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+        HttpPost httpPost = null;
+        HttpResponse response = null;
         try {
             UsageEntry entry = null;
             if (userStatus.equals(AtomHopperConstants.DELETED)) {
@@ -173,9 +338,9 @@ public class AtomHopperClient {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
             }
 
-            HttpResponse response = null;
             if (entry != null) {
-                response = executePostRequest(authToken, marshalEntry(entry), config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+                httpPost = generatePostRequest(marshalEntry(entry));
+                response = httpClient.execute(httpPost);
             }
 
             if (response != null) {
@@ -184,37 +349,57 @@ public class AtomHopperClient {
                     logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
                     logger.warn(errorMsg);
                 }
-                atomHopperHelper.entityConsume(response.getEntity());
             } else {
                 logger.warn("AtomHopperClient: Response was null");
             }
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception: " + e);
+            logger.warn("AtomHopperClient Exception posting user change", e);
+        } finally {
+            if (response != null) {
+                //always close the stream to release connection back to pool
+                atomHopperHelper.entityConsume(response.getEntity());
+            }
         }
     }
 
-    public void postToken(EndUser user, String authToken, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
+    public void postToken(EndUser user, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
+        HttpPost httpPost = null;
+        HttpResponse response = null;
         try {
             final UsageEntry entry = createEntryForRevokeToken(user, revokedToken);
-            final Writer writer = marshalEntry(entry);
-            final HttpResponse response = executePostRequest(authToken, writer, config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
+            httpPost = generatePostRequest(marshalEntry(entry));
+            response = httpClient.execute(httpPost);
             if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
                 logger.warn("Failed to create feed for revoked token: " + revokedToken);
                 logger.warn(errorMsg);
             }
-            atomHopperHelper.entityConsume(response.getEntity());
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception: " + e);
+            logger.warn("AtomHopperClient Exception posting Token TRR", e);
+        } finally {
+            if (response != null) {
+                //always close the stream to release connection back to pool
+                atomHopperHelper.entityConsume(response.getEntity());
+            }
         }
     }
 
-    public HttpResponse executePostRequest(String authToken, Writer writer, String url) throws IOException {
-        final HttpPost httpPost = new HttpPost(url);
+    private HttpPost generatePostRequest(Writer writer) throws IOException {
+        String authToken = atomHopperHelper.getAuthToken();
+
+        //set connection params based on settings when run
+        RequestConfig requestConfig = RequestConfig.copy(RequestConfig.DEFAULT)
+                .setSocketTimeout(identityConfig.getReloadableConfig().getFeedsSocketTimeout())
+                .setConnectTimeout(identityConfig.getReloadableConfig().getFeedsConnectionTimeout())
+                .setConnectionRequestTimeout(identityConfig.getReloadableConfig().getFeedsConnectionRequestTimeout())
+                .build();
+
+        final HttpPost httpPost = new HttpPost(config.getString(AtomHopperConstants.ATOM_HOPPER_URL));
         httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_ATOM_XML);
         httpPost.setHeader("X-Auth-Token", authToken);
         httpPost.setEntity(createRequestEntity(writer.toString()));
-        return httpClient.execute(httpPost);
+        httpPost.setConfig(requestConfig);
+        return httpPost;
     }
 
     public Writer marshalEntry(UsageEntry entry) throws JAXBException {
@@ -401,20 +586,51 @@ public class AtomHopperClient {
         return usageEntry;
     }
 
-    public void setConfig(Configuration config) {
-        this.config = config;
-    }
+    /**
+     * Used to evict expired connections from the httpclient connection manager.
+     *
+     * @see <a href="https://hc.apache.org/httpcomponents-client-4.5.x/tutorial/html/connmgmt.html">HttpComponents Doc</a>
+     */
+    public static class IdleConnectionMonitorThread extends Thread {
 
-    public void setDefaultTenantService(DefaultTenantService defaultTenantService) {
-        this.defaultTenantService = defaultTenantService;
-    }
+        private final HttpClientConnectionManager connMgr;
+        private IdentityConfig identityConfig;
+        private volatile boolean shutdown;
 
-    public void setHttpClient(HttpClient httpClient) {
-        this.httpClient = httpClient;
-    }
+        public IdleConnectionMonitorThread(HttpClientConnectionManager connMgr, IdentityConfig identityConfig) {
+            super();
+            this.connMgr = connMgr;
+            this.identityConfig = identityConfig;
+        }
 
-    public void setAtomHopperHelper(AtomHopperHelper atomHopperHelper) {
-        this.atomHopperHelper = atomHopperHelper;
-    }
+        @Override
+        public void run() {
+            try {
+                while (!shutdown) {
+                    synchronized (this) {
+                        wait(identityConfig.getReloadableConfig().getFeedsDaemonEvictionFrequency());
 
+                        // Close expired connections
+                        connMgr.closeExpiredConnections();
+
+                        // Optionally, close connections
+                        // that have been idle longer than x ms
+                        int idleLimit = identityConfig.getReloadableConfig().getFeedsDaemonEvictionCloseIdleConnectionsAfter();
+                        if (idleLimit > 0) {
+                            connMgr.closeIdleConnections(idleLimit, TimeUnit.MILLISECONDS);
+                        }
+                    }
+                }
+            } catch (InterruptedException ex) {
+                // terminate
+            }
+        }
+
+        public void shutdown() {
+            shutdown = true;
+            synchronized (this) {
+                notifyAll();
+            }
+        }
+    }
 }
