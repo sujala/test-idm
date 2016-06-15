@@ -427,6 +427,10 @@ compileJava() {
     outputs.dir sourceSets.main.output.classesDir
 }
 
+tasks.withType(AbstractCompile) {
+    options.encoding = 'UTF-8'
+}
+
 copyBaseConfig.dependsOn copyConfig
 test.dependsOn copyBaseConfig
 test.dependsOn copyBuildInfo
