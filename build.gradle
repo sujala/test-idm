@@ -10,7 +10,7 @@ apply plugin: 'sonar-runner'
 
 buildscript {
     repositories {
-        mavenCentral()
+        maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/central" }
     }
 
     dependencies {
@@ -44,18 +44,10 @@ configurations {
 
 repositories {
     mavenCentral()
-    maven { url "$nexusHost/nexus/content/repositories/releases" }
-    maven { url "$nexusHost/nexus/content/repositories/thirdparty/" }
     maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/releases" }
-    maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/thirdparty/" }
     maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/snapshots" }
-    maven { url "http://download.java.net/maven/2/" }
-    maven { url "http://repo1.maven.org/maven2" }
-    maven { url "http://repository.jboss.org/maven2" }
-    maven { url "https://repository.jboss.org/nexus/content/repositories/public" }
-    maven { url "http://download.java.net/maven/1" }
-    maven { url "http://repo1.maven.org/maven2/" }
-    maven { url "http://www.eviware.com/repository/maven2" }
+    maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/thirdparty/" }
+    maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/central" }
 }
 
 def resourceDirs = [
