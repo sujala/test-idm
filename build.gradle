@@ -65,6 +65,7 @@ dependencies {
 
     compile ('org.opensaml:opensaml:2.5.3') {
         exclude(module: 'velocity', group: 'velocity')
+        exclude(group: 'org.bouncycastle', module: 'bcprov-jdk15')
     }
 
     compile 'commons-dbcp:commons-dbcp:1.4'
@@ -79,14 +80,16 @@ dependencies {
     compile group: 'com.rsa', name: 'cryptoj', version:'1.0'
     compile group: 'commons-io', name: 'commons-io', version:'2.1'
 
-    compile group: 'org.springframework', name: 'spring-core', version:'4.1.7.RELEASE'
-    compile group: 'org.springframework', name: 'spring-webmvc', version:'4.1.7.RELEASE'
-    compile group: 'org.springframework', name: 'spring-test', version:'4.1.7.RELEASE'
-    compile group: 'org.springframework', name: 'spring-beans', version:'4.1.7.RELEASE'
-    compile group: 'org.springframework', name: 'spring-aop', version:'4.1.7.RELEASE'
-    compile group: 'org.springframework', name: 'spring-jdbc', version:'4.1.7.RELEASE'
-    compile group: 'org.springframework', name: 'spring-aspects', version:'4.1.7.RELEASE'
-    compile group: 'org.springframework', name: 'spring-context-support', version:'4.1.7.RELEASE'
+    def springVersion = '4.1.7.RELEASE'
+    compile group: 'org.springframework', name: 'spring-core', version:springVersion
+    compile group: 'org.springframework', name: 'spring-webmvc', version:springVersion
+    compile group: 'org.springframework', name: 'spring-test', version:springVersion
+    compile group: 'org.springframework', name: 'spring-beans', version:springVersion
+    compile group: 'org.springframework', name: 'spring-aop', version:springVersion
+    compile group: 'org.springframework', name: 'spring-jdbc', version:springVersion
+    compile group: 'org.springframework', name: 'spring-aspects', version:springVersion
+    compile group: 'org.springframework', name: 'spring-context-support', version:springVersion
+    compile group: 'org.springframework', name: 'spring-orm', version:springVersion
     compile (group: 'org.springframework.data', name: 'spring-data-jpa', version: '1.8.1.RELEASE') {
         exclude(module: 'slf4j-api', group: 'org.slf4j')
         exclude(module: 'jcl-over-slf4j', group: 'org.slf4j')
@@ -116,7 +119,7 @@ dependencies {
     compile group: 'commons-collections', name: 'commons-collections', version:'3.2.1'
     compile group: 'org.apache.commons', name: 'commons-collections4', version:'4.0'
     compile group: 'commons-lang', name: 'commons-lang', version:'2.4'
-    compile group: 'cglib', name: 'cglib', version:'2.2'
+    compile group: 'cglib', name: 'cglib-nodep', version:'2.2'
     compile group: 'com.sun.jersey', name: 'jersey-client', version:'1.1.5'
     compile group: 'com.sun.jersey', name: 'jersey-server', version:'1.1.5'
     compile group: 'com.sun.jersey', name: 'jersey-json', version:'1.1.5'
