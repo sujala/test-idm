@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.ctc.wstx.util.StringUtil;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
