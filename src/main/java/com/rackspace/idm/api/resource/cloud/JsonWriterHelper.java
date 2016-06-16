@@ -6,7 +6,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspacecloud.docs.auth.api.v1.BaseURL;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRef;
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList;
-import org.apache.cxf.common.util.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.openstack.docs.common.api.v1.Extension;
@@ -179,7 +179,7 @@ public final class JsonWriterHelper {
 
         if (user.getOtherAttributes().size() != 0) {
             String password = user.getOtherAttributes().get(new QName("http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0", "password"));
-            if (!StringUtils.isEmpty(password)) {
+            if (StringUtils.isNotEmpty(password)) {
                 outer.put(JSONConstants.OS_KSADM_PASSWORD, password);
             }
         }
@@ -275,12 +275,12 @@ public final class JsonWriterHelper {
             }
         }
 
-        if (!StringUtils.isEmpty(user.getFederatedIdp())) {
+        if (StringUtils.isNotEmpty(user.getFederatedIdp())) {
             userInner.put(JSONConstants.RAX_AUTH_FEDERATED_IDP, user.getFederatedIdp());
         }
 
         String defaultRegion = user.getDefaultRegion();
-        if (!StringUtils.isEmpty(defaultRegion)) {
+        if (StringUtils.isNotEmpty(defaultRegion)) {
             userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, defaultRegion);
         } else {
             userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");

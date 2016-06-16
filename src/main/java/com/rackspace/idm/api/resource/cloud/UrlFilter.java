@@ -1,23 +1,21 @@
 package com.rackspace.idm.api.resource.cloud;
 
-import org.apache.cxf.common.util.UrlUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge
- * Date: Mar 20, 2012
- * Time: 12:52:06 PM
- * To change this template use File | Settings | File Templates.
- */
 public class UrlFilter implements Filter {
+    private static final Logger LOG = LoggerFactory.getLogger(UrlFilter.class);
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         //To change body of implemented methods use File | Settings | File Templates.
@@ -28,9 +26,9 @@ public class UrlFilter implements Filter {
         final HttpServletRequest req = (HttpServletRequest) request;
 
         final String uri = req.getRequestURI();
-        final String decodeUri = UrlUtils.urlDecode(uri);
+        final String decodeUri = urlDecode(uri);
         final String pathInfo = req.getPathInfo();
-        final String decodePathInfo = UrlUtils.urlDecode(pathInfo);
+        final String decodePathInfo = urlDecode(pathInfo);
         final Map decodeMap = new HashMap();
         final Map<String, String[]> map = req.getParameterMap();
         if (!map.isEmpty()) {
@@ -38,7 +36,7 @@ public class UrlFilter implements Filter {
             while (iterator.hasNext()) {
                 Map.Entry mapEntry = (Map.Entry) iterator.next();
                 String[] values = (String[]) mapEntry.getValue();
-                String decode = UrlUtils.urlDecode(values[0]);
+                String decode = urlDecode(values[0]);
                 decodeMap.put(mapEntry.getKey(), decode);
             }
         }
@@ -66,6 +64,15 @@ public class UrlFilter implements Filter {
 
     @Override
     public void destroy() {
-        //To change body of implemented methods use File | Settings | File Templates.
+
+    }
+
+    private String urlDecode(String value) {
+        try {
+            value = URLDecoder.decode(value, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            LOG.warn("UTF-8 encoding can not be used to decode " + value);
+        }
+        return value;
     }
 }
