@@ -112,7 +112,17 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-email', version:'1.2'
     compile group: 'javax.mail', name: 'mail', version:'1.4.7'
     compile group: 'org.apache.velocity', name: 'velocity', version:'1.7'
-    compile group: 'org.apache.velocity', name: 'velocity-tools', version:'2.0'
+    compile (group: 'org.apache.velocity', name: 'velocity-tools', version:'2.0') {
+//        removing dependencies not required by IDM app since we don't use these features
+        exclude(group: 'commons-chain', module: 'commons-chain')
+        exclude(group: 'commons-validator', module: 'commons-validator')
+        exclude(group: 'dom4j', module: 'dom4j')
+        exclude(group: 'oro', module: 'oro')
+        exclude(group: 'sslext', module: 'sslext')
+        exclude(group: 'org.apache.struts', module: 'struts-core')
+        exclude(group: 'org.apache.struts', module: 'struts-taglib')
+        exclude(group: 'org.apache.struts', module: 'struts-tiles')
+    }
     compile group: 'com.unboundid', name: 'unboundid-ldapsdk', version:'3.1.1'
     compile group: 'commons-codec', name: 'commons-codec', version:'1.10'
     compile group: 'commons-configuration', name: 'commons-configuration', version:'1.9'
@@ -138,7 +148,7 @@ dependencies {
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.2.1'
     compile group: 'org.apache.httpcomponents', name: 'httpcore', version:'4.2.1'
     compile group: 'org.freemarker', name: 'freemarker', version:'2.3.18'
-    compile(group: 'commons-logging', name: 'commons-logging', version:'1.1') {
+    compile(group: 'commons-logging', name: 'commons-logging', version:'1.2') {
         exclude(module: 'log4j', group: 'log4j')
         exclude(module: 'logkit', group: 'logkit')
         exclude(module: 'avalon-framework', group: 'avalon-framework')
