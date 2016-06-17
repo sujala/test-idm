@@ -4338,31 +4338,6 @@ objectClass: organizationalUnit
 objectClass: top
 ou: rackers
 
-dn: ou=softDeleted,o=rackspace,dc=rackspace,dc=com
-objectClass: organizationalUnit
-objectClass: top
-ou: softDeleted
-
-dn: ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
-objectClass: organizationalUnit
-objectClass: top
-ou: applications
-
-dn: ou=customers,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
-objectClass: organizationalUnit
-objectClass: top
-ou: customers
-
-dn: ou=policies,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
-objectClass: top
-objectClass: organizationalUnit
-ou: policies
-
-dn: ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com
-objectClass: organizationalUnit
-objectClass: top
-ou: users
-
 dn: ou=users,o=rackspace,dc=rackspace,dc=com
 objectClass: organizationalUnit
 objectClass: top

@@ -22,10 +22,6 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         return APPLICATIONS_BASE_DN;
     }
 
-    public String getSoftDeletedBaseDn() {
-        return SOFT_DELETED_APPLICATIONS_BASE_DN;
-    }
-
     public String getLdapEntityClass(){
         return OBJECTCLASS_RACKSPACEAPPLICATION;
     }

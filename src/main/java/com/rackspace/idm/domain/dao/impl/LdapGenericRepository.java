@@ -540,50 +540,6 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
-    public void softDeleteObject(T object) {
-        getLogger().info("SoftDeleting object - {}", object);
-        try {
-            String oldRdn = object.getUniqueId();
-            if(oldRdn == null) {
-                getLogger().error("Error soft deleting object");
-                throw new IllegalStateException();
-            }
-
-            List<String> tokens = Arrays.asList(oldRdn.split(","));
-
-            String newRdn = tokens.get(0);
-
-            getAppInterface().modifyDN(oldRdn, newRdn, true, getSoftDeletedBaseDn());
-        } catch (LDAPException e) {
-            getLogger().error("Error soft deleting object", e);
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-        getLogger().info("SoftDeleted object - {}", object);
-    }
-
-    @Override
-    public void unSoftDeleteObject(T object) {
-        getLogger().info("UnSoftDeleting object - {}", object);
-        try {
-            String oldRdn = object.getUniqueId();
-            if(oldRdn == null) {
-                getLogger().error("Error soft deleting object");
-                throw new IllegalStateException();
-            }
-
-            List<String> tokens = Arrays.asList(oldRdn.split(","));
-
-            String newRdn = tokens.get(0);
-
-            getAppInterface().modifyDN(oldRdn, newRdn, true, getBaseDn());
-        } catch (LDAPException e) {
-            getLogger().error("Error soft deleting object", e);
-            throw new IllegalStateException(e.getMessage(), e);
-        }
-        getLogger().info("UnSoftDeleted object - {}", object);
-    }
-
-    @Override
     public String[] getSearchAttributes() {
         return ATTR_DEFAULT_SEARCH_ATTRIBUTES;
     }
@@ -622,11 +578,6 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     @Override
     public String getBaseDn(){
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public String getSoftDeletedBaseDn() {
         throw new NotImplementedException();
     }
 
