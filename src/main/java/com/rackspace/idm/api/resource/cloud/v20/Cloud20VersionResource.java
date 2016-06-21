@@ -7,10 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ExceptionHandler;
-import com.rackspace.idm.exception.MigrationReadOnlyIdmException;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.SamlUnmarshaller;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
@@ -69,13 +66,26 @@ public class Cloud20VersionResource {
     @Autowired
     private ExceptionHandler exceptionHandler;
 
-    public Cloud20VersionResource() {
+    private static final String JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH = "org.openstack.docs.common.api.v1:org.w3._2005.atom";
+    private static final JAXBContext JAXBCONTEXT_VERSION_CHOICE;
+
+    static {
+        try {
+            JAXBCONTEXT_VERSION_CHOICE = JAXBContext.newInstance(JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH);
+        } catch (JAXBException e) {
+            throw new IdmException("Error initializing JAXBContext for versionchoice", e);
+        }
     }
 
     @GET
     public Response getCloud20VersionInfo() throws JAXBException {
+        JAXBContext context = JAXBCONTEXT_VERSION_CHOICE;
+        if (!identityConfig.getReloadableConfig().reuseJaxbContext()) {
+            //TODO causes memory leak...only left for backwards compatibility. Must be removed in future version.
+            context = JAXBContext.newInstance(JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH);
+        }
+
         String responseXml = cloudContractDescriptionBuilder.buildVersion20Page();
-        JAXBContext context = JAXBContext.newInstance("org.openstack.docs.common.api.v1:org.w3._2005.atom");
         Unmarshaller unmarshaller = context.createUnmarshaller();
         JAXBElement<VersionChoice> versionChoice = (JAXBElement<VersionChoice>) unmarshaller.unmarshal(new StringReader(responseXml));
         return Response.ok(versionChoice.getValue()).build();

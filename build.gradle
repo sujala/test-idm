@@ -141,7 +141,8 @@ dependencies {
     }
     compile group: 'javax.validation', name: 'validation-api', version:'1.0.0.GA'
     compile group: 'org.bouncycastle', name: 'bcprov-jdk16', version:'1.46'
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.5.2'
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.2.1'
+    compile group: 'org.apache.httpcomponents', name: 'httpcore', version:'4.2.1'
     compile group: 'org.freemarker', name: 'freemarker', version:'2.3.18'
     compile(group: 'commons-logging', name: 'commons-logging', version:'1.1') {
         exclude(module: 'log4j', group: 'log4j')

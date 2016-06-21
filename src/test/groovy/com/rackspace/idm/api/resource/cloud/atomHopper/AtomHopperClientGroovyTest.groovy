@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.entity.Group
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.TokenRevocationRecord
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultIdentityUserService
 import com.rackspace.idm.domain.service.impl.DefaultTenantService
@@ -21,13 +22,13 @@ import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpEntity
 import org.apache.http.HttpResponse
 import org.apache.http.StatusLine
-import org.apache.http.client.methods.CloseableHttpResponse
-import org.apache.http.impl.client.CloseableHttpClient
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import org.w3._2005.atom.UsageEntry
 import spock.lang.Shared
 import spock.lang.Specification
 import org.apache.http.client.HttpClient
+import spock.lang.Unroll
+
 import javax.ws.rs.core.MediaType
 
 /**
@@ -44,31 +45,19 @@ class AtomHopperClientGroovyTest extends Specification {
 
     @Shared DefaultTenantService defaultTenantService
     @Shared Configuration config
-    @Shared CloseableHttpClient httpClient
-
+    @Shared HttpClient httpClient
     @Shared org.openstack.docs.identity.api.v2.ObjectFactory objectFactory;
     @Shared CryptHelper cryptHelper
     @Shared AtomHopperHelper atomHopperHelper
-
-    @Shared IdentityConfig identityConfig
-    @Shared IdentityConfig.StaticConfig staticConfig
-    @Shared IdentityConfig.ReloadableConfig reloadableConfig
 
     def setupSpec(){
         client = new AtomHopperClient();
         objectFactory = new ObjectFactory();
     }
 
-    def setup() {
-        setupMock()
-    }
-
-    def cleanup() {
-        client.destroy()
-    }
-
     def "create atom entry for delete user" () {
         given:
+        setupMock()
         User user = new User()
         user.username = "testUser"
         user.id = "1"
@@ -91,6 +80,7 @@ class AtomHopperClientGroovyTest extends Specification {
 
     def "atom entry posts Groud Id not Group Name " () {
         given:
+        setupMock()
         User user = new User()
         user.username = "testUser"
         user.id = "1"
@@ -115,6 +105,7 @@ class AtomHopperClientGroovyTest extends Specification {
 
     def "Post deleted user" () {
         given:
+        setupMock()
         User user = new User()
         user.username = "testUser"
         user.id = "1"
@@ -126,7 +117,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
-        client.postUser(user, AtomHopperConstants.DELETED)
+        client.postUser(user, "someToken", AtomHopperConstants.DELETED)
 
         then:
         1 * httpClient.execute(_)
@@ -134,6 +125,7 @@ class AtomHopperClientGroovyTest extends Specification {
 
     def "Post disabled user" () {
         given:
+        setupMock()
         User user = new User()
         user.username = "testUser"
         user.id = "1"
@@ -145,7 +137,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
-        client.postUser(user, AtomHopperConstants.DISABLED)
+        client.postUser(user, "someToken", AtomHopperConstants.DISABLED)
 
         then:
         1 * httpClient.execute(_)
@@ -153,6 +145,7 @@ class AtomHopperClientGroovyTest extends Specification {
 
     def "Post migrated user" () {
         given:
+        setupMock()
         User user = new User()
         user.username = "testUser"
         user.id = "1"
@@ -164,7 +157,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
-        client.postUser(user, AtomHopperConstants.MIGRATED)
+        client.postUser(user, "someToken", AtomHopperConstants.MIGRATED)
 
         then:
         1 * httpClient.execute(_)
@@ -172,11 +165,7 @@ class AtomHopperClientGroovyTest extends Specification {
 
     def "Post revoked token" () {
         given:
-        CloseableHttpResponse response = Mock()
-        StatusLine sl = Mock()
-        response.statusLine >> sl
-        sl.statusCode >> 201
-        HttpEntity entity = Mock()
+        setupMock()
         User user = new User()
         user.username = "testUser"
         user.id = "1"
@@ -186,17 +175,16 @@ class AtomHopperClientGroovyTest extends Specification {
         config.getString(_) >> "GLOBAL" >>"GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
         when:
-        client.postToken(user, "revokedToken")
+        client.postToken(user, "someToken", "revokedToken")
 
         then:
-        1 * httpClient.execute(_) >> response
-        1 * response.entity >> entity
-        1 * atomHopperHelper.entityConsume(_)
+        1 * httpClient.execute(_)
     }
 
     def "create atom entry - make sure entry is consume" () {
         given:
-        CloseableHttpResponse response = Mock()
+        setupMock()
+        HttpResponse response = Mock()
         StatusLine sl = Mock()
         response.statusLine >> sl
         sl.statusCode >> 201
@@ -212,7 +200,7 @@ class AtomHopperClientGroovyTest extends Specification {
         defaultTenantService.getMossoIdFromTenantRoles(_) >> "tenantId"
 
         when:
-        client.postUser(user, AtomHopperConstants.DISABLED)
+        client.postUser(user, "someToken", AtomHopperConstants.DISABLED)
 
         then:
         1 * httpClient.execute(_) >> response
@@ -222,7 +210,8 @@ class AtomHopperClientGroovyTest extends Specification {
 
     def "create atom entry for token - make sure entry is consume" () {
         given:
-        CloseableHttpResponse response = Mock()
+        setupMock()
+        HttpResponse response = Mock()
         StatusLine sl = Mock()
         response.statusLine >> sl
         sl.statusCode >> 201
@@ -237,7 +226,7 @@ class AtomHopperClientGroovyTest extends Specification {
         config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
 
         when:
-        client.postToken(user, "revokedToken")
+        client.postToken(user, "someToken", "revokedToken")
 
         then:
         1 * httpClient.execute(_) >> response
@@ -245,8 +234,42 @@ class AtomHopperClientGroovyTest extends Specification {
         1 * atomHopperHelper.entityConsume(_)
     }
 
+    @Unroll
+    def "Entity consumed regardless of feature flag controls reusing jaxbcontext. When #setting" () {
+        given:
+        setupMock()
+        HttpResponse response = Mock()
+        StatusLine sl = Mock()
+        response.statusLine >> sl
+        sl.statusCode >> 201
+        HttpEntity enty = Mock()
+        User user = new User()
+        user.username = "testUser"
+        user.id = "1"
+        user.region = "DFW"
+        user.roles = [createTenantRole("someRole", "1", "desc")].asList()
+        identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+
+        when:
+        client.identityConfig.getReloadableConfig().reuseJaxbContext() >> true
+        client.postToken(user, "someToken", "revokedToken")
+
+        then:
+        1 * httpClient.execute(_) >> response
+        1 * response.entity >> enty
+        1 * atomHopperHelper.entityConsume(_)
+
+        where:
+        setting | _
+        true | _
+        false | _
+    }
+
     def "create feed event for user TRR" () {
         given:
+        setupMock()
         User user = new User()
         user.username = "testUser"
         user.id = "1"
@@ -327,25 +350,17 @@ class AtomHopperClientGroovyTest extends Specification {
         client.identityUserService = identityUserService
         defaultTenantService = Mock()
         client.defaultTenantService = defaultTenantService
-
+        client.identityConfig = Mock(IdentityConfig)
+        client.identityConfig.getReloadableConfig() >> Mock(IdentityConfig.ReloadableConfig)
+        client.identityConfig.getReloadableConfig().reuseJaxbContext() >> false
+        config = Mock()
+        client.config = config
         httpClient = Mock()
         client.httpClient = httpClient
-
         atomHopperHelper = Mock()
         client.atomHopperHelper = atomHopperHelper
 
         config.getString("atom.hopper.crypto.password") >> "password"
         config.getString("atom.hopper.crypto.salt") >> "c8 99"
-
-        config = Mock()
-        client.config = config
-
-        identityConfig = Mock()
-        staticConfig = Mock()
-        reloadableConfig = Mock()
-        identityConfig.getStaticConfig() >> staticConfig
-        identityConfig.getReloadableConfig() >> reloadableConfig
-        client.identityConfig = identityConfig
     }
-
 }

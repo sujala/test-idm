@@ -151,6 +151,11 @@ class Cloud11Methods {
         "Basic " + new String(baseEncoding(username, password))
     }
 
+    def getVersion(MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path11).accept(requestContentMediaType).get(ClientResponse)
+    }
+
     def baseEncoding(String username, String password) {
         return Base64.encode(username + ":" + password);
     }
