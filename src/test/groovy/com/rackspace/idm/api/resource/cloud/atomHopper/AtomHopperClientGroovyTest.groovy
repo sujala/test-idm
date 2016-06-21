@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.atomHopper
 import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.event.identity.trr.user.CloudIdentityType
 import com.rackspace.docs.event.identity.trr.user.ValuesEnum
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.impl.MemoryTokenRevocationRecordPersistenceStrategy
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
@@ -26,6 +27,8 @@ import org.w3._2005.atom.UsageEntry
 import spock.lang.Shared
 import spock.lang.Specification
 import org.apache.http.client.HttpClient
+import spock.lang.Unroll
+
 import javax.ws.rs.core.MediaType
 
 /**
@@ -231,6 +234,39 @@ class AtomHopperClientGroovyTest extends Specification {
         1 * atomHopperHelper.entityConsume(_)
     }
 
+    @Unroll
+    def "Entity consumed regardless of feature flag controls reusing jaxbcontext. When #setting" () {
+        given:
+        setupMock()
+        HttpResponse response = Mock()
+        StatusLine sl = Mock()
+        response.statusLine >> sl
+        sl.statusCode >> 201
+        HttpEntity enty = Mock()
+        User user = new User()
+        user.username = "testUser"
+        user.id = "1"
+        user.region = "DFW"
+        user.roles = [createTenantRole("someRole", "1", "desc")].asList()
+        identityUserService.getGroupsForEndUser(_) >> [createGroup("group",1,"desc")].asList()
+        defaultTenantService.getTenantRolesForUser(_) >> [createTenantRole("someRole", "1", "desc")].asList()
+        config.getString(_) >> "GLOBAL" >> "GLOBAL" >> "http://10.4.39.67:8888/namespace/feed"
+
+        when:
+        client.identityConfig.getReloadableConfig().reuseJaxbContext() >> true
+        client.postToken(user, "someToken", "revokedToken")
+
+        then:
+        1 * httpClient.execute(_) >> response
+        1 * response.entity >> enty
+        1 * atomHopperHelper.entityConsume(_)
+
+        where:
+        setting | _
+        true | _
+        false | _
+    }
+
     def "create feed event for user TRR" () {
         given:
         setupMock()
@@ -314,6 +350,9 @@ class AtomHopperClientGroovyTest extends Specification {
         client.identityUserService = identityUserService
         defaultTenantService = Mock()
         client.defaultTenantService = defaultTenantService
+        client.identityConfig = Mock(IdentityConfig)
+        client.identityConfig.getReloadableConfig() >> Mock(IdentityConfig.ReloadableConfig)
+        client.identityConfig.getReloadableConfig().reuseJaxbContext() >> false
         config = Mock()
         client.config = config
         httpClient = Mock()

@@ -7,10 +7,12 @@ import com.rackspace.docs.core.event.V1Element;
 import com.rackspace.docs.event.identity.trr.user.ValuesEnum;
 import com.rackspace.docs.event.identity.user.CloudIdentityType;
 import com.rackspace.docs.event.identity.user.ResourceTypes;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
+import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.Validate;
@@ -28,7 +30,6 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.bouncycastle.crypto.InvalidCipherTextException;
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +73,9 @@ public class AtomHopperClient {
     private Configuration config;
 
     @Autowired
+    private IdentityConfig identityConfig;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
@@ -86,6 +90,17 @@ public class AtomHopperClient {
     private HttpClient httpClient;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    private static final Class[] JAXB_CONTEXT_FEED_ENTRY_CONTEXT_PATH = new Class[] {UsageEntry.class, CloudIdentityType.class, com.rackspace.docs.event.identity.token.CloudIdentityType.class, com.rackspace.docs.event.identity.trr.user.CloudIdentityType.class};
+    private static final JAXBContext JAXB_CONTEXT_FEED_ENTRY;
+
+    static {
+        try {
+            JAXB_CONTEXT_FEED_ENTRY = JAXBContext.newInstance(JAXB_CONTEXT_FEED_ENTRY_CONTEXT_PATH);
+        } catch (JAXBException e) {
+            throw new IdmException("Error initializing JAXBContext for cloud feed events", e);
+        }
+    }
 
     public AtomHopperClient() {
         try {
@@ -219,8 +234,13 @@ public class AtomHopperClient {
 
     public Writer marshalEntry(UsageEntry entry) throws JAXBException {
         final Writer writer = new StringWriter();
-        final JAXBContext jc = JAXBContext.newInstance(UsageEntry.class, CloudIdentityType.class, com.rackspace.docs.event.identity.token.CloudIdentityType.class, com.rackspace.docs.event.identity.trr.user.CloudIdentityType.class);
-        final Marshaller marshaller = jc.createMarshaller();
+        JAXBContext context = JAXB_CONTEXT_FEED_ENTRY;
+        if (!identityConfig.getReloadableConfig().reuseJaxbContext()) {
+            //TODO causes memory leak...only left for backwards compatibility. Must be removed in future version.
+            context = JAXBContext.newInstance(JAXB_CONTEXT_FEED_ENTRY_CONTEXT_PATH);
+        }
+
+        final Marshaller marshaller = context.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
         marshaller.setProperty("com.sun.xml.bind.namespacePrefixMapper", new AHNamespaceMapper());
         marshaller.marshal(entry, writer);
