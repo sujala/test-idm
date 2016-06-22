@@ -70,6 +70,7 @@ public class DefaultCloud11Service implements Cloud11Service {
     private Configuration config;
 
     @Autowired
+    @Setter
     private IdentityConfig identityConfig;
 
     @Autowired
@@ -141,10 +142,25 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Autowired
     private TokenRevocationService tokenRevocationService;
 
+    private static final Class JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH = VersionChoice.class;
+    private static final JAXBContext JAXBCONTEXT_VERSION_CHOICE;
+
+    static {
+        try {
+            JAXBCONTEXT_VERSION_CHOICE = JAXBContext.newInstance(JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH);
+        } catch (JAXBException e) {
+            throw new IdmException("Error initializing JAXBContext for versionchoice", e);
+        }
+    }
 
     public ResponseBuilder getVersion(UriInfo uriInfo) throws JAXBException {
+        JAXBContext context = JAXBCONTEXT_VERSION_CHOICE;
+        if (!identityConfig.getReloadableConfig().reuseJaxbContext()) {
+            //TODO causes memory leak...only left for backwards compatibility. Must be removed in future version.
+            context = JAXBContext.newInstance(JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH);
+        }
+
         final String responseXml = cloudContractDescriptionBuilder.buildVersion11Page();
-        JAXBContext context = JAXBContext.newInstance(VersionChoice.class);
         Unmarshaller unmarshaller = context.createUnmarshaller();
         JAXBElement<VersionChoice> versionChoice = (JAXBElement<VersionChoice>) unmarshaller.unmarshal(new StringReader(responseXml));
         return Response.ok(versionChoice.getValue());

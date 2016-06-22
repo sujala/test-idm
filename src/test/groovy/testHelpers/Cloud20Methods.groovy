@@ -897,4 +897,9 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(RAX_AUTH).path(SERVICE_PATH_PASSWORD_RESET).type(requestContentMediaType).entity(passwordReset).header(X_AUTH_TOKEN, token).post(ClientResponse)
     }
 
+    def getVersion(MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).accept(requestContentMediaType).get(ClientResponse)
+    }
+
 }
