@@ -5,6 +5,7 @@ import com.rackspace.idm.api.resource.cloud.v11.Cloud11VersionResource;
 import com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.exception.IdmException;
 import org.openstack.docs.common.api.v1.VersionChoiceList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,17 @@ public class CloudVersionsResource {
     private final CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
     private IdentityConfig identityConfig;
 
+    private static final Class JAXBCONTEXT_VERSION_CHOICE_LIST_CONTEXT_PATH = VersionChoiceList.class;
+    private static final JAXBContext JAXBCONTEXT_VERSION_CHOICE_LIST;
+
+    static {
+        try {
+            JAXBCONTEXT_VERSION_CHOICE_LIST = JAXBContext.newInstance(JAXBCONTEXT_VERSION_CHOICE_LIST_CONTEXT_PATH);
+        } catch (JAXBException e) {
+            throw new IdmException("Error initializing JAXBContext for versionchoicelist", e);
+        }
+    }
+
     @Autowired
     public CloudVersionsResource(Cloud10VersionResource cloud10VersionResource,
                                  Cloud11VersionResource cloud11VersionResource,
@@ -51,9 +63,14 @@ public class CloudVersionsResource {
     @Produces({MediaType.APPLICATION_XML})
     @GET
     public Response getInternalCloudVersionsInfo() throws JAXBException {
-        final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage();
-        JAXBContext context = JAXBContext.newInstance(VersionChoiceList.class);
+        JAXBContext context = JAXBCONTEXT_VERSION_CHOICE_LIST;
+        if (!identityConfig.getReloadableConfig().reuseJaxbContext()) {
+            //TODO causes memory leak...only left for backwards compatibility. Must be removed in future version.
+            context = JAXBContext.newInstance(JAXBCONTEXT_VERSION_CHOICE_LIST_CONTEXT_PATH);
+        }
+
         Unmarshaller unmarshaller = context.createUnmarshaller();
+        final String responseXml = cloudContractDescriptionBuilder.buildInternalRootPage();
         JAXBElement<VersionChoiceList> versionChoice = (JAXBElement<VersionChoiceList>) unmarshaller.unmarshal(new StringReader(responseXml));
         return Response.ok(versionChoice.getValue()).build();
     }

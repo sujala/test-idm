@@ -44,11 +44,11 @@ class CloudVersionIntegrationTest extends RootIntegrationTest {
 
     @Unroll
     def "Versions.xml returned regardless of feature.return.json.specific.cloud.version set to #value when request xml"() {
-        when: "get xml with feat"
+        when: "get xml with feature"
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, value)
         def response = cloud.getVersions(MediaType.APPLICATION_XML_TYPE)
 
-        then: "get json specific version"
+        then: "get xml specific version"
         response.status == HttpStatus.SC_OK
         response.getHeaders().getFirst("content-type") == "application/xml"
 
@@ -61,5 +61,54 @@ class CloudVersionIntegrationTest extends RootIntegrationTest {
         value | _
         true | _
         false | _
+    }
+
+    @Unroll
+    def "Returning Versions.xml returns when feature.reuse.jaxb.context set to #value"() {
+        when: "get xml with feature"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_REUSE_JAXB_CONTEXT, value)
+        def response = cloud.getVersions(MediaType.APPLICATION_XML_TYPE)
+
+        then: "get xml specific version"
+        response.status == HttpStatus.SC_OK
+        response.getHeaders().getFirst("content-type") == "application/xml"
+
+        //for this test just verify the content does not contain the v3 data (which is not part of the versions.xml)
+        String val = response.getEntity(String)
+        !val.contains("https://identity.api.rackspacecloud.com/v3")
+        val.contains("<atom:link")
+
+        where:
+        value | _
+        true | _
+        false | _
+    }
+
+    def "Returning Versions20.xml returns same value regardless of feature.reuse.jaxb.context"() {
+        when: "get xml with feat"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_REUSE_JAXB_CONTEXT, true)
+        def responseTrue = cloud20.getVersion(MediaType.APPLICATION_XML_TYPE)
+
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_REUSE_JAXB_CONTEXT, false)
+        def responseFalse = cloud20.getVersion(MediaType.APPLICATION_XML_TYPE)
+
+        then: "get json specific version"
+        responseTrue.status == HttpStatus.SC_OK
+        responseFalse.status == HttpStatus.SC_OK
+        responseTrue.getEntity(String) == responseFalse.getEntity(String)
+    }
+
+    def "Returning Versions11.xml returns same value regardless of feature.reuse.jaxb.context"() {
+        when: "get xml with feat"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_REUSE_JAXB_CONTEXT, true)
+        def responseTrue = cloud11.getVersion()
+
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_REUSE_JAXB_CONTEXT, false)
+        def responseFalse = cloud11.getVersion()
+
+        then: "get json specific version"
+        responseTrue.status == HttpStatus.SC_OK
+        responseFalse.status == HttpStatus.SC_OK
+        responseTrue.getEntity(String) == responseFalse.getEntity(String)
     }
 }

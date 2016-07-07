@@ -7,6 +7,12 @@ import javax.xml.bind.*;
 import java.io.StringReader;
 import java.io.StringWriter;
 
+/**
+ *
+ * @deprecated Do not use. Use of JAXBContext.newInstance is a known memory leak. This class will be removed in a future version.
+ * @param <T>
+ */
+@Deprecated
 public class ObjectMarshaller <T> {
 
     public String marshal(Object jaxbObject, Class<?> type) throws JAXBException {

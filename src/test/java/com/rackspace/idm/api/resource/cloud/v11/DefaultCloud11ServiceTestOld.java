@@ -9,6 +9,7 @@ import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithPasswordCredentials;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.CloudAdminAuthorizationException;
@@ -87,6 +88,7 @@ public class DefaultCloud11ServiceTestOld {
     TokenRevocationService tokenRevocationService;
     AuthWithApiKeyCredentials authWithApiKeyCredentials;
     AuthWithPasswordCredentials authWithPasswordCredentials;
+    private IdentityConfig identityConfig;
 
     @Before
     public void setUp() throws Exception {
@@ -127,6 +129,10 @@ public class DefaultCloud11ServiceTestOld {
         userDO.setMossoId(1);
         userDO.setNastId("nastId");
 
+        identityConfig = mock(IdentityConfig.class);
+        IdentityConfig.ReloadableConfig reloadableConfig = mock(IdentityConfig.ReloadableConfig.class);
+        when(identityConfig.getReloadableConfig()).thenReturn(reloadableConfig);
+
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic YXV0aDphdXRoMTIz");
         UriBuilderImpl uriBuilder = mock(UriBuilderImpl.class);
         when(uriBuilder.build()).thenReturn(new URI(""));
@@ -161,6 +167,7 @@ public class DefaultCloud11ServiceTestOld {
         defaultCloud11Service.setTokenRevocationService(tokenRevocationService);
         defaultCloud11Service.setAuthWithApiKeyCredentials(authWithApiKeyCredentials);
         defaultCloud11Service.setAuthWithPasswordCredentials(authWithPasswordCredentials);
+        defaultCloud11Service.setIdentityConfig(identityConfig);
     }
 
     @Test

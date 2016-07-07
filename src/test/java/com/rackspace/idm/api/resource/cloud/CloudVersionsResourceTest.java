@@ -16,6 +16,7 @@ import javax.ws.rs.core.Response;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created with IntelliJ IDEA.
@@ -39,6 +40,9 @@ public class CloudVersionsResourceTest {
     @Before
     public void setUp() throws Exception {
         identityConfig = mock(IdentityConfig.class);
+        IdentityConfig.ReloadableConfig reloadableConfig = mock(IdentityConfig.ReloadableConfig.class);
+        when(identityConfig.getReloadableConfig()).thenReturn(reloadableConfig);
+
         serviceDescriptionTemplateUtil = new ServiceDescriptionTemplateUtil();
         fileSystemApiDocRepository = new FileSystemApiDocRepository(identityConfig);
         cloudClient = mock(CloudClient.class);

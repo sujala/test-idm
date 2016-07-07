@@ -280,6 +280,9 @@ public class IdentityConfig {
     public static final String FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP = "feature.return.json.specific.cloud.version";
     public static final boolean FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT = true;
 
+    public static final String FEATURE_REUSE_JAXB_CONTEXT = "feature.reuse.jaxb.context";
+    public static final boolean FEATURE_REUSE_JAXB_CONTEXT_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -465,6 +468,7 @@ public class IdentityConfig {
         defaults.put(PURGE_TRRS_OBSOLETE_AFTER_PROP, PURGE_TRRS_OBSOLETE_AFTER_DEFAULT);
 
         defaults.put(FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT);
+        defaults.put(FEATURE_REUSE_JAXB_CONTEXT, FEATURE_REUSE_JAXB_CONTEXT_DEFAULT);
 
         return defaults;
     }
@@ -1464,6 +1468,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, versionAdded = "3.3.2", description = "Whether or not to return the custom versions.json when GET /cloud is called and json is requested or translate the versions.xml to json")
         public boolean returnJsonSpecificCloudVersionResource() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP);
+        }
+
+        @IdmProp(key = FEATURE_REUSE_JAXB_CONTEXT, versionAdded = "3.3.3", description = "Whether or not to reuse JAXBContext across threads rather than creating new one for each use which causes a memory leak. This feature is only here to revert to existing functinality if required.")
+        public boolean reuseJaxbContext() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_REUSE_JAXB_CONTEXT);
         }
     }
 

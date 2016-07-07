@@ -49,11 +49,8 @@ public interface GenericDao<T> {
      */
     void deleteObject(Filter searchFilter);
 
-    void softDeleteObject(T object);
-    void unSoftDeleteObject(T object);
     String[] getSearchAttributes();
     String getBaseDn();
-    String getSoftDeletedBaseDn();
     String getLdapEntityClass();
     String getNextId();
     String addLdapContainer(String dnString, String containerName);

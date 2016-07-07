@@ -7,7 +7,7 @@ import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.persist.LDAPPersister;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.cxf.common.util.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.hibernate.collection.spi.PersistentCollection;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
