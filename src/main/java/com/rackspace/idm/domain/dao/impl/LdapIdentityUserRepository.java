@@ -347,16 +347,6 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
-    public void softDeleteObject(BaseUser object) {
-        throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
-    public void unSoftDeleteObject(BaseUser object) {
-        throw new UnsupportedOperationException("Not supported");
-    }
-
-    @Override
     public void deleteObject(BaseUser object) {
         throw new UnsupportedOperationException("Not supported");
     }
@@ -366,8 +356,4 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         throw new UnsupportedOperationException("Not supported");
     }
 
-    @Override
-    public String getSoftDeletedBaseDn() {
-        throw new UnsupportedOperationException("Not supported");
-    }
 }

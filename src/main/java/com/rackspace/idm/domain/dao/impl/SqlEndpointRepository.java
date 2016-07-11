@@ -10,7 +10,7 @@ import com.rackspace.idm.domain.sql.entity.SqlEndpoint;
 import com.rackspace.idm.domain.sql.mapper.impl.AdminEndpointMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.InternalEndpointMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.PublicEndpointMapper;
-import org.apache.cxf.common.util.StringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,13 +79,13 @@ public class SqlEndpointRepository implements EndpointDao {
         publicEndpoint.setInterface1(PUBLIC_INTERFACE);
         endpoints.add(endpointRepository.save(publicEndpoint));
 
-        if(!StringUtils.isEmpty(cloudBaseUrl.getInternalUrl())){
+        if(StringUtils.isNotEmpty(cloudBaseUrl.getInternalUrl())){
             SqlEndpoint internalEndpoint = internalEndpointMapper.toSQL(cloudBaseUrl);
             internalEndpoint.setInterface1(INTERNAL_INTERFACE);
             endpoints.add(endpointRepository.save(internalEndpoint));
         }
 
-        if(!StringUtils.isEmpty(cloudBaseUrl.getAdminUrl())){
+        if(StringUtils.isNotEmpty(cloudBaseUrl.getAdminUrl())){
             SqlEndpoint adminEndpoint = adminEndpointMapper.toSQL(cloudBaseUrl);
             adminEndpoint.setInterface1(ADMIN_INTERFACE);
             endpoints.add(endpointRepository.save(adminEndpoint));

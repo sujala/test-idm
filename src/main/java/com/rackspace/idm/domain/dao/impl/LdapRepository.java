@@ -150,7 +150,6 @@ public abstract class LdapRepository {
     public static final String ATTR_UID = "uid";
     public static final String ATTR_USE_FOR_DEFAULT_REGION = "useForDefaultRegion";
     public static final String ATTR_UPDATED_DATE = "modifyTimestamp";
-    public static final String ATTR_SOFT_DELETED_DATE = "softDeletedTimestamp";
     public static final String ATTR_PASSWORD_UPDATED_TIMESTAMP = "passwordUpdatedTimestamp";
     public static final String ATTR_PASSWORD_SELF_UPDATED = "passwordSelfUpdated";
     public static final String ATTR_VERSION_ID = "versionId";
@@ -224,9 +223,6 @@ public abstract class LdapRepository {
     protected static final String RACKERS_BASE_DN = "ou=rackers,o=rackspace,dc=rackspace,dc=com";
     protected static final String FEDERATED_RACKERS_BASE_DN = EXTERNAL_PROVIDERS_BASE_DN;
     protected static final String NEXT_IDS_BASE_DN = "ou=nextIds,o=rackspace,dc=rackspace,dc=com";
-    protected static final String SOFT_DELETED_USERS_BASE_DN = "ou=users,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
-    protected static final String SOFT_DELETED_POLICIES_BASE_DN = "ou=policies,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
-    protected static final String SOFT_DELETED_APPLICATIONS_BASE_DN = "ou=applications,ou=softDeleted,o=rackspace,dc=rackspace,dc=com";
     protected static final String PATTERN_BASE_DN = "ou=patterns,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String PROPERTY_BASE_DN = "ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String MULTIFACTOR_MOBILE_PHONE_BASE_DN = "ou=mobilePhones,ou=multiFactorDevices,o=rackspace,dc=rackspace,dc=com";
