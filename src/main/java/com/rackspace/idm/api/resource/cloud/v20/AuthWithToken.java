@@ -43,6 +43,20 @@ public class AuthWithToken {
         AuthResponseTuple authResponseTuple = new AuthResponseTuple();
         ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
 
+        /*
+        TODO: Should consolidate/clean up auth w/ token validity logic.
+         It's weird that an expired impersonation token will throw
+         a NotAuthorizedException while an expired UserScopeAccess throws a NotAuthenticatedException. Should verify if
+         response is different in either case, and if not, consolidate/cleanup the validity code.
+         */
+
+        //fail fast if null.
+        if (sa == null) {
+            String errMsg = "Token not authenticated";
+            logger.warn(errMsg);
+            throw new NotAuthenticatedException(errMsg);
+        }
+
         //restricted (scoped) tokens can not be used for auth w/ token
         if (StringUtils.isNotBlank(sa.getScope())) {
             throw new ForbiddenException(GlobalConstants.FORBIDDEN_DUE_TO_RESTRICTED_TOKEN);
@@ -60,6 +74,9 @@ public class AuthWithToken {
             logger.info("Impersonating token {} with token {} ", authenticationRequest.getToken(), newToken);
             sa = scopeAccessService.getScopeAccessByAccessToken(newToken);
         }
+
+        //Perform final checks on effective token. If original was impersonation token then sa was replaced with a new token
+        //so need to recheck
         if (!(sa instanceof UserScopeAccess) || sa.isAccessTokenExpired(new DateTime())) {
             String errMsg = "Token not authenticated";
             logger.warn(errMsg);
