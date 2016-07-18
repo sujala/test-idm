@@ -11,6 +11,7 @@ public class Constants {
 
     private Constants() {}
 
+    public static final int PASSWORD_MIN = 8;
     public static final int MAX_TOKEN_LENGTH = 255;
     public static final int MAX = 100;
     public static final int MAX_64 = 64;
