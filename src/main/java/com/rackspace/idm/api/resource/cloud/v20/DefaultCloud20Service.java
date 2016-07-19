@@ -106,6 +106,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String FEDERATION_IDP_FILTER_TENANT_NO_DOMAIN_ERROR_MESSAGE = "The provided tenant is not associated with a domain";
 
     public static final String DUPLICATE_SERVICE_NAME_ERROR_MESSAGE = "More than one service exists with the given name. Please specify a different service name for the endpoint template.";
+    public static final String DUPLICATE_SERVICE_ERROR_MESSAGE = "Unable to fulfill request. More than one service exists with the given name.";
 
     public static final String ERROR_CANNOT_DELETE_USER_TYPE_ROLE_MESSAGE = "Cannot delete identity user-type roles from a user.";
 
@@ -2513,12 +2514,30 @@ public class DefaultCloud20Service implements Cloud20Service {
     // KSADM Extension Role Methods
 
     @Override
-    public ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) {
+    public ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String name, Integer marker, Integer limit) {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
-            Iterable<Application> clients = this.applicationService.getOpenStackServices();
+            Iterable<Application> clients;
+
+            if (StringUtils.isNotBlank(name)) {
+                Application service;
+                try {
+                    service = this.applicationService.getByName(name);
+                } catch (IllegalStateException e) {
+                    if (e.getCause() != null && e.getCause() instanceof LDAPException) {
+                        throw new UnrecoverableIdmException(DUPLICATE_SERVICE_ERROR_MESSAGE, e);
+                    }
+                    throw e;
+                }
+                clients = new ArrayList<>();
+                if (service != null) {
+                    clients = Arrays.asList(service);
+                }
+            } else {
+                clients = this.applicationService.getOpenStackServices();
+            }
 
             return Response.ok(
                     objFactories.getOpenStackIdentityExtKsadmnV1Factory().createServices(serviceConverterCloudV20.toServiceList(clients)).getValue());

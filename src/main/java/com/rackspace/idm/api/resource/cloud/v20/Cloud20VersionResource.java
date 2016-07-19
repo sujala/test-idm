@@ -924,10 +924,11 @@ public class Cloud20VersionResource {
     public Response listServices(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @QueryParam("name") String name,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit)
         {
-        return cloud20Service.listServices(httpHeaders, authToken, validateMarker(marker), validateLimit(limit)).build();
+        return cloud20Service.listServices(httpHeaders, authToken, name, validateMarker(marker), validateLimit(limit)).build();
     }
 
     @POST
