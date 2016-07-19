@@ -43,9 +43,9 @@ public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<L
 
     @Override
     public List<LdapTokenRevocationRecord> findObsoleteTrrs(int max) {
-        if(max > LdapPagingIterator.PAGE_SIZE) {
-            getLogger().debug("Aborting search request due to requested max results of {} exceeding maximum limit of {}", max, LdapPagingIterator.PAGE_SIZE);
-            throw new IllegalArgumentException("Max results must not exceed " + LdapPagingIterator.PAGE_SIZE);
+        if(max > identityConfig.getReloadableConfig().getMaxDirectoryPageSize()) {
+            getLogger().debug("Aborting search request due to requested max results of {} exceeding maximum limit of {}", max, identityConfig.getReloadableConfig().getMaxDirectoryPageSize());
+            throw new IllegalArgumentException("Max results must not exceed " + identityConfig.getReloadableConfig().getMaxDirectoryPageSize());
         }
 
         Filter filter = searchForObsoleteTokenRevocationRecords();

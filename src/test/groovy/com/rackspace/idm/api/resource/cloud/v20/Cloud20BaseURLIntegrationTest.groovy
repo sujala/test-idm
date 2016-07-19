@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.dao.EndpointDao
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.springframework.beans.factory.annotation.Autowired
 import testHelpers.RootIntegrationTest
@@ -122,6 +124,48 @@ class Cloud20BaseURLIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteService(service2)
         utils.deleteService(service1)
+    }
+
+    def "listing endpoint templates does not return duplicates"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.MAX_CA_DIRECTORY_PAGE_SIZE_PROP, 20)
+
+        when: "list all endpoint templates"
+        def listResponse = cloud20.listEndpointTemplates(utils.getServiceAdminToken())
+        def totalEndpointTemplates = endpointDao.getBaseUrlCount()
+        assert listResponse.status == 200
+        def returnedEndpointTemplates = listResponse.getEntity(EndpointTemplateList).value.endpointTemplate
+        def returnedEndpointTemplateIds = returnedEndpointTemplates.id
+
+        then: "no duplicates in the returned results"
+        returnedEndpointTemplateIds.each {
+            assert returnedEndpointTemplateIds.count(it) == 1
+        }
+
+        and: "the returned list of base URLs contains the same number of base URLs as stored in the directory"
+        returnedEndpointTemplates.size() == totalEndpointTemplates
+
+        cleanup:
+        reloadableConfiguration.reset()
+    }
+
+    def "v2.0 delete endpoint template deletes the specified endpoint template"() {
+        given:
+        def endpointTemplate = utils.createEndpointTemplate()
+
+        when: "get the endpoint template"
+        def returnedET = utils.getEndpointTemplate(endpointTemplate.id)
+
+        then: "the endpoint template is there"
+        returnedET.id == endpointTemplate.id
+
+        when: "delete the endpoint template"
+        def deleteResponse = cloud20.deleteEndpointTemplate(utils.getServiceAdminToken(), endpointTemplate.id.toString())
+        def getAfterDeleteResponse = cloud20.getEndpointTemplate(utils.getServiceAdminToken(), endpointTemplate.id.toString())
+
+        then: "the endpoint template is no longer there"
+        deleteResponse.status == 204
+        getAfterDeleteResponse.status == 404
     }
 
 }

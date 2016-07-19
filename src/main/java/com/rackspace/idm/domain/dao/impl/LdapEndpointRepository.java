@@ -98,6 +98,11 @@ public class LdapEndpointRepository extends LdapGenericRepository<CloudBaseUrl> 
         return getObjects(searchFilterGetBaseUrlById(baseUrlIds));
     }
 
+    @Override
+    public int getBaseUrlCount() {
+        return countObjects(searchFilterGetBaseUrl());
+    }
+
     private Filter searchFilterGetBaseUrlById(String baseUrlId) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, baseUrlId)

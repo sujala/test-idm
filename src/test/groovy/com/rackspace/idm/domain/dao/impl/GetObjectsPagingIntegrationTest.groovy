@@ -1,11 +1,15 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+import com.rackspace.idm.domain.dao.EndpointDao
+import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.entity.Tenant
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.annotation.DirtiesContext
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.junit.IgnoreByRepositoryProfile
 
@@ -22,86 +26,71 @@ class GetObjectsPagingIntegrationTest extends RootIntegrationTest{
     @Shared def defaultUser, users
     @Shared def domainId
 
-    @Autowired(required = false)
-    LdapTenantRepository repo;
-
-    @Autowired
-    Configuration config;
+    @Autowired TenantDao tenantDao
+    @Autowired Configuration config
 
     def cleanup() {
         config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_DEFAULT_VALUE)
     }
 
+    @Unroll
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
-    def "Get paged or unpaged as appropriate" () {
+    def "Get paged or unpaged as appropriate: useVlvAndSssControl = #useVlvAndSssControl" () {
         given:
-        def startCount = getNumberOfPreExistingTenants()
+        config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, useVlvAndSssControl)
+        def totalTenants = tenantDao.getTenantCount()
 
-        //if the number of existing objects is not less than the page count, then, at a minimum, the < page size tests are invalid.
-        assert startCount < LdapPagingIterator.PAGE_SIZE
-
-        def totalWantedForLessThanPage = LdapPagingIterator.PAGE_SIZE - 1
-        def numToCreateForLessThanPage = totalWantedForLessThanPage - startCount
-
-        def totalWantedForEqualPage = LdapPagingIterator.PAGE_SIZE
-        def numToCreateForEqualsPage = totalWantedForEqualPage - totalWantedForLessThanPage
-
-        def totalWantedForGreaterThanPage = LdapPagingIterator.PAGE_SIZE + 1
-        def numToCreateForGreaterThanPage = totalWantedForGreaterThanPage - totalWantedForEqualPage
-
-        List<Tenant> createdTenants = new ArrayList<Tenant>(totalWantedForGreaterThanPage);
-
-        when: "search result count < page size"
-        createdTenants.addAll(addTenants(numToCreateForLessThanPage));
-        sleep(500) // FIXME
+        when: "set the max page size to one more than the current number of tenants"
+        reloadableConfiguration.setProperty(IdentityConfig.MAX_CA_DIRECTORY_PAGE_SIZE_PROP, totalTenants + 1)
+        def tenants = tenantDao.getTenants()
 
         then:
-        config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, true)
-        assertIterableTypeWithCount(repo.getTenants(), List, totalWantedForLessThanPage)
+        if (useVlvAndSssControl) {
+            assertIterableTypeWithCount(tenants, List, totalTenants)
+        } else {
+            assertIterableTypeWithCount(tenants, LdapPagingIterator, totalTenants)
+        }
 
-        config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, false)
-        assertIterableTypeWithCount(repo.getTenants(), LdapPagingIterator, totalWantedForLessThanPage)
+        when: "set the max page size to be equal to the total number of tenants"
+        reloadableConfiguration.setProperty(IdentityConfig.MAX_CA_DIRECTORY_PAGE_SIZE_PROP, totalTenants)
+        tenants = tenantDao.getTenants()
 
-        //equal to page test
-        when: "search result count == page size"
-        createdTenants.addAll(addTenants(numToCreateForEqualsPage));
-        sleep(500) // FIXME
+        then:
+        if (useVlvAndSssControl) {
+            assertIterableTypeWithCount(tenants, List, totalTenants)
+        } else {
+            assertIterableTypeWithCount(tenants, LdapPagingIterator, totalTenants)
+        }
 
-        then: "return LdapPagingIterator when optimization is false, List when true"
-        config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, true)
-        assertIterableTypeWithCount(repo.getTenants(), List, totalWantedForEqualPage)
+        when: "set the max page size to be equal to 1 minus the total number of tenants"
+        reloadableConfiguration.setProperty(IdentityConfig.MAX_CA_DIRECTORY_PAGE_SIZE_PROP, totalTenants - 1)
+        tenants = tenantDao.getTenants()
 
-        config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, false)
-        assertIterableTypeWithCount(repo.getTenants(), LdapPagingIterator, totalWantedForEqualPage)
-
-        when: "search result count > page size"
-        createdTenants.addAll(addTenants(numToCreateForGreaterThanPage));
-
-        then: "always returns LdapPagingIterator"
-        config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, true)
-        assertIterableTypeWithCount(repo.getTenants(), LdapPagingIterator, totalWantedForGreaterThanPage)
-
-        config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, false)
-        assertIterableTypeWithCount(repo.getTenants(), LdapPagingIterator, totalWantedForGreaterThanPage)
+        then:
+        assertIterableTypeWithCount(tenants, LdapPagingIterator, totalTenants)
 
         cleanup:
-        deleteTenants(createdTenants)
+        reloadableConfiguration.reset()
+
+        where:
+        useVlvAndSssControl | _
+        true                | _
+        false               | _
     }
 
-    def void assertIterableTypeWithCount(Iterable iterator, Class expectedIteratorType, int expectedItemCount) {
-        assert List.isInstance(iterator) || LdapPagingIterator.isInstance(iterator)
-        // FIXME: assert expectedIteratorType.isInstance(iterator)
-        assert countEntriesInIterable(iterator) > expectedItemCount - 2 && countEntriesInIterable(iterator) < expectedItemCount + 2
-        // FIXME: assert countEntriesInIterable(iterator) == expectedItemCount
-    }
+    def void assertIterableTypeWithCount(Iterable iterator, expectedIteratorType, expectedItemCount) {
+        def allItems = iterator.iterator().collect()
+        def totalItems = allItems.size()
 
-    def getNumberOfPreExistingTenants() {
-        Integer preExisting = 0
-        Iterable<Tenant> existingTenants = repo.getTenants();
-        for (Tenant t : existingTenants) {
-            preExisting++
+        //no duplicates in list
+        allItems.each {
+            allItems.count(it.tenantId) == 1
         }
-        return preExisting
+
+        assert List.isInstance(iterator) || LdapPagingIterator.isInstance(iterator)
+        assert expectedIteratorType.isInstance(iterator)
+        assert totalItems > expectedItemCount - 2 && totalItems < expectedItemCount + 2
+        assert totalItems == expectedItemCount
     }
 
     def countEntriesInIterable(Iterable iterator) {
@@ -115,23 +104,5 @@ class GetObjectsPagingIntegrationTest extends RootIntegrationTest{
         }
         return i;
     }
-
-    def List<Tenant> addTenants(int count) {
-        List<Tenant> tenantList = new ArrayList<Tenant>(LdapPagingIterator.PAGE_SIZE);
-        for (int i=0; i<count; i++) {
-            def tenantId = getRandomUUID("tenantId")
-            Tenant tenant = getEntityFactory().createTenant(tenantId, tenantId);
-            repo.addTenant(tenant)
-            tenantList.add(tenant)
-        }
-        return tenantList;
-    }
-
-    def deleteTenants(List<Tenant> tenantList) {
-        for (Tenant t : tenantList) {
-            repo.deleteObject(t)
-        }
-    }
-
 
 }

@@ -34,4 +34,12 @@ public interface EndpointDao {
     Iterable<CloudBaseUrl> getBaseUrlsById(List<String> baseUrlIds);
 
     void updateCloudBaseUrl(CloudBaseUrl cloudBaseUrl);
+
+    /**
+     * Returns the total number of base URLs
+     *
+     * @return
+     */
+    int getBaseUrlCount();
+
 }

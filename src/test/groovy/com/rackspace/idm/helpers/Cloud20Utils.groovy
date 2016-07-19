@@ -613,8 +613,8 @@ class Cloud20Utils {
         return endpointTemplateResp
     }
 
-    def getEndpointTemplate(String endpointTemplateId) {
-        return methods.getEndpointTemplate(getServiceAdminToken(), endpointTemplateId).getEntity(EndpointTemplate).value
+    def getEndpointTemplate(def endpointTemplateId) {
+        return methods.getEndpointTemplate(getServiceAdminToken(), "" + endpointTemplateId).getEntity(EndpointTemplate).value
     }
 
     def deleteEndpointTemplate(endpointTemplate) {
