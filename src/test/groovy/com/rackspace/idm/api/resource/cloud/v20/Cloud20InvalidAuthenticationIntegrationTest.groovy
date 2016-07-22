@@ -66,4 +66,41 @@ class Cloud20InvalidAuthenticationIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
+    def "auth with token returns 401 with invalid token"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def token = utils.getToken(userAdmin.username)
+
+        when: "use valid token"
+        def response = cloud20.authenticateTokenAndTenant(token, domainId)
+
+        then: "get valid response"
+        response.status == 200
+
+        when: "revoke token and reauth"
+        utils.revokeToken(token)
+        response = cloud20.authenticateTokenAndTenant(token, domainId)
+
+        then:
+        response.status == 401
+
+        when: "send never valid UUID formatted token"
+        response = cloud20.authenticateTokenAndTenant(UUID.randomUUID().toString().replaceAll("-",""), domainId)
+
+        then:
+        response.status == 401
+
+        when: "send never valid non-UUID (so processed as AE) formatted token"
+        response = cloud20.authenticateTokenAndTenant("A_token_that_is_not_uuid_or_valid", domainId)
+
+        then:
+        response.status == 401
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
 }
