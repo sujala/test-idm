@@ -854,6 +854,16 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSADM).path("services").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(service).post(ClientResponse)
     }
 
+    def listServices(String token, MediaType accept=APPLICATION_XML_TYPE, String name = null) {
+        initOnUse()
+        WebResource webResource = resource.path(path20).path(OS_KSADM).path("services")
+        def queryParams = new MultivaluedMapImpl()
+        if (name != null){
+            queryParams.add("name", name)
+        }
+        webResource.queryParams(queryParams).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
+    }
+
     def deleteService(String token, String serviceId) {
         initOnUse()
         resource.path(path20).path(OS_KSADM).path("services").path(serviceId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
