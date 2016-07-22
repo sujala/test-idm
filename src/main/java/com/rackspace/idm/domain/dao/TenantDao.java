@@ -15,4 +15,11 @@ public interface TenantDao {
     PaginatorContext<Tenant> getTenantsPaged(int offset, int limit);
     void updateTenant(Tenant tenant);
     void updateTenantAsIs(Tenant tenant);
+
+    /**
+     * Returns the total number of tenants
+     *
+     * @return
+     */
+    int getTenantCount();
 }

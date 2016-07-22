@@ -283,6 +283,9 @@ public class IdentityConfig {
     public static final String FEATURE_REUSE_JAXB_CONTEXT = "feature.reuse.jaxb.context";
     public static final boolean FEATURE_REUSE_JAXB_CONTEXT_DEFAULT = true;
 
+    public static final String MAX_CA_DIRECTORY_PAGE_SIZE_PROP = "max.ca.directory.page.size";
+    public static final int MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT = 1000;
+
     /**
      * Required static prop
      */
@@ -469,6 +472,8 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_PROP, FEATURE_RETURN_JSON_SPECIFIC_CLOUD_VERSION_DEFAULT);
         defaults.put(FEATURE_REUSE_JAXB_CONTEXT, FEATURE_REUSE_JAXB_CONTEXT_DEFAULT);
+
+        defaults.put(MAX_CA_DIRECTORY_PAGE_SIZE_PROP, MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT);
 
         return defaults;
     }
@@ -1474,6 +1479,13 @@ public class IdentityConfig {
         public boolean reuseJaxbContext() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_REUSE_JAXB_CONTEXT);
         }
+
+        @IdmProp(key = MAX_CA_DIRECTORY_PAGE_SIZE_PROP, versionAdded = "3.5.0", description = "The maximum page size allowed to query the directory for. This property should be set to match the maximum query size as configured on " +
+                "the CA directory side. It should also be noted that this property will also impact other services through the API. For example, the API call used for deleting TRRs will limit how many TRRs can be deleted in a single request based upon this configuration.")
+        public int getMaxDirectoryPageSize() {
+            return getIntSafely(reloadableConfiguration, MAX_CA_DIRECTORY_PAGE_SIZE_PROP);
+        }
+
     }
 
     @Deprecated

@@ -9,7 +9,6 @@ import java.util.Iterator;
 
 public class LdapPagingIterator<T> implements Iterable<T> {
 
-    public static final int PAGE_SIZE = 1000;
     private int offset;
     private int index;
 
@@ -19,11 +18,14 @@ public class LdapPagingIterator<T> implements Iterable<T> {
     private String dn;
     private SearchScope scope;
 
-    public LdapPagingIterator(GenericDao<T> repo, Filter searchFilter, String dn, SearchScope scope) {
+    private final int PAGE_SIZE;
+
+    public LdapPagingIterator(GenericDao<T> repo, Filter searchFilter, String dn, SearchScope scope, int pageSize) {
         this.repo = repo;
         this.searchFilter = searchFilter;
         this.dn = dn;
         this.scope = scope;
+        this.PAGE_SIZE = pageSize;
     }
 
     @Override
@@ -42,9 +44,9 @@ public class LdapPagingIterator<T> implements Iterable<T> {
             @Override
             public T next() {
                 if (index >= PAGE_SIZE) {
-                    context = repo.getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
                     offset += PAGE_SIZE;
                     index = 0;
+                    context = repo.getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
                 }
                 return context.getValueList().get(index++);
             }

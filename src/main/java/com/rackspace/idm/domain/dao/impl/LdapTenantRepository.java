@@ -62,6 +62,11 @@ public class LdapTenantRepository extends LdapGenericRepository<Tenant> implemen
         return ATTR_ID;
     }
 
+    @Override
+    public int getTenantCount() {
+        return countObjects(searchFilterGetTenants());
+    }
+
     private Filter searchFilterGetTenantById(String tenantId) {
         return new LdapRepository.LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, tenantId)

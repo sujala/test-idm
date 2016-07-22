@@ -44,6 +44,9 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     @Autowired
     private LdapPaginatorRepository<T> paginator;
 
+    @Autowired
+    private IdentityConfig identityConfig;
+
     @Override
     public Iterable<T> getObjects(Filter searchFilter) {
         return getObjects(searchFilter, getBaseDn(), SearchScope.SUB);
@@ -73,10 +76,10 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
                     String loggerMsg = String.format("Encountered error searching for %s - %s using unsorted/paged method. Falling back to original code.", entityType.toString(), searchFilter);
                     getLogger().error(loggerMsg);
                 }
-                return new LdapPagingIterator<T>(this, searchFilter, dn, scope);
+                return new LdapPagingIterator<T>(this, searchFilter, dn, scope, identityConfig.getReloadableConfig().getMaxDirectoryPageSize());
             }
         } else {
-            return new LdapPagingIterator<T>(this, searchFilter, dn, scope);
+            return new LdapPagingIterator<T>(this, searchFilter, dn, scope, identityConfig.getReloadableConfig().getMaxDirectoryPageSize());
         }
     }
 
@@ -85,13 +88,13 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     protected List<T> getUnpagedUnsortedObjects(Filter searchFilter, String dn, SearchScope scope) throws LDAPSearchException {
-        return getUnpagedUnsortedObjects(searchFilter, dn, scope, LdapPagingIterator.PAGE_SIZE);
+        return getUnpagedUnsortedObjects(searchFilter, dn, scope, identityConfig.getReloadableConfig().getMaxDirectoryPageSize());
     }
 
     protected List<T> getUnpagedUnsortedObjects(Filter searchFilter, String dn, SearchScope scope, int maxResult) throws LDAPSearchException {
-        if(maxResult > LdapPagingIterator.PAGE_SIZE) {
-            getLogger().debug("Aborting search request due to requested max results of {} exceeding maximum limit of {}", maxResult, LdapPagingIterator.PAGE_SIZE);
-            throw new IllegalArgumentException("Max results must not exceed " + LdapPagingIterator.PAGE_SIZE);
+        if(maxResult > identityConfig.getReloadableConfig().getMaxDirectoryPageSize()) {
+            getLogger().debug("Aborting search request due to requested max results of {} exceeding maximum limit of {}", maxResult, identityConfig.getReloadableConfig().getMaxDirectoryPageSize());
+            throw new IllegalArgumentException("Max results must not exceed " + identityConfig.getReloadableConfig().getMaxDirectoryPageSize());
         }
         getLogger().debug(String.format("Getting all %s unpaged and unsorted objects", entityType));
 

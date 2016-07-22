@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.sql.entity.SqlEndpoint;
 import com.rackspace.idm.domain.sql.mapper.impl.AdminEndpointMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.InternalEndpointMapper;
 import com.rackspace.idm.domain.sql.mapper.impl.PublicEndpointMapper;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
@@ -93,6 +94,11 @@ public class SqlEndpointRepository implements EndpointDao {
 
         final String ldif = publicEndpointMapper.toLDIF(buildCloudBaseUrl(endpoints));
         applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, cloudBaseUrl.getUniqueId(), ldif));
+    }
+
+    @Override
+    public int getBaseUrlCount() {
+        throw new NotImplementedException();
     }
 
     @Override
