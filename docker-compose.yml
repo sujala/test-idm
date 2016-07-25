@@ -28,3 +28,9 @@ mariadb:
     volumes:
         - ./sql/schema:/schema
         - ./sql/data:/data
+repose:
+    image: docker.ciidentity.com/repose
+    ports:
+        - 8080:8080
+    volumes:
+        - ./repose/config:/etc/repose
