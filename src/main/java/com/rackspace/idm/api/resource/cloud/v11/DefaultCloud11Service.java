@@ -1135,7 +1135,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         ServiceCatalogInfo scInfo = scopeAccessService.getServiceCatalogInfo(userAuthenticationResult.getUser());
 
         //verify the user is allowed to login
-        if (authorizationService.restrictUserAuthentication((EndUser) userAuthenticationResult.getUser(), scInfo)) {
+        if (authorizationService.restrictUserAuthentication(scInfo)) {
             throw new ForbiddenException(GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE);
         }
 

@@ -190,10 +190,39 @@ public interface AuthorizationService {
      * - The user has AT LEAST ONE tenant
      * - ALL tenants on the user are disabled
      * - The user is a user admin or below level of access
+     * - The IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP == true
      *
-     * @param user
      * @param serviceCatalogInfo
      * @return
      */
-    boolean restrictUserAuthentication(EndUser user, ServiceCatalogInfo serviceCatalogInfo);
+    boolean restrictUserAuthentication(ServiceCatalogInfo serviceCatalogInfo);
+
+    /**
+     * Checks that a user should be considered SUSPENDED based on the user state
+     * and the endpoints for their tokens would be returned.
+     *
+     * Returns TRUE if the user should be considered disabled by meeting the following criteria:
+     * - The user has AT LEAST ONE tenant
+     * - ALL tenants on the user are disabled
+     * - The user is a user admin or below level of access
+     * - The IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP == true
+     *
+     * @param serviceCatalogInfo
+     * @return
+     */
+    boolean restrictTokenEndpoints(ServiceCatalogInfo serviceCatalogInfo);
+
+    /**
+     * Checks that a user should be considered SUSPENDED based on the user state.
+     *
+     * Returns TRUE if the user should be considered disabled by meeting the following criteria:
+     * - The user has AT LEAST ONE tenant
+     * - ALL tenants on the user are disabled
+     * - The user is a user admin or below level of access
+     *
+     * @param serviceCatalogInfo
+     * @return
+     */
+    boolean restrictEndpointsForTerminator(ServiceCatalogInfo serviceCatalogInfo);
+
 }

@@ -133,7 +133,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
 
         //verify the user is allowed to login
         List<OpenstackEndpoint> endpoints = serviceCatalogInfo.getUserEndpoints();
-        if (authorizationService.restrictUserAuthentication(user, serviceCatalogInfo)) {
+        if (authorizationService.restrictUserAuthentication(serviceCatalogInfo)) {
             endpoints = Collections.EMPTY_LIST;
         }
 
