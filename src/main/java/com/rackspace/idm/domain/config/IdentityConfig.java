@@ -137,6 +137,8 @@ public class IdentityConfig {
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP = "feature.endpoint.template.type.use.config.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP = "feature.endpoint.template.type.mosso.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP = "feature.endpoint.template.type.nast.mapping";
+    public static final String FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP = "feature.endpoint.template.disable.name.type";
+    public static final boolean FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_DEFAULT = false;
     public static final String OTP_ISSUER = "feature.otp.issuer";
     public static final String OTP_ENTROPY = "feature.otp.entropy";
     public static final String OTP_CREATE_ENABLED = "feature.otp.create.enabled.flag";
@@ -527,6 +529,8 @@ public class IdentityConfig {
         defaults.put(FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_PROP, FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_DEFAULT);
         defaults.put(FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP, FEEDS_USE_CONFIGURABLE_HTTPCLIENT_DEFAULT);
         defaults.put(FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP, FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_DEFAULT);
+
+        defaults.put(FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP, FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_DEFAULT);
 
         return defaults;
     }
@@ -1589,6 +1593,11 @@ public class IdentityConfig {
                 , description = "The timeout in milliseconds until a connection is retrieve from the connection pool.")
         public int getFeedsConnectionRequestTimeout() {
             return getIntSafely(reloadableConfiguration, FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP, versionAdded = "3.5.0", description = "Whether or not endpoint template creation is allowed using service name and type.")
+        public boolean getFeatureEndpointTemplateDisableNameType() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP);
         }
     }
 

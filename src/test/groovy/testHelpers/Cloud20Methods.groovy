@@ -680,14 +680,14 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SECRETQA).path(QUESTIONS).path(questionId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addEndpointTemplate(String token, endpointTemplate) {
+    def addEndpointTemplate(String token, endpointTemplate, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(endpointTemplate).post(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).header(X_AUTH_TOKEN, token).accept(acceptMediaType).type(APPLICATION_XML).entity(endpointTemplate).post(ClientResponse)
     }
 
-    def getEndpointTemplate(String token, String endpointTemplateId) {
+    def getEndpointTemplate(String token, String endpointTemplateId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(endpointTemplateId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(endpointTemplateId).header(X_AUTH_TOKEN, token).accept(acceptMediaType).type(APPLICATION_XML).get(ClientResponse)
     }
 
     def listEndpointTemplates(String token, accept = APPLICATION_XML_TYPE) {

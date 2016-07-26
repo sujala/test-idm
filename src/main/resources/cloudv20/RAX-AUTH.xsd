@@ -37,6 +37,7 @@
     <attribute name="pemEncoding" type="xsd:string" />
     <attribute name="tokenFormat" type="RAX-AUTH:TokenFormatEnum" />
     <attribute name="factorType" type="RAX-AUTH:FactorTypeEnum" />
+    <attribute name="assignmentType" type="RAX-AUTH:EndpointTemplateAssignmentTypeEnum" />
 
     <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />
@@ -589,6 +590,44 @@
         <restriction base="xsd:string">
             <enumeration value="RACKER"/>
             <enumeration value="DOMAIN"/>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="EndpointTemplateAssignmentTypeEnum">
+        <restriction base="xsd:string">
+            <enumeration value="MOSSO">
+                <annotation>
+                    <xsd:documentation
+                            xml:lang="EN"
+                            xmlns="http://www.w3.org/1999/xhtml">
+                        <p>
+                            The value for assigning endpoint templates to MOSSO type services (ex. compute).
+                        </p>
+                    </xsd:documentation>
+                </annotation>
+            </enumeration>
+            <enumeration value="NAST">
+                <annotation>
+                    <xsd:documentation
+                            xml:lang="EN"
+                            xmlns="http://www.w3.org/1999/xhtml">
+                        <p>
+                            The value for assigning endpoint templates to NAST type services (ex. object-store).
+                        </p>
+                    </xsd:documentation>
+                </annotation>
+            </enumeration>
+            <enumeration value="MANUAL">
+                <annotation>
+                    <xsd:documentation
+                            xml:lang="EN"
+                            xmlns="http://www.w3.org/1999/xhtml">
+                        <p>
+                            The value for manually assigning endpoint templates.
+                        </p>
+                    </xsd:documentation>
+                </annotation>
+            </enumeration>
         </restriction>
     </simpleType>
 
