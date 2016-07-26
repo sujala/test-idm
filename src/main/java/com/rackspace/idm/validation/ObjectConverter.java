@@ -48,6 +48,7 @@ public class ObjectConverter {
         mapping.put(BaseURL.class, BaseUrlForValidation.class);
         mapping.put(PasswordCredentialsBase.class, CredentialTypeForValidation.class);
         mapping.put(ApiKeyCredentials.class, CredentialTypeForValidation.class);
+        mapping.put(PasswordReset.class, PasswordResetForValidation.class);
     }
 
     public Object convert(Object object) {

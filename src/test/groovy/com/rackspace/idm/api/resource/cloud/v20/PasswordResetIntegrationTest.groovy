@@ -9,6 +9,7 @@ import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.helpers.WiserWrapper
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.subethamail.wiser.WiserMessage
 import spock.lang.Shared
@@ -17,6 +18,9 @@ import testHelpers.EmailUtils
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
+
+import static com.rackspace.idm.validation.entity.Constants.PASSWORD_MIN;
+import static com.rackspace.idm.validation.entity.Constants.MAX;
 
 class PasswordResetIntegrationTest extends RootIntegrationTest {
 
@@ -223,6 +227,32 @@ class PasswordResetIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users)
         reloadableConfiguration.reset()
+    }
+
+    @Unroll
+    def "reset user password using invalid password, request = #request"() {
+        given:
+        def domainId = utils.createDomain()
+        def users, userAdmin
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def emailToken = getPasswordResetToken(userAdmin)
+        def newPassword = 'P' * 101
+
+        when: "reset the password"
+        def response = cloud20.resetPassword(emailToken, v2Factory.createPasswordReset(newPassword), request)
+
+        then: "bad request"
+        response.status == 400
+        def fault = response.getEntity(BadRequestFault)
+        fault.message == "password: size must be between " + PASSWORD_MIN + " and " + MAX
+
+        cleanup:
+        utils.deleteUsers(users)
+
+        where:
+        request | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
     }
 
     def getPasswordResetToken(userAdmin) {
