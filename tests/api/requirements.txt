@@ -1,0 +1,10 @@
+# Pinning ddt. See https://github.com/txels/ddt/issues/38
+ddt==1.0.0
+hypothesis==3.4.0
+jsonschema==2.5.1
+lxml==3.6.0
+nose==1.3.7
+opencafe==0.3.0
+requests==2.10.0
+StringGenerator==0.1.9
+flake8==3.0.3
