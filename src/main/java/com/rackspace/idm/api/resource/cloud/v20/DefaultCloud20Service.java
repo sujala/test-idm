@@ -1406,7 +1406,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         //verify the user is allowed to login [TERMINATOR]
         List<OpenstackEndpoint> endpoints = scInfo.getUserEndpoints();
-        if (authorizationService.restrictUserAuthentication(user, scInfo)) {
+        if (authorizationService.restrictUserAuthentication(scInfo)) {
             //terminator is in effect. All tenants disabled so blank service catalog
             endpoints = Collections.EMPTY_LIST;
         } else if (restrictingAuthByTenant) {
@@ -2376,8 +2376,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             if(sa == null || StringUtils.isNotBlank(sa.getScope())) {
                 throw new NotFoundException("Valid token not found");
             }
-            List<OpenstackEndpoint> endpoints = scopeAccessService.getOpenstackEndpointsForScopeAccess(sa);
-            EndpointList list = endpointConverterCloudV20.toEndpointList(endpoints);
+
+            BaseUser baseUser = userService.getUserByScopeAccess(sa, false);
+            ServiceCatalogInfo scInfo = scopeAccessService.getServiceCatalogInfo(baseUser);
+
+            EndpointList list;
+            if (authorizationService.restrictTokenEndpoints(scInfo)) {
+                //terminator is in effect. All tenants disabled so blank endpoint list
+                list = objFactories.getOpenStackIdentityV2Factory().createEndpointList();
+            } else {
+                list = endpointConverterCloudV20.toEndpointList(scInfo.getUserEndpoints());
+            }
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createEndpoints(list).getValue());
         } catch (Exception ex) {

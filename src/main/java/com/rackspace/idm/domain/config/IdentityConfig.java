@@ -144,6 +144,8 @@ public class IdentityConfig {
 
     public static final String FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP = "feature.user.disabled.by.tenants.enabled";
     public static final boolean FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT = false;
+    public static final String FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP = "feature.list.endpoints.for.token.filtered.for.terminator";
+    public static final boolean FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_DEFAULT = false;
     public static final String FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP = "domain.restricted.to.one.user.admin.enabled";
     public static final String MAX_OTP_DEVICE_PER_USER_PROP = "max.otp.device.per.user";
     public static final int MAX_OTP_DEVICE_PER_USER_DEFAULT = 5;
@@ -389,6 +391,7 @@ public class IdentityConfig {
         defaults.put(OTP_ISSUER, "Rackspace");
         defaults.put(OTP_ENTROPY, 25);
         defaults.put(FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT);
+        defaults.put(FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_DEFAULT);
         defaults.put(FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, false);
         defaults.put(FEATURE_ENABLE_IMPLICIT_ROLE_PROP, false);
         defaults.put(FEATURE_AE_TOKENS_ENCRYPT, true);
@@ -1102,6 +1105,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP)
         public boolean getFeatureUserDisabledByTenantsEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP);
+        }
+
+        @IdmProp(key = FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, versionAdded = "3.5.0", description = "Whether to strip out all the endpoints from the list endpoints for token call for a user that is SUSPENDED by terminator")
+        public boolean getFeatureListEndpointsForTokenFilteredForTerminator() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP);
         }
 
         @IdmProp(key = FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, versionAdded = "2.15.0", description = "How long, in seconds, after which the last invalid MFA logic attempt will be ignored. This affects when an account will be automatically unlocked when using local locking")

@@ -771,10 +771,20 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean restrictUserAuthentication(EndUser user, ServiceCatalogInfo serviceCatalogInfo) {
-        if(identityConfig.getReloadableConfig().getFeatureUserDisabledByTenantsEnabled()
-                && serviceCatalogInfo.allTenantsDisabled()) {
+    public boolean restrictUserAuthentication(ServiceCatalogInfo serviceCatalogInfo) {
+        return identityConfig.getReloadableConfig().getFeatureUserDisabledByTenantsEnabled() &&
+                restrictEndpointsForTerminator(serviceCatalogInfo);
+    }
 
+    @Override
+    public boolean restrictTokenEndpoints(ServiceCatalogInfo serviceCatalogInfo) {
+        return identityConfig.getReloadableConfig().getFeatureListEndpointsForTokenFilteredForTerminator() &&
+                restrictEndpointsForTerminator(serviceCatalogInfo);
+    }
+
+    @Override
+    public boolean restrictEndpointsForTerminator(ServiceCatalogInfo serviceCatalogInfo) {
+        if(serviceCatalogInfo.allTenantsDisabled()) {
             //identity-admins+ bypass terminator restriction
             IdentityUserTypeEnum userType = getIdentityTypeRoleAsEnum(serviceCatalogInfo);
             if(userType != null && !userType.hasAtLeastIdentityAdminAccessLevel()) {

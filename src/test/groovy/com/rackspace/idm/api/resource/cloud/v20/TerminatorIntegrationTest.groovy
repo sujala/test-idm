@@ -17,6 +17,7 @@ import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.rackspacecloud.docs.auth.api.v1.ForbiddenFault
 import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.EndpointList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -41,7 +42,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
     private static final Logger LOG = Logger.getLogger(TerminatorIntegrationTest.class)
 
     @Unroll
-    def "test provisioned user authentication when all tenants on user are disabled: userType = #tokenType, featureEnabled = #featureEnabled"() {
+    def "test terminator for provisioned users when all tenants on user are disabled: userType = #tokenType, featureEnabled = #featureEnabled"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, featureEnabled)
         def domain = utils.createDomain()
@@ -135,6 +136,31 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
             assert v20ResponseData.token.tenant.id == mossoTenantId
         }
 
+        when: "list endpoints for token, feature disabled"
+        def token = v20ResponseData.token.id
+        def listEndpointsForTokenFeatureEnabled = false
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, listEndpointsForTokenFeatureEnabled)
+        def listEndpointsForTokenResponse = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), token)
+
+        then: "NOT empty if user is restricted by terminator and feature flag is disabled"
+        listEndpointsForTokenResponse.status == 200
+        def listEndpointsData = listEndpointsForTokenResponse.getEntity(EndpointList).value
+        assert listEndpointsData.endpoint.size() > 0
+
+        when: "list endpoints for token, feature enabled"
+        listEndpointsForTokenFeatureEnabled = true
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, listEndpointsForTokenFeatureEnabled)
+        listEndpointsForTokenResponse = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), token)
+
+        then: "empty if user is restricted by terminator and feature flag is enabled"
+        listEndpointsForTokenResponse.status == 200
+        def listEndpointsData2 = listEndpointsForTokenResponse.getEntity(EndpointList).value
+        if(restricted) {
+            assert listEndpointsData2.endpoint.size() == 0
+        } else {
+            assert listEndpointsData2.endpoint.size() > 0
+        }
+
         cleanup:
         utils.deleteUsers(identityAdmin, defaultUser, userManage, userAdmin)
         deleteRoleOnServiceAdmin(role.id, Constants.SERVICE_ADMIN_2_USERNAME)
@@ -158,7 +184,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "test provisioned user authentication when user has disabled tenants but at least one enabled tenant: userType = #tokenType"() {
+    def "test terminator for provisioned users when user has disabled tenants but at least one enabled tenant: userType = #tokenType"() {
         given:
         def domain = utils.createDomain()
         def endpointTemplateId = testUtils.getRandomInteger().toString()
@@ -229,7 +255,18 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
 
         then: "the service catalog is returned for user"
         v20Response.status == 200
-        v20Response.getEntity(AuthenticateResponse).value.serviceCatalog.service.endpoint.flatten().size() != 0
+        def authData = v20Response.getEntity(AuthenticateResponse).value
+        authData.serviceCatalog.service.endpoint.flatten().size() != 0
+
+        when: "enable the feature to filter the endpoints and list endpoints for token"
+        def token = authData.token.id
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, true)
+        def listEndpointsForTokenResponse = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), token)
+
+        then: "there are endpoints in the response"
+        listEndpointsForTokenResponse.status == 200
+        def listEndpointsData = listEndpointsForTokenResponse.getEntity(EndpointList).value
+        listEndpointsData.endpoint.size() > 0
 
         cleanup:
         try { utils.deleteUsers(identityAdmin, defaultUser, userManage, userAdmin) } catch (Exception e) {}
@@ -238,6 +275,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         try { utils.deleteTenant(tenant2) } catch (Exception e) {}
         try { utils.deleteDomain(domain) } catch (Exception e) {}
         try { utils.deleteEndpointTemplate(endpointTemplate) } catch (Exception e) {}
+        reloadableConfiguration.reset()
 
         where:
         tokenType | restricted
@@ -249,7 +287,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "test provisioned user authentication when user has no tenants: userType = #tokenType"() {
+    def "test terminator for provisioned users when user has no tenants: userType = #tokenType"() {
         given:
         def domain = utils.createDomain()
         def identityAdmin, userAdmin, defaultUser, userManage
@@ -301,11 +339,23 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
 
         then: "the empty service catalog is returned for the user"
         v20Response.status == 200
-        v20Response.getEntity(AuthenticateResponse).value.serviceCatalog.service.endpoint.flatten().size() == 0
+        def authData = v20Response.getEntity(AuthenticateResponse).value
+        authData.serviceCatalog.service.endpoint.flatten().size() == 0
+
+        when: "enable the feature to filter the endpoints and list endpoints for token"
+        def token = authData.token.id
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, true)
+        def listEndpointsForTokenResponse = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), token)
+
+        then: "there are NO endpoints in the response"
+        listEndpointsForTokenResponse.status == 200
+        def listEndpointsData = listEndpointsForTokenResponse.getEntity(EndpointList).value
+        listEndpointsData.endpoint.size() == 0
 
         cleanup:
         utils.deleteUsers(identityAdmin, defaultUser, userManage, userAdmin)
         utils.deleteDomain(domain)
+        reloadableConfiguration.reset()
 
         where:
         tokenType                           | _
@@ -317,9 +367,10 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "test federated user authentication when all tenants on user are disabled, featureEnabled = #featureEnabled"() {
+    def "test terminator for federated users when all tenants on user are disabled, authFeatureEnabled = #authFeatureEnabled, endpoinstFeatureEnabled = #endpointsFeatureEnabled"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, featureEnabled)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, authFeatureEnabled)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, endpointsFeatureEnabled)
         def domainId = utils.createDomain()
         def mossoTenantId = domainId
         def nastTenantId = utils.getNastTenant(domainId)
@@ -336,10 +387,17 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         then: "successful auth and empty service catalog"
         samlResponse.status == 200
         def responseData = samlResponse.getEntity(AuthenticateResponse).value
-        if(featureEnabled) {
+        def samlToken = responseData.token.id
+        def listEndpointsData = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), samlToken).getEntity(EndpointList).value
+        if(authFeatureEnabled) {
             assert responseData.serviceCatalog.service.endpoint.flatten().size() == 0
         } else {
-            assert responseData.serviceCatalog.service.endpoint.flatten().size() != 0
+            assert responseData.serviceCatalog.service.endpoint.flatten().size() > 0
+        }
+        if(endpointsFeatureEnabled) {
+            assert listEndpointsData.endpoint.size() == 0
+        } else {
+            assert listEndpointsData.endpoint.size() > 0
         }
 
         when: "enable one of the tenants and auth again"
@@ -348,7 +406,10 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
 
         then: "successful and service catalog is popualted again"
         def responseData2 = samlResponse.getEntity(AuthenticateResponse).value
-        responseData2.serviceCatalog.service.endpoint.flatten().size() != 0
+        def samlToken2 = responseData.token.id
+        def listEndpointsData2 = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), samlToken2).getEntity(EndpointList).value
+        responseData2.serviceCatalog.service.endpoint.flatten().size() > 0
+        assert listEndpointsData2.endpoint.size() > 0
 
         cleanup:
         utils.deleteUsers(users)
@@ -356,9 +417,11 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
 
         where:
-        featureEnabled | _
-        true           | _
-        false          | _
+        authFeatureEnabled | endpointsFeatureEnabled
+        true               | true
+        false              | false
+        true               | false
+        false              | true
     }
 
     @Unroll
