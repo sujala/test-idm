@@ -1030,7 +1030,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         response.status == 403
     }
 
-    @Ignore("This test should no longer be ignored once CID-97 is fixed")
     def "users cannot be created with multifactorEnabled"() {
         given:
         def domainId = utils.createDomain()
@@ -1090,10 +1089,9 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         authResponse.status == 200
 
         cleanup:
-        utils.deleteUsersQuietly(defaultUser, userAdmin, idmAdmin)
+        utils.deleteUsersQuietly([defaultUser, userAdmin, idmAdmin] as List<User>)
     }
 
-    @Ignore("This test should no longer be ignored once CID-97 is fixed")
     def "users cannot be created with multiFactorEnforcementLevel"() {
         given:
         def domainId = utils.createDomain()
@@ -1153,10 +1151,9 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         authResponse.status == 200
 
         cleanup:
-        utils.deleteUsersQuietly(defaultUser, userAdmin, idmAdmin)
+        utils.deleteUsersQuietly([defaultUser, userAdmin, idmAdmin] as List<User>)
     }
 
-    @Ignore("This test should no longer be ignored once CID-97 is fixed")
     def "users cannot be created with factorType"() {
         given:
         def domainId = utils.createDomain()
@@ -1216,7 +1213,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         authResponse.status == 200
 
         cleanup:
-        utils.deleteUsersQuietly(defaultUser, userAdmin, idmAdmin)
+        utils.deleteUsersQuietly([defaultUser, userAdmin, idmAdmin] as List<User>)
     }
 
     def "create user without specifying enabled creates an enabled user"() {

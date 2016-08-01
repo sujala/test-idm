@@ -577,6 +577,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.USER_MANAGER, null);
             User caller = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
+            //ignore the mfa attributes
+            usr.setMultiFactorEnabled(null);
+            usr.setUserMultiFactorEnforcementLevel(null);
+            usr.setFactorType(null);
+
             //ignore the core contact id for users that are not service or identity admins
             if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
                 usr.setContactId(null);
