@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- http://wiki.openrepose.org/display/REPOSE/Rate+Limiting+Filter -->
+<rate-limiting overLimit-429-responseCode="false" 
+    use-capture-groups="true"
+    xmlns="http://docs.openrepose.org/repose/rate-limiting/v1.0">
+    <!--
+        Defines an endpoint with a matching regex to bind GET requests for
+        returning live rate limiting information.
+    -->
+    <request-endpoint uri-regex="/limits/?" include-absolute-limits="true"/>
+    <!-- Limits for all other requests -->
+
+    <limit-group id="Standard" groups="IP_Standard" default="true">
+
+        <limit id="Standard-01" uri="/*" uri-regex="(/).*" http-methods="ALL" unit="SECOND" value="50" />
+    </limit-group>
+
+    <limit-group id="Super" groups="IP_Super" default="false">
+
+        <limit id="Super-01" uri="/*" uri-regex="(/).*" http-methods="ALL" unit="SECOND" value="500" />
+    </limit-group>
+
+    <limit-group id="MFA_Verify_By_User_ID" groups="User_Standard" default="false">
+
+        <limit id="MFA_Verify_By_User_ID-01" uri="/v2.0/users/*/RAX-AUTH/multi-factor/mobile-phones/*/verificationcode" uri-regex="(/).*/v2.0/users/[\w\d]*/RAX-AUTH/multi-factor/mobile-phones/[\w\d]*/verificationcode" http-methods="POST" unit="DAY" value="10" />
+    </limit-group>
+</rate-limiting>

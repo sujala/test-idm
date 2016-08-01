@@ -301,6 +301,11 @@ task zipEdirConfig(type: Zip) {
     from "edir/config"
 }
 
+task zipRepose(type: Zip) {
+    classifier = 'repose'
+    from "repose"
+}
+
 idea {
     module {
         sourceDirs += file(generatedSrc)
@@ -358,6 +363,7 @@ artifacts {
     archives zipEdirLdif
     archives zipEdirConfig
     archives zipResources
+    archives zipRepose
     archives jar
 }
 
@@ -459,6 +465,7 @@ war.dependsOn zipLdap
 war.dependsOn zipSql
 war.dependsOn zipEdirLdif
 war.dependsOn zipEdirConfig
+war.dependsOn zipRepose
 war.dependsOn copyBuildInfo
 jettyRun.dependsOn copyBaseConfig
 jettyRun.dependsOn copyBuildInfo

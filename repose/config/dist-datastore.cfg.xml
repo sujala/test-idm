@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- http://wiki.openrepose.org/display/REPOSE/Distributed+Datastore -->
+<distributed-datastore xmlns="http://docs.openrepose.org/repose/distributed-datastore/v1.0">
+   <allowed-hosts allow-all="false">
+      <allow host="127.0.0.1" />
+   </allowed-hosts>
+   <port-config>
+     <port port="9898" cluster="identity" />
+   </port-config>
+</distributed-datastore>
+
