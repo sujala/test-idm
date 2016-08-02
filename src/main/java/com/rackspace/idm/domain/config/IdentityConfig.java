@@ -333,6 +333,47 @@ public class IdentityConfig {
     public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX = "ignore.migration.change.events.of.type.for.listener";
     public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_REG = MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX + ".%s";
 
+    /* ************************
+    FEEDS Connection Props. Feed calls are asynchronous so a larger default timeout is acceptable
+     ************************** */
+    public static final String FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP = "feeds.use.configurable.httpclient";
+    public static final boolean FEEDS_USE_CONFIGURABLE_HTTPCLIENT_DEFAULT = true;
+
+    public static final String FEEDS_MAX_CONNECTIONS_PROP = "feeds.max.connections";
+    public static final int FEEDS_MAX_CONNECTIONS_DEFAULT = 200;
+
+    public static final String FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP = "feeds.max.connections.per.route";
+    public static final int FEEDS_MAX_CONNECTIONS_PER_ROUTE_DEFAULT = 100;
+
+    /**
+     * Configures the time to  the connection was established; maximum time of inactivity between two data packets
+     */
+    public static final String FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_PROP = "feeds.new.connection.socket.timeout.ms";
+    public static final int FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_DEFAULT = 20000;
+
+    /**
+     * Configures the time waiting for data after the connection was established; maximum time of inactivity between two data packets
+     */
+    public static final String FEEDS_SOCKET_TIMEOUT_MS_PROP = "feeds.socket.timeout.ms";
+    public static final int FEEDS_SOCKET_TIMEOUT_DEFAULT = 20000;
+
+    /**
+     * Configures the maximum time to establish the connection with the remote host
+     */
+    public static final String FEEDS_CONNECTION_TIMEOUT_MS_PROP = "feeds.connection.timeout.ms";
+    public static final int FEEDS_CONNECTION_TIMEOUT_MS_DEFAULT = 10000;
+
+    /**
+     * Configures the maximum time to wait to receive a connection from the connection pool before timing out
+     */
+    public static final String FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_PROP = "feeds.connection.request.timeout.ms";
+    public static final int FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_DEFAULT = 30000;
+
+    /**
+     * How long a connection must be idle before it is checked for validity.
+     */
+    public static final String FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP = "feeds.on.use.eviction.validate.after.ms";
+    public static final int FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_DEFAULT = 10000;
 
     /* ************************
     MFA MIGRATION PROPS
@@ -477,6 +518,15 @@ public class IdentityConfig {
         defaults.put(FEATURE_REUSE_JAXB_CONTEXT, FEATURE_REUSE_JAXB_CONTEXT_DEFAULT);
 
         defaults.put(MAX_CA_DIRECTORY_PAGE_SIZE_PROP, MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT);
+
+        defaults.put(FEEDS_MAX_CONNECTIONS_PROP, FEEDS_MAX_CONNECTIONS_DEFAULT);
+        defaults.put(FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP, FEEDS_MAX_CONNECTIONS_PER_ROUTE_DEFAULT);
+        defaults.put(FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_PROP, FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_DEFAULT);
+        defaults.put(FEEDS_SOCKET_TIMEOUT_MS_PROP, FEEDS_SOCKET_TIMEOUT_DEFAULT);
+        defaults.put(FEEDS_CONNECTION_TIMEOUT_MS_PROP, FEEDS_CONNECTION_TIMEOUT_MS_DEFAULT);
+        defaults.put(FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_PROP, FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_DEFAULT);
+        defaults.put(FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP, FEEDS_USE_CONFIGURABLE_HTTPCLIENT_DEFAULT);
+        defaults.put(FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP, FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_DEFAULT);
 
         return defaults;
     }
@@ -1065,6 +1115,32 @@ public class IdentityConfig {
             return getStringSafely(staticConfiguration, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME);
         }
 
+        @IdmProp(key = FEEDS_MAX_CONNECTIONS_PROP, versionAdded = "3.5.0", description = "The total http connections allowed by the HttpClient used to post feed events")
+        public int getFeedsMaxTotalConnections() {
+            return getIntSafely(staticConfiguration, FEEDS_MAX_CONNECTIONS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP, versionAdded = "3.5.0", description = "The total http connections allowed by the HttpClient for each route used to post feed events")
+        public int getFeedsMaxConnectionsPerRoute() {
+            return getIntSafely(staticConfiguration, FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP);
+        }
+
+        @IdmProp(key = FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP, versionAdded = "3.5.0"
+                , description = "Whether or not to configure the http client used to establish feed connections using " +
+                "the other 'feeds*' properties")
+        public boolean useFeedsConfigurableHttpClient() {
+            return getBooleanSafely(staticConfiguration, FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP);
+        }
+
+        @IdmProp(key = FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_PROP, versionAdded = "3.5.0", description = "The timeout to establish a new socket for non-blocking I/O operations ")
+        public int getFeedsNewConnectionSocketTimeout() {
+            return getIntSafely(staticConfiguration, FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP, versionAdded = "3.5.0", description = "After how long of inactivity, in ms, a connection will be checked for validity.")
+        public int getFeedsOnUseEvictionValidateAfterInactivity() {
+            return getIntSafely(reloadableConfiguration, FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP);
+        }
     }
 
     /**
@@ -1494,6 +1570,26 @@ public class IdentityConfig {
             return getIntSafely(reloadableConfiguration, MAX_CA_DIRECTORY_PAGE_SIZE_PROP);
         }
 
+        @IdmProp(key = FEEDS_SOCKET_TIMEOUT_MS_PROP, versionAdded = "3.5.0"
+                , description = "The timeout for waiting for data when sending feed requests - or, put differently, " +
+                "a maximum period inactivity between two consecutive data packets. A timeout value of zero is " +
+                "interpreted as an infinite")
+        public int getFeedsSocketTimeout() {
+            return getIntSafely(reloadableConfiguration, FEEDS_SOCKET_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_CONNECTION_TIMEOUT_MS_PROP, versionAdded = "3.5.0"
+                , description = "The timeout in milliseconds until a connection is established. A timeout value of " +
+                "zero is interpreted as an infinite")
+        public int getFeedsConnectionTimeout() {
+            return getIntSafely(reloadableConfiguration, FEEDS_CONNECTION_TIMEOUT_MS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_PROP, versionAdded = "3.5.0"
+                , description = "The timeout in milliseconds until a connection is retrieve from the connection pool.")
+        public int getFeedsConnectionRequestTimeout() {
+            return getIntSafely(reloadableConfiguration, FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_PROP);
+        }
     }
 
     @Deprecated
