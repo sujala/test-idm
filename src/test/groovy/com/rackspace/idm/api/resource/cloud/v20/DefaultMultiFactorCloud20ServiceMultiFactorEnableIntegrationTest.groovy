@@ -1,11 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -15,12 +17,15 @@ import com.rackspacecloud.docs.auth.api.v1.UnauthorizedFault
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.util.StringUtils
+import org.subethamail.wiser.WiserMessage
 import spock.lang.Unroll
+import testHelpers.EmailUtils
 import testHelpers.IdmAssert
 
 import javax.ws.rs.core.MediaType
@@ -138,7 +143,7 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
-    def "When successfully enable multifactor api key tokens are not revoked, but password tokens are"() {
+    def "When successfully enable multifactor api key and password reset tokens are not revoked, but password tokens are"() {
         setup:
         addPhone()
         verifyPhone()
@@ -149,7 +154,10 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         String apiToken = apiTokenResponse.token.id
         AuthenticateResponse pwdTokenResponse = utils.authenticate(userByIdResponse)
         String pwdToken = pwdTokenResponse.token.id
+        cloud20.forgotPassword(v2Factory.createForgotPasswordCredentials(initialUserAdmin.username, null))
 
+        WiserMessage message = wiserWrapper.wiserServer.getMessages().get(0)
+        def resetToken = EmailUtils.extractTokenFromDefaultForgotPasswordEmail(message.getMimeMessage())
         MultiFactor settings = v2Factory.createMultiFactorSettings(true)
 
         when:
@@ -157,10 +165,55 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
 
         then:
         cloud20.validateToken(specificationIdentityAdminToken, apiToken).status == HttpStatus.SC_OK
+
+        //401 would be token invalid. 400 just that request is invalid
+        cloud20.resetPassword(resetToken, v2Factory.createPasswordReset("abc")).status == 400
         //sleep for a second to avoid race condition with docker image
         sleep(1000)
         cloud20.validateToken(specificationIdentityAdminToken, pwdToken).status == HttpStatus.SC_NOT_FOUND
     }
+
+    def "Enabling MFA sends cloud feed event for enabling MFA, and one for disabling only Password tokens"() {
+        setup:
+        addPhone()
+        verifyPhone()
+        User initialUserAdmin = userRepository.getUserById(userAdmin.getId())
+        def userById = utils.getUserById(userAdmin.id, specificationIdentityAdminToken)
+        resetCloudFeedsMock()
+
+        MultiFactor settings = v2Factory.createMultiFactorSettings(true)
+
+        when:
+        def response = cloud20.updateMultiFactorSettings(userAdminToken, userAdmin.id, settings)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        and: "verify that 2 events were posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(2)
+        )
+
+        and: "verify that an UPDATE event was posted for the user"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(userById, EventType.UPDATE.name()),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "verify that the USER TRR event was posted for PASSWORD "
+        cloudFeedsMock.verify(
+                testUtils.createUserTrrFeedsRequest(userById, AuthenticatedByMethodGroup.PASSWORD),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "verify that a USER TRR event was NOT posted for EMAIL "
+        cloudFeedsMock.verify(
+                testUtils.createUserTrrFeedsRequest(userById, AuthenticatedByMethodGroup.EMAIL),
+                VerificationTimes.exactly(0)
+        )
+    }
+
 
     @Unroll
     def "Successfully disable multifactor: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {

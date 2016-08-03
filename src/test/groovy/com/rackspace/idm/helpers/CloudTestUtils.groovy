@@ -1,6 +1,9 @@
 package com.rackspace.idm.helpers
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
+import com.rackspace.idm.domain.entity.TokenRevocationRecord
+import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpHeaders
 import org.mockserver.model.Header
 import org.mockserver.model.HttpRequest
@@ -46,6 +49,11 @@ class CloudTestUtils {
         return "//event[@id and @resourceName='$user.username' and @type='$eventType']/product[@displayName='$user.username' and @resourceType='USER' and @serviceCode='CloudIdentity']"
     }
 
+    def String getFeedsXPathForUserTRR(user, AuthenticatedByMethodGroup authenticatedByMethodGroup) {
+        def authBy = StringUtils.join(authenticatedByMethodGroup.getAuthenticatedByMethodsAsValues(), " ")
+        return "//event[@id and @resourceId='$user.id' and @type='DELETE']/product[@resourceType='TRR_USER' and @serviceCode='CloudIdentity']/tokenAuthenticatedBy[@values='$authBy']"
+    }
+
     def HttpRequest createFeedsRequest() {
         return new HttpRequest()
                 .withMethod(Constants.POST)
@@ -58,4 +66,7 @@ class CloudTestUtils {
         return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForUser(user, eventType)))
     }
 
+    def HttpRequest createUserTrrFeedsRequest(user, AuthenticatedByMethodGroup authenticatedByMethodGroup) {
+        return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForUserTRR(user, authenticatedByMethodGroup)))
+    }
 }
