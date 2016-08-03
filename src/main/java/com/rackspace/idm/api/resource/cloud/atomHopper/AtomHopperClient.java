@@ -16,19 +16,29 @@ import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.Validate;
-import org.apache.http.HttpException;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
+import org.apache.http.*;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
+import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.*;
 import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.message.BasicHeaderElementIterator;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.protocol.HttpContext;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +49,10 @@ import org.w3._2005.atom.Title;
 import org.w3._2005.atom.UsageContent;
 import org.w3._2005.atom.UsageEntry;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.JAXBContext;
@@ -50,17 +64,14 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge, bernardo
- * Date: May 30, 2012
- * Time: 4:12:42 PM
- * To change this template use File | Settings | File Templates.
- */
 @Component
 public class AtomHopperClient {
 
@@ -68,12 +79,6 @@ public class AtomHopperClient {
     public static final int PORT443 = 443;
     public static final int MAX_TOTAL_CONNECTION = 200;
     public static final int DEFAULT_MAX_PER_ROUTE = 200;
-
-    @Autowired
-    private Configuration config;
-
-    @Autowired
-    private UserService userService;
 
     @Autowired
     private IdentityUserService identityUserService;
@@ -87,7 +92,7 @@ public class AtomHopperClient {
     @Autowired
     private IdentityConfig identityConfig;
 
-    private HttpClient httpClient;
+    private CloseableHttpClient httpClient;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -103,6 +108,37 @@ public class AtomHopperClient {
     }
 
     public AtomHopperClient() {
+    }
+
+    /**
+     * Initialize the client
+     */
+    @PostConstruct
+    public void init() {
+        if (identityConfig.getStaticConfig().useFeedsConfigurableHttpClient()) {
+            httpClient = createHttpClient();
+        } else {
+            httpClient = createLegacyHttpClient();
+        }
+    }
+
+    /**
+     * Used to shutdown the connection manager
+     */
+    @PreDestroy
+    public void destroy() {
+        //the connection manager has a finalize as well, but this allows spring to shut down on application context
+        // closing without relying on iffy finalizers
+        if (httpClient != null) {
+            try {
+                httpClient.close();
+            } catch (Exception e) {
+                logger.debug("Error closing httpclient. Ignoring since closing", e);
+            }
+        }
+    }
+
+    private CloseableHttpClient createLegacyHttpClient() {
         try {
             final SSLSocketFactory sslsf = new SSLSocketFactory(new TrustStrategy() {
                 @Override
@@ -116,60 +152,134 @@ public class AtomHopperClient {
             schemeRegistry.register(new Scheme("https", PORT443, sslsf));
 
             final PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
+
             // Increase max total connection to 200
             cm.setMaxTotal(MAX_TOTAL_CONNECTION);
-            // Increase default max connection per route to 20
+            // Increase default max connection per route to 200
             cm.setDefaultMaxPerRoute(DEFAULT_MAX_PER_ROUTE);
 
-            httpClient = new DefaultHttpClient(cm);
+            return new DefaultHttpClient(cm);
         } catch (Exception e) {
-            logger.error("unable to setup SSL trust manager: {}", e.getMessage());
-            httpClient = new DefaultHttpClient();
+            logger.error(String.format("Unable to setup SSL trust manager: %s", e.getMessage()), e);
+            return new DefaultHttpClient();
         }
+    }
+
+    private CloseableHttpClient createHttpClient() {
+        //TODO - we should not trust all certs and hosts like this...
+        SSLContext sslContext = null;
+        try {
+            sslContext = org.apache.http.ssl.SSLContextBuilder.create().loadTrustMaterial(new TrustStrategy() {
+                public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
+                    return true;
+                }
+            }).build();
+        } catch (NoSuchAlgorithmException|KeyManagementException|KeyStoreException ex) {
+            logger.error("Unable to setup SSL trust manager for cloud feeds client", ex);
+            throw new IllegalStateException("Unable to setup SSL trust manager for cloud feeds client. Can not run without Cloud Feeds secure connection", ex);
+        }
+
+        HostnameVerifier hostnameVerifier = NoopHostnameVerifier.INSTANCE;
+
+        //create the connection factor to use weak trust strategy/verifier, then register it for use for https connections
+        SSLConnectionSocketFactory sslFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier);
+        Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                .register("https", sslFactory)
+                .build();
+
+        /*
+        create pooling connection manager to reuse connections across threads. initialize with custom registry to accept
+        all SSL
+         */
+        PoolingHttpClientConnectionManager poolingHttpClientConnectionManager = new PoolingHttpClientConnectionManager(registry);
+
+        //set default connection params based on static properties
+        SocketConfig socketConfig = SocketConfig.copy(SocketConfig.DEFAULT)
+                .setSoTimeout(identityConfig.getStaticConfig().getFeedsNewConnectionSocketTimeout())
+                .build();
+
+        /*
+        Configure the pool based on pass through configuration properties
+         */
+        poolingHttpClientConnectionManager.setMaxTotal(identityConfig.getStaticConfig().getFeedsMaxTotalConnections());
+        poolingHttpClientConnectionManager.setDefaultMaxPerRoute(identityConfig.getStaticConfig().getFeedsMaxConnectionsPerRoute());
+        poolingHttpClientConnectionManager.setValidateAfterInactivity(identityConfig.getStaticConfig().getFeedsOnUseEvictionValidateAfterInactivity());
+        poolingHttpClientConnectionManager.setDefaultSocketConfig(socketConfig);
+
+        //set default connection params used for post socket creation based on settings during app launch. The settings
+        //will be overridden at request time.
+        RequestConfig requestConfig = RequestConfig.copy(RequestConfig.DEFAULT)
+                .setSocketTimeout(identityConfig.getReloadableConfig().getFeedsSocketTimeout())
+                .setConnectTimeout(identityConfig.getReloadableConfig().getFeedsConnectionTimeout())
+                .setConnectionRequestTimeout(identityConfig.getReloadableConfig().getFeedsConnectionRequestTimeout())
+                .build();
+
+        //create the client and set the custom context
+        HttpClientBuilder b = HttpClientBuilder.create()
+                .setSSLContext(sslContext)
+                .setConnectionManager(poolingHttpClientConnectionManager)
+                .setDefaultRequestConfig(requestConfig)
+                ;
+
+        CloseableHttpClient client = b.build();
+
+        return client;
     }
 
     @Async
     public void asyncPost(EndUser user, String userStatus) {
         try {
-            postUser(user, atomHopperHelper.getAuthToken(), userStatus);
+            postUser(user, userStatus);
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception: " + e);
+            logger.warn("AtomHopperClient Exception posting user change: ", e);
         }
     }
 
     @Async
     public void asyncTokenPost(EndUser user, String revokedToken) {
         try {
-            postToken(user, atomHopperHelper.getAuthToken(), revokedToken);
+            postToken(user, revokedToken);
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception: " + e);
+            logger.warn("AtomHopperClient Exception posting token TRR: ", e);
         }
     }
 
     @Async
     public void asyncPostUserTrr(BaseUser user, TokenRevocationRecord trr) {
         Validate.isTrue(user.getId().equals(trr.getTargetIssuedToId()));
-        postUserTrr(user, trr);
-    }
-
-    public void postUserTrr(BaseUser user, TokenRevocationRecord trr) {
-        Validate.isTrue(user.getId().equals(trr.getTargetIssuedToId()));
         try {
-            String authToken = atomHopperHelper.getAuthToken();
-            final UsageEntry entry = createUserTrrEntry(user, trr);
-            final Writer writer = marshalEntry(entry);
-            final HttpResponse response = executePostRequest(authToken, writer, identityConfig.getReloadableConfig().getAtomHopperUrl());
-            if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
-                final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-                logger.warn("Failed to create feed for user TRR: " + errorMsg);
-            }
-            atomHopperHelper.entityConsume(response.getEntity());
+            postUserTrr(user, trr);
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception posting User TRR: " + e);
+            logger.warn("AtomHopperClient Exception posting user TRR: ", e);
         }
     }
 
-    public void postUser(EndUser user, String authToken, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+    public void postUserTrr(BaseUser user, TokenRevocationRecord trr) throws IOException {
+        Validate.isTrue(user.getId().equals(trr.getTargetIssuedToId()));
+        HttpResponse response = null;
+        try {
+            final UsageEntry entry = createUserTrrEntry(user, trr);
+            HttpPost httpPost = generatePostRequest(marshalEntry(entry));
+            response = httpClient.execute(httpPost);
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpServletResponse.SC_CREATED) {
+                final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+                logger.warn(String.format("Failed to post user TRR feed event for userId: %s. Returned status code: %s with body %s", user.getId(), statusCode, errorMsg));
+            }
+        } catch (Exception e) {
+            logger.warn("AtomHopperClient Exception posting User TRR: ", e);
+        } finally {
+            if (response != null) {
+                //always close the stream to release connection back to pool
+                logger.debug("Consuming entity to release connection back to pool");
+                atomHopperHelper.entityConsume(response.getEntity());
+            }
+        }
+    }
+
+    public void postUser(EndUser user, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+        HttpResponse response = null;
         try {
             UsageEntry entry = null;
             if (userStatus.equals(AtomHopperConstants.DELETED)) {
@@ -190,48 +300,70 @@ public class AtomHopperClient {
                 entry = createEntryForUser(user, EventType.UPDATE, false);
             }
 
-            HttpResponse response = null;
             if (entry != null) {
-                response = executePostRequest(authToken, marshalEntry(entry), identityConfig.getReloadableConfig().getAtomHopperUrl());
+                HttpPost httpPost = generatePostRequest(marshalEntry(entry));
+                response = httpClient.execute(httpPost);
             }
 
             if (response != null) {
-                if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode != HttpServletResponse.SC_CREATED) {
                     final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-                    logger.warn("Failed to create feed for user: " + user.getUsername() + "with Id:" + user.getId());
-                    logger.warn(errorMsg);
+                    logger.warn(String.format("Failed to post User Feed event for user: %s with Id: %s. StatusCode: %s; ResponseBody: %s", user.getUsername(), user.getId(), statusCode, errorMsg));
                 }
-                atomHopperHelper.entityConsume(response.getEntity());
             } else {
                 logger.warn("AtomHopperClient: Response was null");
             }
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception: " + e);
+            logger.warn("AtomHopperClient Exception posting user change", e);
+        } finally {
+            if (response != null) {
+                //always close the stream to release connection back to pool
+                logger.debug("Consuming entity to release connection back to pool");
+                atomHopperHelper.entityConsume(response.getEntity());
+            }
         }
     }
 
-    public void postToken(EndUser user, String authToken, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
+    public void postToken(EndUser user, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
+        HttpResponse response = null;
         try {
             final UsageEntry entry = createEntryForRevokeToken(user, revokedToken);
-            final Writer writer = marshalEntry(entry);
-            final HttpResponse response = executePostRequest(authToken, writer, identityConfig.getReloadableConfig().getAtomHopperUrl());
-            if (response.getStatusLine().getStatusCode() != HttpServletResponse.SC_CREATED) {
+
+            HttpPost httpPost = generatePostRequest(marshalEntry(entry));
+            response = httpClient.execute(httpPost);
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpServletResponse.SC_CREATED) {
                 final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
-                logger.warn("Failed to create feed for revoked token: " + revokedToken);
-                logger.warn(errorMsg);
+                logger.warn(String.format("Failed to post Token TRR event for revoked token: %s. Returned status code: %s; responseBody: %s", revokedToken, statusCode, errorMsg));
             }
-            atomHopperHelper.entityConsume(response.getEntity());
         } catch (Exception e) {
-            logger.warn("AtomHopperClient Exception: " + e);
+            logger.warn("AtomHopperClient Exception posting Token TRR", e);
+        } finally {
+            if (response != null) {
+                //always close the stream to release connection back to pool
+                logger.debug("Consuming entity to release connection back to pool");
+                atomHopperHelper.entityConsume(response.getEntity());
+            }
         }
     }
 
-    public HttpResponse executePostRequest(String authToken, Writer writer, String url) throws IOException {
-        final HttpPost httpPost = new HttpPost(url);
+    private HttpPost generatePostRequest(Writer writer) throws IOException {
+        String authToken = atomHopperHelper.getAuthToken();
+
+        //set connection params based on settings when run
+        RequestConfig requestConfig = RequestConfig.copy(RequestConfig.DEFAULT)
+                .setSocketTimeout(identityConfig.getReloadableConfig().getFeedsSocketTimeout())
+                .setConnectTimeout(identityConfig.getReloadableConfig().getFeedsConnectionTimeout())
+                .setConnectionRequestTimeout(identityConfig.getReloadableConfig().getFeedsConnectionRequestTimeout())
+                .build();
+
+        final HttpPost httpPost = new HttpPost(identityConfig.getReloadableConfig().getAtomHopperUrl());
         httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_ATOM_XML);
         httpPost.setHeader("X-Auth-Token", authToken);
         httpPost.setEntity(createRequestEntity(writer.toString()));
-        return httpClient.execute(httpPost);
+        httpPost.setConfig(requestConfig);
+        return httpPost;
     }
 
     public Writer marshalEntry(UsageEntry entry) throws JAXBException {
@@ -254,7 +386,7 @@ public class AtomHopperClient {
     }
 
     public UsageEntry createEntryForUser(EndUser user, EventType eventType, Boolean migrated) throws DatatypeConfigurationException {
-        logger.warn("Creating user entry ...");
+        logger.debug("Creating user entry ...");
 
         final CloudIdentityType cloudIdentityType = new CloudIdentityType();
 
@@ -292,12 +424,12 @@ public class AtomHopperClient {
 
         final String id = UUID.randomUUID().toString();
         final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, user.getId(), username, AtomHopperConstants.IDENTITY_EVENT, tenantId);
-        logger.warn("Created Identity user entry with id: " + id);
+        logger.debug("Created Identity user entry with id: " + id);
         return usageEntry;
     }
 
     public UsageEntry createEntryForRevokeToken(EndUser user, String token) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
-        logger.warn("Creating revoke token entry ...");
+        logger.debug("Creating revoke token entry ...");
 
         final com.rackspace.docs.event.identity.token.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.token.CloudIdentityType();
         cloudIdentityType.setResourceType(com.rackspace.docs.event.identity.token.ResourceTypes.TOKEN);
@@ -315,7 +447,7 @@ public class AtomHopperClient {
 
         final String id = UUID.randomUUID().toString();
         final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, EventType.DELETE, id, token, null, AtomHopperConstants.IDENTITY_TOKEN_EVENT, null);
-        logger.warn("Created Identity token entry with id: " + id);
+        logger.debug("Created Identity token entry with id: " + id);
         return usageEntry;
     }
 
@@ -328,7 +460,7 @@ public class AtomHopperClient {
      * recognized by feed schema or error creating date for token creation date
      */
     private UsageEntry createUserTrrEntry(BaseUser user, TokenRevocationRecord trr) {
-        logger.debug("Creating user trr entry ...");
+        logger.debug("Creating user TRR entry ...");
         Validate.isTrue(user.getId().equals(trr.getTargetIssuedToId()));
 
         final com.rackspace.docs.event.identity.trr.user.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.trr.user.CloudIdentityType();
@@ -380,7 +512,7 @@ public class AtomHopperClient {
 
         final String id = UUID.randomUUID().toString();
         final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, EventType.DELETE, id, user.getId(), null, AtomHopperConstants.IDENTITY_USER_TRR_EVENT, null);
-        logger.debug("Created user trr entry with id: " + id);
+        logger.debug("Created user TRR entry with id: " + id);
         return usageEntry;
     }
 
@@ -426,13 +558,4 @@ public class AtomHopperClient {
     public void setDefaultTenantService(DefaultTenantService defaultTenantService) {
         this.defaultTenantService = defaultTenantService;
     }
-
-    public void setHttpClient(HttpClient httpClient) {
-        this.httpClient = httpClient;
-    }
-
-    public void setAtomHopperHelper(AtomHopperHelper atomHopperHelper) {
-        this.atomHopperHelper = atomHopperHelper;
-    }
-
 }
