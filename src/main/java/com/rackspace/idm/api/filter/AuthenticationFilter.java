@@ -48,8 +48,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     /**
      * Pattern to recognize validate call against AE or UUID tokens
      */
-    private static Pattern tokenValidationPathPattern = Pattern.compile("^cloud/v2.0/tokens/[\\w-_=]+$");
-    private static Pattern tokenEndpointPathPattern = Pattern.compile("^cloud/v2.0/tokens/[\\w-_=]+/endpoints/?$");
+    private static Pattern tokenValidationPathPattern = Pattern.compile("^cloud/v2.0/tokens/[^/]+$");
+    private static Pattern tokenEndpointPathPattern = Pattern.compile("^cloud/v2.0/tokens/[^/]+/endpoints/?$");
 
     private final AuthHeaderHelper authHeaderHelper = new AuthHeaderHelper();
     private final Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
