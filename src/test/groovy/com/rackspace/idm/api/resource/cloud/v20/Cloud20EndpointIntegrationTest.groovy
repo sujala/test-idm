@@ -62,7 +62,7 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteTenant(tenant)
         utils.deleteDomain(domainId)
-        utils.deleteEndpointTemplate(endpointTemplate)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplate.id.toString())
     }
 
     def "endpoints created with tenantAlias = '' do not display tenant in the url"() {
@@ -96,7 +96,7 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteTenant(tenant)
         utils.deleteDomain(domainId)
-        utils.deleteEndpointTemplate(endpointTemplate)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplate.id.toString())
     }
 
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
@@ -136,7 +136,7 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteTenant(tenant)
         utils.deleteDomain(domainId)
-        utils.deleteEndpointTemplate(endpointTemplate)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplate.id.toString())
         staticIdmConfiguration.reset()
     }
 
@@ -172,7 +172,7 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteTenant(tenant)
         utils.deleteDomain(domainId)
-        utils.deleteEndpointTemplate(endpointTemplate)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplate.id.toString())
         staticIdmConfiguration.reset()
     }
 
@@ -208,7 +208,7 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteTenant(tenant)
         utils.deleteDomain(domainId)
-        utils.deleteEndpointTemplate(endpointTemplate)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplate.id.toString())
     }
 
     @Unroll
@@ -263,7 +263,9 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
-        utils.deleteEndpointTemplate(endpointTemplate)
+        utils.deleteTenant(nastTenantId)
+        utils.deleteTenant(mossoTenantId)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
 
         where:
         userType                            | accept                          | request
@@ -323,7 +325,7 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsersQuietly(users)
         utils.deleteTenant(userAdmin.domainId)
-        utils.deleteEndpointTemplate(endpointTemplate)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
     }
 
     def "explicitly assigning global endpoint to tenant does not cause endpoint to list twice"() {
@@ -352,7 +354,7 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteTenant(tenant)
-        utils.deleteEndpointTemplate(endpointTemplate)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
     }
 
 }

@@ -17,6 +17,12 @@ public interface TenantDao {
     void updateTenantAsIs(Tenant tenant);
 
     /**
+     * Returns a list of tenants associated with a baseUrl
+     * @return
+     */
+    Iterable<Tenant> getTenantsByBaseUrlId(String baseUrlId);
+
+    /**
      * Returns the total number of tenants
      *
      * @return

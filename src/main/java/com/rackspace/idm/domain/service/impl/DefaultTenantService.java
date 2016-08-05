@@ -537,6 +537,16 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public List<Tenant> getTenantsForEndpoint(String endpointId) {
+        List<Tenant> tenantList = new ArrayList<>();
+        for (Tenant tenant : tenantDao.getTenantsByBaseUrlId(endpointId)){
+            tenantList.add(tenant);
+        }
+
+        return tenantList;
+    }
+
+    @Override
     public List<TenantRole> getRbacRolesForUser(EndUser user) {
         if (user == null) {
             throw new IllegalArgumentException(

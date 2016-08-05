@@ -147,10 +147,10 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     }
 
     def cleanup() {
-        utils.deleteEndpointTemplate(usGlobalEndpointEnabled)
-        utils.deleteEndpointTemplate(usGlobalEndpointDisabled)
-        utils.deleteEndpointTemplate(lonGlobalEndpointEnabled)
-        utils.deleteEndpointTemplate(lonGlobalEndpointDisabled)
+        utils.disableAndDeleteEndpointTemplate(usGlobalEndpointEnabled.id.toString())
+        utils.disableAndDeleteEndpointTemplate(usGlobalEndpointDisabled.id.toString())
+        utils.disableAndDeleteEndpointTemplate(lonGlobalEndpointEnabled.id.toString())
+        utils.disableAndDeleteEndpointTemplate(lonGlobalEndpointDisabled.id.toString())
     }
 
     def "initial user populated appropriately from saml no roles provided"() {

@@ -159,6 +159,13 @@ class Cloud20BaseURLIntegrationTest extends RootIntegrationTest {
         then: "the endpoint template is there"
         returnedET.id == endpointTemplate.id
 
+        when: "disable endpoint template"
+        endpointTemplate.enabled = false
+        def updateResponse = cloud20.updateEndpointTemplate(utils.getServiceAdminToken(), endpointTemplate.id.toString(), endpointTemplate)
+
+        then:
+        updateResponse.status == 200
+
         when: "delete the endpoint template"
         def deleteResponse = cloud20.deleteEndpointTemplate(utils.getServiceAdminToken(), endpointTemplate.id.toString())
         def getAfterDeleteResponse = cloud20.getEndpointTemplate(utils.getServiceAdminToken(), endpointTemplate.id.toString())
