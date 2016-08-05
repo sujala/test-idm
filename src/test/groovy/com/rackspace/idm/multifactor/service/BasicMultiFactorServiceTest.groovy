@@ -288,9 +288,8 @@ class BasicMultiFactorServiceTest extends RootServiceTest {
         }
 
         1 * tokenRevocationService.revokeTokensForEndUser(user, _) >> { arguments -> expirationExceptions=arguments[1]}
-        expirationExceptions.size() == 2
+        expirationExceptions.size() == 1
         expirationExceptions.find { it.matches(AuthenticatedByMethodGroup.PASSWORD); it} != null
-        expirationExceptions.find { it.matches(AuthenticatedByMethodGroup.EMAIL); it} != null
     }
 
     def "updateMultiFactorDomainSettings: appropriate user tokens are revoked when set to required"() {

@@ -53,7 +53,7 @@ public interface TokenRevocationService {
      * Static constant defining tokens groups that should be revoked when MFA is enabled for a user. This can be passed to the {@link #revokeTokensForEndUser(com.rackspace.idm.domain.entity.EndUser, java.util.List)} and
      * {@link #revokeTokensForEndUser(String, java.util.List)} methods
      */
-    public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_REVOKE_ON_MFA_ENABLE = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.PASSWORD, AuthenticatedByMethodGroup.EMAIL));
+    public static final List<AuthenticatedByMethodGroup> AUTH_BY_LIST_REVOKE_ON_MFA_ENABLE = Collections.unmodifiableList(Arrays.asList(AuthenticatedByMethodGroup.PASSWORD));
 
     /**
      * Revoke the specified token if it is valid (not expired) and has not been revoked previously.
