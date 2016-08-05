@@ -3,6 +3,7 @@ package com.rackspace.idm.validation;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.Domain;
@@ -11,7 +12,6 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.entity.Constants;
 import org.apache.commons.codec.binary.Base64;
@@ -25,7 +25,6 @@ import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.openstack.docs.identity.api.v2.Role;
-import org.openstack.docs.identity.api.v2.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +32,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.security.cert.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -52,6 +52,10 @@ public class Validator20 {
     public static final String USERNAME_EMPTY_IMPERSONATION_ERROR_MSG = "Username cannot be empty or blank";
     public static final String EXPIRE_IN_ELEMENT_LESS_ONE_IMPERSONATION_ERROR_MSG = "Expire in element cannot be less than 1.";
     public static final String EXPIRE_IN_ELEMENT_EXCEEDS_MAX_IMPERSONATION_ERROR_MSG = "Expire in element cannot be more than %s";
+    public static final String ENDPOINT_TEMPLATE_EXTRA_ATTRIBUTES_ERROR_MSG = "If serviceId is provided, neither name nor type may be supplied.";
+    public static final String ENDPOINT_TEMPLATE_ACCEPTABLE_ASSIGNMENT_TYPE_ERROR_MSG = "Assignment type must be specified; Acceptable values are: %s.";
+    public static final String ENDPOINT_TEMPLATE_EMPTY_SERVICE_ID_ERROR_MSG = "A serviceId must be provided if assignmentType is supplied.";
+    public static final String ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_ERROR_MSG = "Using attributes name and type is no longer supported on endpoint creation; Please use serviceId and assignmentType.";
     public static final String TOKEN_CLOUD_AUTH_EXPIRATION_SECONDS_PROP_NAME = "token.cloudAuthExpirationSeconds";
     public static final String ROLE_NAME_INVALID = "Invalid role name. Naming convention is <product prefix>:<role name> " +
             "where both the prefix and role name must start with an alphanumeric character.  The rest of the prefix and " +
@@ -94,6 +98,9 @@ public class Validator20 {
 
     @Autowired
     Configuration config;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Autowired
     private RoleService roleService;
@@ -238,18 +245,44 @@ public class Validator20 {
     }
 
     public void validateEndpointTemplate(EndpointTemplate endpoint) {
+        if (identityConfig.getReloadableConfig().getFeatureEndpointTemplateDisableNameType()) {
+            if(endpoint.getName() != null || endpoint.getType() != null) {
+                logger.info(ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_ERROR_MSG);
+                throw new BadRequestException(ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_ERROR_MSG);
+            }
+        }
+
         //need to verify that these values are supplied due to them being optional in the schema and the use of json
+        if ( !StringUtils.isBlank(endpoint.getServiceId())){
+            // Make sure that service name and type are empty when passing in a serviceId in endpointTemplate creation
+            if (!(StringUtils.isBlank(endpoint.getName()) || StringUtils.isBlank(endpoint.getType()))) {
+                logger.warn(ENDPOINT_TEMPLATE_EXTRA_ATTRIBUTES_ERROR_MSG);
+                throw new BadRequestException(ENDPOINT_TEMPLATE_EXTRA_ATTRIBUTES_ERROR_MSG);
+            }
+            // NOTE: Jaxb will set unsupported enum assignment type to null
+            if (endpoint.getAssignmentType() == null) {
+                String errMsg = String.format(ENDPOINT_TEMPLATE_ACCEPTABLE_ASSIGNMENT_TYPE_ERROR_MSG, Arrays.asList(EndpointTemplateAssignmentTypeEnum.values()));
+                logger.warn(errMsg);
+                throw new BadRequestException(errMsg);
+            }
+        } else {
+            // assignmentType cannot be provided without a serviceId.
+            if (endpoint.getAssignmentType() != null && !StringUtils.isBlank(endpoint.getAssignmentType().value())){
+                logger.warn(ENDPOINT_TEMPLATE_EMPTY_SERVICE_ID_ERROR_MSG);
+                throw new BadRequestException(ENDPOINT_TEMPLATE_EMPTY_SERVICE_ID_ERROR_MSG);
+            }
+            if (StringUtils.isBlank(endpoint.getType())) {
+                throwBadRequestForMissingAttr("type");
+            }
+            if (StringUtils.isBlank(endpoint.getName())) {
+                throwBadRequestForMissingAttr("name");
+            }
+        }
         if (endpoint.getId() == null) {
             throwBadRequestForMissingAttr("id");
         }
-        if (StringUtils.isBlank(endpoint.getType())) {
-            throwBadRequestForMissingAttr("type");
-        }
         if (StringUtils.isBlank(endpoint.getPublicURL())) {
             throwBadRequestForMissingAttr("publicURL");
-        }
-        if (StringUtils.isBlank(endpoint.getName())) {
-            throwBadRequestForMissingAttr("name");
         }
     }
 

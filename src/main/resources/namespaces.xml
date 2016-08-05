@@ -162,6 +162,9 @@
         <entry key="http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0">
             <value/>
         </entry>
+        <entry key="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
+            <value>rax-auth</value>
+        </entry>
     </util:map>
 
     <util:map id="raxksqaNsPrefixMap"

@@ -122,6 +122,9 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.endpointConverterCloudV20 = endpointConverter
         service.validator20 = realValidator20
 
+        reloadableConfig.getFeatureEndpointTemplateDisableNameType() >> false
+        mockIdentityConfig(service.validator20)
+
         when:
         def response = service.addEndpointTemplate(null, null, authToken, endpointTemplate)
 

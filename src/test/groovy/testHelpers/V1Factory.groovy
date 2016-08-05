@@ -125,7 +125,7 @@ class V1Factory {
         return createEndpointTemplate(1, NAME)
     }
 
-    def createEndpointTemplate(String id, String type = "compute", String publicUrl = "http://public.url", String name, enabled = true, region = null) {
+    def createEndpointTemplate(String id, String type = "compute", String publicUrl = "http://public.url", String name="cloudServers", enabled = true, region = null, serviceId = null, assignmentType = null) {
         def localPublicUrl = publicUrl
         new EndpointTemplate().with {
             it.id = id as int
@@ -134,6 +134,8 @@ class V1Factory {
             it.name = name
             it.enabled = enabled
             it.region = region
+            it.serviceId = serviceId
+            it.assignmentType = assignmentType
             it.version = new VersionForService().with {
                 it.id = "id"
                 it.info = "info"

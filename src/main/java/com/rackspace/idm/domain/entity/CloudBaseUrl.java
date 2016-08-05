@@ -86,8 +86,6 @@ public class CloudBaseUrl implements Auditable, UniqueId {
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private String region;
 
-    @NotNull
-    @Pattern(regexp = RegexPatterns.NOT_EMPTY, message = MessageTexts.NOT_EMPTY)
     @LDAPField(attribute=LdapRepository.ATTR_SERVICE,
             objectClass=LdapRepository.OBJECTCLASS_BASEURL,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)

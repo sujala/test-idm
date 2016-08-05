@@ -1,9 +1,12 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.EndpointTemplateAssignmentTypeEnum;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
+import com.rackspace.idm.domain.service.ApplicationService;
 import org.dozer.Mapper;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList;
@@ -25,6 +28,9 @@ public class EndpointConverterCloudV20 {
 
     @Autowired
     private IdentityConfig identityConfig;
+
+    @Autowired
+    private ApplicationService applicationService;
 
     public ServiceCatalog toServiceCatalog(List<OpenstackEndpoint> endpoints) {
         ServiceCatalog catalog;
@@ -85,12 +91,30 @@ public class EndpointConverterCloudV20 {
         return list;
     }
 
+    private EndpointTemplateAssignmentTypeEnum getAssignmentType(String baseUrlType) {
+        try {
+            return EndpointTemplateAssignmentTypeEnum.fromValue(baseUrlType);
+        } catch (NullPointerException | IllegalArgumentException e){
+            return null;
+        }
+    }
+
     public EndpointTemplate toEndpointTemplate(CloudBaseUrl baseUrl) {
         EndpointTemplate template = mapper.map(baseUrl, EndpointTemplate.class);
         template.setEnabled(baseUrl.getEnabled());
         template.setGlobal(baseUrl.getGlobal());
         template.setDefault(baseUrl.getDef());
         template.setName(baseUrl.getServiceName());
+        //NOTE: ServiceId and assignmentType are now expose on every response
+        template.setServiceId(baseUrl.getClientId());
+
+        // Default endpoint template type to 'MANUAL' if null or not one of the acceptable types
+        EndpointTemplateAssignmentTypeEnum typeEnum = getAssignmentType(baseUrl.getBaseUrlType());
+        if (typeEnum == null) {
+            template.setAssignmentType(EndpointTemplateAssignmentTypeEnum.MANUAL);
+        } else {
+            template.setAssignmentType(typeEnum);
+        }
 
         if (!StringUtils.isBlank(baseUrl.getVersionId())) {
             VersionForService version = new VersionForService();
@@ -137,10 +161,11 @@ public class EndpointConverterCloudV20 {
         }
         return endpoint;
     }
-    
+
     public CloudBaseUrl toCloudBaseUrl(EndpointTemplate template) {
         CloudBaseUrl baseUrl = mapper.map(template, CloudBaseUrl.class);
         baseUrl.setServiceName(template.getName());
+        baseUrl.setClientId(template.getServiceId());
 
         if (template.getVersion() != null) {
             baseUrl.setVersionId(template.getVersion().getId());
@@ -155,13 +180,26 @@ public class EndpointConverterCloudV20 {
 
         String type = template.getType();
 
-        if (identityConfig.getReloadableConfig().getBaseUrlUseTypeMappingFlag()) {
+        /*
+        Setting endpoint template baseURL type.
+
+        1. If serviceId is provided, retrieve application by id and set both openstack and baseUrl type.
+        2. Fall back to using configuration mapping to set the baseUrl Type if name and type where provided in the endpoint template creation
+           when reloadable properties feature.endpoint.template.type.nast.mapping and feature.endpoint.template.type.mosso.mapping are enabled.
+        3. Use hardcoded value 'object-store' to determine nast endpoint and set any other to mosso type. (Deprecate)
+         */
+        if (!StringUtils.isBlank(baseUrl.getClientId())) {
+            Application application = applicationService.checkAndGetApplication(baseUrl.getClientId());
+            baseUrl.setOpenstackType(application.getOpenStackType());
+            baseUrl.setBaseUrlType(template.getAssignmentType().value());
+        } else if (identityConfig.getReloadableConfig().getBaseUrlUseTypeMappingFlag()) {
             if(ignoreCaseContains(identityConfig.getReloadableConfig().getBaseUrlNastTypeMapping(), type)) {
                 baseUrl.setBaseUrlType("NAST");
             } else if(ignoreCaseContains(identityConfig.getReloadableConfig().getBaseUrlMossoTypeMapping(), type)) {
                 baseUrl.setBaseUrlType("MOSSO");
             } else {
-                baseUrl.setBaseUrlType(template.getType());
+                // If the service type is not in the nast/mosso mapping set baseUrl type to 'MANUAL'
+                baseUrl.setBaseUrlType(EndpointTemplateAssignmentTypeEnum.MANUAL.value());
             }
 
         } else {

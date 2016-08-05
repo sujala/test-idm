@@ -184,6 +184,8 @@ public final class JSONConstants {
     public static final String RAX_AUTH_AUTHENTICATED_BY = "RAX-AUTH:authenticatedBy";
     public static final String RAX_AUTH_TENANT_ALIAS = "RAX-AUTH:tenantAlias";
     public static final String TENANT_ALIAS = "tenantAlias";
+    public static final String RAX_AUTH_ASSIGNMENT_TYPE = "RAX-AUTH:assignmentType";
+    public static final String ASSIGNMENT_TYPE = "assignmentType";
 
     public static final String MOBILE_PHONE = "mobilePhone";
     public static final String RAX_AUTH_MOBILE_PHONE = "RAX-AUTH:mobilePhone";
@@ -242,6 +244,8 @@ public final class JSONConstants {
     public static final String ENDPOINT_LINKS_PATH = "endpoint.link";
     public static final String ENDPOINT_ENDPOINT_LINKS_PATH = "endpoint.endpoint_links";
     public static final String ENDPOINT_TEMPLATE_TENANT_ALIAS_PATH = "endpointTemplate.tenantAlias";
+    public static final String ENDPOINT_TEMPLATE_ASSIGNMENT_TYPE_PATH = "endpointTemplate.assignmentType";
+    public static final String ENDPOINT_TEMPLATE_RAX_AUTH_ASSIGNMENT_TYPE_PATH = "endpointTemplate.RAX-AUTH:assignmentType";
     public static final String ENDPOINT_TEMPLATE_RAX_AUTH_TENANT_ALIAS_PATH = "endpointTemplate.RAX-AUTH:tenantAlias";
     public static final String GROUPS_LIST_PATH = "groups.group";
     public static final String ROLE_PROPAGATE_PATH = "role.propagate";

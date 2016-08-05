@@ -334,6 +334,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         if (!StringUtils.isEmpty(endpointTemplate.getAdminURL())) {
             cloudBaseUrl.setAdminUrlId(UUID.randomUUID().toString().replaceAll("-", ""));
         }
+        // No need to retrieve the application if service id is provided on endpoint template creation.
+        if (endpointTemplate.getServiceId() != null) {
+            return;
+        }
         String serviceName = endpointTemplate.getName();
         if (serviceName != null) {
             Application application;

@@ -49,6 +49,7 @@ public class JSONWriterForOsKsCatalogEndpointTemplate implements MessageBodyWrit
     public void writeTo(EndpointTemplate endpointTemplate, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(ENDPOINT_TEMPLATE_TENANT_ALIAS_PATH, RAX_AUTH_TENANT_ALIAS);
+        prefixValues.put(ENDPOINT_TEMPLATE_ASSIGNMENT_TYPE_PATH, RAX_AUTH_ASSIGNMENT_TYPE);
         prefixValues.put(ENDPOINT_TEMPLATE, OS_KSCATALOG_ENDPOINT_TEMPLATE);
 
         write(endpointTemplate, entityStream, prefixValues);
