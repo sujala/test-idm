@@ -695,6 +695,15 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         fault.message == DefaultUserService.ERROR_MSG_TOKEN_NOT_FOUND
     }
 
+    def "validate should return correct response 404 for invalid token" () {
+        when:
+        def token = "AAD1PcpjnPTXSIzlUEK2APeEvfxoa33wQqCIU_fIcHjUO5ON70NPXQ2-pMmLp2usnv6VRakMJ3T5o-WmR7UGyIpHSczYMFhK2bYjCPYn24hqQpkUgn_97Lx%20"
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), token)
+
+        then:
+        response.status == 404
+    }
+
     def getContactIdFromValidateResponse(validateResponse, accept) {
         if(MediaType.APPLICATION_XML_TYPE == accept) {
             def user = validateResponse.getEntity(AuthenticateResponse).value.user
