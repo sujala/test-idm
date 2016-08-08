@@ -8,6 +8,7 @@ class Constants {
     static def SERVICE_ADMIN_USERNAME = "AuthQE"
     static def SERVICE_ADMIN_PASSWORD = "Auth1234"
 
+    static def SERVICE_ADMIN_ID_2 = "173195"
     static def SERVICE_ADMIN_2_USERNAME = "AuthQE2"
     static def SERVICE_ADMIN_2_PASSWORD = "Auth1234"
     static def SERVICE_ADMIN_2_API_KEY = "1234567890"

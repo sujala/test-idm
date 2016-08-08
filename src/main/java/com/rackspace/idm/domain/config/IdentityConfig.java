@@ -289,6 +289,9 @@ public class IdentityConfig {
     public static final String MAX_CA_DIRECTORY_PAGE_SIZE_PROP = "max.ca.directory.page.size";
     public static final int MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT = 1000;
 
+    public static final String LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP = "feature.list.global.roles.for.user.precedence.restriction.enabled.prop";
+    public static final boolean LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -518,6 +521,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_REUSE_JAXB_CONTEXT, FEATURE_REUSE_JAXB_CONTEXT_DEFAULT);
 
         defaults.put(MAX_CA_DIRECTORY_PAGE_SIZE_PROP, MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT);
+        defaults.put(LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP, LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_DEFAULT);
 
         defaults.put(FEEDS_MAX_CONNECTIONS_PROP, FEEDS_MAX_CONNECTIONS_DEFAULT);
         defaults.put(FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP, FEEDS_MAX_CONNECTIONS_PER_ROUTE_DEFAULT);
@@ -1565,6 +1569,12 @@ public class IdentityConfig {
                 "the CA directory side. It should also be noted that this property will also impact other services through the API. For example, the API call used for deleting TRRs will limit how many TRRs can be deleted in a single request based upon this configuration.")
         public int getMaxDirectoryPageSize() {
             return getIntSafely(reloadableConfiguration, MAX_CA_DIRECTORY_PAGE_SIZE_PROP);
+        }
+
+        @IdmProp(key = LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP, versionAdded = "3.5.0", description = "Whether or not to apply the usual precedence restriction to service and identity admins for the 'List global roles for user' API call." +
+                "When enabled, this will prevent identity admins from listing roles for service admins and other identity admins. Service admins will also be prevented from listing roles for other service admins.")
+        public boolean listGlobalRolesForUserPrecedenceRestrictionEnabled() {
+            return getBooleanSafely(reloadableConfiguration, LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP);
         }
 
         @IdmProp(key = FEEDS_SOCKET_TIMEOUT_MS_PROP, versionAdded = "3.5.0"

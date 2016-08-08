@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.RoleService
@@ -8,6 +9,7 @@ import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.RoleList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
@@ -521,6 +523,69 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
 
         then:
         response.status == 400
+    }
+
+    @Unroll
+    def "service admins can list global roles for self but not other sevice admins, useNewAuthZLogic = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP, featureEnabled)
+        def serviceAdminToken = utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
+
+        when: "list roles for self"
+        def response = cloud20.listUserGlobalRoles(serviceAdminToken, Constants.SERVICE_ADMIN_ID)
+
+        then: "success"
+        response.status == 200
+
+        when: "list roles for other service admin"
+        response = cloud20.listUserGlobalRoles(serviceAdminToken, Constants.SERVICE_ADMIN_ID_2)
+
+        then: "403 Forbidden, if feature is enabled"
+        response.status == featureEnabled ? 403 : 200
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        featureEnabled | _
+        true           | _
+        false          | _
+    }
+
+    @Unroll
+    def "identity admins can list global roles for self but not for other identity admins or service admins, useNewAuthZLogic = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP, featureEnabled)
+        def identityAdmin = utils.createIdentityAdmin()
+        def identityAdmin2 = utils.createIdentityAdmin()
+        def token = utils.getToken(identityAdmin.username)
+
+        when: "list roles for self"
+        def response = cloud20.listUserGlobalRoles(token, identityAdmin.id)
+
+        then: "success"
+        response.status == 200
+
+        when: "list roles for other identity admin"
+        response = cloud20.listUserGlobalRoles(token, identityAdmin2.id)
+
+        then: "403 Forbidden if feature flag is enabled"
+        response.status == featureEnabled ? 403 : 200
+
+        when: "list roles for other service admin"
+        response = cloud20.listUserGlobalRoles(token, Constants.SERVICE_ADMIN_ID)
+
+        then: "403 Forbidden if feature flag is enabled"
+        response.status == featureEnabled ? 403 : 200
+
+        cleanup:
+        utils.deleteUsers(identityAdmin, identityAdmin2)
+        reloadableConfiguration.reset()
+
+        where:
+        featureEnabled | _
+        true           | _
+        false          | _
     }
 
 }
