@@ -26,7 +26,6 @@ public class IdentityConfig {
     private static final String LOCALHOST = "localhost";
     private static final String PORT_25 = "25";
     public static final String CONFIG_FOLDER_SYS_PROP_NAME = "idm.properties.location";
-    public static final String FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME = "feature.use.reloadable.docs";
 
     /**
      * Should be provided in seconds
@@ -439,7 +438,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENABLE_IMPLICIT_ROLE_PROP, false);
         defaults.put(FEATURE_AE_TOKENS_ENCRYPT, true);
         defaults.put(FEATURE_AE_TOKENS_DECRYPT, true);
-        defaults.put(FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME, true);
         defaults.put(RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME, 60);
         defaults.put(BYPASS_DEFAULT_NUMBER, BigInteger.ONE);
         defaults.put(BYPASS_MAXIMUM_NUMBER, BigInteger.TEN);
@@ -966,11 +964,6 @@ public class IdentityConfig {
         @IdmProp(key = PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME)
         public int getReloadablePropertiesTTL() {
             return getIntSafely(staticConfiguration, PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME);
-        }
-
-        @IdmProp(key = FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME)
-        public boolean useReloadableDocs() {
-            return getBooleanSafely(staticConfiguration, FEATURE_USE_RELOADABLE_DOCS_FROM_CONFIG_PROP_NAME);
         }
 
         @IdmProp(key = RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME)
@@ -1679,11 +1672,6 @@ public class IdentityConfig {
     @Deprecated
     public boolean allowFederatedImpersonation() {
         return getStaticConfig().allowFederatedImpersonation();
-    }
-
-    @Deprecated
-    public boolean useReloadableDocs() {
-        return getStaticConfig().useReloadableDocs();
     }
 
     @Deprecated

@@ -41,14 +41,6 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
         fileSystemApiDocRepository.getContent(path)
 
         then:
-        1 * identityConfig.useReloadableDocs() >> false
-        fileSystemApiDocRepository.versionInfo == null
-
-        when:
-        fileSystemApiDocRepository.getContent(path)
-
-        then:
-        1 * identityConfig.useReloadableDocs() >> true
         1 * identityConfig.reloadableDocsTimeOutInSeconds() >> 100
         fileSystemApiDocRepository.versionInfo != null
     }
@@ -63,7 +55,6 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
         fileSystemApiDocRepository.getContent(path)
 
         then:
-        1 * identityConfig.useReloadableDocs() >> true
         1 * mockCache.getUnchecked(path) >> {throw new RuntimeException("Random Exception")}
         notThrown(RuntimeException)
     }
@@ -78,15 +69,14 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
         String returnedContent = fileSystemApiDocRepository.getContent(path);
 
         then:
-        1 * identityConfig.useReloadableDocs() >> true
         1 * identityConfig.getConfigRoot() >> tempFile.getParentFile().getAbsolutePath()
         returnedContent == ""
 
-        when: "using fallback"
+        when: "delete file to use fallback"
+        tempFile.delete()
         returnedContent = fileSystemApiDocRepository.getContent(path);
 
         then:
-        1 * identityConfig.useReloadableDocs() >> false
         returnedContent == ""
     }
 
@@ -105,7 +95,6 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
         String returnedContent = fileSystemApiDocRepository.getContent(path)
 
         then:
-        1 * identityConfig.useReloadableDocs() >> true
         1 * identityConfig.getConfigRoot() >> tempFile.getParentFile().getAbsolutePath()
         returnedContent == resourceContent
     }
@@ -123,7 +112,6 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
 
         identityConfig.getConfigRoot() >> tempFile.getParentFile().getAbsolutePath()
         identityConfig.reloadableDocsTimeOutInSeconds() >> 0
-        identityConfig.useReloadableDocs() >> true
 
         when:
         String returnedContent = fileSystemApiDocRepository.getContent(path)
@@ -183,14 +171,13 @@ class FileSystemApiDocRepositoryIntegrationTest extends RootServiceTest {
         String returnedContent = fileSystemApiDocRepository.getContent(path);
 
         then:
-        1 * identityConfig.useReloadableDocs() >> true
         returnedContent != ""
 
-        when: "using fallback"
+        when: "delete the file so logic goes to using fallback"
+        testFile.delete()
         returnedContent = fileSystemApiDocRepository.getContent(path);
 
         then:
-        1 * identityConfig.useReloadableDocs() >> false
         returnedContent != ""
     }
 
