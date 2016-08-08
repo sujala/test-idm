@@ -755,6 +755,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
+    public boolean authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(String... roleNames) {
+        Assert.notNull(roleNames);
+
+        return authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(roleNames));
+    }
+
+    @Override
     public boolean authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(List<String> roleNames) {
         Assert.notNull(roleNames);
 

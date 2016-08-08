@@ -134,6 +134,14 @@ public interface AuthorizationService {
     boolean authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(List<String> roleNames);
 
     /**
+     * Whether the effective caller has at least one role with the specified role name. This can only be used to check
+     * identity RBAC roles.
+     *
+     * @param roleNames
+     */
+    boolean authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(String... roleNames);
+
+    /**
      * Verifies that the effective caller has the specified identity type (or higher) and/or a role with the
      * specified name. If so, the method returns. Otherwise, throws a ForbiddenException.
      *
