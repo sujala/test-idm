@@ -48,14 +48,10 @@ public class FileSystemApiDocRepository implements ApiDocDao {
         /*
         search within config folder for the file. Fallback to original loading from classpath if not found or encounter any error.
          */
-        if (identityConfig.useReloadableDocs()) {
-            try {
-                result = getLazyInitVersionInfo().getUnchecked(path);
-            } catch (Exception e) {
-                LOG.info(String.format("Error loading '%s' from reloadable docs. Falling back to classpath.", path), e);
-                result = loadFromClassPath(path);
-            }
-        } else {
+        try {
+            result = getLazyInitVersionInfo().getUnchecked(path);
+        } catch (Exception e) {
+            LOG.info(String.format("Error loading '%s' from reloadable docs. Falling back to classpath.", path), e);
             result = loadFromClassPath(path);
         }
 

@@ -60,7 +60,7 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         assertFormat(reloadableConfig)
         assertTypeAndValueOfPropValue(staticConfig.find{it.name == "ga.username"}.get(PropKey.value.toString()), "auth")
         assertTypeAndValueOfPropValue(staticConfig.find{it.name == "reloadable.docs.cache.timeout"}.get(PropKey.value.toString()), 10)
-        assertTypeAndValueOfPropValue(staticConfig.find{it.name == "feature.use.reloadable.docs"}.get(PropKey.value.toString()), true)
+        assertTypeAndValueOfPropValue(staticConfig.find{it.name == IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP}.get(PropKey.value.toString()), true)
     }
 
     def "test get idm props can be called by user w/ role"() {
