@@ -701,7 +701,26 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         def response = cloud20.validateToken(utils.getServiceAdminToken(), token)
 
         then:
-        response.status == 404
+        response.status == SC_NOT_FOUND
+    }
+
+    def "validate should return 404 when valid token is modified" () {
+        given:
+        def domainId = utils.createDomain()
+        (defaultUser, users) = utils.createDefaultUser(domainId)
+
+        when:
+        def response = utils.authenticate(defaultUser)
+        def token = response.token.id + "%20"
+        def resp = cloud20.validateToken(utils.getServiceAdminToken(), token)
+
+        then:
+        token != null
+        resp.status == SC_NOT_FOUND
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
     }
 
     def getContactIdFromValidateResponse(validateResponse, accept) {

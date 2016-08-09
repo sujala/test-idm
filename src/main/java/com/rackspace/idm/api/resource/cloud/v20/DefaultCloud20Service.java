@@ -3936,6 +3936,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ForbiddenException("Cannot use scoped tokens to validate tokens.");
             }
 
+            if (!StringUtils.deleteWhitespace(tokenId).equals(tokenId))  {
+                throw new NotFoundException("Token not found.");
+            }
+
             final ScopeAccess sa = checkAndGetToken(tokenId); //throws not found exception if token can't not be decrypted
             //no scoped tokens can currently be validated through the v2 validate call
             if (sa.isAccessTokenExpired(new DateTime()) || StringUtils.isNotBlank(sa.getScope())) {
