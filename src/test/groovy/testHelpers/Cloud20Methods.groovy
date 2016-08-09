@@ -305,9 +305,9 @@ class Cloud20Methods {
         request.header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def authenticateTokenAndTenant(String token, String tenantId) {
+    def authenticateTokenAndTenant(token, tenantId) {
         initOnUse()
-        authenticate(v2Factory.createTokenAuthenticationRequest(token, tenantId, null))
+        authenticate(v2Factory.createTokenAuthenticationRequest(token, tenantId.toString(), null))
     }
 
     def authenticatePassword(String username, String password=DEFAULT_PASSWORD) {
