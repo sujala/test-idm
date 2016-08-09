@@ -213,6 +213,40 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         response.getEntity(IdentityFault).value.message == Validator20.ENDPOINT_TEMPLATE_EXTRA_ATTRIBUTES_ERROR_MSG
     }
 
+    def "Endpoint template cannot be created with name, service id and assignment type"() {
+        given: "An admin user and a endpoint template"
+        def adminToken = utils.getIdentityAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def listServiceResponse = cloud20.listServices(adminToken, MediaType.APPLICATION_XML_TYPE, "cloudServers")
+        def serviceList = listServiceResponse.getEntity(ServiceList).value
+        def serviceId = serviceList.service[0].id
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, null, "http://publicUrl", "cloudServers", true, null, serviceId, "MOSSO")
+
+        when: "Attempt to create a new endpoint template"
+        def response = cloud20.addEndpointTemplate(adminToken, endpointTemplate)
+
+        then: "Assert BadRequest"
+        response.status == 400
+        response.getEntity(IdentityFault).value.message == Validator20.ENDPOINT_TEMPLATE_EXTRA_ATTRIBUTES_ERROR_MSG
+    }
+
+    def "Endpoint template cannot be created with type, service id and assignment type"() {
+        given: "An admin user and a endpoint template"
+        def adminToken = utils.getIdentityAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def listServiceResponse = cloud20.listServices(adminToken, MediaType.APPLICATION_XML_TYPE, "cloudServers")
+        def serviceList = listServiceResponse.getEntity(ServiceList).value
+        def serviceId = serviceList.service[0].id
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, "compute", "http://publicUrl", null, true, null, serviceId, "MOSSO")
+
+        when: "Attempt to create a new endpoint template"
+        def response = cloud20.addEndpointTemplate(adminToken, endpointTemplate)
+
+        then: "Assert BadRequest"
+        response.status == 400
+        response.getEntity(IdentityFault).value.message == Validator20.ENDPOINT_TEMPLATE_EXTRA_ATTRIBUTES_ERROR_MSG
+    }
+
     def "Endpoint template cannot be created with only serviceId"() {
         given: "An admin user and a endpoint template"
         def adminToken = utils.getIdentityAdminToken()

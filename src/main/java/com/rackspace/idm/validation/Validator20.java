@@ -255,7 +255,7 @@ public class Validator20 {
         //need to verify that these values are supplied due to them being optional in the schema and the use of json
         if ( !StringUtils.isBlank(endpoint.getServiceId())){
             // Make sure that service name and type are empty when passing in a serviceId in endpointTemplate creation
-            if (!(StringUtils.isBlank(endpoint.getName()) || StringUtils.isBlank(endpoint.getType()))) {
+            if (StringUtils.isNotBlank(endpoint.getName()) || StringUtils.isNotBlank(endpoint.getType())) {
                 logger.warn(ENDPOINT_TEMPLATE_EXTRA_ATTRIBUTES_ERROR_MSG);
                 throw new BadRequestException(ENDPOINT_TEMPLATE_EXTRA_ATTRIBUTES_ERROR_MSG);
             }
