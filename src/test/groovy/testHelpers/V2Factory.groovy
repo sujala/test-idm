@@ -387,10 +387,10 @@ class V2Factory {
         }
     }
 
-    def createTenant(String name, String displayName, boolean enabled) {
+    def createTenant(name, displayName, boolean enabled) {
         new Tenant().with {
-            it.name = name
-            it.displayName = displayName
+            it.name = name.toString()
+            it.displayName = displayName.toString()
             it.enabled = enabled
             return it
         }

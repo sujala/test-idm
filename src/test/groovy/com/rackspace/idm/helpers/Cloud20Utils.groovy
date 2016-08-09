@@ -328,7 +328,7 @@ class Cloud20Utils {
         return [userAdmin, [identityAdmin, userAdmin].asList()]
     }
 
-    def createUserAdminWithTenants(domainId) {
+    def createUserAdminWithTenants(domainId = createDomain()) {
         def identityAdmin = createIdentityAdmin()
 
         def identityAdminToken = getToken(identityAdmin.username)
@@ -924,9 +924,10 @@ class Cloud20Utils {
         response.getEntity(Tenants).value
     }
 
-    def updateTenant(String tenantId, boolean enabled) {
+    def updateTenant(String tenantId, boolean enabled = true, tenantName = null) {
         def tenant = getTenant(tenantId)
         tenant.enabled = enabled
+        tenant.name = tenantName
         def response = methods.updateTenant(getServiceAdminToken(), tenantId, tenant)
         assert (response.status == SC_OK)
         response.getEntity(Tenant).value

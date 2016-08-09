@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.DomainService
 import groovy.json.JsonSlurper
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.Tenants
 import org.springframework.beans.factory.annotation.Autowired
@@ -263,6 +265,89 @@ class TenantIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "updated tenant name is reflected in authenticate and validate token responses, useTenantNameFeatureFlag = #useTenantNameFeatureFlag"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.USE_TENANT_NAME_FOR_AUTH_AND_VALIDATE_RESPONSE_PROP, useTenantNameFeatureFlag)
+        def users, userAdmin
+        (userAdmin, users) = utils.createUserAdminWithTenants()
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def mossoTenantId = userAdmin.domainId
+        def mossoTenant = utils.updateTenant(mossoTenantId, true, testUtils.getRandomUUID())
+        def otherTenantId = testUtils.getRandomInteger()
+        def otherTenant = utils.createTenant(otherTenantId)
+        otherTenant = utils.updateTenant(otherTenant.id, true, testUtils.getRandomUUID())
+        def role = utils.createRole()
+        utils.addRoleToUserOnTenant(userAdmin, otherTenant, role.id)
+        utils.addApiKeyToUser(userAdmin)
+
+        when: "auth and validate w/ mosso tenant"
+        def authWithPasswordResponse = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
+        def authWithApiKeyResponse = cloud20.authenticateApiKey(userAdmin.username, Constants.DEFAULT_API_KEY)
+        def authWithTokenResponse = cloud20.authenticateTokenAndTenant(userAdminToken, mossoTenantId)
+        def validateResponse = cloud20.validateToken(utils.getServiceAdminToken(), userAdminToken)
+
+        then: "assert on auth responses"
+        def authWithPasswordData = authWithPasswordResponse.getEntity(AuthenticateResponse).value
+        def authWithApiKeyData = authWithApiKeyResponse.getEntity(AuthenticateResponse).value
+        def authWithTokenData = authWithTokenResponse.getEntity(AuthenticateResponse).value
+        assertAuthTenantNameAndId(authWithPasswordData, mossoTenant, useTenantNameFeatureFlag)
+        assertAuthTenantNameAndId(authWithApiKeyData, mossoTenant, useTenantNameFeatureFlag)
+        //NOTE: existing logic for auth w/ token and tenant always returned the correct tenant name in the response
+        assertAuthTenantNameAndId(authWithTokenData, mossoTenant, true)
+
+        and: "assert on validate response"
+        validateResponse.status == 200
+        AuthenticateResponse validateData = validateResponse.getEntity(AuthenticateResponse).value
+        assertAuthTenantNameAndId(validateData, mossoTenant, useTenantNameFeatureFlag)
+
+        when: "delete the mosso tenant off the user to fall back to 'numeric tenant ID logic' and auth and validate w/ nast tenant"
+        utils.deleteRoleFromUserOnTenant(userAdmin, mossoTenant, Constants.MOSSO_ROLE_ID)
+        def authWithPasswordResponse2 = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
+        def authWithApiKeyResponse2 = cloud20.authenticateApiKey(userAdmin.username, Constants.DEFAULT_API_KEY)
+        def authWithTokenResponse2 = cloud20.authenticateTokenAndTenant(userAdminToken, otherTenantId)
+        def validateResponse2 = cloud20.validateToken(utils.getServiceAdminToken(), userAdminToken)
+
+        then: "assert on auth responses"
+        def authWithPasswordData2 = authWithPasswordResponse2.getEntity(AuthenticateResponse).value
+        def authWithApiKeyData2 = authWithApiKeyResponse2.getEntity(AuthenticateResponse).value
+        def authWithTokenData2 = authWithTokenResponse2.getEntity(AuthenticateResponse).value
+        assertAuthTenantNameAndId(authWithPasswordData2, otherTenant, useTenantNameFeatureFlag)
+        assertAuthTenantNameAndId(authWithApiKeyData2, otherTenant, useTenantNameFeatureFlag)
+        //NOTE: existing logic for auth w/ token and tenant always returned the correct tenant name in the response
+        assertAuthTenantNameAndId(authWithTokenData2, otherTenant, true)
+
+        and: "assert on validate response"
+        validateResponse.status == 200
+        AuthenticateResponse validateData2 = validateResponse2.getEntity(AuthenticateResponse).value
+        assertAuthTenantNameAndId(validateData2, otherTenant, useTenantNameFeatureFlag)
+
+        cleanup:
+        reloadableConfiguration.reset()
+        utils.deleteUsers(users)
+        utils.deleteRole(role)
+        utils.deleteTenant(mossoTenant)
+        utils.deleteTenant(otherTenant)
+
+        where:
+        useTenantNameFeatureFlag | _
+        true                     | _
+        false                    | _
+    }
+
+    def assertAuthTenantNameAndId(AuthenticateResponse authData, tenant, boolean nameAndIdShouldNotMatch) {
+        if (nameAndIdShouldNotMatch) {
+            assert authData.token.tenant.name == tenant.name
+            assert authData.token.tenant.id == tenant.id
+            assert authData.token.tenant.id != authData.token.tenant.name
+        } else {
+            assert authData.token.tenant.name == tenant.id
+            assert authData.token.tenant.id == tenant.id
+            assert authData.token.tenant.id == authData.token.tenant.name
+        }
+        true
     }
 
 }
