@@ -128,4 +128,11 @@ public interface TenantService {
      * @return
      */
     TenantRole getEphemeralRackerTenantRole();
+
+    /**
+     * Returns a list of tenants associated to endpoint.
+     *
+     * @return
+     */
+    List<Tenant> getTenantsForEndpoint(String endpointId);
 }

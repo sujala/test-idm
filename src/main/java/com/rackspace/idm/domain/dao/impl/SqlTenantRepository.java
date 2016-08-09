@@ -79,6 +79,11 @@ public class SqlTenantRepository implements TenantDao {
     }
 
     @Override
+    public Iterable<Tenant> getTenantsByBaseUrlId(String baseUrlId) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public int getTenantCount() {
         throw new NotImplementedException();
     }

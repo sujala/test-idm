@@ -275,6 +275,94 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
     }
 
+    def "Delete endpoint template"() {
+        given: "An admin user and a endpoint template"
+        def adminToken = utils.getIdentityAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def listServiceResponse = cloud20.listServices(adminToken, MediaType.APPLICATION_XML_TYPE, "cloudServers")
+        def serviceList = listServiceResponse.getEntity(ServiceList).value
+        def serviceId = serviceList.service[0].id
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, null,"http://publicUrl", null, true, null, serviceId, "MOSSO")
+
+        when: "Create a new endpoint template"
+        def response = cloud20.addEndpointTemplate(adminToken, endpointTemplate)
+
+        then: "Assert newly created endpoint template"
+        response.status == 201
+
+        when: "Delete endpoint tempalte"
+        def deleteResponse = cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
+
+        then:
+        deleteResponse.status == 204
+    }
+
+    def "Attempt to delete enabled endpoint template"() {
+        given: "An admin user and a endpoint template"
+        def adminToken = utils.getServiceAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def listServiceResponse = cloud20.listServices(adminToken, MediaType.APPLICATION_XML_TYPE, "cloudServers")
+        def serviceList = listServiceResponse.getEntity(ServiceList).value
+        def serviceId = serviceList.service[0].id
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, null,"http://publicUrl", null, true, null, serviceId, "MOSSO")
+
+        when: "Create and enable endpoint template"
+        def createdResponse = cloud20.addEndpointTemplate(adminToken, endpointTemplate)
+        endpointTemplate.enabled = true
+        def updatedResponse = cloud20.updateEndpointTemplate(adminToken, endpointTemplateId, endpointTemplate)
+
+        then: "Assert created and updated responses"
+        createdResponse.status == 201
+        updatedResponse.status == 200
+
+        when: "Delete endpoint tempalte"
+        def deleteResponse = cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
+
+        then:
+        deleteResponse.status == 403
+
+        cleanup:
+        endpointTemplate.enabled = false
+        cloud20.updateEndpointTemplate(adminToken, endpointTemplateId, endpointTemplate)
+        cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
+    }
+
+    def "Attempt to delete an endpoint template associated to a tenant"() {
+        given: "An admin user, tenant and endpoint template"
+        def adminToken = utils.getServiceAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def listServiceResponse = cloud20.listServices(adminToken, MediaType.APPLICATION_XML_TYPE, "cloudServers")
+        def serviceList = listServiceResponse.getEntity(ServiceList).value
+        def serviceId = serviceList.service[0].id
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, null,"http://publicUrl", null, true, null, serviceId, "MOSSO")
+        def tenantId = testUtils.getRandomIntegerString()
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
+
+        when: "Create endpoint template and tenant"
+        def createEndpointResponse = cloud20.addEndpointTemplate(adminToken, endpointTemplate)
+        def createdTenantResponse = cloud20.addTenant(adminToken, tenant)
+
+        then: "Assert created and updated response"
+        createEndpointResponse.status == 201
+        createdTenantResponse.status == 201
+
+        when: "Assigning endpoint to tenant"
+        def addEndpointResponse = cloud20.addEndpoint(adminToken, tenantId, endpointTemplate)
+
+        then: "Assert adding endpoint to tenant response"
+        addEndpointResponse.status == 200
+
+        when: "Attempt to delete endpoint tempalte"
+        def deleteResponse = cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
+
+        then:
+        deleteResponse.status == 403
+
+        cleanup:
+        cloud20.deleteTenant(adminToken, tenantId)
+        cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
+    }
+
     def assertAssignmentTypeEnum(endpointTemplate, assignmentType, acceptContentType) {
         def type = null
         if (acceptContentType == MediaType.APPLICATION_XML_TYPE) {

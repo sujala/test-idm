@@ -166,7 +166,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         deleteRoleOnServiceAdmin(role.id, Constants.SERVICE_ADMIN_2_USERNAME)
         utils.deleteTenant(tenant)
         utils.deleteDomain(domain)
-        utils.deleteEndpointTemplate(endpointTemplate)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
         reloadableConfiguration.reset()
 
         where:
@@ -274,7 +274,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         try { utils.deleteTenant(tenant1) } catch (Exception e) {}
         try { utils.deleteTenant(tenant2) } catch (Exception e) {}
         try { utils.deleteDomain(domain) } catch (Exception e) {}
-        try { utils.deleteEndpointTemplate(endpointTemplate) } catch (Exception e) {}
+        try { utils.disableAndDeleteEndpointTemplate(endpointTemplateId) } catch (Exception e) {}
         reloadableConfiguration.reset()
 
         where:

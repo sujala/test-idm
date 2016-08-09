@@ -622,6 +622,16 @@ class Cloud20Utils {
         assert (response.status == SC_NO_CONTENT)
     }
 
+    def disableAndDeleteEndpointTemplate(endpointTemplateId){
+        def endpointTemplate = new EndpointTemplate().with {
+            it.id = endpointTemplateId as int
+            it.enabled = false
+            it
+        }
+        updateEndpointTemplate(endpointTemplate, endpointTemplateId)
+        deleteEndpointTemplate(endpointTemplate)
+    }
+
     def addEndpointTemplateToTenant(tenantId, endpointTemplateId) {
         def endpointTemplate = new EndpointTemplate().with {
             it.id = endpointTemplateId

@@ -189,7 +189,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         endpointService.updateBaseUrl(endpointTemplateEntity)
 
         when: "create a user with the new endpoint disabled and auth as that user"
-        def createdUser1 = utils.createUserWithTenants(utils.getIdentityAdminToken(), testUtils.getRandomUUID("user-admin"), utils.createDomain())
+        def user1DomainId = utils.createDomain()
+        def createdUser1 = utils.createUserWithTenants(utils.getIdentityAdminToken(), testUtils.getRandomUUID("user-admin"), user1DomainId)
         def authUser1 = utils.authenticate(createdUser1)
 
         then: "the endpoint DOES NOT show up in the service catalog"
@@ -199,7 +200,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         endpointTemplateEntity = endpointService.getBaseUrlById(endpointTemplateId)
         endpointTemplateEntity.enabled = true
         endpointService.updateBaseUrl(endpointTemplateEntity)
-        def createdUser2 = utils.createUserWithTenants(utils.getIdentityAdminToken(), testUtils.getRandomUUID("user-admin"), utils.createDomain())
+        def user2DomainId = utils.createDomain()
+        def createdUser2 = utils.createUserWithTenants(utils.getIdentityAdminToken(), testUtils.getRandomUUID("user-admin"), user2DomainId)
         def authUser2 = utils.authenticate(createdUser2)
 
         then: "the endpoint DOES show up in the service catalog"
@@ -207,7 +209,9 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(createdUser1, createdUser2)
-        utils.deleteEndpointTemplate(endpointTemplateResp)
+        utils.deleteTenant(utils.getNastTenant(user1DomainId))
+        utils.deleteTenant(utils.getNastTenant(user2DomainId))
+        utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
     }
 
     @Unroll
@@ -222,7 +226,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         endpointService.updateBaseUrl(endpointTemplateEntity)
 
         when: "create a user with the base URL enabled attribute set to false"
-        def createdUser = utils.createUserWithTenants(utils.getIdentityAdminToken(), testUtils.getRandomUUID("user-admin"), utils.createDomain())
+        def domainId = utils.createDomain()
+        def createdUser = utils.createUserWithTenants(utils.getIdentityAdminToken(), testUtils.getRandomUUID("user-admin"), domainId)
         def authUser = utils.authenticate(createdUser)
 
         then:
@@ -234,7 +239,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(createdUser)
-        utils.deleteEndpointTemplate(endpointTemplateResp)
+        utils.deleteTenant(utils.getNastTenant(domainId))
+        utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
         staticIdmConfiguration.reset()
 
         where:

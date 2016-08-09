@@ -110,6 +110,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String ERROR_CANNOT_DELETE_USER_TYPE_ROLE_MESSAGE = "Cannot delete identity user-type roles from a user.";
 
+    public static final String ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_MESSAGE = "Deleting enabled templates or templates associated with one or more tenants is not allowed";
+
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -1617,6 +1619,11 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
             CloudBaseUrl baseUrl = endpointService.checkAndGetEndpointTemplate(endpointTemplateId);
+
+            if (baseUrl.getEnabled() || !tenantService.getTenantsForEndpoint(endpointTemplateId).isEmpty()) {
+                logger.warn(ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_MESSAGE);
+                throw new ForbiddenException(ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_MESSAGE);
+            }
             this.endpointService.deleteBaseUrl(baseUrl.getBaseUrlId());
             return Response.noContent();
         } catch (Exception ex) {
