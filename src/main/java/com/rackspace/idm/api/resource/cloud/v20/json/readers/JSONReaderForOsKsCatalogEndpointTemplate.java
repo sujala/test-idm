@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JsonPrefixMapper;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.io.IOUtils;
@@ -54,7 +55,7 @@ public class JSONReaderForOsKsCatalogEndpointTemplate implements MessageBodyRead
         return read(inputStream, OS_KSCATALOG_ENDPOINT_TEMPLATE, prefixValues);
     }
 
-    protected EndpointTemplate read(InputStream entityStream, String rootValue, HashMap prefixValues) {
+    protected EndpointTemplate read(InputStream entityStream, String rootValue, HashMap<String, String> prefixValues) {
         try {
 
             String jsonBody = IOUtils.toString(entityStream, JSONConstants.UTF_8);
@@ -97,6 +98,14 @@ public class JSONReaderForOsKsCatalogEndpointTemplate implements MessageBodyRead
             ((JSONObject)outer.get(ENDPOINT_TEMPLATE)).remove(VERSION_ID);
             ((JSONObject)outer.get(ENDPOINT_TEMPLATE)).remove(VERSION_INFO);
             ((JSONObject)outer.get(ENDPOINT_TEMPLATE)).remove(VERSION_LIST);
+
+            // Remove assignmentType if invalid enum value is supplied.
+            JSONObject endpointTemplateObj = (JSONObject)outer.get(ENDPOINT_TEMPLATE);
+            String assignmentType = (String)endpointTemplateObj.get(ASSIGNMENT_TYPE);
+            if (endpointTemplateObj.containsKey(ASSIGNMENT_TYPE)
+                    && EndpointConverterCloudV20.getAssignmentType(assignmentType) == null) {
+                ((JSONObject) outer.get(ENDPOINT_TEMPLATE)).remove(ASSIGNMENT_TYPE);
+            }
 
             String jsonString = jsonObject.toString();
             ObjectMapper om = new ObjectMapper();
