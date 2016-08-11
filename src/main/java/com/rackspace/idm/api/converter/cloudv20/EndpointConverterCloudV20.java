@@ -91,7 +91,7 @@ public class EndpointConverterCloudV20 {
         return list;
     }
 
-    private EndpointTemplateAssignmentTypeEnum getAssignmentType(String baseUrlType) {
+    public static EndpointTemplateAssignmentTypeEnum getAssignmentType(String baseUrlType) {
         try {
             return EndpointTemplateAssignmentTypeEnum.fromValue(baseUrlType);
         } catch (NullPointerException | IllegalArgumentException e){

@@ -100,9 +100,11 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
 
         where:
-        acceptContentType               | _
-        MediaType.APPLICATION_XML_TYPE  | _
-        MediaType.APPLICATION_JSON_TYPE | _
+        acceptContentType               | requestContentType              | _
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | _
     }
 
     @Unroll
@@ -187,13 +189,19 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
 
         where:
-        acceptContentType               | assignmentType
-        MediaType.APPLICATION_XML_TYPE  | "MOSSO"
-        MediaType.APPLICATION_JSON_TYPE | "MOSSO"
-        MediaType.APPLICATION_XML_TYPE  | "NAST"
-        MediaType.APPLICATION_JSON_TYPE | "NAST"
-        MediaType.APPLICATION_XML_TYPE  | "MANUAL"
-        MediaType.APPLICATION_JSON_TYPE | "MANUAL"
+        acceptContentType               | requestContentType              | assignmentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | "MOSSO"
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | "MOSSO"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "MOSSO"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | "MOSSO"
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | "NAST"
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | "NAST"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "NAST"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | "NAST"
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | "MANUAL"
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | "MANUAL"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "MANUAL"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | "MANUAL"
     }
 
     def "Endpoint template cannot be created with name, type, service id and assignment type"() {
@@ -276,6 +284,52 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         then: "Assert BadRequest"
         response.status == 400
         response.getEntity(IdentityFault).value.message == Validator20.ENDPOINT_TEMPLATE_EMPTY_SERVICE_ID_ERROR_MSG
+    }
+
+    @Unroll
+    def "Endpoint template cannot be created with invalid AssignmentType: XML"() {
+        given: "An admin user and a endpoint template"
+        def adminToken = utils.getIdentityAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def endpointTemplate = getEndpointTemplateRequestXML(endpointTemplateId, "serviceId", assignmentType, "http://publicUrl")
+
+        when: "Attempt to create a new endpoint template"
+        def response = cloud20.addEndpointTemplate(adminToken, endpointTemplate)
+
+        then: "Assert BadRequest"
+        response.status == 400
+        def expectedErrorMsg = String.format(Validator20.ENDPOINT_TEMPLATE_ACCEPTABLE_ASSIGNMENT_TYPE_ERROR_MSG, Arrays.asList(EndpointTemplateAssignmentTypeEnum.values()))
+        response.getEntity(IdentityFault).value.message == expectedErrorMsg
+
+        where:
+        assignmentType | _
+        "INVALID"      | _
+        ""             | _
+        null           | _
+
+    }
+
+    @Unroll
+    def "Endpoint template cannot be created with invalid AssignmentType: JSON"() {
+        given: "An admin user and a endpoint template"
+        def adminToken = utils.getIdentityAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def endpointTemplate = getEndpointTemplateRequestJSON(endpointTemplateId, "serviceId", assignmentType, "http://publicUrl")
+
+        when: "Attempt to create a new endpoint template"
+        def response = cloud20.addEndpointTemplate(adminToken, endpointTemplate, MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_JSON_TYPE)
+
+        then: "Assert BadRequest"
+        response.status == 400
+        def expectedErrorMsg = String.format(Validator20.ENDPOINT_TEMPLATE_ACCEPTABLE_ASSIGNMENT_TYPE_ERROR_MSG, Arrays.asList(EndpointTemplateAssignmentTypeEnum.values()))
+        def entity = new JsonSlurper().parseText(response.getEntity(String))
+        entity["badRequest"].message == expectedErrorMsg
+
+        where:
+        assignmentType | _
+        "INVALID"      | _
+        ""             | _
+        null           | _
     }
 
     def "Endpoint template cannot be created with invalid ServiceId"() {
@@ -428,5 +482,24 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
             list = endpointTemplateList["OS-KSCATALOG:endpointTemplates"]
         }
         return list
+    }
+
+    // Methods getEndpointTemplateRequestXML and getEndpointTemplateRequestJSON are needed in order to provide invalid
+    // values for assignmentType.
+
+    def getEndpointTemplateRequestXML(id, serviceId, assignmentType, publicUrl){
+        return "<?xml version=\"1.0\" encoding=\"UTF-8\"?> " +
+               "<endpointTemplate xmlns=\"http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0\" " +
+               "xmlns:RAX-AUTH=\"http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0\" " +
+               "id=\"$id\" serviceId=\"$serviceId\" RAX-AUTH:assignmentType=\"$assignmentType\" publicURL=\"$publicUrl\">" +
+               "</endpointTemplate>"
+    }
+
+    def getEndpointTemplateRequestJSON(id, serviceId, assignmentType, publicUrl) {
+        return "{\"OS-KSCATALOG:endpointTemplate\": {" +
+                "\"id\":\"$id\"," +
+                "\"serviceId\":\"$serviceId\"," +
+                "\"RAX-AUTH:assignmentType\":\"$assignmentType\"," +
+                "\"publicURL\": \"$publicUrl\"}}"
     }
 }
