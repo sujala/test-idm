@@ -1,0 +1,110 @@
+{
+    "with_compute_service_default_false_global_false": {
+        "additional_input_for_create": {
+            "public_url": "https://www.test_public_endpoint_template_with_existing_service.com",
+            "internal_url": "https://www.test_internal_endpoint_template_with_existing_service.com",
+            "admin_url": "https://www.test_admin_endpoint_template_with_existing_service.com",
+            "name": "cloudServers",
+            "template_type": "compute"
+        },
+        "additional_input_for_update": {
+            "global_attr": false,
+            "default": false,
+            "enabled": false
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": false
+    },
+    "with_compute_service_default_true_global_false": {
+        "additional_input_for_create": {
+            "name": "cloudServers",
+            "template_type": "compute"
+        },
+        "additional_input_for_update": {
+            "global_attr": false,
+            "default": true,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_compute_service_default_false_global_true": {
+        "additional_input_for_create": {
+            "name": "cloudServers",
+            "template_type": "compute"
+        },
+        "additional_input_for_update": {
+            "global_attr": true,
+            "default": false,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_compute_service_default_true_global_true": {
+        "additional_input_for_create": {
+            "name": "cloudServers",
+            "template_type": "compute"
+        },
+        "additional_input_for_update": {
+            "global_attr": true,
+            "default": true,
+            "enabled": true
+        },
+        "expected_update_response": 400
+    },
+    "with_objectstore_service_default_false_global_false": {
+        "additional_input_for_create": {
+            "public_url": "https://www.test_public_endpoint_template_with_existing_service.com",
+            "internal_url": "https://www.test_internal_endpoint_template_with_existing_service.com",
+            "admin_url": "https://www.test_admin_endpoint_template_with_existing_service.com",
+            "name": "cloudFiles",
+            "template_type": "object-store"
+        },
+        "additional_input_for_update": {
+            "global_attr": false,
+            "default": false,
+            "enabled": false
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": false
+    },
+    "with_objectstore_service_default_true_global_false": {
+        "additional_input_for_create": {
+            "name": "cloudFiles",
+            "template_type": "object-store"
+        },
+        "additional_input_for_update": {
+            "global_attr": false,
+            "default": true,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_objectstore_service_default_false_global_true": {
+        "additional_input_for_create": {
+            "name": "cloudFiles",
+            "template_type": "object-store"
+        },
+        "additional_input_for_update": {
+            "global_attr": true,
+            "default": false,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_objectstore_service_default_true_global_true": {
+        "additional_input_for_create": {
+            "name": "cloudFiles",
+            "template_type": "object-store"
+        },
+        "additional_input_for_update": {
+            "global_attr": true,
+            "default": true,
+            "enabled": true
+        },
+        "expected_update_response": 400
+    }
+}

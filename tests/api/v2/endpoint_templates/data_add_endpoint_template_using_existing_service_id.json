@@ -1,0 +1,134 @@
+{
+    "with_assignment_type_Mosso_default_false_global_false": {
+        "additional_input_for_create": {
+            "public_url": "https://www.test_public_endpoint_template_with_existing_service.com",
+            "internal_url": "https://www.test_internal_endpoint_template_with_existing_service.com",
+            "admin_url": "https://www.test_admin_endpoint_template_with_existing_service.com",
+            "assignment_type": "MOSSO",
+            "service_id": "a45b14e394a57e3fd4e45d59ff3693ead204998b"
+        },
+        "service": {
+          "name": "cloudServers"
+        },
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": false,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": false
+    },
+    "with_assignment_type_Mosso_default_false_global_true": {
+        "additional_input_for_create": {
+            "assignment_type": "MOSSO",
+            "service_id": "a45b14e394a57e3fd4e45d59ff3693ead204998b"
+        },
+        "service": {
+          "name": "cloudServers"
+        },
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": true,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_assignment_type_Mosso_default_true_global_false": {
+        "additional_input_for_create": {
+            "assignment_type": "MOSSO",
+            "service_id": "a45b14e394a57e3fd4e45d59ff3693ead204998b"
+        },
+        "service": {
+          "name": "cloudServers"
+        },
+        "additional_input_for_update": {
+            "default": true,
+            "global_attr": false,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_assignment_type_Mosso_default_true_global_true": {
+        "additional_input_for_create": {
+            "assignment_type": "MOSSO",
+            "service_id": "a45b14e394a57e3fd4e45d59ff3693ead204998b"
+        },
+        "service": {
+          "name": "cloudServers"
+        },
+        "additional_input_for_update": {
+            "default": true,
+            "global_attr": true,
+            "enabled": true
+        },
+        "expected_update_response": 400
+    },
+    "with_assignment_type_Nast_default_false_global_false": {
+        "additional_input_for_create": {
+            "public_url": "https://www.test_public_endpoint_template_with_existing_service.com",
+            "internal_url": "https://www.test_internal_endpoint_template_with_existing_service.com",
+            "admin_url": "https://www.test_admin_endpoint_template_with_existing_service.com",
+            "assignment_type": "NAST",
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1"
+        },
+        "service": {
+          "name": "cloudFiles"
+        },
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": false,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": false
+    },
+    "with_assignment_type_Nast_default_false_global_true": {
+        "additional_input_for_create": {
+            "assignment_type": "NAST",
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1"
+        },
+        "service": {
+          "name": "cloudFiles"
+        },
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": true,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_assignment_type_Nast_default_true_global_false": {
+        "additional_input_for_create": {
+            "assignment_type": "NAST",
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1"
+        },
+        "service": {
+          "name": "cloudFiles"
+        },
+        "additional_input_for_update": {
+            "default": true,
+            "global_attr": false,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_assignment_type_Nast_default_true_global_true": {
+        "additional_input_for_create": {
+            "assignment_type": "NAST",
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1"
+        },
+        "service": {
+          "name": "cloudFiles"
+        },
+        "additional_input_for_update": {
+            "default": true,
+            "global_attr": true,
+            "enabled": true
+        },
+        "expected_update_response": 400
+    }
+}

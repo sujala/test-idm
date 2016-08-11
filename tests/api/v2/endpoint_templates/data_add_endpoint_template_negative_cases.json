@@ -1,0 +1,165 @@
+{
+    "with_service_id_and_service_name": {
+        "additional_input_for_create": {
+            "name": "cloudServers",
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1"
+        },
+        "expected_response": 400,
+        "expected_error_message": "If serviceId is provided, neither name nor type may be supplied."
+    },
+    "with_service_id_and_service_type": {
+        "additional_input_for_create": {
+            "template_type": "compute",
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1"
+        },
+        "expected_response": 400,
+        "expected_error_message": "If serviceId is provided, neither name nor type may be supplied."
+    },
+    "with_service_id_name_and_service_name": {
+        "additional_input_for_create": {
+            "name": "cloudServers",
+            "template_type": "compute",
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1"
+        },
+        "expected_response": 400,
+        "expected_error_message": "If serviceId is provided, neither name nor type may be supplied."
+    },
+    "with_invalid_service_id_and_Mosso_assignment_type": {
+        "additional_input_for_create": {
+            "service_id": "666666666666666",
+            "assignment_type": "MOSSO"
+        },
+        "expected_response": 404
+    },
+    "with_invalid_service_id_and_Nast_assignment_type": {
+        "additional_input_for_create": {
+            "service_id": "666666666666666",
+            "assignment_type": "NAST"
+        },
+        "expected_response": 404
+    },
+    "with_invalid_service_id_and_Manual_assignment_type": {
+        "additional_input_for_create": {
+            "service_id": "666666666666666",
+            "assignment_type": "MANUAL"
+        },
+        "expected_response": 404
+    },
+    "with_invalid_assignment_type": {
+        "additional_input_for_create": {
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1",
+            "assignment_type": "ABCD"
+        },
+        "expected_response": 400,
+        "expected_error_message": "Assignment type must be specified; Acceptable values are: [MOSSO, NAST, MANUAL]."
+    },
+    "with_invalid_assignment_type_similar_to_valid_one": {
+        "additional_input_for_create": {
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1",
+            "assignment_type": "MOSSOA"
+        },
+        "expected_response": 400,
+        "expected_error_message": "Assignment type must be specified; Acceptable values are: [MOSSO, NAST, MANUAL]."
+    },
+    "with_partially_valid_assignment_type": {
+        "additional_input_for_create": {
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1",
+            "assignment_type": "MOSS"
+        },
+        "expected_response": 400,
+        "expected_error_message": "Assignment type must be specified; Acceptable values are: [MOSSO, NAST, MANUAL]."
+    },
+    "with_empty_assignment_type": {
+        "additional_input_for_create": {
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1",
+            "assignment_type": ""
+        },
+        "expected_response": 400,
+        "expected_error_message": "Assignment type must be specified; Acceptable values are: [MOSSO, NAST, MANUAL]."
+    },
+    "with_missing_assignment_type": {
+        "additional_input_for_create": {
+            "service_id": "6047d506862b81d6d99273b4853adfe81e0478c1"
+        },
+        "expected_response": 400,
+        "expected_error_message": "Assignment type must be specified; Acceptable values are: [MOSSO, NAST, MANUAL]."
+    },
+    "with_no_service_id_and_Mosso_assignment_type": {
+        "additional_input_for_create": {
+            "assignment_type": "MOSSO"
+        },
+        "expected_response": 400,
+        "expected_error_message": "A serviceId must be provided if assignmentType is supplied."
+    },
+    "with_empty_service_id_and_Mosso_assignment_type": {
+        "additional_input_for_create": {
+            "assignment_type": "MOSSO",
+            "service_id": ""
+        },
+        "expected_response": 400,
+        "expected_error_message": "A serviceId must be provided if assignmentType is supplied."
+    },
+    "with_no_service_id_and_Nast_assignment_type": {
+        "additional_input_for_create": {
+            "assignment_type": "NAST"
+        },
+        "expected_response": 400,
+        "expected_error_message": "A serviceId must be provided if assignmentType is supplied."
+    },
+    "with_empty_service_id_and_Nast_assignment_type": {
+        "additional_input_for_create": {
+            "assignment_type": "NAST",
+            "service_id": ""
+        },
+        "expected_response": 400,
+        "expected_error_message": "A serviceId must be provided if assignmentType is supplied."
+    },
+    "with_no_service_id_and_Manual_assignment_type": {
+        "additional_input_for_create": {
+            "assignment_type": "MANUAL"
+        },
+        "expected_response": 400,
+        "expected_error_message": "A serviceId must be provided if assignmentType is supplied."
+    },
+    "with_empty_service_id_and_Manual_assignment_type": {
+        "additional_input_for_create": {
+            "assignment_type": "MANUAL",
+            "service_id": ""
+        },
+        "expected_response": 400,
+        "expected_error_message": "A serviceId must be provided if assignmentType is supplied."
+    },
+    "with_assignment_type_Mosso_and_service_name_type": {
+        "additional_input_for_create": {
+            "assignment_type": "MOSSO",
+            "name": "cloudServers",
+            "template_type": "compute"
+        },
+        "expected_response": 400,
+        "expected_error_message": "A serviceId must be provided if assignmentType is supplied."
+    },
+    "with_assignment_type_Nast_and_service_name_type": {
+        "additional_input_for_create": {
+            "assignment_type": "NAST",
+            "name": "cloudServers",
+            "template_type": "compute"
+        },
+        "expected_response": 400,
+        "expected_error_message": "A serviceId must be provided if assignmentType is supplied."
+    },
+    "with_assignment_type_Manual_and_service_name_type": {
+        "additional_input_for_create": {
+            "assignment_type": "MANUAL",
+            "name": "cloudServers",
+            "template_type": "compute"
+        },
+        "expected_response": 400,
+        "expected_error_message": "A serviceId must be provided if assignmentType is supplied."
+    },
+    "with_no_service_id_and_service_name_type": {
+        "additional_input_for_create": {
+        },
+        "expected_response": 400,
+        "expected_error_message": "'type' is a required attribute"
+    }
+}
