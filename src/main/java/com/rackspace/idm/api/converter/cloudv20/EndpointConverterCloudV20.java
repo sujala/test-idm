@@ -192,6 +192,7 @@ public class EndpointConverterCloudV20 {
             Application application = applicationService.checkAndGetApplication(baseUrl.getClientId());
             baseUrl.setOpenstackType(application.getOpenStackType());
             baseUrl.setBaseUrlType(template.getAssignmentType().value());
+            baseUrl.setServiceName(application.getName());
         } else if (identityConfig.getReloadableConfig().getBaseUrlUseTypeMappingFlag()) {
             if(ignoreCaseContains(identityConfig.getReloadableConfig().getBaseUrlNastTypeMapping(), type)) {
                 baseUrl.setBaseUrlType("NAST");

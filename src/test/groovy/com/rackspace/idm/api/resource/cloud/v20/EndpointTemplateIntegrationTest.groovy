@@ -166,7 +166,8 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         given: "An admin user and a endpoint template"
         def adminToken = utils.getIdentityAdminToken()
         def endpointTemplateId = testUtils.getRandomIntegerString()
-        def listServiceResponse = cloud20.listServices(adminToken, MediaType.APPLICATION_XML_TYPE, "cloudServers")
+        def serviceName = "cloudServers"
+        def listServiceResponse = cloud20.listServices(adminToken, MediaType.APPLICATION_XML_TYPE, serviceName)
         def serviceList = listServiceResponse.getEntity(ServiceList).value
         def serviceId = serviceList.service[0].id
         def serviceType = serviceList.service[0].type
@@ -183,7 +184,7 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         createdEndpointTemplate.publicURL == endpointTemplate.publicURL
         createdEndpointTemplate.serviceId == serviceId
         assert assertAssignmentTypeEnum(createdEndpointTemplate, assignmentType, acceptContentType)
-        createdEndpointTemplate.name == null
+        createdEndpointTemplate.name == serviceName
 
         cleanup:
         cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
@@ -202,6 +203,45 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | "MANUAL"
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "MANUAL"
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | "MANUAL"
+    }
+
+    def "Assert newly create endpoint template appears in service catalog when enabled and global are set to true"() {
+        given: "An admin user and a endpoint template"
+        def adminToken = utils.getServiceAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def serviceName = "cloudServers"
+        def listServiceResponse = cloud20.listServices(adminToken, MediaType.APPLICATION_XML_TYPE, serviceName)
+        def serviceList = listServiceResponse.getEntity(ServiceList).value
+        def serviceId = serviceList.service[0].id
+        def publicUrl = "http://publicUrl.com"
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, null, publicUrl, null, true, null, serviceId, "MOSSO")
+
+        when: "Create a new endpoint template"
+        def response = cloud20.addEndpointTemplate(adminToken, endpointTemplate)
+
+        then: "Assert newly created endpoint template"
+        response.status == 201
+
+        when: "update endpoint template to enabled and global"
+        endpointTemplate.enabled = true
+        endpointTemplate.global = true
+        def updateResponse = cloud20.updateEndpointTemplate(adminToken, endpointTemplateId, endpointTemplate)
+
+        then: "Assert endpoint template was updated"
+        updateResponse.status == 200
+
+        when: "Authenticate a user"
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants()
+        def authResponse = utils.authenticate(userAdmin)
+
+        then: "Assert endpoint appear in serviceCatalog"
+        def service = authResponse.serviceCatalog.service.find {it.name == serviceName}
+        assert service.endpoint.find {it.publicURL == publicUrl.concat("/" + userAdmin.domainId)} != null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
     }
 
     def "Endpoint template cannot be created with name, type, service id and assignment type"() {
@@ -451,7 +491,7 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
     }
 
-    def assertAssignmentTypeEnum(endpointTemplate, assignmentType, acceptContentType) {
+    def assertAssignmentTypeEnum(endpointTemplate, assignmentType, acceptContentType=MediaType.APPLICATION_XML_TYPE) {
         def type = null
         if (acceptContentType == MediaType.APPLICATION_XML_TYPE) {
             type = endpointTemplate.assignmentType.value()
@@ -461,7 +501,7 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         return type == assignmentType
     }
 
-    def getEndpointTemplateFromResponse(response, acceptContentType) {
+    def getEndpointTemplateFromResponse(response, acceptContentType=MediaType.APPLICATION_XML_TYPE) {
         def endpointTemplate = null
         if (acceptContentType == MediaType.APPLICATION_XML_TYPE) {
             endpointTemplate = response.getEntity(EndpointTemplate).value
