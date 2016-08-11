@@ -4,6 +4,7 @@ import copy
 import ddt
 from hypothesis import given, strategies
 
+from tests.api.utils import header_validation
 from tests.api.v2 import base
 from tests.api.v2.schema import users as users_json
 
@@ -33,6 +34,20 @@ class TestAddUser(base.TestBaseV2):
             additional_input_data={
                 'domain_id': 'api-test',
                 'user_name': sub_user_name})
+        cls.unexpected_headers_HTTP_201 = [
+            header_validation.validate_transfer_encoding_header_not_present]
+        cls.unexpected_headers_HTTP_400 = [
+            header_validation.validate_location_header_not_present,
+            header_validation.validate_content_length_header_not_present]
+        cls.header_validation_functions_HTTP_201 = (
+            cls.default_header_validations +
+            cls.unexpected_headers_HTTP_201 + [
+                header_validation.validate_header_location,
+                header_validation.validate_header_content_length])
+        cls.header_validation_functions_HTTP_400 = (
+            cls.default_header_validations +
+            cls.unexpected_headers_HTTP_400 + [
+                header_validation.validate_header_transfer_encoding])
 
     def setUp(self):
         super(TestAddUser, self).setUp()
@@ -62,7 +77,8 @@ class TestAddUser(base.TestBaseV2):
 
         self.assertSchema(response=resp, json_schema=updated_json_schema)
 
-        self.assertHeaders(response=resp)
+        self.assertHeaders(
+            resp, *self.header_validation_functions_HTTP_201)
         self.user_id.append(resp.json()['user']['id'])
 
     @ddt.data(True, False, '')
@@ -86,7 +102,8 @@ class TestAddUser(base.TestBaseV2):
             domain_id='random')
         self.assertEqual(resp.status_code, 201)
         self.assertSchema(response=resp, json_schema=users_json.add_user)
-        self.assertHeaders(response=resp)
+        self.assertHeaders(
+            resp, *self.header_validation_functions_HTTP_201)
 
         self.user_id.append(resp.json()['user']['id'])
 
@@ -108,6 +125,11 @@ class TestAddUser(base.TestBaseV2):
             domain_id='random')
         self.assertEqual(resp.status_code, 400)
 
+        # This fails on 'Connection' header being absent when run
+        # in docker environment but passes in Staging
+        self.assertHeaders(
+            resp, *self.header_validation_functions_HTTP_400)
+
     @given(strategies.text(), strategies.booleans())
     def test_add_user_hypothesis(self, user_name, enabled):
         """Property Based Testing
@@ -122,6 +144,8 @@ class TestAddUser(base.TestBaseV2):
             email='random@nowhere.com',
             enabled=enabled)
         self.assertEqual(resp.status_code, 400)
+        self.assertHeaders(
+            resp, *self.header_validation_functions_HTTP_400)
 
     def tearDown(self):
         # Delete all users created in the tests
@@ -149,6 +173,13 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
         self.user_id = []
+        self.unexpected_headers_HTTP_201 = [
+            header_validation.validate_transfer_encoding_header_not_present]
+        self.header_validation_functions_HTTP_201 = (
+            self.default_header_validations +
+            self.unexpected_headers_HTTP_201 + [
+                header_validation.validate_header_location,
+                header_validation.validate_header_content_length])
 
     @ddt.file_data('data_add_identity_admin_user.json')
     def test_add_identity_admin_user(self, test_data):
@@ -171,7 +202,8 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
             test_data['addional_schema_fields'])
         self.assertSchema(response=resp, json_schema=updated_json_schema)
 
-        self.assertHeaders(response=resp)
+        self.assertHeaders(
+            resp, *self.header_validation_functions_HTTP_201)
         self.user_id.append(resp.json()['user']['id'])
 
     def tearDown(self):
