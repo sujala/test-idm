@@ -33,7 +33,6 @@ class TestBase(fixtures.BaseTestFixture):
             cls.identity_config.base_url, cls.identity_config.api_version)
         cls.default_header_validations = [
             header_validation.validate_header_vary,
-            header_validation.validate_header_date,
             header_validation.validate_header_server,
             header_validation.validate_header_content_type,
             header_validation.validate_header_not_present]
