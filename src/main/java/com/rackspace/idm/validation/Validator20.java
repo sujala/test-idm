@@ -56,6 +56,7 @@ public class Validator20 {
     public static final String ENDPOINT_TEMPLATE_ACCEPTABLE_ASSIGNMENT_TYPE_ERROR_MSG = "Assignment type must be specified; Acceptable values are: %s.";
     public static final String ENDPOINT_TEMPLATE_EMPTY_SERVICE_ID_ERROR_MSG = "A serviceId must be provided if assignmentType is supplied.";
     public static final String ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_ERROR_MSG = "Using attributes name and type is no longer supported on endpoint creation; Please use serviceId and assignmentType.";
+    public static final String ENDPOINT_TEMPLATE_REQUIRED_ATTR_ERROR_MSG = "'serviceId' and 'assignmentType' are required attributes.";
     public static final String TOKEN_CLOUD_AUTH_EXPIRATION_SECONDS_PROP_NAME = "token.cloudAuthExpirationSeconds";
     public static final String ROLE_NAME_INVALID = "Invalid role name. Naming convention is <product prefix>:<role name> " +
             "where both the prefix and role name must start with an alphanumeric character.  The rest of the prefix and " +
@@ -246,9 +247,13 @@ public class Validator20 {
 
     public void validateEndpointTemplate(EndpointTemplate endpoint) {
         if (identityConfig.getReloadableConfig().getFeatureEndpointTemplateDisableNameType()) {
-            if(endpoint.getName() != null || endpoint.getType() != null) {
+            if (endpoint.getName() != null || endpoint.getType() != null) {
                 logger.info(ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_ERROR_MSG);
                 throw new BadRequestException(ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_ERROR_MSG);
+            }
+            if (StringUtils.isBlank(endpoint.getServiceId()) || endpoint.getAssignmentType() == null) {
+                logger.info(ENDPOINT_TEMPLATE_REQUIRED_ATTR_ERROR_MSG);
+                throw new BadRequestException(ENDPOINT_TEMPLATE_REQUIRED_ATTR_ERROR_MSG);
             }
         }
 
