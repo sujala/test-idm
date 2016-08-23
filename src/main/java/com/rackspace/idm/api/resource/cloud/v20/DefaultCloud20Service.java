@@ -386,6 +386,19 @@ public class DefaultCloud20Service implements Cloud20Service {
                 cloudBaseUrl.setEnabled(endpoint.isEnabled());
             }
 
+            VersionForService version = endpoint.getVersion();
+            if (version != null) {
+                if(StringUtils.isNotBlank(version.getId())) {
+                    cloudBaseUrl.setVersionId(version.getId());
+                }
+                if(StringUtils.isNotBlank(version.getInfo())) {
+                    cloudBaseUrl.setVersionInfo(version.getInfo());
+                }
+                if(StringUtils.isNotBlank(version.getList())) {
+                    cloudBaseUrl.setVersionList(version.getList());
+                }
+            }
+
             endpointService.updateBaseUrl(cloudBaseUrl);
 
             EndpointTemplate value = this.endpointConverterCloudV20.toEndpointTemplate(cloudBaseUrl);
