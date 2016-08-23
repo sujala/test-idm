@@ -22,6 +22,7 @@ import com.unboundid.ldap.sdk.Modification
 import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.SearchScope
 import com.unboundid.ldap.sdk.persist.LDAPPersister
+import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
@@ -36,10 +37,12 @@ import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.junit.IgnoreByRepositoryProfile
 
 import javax.servlet.http.HttpServletResponse
+import javax.ws.rs.core.MediaType
 
 
 class Cloud20IntegrationTest extends RootIntegrationTest {
@@ -1470,12 +1473,40 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         response.status == 403
     }
 
-    def "listUsersWithRole called by admin invalid roleId returns not found"() {
-        when:
-        def response = cloud20.listUsersWithRole(serviceAdminToken, "-5")
+    @Unroll
+    def "listUsersWithRole called by admin with invalid roleId returns not found"() {
+        given: "Invalid role id"
+        def roleId = "invalid"
+
+        when: "List users with role"
+        def response = cloud20.listUsersWithRole(serviceAdminToken, roleId, acceptContentType)
 
         then:
-        response.status == 404
+        def expectedErrorMsg = String.format(DefaultCloud20Service.ROLE_ID_NOT_FOUND_ERROR_MESSAGE, roleId)
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, expectedErrorMsg)
+
+        where:
+        acceptContentType               | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Assert add role to user on tenant with invalid role id returns not found"() {
+        given: "Invalid role id"
+        def roleId = "invalid"
+
+        when: "Add role to user on tenant"
+        def response = cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant.id, userAdmin.id, roleId, acceptContentType)
+
+        then: "Assert not found"
+        def expectedErrorMsg = String.format(DefaultCloud20Service.ROLE_ID_NOT_FOUND_ERROR_MESSAGE, roleId)
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, expectedErrorMsg)
+
+        where:
+        acceptContentType               | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
     }
 
     def "listUsersWithRole called by admins returns success"() {
