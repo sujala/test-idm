@@ -7,6 +7,7 @@ import urlparse
 from cafe.drivers.unittest import fixtures
 
 from tests.api.utils import config
+from tests.api.utils import header_validation
 
 
 class TestBase(fixtures.BaseTestFixture):
@@ -30,6 +31,12 @@ class TestBase(fixtures.BaseTestFixture):
         cls.test_config = config.TestConfig()
         cls.url = urlparse.urljoin(
             cls.identity_config.base_url, cls.identity_config.api_version)
+        cls.default_header_validations = [
+            header_validation.validate_header_vary,
+            header_validation.validate_header_date,
+            header_validation.validate_header_server,
+            header_validation.validate_header_content_type,
+            header_validation.validate_header_not_present]
 
     @staticmethod
     def generate_random_string(pattern="API[\-]Tests[\-][\d\w]{12}"):
@@ -75,9 +82,9 @@ class TestBase(fixtures.BaseTestFixture):
         # Validate the xml response against the defined schema
         relaxng.assert_(response_doc)
 
-    def assertHeaders(self, response):
-        # Do all reponses have the same headers?
-        pass
+    def assertHeaders(self, response, *functions):
+        for function in functions:
+            function(response)
 
     @staticmethod
     def generate_relaxNG_schema(json_schema):
