@@ -34,6 +34,10 @@ public class JSONReaderForUserForCreate extends JSONReaderForEntity<UserForCreat
         prefixValues.put(USER_RAX_KSGRP_GROUPS_PATH, GROUPS);
         prefixValues.put(USER_RAX_AUTH_TOKEN_FORMAT_PATH, TOKEN_FORMAT);
         prefixValues.put(USER_RAX_AUTH_CONTACT_ID_PATH, CONTACT_ID);
+        prefixValues.put(USER_RAX_AUTH_MULTI_FACTOR_ENABLED_PATH, MULTI_FACTOR_ENABLED);
+        prefixValues.put(USER_RAX_AUTH_MULTI_FACTOR_STATE_PATH, MULTI_FACTOR_STATE);
+        prefixValues.put(USER_RAX_AUTH_MULTI_FACTOR_TYPE_PATH, MULTI_FACTOR_TYPE);
+        prefixValues.put(USER_RAX_AUTH_MULTI_FACTOR_ENFORCEMENT_LEVEL_PATH, RAX_AUTH_USER_MULTI_FACTOR_ENFORCEMENT_LEVEL);
 
         return read(inputStream, JSONConstants.USER, prefixValues);
     }

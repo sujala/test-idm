@@ -27,6 +27,7 @@ public final class JSONConstants {
     public static final String DOMAIN = "domain";
     public static final String DOMAIN_ID = "domainId";
     public static final String MULTI_FACTOR_ENABLED = "multiFactorEnabled";
+    public static final String MULTI_FACTOR_ENFORCEMENT_LEVEL_ = "userMultiFactorEnforcementLevel";
     public static final String MULTI_FACTOR_STATE = "multiFactorState";
     public static final String MULTI_FACTOR_TYPE = "factorType";
     public static final String DOMAINS = "domains";
@@ -267,6 +268,7 @@ public final class JSONConstants {
     public static final String USER_RAX_AUTH_MULTI_FACTOR_ENABLED_PATH = "user.RAX-AUTH:multiFactorEnabled";
     public static final String USER_RAX_AUTH_MULTI_FACTOR_STATE_PATH = "user.RAX-AUTH:multiFactorState";
     public static final String USER_RAX_AUTH_MULTI_FACTOR_TYPE_PATH = "user.RAX-AUTH:factorType";
+    public static final String USER_RAX_AUTH_MULTI_FACTOR_ENFORCEMENT_LEVEL_PATH = "user.RAX-AUTH:userMultiFactorEnforcementLevel";
 
     public static final String TENANT_DOMAIN_ID_PATH = "tenant.domainId";
     public static final String TENANTS_DOMAIN_ID_PATH = "tenants.tenant.domainId";

@@ -1,5 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserMultiFactorEnforcementLevelEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
@@ -223,6 +226,55 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         IdentityUserTypeEnum.USER_MANAGER   | false        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
         IdentityUserTypeEnum.USER_MANAGER   | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         IdentityUserTypeEnum.USER_MANAGER   | false        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Update user should ignore MFA attributes, accept = #acceptContentType, request = #requestContentType"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userForUpdate = v2Factory.createUser(userAdmin.id, userAdmin.username)
+
+        when: "Updating user's MFA attributes"
+        def mfEnabled = true
+        def mfState = MultiFactorStateEnum.LOCKED
+        def factorType = FactorTypeEnum.OTP
+        def mfEnforcementLevel = UserMultiFactorEnforcementLevelEnum.REQUIRED
+        userForUpdate.multiFactorEnabled = mfEnabled
+        userForUpdate.multiFactorState = mfState
+        userForUpdate.factorType = factorType
+        userForUpdate.userMultiFactorEnforcementLevel = mfEnforcementLevel
+        def response = cloud20.updateUser(utils.getServiceAdminToken(), userAdmin.id, userForUpdate, acceptContentType, requestContentType)
+        def updatedUser = getUserFromResponse(response)
+
+        then: "Assert MFA attributes are unchanged"
+        response.status == 200
+        updatedUser.multiFactorEnabled != mfEnabled
+        updatedUser.multiFactorState != mfState
+        updatedUser.factorType != factorType
+        updatedUser.userMultiFactorEnforcementLevel != mfEnforcementLevel
+
+        cleanup:
+        utils.deleteUsers(users)
+
+        where:
+        acceptContentType               | requestContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    def getUserFromResponse(response) {
+        def user = null
+        if (response.getType() == MediaType.APPLICATION_XML_TYPE) {
+            user = response.getEntity(User).value
+        } else {
+            def entity = new JsonSlurper().parseText(response.getEntity(String))
+            user = entity["user"]
+        }
+        return user
     }
 
     def getContactIdFromUpdateResponse(response, accept) {
