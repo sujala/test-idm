@@ -134,9 +134,8 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "test feature flag for include/exclude prefixes on json user attributes: accept = #accept, request = #request, includePrefixes = #includePrefixes"() {
+    def "test for include prefixes on json user attributes: accept = #accept, request = #request"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_INCLUDE_USER_ATTR_PREFIXES_PROP, includePrefixes)
         def originalDomainId = testUtils.getRandomUUID("upgradeDomain")
         def upgradeUser = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin"), originalDomainId, "ORD")
         def group = utils.createGroup()
@@ -170,7 +169,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
             assert userResponse.defaultRegion == newRegion
             assert userResponse.secretQA.question == secretQA.question
             assert userResponse.secretQA.answer == secretQA.answer
-        } else if (includePrefixes) {
+        } else {
             def stringResponse = response.getEntity(String)
             userResponse = new JsonSlurper().parseText(stringResponse)['user']
             assert userResponse[JSONConstants.RAX_AUTH_DOMAIN_ID] == "" + newDomainId
@@ -179,15 +178,6 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
             assert userResponse[JSONConstants.RAX_AUTH_DEFAULT_REGION] == newRegion
             assert userResponse[JSONConstants.RAX_KSQA_SECRET_QA][JSONConstants.QUESTION] == secretQA.question
             assert userResponse[JSONConstants.RAX_KSQA_SECRET_QA][JSONConstants.ANSWER] == secretQA.answer
-        } else {
-            def stringResponse = response.getEntity(String)
-            userResponse = new JsonSlurper().parseText(stringResponse)['user']
-            assert userResponse[JSONConstants.RAX_AUTH_DOMAIN_ID] == "" + newDomainId
-            assert userResponse[JSONConstants.ROLES].name.contains(role.name)
-            assert userResponse[JSONConstants.GROUPS].id.contains(group.id)
-            assert userResponse[JSONConstants.RAX_AUTH_DEFAULT_REGION] == newRegion
-            assert userResponse[JSONConstants.SECRET_QA][JSONConstants.QUESTION] == secretQA.question
-            assert userResponse[JSONConstants.SECRET_QA][JSONConstants.ANSWER] == secretQA.answer
         }
 
         cleanup:
@@ -195,13 +185,10 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(identityAdmin)
 
         where:
-        request | accept | includePrefixes
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | false
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | false
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | false
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | true
+        request                         | accept
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
     def "upgrade service returns 400 when invalid default region is provided"() {
