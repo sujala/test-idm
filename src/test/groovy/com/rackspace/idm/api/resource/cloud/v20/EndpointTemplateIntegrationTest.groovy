@@ -4,11 +4,14 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.EndpointTemplateAssignmen
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
+import org.apache.commons.httpclient.HttpStatus
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.IdentityFault
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
@@ -400,6 +403,57 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         response.getEntity(IdentityFault).value.message == Validator20.ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_ERROR_MSG
 
         cleanup:
+        reloadableConfiguration.reset()
+    }
+
+    @Unroll
+    def "Feature flag: feature.endpoint.template.disable.name.type should make serviceId and assignmentType required attributes"() {
+        given: "An admin user and a endpoint template"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP, true)
+        def adminToken = utils.getIdentityAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, null, null, null, null, null, serviceId, assignmentType)
+
+        when: "Attempt to create a new endpoint template with only serviceId"
+        def response = cloud20.addEndpointTemplate(adminToken, endpointTemplate, acceptContentType, requestContentType)
+
+        then: "Assert BadRequest"
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ENDPOINT_TEMPLATE_REQUIRED_ATTR_ERROR_MSG)
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        acceptContentType               | requestContentType              | serviceId | assignmentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | "id"      | null
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | null      | "MOSSO"
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | "id"      | null
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | null      | "MOSSO"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "id"      | null
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | null      | "MOSSO"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | "id"      | null
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | null      | "MOSSO"
+    }
+
+    def "Create endpoint template with service id and assignment type: feature.endpoint.template.disable.name.type=True"() {
+        given: "An admin user and a endpoint template"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP, true)
+        def adminToken = utils.getIdentityAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def serviceName = "cloudServers"
+        def listServiceResponse = cloud20.listServices(adminToken, MediaType.APPLICATION_XML_TYPE, serviceName)
+        def serviceList = listServiceResponse.getEntity(ServiceList).value
+        def serviceId = serviceList.service[0].id
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, null, "http://publicUrl", null, true, null, serviceId, "MOSSO")
+
+        when: "Create a new endpoint template"
+        def response = cloud20.addEndpointTemplate(adminToken, endpointTemplate)
+
+        then: "Assert newly created endpoint template"
+        response.status == 201
+
+        cleanup:
+        cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
         reloadableConfiguration.reset()
     }
 

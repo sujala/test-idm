@@ -301,9 +301,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addEndpointTemplate(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, EndpointTemplate endpoint) {
         try {
-            validator20.validateEndpointTemplate(endpoint);
-
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+
+            validator20.validateEndpointTemplate(endpoint);
 
             final CloudBaseUrl baseUrl = this.endpointConverterCloudV20.toCloudBaseUrl(endpoint);
 
