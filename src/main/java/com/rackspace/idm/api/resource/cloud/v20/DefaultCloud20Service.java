@@ -112,6 +112,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_MESSAGE = "Deleting enabled templates or templates associated with one or more tenants is not allowed";
 
+    public static final String ROLE_ID_NOT_FOUND_ERROR_MESSAGE = "Role with ID %s not found.";
+
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -3186,7 +3188,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             ClientRole role = this.applicationService.getClientRoleById(roleId);
 
             if (role == null) {
-                throw new NotFoundException(String.format("Role with id: %s not found", roleId));
+                throw new NotFoundException(String.format(ROLE_ID_NOT_FOUND_ERROR_MESSAGE, roleId));
             }
 
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccess);
@@ -4080,7 +4082,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     ClientRole checkAndGetClientRole(String id) {
         ClientRole cRole = this.applicationService.getClientRoleById(id);
         if (cRole == null) {
-            String errMsg = String.format("Role %s not found", id);
+            String errMsg = String.format(ROLE_ID_NOT_FOUND_ERROR_MESSAGE, id);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }

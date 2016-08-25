@@ -423,9 +423,9 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(REGIONS).path(regionName).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def listUsersWithRole(String token, String roleId) {
+    def listUsersWithRole(String token, String roleId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(OS_KSADM).path(ROLES).path(roleId).path(RAX_AUTH).path(USERS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(OS_KSADM).path(ROLES).path(roleId).path(RAX_AUTH).path(USERS).header(X_AUTH_TOKEN, token).accept(acceptMediaType).get(ClientResponse)
     }
 
     def listUsersWithRole(String token, String roleId, String offset, String limit) {
@@ -495,11 +495,9 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(ROLES).path(OS_KSADM).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addRoleToUserOnTenant(String token, String tenantId, String userId, String roleId) {
+    def addRoleToUserOnTenant(String token, String tenantId, String userId, String roleId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(TENANTS).path(tenantId).path(USERS).path(userId)
-                .path(ROLES).path(OS_KSADM).path(roleId)
-                .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
+        resource.path(path20).path(TENANTS).path(tenantId).path(USERS).path(userId) .path(ROLES).path(OS_KSADM).path(roleId) .header(X_AUTH_TOKEN, token).accept(acceptMediaType).put(ClientResponse)
     }
 
     def addPhoneToUser(String token, String userId, MobilePhone requestMobilePhone, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
