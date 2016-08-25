@@ -111,6 +111,95 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "Ensure version attributes can be updated for endpoint template created with service name and type"() {
+        given: "Admin user and endpoint template"
+        def adminToken = utils.getServiceAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId)
+
+        when: "Create a new endpoint template"
+        def response = cloud20.addEndpointTemplate(adminToken, endpointTemplate, acceptContentType)
+
+        then: "Assert newly created endpoint template"
+        response.status == 201
+
+        when: "Update endpoint template"
+        def versionId = testUtils.getRandomUUID()
+        def versionInfo = testUtils.getRandomUUID()
+        def versionList = testUtils.getRandomUUID()
+        endpointTemplate.version.id = versionId
+        endpointTemplate.version.info = versionInfo
+        endpointTemplate.version.list = versionList
+        def updateResponse = cloud20.updateEndpointTemplate(adminToken, endpointTemplateId, endpointTemplate, acceptContentType, requestContentType)
+        def updatedEndpointTemplate = getEndpointTemplateFromResponse(updateResponse, acceptContentType)
+
+        then: "Assert updated endpoint template"
+        updateResponse.status == 200
+        if (acceptContentType == MediaType.APPLICATION_XML_TYPE){
+            assert updatedEndpointTemplate.version.id  == versionId
+            assert updatedEndpointTemplate.version.info  == versionInfo
+            assert updatedEndpointTemplate.version.list  == versionList
+        } else {
+            assert updatedEndpointTemplate.versionId == versionId
+            assert updatedEndpointTemplate.versionInfo == versionInfo
+            assert updatedEndpointTemplate.versionList == versionList
+        }
+
+        cleanup:
+        cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
+
+        where:
+        acceptContentType               | requestContentType              | _
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Assert version attributes are not updated for empty strings"() {
+        given: "Admin user and endpoint template"
+        def adminToken = utils.getServiceAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId)
+
+        when: "Create a new endpoint template"
+        def response = cloud20.addEndpointTemplate(adminToken, endpointTemplate, acceptContentType)
+
+        then: "Assert newly created endpoint template"
+        response.status == 201
+
+        when: "Update endpoint template"
+        endpointTemplate.version.id = ""
+        endpointTemplate.version.info = ""
+        endpointTemplate.version.list = ""
+        def updateResponse = cloud20.updateEndpointTemplate(adminToken, endpointTemplateId, endpointTemplate, acceptContentType, requestContentType)
+        def updatedEndpointTemplate = getEndpointTemplateFromResponse(updateResponse, acceptContentType)
+
+        then: "Assert updated endpoint template"
+        updateResponse.status == 200
+        if (acceptContentType == MediaType.APPLICATION_XML_TYPE){
+            assert updatedEndpointTemplate.version.id  == "id"
+            assert updatedEndpointTemplate.version.info  == "info"
+            assert updatedEndpointTemplate.version.list  == "list"
+        } else {
+            assert updatedEndpointTemplate.versionId == "id"
+            assert updatedEndpointTemplate.versionInfo == "info"
+            assert updatedEndpointTemplate.versionList == "list"
+        }
+
+        cleanup:
+        cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
+
+        where:
+        acceptContentType               | requestContentType              | _
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
     def "Create endpoint template with service name and type with no nast/mosso mapping"() {
         given: "Admin user, new service and endpoint template"
         def adminToken = utils.getServiceAdminToken()
@@ -206,6 +295,56 @@ class EndpointTemplateIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | "MANUAL"
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "MANUAL"
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | "MANUAL"
+    }
+
+    @Unroll
+    def "Ensure version attributes can be updated for endpoint template created with service id and assignment type"() {
+        given: "An admin user and a endpoint template"
+        def adminToken = utils.getServiceAdminToken()
+        def endpointTemplateId = testUtils.getRandomIntegerString()
+        def serviceName = "cloudServers"
+        def listServiceResponse = cloud20.listServices(adminToken, MediaType.APPLICATION_XML_TYPE, serviceName)
+        def serviceList = listServiceResponse.getEntity(ServiceList).value
+        def serviceId = serviceList.service[0].id
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, null,"http://publicUrl", null, true, null, serviceId, EndpointTemplateAssignmentTypeEnum.MOSSO)
+
+        when: "Create a new endpoint template"
+        def response = cloud20.addEndpointTemplate(adminToken, endpointTemplate, acceptContentType)
+
+        then: "Assert newly created endpoint template"
+        response.status == 201
+
+        when: "Update endpoint template"
+        def versionId = testUtils.getRandomUUID()
+        def versionInfo = testUtils.getRandomUUID()
+        def versionList = testUtils.getRandomUUID()
+        endpointTemplate.version.id = versionId
+        endpointTemplate.version.info = versionInfo
+        endpointTemplate.version.list = versionList
+        def updateResponse = cloud20.updateEndpointTemplate(adminToken, endpointTemplateId, endpointTemplate, acceptContentType, requestContentType)
+        def updatedEndpointTemplate = getEndpointTemplateFromResponse(updateResponse, acceptContentType)
+
+        then: "Assert updated endpoint template"
+        updateResponse.status == 200
+        if (acceptContentType == MediaType.APPLICATION_XML_TYPE){
+            assert updatedEndpointTemplate.version.id  == versionId
+            assert updatedEndpointTemplate.version.info  == versionInfo
+            assert updatedEndpointTemplate.version.list  == versionList
+        } else {
+            assert updatedEndpointTemplate.versionId == versionId
+            assert updatedEndpointTemplate.versionInfo == versionInfo
+            assert updatedEndpointTemplate.versionList == versionList
+        }
+
+        cleanup:
+        cloud20.deleteEndpointTemplate(adminToken, endpointTemplateId)
+
+        where:
+        acceptContentType               | requestContentType              | _
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | _
     }
 
     def "Assert newly create endpoint template appears in service catalog when enabled and global are set to true"() {
