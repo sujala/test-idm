@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cross-origin-resource-sharing xmlns="http://docs.openrepose.org/repose/cross-origin-resource-sharing/v1.0">
+    <allowed-origins>
+        <origin regex="true">.*.rackspace.com</origin>
+    </allowed-origins>
+
+    <allowed-methods>
+        <method>OPTIONS</method>
+        <method>GET</method>
+        <method>HEAD</method>
+        <method>POST</method>
+        <method>PUT</method>
+    </allowed-methods>
+</cross-origin-resource-sharing>

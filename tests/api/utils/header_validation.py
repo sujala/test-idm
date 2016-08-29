@@ -65,6 +65,25 @@ def validate_header_transfer_encoding(response):
     # TODO : Assert the content of this header. e.g. its pattern
 
 
+def validate_header_access_control_allow_origin(value):
+    header = 'access-control-allow-origin'
+
+    def validation(response):
+        basic_header_validations(response=response, header=header)
+        assert response.headers[header] == value
+
+    return validation
+
+
+def validate_header_origin(value):
+    header = 'origin'
+
+    def validation(response):
+        basic_header_validations(response=response, header=header)
+        assert response.headers[header] == value
+
+    return validation
+
 def basic_header_validations(response, header):
 
     assert header in response.headers, (

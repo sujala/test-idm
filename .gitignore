@@ -1,3 +1,5 @@
+.identity
+.python-version
 *.egg-info
 *.iml
 *.ipr

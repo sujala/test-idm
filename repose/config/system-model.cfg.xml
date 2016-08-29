@@ -12,6 +12,7 @@
       <filter name="uri-identity" />
       <filter name="slf4j-http-logging" />
       <filter name="rate-limiting" />
+      <filter name="cors"/>
       <filter name="content-type-stripper" />
       <filter name="translation" />
     </filters>

@@ -33,7 +33,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         self.deserialize_format = deserialize_format
 
     def get_auth_token(self, user, password=None, api_key=None,
-                       requestslib_kwargs=None):
+                       headers=None, requestslib_kwargs=None):
         if api_key:
             request_object = requests.AuthenticateWithApiKey(
                 user_name=user, api_key=api_key)
@@ -43,7 +43,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         url = self.url + '/tokens'
         resp = self.request('POST', url, request_entity=request_object,
-                            requestslib_kwargs=requestslib_kwargs)
+                            headers=headers, requestslib_kwargs=requestslib_kwargs)
 
         # If the response is xml, adds a json() menthod to the object.
         # The json() method should return a json equivalent of the
