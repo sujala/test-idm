@@ -1,17 +1,13 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
-import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.FederatedUser;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorStateEnum;
 import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
-import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
 import org.joda.time.DateTime;
@@ -28,7 +24,6 @@ import org.springframework.util.CollectionUtils;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -51,16 +46,10 @@ public class UserConverterCloudV20 {
     GroupConverterCloudV20 groupConverterCloudV20;
 
     @Autowired
-    private Configuration config;
-
-    @Autowired
     AuthorizationService authorizationService;
 
     @Autowired
     IdentityConfig identityConfig;
-
-    @Autowired
-    RequestContextHolder requestContextHolder;
 
     @Autowired
     private BasicMultiFactorService basicMultiFactorService;
@@ -86,10 +75,6 @@ public class UserConverterCloudV20 {
         userEntity.setRsGroupId(groupConverterCloudV20.toSetOfGroupIds(user.getGroups()));
 
         return userEntity;
-    }
-
-    public UserForAuthenticateResponse toUserForAuthenticateResponse(EndUser user) {
-        return toUserForAuthenticateResponse(user, user.getRoles());
     }
 
     public UserForAuthenticateResponse toUserForAuthenticateResponse(EndUser user, List<TenantRole> roles) {

@@ -7,8 +7,10 @@ import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.domain.service.OpenstackType;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -186,7 +188,7 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
-    public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, String baseUrlType, String region) {
+    public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, OpenstackType baseUrlType, String region) {
         HashMap<String, CloudBaseUrl> baseUrls = new HashMap<String, CloudBaseUrl>();
 
         HashSet<String> tenantBaseUrlIds = new HashSet<String>();
@@ -199,7 +201,7 @@ public class DefaultEndpointService implements EndpointService {
             tenantBaseUrlIds.addAll(tenant.getV1Defaults());
         }
 
-        for (CloudBaseUrl baseUrl : endpointDao.getBaseUrlsById(new ArrayList<String>(tenantBaseUrlIds))) {
+        for (CloudBaseUrl baseUrl : endpointDao.getBaseUrlsById(new ArrayList<>(tenantBaseUrlIds))) {
             processBaseUrl(baseUrl, tenant);
             baseUrls.put(baseUrl.getBaseUrlId(), baseUrl);
         }
@@ -221,18 +223,20 @@ public class DefaultEndpointService implements EndpointService {
         return this.getOpenStackEndpointForTenant(tenant, null, null);
     }
 
-    private void addGlobalBaseUrls(HashMap<String, CloudBaseUrl> baseUrls, Tenant tenant, String baseUrlType, String region) {
-        Iterable<CloudBaseUrl> cloudBaseUrls = null;
+    private void addGlobalBaseUrls(HashMap<String, CloudBaseUrl> baseUrls, Tenant tenant, OpenstackType baseUrlType, String region) {
+        Iterable<CloudBaseUrl> cloudBaseUrls;
         if (region.equalsIgnoreCase("LON")) {
-            cloudBaseUrls = endpointDao.getGlobalUKBaseUrlsByBaseUrlType(baseUrlType);
+            cloudBaseUrls = endpointDao.getGlobalUKBaseUrlsByBaseUrlType(baseUrlType.getName());
         } else {
-            cloudBaseUrls = endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType);
+            cloudBaseUrls = endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType.getName());
         }
-        for (CloudBaseUrl baseUrl : cloudBaseUrls) {
-            if (!baseUrls.containsKey(baseUrl.getBaseUrlId())) {
-                processBaseUrl(baseUrl, tenant);
-                baseUrl.setV1Default(false);
-                baseUrls.put(baseUrl.getBaseUrlId(), baseUrl);
+        if (cloudBaseUrls != null) {
+            for (CloudBaseUrl baseUrl : cloudBaseUrls) {
+                if (!baseUrls.containsKey(baseUrl.getBaseUrlId())) {
+                    processBaseUrl(baseUrl, tenant);
+                    baseUrl.setV1Default(false);
+                    baseUrls.put(baseUrl.getBaseUrlId(), baseUrl);
+                }
             }
         }
     }

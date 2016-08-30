@@ -26,6 +26,7 @@ import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.Group;
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import lombok.Setter;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
@@ -1099,12 +1100,6 @@ public class DefaultCloud11Service implements Cloud11Service {
             String username = passCreds.getUsername();
             String password = passCreds.getPassword();
 
-            /*
-            taking this out because not needed to retrieve user anymore, and guaranteed user will exist due to validateCredential
-            call earlier so exception won't be thrown.
-             */
-//            user = userService.getUserByUsernameForAuthentication(username);
-
             v11AuthResponseTuple = innerPwdAuth(username, password);
         }
 
@@ -1214,9 +1209,11 @@ public class DefaultCloud11Service implements Cloud11Service {
     }
 
     private void hideAdminUrls(List<OpenstackEndpoint> endpoints) {
-        for(OpenstackEndpoint endpoint : endpoints){
-            for(CloudBaseUrl baseUrl : endpoint.getBaseUrls()){
-                baseUrl.setAdminUrl(null);
+        if (CollectionUtils.isNotEmpty(endpoints)) {
+            for(OpenstackEndpoint endpoint : endpoints) {
+                for(CloudBaseUrl baseUrl : endpoint.getBaseUrls()){
+                    baseUrl.setAdminUrl(null);
+                }
             }
         }
     }

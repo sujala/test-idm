@@ -35,7 +35,7 @@ public interface EndpointService {
 
     OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant);
 
-    OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, String openStackType, String region);
+    OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, OpenstackType openStackType, String region);
 
     void updateBaseUrl(CloudBaseUrl baseUrl);
 

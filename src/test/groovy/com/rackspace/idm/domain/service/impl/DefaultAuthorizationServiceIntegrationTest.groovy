@@ -71,20 +71,18 @@ class DefaultAuthorizationServiceIntegrationTest extends Specification {
         ImmutableClientRole umRole = service.identityRoleNameToRoleMap.get(identityConfig.getStaticConfig().getIdentityUserManagerRoleName())
 
         List<TenantRole> tenantRoles = [createTenantRoleForClientRole(umRole), createTenantRoleForClientRole(uaRole)]
-        ServiceCatalogInfo scInfo = new ServiceCatalogInfo(tenantRoles, null, null);
 
         expect:
-        service.getIdentityTypeRoleAsEnum(scInfo) == IdentityUserTypeEnum.USER_ADMIN
+        service.getIdentityTypeRoleAsEnum(tenantRoles) == IdentityUserTypeEnum.USER_ADMIN
     }
 
     def "Getting identity user type returns null when no identity type role provided"() {
         ImmutableClientRole rackerRole = service.identityRoleNameToRoleMap.get(GlobalConstants.ROLE_NAME_RACKER)
 
         List<TenantRole> tenantRoles = [createTenantRoleForClientRole(rackerRole)]
-        ServiceCatalogInfo scInfo = new ServiceCatalogInfo(tenantRoles, null, null);
 
         expect:
-        service.getIdentityTypeRoleAsEnum(scInfo) == null
+        service.getIdentityTypeRoleAsEnum(tenantRoles) == null
     }
 
 

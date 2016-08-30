@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.converter.cloudv20
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.domain.config.ExternalBeansConfiguration
@@ -11,7 +12,6 @@ import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
-import com.rackspacecloud.docs.auth.api.v1.GroupsList
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
@@ -20,13 +20,8 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.xml.datatype.DatatypeFactory
-/**
- * Created with IntelliJ IDEA.
- * User: matt.kovacs
- * Date: 8/20/13
- * Time: 11:26 AM
- * To change this template use File | Settings | File Templates.
- */
+
+
 class UserConverterCloudV20Test extends Specification {
     @Shared UserConverterCloudV20 converterCloudV20
     @Shared RoleConverterCloudV20 mockRoleConverterCloudV20
@@ -58,7 +53,6 @@ class UserConverterCloudV20Test extends Specification {
         mockRoleConverterCloudV20()
         mockSecretQAConverterCloudV20()
         mockGroupConverterCloudV20()
-        mockConfig()
 
         basicMultiFactorService = Mock(BasicMultiFactorService)
         converterCloudV20.basicMultiFactorService = basicMultiFactorService

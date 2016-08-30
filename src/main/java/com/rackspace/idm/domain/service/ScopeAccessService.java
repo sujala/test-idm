@@ -120,7 +120,9 @@ public interface ScopeAccessService {
     List<OpenstackEndpoint> getOpenstackEndpointsForScopeAccess(ScopeAccess scopeAccess);
 
     /**
-     * Returns a list of endpoints for the user along with tenants and roles associated with the user for the token
+     * Returns the ServiceCatalogInfo for the given user. This object contains all of the tenant roles, tenants, and
+     * OpenstackEndpoints for a user.
+     *
      * @param baseUser
      * @return
      */

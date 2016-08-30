@@ -78,9 +78,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(new ServiceCatalog());
 
         when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
-        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
-        authResponseTuple.setUser(user);
-        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple(user, userScopeAccess);
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
         when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 
@@ -134,9 +132,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
         when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
-        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
-        authResponseTuple.setUser(user);
-        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple(user, userScopeAccess);
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
         when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 
@@ -179,9 +175,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
         when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
-        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
-        authResponseTuple.setUser(user);
-        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple(user, userScopeAccess);
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
         when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 
@@ -238,9 +232,7 @@ public class Cloud10VersionResourceTest {
 
 
         when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
-        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
-        authResponseTuple.setUser(user);
-        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple(user, userScopeAccess);
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
         when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 
@@ -269,9 +261,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
         when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
-        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
-        authResponseTuple.setUser(user);
-        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple(user, userScopeAccess);
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
         when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 
@@ -289,9 +279,7 @@ public class Cloud10VersionResourceTest {
         when(endpointConverterCloudV11.toServiceCatalog(anyList())).thenReturn(serviceCatalog);
 
         when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
-        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
-        authResponseTuple.setUser(user);
-        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple(user, userScopeAccess);
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
         when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 
@@ -314,9 +302,7 @@ public class Cloud10VersionResourceTest {
         when(userScopeAccess.getAccessTokenExp()).thenReturn(new DateTime(1).toDate());
 
         when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
-        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
-        authResponseTuple.setUser(user);
-        authResponseTuple.setUserScopeAccess(userScopeAccess);
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple(user, userScopeAccess);
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(authResponseTuple);
         when(scopeAccessService.getServiceCatalogInfo(user)).thenReturn(new ServiceCatalogInfo());
 

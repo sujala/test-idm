@@ -201,21 +201,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean authorizeIdmSuperAdminOrRackspaceClient(ScopeAccess scopeAccess) {
-        boolean isRackspaceClient = authorizeRackspaceClient(scopeAccess);
-        boolean isIdmSuperAdmin = false;
-        //verify if caller is a rackspace client, idm client or super admin
-        if(!isRackspaceClient){
-            isIdmSuperAdmin = authorizeIdmSuperAdmin(scopeAccess);
-        }
-
-        if(!isRackspaceClient && ! isIdmSuperAdmin) {
-            throw new ForbiddenException("Access denied");
-        }
-        return true;
-    }
-
-    @Override
     public boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess) {
         BaseUser user = userService.getUserByScopeAccess(scopeAccess);
         if (!authorizeUserAccess(user)) {
@@ -566,8 +551,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public IdentityUserTypeEnum getIdentityTypeRoleAsEnum(ServiceCatalogInfo serviceCatalogInfo) {
-        List<TenantRole> userRoles = serviceCatalogInfo.getUserTenantRoles();
+    public IdentityUserTypeEnum getIdentityTypeRoleAsEnum(Collection<TenantRole> userRoles) {
         ClientRole userLowestWeightIdentityRole = null;
         IdentityUserTypeEnum userLowestWeightIdentityRoleType = null;
 
@@ -791,14 +775,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean restrictEndpointsForTerminator(ServiceCatalogInfo serviceCatalogInfo) {
-        if(serviceCatalogInfo.allTenantsDisabled()) {
-            //identity-admins+ bypass terminator restriction
-            IdentityUserTypeEnum userType = getIdentityTypeRoleAsEnum(serviceCatalogInfo);
-            if(userType != null && !userType.hasAtLeastIdentityAdminAccessLevel()) {
-                return true;
-            }
-        }
-        return false;
+        return serviceCatalogInfo.allTenantsDisabled() &&
+                serviceCatalogInfo.getUserTypeEnum() != null &&
+                !serviceCatalogInfo.getUserTypeEnum().hasAtLeastIdentityAdminAccessLevel();
     }
 
     private String getRoleString(List<ClientRole> clientRoles) {

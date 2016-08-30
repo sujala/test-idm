@@ -40,7 +40,6 @@ public class AuthWithToken {
             throw new BadRequestException("Invalid request. Specify tenantId or tenantName.");
         }
 
-        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
         ScopeAccess sa = scopeAccessService.getScopeAccessByAccessToken(authenticationRequest.getToken().getId());
 
         /*
@@ -63,8 +62,9 @@ public class AuthWithToken {
         }
 
         // Check for impersonated token
+        ImpersonatedScopeAccess impersonatedScopeAccess = null;
         if (sa instanceof ImpersonatedScopeAccess) {
-            authResponseTuple.setImpersonatedScopeAccess((ImpersonatedScopeAccess) sa);
+            impersonatedScopeAccess = (ImpersonatedScopeAccess) sa;
             // Check Expiration of impersonated token
             if (sa.isAccessTokenExpired(new DateTime())) {
                 throw new NotAuthorizedException("Token not authenticated");
@@ -82,15 +82,14 @@ public class AuthWithToken {
             logger.warn(errMsg);
             throw new NotAuthenticatedException(errMsg);
         }
-        authResponseTuple.setUserScopeAccess((UserScopeAccess) sa);
+        UserScopeAccess usa = (UserScopeAccess) sa;
+        EndUser user = getUserByIdForAuthentication(usa.getUserRsId());
 
-        authResponseTuple.setUser(getUserByIdForAuthentication(authResponseTuple.getUserScopeAccess().getUserRsId()));
-
-        if(!(authResponseTuple.getUser() instanceof FederatedUser)) {
-            scopeAccessService.updateExpiredUserScopeAccess((User) authResponseTuple.getUser(), sa.getClientId(), null);
+        if(!(user instanceof FederatedUser)) {
+            scopeAccessService.updateExpiredUserScopeAccess((User) user, sa.getClientId(), null);
         }
 
-        return authResponseTuple;
+        return new AuthResponseTuple(user, usa, impersonatedScopeAccess);
     }
 
     EndUser getUserByIdForAuthentication(String id) {

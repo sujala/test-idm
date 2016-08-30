@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Tenant
+import com.rackspace.idm.domain.service.OpenstackType
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -28,14 +29,14 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         def baseUrls = new HashMap<String, CloudBaseUrl>()
         def tenant = entityFactory.createTenant()
         def region = "LON"
-        def baseUrlType = "MOSSO"
+        def baseUrlType = new OpenstackType("MOSSO")
 
         when:
         service.addGlobalBaseUrls(baseUrls, tenant, baseUrlType, region)
 
         then:
         1 * endpointDao.getGlobalUKBaseUrlsByBaseUrlType(_) >> { String baseUrlTypeParam ->
-            assert (baseUrlTypeParam == baseUrlType)
+            assert (baseUrlTypeParam == baseUrlType.getName())
             [].asList()
         }
     }
@@ -45,14 +46,14 @@ class DefaultEndpointServiceTest extends RootServiceTest {
         def baseUrls = new HashMap<String, CloudBaseUrl>()
         def tenant = entityFactory.createTenant()
         def region = "ORD"
-        def baseUrlType = "MOSSO"
+        def baseUrlType = new OpenstackType("MOSSO")
 
         when:
         service.addGlobalBaseUrls(baseUrls, tenant, baseUrlType, region)
 
         then:
         1 * endpointDao.getGlobalUSBaseUrlsByBaseUrlType(_) >> { String baseUrlTypeParam ->
-            assert (baseUrlTypeParam == baseUrlType)
+            assert (baseUrlTypeParam == baseUrlType.getName())
             [].asList()
         }
     }
@@ -64,13 +65,13 @@ class DefaultEndpointServiceTest extends RootServiceTest {
 
         def tenant = entityFactory.createTenant()
         def region = "ORD"
-        def baseUrlType = "MOSSO"
+        def baseUrlType = new OpenstackType("MOSSO")
 
         when:
         service.addGlobalBaseUrls(baseUrls, tenant, baseUrlType, region)
 
         then:
-        1 * endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType) >> [baseUrl].asList()
+        1 * endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType.getName()) >> [baseUrl].asList()
         baseUrls.keySet().size() == 1
     }
 
@@ -82,13 +83,13 @@ class DefaultEndpointServiceTest extends RootServiceTest {
 
         def tenant = entityFactory.createTenant()
         def region = "ORD"
-        def baseUrlType = "MOSSO"
+        def baseUrlType = new OpenstackType("MOSSO")
 
         when:
         service.addGlobalBaseUrls(baseUrls, tenant, baseUrlType, region)
 
         then:
-        1 * endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType) >> [baseUrl].asList()
+        1 * endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType.getName()) >> [baseUrl].asList()
         baseUrls.keySet().size() == 1
     }
 
@@ -104,14 +105,14 @@ class DefaultEndpointServiceTest extends RootServiceTest {
 
         def tenant = entityFactory.createTenant()
         def region = "ORD"
-        def baseUrlType = "MOSSO"
+        def baseUrlType = new OpenstackType("MOSSO")
 
         when:
         service.addGlobalBaseUrls(baseUrls, tenant, baseUrlType, region)
         def addedBaseUrl = baseUrls.get(baseUrlId)
 
         then:
-        1 * endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType) >> [baseUrl].asList()
+        1 * endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType.getName()) >> [baseUrl].asList()
         addedBaseUrl.v1Default == false
     }
 

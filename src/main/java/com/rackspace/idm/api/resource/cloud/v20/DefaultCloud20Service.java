@@ -41,7 +41,6 @@ import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
@@ -92,8 +91,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String SETUP_MFA_SCOPE_FORBIDDEN = "SETUP-MFA SCOPE not supported";
     public static final String MUST_SETUP_MFA = "User must setup multi-factor";
 
-    public static final String FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED = "feature.return.full.service.catalog.when.mosso.tenant.specified.in.v2.auth";
-    public static final boolean FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED_DEFAULT_VALUE = false;
     public static final String FEATURE_USER_TOKEN_SELF_VALIDATION = "feature.user.token.selfValidation";
     public static final boolean FEATURE_USER_TOKEN_SELF_VALIDATION_DEFAULT_VALUE = false;
 
@@ -271,6 +268,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private CreateSubUserService createSubUserService;
+
+    @Autowired
+    private DefaultAuthenticateResponseService authenticateResponseService;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -883,16 +883,14 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     // Core Service Methods
 
-    AuthenticateResponse authenticateFederatedDomain(AuthenticationRequest authenticationRequest,
+    private AuthenticateResponse authenticateFederatedDomain(AuthenticationRequest authenticationRequest,
                                                      com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
         // ToDo: Validate Domain
         if(!domain.getName().equalsIgnoreCase(GlobalConstants.RACKSPACE_DOMAIN)){
             throw new BadRequestException("Invalid domain specified");
         }// The below is only for Racker Auth for now....
 
-        AuthenticateResponse auth;
-        BaseUser user = null;
-        UserScopeAccess usa;
+        Racker racker = null;
         RackerScopeAccess rsa;
         List<String> authenticatedBy = new ArrayList<String>();
         if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
@@ -901,7 +899,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             validator20.validatePasswordCredentials(creds);
             Domain domainDO = domainConverterCloudV20.fromDomain(domain);
             UserAuthenticationResult result = authenticationService.authenticateDomainUsernamePassword(creds.getUsername(), creds.getPassword(), domainDO);
-            user = result.getUser();
+            racker = (Racker) result.getUser();
             authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD);
         } else if (authenticationRequest.getCredential().getValue() instanceof RsaCredentials) {
             RsaCredentials creds = (RsaCredentials) authenticationRequest.getCredential().getValue();
@@ -909,15 +907,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             validator20.validateUsername(creds.getUsername());
             Domain domainDO = domainConverterCloudV20.fromDomain(domain);
             UserAuthenticationResult result = authenticationService.authenticateDomainRSA(creds.getUsername(), creds.getTokenKey(), domainDO);
-            user = result.getUser();
-            ((Racker)user).setRackerId(((Racker) result.getUser()).getRackerId());
+            racker = (Racker) result.getUser();
             authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_RSAKEY);
         }
-        rsa = scopeAccessService.getValidRackerScopeAccessForClientId((Racker) user, getCloudAuthClientId(), authenticatedBy);
+        rsa = scopeAccessService.getValidRackerScopeAccessForClientId(racker, identityConfig.getStaticConfig().getCloudAuthClientId(), authenticatedBy);
 
         //Get the roles for the racker
-        List<TenantRole> roleList =  tenantService.getEphemeralRackerTenantRoles(user.getId());
-        return authConverterCloudV20.toAuthenticationResponse(user, rsa, roleList, new ArrayList());
+        List<TenantRole> roleList =  tenantService.getEphemeralRackerTenantRoles(racker.getId());
+        return authConverterCloudV20.toRackerAuthenticationResponse(racker, rsa, roleList, Collections.EMPTY_LIST);
     }
 
     public ResponseBuilder upgradeUserToCloud(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, org.openstack.docs.identity.api.v2.User upgradeUser) {
@@ -1061,11 +1058,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
-    /*
-    TODO: Refactor this method. It's getting messy. Wait till after MFA though to avoid making it too difficult to follow the mfa changes
-     */
+        /*
+         TODO: Refactor this method. It's getting messy. Wait till after MFA though to avoid making it too difficult to follow the mfa changes
+        */
         try {
-            AuthResponseTuple authResponseTuple = new AuthResponseTuple();
+            AuthResponseTuple authResponseTuple;
             if (authenticationRequest.getCredential() == null && authenticationRequest.getToken() == null) {
                 throw new BadRequestException("Invalid request body: unable to parse Auth data. Please review XML or JSON formatting.");
             }
@@ -1149,7 +1146,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                     authResponseTuple = scopeAccessService.createScopeAccessForUserAuthenticationResult(authResult);
                 }
             }
-            AuthenticateResponse auth = buildAuthResponse(authResponseTuple.getUserScopeAccess(), authResponseTuple.getImpersonatedScopeAccess(), authResponseTuple.getUser(), authenticationRequest);
+            AuthenticateResponse auth = authenticateResponseService.buildAuthResponseForAuthenticate(authResponseTuple, authenticationRequest);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -1409,206 +1406,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
-    }
-
-    public AuthenticateResponse buildAuthResponse(UserScopeAccess userScopeAccess, ScopeAccess impersonatedScopeAccess, EndUser user, AuthenticationRequest authenticationRequest) {
-        /*
-        common case will be a successful auth, so get the service catalog assuming the user has access to specified tenant.
-        The user would have successfully authenticated prior to reaching this point
-         */
-        ServiceCatalogInfo scInfo = scopeAccessService.getServiceCatalogInfo(user);
-
-        boolean restrictingAuthByTenant = isUserRestrictingAuthByTenant(authenticationRequest);
-
-        /*
-        if user specified a tenantId/tenantName for auth request, must verify user has access to that tenant (regardless of
-        whether the tenant is disabled or not)
-         */
-        if (restrictingAuthByTenant) {
-            verifyUserHasRoleOnSpecifiedTenant(user, scInfo, authenticationRequest);
-        }
-
-        //verify the user is allowed to login [TERMINATOR]
-        List<OpenstackEndpoint> endpoints = scInfo.getUserEndpoints();
-        if (authorizationService.restrictUserAuthentication(scInfo)) {
-            //terminator is in effect. All tenants disabled so blank service catalog
-            endpoints = Collections.EMPTY_LIST;
-        } else if (restrictingAuthByTenant) {
-            /*
-            if terminator is in play, doesn't matter if the user specified a disabled tenant. However, if terminator
-            is not in play and user specified tenant, must validate that the tenant the user specified is actually
-            enabled, otherwise throw an error
-             */
-            verifyUserSpecifiedTenantIsEnabled(user, scInfo, authenticationRequest);
-        }
-
-        IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(scInfo);
-        // Remove Admin URLs if non admin token or if user does not have a user type (all users should, but just in case)
-        if (userType == null || !userType.hasLevelAccessOf(IdentityUserTypeEnum.SERVICE_ADMIN)) {
-            stripEndpoints(endpoints);
-        }
-
-        List<TenantRole> roles = scInfo.getUserTenantRoles();
-
-        org.openstack.docs.identity.api.v2.Token convertedToken = null;
-        if (impersonatedScopeAccess != null) {
-            convertedToken = tokenConverterCloudV20.toToken(impersonatedScopeAccess, null);
-        } else {
-            convertedToken = tokenConverterCloudV20.toToken(userScopeAccess, null);
-        }
-
-        AuthenticateResponse auth;
-        if (restrictingAuthByTenant) {
-            //tenant was specified
-            List<OpenstackEndpoint> tenantEndpoints = new ArrayList<OpenstackEndpoint>();
-            Tenant tenant;
-            String tenantId = authenticationRequest.getTenantId();
-            String tenantName = authenticationRequest.getTenantName();
-
-            if (!StringUtils.isBlank(tenantId)) {
-                tenant = scInfo.findUserTenantById(tenantId);
-            } else {
-                tenant = scInfo.findUserTenantByName(tenantName);
-            }
-
-            //fallback to legacy logic if for some reason tenant wasn't in catalog. Don't think is actually possible, but technically
-            //legacy code would allow it.
-            if (tenant == null) {
-                if (!StringUtils.isBlank(tenantId)) {
-                    tenant = tenantService.getTenant(tenantId);
-                } else {
-                    tenant = tenantService.getTenantByName(tenantName);
-                }
-            }
-
-            convertedToken.setTenant(convertTenantEntityToApi(tenant));
-
-            //filter endpoints by tenant
-            if (shouldFilterServiceCatalogByTenant(tenant.getTenantId(), roles)) {
-                for (OpenstackEndpoint endpoint : endpoints) {
-                    if (tenant.getTenantId().equals(endpoint.getTenantId())) {
-                        tenantEndpoints.add(endpoint);
-                    }
-                }
-            } else {
-                tenantEndpoints.addAll(endpoints);
-            }
-
-            auth = authConverterCloudV20.toAuthenticationResponse(user, userScopeAccess, roles, tenantEndpoints);
-            auth.setToken(convertedToken);
-        } else {
-            auth = authConverterCloudV20.toAuthenticationResponse(user, userScopeAccess, roles, endpoints);
-        }
-
-        //do not expose the core contact ID through auth
-        auth.getUser().setContactId(null);
-
-        // If this is a scoped token we clear out the service catalog
-        if (authenticationRequest.getScope() != null) {
-            auth.setServiceCatalog(null);
-        }
-
-        return auth;
-    }
-
-    private boolean isUserRestrictingAuthByTenant(AuthenticationRequest authenticationRequest) {
-        String tenantId = authenticationRequest.getTenantId();
-        String tenantName = authenticationRequest.getTenantName();
-        return StringUtils.isNotBlank(tenantId) || StringUtils.isNotBlank(tenantName);
-    }
-
-    /**
-     * Throws NotAuthenticatedException if the user does not have a tenant role on the specified tenant. Does not
-     * matter if the tenant is enabled or disabled.
-     *
-     * @param user
-     * @param scInfo
-     * @param authenticationRequest
-     */
-    private void verifyUserHasRoleOnSpecifiedTenant(EndUser user, ServiceCatalogInfo scInfo, AuthenticationRequest authenticationRequest) {
-        String tenantId = authenticationRequest.getTenantId();
-        String tenantName = authenticationRequest.getTenantName();
-        if (StringUtils.isNotBlank(tenantId) && scInfo.findUserTenantById(tenantId) == null) {
-            throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, tenantId);
-        } else if (StringUtils.isNotBlank(tenantName) && scInfo.findUserTenantByName(tenantName) == null) {
-            throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, tenantName);
-        }
-    }
-
-    /**
-     * Throws NotAuthenticatedException if the user does not have a tenant role on the specified tenant. Does not
-     * matter if the tenant is enabled or disabled.
-     *
-     * @param user
-     * @param scInfo
-     * @param authenticationRequest
-     */
-    private void verifyUserSpecifiedTenantIsEnabled(EndUser user, ServiceCatalogInfo scInfo, AuthenticationRequest authenticationRequest) {
-        String tenantId = authenticationRequest.getTenantId();
-        String tenantName = authenticationRequest.getTenantName();
-        if (StringUtils.isNotBlank(tenantId)) {
-            Tenant tenant = scInfo.findUserTenantById(tenantId);
-            if (tenant == null || Boolean.FALSE.equals(tenant.getEnabled())) {
-                throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, tenantId);
-            }
-        } else if (StringUtils.isNotBlank(tenantName)) {
-            Tenant tenant = scInfo.findUserTenantByName(tenantName);
-            if (tenant == null || Boolean.FALSE.equals(tenant.getEnabled())) {
-                throwRestrictTenantErrorMessageForAuthenticationRequest(authenticationRequest, user, tenantName);
-            }
-        }
-    }
-
-    /**
-     * Throw an error because the user does not have proper access to the tenant. The error message differs based on
-     * the authentication method used.
-     *
-     * @param authenticationRequest
-     * @param user
-     * @param tenantIdentifier
-     */
-    private void throwRestrictTenantErrorMessageForAuthenticationRequest(AuthenticationRequest authenticationRequest, EndUser user, String tenantIdentifier) {
-        String errorMsg;
-        if (authenticationRequest.getToken() != null) {
-            errorMsg = String.format("Token doesn't belong to Tenant with Id/Name: '%s'", tenantIdentifier);
-        } else {
-            errorMsg =  String.format("Tenant with Name/Id: '%s' is not valid for User '%s' (id: '%s')", tenantIdentifier, user.getUsername(), user.getId());
-        }
-        logger.warn(errorMsg);
-        throw new NotAuthenticatedException(errorMsg);
-    }
-
-    private boolean shouldFilterServiceCatalogByTenant(String tenantId, List<TenantRole> roles) {
-        // If the feature flag is false, then we should always filter the service catalog by tenant
-        if (!config.getBoolean(FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED, FEATURE_RETURN_FULL_SERVICE_CATALOG_WHEN_MOSSO_TENANT_SPECIFIED_DEFAULT_VALUE)) {
-            return true;
-        }
-
-        // If the feature flag is true then we should filter the service catalog
-        // when the tenant specified is NOT the mosso tenant
-        return !isMossoTenant(tenantId, roles);
-    }
-
-    private boolean isMossoTenant(String tenantId, List<TenantRole> roles) {
-        for (TenantRole role : roles) {
-            if (role.getName().equals("compute:default")) {
-                return role.getTenantIds().contains(tenantId);
-            }
-        }
-        return tenantId.matches("\\d+");
-    }
-
-    User getUserByIdForAuthentication(String id) {
-        User user = null;
-
-        try {
-            user = userService.checkAndGetUserById(id);
-        } catch (NotFoundException e) {
-            String errorMessage = String.format("Unable to authenticate user with credentials provided.");
-            logger.warn(errorMessage);
-            throw new NotAuthenticatedException(errorMessage, e);
-        }
-        return user;
     }
 
     @Override
@@ -3959,78 +3756,16 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException("Token not found.");
             }
 
-            AuthenticateResponse access = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
-            access.setToken(this.tokenConverterCloudV20.toToken(sa, null));
-
+            AuthenticateResponse authenticateResponse;
             if (sa instanceof RackerScopeAccess) {
-                RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) sa;
-                Racker racker = userService.getRackerByRackerId(rackerScopeAccess.getRackerId());
-                List<TenantRole> roleList = tenantService.getEphemeralRackerTenantRoles(racker.getRackerId());
-                access.setUser(userConverterCloudV20.toRackerForAuthenticateResponse(racker, roleList));
-            }
-            else if (sa instanceof UserScopeAccess || sa instanceof ImpersonatedScopeAccess) {
-                EndUser user;
-                List<TenantRole> roles;
-                if (sa instanceof UserScopeAccess) {
-                    UserScopeAccess usa = (UserScopeAccess) sa;
-                    user = (EndUser) userService.getUserByScopeAccess(usa);
-                    roles = tenantService.getTenantRolesForUser(user);
-                    validator20.validateTenantIdInRoles(tenantId, roles);
-                    access.setToken(tokenConverterCloudV20.toToken(sa, roles));
-
-                    if (user instanceof User &&
-                            !authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
-                        //only service or identity admins can see the core contact ID on a user
-                        ((User) user).setContactId(null);
-                    }
-
-                    access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
-                } else {
-                    ImpersonatedScopeAccess isa = (ImpersonatedScopeAccess) sa;
-                    ScopeAccess impersonatedToken = scopeAccessService.getScopeAccessByAccessToken(isa.getImpersonatingToken());
-
-                    if (impersonatedToken == null || impersonatedToken.isAccessTokenExpired(new DateTime())) {
-                        throw new NotFoundException("Token not found.");
-                    }
-
-                    if (!(impersonatedToken instanceof UserScopeAccess)) {
-                        //the only type of scope access that can be impersonated is a UserScopeAccess, if we get here then this is probably bad data
-                        throw new IllegalStateException("Unrecognized type of token being impersonated " + impersonatedToken.getClass().getSimpleName());
-                    }
-
-                    BaseUser impersonator = userService.getUserByScopeAccess(isa);
-                    UserScopeAccess usaImpersonatedToken = (UserScopeAccess) impersonatedToken;
-                    user = identityUserService.getEndUserById(usaImpersonatedToken.getUserRsId());
-
-                    roles = tenantService.getTenantRolesForUser(user);
-                    validator20.validateTenantIdInRoles(tenantId, roles);
-                    access.setToken(tokenConverterCloudV20.toToken(isa, roles));
-                    access.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
-
-                    if(!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
-                        //only service or identity admins can see the core contact ID on a user
-                        access.getUser().setContactId(null);
-                    }
-
-                    UserForAuthenticateResponse userForAuthenticateResponse = null;
-                    List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator);
-                    if (impersonator instanceof User) {
-                        userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse((User)impersonator, impRoles);
-                    } else if (impersonator instanceof Racker) {
-                        //The impersonator section when the impersonator is a Racker only displays the "Racker" role, not all the
-                        //edir groups to which the user belongs.
-                        userForAuthenticateResponse = userConverterCloudV20.toRackerForAuthenticateResponse((Racker)impersonator, impRoles);
-                    } else {
-                        throw new IllegalStateException("Unrecognized type of user '" + user.getClass().getName() + "'");
-                    }
-                    com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory objectFactory = objFactories.getRackspaceIdentityExtRaxgaV1Factory();
-                    JAXBElement<UserForAuthenticateResponse> impersonatorJAXBElement = objectFactory.createImpersonator(userForAuthenticateResponse);
-                    access.getAny().add(impersonatorJAXBElement);
-                }
+                authenticateResponse = authenticateResponseService.buildAuthResponseForValidateToken((RackerScopeAccess) sa);
+            } else if (sa instanceof UserScopeAccess) {
+                authenticateResponse = authenticateResponseService.buildAuthResponseForValidateToken((UserScopeAccess) sa, tenantId);
+            } else {
+                authenticateResponse = authenticateResponseService.buildAuthResponseForValidateToken((ImpersonatedScopeAccess) sa, tenantId);
             }
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(access).getValue());
-
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(authenticateResponse).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -4134,38 +3869,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         return authScopeAccess;
     }
 
-    void stripEndpoints(List<OpenstackEndpoint> endpoints) {
-        for (int i = 0; i < endpoints.size(); i++) {
-            for (CloudBaseUrl baseUrl : endpoints.get(i).getBaseUrls()) {
-                baseUrl.setAdminUrl(null);
-            }
-        }
-    }
-
-    private Boolean getGenerateApiKeyUserForCreate(){
-        return config.getBoolean("generate.apiKey.userForCreate");
-    }
-
-    private String getCloudAuthClientId() {
-        return config.getString("cloudAuth.clientId");
-    }
-
-    private String getCloudAuthUserAdminRole() {
-        return config.getString("cloudAuth.userAdminRole");
-    }
-
-    private String getCloudAuthUserRole() {
-        return config.getString("cloudAuth.userRole");
-    }
-
-    private String getCloudAuthIdentityAdminRole() {
-        return config.getString("cloudAuth.adminRole");
-    }
-
-    private String getRackerImpersonateRole(){
-        return identityConfig.getStaticConfig().getRackerImpersonateRoleName();
-    }
-
     JAXBElement<? extends CredentialType> getJSONCredentials(String jsonBody) {
 
         JAXBElement<? extends CredentialType> jaxbCreds = null;
@@ -4204,43 +3907,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         return body;
     }
 
-    TenantForAuthenticateResponse convertTenantEntityToApi(Tenant tenant) {
-        TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
-        tenantForAuthenticateResponse.setId(tenant.getTenantId());
-        tenantForAuthenticateResponse.setName(tenant.getName());
-        return tenantForAuthenticateResponse;
-    }
-
-    private com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain checkDomainFromAuthRequest(AuthenticationRequest authenticationRequest) {
-        if(authenticationRequest.getAny() != null && authenticationRequest.getAny().size() > 0) {
-            for(int i=0;i<authenticationRequest.getAny().size();i++) {
-                try {
-                    com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = null;
-                    if(authenticationRequest.getAny().get(i) instanceof com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain) {
-                        domain = (com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain) authenticationRequest.getAny().get(i);
-                        return domain;
-                    }else if(((JAXBElement)authenticationRequest.getAny().get(i)).getValue() instanceof com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain) {
-                        domain = (com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain) ((JAXBElement)authenticationRequest.getAny().get(i)).getValue();
-                        return domain;
-                    }
-                } catch (Exception ex){
-
-                }
-            }
-        }
-        return null;
-    }
-
-    private List<String> getRoleNames(List<TenantRole> tenantRoles) {
-        List<String> roleNames = new ArrayList<String> ();
-        if (tenantRoles != null) {
-            for (TenantRole tenantRole : tenantRoles) {
-                roleNames.add(tenantRole.getName());
-            }
-        }
-
-        return roleNames;
-    }
 
     /**
      * This method checks to make sure that a user is allowed to request a token scoped
