@@ -149,6 +149,74 @@ class UserAdd(base.AutoMarshallingModel):
         return etree.tostring(add_user_request)
 
 
+class UserUpdate(base.AutoMarshallingModel):
+    """Marshalling for update user request.
+        TODO: insert update user request xml part
+    """
+
+    def __init__(self, user_name=None, domain_id=None, contact_id=None,
+                 default_region=None, token_format=None, password=None,
+                 email=None, enabled=None, mfa_enabled=None,
+                 mfa_state=None, mf_enforcement_level=None,
+                 factor_type=None, display_name=None):
+
+        self.user_name = user_name
+        self.domain_id = domain_id
+        self.contact_id = contact_id
+        self.default_region = default_region
+        self.token_format = token_format
+        self.password = password
+        self.email = email
+        self.enabled = enabled
+        self.mfa_enabled = mfa_enabled
+        self.mfa_state = mfa_state
+        self.mf_enforcement_level = mf_enforcement_level
+        self.factor_type = factor_type
+        self.display_name = display_name
+
+    def _obj_to_json(self):
+        update_user_request = {'user': {}}
+        if self.user_name:
+            update_user_request[const.USER][const.USERNAME] = self.user_name
+        if self.domain_id:
+            update_user_request[const.USER][const.DOMAINID] = self.domain_id
+        if self.contact_id:
+            update_user_request[const.USER][const.CONTACTID] = self.contact_id
+        if self.default_region:
+            update_user_request[const.USER][const.DEFAULT_REGION] = (
+                self.default_region)
+        if self.contact_id:
+            update_user_request[const.USER][const.TOKEN_FORMAT] = (
+                self.token_format)
+        if self.password:
+            update_user_request[const.USER][const.PASSWORD] = self.password
+        if self.email:
+            update_user_request[const.USER][const.EMAIL] = self.email
+        if self.enabled is not None:
+            update_user_request[const.USER][const.ENABLED] = self.enabled
+        if self.mfa_enabled is not None:
+            update_user_request[const.USER][
+                const.RAX_AUTH_MULTI_FACTOR_ENABLED] = self.mfa_enabled
+        if self.mfa_state:
+            update_user_request[const.USER][
+                const.RAX_AUTH_MULTI_FACTOR_STATE] = self.mfa_state
+        if self.mf_enforcement_level:
+            update_user_request[const.USER][
+                const.RAX_AUTH_USER_MULTI_FACTOR_ENFORCEMENT_LEVEL] = (
+                self.mf_enforcement_level
+            )
+        if self.factor_type:
+            update_user_request[const.USER][const.RAX_AUTH_FACTOR_TYPE] = (
+                self.factor_type
+            )
+        if self.display_name:
+            update_user_request[const.USER][const.DISPLAY_NAME] = (
+                self.display_name)
+        return json.dumps(update_user_request)
+
+        # TODO: insert update user request xml part
+
+
 class RoleAdd(base.AutoMarshallingModel):
     """Marshalling for Add Role Request."""
     def __init__(self, role_name, role_id, role_description):

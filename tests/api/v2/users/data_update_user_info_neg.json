@@ -1,0 +1,28 @@
+{
+  "update_email": {
+    "update_input": {
+      "email": "cid_test.rackspace.com"
+    },
+    "update_schema_fields": [
+      "email"
+    ]
+  },
+  "update_name": {
+    "update_input": {
+      "user_name": "api_test_newname123?"
+    },
+    "update_schema_fields": []
+  },
+  "update_password": {
+    "update_input": {
+      "password": "test"
+    },
+    "update_schema_fields": []
+  },
+  "update_password_2": {
+    "update_input": {
+      "password": "12134567778"
+    },
+    "update_schema_fields": []
+  }
+}
