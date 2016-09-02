@@ -314,8 +314,14 @@ idea {
 }
 
 jacoco {
-    toolVersion = "0.7.1.201405082137"
+    toolVersion = "0.7.5.201505241946"
     reportsDir = file("$buildDir/customJacocoReportDir")
+}
+
+task applicationCodeCoverageReport(type:JacocoReport){
+    executionData "coverage/target/jacoco.exec" 
+    classDirectories = files("coverage/target/classes")
+    sourceDirectories = files("src")
 }
 
 test {
