@@ -337,6 +337,57 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         return resp
 
+    def list_users(self, option=None, requestslib_kwargs=None):
+        """Return response object from list users api call
+
+        GET /v2.0/users or /v2.0/users{?name,email}
+        ex: /v2.0/users?email=test@blah.com
+            /v2.0/users?name=blahblah (get user by name)
+        list of users were created by a given user token
+        """
+        url = self.url + const.USER_URL
+        resp = self.request(method="GET", url=url, params=option,
+                            requestslib_kwargs=requestslib_kwargs)
+        if self.deserialize_format == const.XML:
+            def json(self):
+                resp_json = {}
+                resp_json[const.USERS] = {}
+
+                root_string = resp.text.encode(const.ASCII)
+                root = objectify.fromstring(root_string)
+                for child in root:
+                    resp_json[const.USERS][const.USER] = {}
+                    resp_json[const.USERS][const.USER][const.USERNAME] = (
+                        child.attrib[const.USERNAME])
+
+                    # Needed because json expects boolean
+                    if child.attrib[const.ENABLED] == 'true':
+                        resp_json[const.USERS][const.USER][const.ENABLED] = (
+                            True)
+                    else:
+                        resp_json[const.USERS][const.USER][const.ENABLED] = (
+                            False)
+
+                    resp_json[const.USERS][const.USER][const.EMAIL] = (
+                        child.attrib[const.EMAIL])
+                    resp_json[const.USERS][const.USER][const.ID] = (
+                        child.attrib[const.ID])
+
+                    domainId_key = '{' + const.XMLNS_RAX_AUTH + '}' + (
+                        const.DOMAINID)
+                    resp_json[const.USERS][const.USER][
+                        const.RAX_AUTH_DOMAIN] = child.attrib[domainId_key]
+
+                    defaultRegion_key = (
+                        '{' + const.XMLNS_RAX_AUTH + '}' +
+                        const.DEFAULT_REGION)
+                    resp_json[const.USERS][const.USER][
+                        const.RAX_AUTH_DEFAULT_REGION] = (
+                        child.attrib[defaultRegion_key])
+                return resp_json
+            resp.json = types.MethodType(json, resp, type(resp))
+        return resp
+
     def add_endpoint_template(self, request_object, requestslib_kwargs=None):
         """Return response object from the create endpoint template api call
 
@@ -480,6 +531,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         resp = self.request('GET', url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
+
 
     ''' THE CODE BELOW IS NOT USED IN ANY OF THE TESTS YET.
     COMMENTING THIS OUT, SO WE CAN RESURRECT THESE CLIENT METHODS WHENEVER
@@ -662,7 +714,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 root_string = resp.text.encode(const.ASCII)
                 root = objectify.fromstring(root_string)
 
-                resp_json[const.ROLE]['users'] = root.attrib['users']
+                resp_json[const.ROLE][const.USERS] = root.attrib[const.USERS]
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
 
