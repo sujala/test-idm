@@ -104,15 +104,6 @@ public class DefaultDomainServiceTestOld {
         defaultDomainService.addTenantToDomain(null,null);
     }
 
-    @Test(expected = ForbiddenException.class)
-    public void addTenantsToDomain_disabledDomain_throwsForbiddenException() throws Exception{
-        Domain domain = new Domain();
-        domain.setDomainId("1");
-        domain.setEnabled(false);
-        when(domainDao.getDomain(anyString())).thenReturn(domain);
-        defaultDomainService.addTenantToDomain(null, null);
-    }
-
     @Test
     public void addTenantsToDomain_validTenant_returns() throws Exception {
         Domain domain = new Domain();

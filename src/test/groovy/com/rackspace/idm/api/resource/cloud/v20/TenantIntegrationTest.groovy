@@ -3,12 +3,16 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.DomainService
+import com.rackspace.idm.domain.service.impl.DefaultDomainService
 import groovy.json.JsonSlurper
+import org.apache.commons.httpclient.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.Tenants
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
@@ -335,6 +339,127 @@ class TenantIntegrationTest extends RootIntegrationTest {
         useTenantNameFeatureFlag | _
         true                     | _
         false                    | _
+    }
+
+    @Unroll
+    def "test create tenant with domain ID - accept: #acceptMediaType, request = #requestMediaType"() {
+        given: "A domain and tenant"
+        def adminToken = utils.getIdentityAdminToken()
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
+        def domain = utils.createDomainEntity()
+        tenant.domainId = domain.id
+
+        when: "Creating a new tenant"
+        def response = cloud20.addTenant(adminToken, tenant, acceptMediaType, requestMediaType)
+
+        then: "Assert tenant was created with given domain ID"
+        response.status == 201
+        if(acceptMediaType == MediaType.APPLICATION_XML_TYPE) {
+            def tenantResponse = response.getEntity(Tenant).value
+            assert tenantResponse.domainId == domain.id
+        } else {
+            def tenantResponse = new JsonSlurper().parseText(response.getEntity(String))
+            assert tenantResponse['tenant']['RAX-AUTH:domainId'] == domain.id
+        }
+
+        cleanup:
+        utils.deleteTenantById(tenantId)
+        utils.deleteDomain(domain.id)
+
+        where:
+        acceptMediaType                 | requestMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "test create tenant with invalid domain ID - accept: #acceptMediaType, request = #requestMediaType"() {
+        given: "A domain and tenant"
+        def adminToken = utils.getIdentityAdminToken()
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
+        def invalidDomainId = testUtils.getRandomUUID("invalid")
+        tenant.domainId = invalidDomainId
+
+        when: "Creating a new tenant"
+        def response = cloud20.addTenant(adminToken, tenant, acceptMediaType, requestMediaType)
+
+        then: "Assert BadRequest"
+        String expectedErrMsg = String.format(DefaultCloud20Service.DOMAIN_ID_NOT_FOUND_ERROR_MESSAGE, invalidDomainId)
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, expectedErrMsg)
+
+        where:
+        acceptMediaType                 | requestMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Assert domain Id is case insensitive on tenant creation  - accept: #acceptMediaType, request = #requestMediaType"() {
+        given: "A domain and tenant"
+        def adminToken = utils.getIdentityAdminToken()
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
+        def domain = utils.createDomainEntity()
+        tenant.domainId = domain.id.toUpperCase()
+
+        when: "Creating a new tenant"
+        def response = cloud20.addTenant(adminToken, tenant, acceptMediaType, requestMediaType)
+
+        then: "Assert tenant was created with given domain ID"
+        response.status == 201
+        if(acceptMediaType == MediaType.APPLICATION_XML_TYPE) {
+            def tenantResponse = response.getEntity(Tenant).value
+            assert tenantResponse.domainId == domain.id
+        } else {
+            def tenantResponse = new JsonSlurper().parseText(response.getEntity(String))
+            assert tenantResponse['tenant']['RAX-AUTH:domainId'] == domain.id
+        }
+
+        where:
+        acceptMediaType                 | requestMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Create tenant with disabled domain  - accept: #acceptMediaType, request = #requestMediaType"() {
+        given: "A disabled domain and tenant"
+        def adminToken = utils.getIdentityAdminToken()
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
+        def domainId = testUtils.getRandomUUID("domain")
+        def domain = v2Factory.createDomain(domainId, domainId)
+        domain.enabled = false
+        utils.createDomain(domain)
+        tenant.domainId = domain.id
+
+        when: "Creating a new tenant"
+        def response = cloud20.addTenant(adminToken, tenant, acceptMediaType, requestMediaType)
+
+        then: "Assert tenant was created with given domain ID"
+        response.status == 201
+        if(acceptMediaType == MediaType.APPLICATION_XML_TYPE) {
+            def tenantResponse = response.getEntity(Tenant).value
+            assert tenantResponse.domainId == domain.id
+        } else {
+            def tenantResponse = new JsonSlurper().parseText(response.getEntity(String))
+            assert tenantResponse['tenant']['RAX-AUTH:domainId'] == domain.id
+        }
+
+        where:
+        acceptMediaType                 | requestMediaType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
     def assertAuthTenantNameAndId(AuthenticateResponse authData, tenant, boolean nameAndIdShouldNotMatch) {

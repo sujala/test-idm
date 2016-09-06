@@ -56,6 +56,7 @@ public class DefaultDomainService implements DomainService {
     public static final String DOMAIN_CANNOT_BE_NULL = "Domain cannot be null";
     public static final String DOMAIN_ID_CANNOT_BE_NULL = "Domain ID cannot be null";
     public static final String DOMAIN_NAME_CANNOT_BE_NULL = "Domain name cannot be null or empty";
+    public static final String DOMAIN_NOT_FOUND_ERROR_MESSGAE = "Domain with ID %s not found.";
 
     @Autowired
     private DomainDao domainDao;
@@ -120,10 +121,10 @@ public class DefaultDomainService implements DomainService {
     @Override
     public void addTenantToDomain(String tenantId, String domainId) {
         final Domain domain = getDomain(domainId);
-        if(domain == null)
-            throw new NotFoundException("Domain could not be found");
-        if(!domain.getEnabled())
-            throw new ForbiddenException("Cannot add tenant to disabled domain");
+        if(domain == null) {
+            String errMsg = String.format(DOMAIN_NOT_FOUND_ERROR_MESSGAE, domainId);
+            throw new NotFoundException(errMsg);
+        }
 
         final Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
@@ -170,9 +171,10 @@ public class DefaultDomainService implements DomainService {
     @Override
     public void removeTenantFromDomain(String tenantId, String domainId) {
         Domain domain = getDomain(domainId);
-        if(domain == null)
-            throw new NotFoundException("Domain could not be found");
-
+        if(domain == null) {
+            String errMsg = String.format(DOMAIN_NOT_FOUND_ERROR_MESSGAE, domainId);
+            throw new NotFoundException(errMsg);
+        }
         final Tenant tenant = tenantService.getTenant(tenantId);
         if (tenant == null) {
             /*
@@ -228,7 +230,7 @@ public class DefaultDomainService implements DomainService {
     public Domain checkAndGetDomain(String domainId) {
         Domain domain = this.getDomain(domainId);
         if (domain == null) {
-            String errMsg = String.format("Domain with id: '%s' was not found.", domainId);
+            String errMsg = String.format(DOMAIN_NOT_FOUND_ERROR_MESSGAE, domainId);
             logger.warn(errMsg);
             throw new NotFoundException(errMsg);
         }

@@ -98,6 +98,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final boolean FEATURE_USER_TOKEN_SELF_VALIDATION_DEFAULT_VALUE = false;
 
     public static final String INVALID_DOMAIN_ERROR = "Invalid domain";
+    public static final String DOMAIN_ID_NOT_FOUND_ERROR_MESSAGE = "Domain ID %s does not exist.";
     public static final String CANNOT_SPECIFY_GROUPS_ERROR = "Cannot specify groups for sub-users";
     public static final String V11_API_QNAME = "http://docs.rackspacecloud.com/auth/api/v1.1";
 
@@ -565,18 +566,28 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenant.setId(tenant.getName());
             final Tenant savedTenant = this.tenantConverterCloudV20.fromTenant(tenant);
 
-            //new tenants get added to the default domain. Default domain MUST exist and must be enabled
-            Domain defaultDomain = domainService.getDomain(identityConfig.getReloadableConfig().getTenantDefaultDomainId());
-            if (defaultDomain == null || !Boolean.TRUE.equals(defaultDomain.getEnabled())) {
-                throw new IllegalStateException("Default domain must exist and be enabled in order to create tenants");
+            Domain domain;
+            if (StringUtils.isBlank(tenant.getDomainId())) {
+                // New tenants get added to the default domain if no domain Id is specified. Default domain MUST exist and must be enabled
+                domain = domainService.getDomain(identityConfig.getReloadableConfig().getTenantDefaultDomainId());
+                if (domain == null || !Boolean.TRUE.equals(domain.getEnabled())) {
+                    throw new IllegalStateException("Default domain must exist and be enabled in order to create tenants");
+                }
+            } else {
+                // Assert the domain provided exists.
+                domain = domainService.getDomain(savedTenant.getDomainId());
+                if (domain == null){
+                    String errMsg = String.format(DOMAIN_ID_NOT_FOUND_ERROR_MESSAGE, tenant.getDomainId());
+                    throw new BadRequestException(errMsg);
+                }
             }
-            savedTenant.setDomainId(defaultDomain.getDomainId());
+            savedTenant.setDomainId(domain.getDomainId());
 
             // Saves the Tenant
             this.tenantService.addTenant(savedTenant);
 
             //update the domain backpointer to the tenant
-            domainService.addTenantToDomain(savedTenant.getTenantId(), defaultDomain.getDomainId());
+            domainService.addTenantToDomain(savedTenant.getTenantId(), savedTenant.getDomainId());
 
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             String tenantId = savedTenant.getTenantId();
