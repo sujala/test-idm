@@ -6,14 +6,7 @@ from lxml import objectify
 
 from cafe.engine.http import client
 from tests.api.v2.models import requests
-
-
-XMLNS = "http://docs.openstack.org/identity/api/v2.0"
-XMLNS_OS_KSADM = "http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0"
-XMLNS_RAX_AUTH = "http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0"
-XMLNS_RAX_KSGRP = "http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0"
-XMLNS_RAX_KSQA = "http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0"
-XMLNS_RAX_KSKEY = "http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0"
+from tests.api import constants as const
 
 
 class IdentityAPIClient(client.AutoMarshallingHTTPClient):
@@ -22,12 +15,12 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
     def __init__(self, url, serialize_format, deserialize_format):
         super(IdentityAPIClient, self).__init__()
         self.url = url
-        self.default_headers['Content-Type'] = 'application/{0}'.format(
-            serialize_format)
-        self.default_headers['Accept-Encoding'] = 'application/{0}'.format(
-            deserialize_format)
-        self.default_headers['Accept'] = 'application/{0}'.format(
-            deserialize_format)
+        self.default_headers[const.CONTENT_TYPE] = (
+            const.CONTENT_TYPE_VALUE.format(serialize_format))
+        self.default_headers[const.ACCEPT_ENCODING] = (
+            const.ACCEPT_ENCODING_VALUE.format(deserialize_format))
+        self.default_headers[const.ACCEPT] = (
+            const.ACCEPT_ENCODING_VALUE.format(deserialize_format))
 
         self.serialize_format = serialize_format
         self.deserialize_format = deserialize_format
@@ -41,113 +34,110 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             request_object = requests.AuthenticateWithPassword(
                 user_name=user, password=password)
 
-        url = self.url + '/tokens'
-        resp = self.request('POST', url, request_entity=request_object,
-                            headers=headers, requestslib_kwargs=requestslib_kwargs)
+        url = self.url + const.TOKEN_URL
+        resp = self.request(method='POST', url=url,
+                            request_entity=request_object,
+                            headers=headers,
+                            requestslib_kwargs=requestslib_kwargs)
 
         # If the response is xml, adds a json() menthod to the object.
         # The json() method should return a json equivalent of the
         # xml response.
-        if self.deserialize_format == 'xml':
+        if self.deserialize_format == const.XML:
             def json(self):
                 # NOTE: Partially implemented for the purpose of extracting
                 # auth token. Needs to be revisited when implementing tests for
                 # the endpoint
                 resp_json = {}
-                resp_json['access'] = {}
+                resp_json[const.ACCESS] = {}
 
-                root_string = resp.text.encode('ascii')
+                root_string = resp.text.encode(const.ASCII)
                 root = objectify.fromstring(root_string)
-                token = root['token'].attrib
+                token = root[const.TOKEN].attrib
 
-                services = root['serviceCatalog']
+                services = root[const.SERVICE_CATALOG]
                 serviceCatalog = []
 
                 for service in services.getchildren():
                     item = {}
-                    item['name'] = service.attrib['name']
-                    item['type'] = service.attrib['type']
+                    item[const.NAME] = service.attrib[const.NAME]
+                    item[const.TYPE] = service.attrib[const.TYPE]
                     links = []
                     for endpoint in service.endpoint:
                         links.append(endpoint.attrib)
-                    item['endpoints'] = links
+                    item[const.ENDPOINTS] = links
                     serviceCatalog.append(item)
 
-                resp_json['access']['serviceCatalog'] = serviceCatalog
-                resp_json['access']['token'] = token
-                resp_json['access']['user'] = user
+                resp_json[const.ACCESS][const.SERVICE_CATALOG] = serviceCatalog
+                resp_json[const.ACCESS][const.TOKEN] = token
+                resp_json[const.ACCESS][const.USER] = user
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
 
         return resp
 
-    def add_user(self, user_name, email=None, domain_id=None, contact_id=None,
-                 default_region=None, token_format=None, password=None,
-                 enabled=True, display_name=None,
-                 requestslib_kwargs=None):
+    def add_user(self, request_object, requestslib_kwargs=None):
         """Return response object from the add user api call
 
         POST /v2.0/users
         In case of XML response, add a json() method to the response object
         that will create a JSON equivalent of the XML response
         """
-        url = self.url + '/users'
+        url = self.url + const.USER_URL
 
         # This is needed because json expects boolean values, while xml
         # expects strings. The tests always pass in boolean, and the xml client
         # has to translate it to string
-        if self.serialize_format == 'xml':
-            if enabled:
-                enabled = 'true'
-            else:
-                enabled = 'false'
-        request_object = requests.AddUser(
-            user_name=user_name, domain_id=domain_id, contact_id=contact_id,
-            default_region=default_region, token_format=token_format,
-            password=password, email=email, enabled=enabled,
-            display_name=display_name)
-        resp = self.request('POST', url, request_entity=request_object,
+
+        resp = self.request(method='POST', url=url,
+                            request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
 
         # If the response is xml, adds a json() menthod to the object.
         # The json() method should return a json equivalent of the
         # xml response.
-        if self.deserialize_format == 'xml':
+        if self.deserialize_format == const.XML:
             def json(self):
                 resp_json = {}
-                resp_json['user'] = {}
+                resp_json[const.USER] = {}
 
-                root_string = resp.text.encode('ascii')
+                root_string = resp.text.encode(const.ASCII)
                 root = objectify.fromstring(root_string)
-                resp_json['user']['username'] = root.attrib['username']
+                resp_json[const.USER][const.USERNAME] = (
+                    root.attrib[const.USERNAME])
                 # Needed because json expects boolean
-                if root.attrib['enabled'] == 'true':
-                    resp_json['user']['enabled'] = True
+                if root.attrib[const.ENABLED] == 'true':
+                    resp_json[const.USER][const.ENABLED] = True
                 else:
-                    resp_json['user']['enabled'] = False
+                    resp_json[const.USER][const.ENABLED] = False
 
-                if email:
-                    resp_json['user']['email'] = root.attrib['email']
-                resp_json['user']['id'] = root.attrib['id']
+                if const.EMAIL in request_object:
+                    resp_json[const.USER][const.EMAIL] = (
+                        root.attrib[const.EMAIL])
+                resp_json[const.USER][const.ID] = root.attrib[const.ID]
 
-                if not password:
-                    password_key = '{' + XMLNS_OS_KSADM + '}' + 'password'
-                    resp_json['user']['OS-KSADM:password'] = (
+                if const.PASSWORD not in request_object:
+                    password_key = ('{' + const.XMLNS_OS_KSADM + '}'
+                                    + const.PASSWORD)
+                    resp_json[const.USER][const.PASSWORD] = (
                         root.attrib[password_key])
 
                 defaultRegion_key = (
-                    '{' + XMLNS_RAX_AUTH + '}' + 'defaultRegion')
-                resp_json['user']['RAX-AUTH:defaultRegion'] = root.attrib[
+                    '{' + const.XMLNS_RAX_AUTH + '}' + const.DEFAULT_REGION)
+                resp_json[const.USER][const.DEFAULT_REGION] = root.attrib[
                     defaultRegion_key]
 
-                mFE_key = '{' + XMLNS_RAX_AUTH + '}' + 'multiFactorEnabled'
+                mFE_key = (
+                    '{' + const.XMLNS_RAX_AUTH + '}' +
+                    const.MULTI_FACTOR_ENABLED)
                 if root.attrib[mFE_key] == 'true':
-                    resp_json['user']['multiFactorEnabled'] = True
+                    resp_json[const.USER][const.MULTI_FACTOR_ENABLED] = True
                 else:
-                    resp_json['user']['multiFactorEnabled'] = False
+                    resp_json[const.USER][const.MULTI_FACTOR_ENABLED] = False
 
-                domainId_key = '{' + XMLNS_RAX_AUTH + '}' + 'domainId'
-                resp_json['user']['RAX-AUTH:domainId'] = root.attrib[
+                domainId_key = (
+                    '{' + const.XMLNS_RAX_AUTH + '}' + const.DOMAINID)
+                resp_json[const.USER][const.DOMAIN] = root.attrib[
                     domainId_key]
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
@@ -161,38 +151,41 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         In case of XML response, add a json() method to the response object
         that will create a JSON equivalent of the XML response
         """
-        url = self.url + '/users/' + user_id
-        resp = self.request('GET', url,
+        url = self.url + const.GET_USER_URL.format(user_id=user_id)
+        resp = self.request(method='GET', url=url,
                             requestslib_kwargs=requestslib_kwargs)
 
         # If the response is xml, adds a json() menthod to the object.
         # The json() method should return a json equivalent of the
         # xml response.
-        if self.deserialize_format == 'xml':
+        if self.deserialize_format == const.XML:
             def json(self):
                 resp_json = {}
-                resp_json['user'] = {}
+                resp_json[const.USER] = {}
 
-                root_string = resp.text.encode('ascii')
+                root_string = resp.text.encode(const.ASCII)
                 root = objectify.fromstring(root_string)
-                resp_json['user']['username'] = root.attrib['username']
+                resp_json[const.USER][const.USERNAME] = (
+                    root.attrib[const.USERNAME])
                 # Needed because json expects boolean
-                if root.attrib['enabled'] == 'true':
-                    resp_json['user']['enabled'] = True
+                if root.attrib[const.ENABLED] == 'true':
+                    resp_json[const.USER][const.ENABLED] = True
                 else:
-                    resp_json['user']['enabled'] = False
+                    resp_json[const.USER][const.ENABLED] = False
 
-                resp_json['user']['email'] = root.attrib['email']
-                resp_json['user']['id'] = root.attrib['id']
+                resp_json[const.USER][const.EMAIL] = root.attrib[const.EMAIL]
+                resp_json[const.USER][const.ID] = root.attrib[const.ID]
 
-                domainId_key = '{' + XMLNS_RAX_AUTH + '}' + 'domainId'
-                resp_json['user']['RAX-AUTH:domainId'] = (
-                    root.attrib[domainId_key])
+                domainId_key = (
+                    '{' + const.XMLNS_RAX_AUTH + '}' + const.DOMAINID)
+                resp_json[const.USER][const.DOMAIN] = root.attrib[
+                    domainId_key]
 
                 defaultRegion_key = (
-                    '{' + XMLNS_RAX_AUTH + '}' + 'defaultRegion')
-                resp_json['user']['RAX-AUTH:defaultRegion'] = root.attrib[
-                    defaultRegion_key]
+                    '{' + const.XMLNS_RAX_AUTH + '}' + const.DEFAULT_REGION)
+                resp_json[const.USER][const.RAX_AUTH_DEFAULT_REGION] = (
+                    root.attrib[defaultRegion_key])
+
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
 
@@ -203,8 +196,8 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         DELETE /v2.0/users/{user_id}
         """
-        url = self.url + '/users/' + user_id
-        resp = self.request('DELETE', url,
+        url = self.url + const.DELETE_USER_URL.format(user_id=user_id)
+        resp = self.request(method='DELETE', url=url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
@@ -221,7 +214,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         In case of XML response, add a json() method to the response object
         that will create a JSON equivalent of the XML response
         """
-        url = self.url + '/RAX-AUTH/domains'
+        url = self.url + const.domain_url
         resp = self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
         return resp
 
@@ -237,34 +230,38 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         request_object = requests.AddRole(
             role_name=role_name, role_id=role_id,
             role_description=role_description)
-        resp = self.request('POST', url, request_entity=request_object,
+        resp = self.request(method='POST', url=url,
+                            request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
         # If the response is xml, adds a json() menthod to the object.
         # The json() method should return a json equivalent of the
         # xml response.
-        if self.deserialize_format == 'xml':
+        if self.deserialize_format == const.XML:
             def json(self):
                 resp_json = {}
                 resp_json['role'] = {}
 
-                root_string = resp.text.encode('ascii')
+                root_string = resp.text.encode(const.ASCII)
                 root = objectify.fromstring(root_string)
 
-                resp_json['role']['id'] = root.attrib['id']
-                resp_json['role']['name'] = root.attrib['name']
-                resp_json['role']['description'] = root.attrib['description']
-                resp_json['role']['serviceId'] = root.attrib['serviceId']
+                resp_json[const.ROLE][const.ID] = root.attrib[const.ID]
+                resp_json[const.ROLE][const.NAME] = root.attrib[const.NAME]
+                resp_json[const.ROLE][const.DESCRIPTION] = (
+                    root.attrib[const.DESCRIPTION])
+                resp_json[const.ROLE][const.SERVICE_ID] = (
+                    root.attrib[const.SERVICE_ID])
 
                 admin_role_key = \
-                    '{' + XMLNS_RAX_AUTH + '}' + 'administratorRole'
-                resp_json['role']['RAX-AUTH:administratorRole'] = root.attrib[
-                    admin_role_key]
+                    '{' + const.XMLNS_RAX_AUTH + '}' + const.ADMINISTRATOR_ROLE
+                resp_json[const.ROLE][const.RAX_AUTH_ADMINISTRATOR_ROLE] = (
+                    root.attrib[admin_role_key])
 
-                propagate_key = '{' + XMLNS_RAX_AUTH + '}' + 'propagate'
+                propagate_key = '{' + const.XMLNS_RAX_AUTH + '}' +
+                    const.PROPAGATE
                 if root.attrib[propagate_key] == 'true':
-                    resp_json['role']['RAX-AUTH:propagate'] = True
+                    resp_json[const.ROLE][const.RAX_AUTH_PROPAGATE] = True
                 else:
-                    resp_json['role']['RAX-AUTH:propagate'] = False
+                    resp_json[const.ROLE][const.RAX_AUTH_PROPAGATE] = False
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
 
@@ -280,29 +277,33 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + '/OS-KSADM/roles/' + role_id
         resp = self.request('GET', url,
                             requestslib_kwargs=requestslib_kwargs)
-        if self.deserialize_format == 'xml':
+        if self.deserialize_format == const.XML:
             def json(self):
                 resp_json = {}
-                resp_json['role'] = {}
+                resp_json[const.ROLE] = {}
 
-                root_string = resp.text.encode('ascii')
+                root_string = resp.text.encode(const.ASCII)
                 root = objectify.fromstring(root_string)
 
-                resp_json['role']['id'] = root.attrib['id']
-                resp_json['role']['name'] = root.attrib['name']
-                resp_json['role']['description'] = root.attrib['description']
-                resp_json['role']['serviceId'] = root.attrib['serviceId']
+                resp_json[const.ROLE][const.ID] = root.attrib[const.ID]
+                resp_json[const.ROLE][const.NAME] = root.attrib[const.NAME]
+                resp_json[const.ROLE][const.DESCRIPTION] = (
+                    root.attrib[const.DESCRIPTION])
+                resp_json[const.ROLE][const.SERVICE_ID] = (
+                    root.attrib[const.SERVICE_ID])
 
                 admin_role_key = (
-                    '{' + XMLNS_RAX_AUTH + '}' + 'administratorRole')
-                resp_json['role']['RAX-AUTH:administratorRole'] = root.attrib[
-                    admin_role_key]
+                    '{' + const.XMLNS_RAX_AUTH + '}' +
+                    const.ADMINISTRATOR_ROLE)
+                resp_json[const.ROLE][const.RAX_AUTH_ADMINISTRATOR_ROLE] = (
+                    root.attrib[admin_role_key])
 
-                propagate_key = '{' + XMLNS_RAX_AUTH + '}' + 'propagate'
+                propagate_key = '{' + const.XMLNS_RAX_AUTH + '}' +
+                    const.PROPAGATE
                 if root.attrib[propagate_key] == 'true':
-                    resp_json['role']['RAX-AUTH:propagate'] = True
+                    resp_json[const.ROLE][const.RAX_AUTH_PROPAGATE] = True
                 else:
-                    resp_json['role']['RAX-AUTH:propagate'] = False
+                    resp_json[const.ROLE][const.RAX_AUTH_PROPAGATE] = False
             resp.json = types.MethodType(json, resp, type(resp))
 
         return resp
@@ -315,7 +316,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         that will create a JSON equivalent of the XML response
         """
         url = self.url + '/OS-KSADM/roles/' + role_id
-        resp = self.request('DELETE', url,
+        resp = self.request(const.DELETE, url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
@@ -329,29 +330,31 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + '/users/' + user_id + '/roles/OS-KSADM/' + role_id
         resp = self.request('PUT', url,
                             requestslib_kwargs=requestslib_kwargs)
-        if self.deserialize_format == 'xml':
+        if self.deserialize_format == const.XML:
             def json(self):
                 resp_json = {}
-                resp_json['role'] = {}
+                resp_json[const.ROLE] = {}
 
-                root_string = resp.text.encode('ascii')
+                root_string = resp.text.encode(const.ASCII)
                 root = objectify.fromstring(root_string)
 
-                resp_json['role']['id'] = root.attrib['id']
-                resp_json['role']['name'] = root.attrib['name']
-                resp_json['role']['description'] = root.attrib['description']
-                resp_json['role']['serviceId'] = root.attrib['serviceId']
+                resp_json[const.ROLE][const.ID] = root.attrib[const.ID]
+                resp_json[const.ROLE][const.NAME] = root.attrib[const.NAME]
+                resp_json[const.ROLE][const.DESCRIPTION] = (
+                    root.attrib[const.DESCRIPTION])
+                resp_json[const.ROLE][const.SERVICE_ID] = (
+                    root.attrib[const.SERVICE_ID])
 
                 admin_role_key = \
-                    '{' + XMLNS_RAX_AUTH + '}' + 'administratorRole'
-                resp_json['role']['RAX-AUTH:administratorRole'] = root.attrib[
-                    admin_role_key]
+                    '{' + const.XMLNS_RAX_AUTH + '}' + const.ADMINISTRATOR_ROLE
+                resp_json[const.ROLE][const.RAX_AUTH_ADMINISTRATOR_ROLE] = (
+                    root.attrib[admin_role_key])
 
-                propagate_key = '{' + XMLNS_RAX_AUTH + '}' + 'propagate'
+                propagate_key = '{' + const.XMLNS_RAX_AUTH + '}' + 'propagate'
                 if root.attrib[propagate_key] == 'true':
-                    resp_json['role']['RAX-AUTH:propagate'] = True
+                    resp_json[const.ROLE][const.RAX_AUTH_PROPAGATE] = True
                 else:
-                    resp_json['role']['RAX-AUTH:propagate'] = False
+                    resp_json[const.ROLE][const.RAX_AUTH_PROPAGATE] = False
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
 
@@ -384,15 +387,15 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         # If the response is xml, adds a json() menthod to the object.
         # The json() method should return a json equivalent of the
         # xml response.
-        if self.deserialize_format == 'xml':
+        if self.deserialize_format == const.XML:
             def json(self):
                 resp_json = {}
-                resp_json['role'] = {}
+                resp_json[const.ROLE] = {}
 
-                root_string = resp.text.encode('ascii')
+                root_string = resp.text.encode(const.ASCII)
                 root = objectify.fromstring(root_string)
 
-                resp_json['role']['users'] = root.attrib['users']
+                resp_json[const.ROLE]['users'] = root.attrib['users']
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
 

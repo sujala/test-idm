@@ -6,7 +6,9 @@ from hypothesis import given, strategies
 
 from tests.api.utils import header_validation
 from tests.api.v2 import base
+from tests.api.v2.models import requests
 from tests.api.v2.schema import users as users_json
+from tests.api import constants as const
 
 
 @ddt.ddt
@@ -25,14 +27,14 @@ class TestAddUser(base.TestBaseV2):
 
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': 'api-test'})
+            additional_input_data={'domain_id': const.DOMAIN_API_TEST})
 
         sub_user_name = cls.generate_random_string(
-            pattern='sub[\-]user[\d\w]{12}')
+            pattern=const.SUB_USER_PATTERN)
         cls.user_client = cls.generate_client(
             parent_client=cls.user_admin_client,
             additional_input_data={
-                'domain_id': 'api-test',
+                'domain_id': const.DOMAIN_API_TEST,
                 'user_name': sub_user_name})
         cls.unexpected_headers_HTTP_201 = [
             header_validation.validate_transfer_encoding_header_not_present]
@@ -51,7 +53,9 @@ class TestAddUser(base.TestBaseV2):
 
     def setUp(self):
         super(TestAddUser, self).setUp()
-        self.user_id = []
+        self.user_ids = []
+        self.add_input = {'domain_id': const.DOMAIN_TEST}
+        self.add_schema_fields = [const.NS_PASSWORD]
 
     @ddt.file_data('data_add_user_admin_user.json')
     def test_add_user_admin_user(self, test_data):
@@ -66,20 +70,91 @@ class TestAddUser(base.TestBaseV2):
         '''
         user_name = self.generate_random_string()
         input_data = test_data['additional_input']
-        resp = self.identity_admin_client.add_user(
-            user_name=user_name, **input_data)
+        request_object = requests.UserAdd(user_name=user_name, **input_data)
+        resp = self.identity_admin_client.add_user(request_object)
         self.assertEqual(resp.status_code, 201)
+        self.user_ids.append(resp.json()[const.USER][const.ID])
 
         updated_json_schema = copy.deepcopy(users_json.add_user)
-        updated_json_schema['properties']['user']['required'] = (
-            users_json.add_user['properties']['user']['required'] +
-            test_data['addional_schema_fields'])
+        updated_json_schema[const.PROPERTIES][const.USER][const.REQUIRED] = (
+            users_json.add_user[const.PROPERTIES][const.USER][const.REQUIRED] +
+            test_data['additional_schema_fields'])
 
         self.assertSchema(response=resp, json_schema=updated_json_schema)
 
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_201)
-        self.user_id.append(resp.json()['user']['id'])
+
+    @ddt.file_data('data_add_user_w_mfa_attrs.json')
+    def test_add_user_admin_user_w_mfa_attrs(self, test_data):
+        '''Add user_admin type users
+
+        test_data comes from a json data file that can contain various possible
+        input combinations. Each of these data combination is a separate test
+        case.
+        NOTE: This test case illustrates providing test_data in a json file.
+        '''
+        mfa_input = test_data['mfa_input']
+        data_list = self.generate_data_combinations(data_dict=mfa_input)
+        # run multiple combination of mfa input attributes
+        for ea_mfa_input in data_list:
+            user_name = self.generate_random_string()
+            add_input = self.add_input
+            input_data = dict(add_input, **ea_mfa_input)
+            request_object = requests.UserAdd(user_name=user_name,
+                                              **input_data)
+            resp = self.identity_admin_client.add_user(request_object)
+            self.assertEqual(resp.status_code, 201,
+                             "Fail to create user with {0}".format(input_data))
+            self.user_ids.append(resp.json()[const.USER]['id'])
+
+            updated_json_schema = copy.deepcopy(users_json.add_user)
+            updated_json_schema[const.PROPERTIES][const.USER][
+                const.REQUIRED] = (
+                users_json.add_user[const.PROPERTIES][const.USER][
+                    const.REQUIRED] + self.add_schema_fields)
+
+            self.assertEqual(resp.json()[const.USER][
+                                 const.RAX_AUTH_MULTI_FACTOR_ENABLED], False)
+            self.assertSchema(response=resp, json_schema=updated_json_schema)
+            self.assertHeaders(response=resp)
+
+    @ddt.file_data('data_add_user_w_mfa_attrs.json')
+    def test_add_user_default_user_w_mfa_attrs(self, test_data):
+        '''Add user_defaut type users
+
+        test_data comes from a json data file that can contain various possible
+        input combinations. Each of these data combination is a separate test
+        case.
+        NOTE: This test case illustrates providing test_data in a json file.
+        '''
+        mfa_input = test_data['mfa_input']
+        data_list = self.generate_data_combinations(data_dict=mfa_input)
+        # run multiple combination of mfa input attributes
+        for ea_mfa_input in data_list:
+            add_input = self.add_input
+            input_data = dict(add_input, **ea_mfa_input)
+            user_name = self.generate_random_string(
+                pattern=const.SUB_USER_PATTERN)
+            request_object = requests.UserAdd(
+                user_name=user_name,
+                **input_data
+            )
+            resp = self.user_admin_client.add_user(request_object)
+            self.assertEqual(resp.status_code, 201,
+                             "Fail to create user with {0}".format(input_data))
+            self.user_ids.append(resp.json()[const.USER][const.ID])
+
+            updated_json_schema = copy.deepcopy(users_json.add_user)
+            updated_json_schema[const.PROPERTIES][const.USER][
+                const.REQUIRED] = (
+                users_json.add_user[const.PROPERTIES][const.USER][
+                    const.REQUIRED] + self.add_schema_fields)
+
+            self.assertEqual(resp.json()[const.USER][
+                                 const.RAX_AUTH_MULTI_FACTOR_ENABLED], False)
+            self.assertSchema(response=resp, json_schema=updated_json_schema)
+            self.assertHeaders(response=resp)
 
     @ddt.data(True, False, '')
     def test_add_user(self, enabled):
@@ -94,18 +169,20 @@ class TestAddUser(base.TestBaseV2):
         'test_add_user_admin_user'.
         """
         user_name = self.generate_random_string()
-        password = self.generate_random_string(pattern='Password1[\d\w]{10}')
-        resp = self.identity_admin_client.add_user(
+        password = self.generate_random_string(pattern=const.PASSWORD_PATTERN)
+        request_object = requests.UserAdd(
             user_name=user_name,
             password=password,
             enabled=enabled,
-            domain_id='random')
+            domain_id=const.DOMAIN_TEST
+        )
+        resp = self.identity_admin_client.add_user(request_object)
         self.assertEqual(resp.status_code, 201)
+        self.user_ids.append(resp.json()[const.USER][const.ID])
+
         self.assertSchema(response=resp, json_schema=users_json.add_user)
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_201)
-
-        self.user_id.append(resp.json()['user']['id'])
 
     @ddt.data(['  ', 'me@mail.com', True], ['വളം', 'me@mail.com', True],
               ['first last', 'valid@email.com', ''])
@@ -120,9 +197,13 @@ class TestAddUser(base.TestBaseV2):
 
         @todo: This can be merged into the previous test_case
         'test_add_user_admin_user'."""
-        resp = self.identity_admin_client.add_user(
-            user_name=user_name, email=email_id, enabled=enabled,
-            domain_id='random')
+        request_object = requests.UserAdd(
+            user_name=user_name,
+            email=email_id,
+            enabled=enabled,
+            domain_id=const.DOMAIN_TEST
+        )
+        resp = self.identity_admin_client.add_user(request_object)
         self.assertEqual(resp.status_code, 400)
 
         # This fails on 'Connection' header being absent when run
@@ -139,23 +220,30 @@ class TestAddUser(base.TestBaseV2):
         """
         if not self.test_config.run_hypothesis_tests:
             self.skipTest('Skipping Hypothesis tests per config value')
-        resp = self.user_admin_client.add_user(
+        request_object = requests.UserAdd(
             user_name=user_name,
-            email='random@nowhere.com',
-            enabled=enabled)
+            email=const.EMAIL_RANDOM,
+            enabled=enabled
+        )
+        resp = self.user_admin_client.add_user(request_object)
         self.assertEqual(resp.status_code, 400)
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_400)
 
     def tearDown(self):
         # Delete all users created in the tests
-        for id in self.user_id:
-            self.identity_admin_client.delete_user(user_id=id)
+        for id in self.user_ids:
+            resp = self.identity_admin_client.delete_user(user_id=id)
+            self.assertEqual(resp.status_code, 204)
         super(TestAddUser, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):
-        # @todo: Delete all users created in the setUpClass
+        # Delete all users created in the setUpClass
+        cls.delete_client(client=cls.user_client,
+                          parent_client=cls.user_admin_client)
+        cls.delete_client(client=cls.user_admin_client,
+                          parent_client=cls.identity_admin_client)
         super(TestAddUser, cls).tearDownClass()
 
 
@@ -172,7 +260,7 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
         super(TestServiceAdminLevelAddUser, self).setUp()
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
-        self.user_id = []
+        self.user_ids = []
         self.unexpected_headers_HTTP_201 = [
             header_validation.validate_transfer_encoding_header_not_present]
         self.header_validation_functions_HTTP_201 = (
@@ -180,6 +268,8 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
             self.unexpected_headers_HTTP_201 + [
                 header_validation.validate_header_location,
                 header_validation.validate_header_content_length])
+        self.add_input = {'domain_id': const.DOMAIN_TEST}
+        self.add_schema_fields = [const.NS_PASSWORD]
 
     @ddt.file_data('data_add_identity_admin_user.json')
     def test_add_identity_admin_user(self, test_data):
@@ -190,24 +280,62 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
         """
         user_name = self.generate_random_string()
         input_data = test_data['additional_input']
-        resp = self.service_admin_client.add_user(
-            user_name=user_name, **input_data)
+        request_object = requests.UserAdd(
+            user_name=user_name,
+            **input_data
+        )
+        resp = self.service_admin_client.add_user(request_object)
         self.assertEqual(resp.status_code, 201)
-
-        updated_json_schema = ''
+        self.user_ids.append(resp.json()[const.USER][const.ID])
 
         updated_json_schema = copy.deepcopy(users_json.add_user)
-        updated_json_schema['properties']['user']['required'] = (
-            users_json.add_user['properties']['user']['required'] +
-            test_data['addional_schema_fields'])
+        updated_json_schema[const.PROPERTIES][const.USER][const.REQUIRED] = (
+            users_json.add_user[const.PROPERTIES][const.USER][const.REQUIRED] +
+            test_data['additional_schema_fields'])
         self.assertSchema(response=resp, json_schema=updated_json_schema)
 
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_201)
-        self.user_id.append(resp.json()['user']['id'])
+
+    @ddt.file_data('data_add_user_w_mfa_attrs.json')
+    def test_add_user_identity_admin_w_mfa_attrs(self, test_data):
+        '''Add identity_admin type users
+
+        test_data comes from a json data file that can contain various possible
+        input combinations. Each of these data combination is a separate test
+        case.
+        NOTE: This test case illustrates providing test_data in a json file.
+        '''
+        mfa_input = test_data['mfa_input']
+        data_list = self.generate_data_combinations(data_dict=mfa_input)
+        # run multiple combination of mfa input attributes
+        for ea_mfa_input in data_list:
+            user_name = self.generate_random_string()
+            add_input = self.add_input
+            input_data = dict(add_input, **ea_mfa_input)
+            request_object = requests.UserAdd(
+                user_name=user_name,
+                **input_data
+            )
+            resp = self.service_admin_client.add_user(request_object)
+            self.assertEqual(resp.status_code, 201,
+                             "Fail to create user with {0}".format(input_data))
+            self.user_ids.append(resp.json()[const.USER][const.ID])
+
+            updated_json_schema = copy.deepcopy(users_json.add_user)
+            updated_json_schema[const.PROPERTIES][const.USER][
+                const.REQUIRED] = (
+                users_json.add_user[const.PROPERTIES][const.USER][
+                    const.REQUIRED] + self.add_schema_fields)
+
+            self.assertEqual(resp.json()[const.USER][
+                                 const.RAX_AUTH_MULTI_FACTOR_ENABLED], False)
+            self.assertSchema(response=resp, json_schema=updated_json_schema)
+            self.assertHeaders(response=resp)
 
     def tearDown(self):
         # Delete all users created in the tests
-        for id in self.user_id:
-            self.service_admin_client.delete_user(user_id=id)
+        for id in self.user_ids:
+            resp = self.service_admin_client.delete_user(user_id=id)
+            self.assertEqual(resp.status_code, 204)
         super(TestServiceAdminLevelAddUser, self).tearDown()

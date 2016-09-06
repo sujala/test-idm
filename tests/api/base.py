@@ -2,6 +2,7 @@ import jsonschema
 from lxml import etree
 from StringIO import StringIO
 from strgen import StringGenerator
+from itertools import combinations
 import urlparse
 
 from cafe.drivers.unittest import fixtures
@@ -163,6 +164,49 @@ class TestBase(fixtures.BaseTestFixture):
         xml_schema += end_grammar
 
         return xml_schema
+
+    @classmethod
+    def generate_data_combinations(self, data_dict, start=None):
+        """
+        This method is intended to support a common testing pattern where a
+        data-driven test is given a data set and tests using combinations of
+        that data to provide better coverage the input domain. This is done
+        by creating combinations of the input data dictionary with length
+        starting with `start` and ending with the length of the input data
+        dictionary.
+        For example, you are trying to create/update a user's MFA attributes
+        with the following data set:
+        {
+                "mf_enabled": true,
+                "user_mf_enforcement_level": "OPTIONAL",
+                "factor_type": "SMS"
+        }
+        this test would allow for you to test with the following data sets
+        without needing to enumerate all of them in the data file
+        [{u'mf_enabled': True}, {u'factor_type': u'SMS'},
+         {u'user_mf_enforcement_level': u'OPTIONAL'},
+         {u'mf_enabled': True, u'factor_type': u'SMS'},
+         {u'mf_enabled': True, u'user_mf_enforcement_level': u'OPTIONAL'},
+         {u'factor_type': u'SMS', u'user_mf_enforcement_level': u'OPTIONAL'},
+         {u'mf_enabled': True, u'factor_type': u'SMS',
+         u'user_mf_enforcement_level': u'OPTIONAL'}]
+        :param start: value from 1 to len of dict + 1, set to 1 if out of range
+        :param data_dict: take a dictionary
+        :return: List of data sets
+        """
+        result_list = []
+        if start is None:
+            start = 1
+        elif start < 1 | start > (len(data_dict) + 1):
+            start = 1
+        if data_dict:
+            for i in range(start, len(data_dict) + 1):
+                # Loop through list of combinations
+                for ec in combinations(data_dict, i):
+                    # create dict with key:value items for each combination
+                    dic = {item: data_dict[item] for item in ec}
+                    result_list.append(dic)
+        return result_list
 
     @classmethod
     def tearDownClass(cls):
