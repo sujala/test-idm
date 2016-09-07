@@ -4,7 +4,6 @@ import com.rackspace.idm.domain.dao.impl.LdapConnectionPools;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.util.ssl.SSLUtil;
 import com.unboundid.util.ssl.TrustAllTrustManager;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -22,14 +21,13 @@ import java.security.GeneralSecurityException;
 @Profile({"LDAP", "default"})
 @org.springframework.context.annotation.Configuration
 public class LdapConfiguration {
-    public static final int SERVER_POOL_SIZE_INIT = 1;
-    public static final int SERVER_POOL_SIZE_MAX = 100;
     private static final int DEFAULT_SERVER_PORT = 636;
     private static final String CONNECT_ERROR_STRING = "Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct.";
     public static final int PORT = 389;
 
     @Autowired
-    private Configuration config;
+    private IdentityConfig identityConfig;
+
     private Logger logger=LoggerFactory.getLogger(LdapConfiguration.class);
 
     public LdapConfiguration() {
@@ -37,11 +35,10 @@ public class LdapConfiguration {
 
     /**
      * Use for unit testing.
-     * 
-     * @param config
+     *
      */
-    public LdapConfiguration(Configuration config) {
-        this.config = config;
+    public LdapConfiguration(IdentityConfig identityConfig) {
+        this.identityConfig = identityConfig;
     }
 
     /**
@@ -50,7 +47,7 @@ public class LdapConfiguration {
      * @return
      */
     LDAPConnectionPool connection() {
-        String[] serverList = config.getStringArray("ldap.serverList");
+        String[] serverList = identityConfig.getStaticConfig().getLDAPServerList();
         String[] hosts = new String[0];
         int[] ports = new int[0];
         boolean isSSL = false;
@@ -64,37 +61,38 @@ public class LdapConfiguration {
                 hosts = (String[]) ArrayUtils.add(hosts, parts[0]);
                 // default LDAP port is 636
                 int port = parts.length > 1 && StringUtils.isNotBlank(parts[1]) ? Integer.valueOf(parts[1]) : DEFAULT_SERVER_PORT;
-                if(port != PORT && config.getBoolean("ldap.server.useSSL")) {
+                if(port != PORT && identityConfig.getStaticConfig().getLDAPServerUseSSL()) {
                 	isSSL = true;
                 }
                 ports = ArrayUtils.add(ports, port);
             }
         }
-        int initPoolSize = config.getInt("ldap.server.pool.size.init", SERVER_POOL_SIZE_INIT);
-        int maxPoolSize = config.getInt("ldap.server.pool.size.max", SERVER_POOL_SIZE_MAX);
-        String bindDn = config.getString("ldap.bind.dn");
-        String password = config.getString("ldap.bind.password");
+        int initPoolSize = identityConfig.getStaticConfig().getLDAPServerPoolSizeInit();
+        int maxPoolSize = identityConfig.getStaticConfig().getLDAPServerPoolSizeMax();
+        String bindDn = identityConfig.getStaticConfig().getLDAPServerBindDN();
+        String password = identityConfig.getStaticConfig().getLDAPServerBindPassword();
         Object[] params = {hosts, ports, initPoolSize, maxPoolSize};
         logger.debug("LDAP Config [address={}, port={}, connection_pool_init={}, connection_pool_max={}", params);
 
         LDAPConnectionPool connPool = null;
         try {
             SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
+            LDAPConnectionOptions ldapConnectionOptions = new LDAPConnectionOptions();
+            ldapConnectionOptions.setAllowConcurrentSocketFactoryUse(identityConfig.getStaticConfig().getLDAPServerPoolAllowConcurrentSocketFactoryUse());
             ServerSet serverSet;
             if(isSSL) {
-				serverSet = new RoundRobinServerSet(hosts, ports, sslUtil.createSSLSocketFactory());
+				serverSet = new RoundRobinServerSet(hosts, ports, sslUtil.createSSLSocketFactory(), ldapConnectionOptions);
             } else {
-            	serverSet = new RoundRobinServerSet(hosts, ports);
+            	serverSet = new RoundRobinServerSet(hosts, ports, ldapConnectionOptions);
             }
             BindRequest bind = new SimpleBindRequest(bindDn, password);
             connPool = new LDAPConnectionPool(serverSet, bind, initPoolSize, maxPoolSize);
             connPool.setRetryFailedOperationsDueToInvalidConnections(true);
-
-            int maxConnectionAge = config.getInt("ldap.server.pool.age.max", -1);
-            if (maxConnectionAge >= 0) {
-                connPool.setMaxConnectionAgeMillis(maxConnectionAge);
-            }
-
+            connPool.setMaxConnectionAgeMillis(identityConfig.getStaticConfig().getLDAPServerPoolAgeMax());
+            connPool.setCreateIfNecessary(identityConfig.getStaticConfig().getLDAPServerPoolCreateIfNecessary());
+            connPool.setMaxWaitTimeMillis(identityConfig.getStaticConfig().getLDAPServerPoolMaxWaitTime());
+            connPool.setHealthCheckIntervalMillis(identityConfig.getStaticConfig().getLDAPServerPoolHeathCheckInterval());
+            connPool.setCheckConnectionAgeOnRelease(identityConfig.getStaticConfig().getLDAPServerPoolCheckConnectionAgeOnRelease());
         } catch (LDAPException e) {
             logger.error(CONNECT_ERROR_STRING, e);
             throw new IllegalStateException(CONNECT_ERROR_STRING, e);

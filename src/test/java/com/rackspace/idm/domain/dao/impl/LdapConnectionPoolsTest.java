@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.LdapConfiguration;
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
@@ -36,6 +37,9 @@ public class LdapConnectionPoolsTest {
     @Autowired(required = false)
     Configuration config;
 
+    @Autowired
+    IdentityConfig identityConfig;
+
     LdapConnectionPools ldapConnectionPools;
 
     LDAPConnectionPool appConnectionPool;
@@ -46,7 +50,7 @@ public class LdapConnectionPoolsTest {
 
     @Before
     public void setUp() throws Exception {
-        LdapConfiguration ldapConfiguration = new LdapConfiguration(config);
+        LdapConfiguration ldapConfiguration = new LdapConfiguration(identityConfig);
         LdapConnectionPools connectionPools  = ldapConfiguration.connectionPools();
         appConnectionPool = connectionPools.getAppConnPool();
         bindConnectionPool = connectionPools.getBindConnPool();

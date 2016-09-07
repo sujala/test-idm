@@ -391,6 +391,35 @@ public class IdentityConfig {
     private static final String SQL_SHOW_SQL_PROP = "sql.showSql";
     private static final Boolean SQL_SHOW_DEFAULT = Boolean.FALSE;
 
+    private static final String LDAP_SERVER_LIST_PROP = "ldap.serverList";
+    private static final String LDAP_SERVER_USE_SSL_PROP = "ldap.server.useSSL";
+    private static final String LDAP_SERVER_BIND_DN_PROP = "ldap.bind.dn";
+    private static final String LDAP_SERVER_BIND_PASSWORD_PROP = "ldap.bind.password";
+
+    private static final String LDAP_SERVER_POOL_SIZE_INIT_PROP = "ldap.server.pool.size.init";
+    private static final int LDAP_SERVER_POOL_SIZE_INIT_DEFAULT = 1;
+
+    private static final String LDAP_SERVER_POOL_SIZE_MAX_PROP = "ldap.server.pool.size.max";
+    private static final int LDAP_SERVER_POOL_SIZE_MAX_DEFAULT = 100;
+
+    private static final String LDAP_SERVER_POOL_AGE_MAX_PROP = "ldap.server.pool.age.max";
+    private static final int LDAP_SERVER_POOL_AGE_MAX_DEFAULT = 0;
+
+    private static final String LDAP_SERVER_POOL_CREATE_IF_NECESSARY_PROP = "ldap.server.pool.create.if.necessary";
+    private static final boolean LDAP_SERVER_POOL_CREATE_IF_NECESSARY_DEFAULT = true;
+
+    private static final String LDAP_SERVER_POOL_MAX_WAIT_TIME_PROP = "ldap.server.pool.max.wait.time";
+    private static final long LDAP_SERVER_POOL_MAX_WAIT_TIME_DEFAULT = 0L;
+
+    private static final String LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP = "ldap.server.pool.health.check.interval";
+    private static final long LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_DEFAULT = 60000L;
+
+    private static final String LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_PROP = "ldap.server.pool.check.connection.age.on.release";
+    private static final boolean LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_DEFAULT = false;
+
+    private static final String LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP = "ldap.server.pool.allow.concurrent.socketfactory.use";
+    private static final boolean LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT = false;
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -534,6 +563,16 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP, FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_DEFAULT);
 
+
+        defaults.put(LDAP_SERVER_POOL_SIZE_INIT_PROP, LDAP_SERVER_POOL_SIZE_INIT_DEFAULT);
+        defaults.put(LDAP_SERVER_POOL_SIZE_MAX_PROP, LDAP_SERVER_POOL_SIZE_MAX_DEFAULT);
+        defaults.put(LDAP_SERVER_POOL_AGE_MAX_PROP, LDAP_SERVER_POOL_AGE_MAX_DEFAULT);
+        defaults.put(LDAP_SERVER_POOL_CREATE_IF_NECESSARY_PROP, LDAP_SERVER_POOL_CREATE_IF_NECESSARY_DEFAULT);
+        defaults.put(LDAP_SERVER_POOL_MAX_WAIT_TIME_PROP, LDAP_SERVER_POOL_MAX_WAIT_TIME_DEFAULT);
+        defaults.put(LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP, LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_DEFAULT);
+        defaults.put(LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_PROP, LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_DEFAULT);
+        defaults.put(LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT);
+
         return defaults;
     }
 
@@ -570,6 +609,12 @@ public class IdentityConfig {
         verifyAndLogStaticProperty(SQL_DRIVER_CLASS_NAME_PROP, REQUIRED);
         verifyAndLogStaticProperty(SQL_URL_PROP, REQUIRED);
 
+        verifyAndLogStaticProperty(LDAP_SERVER_LIST_PROP, REQUIRED);
+        verifyAndLogStaticProperty(LDAP_SERVER_USE_SSL_PROP, REQUIRED);
+        verifyAndLogStaticProperty(LDAP_SERVER_BIND_DN_PROP, REQUIRED);
+        verifyRequiredStaticProperty(LDAP_SERVER_BIND_PASSWORD_PROP);
+
+
         logFederatedTokenFormatOverrides();
 
         verifyAndLogReloadableProperty(GROUP_DOMAINID_DEFAULT, REQUIRED);
@@ -579,6 +624,13 @@ public class IdentityConfig {
         verifyAndLogReloadableProperty(IDENTITY_ROLE_TENANT_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(ENDPOINT_REGIONID_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(EMAIL_FROM_EMAIL_ADDRESS, OPTIONAL);
+    }
+
+    private void verifyRequiredStaticProperty(String property) {
+        String readProperty = staticConfiguration.getString(property);
+        if (readProperty == null) {
+            logger.error(String.format(PROPERTY_ERROR_MESSAGE, property, PropertyFileConfiguration.CONFIG_FILE_NAME));
+        }
     }
 
     private void verifyAndLogStaticProperty(String property, boolean required) {
@@ -636,6 +688,20 @@ public class IdentityConfig {
         } catch (ConversionException e) {
             logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
             return (Integer) defaultValue;
+        }
+    }
+
+    private Long getLongSafely(Configuration config, String prop) {
+        Object defaultValue = propertyDefaults.get(prop);
+        try {
+            if (defaultValue == null) {
+                return config.getLong(prop);
+            } else {
+                return config.getLong(prop, (Long) defaultValue);
+            }
+        } catch (NumberFormatException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+            return (Long) defaultValue;
         }
     }
 
@@ -1141,6 +1207,66 @@ public class IdentityConfig {
         @IdmProp(key = FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP, versionAdded = "3.5.0", description = "After how long of inactivity, in ms, a connection will be checked for validity.")
         public int getFeedsOnUseEvictionValidateAfterInactivity() {
             return getIntSafely(reloadableConfiguration, FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP);
+        }
+
+        @IdmProp(key = LDAP_SERVER_LIST_PROP, versionAdded = "1.0.14.8", description = "Comma or space delimited list of server addresses in host:port format, port default is 636")
+        public String[] getLDAPServerList() {
+            return staticConfiguration.getStringArray(LDAP_SERVER_LIST_PROP);
+        }
+
+        @IdmProp(key = LDAP_SERVER_USE_SSL_PROP, versionAdded = "1.0.14.8", description = "Specifies if the LDAP server should use SSL for the connection")
+        public boolean getLDAPServerUseSSL() {
+            return getBooleanSafely(staticConfiguration, LDAP_SERVER_USE_SSL_PROP);
+        }
+
+        @IdmProp(key = LDAP_SERVER_POOL_SIZE_INIT_PROP, versionAdded = "1.0.14.8", description = "The number of connections to initially establish when the pool is created.  It must be greater than or equal to zero.")
+        public int getLDAPServerPoolSizeInit() {
+            return getIntSafely(staticConfiguration, LDAP_SERVER_POOL_SIZE_INIT_PROP);
+        }
+
+        @IdmProp(key = LDAP_SERVER_POOL_SIZE_MAX_PROP, versionAdded = "1.0.14.8", description = "The maximum number of connections that should be maintained in the pool.  It must be greater than or equal to the initial number of connections, and must not be zero.")
+        public int getLDAPServerPoolSizeMax() {
+            return getIntSafely(staticConfiguration, LDAP_SERVER_POOL_SIZE_MAX_PROP);
+        }
+
+        @IdmProp(key = LDAP_SERVER_BIND_DN_PROP, versionAdded = "1.0.14.8", description = "The bind DN for LDAP server simple bind requests.")
+        public String getLDAPServerBindDN() {
+            return getStringSafely(staticConfiguration, LDAP_SERVER_BIND_DN_PROP);
+        }
+
+        //@IdmProp(key = LDAP_SERVER_BIND_PASSWORD_PROP , versionAdded = "1.0.14.8", description = "The password for LDAP server simple bind request.")
+        public String getLDAPServerBindPassword() {
+            return getStringSafely(staticConfiguration, LDAP_SERVER_BIND_PASSWORD_PROP);
+        }
+
+        @IdmProp(key = LDAP_SERVER_POOL_AGE_MAX_PROP, versionAdded = "1.0.14.8", description = "Specifies the maximum length of time in milliseconds that a connection in this pool may be established before it should be closed and replaced with another connection.")
+        public int getLDAPServerPoolAgeMax() {
+            return getIntSafely(staticConfiguration, LDAP_SERVER_POOL_AGE_MAX_PROP);
+        }
+
+        @IdmProp(key = LDAP_SERVER_POOL_CREATE_IF_NECESSARY_PROP, versionAdded = "3.6.0", description = "Specifies whether the connection pool should create a new connection if one is requested when there are none available.")
+        public boolean getLDAPServerPoolCreateIfNecessary() {
+            return getBooleanSafely(staticConfiguration, LDAP_SERVER_POOL_CREATE_IF_NECESSARY_PROP);
+        }
+
+        @IdmProp(key = LDAP_SERVER_POOL_MAX_WAIT_TIME_PROP, versionAdded = "3.6.0", description = "Specifies the maximum length of time in milliseconds to wait for a connection to become available when trying to obtain a connection from the pool.")
+        public long getLDAPServerPoolMaxWaitTime() {
+            return getLongSafely(staticConfiguration, LDAP_SERVER_POOL_MAX_WAIT_TIME_PROP);
+        }
+
+        @IdmProp(key = LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP, versionAdded = "3.6.0", description = "Specifies the length of time in milliseconds between periodic background health checks against the available connections in this pool.")
+        public long getLDAPServerPoolHeathCheckInterval() {
+            return getLongSafely(staticConfiguration, LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP);
+        }
+
+        @IdmProp(key = LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_PROP, versionAdded = "3.6.0", description = "Specifies whether to check the age of a connection against the configured maximum connection age whenever it is released to the pool.")
+        public boolean getLDAPServerPoolCheckConnectionAgeOnRelease() {
+            return getBooleanSafely(staticConfiguration, LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_PROP);
+        }
+
+        @IdmProp(key = LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, versionAdded = "3.6.0", description = " Indicates whether to allow a socket factory instance to be used to create multiple sockets concurrently.")
+        public boolean getLDAPServerPoolAllowConcurrentSocketFactoryUse() {
+            return getBooleanSafely(staticConfiguration, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP);
         }
     }
 

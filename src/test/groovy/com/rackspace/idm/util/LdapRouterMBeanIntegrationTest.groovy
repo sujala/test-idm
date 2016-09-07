@@ -1,4 +1,6 @@
 package com.rackspace.idm.util
+
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.LdapConfiguration
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import org.apache.commons.configuration.Configuration
@@ -30,8 +32,8 @@ class LdapRouterMBeanIntegrationTest extends Specification {
     public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     def setup() {
-        initPoolSize = config.getInt("ldap.server.pool.size.init", LdapConfiguration.SERVER_POOL_SIZE_INIT);
-        maxPoolSize = config.getInt("ldap.server.pool.size.max", LdapConfiguration.SERVER_POOL_SIZE_MAX);
+        initPoolSize = config.getInt("ldap.server.pool.size.init", IdentityConfig.LDAP_SERVER_POOL_SIZE_INIT_DEFAULT);
+        maxPoolSize = config.getInt("ldap.server.pool.size.max", IdentityConfig.LDAP_SERVER_POOL_SIZE_MAX_DEFAULT );
     }
 
     def "get number of application available connections" (){

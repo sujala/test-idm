@@ -16,6 +16,7 @@ import static org.mockito.Mockito.*;
 public class LdapConfigurationTest {
     Configuration configuration;
     LdapConfiguration ldapConfiguration;
+    IdentityConfig identityConfig;
 
     @Rule
     public ConditionalIgnoreRule role = new ConditionalIgnoreRule();
@@ -23,7 +24,8 @@ public class LdapConfigurationTest {
     @Before
     public void setUp() throws Exception {
         configuration = mock(Configuration.class);
-        ldapConfiguration = new LdapConfiguration(configuration);
+        identityConfig = new IdentityConfig(configuration, configuration);
+        ldapConfiguration = new LdapConfiguration(identityConfig);
     }
 
     @Test
