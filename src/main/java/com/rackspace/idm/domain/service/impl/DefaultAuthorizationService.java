@@ -228,7 +228,8 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean authorizeCloudUser(ScopeAccess scopeAccess) {
-        BaseUser user = userService.getUserByScopeAccess(scopeAccess);
+        BaseUser userByScopeAccess = userService.getUserByScopeAccess(scopeAccess);
+        BaseUser user = userByScopeAccess;
         if (!authorizeUserAccess(user)) {
             return false;
         }

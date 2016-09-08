@@ -1005,6 +1005,13 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
+    /**
+     *
+     * @deprecated use IdentityUserService services instead as it supports federated users
+     * @param id
+     * @return
+     */
+    @Deprecated
     @Override
     public User checkAndGetUserById(String id) {
         User user = getUserById(id);
