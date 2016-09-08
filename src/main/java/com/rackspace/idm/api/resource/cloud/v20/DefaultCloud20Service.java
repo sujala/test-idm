@@ -111,6 +111,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String ROLE_ID_NOT_FOUND_ERROR_MESSAGE = "Role with ID %s not found.";
 
+    public static final String USER_NOT_FOUND_ERROR_MESSAGE = "User with ID %s not found.";
+
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -2411,7 +2413,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserLevelAccess(callersScopeAccess);
             User user = this.userService.getUserById(userId);
             if (user == null) {
-                String errMsg = "No Roles found User with id: " + userId;
+                String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
                 logger.warn(errMsg);
                 throw new NotFoundException(errMsg);
             }
@@ -2431,7 +2433,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (!user.getId().equals(caller.getId()) &&
                         !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName())) {
 
-                    precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+                    precedenceValidator.verifyCallerPrecedenceOverUserForListGlobalRoles(caller, user);
 
                     IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(caller);
                     if (userType.isDomainBasedAccessLevel() && !caller.getDomainId().equals(user.getDomainId())) {
