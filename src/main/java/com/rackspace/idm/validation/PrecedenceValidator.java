@@ -2,6 +2,7 @@ package com.rackspace.idm.validation;
 
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.domain.service.RoleService;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
@@ -61,6 +62,23 @@ public class PrecedenceValidator {
         ClientRole userIdentityRole = applicationService.getUserIdentityRole((EndUser) user);
         if (callerIdentityRole != null) {
             if (userIdentityRole != null) {
+                compareWeights(callerIdentityRole.getRsWeight(), userIdentityRole.getRsWeight());
+            }
+        } else {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+    }
+
+    public void verifyCallerPrecedenceOverUserForListGlobalRoles(BaseUser caller, BaseUser user) {
+        if (!(caller instanceof EndUser && user instanceof EndUser)) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
+        ClientRole callerIdentityRole = applicationService.getUserIdentityRole((EndUser) caller);
+        ClientRole userIdentityRole = applicationService.getUserIdentityRole((EndUser) user);
+        if (callerIdentityRole != null && userIdentityRole != null) {
+            // Allow users with user-manager role to list roles for other user-managers.
+            if(!(callerIdentityRole.getName().equals(IdentityUserTypeEnum.USER_MANAGER.getRoleName())
+                    && callerIdentityRole.equals(userIdentityRole))) {
                 compareWeights(callerIdentityRole.getRsWeight(), userIdentityRole.getRsWeight());
             }
         } else {

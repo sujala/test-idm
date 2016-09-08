@@ -1,8 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.security.IdentityRole
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ApplicationService
@@ -12,12 +10,13 @@ import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import spock.lang.Ignore
 import spock.lang.Shared
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import com.sun.jersey.api.client.ClientResponse
 
@@ -155,7 +154,7 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(userAdmin)
     }
 
-    def "acl test: user managers can not list roles for other user-managers within domain"() {
+    def "acl test: user managers can list roles for other user-managers within domain"() {
         //create a user admin and 2 sub-users
         def userAdmin = createUserAdmin()
         def userAdminToken = authenticate(userAdmin.username)
@@ -186,7 +185,7 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         def response = cloud20.listUserGlobalRoles(userManagerToken, userManager2.getId())
 
         then:
-        response.status == HttpStatus.FORBIDDEN.value
+        response.status == HttpStatus.OK.value()
 
         cleanup:
         deleteUserQuietly(userManager2)
@@ -194,6 +193,38 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         deleteRoleQuietly(role1)
         deleteRoleQuietly(role2)
         deleteUserQuietly(userAdmin)
+    }
+
+    def "User managers can not list roles for other user-managers on different domains"() {
+        given: "Two user-manager in different domains"
+        // Two user-admin users
+        def userAdmin = createUserAdmin()
+        def userAdminToken = authenticate(userAdmin.username)
+        def userAdmin2 = createUserAdmin()
+        def userAdminToken2 = authenticate(userAdmin2.username)
+
+        // Two user-manager users
+        def userManager = createDefaultUser(userAdminToken)
+        def userManagerToken = authenticate(userManager.username)
+        def userManager2 = createDefaultUser(userAdminToken2)
+
+        ClientRole cloudIdentityUserManageRole = getUserManageRole()
+
+        //add user-manage role to user-manager
+        addRoleToUser(userAdminToken, userManager, cloudIdentityUserManageRole)
+        addRoleToUser(userAdminToken2, userManager2, cloudIdentityUserManageRole)
+
+        when: "When list roles"
+        def response = cloud20.listUserGlobalRoles(userManagerToken, userManager2.getId())
+
+        then:
+        response.status == HttpStatus.FORBIDDEN.value()
+
+        cleanup:
+        deleteUserQuietly(userManager2)
+        deleteUserQuietly(userManager)
+        deleteUserQuietly(userAdmin)
+        deleteUserQuietly(userAdmin2)
     }
 
     def "acl test: user managers can not list roles for user-admin users within domain"() {
@@ -257,6 +288,19 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
             utils.deleteUsers(users)
         } catch (Exception ex) {/*ignore*/
         }
+    }
+
+    def "Test invalid user Id on list user global roles"() {
+        given: "Admin user and invalid role id"
+        def adminToken = utils.getIdentityAdminToken()
+        def userId = "invalid"
+
+        when: "When list roles"
+        def response = cloud20.listUserGlobalRoles(adminToken, userId)
+
+        then: "Assert NotFound"
+        String expectedErrMsg = String.format(DefaultCloud20Service.USER_NOT_FOUND_ERROR_MESSAGE, userId)
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.NOT_FOUND.value(), expectedErrMsg)
     }
 
     private ClientRole getUserManageRole() {
