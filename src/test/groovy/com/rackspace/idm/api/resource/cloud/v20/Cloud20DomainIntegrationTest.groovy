@@ -644,6 +644,25 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         response.status == 200
     }
 
+    def "Add tenant to disabled domain"() {
+        given: "Disabled domain and tenant"
+        def tenant = utils.createTenant()
+        def domainId = testUtils.getRandomUUID('domain')
+        def domainForCreate = v2Factory.createDomain(domainId, domainId)
+        domainForCreate.enabled = false
+        def domain = utils.createDomain(domainForCreate)
+
+        when: "Add tenant to domain"
+        def response = cloud20.addTenantToDomain(utils.getIdentityAdminToken(), domain.id, tenant.id)
+
+        then: "Assert tenant was added to domain"
+        response.status == 204
+
+        cleanup:
+        utils.deleteTenant(tenant)
+        utils.deleteDomain(domainId)
+    }
+
     def removeDomainFromUser(username) {
         def user = userService.checkAndGetUserByName(username)
         user.setDomainId(null)

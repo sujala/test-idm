@@ -12,6 +12,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
+import static com.rackspace.idm.JSONConstants.DOMAIN_ID;
+import static com.rackspace.idm.JSONConstants.TENANT_RAX_AUTH_DOMAIN_ID_PATH;
+import static com.rackspace.idm.JSONConstants.USER_RAX_AUTH_DOMAIN_ID_PATH;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -22,7 +28,9 @@ public class JSONReaderForTenant extends JSONReaderForEntity<Tenant> {
         Type genericType, Annotation[] annotations, MediaType mediaType,
         MultivaluedMap<String, String> httpHeaders, InputStream inputStream)
         throws IOException {
+        HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
+        prefixValues.put(TENANT_RAX_AUTH_DOMAIN_ID_PATH, DOMAIN_ID);
 
-        return read(inputStream, JSONConstants.TENANT);
+        return read(inputStream, JSONConstants.TENANT, prefixValues);
     }
 }
