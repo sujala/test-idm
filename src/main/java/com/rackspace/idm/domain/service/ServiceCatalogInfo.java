@@ -11,21 +11,27 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * This Class represents the service catalog for a user as well as the metadata for the service catalog.
+ * This includes the tenants, roles used to create the service catalog, the user's Identity user type. The
+ * IdentityUserTypeEnum is being included here because certain features of identity treat the service catalog
+ * differently for a user based on the user's type (ex. Terminator).
+ */
 @Getter
 public class ServiceCatalogInfo {
 
     private List<OpenstackEndpoint> userEndpoints;
     private List<TenantRole> userTenantRoles;
     private List<Tenant> userTenants;
+    private IdentityUserTypeEnum userTypeEnum;
 
-    public ServiceCatalogInfo() {
-        this(null, null, null);
-    }
+    public ServiceCatalogInfo() {}
 
-    public ServiceCatalogInfo( List<TenantRole> userTenantRoles, List<Tenant> userTenants, List<OpenstackEndpoint> userEndpoints) {
+    public ServiceCatalogInfo( List<TenantRole> userTenantRoles, List<Tenant> userTenants, List<OpenstackEndpoint> userEndpoints, IdentityUserTypeEnum userTypeEnum) {
         this.userTenantRoles = userTenantRoles == null ? Collections.EMPTY_LIST : Collections.unmodifiableList(new ArrayList<TenantRole>(userTenantRoles));
         this.userEndpoints = userEndpoints == null ? Collections.EMPTY_LIST : Collections.unmodifiableList(new ArrayList<OpenstackEndpoint>(userEndpoints));
         this.userTenants = userTenants == null ? Collections.EMPTY_LIST : Collections.unmodifiableList(new ArrayList<Tenant>(userTenants));
+        this.userTypeEnum = userTypeEnum;
     }
 
     /**
@@ -58,6 +64,17 @@ public class ServiceCatalogInfo {
         return null;
     }
 
+    public ServiceCatalogInfo filterEndpointsByTenant(Tenant tenant) {
+        List<OpenstackEndpoint> tenantEndpoints = new ArrayList<>();
+
+        for (OpenstackEndpoint endpoint : this.userEndpoints) {
+            if (tenant.getTenantId().equals(endpoint.getTenantId())) {
+                tenantEndpoints.add(endpoint);
+            }
+        }
+
+        return new ServiceCatalogInfo(userTenantRoles, userTenants, tenantEndpoints, userTypeEnum);
+    }
 
     /**
      * A predicate that will return true if the given tenant is enabled

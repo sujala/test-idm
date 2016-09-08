@@ -17,6 +17,8 @@ import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.email.EmailClient
+import com.rackspace.idm.api.resource.cloud.v20.AuthenticateResponseService
+import com.rackspace.idm.api.resource.cloud.v20.DefaultAuthenticateResponseService
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.api.security.DefaultRequestContextHolder
 import com.rackspace.idm.api.security.RequestContext
@@ -199,6 +201,7 @@ class RootServiceTest extends Specification {
     @Shared DefaultRequestContextHolder requestContextHolder
     @Shared TokenRevocationService tokenRevocationService
     @Shared CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator
+    @Shared DefaultAuthenticateResponseService authenticateResponseService
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -306,6 +309,11 @@ class RootServiceTest extends Specification {
         tokenConverter = Mock()
         tokenConverter.toToken(_, _) >> v2Factory.createToken()
         service.tokenConverterCloudV20 = tokenConverter
+    }
+
+    def mockAuthResponseService(service) {
+        authenticateResponseService = Mock()
+        service.authenticateResponseService = authenticateResponseService
     }
 
     def mockUserConverter(service) {

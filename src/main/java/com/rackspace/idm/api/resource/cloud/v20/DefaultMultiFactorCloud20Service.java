@@ -486,11 +486,8 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         authBySet.add(authByMethod.getValue());
 
         UserScopeAccess scopeAccess = scopeAccessService.updateExpiredUserScopeAccess(user, getCloudAuthClientId(), new ArrayList<String>(authBySet));
-        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
-        authResponseTuple.setUser(user);
-        authResponseTuple.setUserScopeAccess(scopeAccess);
 
-        return authResponseTuple;
+        return new AuthResponseTuple(user, scopeAccess);
     }
 
     /**

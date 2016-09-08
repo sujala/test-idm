@@ -952,6 +952,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
     }
 
     def "Duplicate tenant reference in roles doesn't create duplicate endpoints" (){
+        given:
+            mockAuthorizationService(service)
             def role = Mock(com.rackspace.idm.domain.entity.TenantRole)
             def listRoles = [role, role].asList()
             def token = Mock(ScopeAccess)
@@ -964,8 +966,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
             role.getTenantIds() >> ["1"].asList()
             endPoint.getBaseUrls() >> [Mock(CloudBaseUrl)].asList()
             endpointService.getOpenStackEndpointForTenant(_, _, _) >> endPoint
+
         when:
             def endPointList = service.getOpenstackEndpointsForScopeAccess(token)
+
         then:
             endPointList.size() == 1
     }
@@ -1094,7 +1098,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * applicationService.getById(_) >> application
-        result == expectedResult
+        result.getName() == expectedResult
 
         where:
         applicationType | expectedResult

@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.apache.commons.configuration.Configuration;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface AuthorizationService {
@@ -19,7 +20,6 @@ public interface AuthorizationService {
     boolean authorizeCloudUserAdmin(ScopeAccess scopeAccess);
     boolean authorizeUserManageRole(ScopeAccess scopeAccess);
     boolean authorizeCloudUser(ScopeAccess scopeAccess);
-    boolean authorizeIdmSuperAdminOrRackspaceClient(ScopeAccess scopeAccess);
     boolean authorizeIdmSuperAdmin(ScopeAccess scopeAccess);
 
     void checkAuthAndHandleFailure(boolean authorized, ScopeAccess token);
@@ -33,7 +33,6 @@ public interface AuthorizationService {
     boolean hasServiceAdminRole(EndUser user);
     boolean hasSameDomain(User caller, User retrievedUser);
 
-    void verifyIdmSuperAdminAccess(String authToken);
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
 
     /**
@@ -94,11 +93,12 @@ public interface AuthorizationService {
     IdentityUserTypeEnum getIdentityTypeRoleAsEnum(BaseUser baseUser);
 
     /**
-     * Given a serviceCatalogInfo object, determine the associated Identity role
-     * @param serviceCatalogInfo
+     * Given a collection of tenant roles associated with the user, determine the associated Identity role for that user
+     *
+     * @param userRoles
      * @return
      */
-    IdentityUserTypeEnum getIdentityTypeRoleAsEnum(ServiceCatalogInfo serviceCatalogInfo);
+    IdentityUserTypeEnum getIdentityTypeRoleAsEnum(Collection<TenantRole> userRoles);
 
     /**
      * Look up an identity role by id within the cache that is populated at node startup

@@ -415,32 +415,6 @@ public class DefaultCloud20ServiceOldTest {
         assertThat("response builder", ((DefaultRegionServices)responseBuilder.build().getEntity()).getServiceName().size(), equalTo(1));
     }
 
-//    @Test
-//    public void assignDefaultRegionToDomainUser_withNullRegion_assignsDefaultRegion() throws Exception {
-//        final User userDO = new User();
-//        defaultCloud20Service.assignDefaultRegionToDomainUser(userDO);
-//        assertThat("default region", userDO.getRegion(), equalTo("default"));
-//    }
-//
-//    @Test
-//    public void assignDefaultRegionToDomainUser_withRegion_assignsRegion() throws Exception {
-//        final User userDO = new User();
-//        userDO.setRegion("foo");
-//        defaultCloud20Service.assignDefaultRegionToDomainUser(userDO);
-//        assertThat("default region", userDO.getRegion(), equalTo("foo"));
-//    }
-
-    @Test
-    public void stripEndpoints_succeeds() throws Exception {
-        List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
-        List<CloudBaseUrl> cloudBaseUrls = new ArrayList<CloudBaseUrl>();
-        cloudBaseUrls.add(cloudBaseUrl);
-        OpenstackEndpoint endpoint = new OpenstackEndpoint();
-        endpoint.setBaseUrls(cloudBaseUrls);
-        endpoints.add(endpoint);
-        defaultCloud20Service.stripEndpoints(endpoints);
-    }
-
     @Test
     public void listExtensions_currentExtensionsIsNullResponseOk_returns200() throws Exception {
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.listExtensions(httpHeaders);
@@ -573,16 +547,6 @@ public class DefaultCloud20ServiceOldTest {
         when(exceptionHandler.exceptionResponse(argumentCaptor.capture())).thenReturn(responseBuilder);
         assertThat("response builder", defaultCloud20Service.getExtension(null, "RAX-KSKEY"), equalTo(responseBuilder));
         assertThat("exception type", argumentCaptor.getValue(), instanceOf(NullPointerException.class));
-    }
-
-    @Test
-    public void convertTenantEntityToApi_returnsTenantForAuthenticateResponse(){
-        Tenant test = new Tenant();
-        test.setName("test");
-        test.setTenantId("test");
-        TenantForAuthenticateResponse testTenant = defaultCloud20Service.convertTenantEntityToApi(test);
-        assertThat("Verify Tenant", testTenant.getId(), equalTo(test.getTenantId()));
-        assertThat("Verify Tenant", testTenant.getName(), equalTo(test.getName()));
     }
 
     @Test

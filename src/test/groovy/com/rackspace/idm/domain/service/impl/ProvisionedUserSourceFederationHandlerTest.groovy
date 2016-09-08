@@ -20,6 +20,7 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.IdentityUserService
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.ServiceCatalogInfo
@@ -263,7 +264,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> idp
         mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
-        mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints)
+        mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints, IdentityUserTypeEnum.DEFAULT_USER)
 
         when:
         provisionedUserSourceFederationHandler.processRequestForProvider(samlResponseDecorator, idp)
@@ -581,7 +582,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
         mockDomainService.getDomainAdmins(_) >> [new User()].asList()
-        mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints)
+        mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints, IdentityUserTypeEnum.DEFAULT_USER)
         mockAuthorizationService.restrictUserAuthentication(_, _) >> false
 
         and:
@@ -753,7 +754,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         1 * mockFederatedUserDao.addUser(_, _)
         1 * mockScopeAccessService.addUserScopeAccess(_, _)
         1 * mockTenantService.addTenantRolesToUser(_,_)
-        1 * mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints)
+        1 * mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints, IdentityUserTypeEnum.DEFAULT_USER)
 
         authInfo.token != null
         authInfo.endpoints == endpoints
@@ -773,7 +774,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
         reloadableConfig.getIdentityFederationMaxUserCountPerDomainForIdp(_) >> 1000
         mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
-        mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints)
+        mockScopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo(roles, tenants, endpoints, IdentityUserTypeEnum.DEFAULT_USER)
         mockAuthorizationService.restrictUserAuthentication(_, _) >> false
 
         when:

@@ -67,20 +67,29 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Autowired
     private UserService userService;
+
     @Autowired
     private TenantService tenantService;
+
     @Autowired
     private EndpointService endpointService;
+
     @Autowired
     private AuthHeaderHelper authHeaderHelper;
+
     @Autowired
     private ApplicationService applicationService;
+
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private AuthorizationService authorizationService;
 
     @Lazy
     @Autowired
     private AtomHopperClient atomHopperClient;
+
     @Autowired
     private IdentityUserService identityUserService;
 
@@ -109,7 +118,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         // Second get the tenants from each of those roles
-        HashMap<Tenant, String> tenants = getTenants(roles);
+        Map<Tenant, OpenstackType> tenants = getTenantsAndOpenstackTypesForRoles(roles);
 
         // Third get the endppoints for each tenant
         for (Tenant tenant : tenants.keySet()) {
@@ -132,15 +141,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser) {
-        final List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
-        final List<Tenant> tenants = new ArrayList<Tenant>();
+        final List<OpenstackEndpoint> endpoints = new ArrayList<>();
+        final List<Tenant> tenants = new ArrayList<>();
 
         // First get the tenantRoles for the token
         final List<TenantRole> tenantRoles = this.tenantService.getTenantRolesForUser(baseUser);
 
         // Second get the tenants from each of those roles
         if (CollectionUtils.isNotEmpty(tenantRoles)) {
-            final HashMap<Tenant, String> tenantMap = getTenants(tenantRoles);
+            final Map<Tenant, OpenstackType> tenantMap = getTenantsAndOpenstackTypesForRoles(tenantRoles);
             CollectionUtils.addAll(tenants, tenantMap.keySet());
 
             String region = null;
@@ -158,18 +167,22 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             }
         }
 
-        return new ServiceCatalogInfo(tenantRoles, tenants, endpoints);
+        IdentityUserTypeEnum userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);
+        return new ServiceCatalogInfo(tenantRoles, tenants, endpoints, userTypeEnum);
     }
 
-
-    private HashMap<Tenant, String> getTenants(List<TenantRole> roles) {
-        HashMap<Tenant, String> tenants = new HashMap<Tenant, String>();
-        List<String> tenantIdList = new ArrayList<String>();
+    /**
+     * Given a Collection of roles, returns a Map containing all referenced tenants (by the role.tenantId relationship)
+     * with keys as the tenant and the value as the openstack type (MOSSO, NAST, other) as the value
+     */
+    private Map<Tenant, OpenstackType> getTenantsAndOpenstackTypesForRoles(Collection<TenantRole> roles) {
+        HashMap<Tenant, OpenstackType> tenants = new HashMap<>();
+        Set<String> tenantIds = new HashSet<>();
         for (TenantRole role : roles) {
             if (role.getTenantIds() != null) {
                 for (String tenantId : role.getTenantIds()) {
-                    if(!tenantIdList.contains(tenantId)){
-                        tenantIdList.add(tenantId);
+                    if(!tenantIds.contains(tenantId)) {
+                        tenantIds.add(tenantId);
                         Tenant tenant = this.tenantService.getTenant(tenantId);
                         if (tenant != null) {
                             tenants.put(tenant, getOpenStackType(role));
@@ -197,7 +210,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return config.getBoolean(FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_PROP_NAME, FEATURE_AUTHENTICATION_TOKEN_DELETE_FAILURE_STOPS_CLEANUP_DEFAULT_VALUE);
     }
 
-    private String getOpenStackType(TenantRole role) {
+    private OpenstackType getOpenStackType(TenantRole role) {
         String type = null;
 
         Application client = applicationService.getById(role.getClientId());
@@ -211,7 +224,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 }
             }
         }
-        return type;
+
+        return new OpenstackType(type);
     }
 
     private String getRegion(ScopeAccess token) {
@@ -845,11 +859,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                     userAuthenticationResult.getAuthenticatedBy());
         }
 
-        AuthResponseTuple authResponseTuple = new AuthResponseTuple();
-        authResponseTuple.setUser((User)userAuthenticationResult.getUser());
-        authResponseTuple.setUserScopeAccess(sa);
-
-        return authResponseTuple;
+        return new AuthResponseTuple((User)userAuthenticationResult.getUser(), sa);
     }
 
     private void deleteExpiredScopeAccessesExceptForMostRecent(Iterable<ScopeAccess> scopeAccessList, ScopeAccess mostRecent) {

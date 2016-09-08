@@ -1680,24 +1680,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.build().status == 204
     }
 
-    def "checkDomainFromAuthRequest returns domain"() {
-        given:
-        def domain = v1Factory.createDomain()
-        def list = [ domain ].asList()
-        def authRequest = v2Factory.createAuthenticationRequest("tenantId", "tenantName", null).with {
-            it.any = list
-            return it
-        }
-
-        when:
-        def response = service.checkDomainFromAuthRequest(authRequest)
-
-        then:
-        response.description.equals(domain.getDescription())
-        response.id.equals(domain.getId())
-        response.name.equals(domain.getName())
-    }
-
     def "method getAccessibleDomainsEndpointsForUser gets endpoints by user"() {
         given:
         allowUserAccess()
@@ -1744,250 +1726,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         response.status == 400
-    }
-
-    def "authenticate without tenantAccess returns 401 (notAuthenticated)"() {
-        given:
-        def authRequestWithTenantName = v2Factory.createAuthenticationRequest("tokenString", "", "tenantName")
-        def authRequestWithTenantId = v2Factory.createAuthenticationRequest("tokenString", "tenantId", "")
-
-        authWithToken.authenticate(_) >> new AuthResponseTuple().with {
-            it.user = entityFactory.createUser()
-            return it
-        }
-
-        scopeAccessService.getServiceCatalogInfo(_) >> new ServiceCatalogInfo()
-
-        when:
-        def response1 = service.authenticate(headers, authRequestWithTenantName).build()
-        def response2 = service.authenticate(headers, authRequestWithTenantId).build()
-
-        then:
-        response1.status == 401
-        response2.status == 401
-    }
-
-    def "authenticate with tenantAccess and all credential types succeeds"() {
-        given:
-        mockTokenConverter(service)
-        mockAuthConverterCloudV20(service)
-
-        def passwordCred = v2Factory.createJAXBPasswordCredentialsBase("username", "Password1")
-        def apiKeyCred = v1Factory.createJAXBApiKeyCredentials("username", "apiKey")
-
-        def passwordAuthRequest = v2Factory.createAuthenticationRequest("", "", passwordCred)
-        def apiKeyAuthRequest = v2Factory.createAuthenticationRequest("", "", apiKeyCred)
-        def tokenAuthRequest = v2Factory.createAuthenticationRequest("tokenString", "", "")
-
-        def user = entityFactory.createUser()
-
-        def authResponseTuple = new AuthResponseTuple().with {
-            it.user = user
-            it.userScopeAccess = createUserScopeAccess()
-            return it
-        }
-
-        def userAuthenticationResult = new UserAuthenticationResult(user, true)
-
-        scopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> [].asList()
-        scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
-
-        when:
-        def res1 = service.authenticate(headers, tokenAuthRequest).build()
-        def res2 = service.authenticate(headers, passwordAuthRequest).build()
-        def res3 = service.authenticate(headers, apiKeyAuthRequest).build()
-
-        then:
-        authWithToken.authenticate(_) >> authResponseTuple
-        authWithPasswordCredentials.authenticate(_) >> userAuthenticationResult
-        scopeAccessService.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple
-        authWithApiKeyCredentials.authenticate(_) >> userAuthenticationResult
-        scopeAccessService.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple
-
-        res1.status == 200
-        res2.status == 200
-        res3.status == 200
-    }
-
-    def "buildAuthResponse gets service catalog for User"() {
-        given:
-        mockAuthConverterCloudV20(service)
-        mockTokenConverter(service)
-
-        def userScopeAccess = createUserScopeAccess()
-        def user = entityFactory.createUser()
-        def authRequest = v2Factory.createAuthenticationRequest("token", "", "")
-
-        when:
-        service.buildAuthResponse(userScopeAccess, null, user, authRequest)
-
-        then:
-        1 * scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
-    }
-
-    def "buildAuthResponse (pre-terminator) adds tenant to response if tenant ID is specified in request and user has access to tenant"() {
-        given:
-        mockAuthConverterCloudV20(service)
-        mockTokenConverter(service)
-
-        def userScopeAccess = createUserScopeAccess()
-        def user = entityFactory.createUser()
-        def tenantId = "tenantId"
-        def tenant = new Tenant().with {
-            it.tenantId = tenantId
-            it
-        }
-        def authRequest = v2Factory.createAuthenticationRequest("token", "$tenantId", "")
-
-        def endpoint1 = new OpenstackEndpoint().with({
-            it.tenantId = tenantId
-            it.baseUrls = [].asList()
-            it
-        })
-        def endpoint2 = new OpenstackEndpoint().with({
-            it.tenantId = tenantId
-            it.baseUrls = [].asList()
-            it
-        })
-
-        scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo(null, [tenant], [endpoint1, endpoint2].asList())
-        tenantService.hasTenantAccess(_, _) >> true
-
-        when:
-        def response = service.buildAuthResponse(userScopeAccess, null, user, authRequest)
-
-        then:
-        response.token.tenant.id == tenantId
-    }
-
-    def "buildAuthResponse (post-terminator) adds tenant to response if tenant ID is specified in request and user has access"() {
-        given:
-        mockAuthConverterCloudV20(service)
-        mockTokenConverter(service)
-
-        def userScopeAccess = createUserScopeAccess()
-        def user = entityFactory.createUser()
-        def tenantId = "tenantId"
-        def tenant = new Tenant().with {
-            it.tenantId = tenantId
-            it
-        }
-        def authRequest = v2Factory.createAuthenticationRequest("token", "$tenantId", "")
-
-        def endpoint1 = new OpenstackEndpoint().with({
-            it.tenantId = tenantId
-            it.baseUrls = [].asList()
-            it
-        })
-        def endpoint2 = new OpenstackEndpoint().with({
-            it.tenantId = tenantId
-            it.baseUrls = [].asList()
-            it
-        })
-
-        scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo(null, [tenant], [endpoint1, endpoint2].asList())
-
-        when:
-        def response = service.buildAuthResponse(userScopeAccess, null, user, authRequest)
-
-        then:
-        response.token.tenant.id == tenantId
-    }
-
-    def "buildAuthResponse does not add tenant to response if tenant ID is not specified in request"() {
-        given:
-        mockAuthConverterCloudV20(service)
-        mockTokenConverter(service)
-
-        def userScopeAccess = createUserScopeAccess()
-        def user = entityFactory.createUser()
-        def tenantId = "tenantId"
-        def tenant = new Tenant().with {
-            it.tenantId = tenantId
-            it
-        }
-
-        def authRequest = v2Factory.createAuthenticationRequest("token", null, "")
-        scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo(null, [tenant], null)
-
-        when:
-        def response = service.buildAuthResponse(userScopeAccess, null, user, authRequest)
-
-        then:
-        StringUtils.isEmpty(response.token.tenant.id)
-    }
-
-    def "buildAuthResponse gets converted token for impersonated users"() {
-        given:
-        mockAuthConverterCloudV20(service)
-        mockTokenConverter(service)
-
-        def impersonatedScopeAccess = createUserScopeAccess()
-        def user = entityFactory.createUser()
-        def authRequest = v2Factory.createAuthenticationRequest("token", "", "")
-
-        scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
-
-        when:
-        service.buildAuthResponse(null, impersonatedScopeAccess, user, authRequest)
-
-        then:
-        1 * tokenConverter.toToken(impersonatedScopeAccess, _)
-    }
-
-    def "validateToken when caller token is racker token gets tenantRoles and rackerRoles by user"() {
-        given:
-        mockTokenConverter(service)
-        mockUserConverter(service)
-        allowRackerAccess()
-
-        def racker = entityFactory.createRacker()
-
-        when:
-        service.validateToken(headers, authToken, "tokenId", "tenantId")
-
-        then:
-        1 * userService.getRackerByRackerId(_) >> racker
-        1 * tenantService.getEphemeralRackerTenantRoles(racker.id) >> [].asList()
-    }
-
-    def "validateToken when caller token is user token gets tenantRoles by user"() {
-        given:
-        mockTokenConverter(service)
-        mockUserConverter(service)
-        allowUserAccess()
-
-        def user = entityFactory.createUser()
-
-        when:
-        service.validateToken(headers, authToken, "tokenId", "tenantId")
-
-        then:
-        1 * userService.getUserByScopeAccess(_) >> user
-        1 * tenantService.getTenantRolesForUser(user) >> [].asList()
-    }
-
-    def "validateToken when caller token is impersonated gets tenantRoles for user being impersonated"() {
-        given:
-        mockTokenConverter(service)
-        mockUserConverter(service)
-        def scopeAccess = createImpersonatedScopeAccess()
-        def impersonatedToken = createUserScopeAccess()
-        scopeAccessService.getScopeAccessByAccessToken(scopeAccess.accessTokenString) >> scopeAccess
-        scopeAccessService.getScopeAccessByAccessToken(scopeAccess.impersonatingToken) >> impersonatedToken
-
-        def impersonator = entityFactory.createUser()
-        def user = entityFactory.createUser()
-        userConverter.toUserForAuthenticateResponse(_, _) >> v2Factory.createUserForAuthenticateResponse()
-
-        when:
-        service.validateToken(headers, scopeAccess.accessTokenString, scopeAccess.accessTokenString, "tenantId")
-
-        then:
-        1 * userService.getUserByScopeAccess(_) >> impersonator
-        1 * identityUserService.getEndUserById(_) >> user
-        1 * tenantService.getTenantRolesForUser(user) >> [].asList()
-        1 * tenantService.getGlobalRolesForUser(impersonator) >> [].asList()
     }
 
     def "listCredentials verifies user level access"() {
@@ -2403,7 +2141,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             assert (arg3.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD))
             createRackerScopeAcccss()
         }
-        1 * authConverter.toAuthenticationResponse(_, _, _, _) >> new AuthenticateResponse()
     }
 
     def "authenticateFederatedDomain sets token authenticatedBy with rsa credentials"() {
@@ -2431,7 +2168,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             assert (arg4.contains(GlobalConstants.AUTHENTICATED_BY_RSAKEY))
             createRackerScopeAcccss()
         } >> rackerToken
-        1 * authConverter.toAuthenticationResponse(_, _, _, _) >> new AuthenticateResponse()
+        1 * authConverter.toRackerAuthenticationResponse(_, _, _, _) >> new AuthenticateResponse()
     }
 
     def "calling getUserByEmail returns the user"() {
@@ -3817,6 +3554,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockRoleService(service);
         mockIdentityUserService(service)
         mockIdentityConfig(service)
+        mockAuthResponseService(service)
     }
 
     def mockMisc() {

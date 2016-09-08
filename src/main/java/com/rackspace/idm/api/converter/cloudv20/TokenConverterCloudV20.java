@@ -68,10 +68,9 @@ public class TokenConverterCloudV20 {
         return token;
     }
 
-    // TODO: Used for single tenant (mosso) in the response, future may be a list -- see below
-    TenantForAuthenticateResponse toTenantForAuthenticateResponse(List<TenantRole> tenantRoleList) {
+    private TenantForAuthenticateResponse toTenantForAuthenticateResponse(List<TenantRole> tenantRoleList) {
         for (TenantRole tenantRole : tenantRoleList) {
-            // TODO: Check for other names? This is to match the Mosso Type. This is a hack!!
+            // TODO: This is to match the Mosso Type. This is a hack!!
             // trying to identify the mosso tenant, and any tenant that has the role "compute:default"
             // is deemed the mosso tenant. In the future we will get rid of this completely by allowing
             // multiple tenants in the token response. We are stuck because the contract controlled by openstack.
@@ -112,7 +111,4 @@ public class TokenConverterCloudV20 {
         return null;
     }
 
-    public void setObjFactories(JAXBObjectFactories objFactories) {
-        this.objFactories = objFactories;
-    }
 }

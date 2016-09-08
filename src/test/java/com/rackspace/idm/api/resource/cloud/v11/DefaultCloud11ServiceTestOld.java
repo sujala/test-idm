@@ -49,12 +49,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Hector
- * Date: 10/18/11
- * Time: 6:19 PM
- */
+
 public class DefaultCloud11ServiceTestOld {
 
     AuthorizationService authorizationService;
@@ -458,15 +453,6 @@ public class DefaultCloud11ServiceTestOld {
     public void getExtension_invalidExtension_throwsNotFoundException() throws IOException{
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "INVALID");
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
-    }
-
-    @Ignore //we have no extensions at the moment.
-    @Test
-    public void getExtension_withExtensions_addsAliasToExtensionMap() throws IOException{
-        defaultCloud11Service.extensions(httpHeaders);
-        Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
-
     }
 
     @Test(expected = CloudAdminAuthorizationException.class)

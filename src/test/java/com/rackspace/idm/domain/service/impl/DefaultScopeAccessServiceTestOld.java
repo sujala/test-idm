@@ -35,12 +35,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Hector
- * Date: 5/31/12
- * Time: 10:30 AM
- */
+
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultScopeAccessServiceTestOld {
 
@@ -72,31 +67,6 @@ public class DefaultScopeAccessServiceTestOld {
         when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
         when(configuration.getInt("token.cloudAuthExpirationSeconds")).thenReturn(86400);
         when(configuration.getInt("token.refreshWindowHours")).thenReturn(12);
-    }
-
-    @Test
-    public void getOpenStackEndpointsForScopeAccess_tokenNotInstanceOfDelegatedClientScopeAccess_setsParentUniqueId() throws Exception {
-        ScopeAccess token = new UserScopeAccess();
-        token.setUniqueId("cn=rdn,dc=parent");
-        when(tenantService.getTenantRolesForUser(null)).thenReturn(null);
-        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantService).getTenantRolesForUser(any(BaseUser.class));
-    }
-
-    @Test
-    public void getOpenStackEndpointsForScopeAccess_tokenNotInstanceOfDelegatedClientScopeAccessAndFails_stillPasses() throws Exception {
-        ScopeAccess token = new UserScopeAccess();
-        when(tenantService.getTenantRolesForUser(null)).thenReturn(null);
-        defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        verify(tenantService).getTenantRolesForUser(any(BaseUser.class));
-    }
-
-    @Test
-    public void getOpenStackEndpointsForScopeAccess_rolesNull_returnsEmptyList() throws Exception {
-        ScopeAccess token = new UserScopeAccess();
-        when(tenantService.getTenantRolesForUser(null)).thenReturn(null);
-        List<OpenstackEndpoint> endpoints = defaultScopeAccessService.getOpenstackEndpointsForScopeAccess(token);
-        assertThat("size", endpoints.size(),equalTo(0));
     }
 
     @Test
