@@ -11,6 +11,7 @@ import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
 import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
+import org.joda.time.DateTime;
 
 import javax.validation.constraints.NotNull;
 import java.util.*;
@@ -95,6 +96,20 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
      */
     public boolean isDisabled() {
         return false;
+    }
+
+    /**
+     * A federated user is considered expired if the expiredTimestamp is either null or contains a date before "now"
+     *
+     * @return
+     */
+    public boolean isExpired() {
+        if (expiredTimestamp == null) {
+            // If user doesn't have expired timestamp, is considered expired.
+            return true;
+        }
+        DateTime expirationDate = new DateTime(expiredTimestamp);
+        return expirationDate.isBeforeNow();
     }
 
     @Override

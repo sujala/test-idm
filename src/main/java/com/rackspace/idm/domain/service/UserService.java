@@ -82,6 +82,12 @@ public interface UserService {
 
     BaseUser getUserByScopeAccess(ScopeAccess scopeAccess, boolean checkUserDisabled);
 
+    /**
+     * Retrieve the user (racker, provisioned, federated) associated with the token
+     *
+     * @param scopeAccess
+     * @return
+     */
     BaseUser getUserByScopeAccess(ScopeAccess scopeAccess);
 
     boolean isUsernameUnique(String username);

@@ -38,6 +38,7 @@ import org.opensaml.xml.signature.Signature
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.IdentityFault
+import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -1055,7 +1056,6 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         }
     }
 
-
     def void verifyResponseFromSamlRequest(authResponse, expectedUserName, User userAdminEntity, List<ClientRole> expectedRbacRoles = Collections.EMPTY_LIST, List<ClientRole> notExpectedRbacRoles = Collections.EMPTY_LIST) {
         //check the user object
         assert authResponse.user.id != null
@@ -1505,6 +1505,38 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         then:
         response.status == 403
         response.getEntity(IdentityFault).value.message == ProvisionedUserSourceFederationHandler.NO_USER_ADMIN_FOR_DOMAIN_ERROR_MESSAGE
+    }
+
+    def "fed user can get admin for own domain"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        samlResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
+
+        when: "retrieve admin for fed user"
+        def response = cloud20.getAdminsForUser(authResponse.token.id, authResponse.user.id)
+
+        then: "get admin"
+        response.status == HttpStatus.SC_OK
+        def admins = response.getEntity(UserList).value
+        admins.getUser().size == 1
+        admins.getUser().getAt(0).id == userAdminEntity.id
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
     }
 
     def deleteFederatedUserQuietly(username) {

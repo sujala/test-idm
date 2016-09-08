@@ -3155,19 +3155,37 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getUserAdminsForUser(String authToken, String userId) {
-        ScopeAccess callerScopeAccess = getScopeAccessForValidToken(authToken);
-        authorizationService.verifyUserLevelAccess(callerScopeAccess);
+        requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
-        User caller = getUser(callerScopeAccess);
-        User user = userService.checkAndGetUserById(userId);
+        BaseUser caller =  requestContextHolder.getRequestContext().getEffectiveCaller();
+        EndUser user = identityUserService.checkAndGetUserById(userId);
 
-        boolean callerIsDefaultUser = authorizationService.authorizeCloudUser(callerScopeAccess);
-        boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(callerScopeAccess);
+        boolean callerIsDefaultUser = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName());
+        boolean callerIsUserAdmin = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName());
 
-        if (callerIsDefaultUser && (!caller.getId().equals(user.getId()))) {
-            throw new ForbiddenException(NOT_AUTHORIZED);
-        } else if (callerIsUserAdmin && (!caller.getDomainId().equals(user.getDomainId()))) {
-            throw new ForbiddenException(NOT_AUTHORIZED);
+        boolean isSelfCall = caller.getId().equals(user.getId());
+        String callerDomain = caller.getDomainId();
+        String targetDomain = user.getDomainId();
+
+        if (!isSelfCall) {
+            if (callerIsDefaultUser) {
+                // Default users can only call on themself
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            } else if (callerIsUserAdmin &&
+                    ((callerDomain != null && !callerDomain.equals(targetDomain))
+                     || (callerDomain == null && targetDomain != null))
+                    ) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+        }
+
+        // Additional fed user tests added as part of CID-66
+        if (user instanceof FederatedUser) {
+            FederatedUser federatedUser = (FederatedUser) user;
+            if (federatedUser.isExpired()) {
+                throw new NotFoundException(String.format("User %s not found", userId));
+            }
         }
 
         List<User> admins = new ArrayList<User>();

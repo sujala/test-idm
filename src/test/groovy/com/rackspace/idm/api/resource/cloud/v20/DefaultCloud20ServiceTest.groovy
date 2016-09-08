@@ -25,6 +25,8 @@ import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
+import org.mockito.AdditionalMatchers
+import testHelpers.IdmAssert
 
 import javax.ws.rs.core.HttpHeaders
 import org.apache.http.HttpStatus
@@ -78,13 +80,12 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.exceptionHandler = exceptionHandler
         service.objFactories = objFactories
 
-        mockRequestContextHolder(service)
-        service.requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(_) >> new ScopeAccess()
     }
 
     def setup() {
         mockServices()
         mockMisc()
+        service.requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(_) >> new ScopeAccess()
 
         headers = Mock(HttpHeaders)
         jaxbMock = Mock(JAXBElement)
@@ -1988,82 +1989,118 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.status == 200
     }
 
-    def "user accesslevel is verified by getAdminsForDefaultUser"() {
-        given:
-        userService.checkAndGetUserById(_) >> entityFactory.createUser()
-        domainService.getEnabledDomainAdmins(_, _) >> [].asList()
-
-        when:
-        service.getUserAdminsForUser(authToken, "userId")
-
-        then:
-        1 * scopeAccessService.getScopeAccessByAccessToken(authToken) >> createUserScopeAccess()
-        1 * authorizationService.verifyUserLevelAccess(_)
-    }
-
-    def "when caller is defaultuser getAdminsForDefaultUser verifies caller is user"() {
+    def "getAdminsForDefaultUser - Default user can't get admin for any other user"() {
         given:
         allowUserAccess()
         def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
         def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
 
-        authorizationService.authorizeCloudUser(_) >> true
-
-        when:
+        when: "same domain, but different user"
         service.getUserAdminsForUser(authToken, "userId")
 
         then:
-        1 * identityUserService.getProvisionedUserById(_) >> caller
-        1 * userService.checkAndGetUserById(_) >> user
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> true
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()) >> false
+        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * identityUserService.checkAndGetUserById("userId") >> user
 
-        then:
+        then: "get forbidden"
         thrown(ForbiddenException)
     }
 
-    def "when caller is userAdmin getAdminsForDefaultUser verifies user is in callers domain"() {
+    def "getAdminsForDefaultUser - when caller is userAdmin, can't specify user in different domain"() {
         given:
         allowUserAccess()
         def caller = entityFactory.createUser("caller", "callerId", "callerDomain", "REGION")
         def user = entityFactory.createUser("user", "userId", "userDomain", "REGION")
 
-        authorizationService.authorizeCloudUserAdmin(_) >> true
-
         when:
         service.getUserAdminsForUser(authToken, "userId")
 
         then:
-        1 * identityUserService.getProvisionedUserById(_) >> caller
-        1 * userService.checkAndGetUserById(_) >> user
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> false
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()) >> true
+        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * identityUserService.checkAndGetUserById("userId") >> user
 
         then:
         thrown(ForbiddenException)
     }
 
-    def "a list of enabled admins is returned by getAdminsForDefaultUser"() {
+    def "getAdminsForDefaultUser - A user-admin without a domain is not allowed to list admins in a different domain"() {
+        given:
+        allowUserAccess()
+        def caller = entityFactory.createUser("caller", "callerId", null, "REGION")
+        def user = entityFactory.createUser("user", "userId", "aDomain", "REGION")
+
+        when:
+        def response = service.getUserAdminsForUser(authToken, "userId").build()
+
+        then:
+        0 * domainService.getEnabledDomainAdmins(_, _)
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> false
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()) >> true
+        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * identityUserService.checkAndGetUserById("userId") >> user
+
+        then:
+        thrown(ForbiddenException)
+    }
+
+    def "getAdminsForDefaultUser - A user-admin with a domain is not allowed to list admins in a null domain"() {
+        given:
+        allowUserAccess()
+        def caller = entityFactory.createUser("caller", "callerId", "aDomain", "REGION")
+        def user = entityFactory.createUser("user", "userId", null, "REGION")
+
+        when:
+        def response = service.getUserAdminsForUser(authToken, "userId").build()
+
+        then:
+        0 * domainService.getEnabledDomainAdmins(_, _)
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> false
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()) >> true
+        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * identityUserService.checkAndGetUserById("userId") >> user
+
+        then:
+        thrown(ForbiddenException)
+    }
+
+    def "getAdminsForDefaultUser - a list of enabled admins is returned by getAdminsForDefaultUser"() {
         given:
         allowUserAccess()
         def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
         def user = entityFactory.createUser("user", "userId", "domainId", "REGION")
-
-        userService.getUser(_) >> caller
-        userService.checkAndGetUserById(_) >> user
 
         when:
         def response = service.getUserAdminsForUser(authToken, "userId").build()
 
         then:
         1 * domainService.getEnabledDomainAdmins("domainId")
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> false
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()) >> true
+        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * identityUserService.checkAndGetUserById("userId") >> user
+
         response.status == 200
     }
 
-    def "A list of admins is not retrieve if the user has no domain"() {
+    def "getAdminsForDefaultUser - A list of admins is not retrieve if the target user has no domain"() {
         given:
         allowUserAccess()
         def caller = entityFactory.createUser("caller", "callerId", null, "REGION")
         def user = entityFactory.createUser("user", "userId", null, "REGION")
-
-        userService.getUser(_) >> caller
-        userService.checkAndGetUserById(_) >> user
 
         when:
         def response = service.getUserAdminsForUser(authToken, "userId").build()
@@ -2071,6 +2108,62 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         response.status == 200
         0 * domainService.getEnabledDomainAdmins(_, _)
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> false
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()) >> true
+        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * identityUserService.checkAndGetUserById("userId") >> user
+    }
+
+    def "getAdminsForDefaultUser - Expired Fed users will return 404"() {
+        given:
+        allowUserAccess()
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createFederatedUser("user").with {
+            it.domainId = "domainId"
+            it.id = "userId"
+            it.expiredTimestamp = new DateTime().minusHours(1).toDate()
+            it
+        }
+
+        when:
+        def response = service.getUserAdminsForUser(authToken, "userId").build()
+
+        then:
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> false
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()) >> true
+        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * identityUserService.checkAndGetUserById("userId") >> user
+
+        then:
+        thrown(NotFoundException)
+    }
+
+    def "getAdminsForDefaultUser - Non-Expired Fed users will return admins"() {
+        given:
+        allowUserAccess()
+        def caller = entityFactory.createUser("caller", "callerId", "domainId", "REGION")
+        def user = entityFactory.createFederatedUser("user").with {
+            it.domainId = "domainId"
+            it.id = "userId"
+            it.expiredTimestamp = new DateTime().plusDays(1).toDate()
+            it
+        }
+
+        when:
+        def response = service.getUserAdminsForUser(authToken, "userId").build()
+
+        then:
+        1 * domainService.getEnabledDomainAdmins("domainId")
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) >> false
+        1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()) >> true
+        1 * securityContext.getAndVerifyEffectiveCallerToken(authToken)
+        1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * identityUserService.checkAndGetUserById("userId") >> user
     }
 
     def "identity admin should be able to retrieve users api key"() {
@@ -3555,6 +3648,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockIdentityUserService(service)
         mockIdentityConfig(service)
         mockAuthResponseService(service)
+        mockRequestContextHolder(service)
     }
 
     def mockMisc() {
