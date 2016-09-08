@@ -2031,7 +2031,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         thrown(ForbiddenException)
     }
 
-    def "getAdminsForDefaultUser - A user-admin without a domain is not allowed to list admin in a different domain"() {
+    def "getAdminsForDefaultUser - A user-admin without a domain is not allowed to list admins in a different domain"() {
         given:
         allowUserAccess()
         def caller = entityFactory.createUser("caller", "callerId", null, "REGION")

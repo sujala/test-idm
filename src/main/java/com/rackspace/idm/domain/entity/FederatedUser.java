@@ -105,7 +105,7 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
      */
     public boolean isExpired() {
         if (expiredTimestamp == null) {
-            //if user doesn't have expired timestamp, is considered expired.
+            // If user doesn't have expired timestamp, is considered expired.
             return true;
         }
         DateTime expirationDate = new DateTime(expiredTimestamp);

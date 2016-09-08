@@ -1056,7 +1056,6 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         }
     }
 
-
     def void verifyResponseFromSamlRequest(authResponse, expectedUserName, User userAdminEntity, List<ClientRole> expectedRbacRoles = Collections.EMPTY_LIST, List<ClientRole> notExpectedRbacRoles = Collections.EMPTY_LIST) {
         //check the user object
         assert authResponse.user.id != null
@@ -1526,7 +1525,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
         verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
 
-        when: "retrieve admin for fed  user"
+        when: "retrieve admin for fed user"
         def response = cloud20.getAdminsForUser(authResponse.token.id, authResponse.user.id)
 
         then: "get admin"
