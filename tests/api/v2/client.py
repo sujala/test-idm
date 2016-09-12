@@ -201,11 +201,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
-    ''' THE CODE BELOW IS NOT USED IN ANY OF THE TESTS YET.
-    COMMENTING THIS OUT, SO WE CAN RESURRECT THESE CLIENT METHODS WHENEVER
-    WE ADD TESTS FOR THE CORRESPONDING ENDPOINTS.
-
-    def list_domains(self, requestslib_kwargs=None):
+    def list_domains(self, headers=None, requestslib_kwargs=None):
         """Return response object from the list domains api call
 
         GET /v2.0/RAX-AUTH/domains
@@ -214,9 +210,15 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         In case of XML response, add a json() method to the response object
         that will create a JSON equivalent of the XML response
         """
-        url = self.url + const.domain_url
-        resp = self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
+        url = self.url + const.DOMAIN_URL
+        resp = self.request('GET', url,
+                            headers=headers,
+                            requestslib_kwargs=requestslib_kwargs)
         return resp
+
+    ''' THE CODE BELOW IS NOT USED IN ANY OF THE TESTS YET.
+    COMMENTING THIS OUT, SO WE CAN RESURRECT THESE CLIENT METHODS WHENEVER
+    WE ADD TESTS FOR THE CORRESPONDING ENDPOINTS.
 
     def add_role(self, role_name, role_id=None, role_description=None,
                  requestslib_kwargs=None):
