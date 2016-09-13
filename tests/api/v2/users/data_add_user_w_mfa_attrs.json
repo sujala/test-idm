@@ -1,0 +1,30 @@
+{
+    "mfa_present": {
+        "mfa_input": {
+            "mf_enabled": true,
+            "user_mf_enforcement_level": "OPTIONAL",
+            "factor_type": "OTP"
+        }
+    },
+    "mfa_present_2": {
+        "mfa_input": {
+            "mf_enabled": true,
+            "user_mf_enforcement_level": "REQUIRED",
+            "factor_type": "OTP"
+        }
+    },
+    "mfa_present_3": {
+        "mfa_input": {
+            "mf_enabled": true,
+            "user_mf_enforcement_level": "OPTIONAL",
+            "factor_type": "SMS"
+        }
+    },
+    "mfa_present_4": {
+        "mfa_input": {
+            "mf_enabled": true,
+            "user_mf_enforcement_level": "REQUIRED",
+            "factor_type": "SMS"
+        }
+    }
+}

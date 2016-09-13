@@ -1,12 +1,12 @@
 {
     "only_user_name": {
         "additional_input": {},
-        "addional_schema_fields": [
+        "additional_schema_fields": [
             "OS-KSADM:password"]
     },
     "email_present": {
         "additional_input": {"email": "random@rackspace.com"},
-        "addional_schema_fields": [
+        "additional_schema_fields": [
             "OS-KSADM:password", "email"]
     }
 }
