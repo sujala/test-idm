@@ -21,11 +21,11 @@ add_user = {
                     'enum': ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']},
                 const.PASSWORD: {'type': 'string'},
                 const.ID: {'type': 'string'},
-                const.RAX_AUTH_DOMAIN: {'type': 'string'},
+                const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
                 const.NS_PASSWORD: {'type': 'string'}},
             'required': [const.USERNAME, const.ENABLED,
                          const.RAX_AUTH_DEFAULT_REGION, const.ID,
-                         const.RAX_AUTH_DOMAIN,
+                         const.RAX_AUTH_DOMAIN_ID,
                          const.RAX_AUTH_MULTI_FACTOR_ENABLED],
             'additionalProperties': False}},
     'required': [const.USER],
@@ -43,14 +43,14 @@ get_user = {
                 const.USERNAME: {'type': 'string'},
                 const.EMAIL: {'type': 'string', 'format': 'email'},
                 const.ENABLED: {'type': 'boolean'},
-                const.RAX_AUTH_DOMAIN: {'type': 'string'},
+                const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
                 const.RAX_AUTH_DEFAULT_REGION: {
                     'type': 'string',
                     'enum': ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']},
                 const.ID: {'type': 'string'}},
             'required': [const.USERNAME, const.EMAIL, const.ENABLED,
                          const.RAX_AUTH_DEFAULT_REGION,
-                         const.RAX_AUTH_DOMAIN],
+                         const.RAX_AUTH_DOMAIN_ID],
             'additionalProperties': False}},
     'required': [const.USER],
     'additionalProperties': False
@@ -65,7 +65,7 @@ update_user = {
                 const.EMAIL: {'type': 'string', 'format': 'email'},
                 const.RAX_AUTH_MULTI_FACTOR_ENABLED: {'type': 'boolean'},
                 const.ENABLED: {'type': 'boolean'},
-                const.RAX_AUTH_DOMAIN: {'type': 'string'},
+                const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
                 const.RAX_AUTH_CONTACTID: {'type': 'string'},
                 const.RAX_AUTH_DEFAULT_REGION: {
                     'type': 'string',
@@ -74,7 +74,8 @@ update_user = {
                 const.CREATED: {'type': 'string', 'format': 'dateTime'},
                 const.UPDATED: {'type': 'string', 'format': 'dateTime'}},
             'required': [const.USERNAME, const.ID, const.ENABLED,
-                         const.RAX_AUTH_DEFAULT_REGION, const.RAX_AUTH_DOMAIN,
+                         const.RAX_AUTH_DEFAULT_REGION,
+                         const.RAX_AUTH_DOMAIN_ID,
                          const.RAX_AUTH_MULTI_FACTOR_ENABLED,
                          const.CREATED, const.UPDATED],
             'additionalProperties': False}},
@@ -93,7 +94,7 @@ user_item = {
         const.RAX_AUTH_MULTI_FACTOR_ENABLED: {'type': 'boolean'},
         const.RAX_AUTH_FACTOR_TYPE: {'type': 'string'},
         const.RAX_AUTH_MULTI_FACTOR_STATE: {'type': 'string'},
-        const.RAX_AUTH_DOMAIN: {'type': 'string'},
+        const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
         const.RAX_AUTH_DEFAULT_REGION: {
             'type': 'string',
             'enum': ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']},
@@ -101,7 +102,7 @@ user_item = {
     },
     "required": [const.USERNAME, const.ENABLED,
                  const.RAX_AUTH_DEFAULT_REGION,
-                 const.ID, const.RAX_AUTH_DOMAIN,
+                 const.ID, const.RAX_AUTH_DOMAIN_ID,
                  const.RAX_AUTH_MULTI_FACTOR_ENABLED],
     'additionalProperties': False
 }
@@ -111,4 +112,3 @@ list_users = {
         const.USERS: {'type': 'array', 'items': user_item}
     }
 }
-

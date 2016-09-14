@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 
-"""
-This contains all constants using in api test
-"""
+"""This contains all constants using in api test. """
 
-"""Some contants used for tests in general"""
 
 """URLs"""
 USER_URL = '/users'
@@ -14,7 +11,7 @@ TOKEN_URL = '/tokens'
 GET_TOKEN_URL = '/tokens/{token_id}'
 DOMAIN_URL = '/RAX-AUTH/domains'
 CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
-APIKEY_URL = CREDENTIALS_URL+"/RAX-KSKEY:apiKeyCredentials"
+APIKEY_URL = CREDENTIALS_URL + "/RAX-KSKEY:apiKeyCredentials"
 LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 ENDPOINT_TEMPLATE_URL = LIST_ENDPOINT_TEMPLATES_URL = (
     "/OS-KSCATALOG/endpointTemplates")
@@ -27,6 +24,10 @@ ADD_ENDPOINT_TO_TENANT_URL = "/tenants/{tenant_id}/OS-KSCATALOG/endpoints"
 DELETE_ENDPOINT_FROM_TENANT_URL = (
     "/tenants/{tenant_id}/OS-KSCATALOG/endpoints/{endpoint_template_id}")
 LIST_ENDPOINTS_FOR_TOKEN_URL = "/tokens/{token_id}/endpoints"
+
+ADD_TENANT_URL = LIST_TENANTS = '/tenants'
+UPDATE_TENANT_URL = DELETE_TENANT_URL = GET_TENANT_URL = (
+    '/tenants/{tenant_id}')
 
 """Some Constanst for values"""
 PASSWORD_PATTERN = "Password1[\d\w]{10}"
@@ -63,9 +64,9 @@ CONTENT_TYPE = "Content-Type"
 DEFAULT = "default"
 DEFAULT_REGION = "defaultRegion"
 DESCRIPTION = "description"
-DISPLAY_NAME = "display_name"
 DOMAIN = "domain"
 DOMAINID = "domainId"
+DISPLAY_NAME = "display-name"
 EMAIL = "email"
 ENABLED = "enabled"
 ENDPOINTS = "endpoints"
@@ -100,6 +101,9 @@ USERNAME = "username"
 TENANT_ALIAS = "tenantAlias"
 TOKEN = "token"
 TOKEN_FORMAT = "tokenFormat"
+TENANT = "tenant"
+TENANTS = "tenants"
+
 TYPE = "type"
 VERSION_ID = "versionId"
 VERSION_INFO = "versionInfo"
@@ -125,7 +129,7 @@ NS_SECRETQA = RAX_KSQA_NAMESPACE + ":secretQA"
 NS_API_KEY_CREDENTIALS = RAX_KSKEY_NAMESPACE + ":apiKeyCredentials"
 RAX_AUTH = "RAX-AUTH"
 RAX_AUTH_ASSIGNMENT_TYPE = "RAX-AUTH:assignmentType"
-RAX_AUTH_DOMAIN = "RAX-AUTH:domainId"
+RAX_AUTH_DOMAIN_ID = "RAX-AUTH:domainId"
 RAX_AUTH_CONTACTID = "RAX-AUTH:contactId"
 RAX_AUTH_DEFAULT_REGION = "RAX-AUTH:defaultRegion"
 RAX_AUTH_MULTI_FACTOR_ENABLED = "RAX-AUTH:multiFactorEnabled"

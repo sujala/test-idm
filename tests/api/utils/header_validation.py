@@ -84,6 +84,7 @@ def validate_header_origin(value):
 
     return validation
 
+
 def basic_header_validations(response, header):
 
     assert header in response.headers, (

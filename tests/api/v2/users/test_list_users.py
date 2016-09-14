@@ -138,7 +138,7 @@ class TestListUsers(base.TestBaseV2):
                           json_schema=users_json.list_users)
         self.assertEqual(len(resp.json()[const.USERS]), 4)
         for user in resp.json()[const.USERS]:
-            self.assertEqual(user[const.RAX_AUTH_DOMAIN],
+            self.assertEqual(user[const.RAX_AUTH_DOMAIN_ID],
                              self.DOMAIN_ID_TEST)
 
     def test_list_user_email_by_user_admin(self):

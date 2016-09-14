@@ -1,0 +1,17 @@
+{
+    "description": {
+        "test_data": {
+            "description": "Updated description"},
+        "additional_schema_fields": ["description"]
+    },
+    "enabled": {
+        "test_data": {
+            "enabled": "false"},
+        "additional_schema_fields": []
+    },
+    "display_name": {
+        "test_data": {
+            "display_name": "New Name"},
+        "additional_schema_fields": []
+    }
+}

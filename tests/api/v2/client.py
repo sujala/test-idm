@@ -255,6 +255,65 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def add_tenant(self, tenant, requestslib_kwargs=None):
+        """Return response object from the add tenant api call
+
+        POST /tenants
+        @todo: In case of XML response, add a json() method to the response
+        object that will create a JSON equivalent of the XML response
+        """
+        url = self.url + const.ADD_TENANT_URL
+        resp = self.request('POST', url, request_entity=tenant,
+                            requestslib_kwargs=requestslib_kwargs)
+
+        return resp
+
+    def update_tenant(self, tenant_id,
+                      request_object, requestslib_kwargs=None):
+        """Return response object from the update tenant api call
+
+        POST /tenants/{tenant_id}
+        @todo: In case of XML response, add a json() method to the response
+        object that will create a JSON equivalent of the XML response
+        """
+        url = self.url + const.UPDATE_TENANT_URL.format(tenant_id=tenant_id)
+        resp = self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def get_tenant(self, tenant_id):
+        """Return response object from the get tenant api call
+
+        GET /tenants/{tenant_id}
+        @todo: In case of XML response, add a json() method to the response
+        object that will create a JSON equivalent of the XML response
+        """
+        url = self.url + const.GET_TENANT_URL.format(tenant_id=tenant_id)
+        resp = self.request('GET', url)
+        return resp
+
+    def delete_tenant(self, tenant_id):
+        """Return response object from the delete tenant api call
+
+        DELETE /tenants/{tenant_id}
+        """
+        url = self.url + const.DELETE_TENANT_URL.format(tenant_id=tenant_id)
+        resp = self.request('DELETE', url)
+        return resp
+
+    def list_tenants(self, requestslib_kwargs=None):
+        """Return response object from the list tenants call
+
+        GET /v2.0/tenants
+        @todo:
+        In case of XML response, add a json() method to the response object
+        that will create a JSON equivalent of the XML response
+        """
+        url = self.url + const.LIST_TENANTS
+        resp = self.request('GET', url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
     def list_domains(self, headers=None, requestslib_kwargs=None):
         """Return response object from the list domains api call
 
@@ -330,7 +389,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 domainId_key = '{' + const.XMLNS_RAX_AUTH + '}' + (
                     const.DOMAINID
                 )
-                resp_json[const.USER][const.RAX_AUTH_DOMAIN] = (
+                resp_json[const.USER][const.RAX_AUTH_DOMAIN_ID] = (
                     root.attrib[domainId_key])
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
@@ -376,7 +435,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                     domainId_key = '{' + const.XMLNS_RAX_AUTH + '}' + (
                         const.DOMAINID)
                     resp_json[const.USERS][const.USER][
-                        const.RAX_AUTH_DOMAIN] = child.attrib[domainId_key]
+                        const.RAX_AUTH_DOMAIN_ID] = child.attrib[domainId_key]
 
                     defaultRegion_key = (
                         '{' + const.XMLNS_RAX_AUTH + '}' +
@@ -531,7 +590,6 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         resp = self.request('GET', url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
-
 
     ''' THE CODE BELOW IS NOT USED IN ANY OF THE TESTS YET.
     COMMENTING THIS OUT, SO WE CAN RESURRECT THESE CLIENT METHODS WHENEVER

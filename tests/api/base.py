@@ -86,6 +86,13 @@ class TestBase(fixtures.BaseTestFixture):
         for function in functions:
             function(response)
 
+    def assertBoolean(self, expected, actual):
+        if expected.lower() == 'true':
+            expected = True
+        else:
+            expected = False
+        self.assertEqual(actual, expected)
+
     @staticmethod
     def generate_relaxNG_schema(json_schema):
         """Generate a RelaxNG schema equivalent of the json_schema."""
