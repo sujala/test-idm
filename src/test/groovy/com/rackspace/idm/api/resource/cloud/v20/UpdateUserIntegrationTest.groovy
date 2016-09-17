@@ -130,7 +130,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "update user only allows for identity or service admins to set and view contact ID, userType = #userType, accept = #accept, request = #request"() {
+    def "update user only allows for identity or service admins to set contact ID, userType = #userType, accept = #accept, request = #request"() {
         given:
         def domainId = utils.createDomain()
         def contactId = testUtils.getRandomUUID("contactId")
@@ -162,7 +162,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
 
         then:
         updateUserResponse.status == 200
-        def returnedContactId = getContactIdFromUpdateResponse(updateUserResponse, accept)
+        def returnedContactId = getContactIdFromUpdateResponse(updateUserResponse)
         if(attributeSet) {
             assert returnedContactId == contactId
         } else {
@@ -177,12 +177,8 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
 
         then:
         updateUserResponse.status == 200
-        def returnedContactId2 = getContactIdFromUpdateResponse(updateUserResponse2, accept)
-        if(attributeSet) {
-            assert returnedContactId2 == contactId
-        } else {
-            assert returnedContactId2 == null
-        }
+        def returnedContactId2 = getContactIdFromUpdateResponse(updateUserResponse2)
+        assert returnedContactId2 == contactId
 
         when: "now that the user has a contact ID, update the user without the contact ID to verify it is not deleted"
         userForCreate.contactId = null
@@ -190,12 +186,8 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
 
         then: "verify the response"
         updateUserResponse.status == 200
-        def returnedContactId3 = getContactIdFromUpdateResponse(updateUserResponse3, accept)
-        if(attributeSet) {
-            assert returnedContactId3 == contactId
-        } else {
-            assert returnedContactId3 == null
-        }
+        def returnedContactId3 = getContactIdFromUpdateResponse(updateUserResponse3)
+        assert returnedContactId3 == contactId
 
         and: "verify that the attribute was not modified"
         def userEntity2 = userService.getUserById(user.id)
@@ -266,6 +258,44 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
+    @Unroll
+    def "Assert correct user level access exposes the contactId after admin has set contactId, accept = #acceptContentType" () {
+        given:
+        def domainId = utils.createDomain()
+        def contactId = testUtils.getRandomUUID("contactId")
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        when: "Update default user's contactId"
+        def userForUpdate = new User().with {
+            it.contactId = contactId
+            it
+        }
+        cloud20.updateUser(utils.getIdentityAdminToken(), defaultUser.id, userForUpdate)
+
+        then: "Update default user"
+        for (def user : users) {
+            def token = utils.getToken(user.username)
+            userForUpdate = new User().with {
+                it.displayName = testUtils.getRandomUUID("displayName")
+                it
+            }
+            def updateResponse = cloud20.updateUser(token, defaultUser.id, userForUpdate)
+            assert updateResponse.status == 200
+            def returnedContactId = getContactIdFromUpdateResponse(updateResponse)
+            assert returnedContactId == contactId
+        }
+
+        cleanup:
+        utils.deleteUsers(users)
+
+        where:
+        acceptContentType               | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
     def getUserFromResponse(response) {
         def user = null
         if (response.getType() == MediaType.APPLICATION_XML_TYPE) {
@@ -277,8 +307,8 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         return user
     }
 
-    def getContactIdFromUpdateResponse(response, accept) {
-        if(MediaType.APPLICATION_XML_TYPE == accept) {
+    def getContactIdFromUpdateResponse(response) {
+        if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
             def returnedUser = response.getEntity(User).value
             return returnedUser.contactId
         } else {
@@ -286,7 +316,6 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
             if(returnedUser.hasProperty('RAX-AUTH:contactId')) assert returnedUser['RAX-AUTH:contactId'] != null
             return returnedUser['RAX-AUTH:contactId']
         }
-
     }
 
 }

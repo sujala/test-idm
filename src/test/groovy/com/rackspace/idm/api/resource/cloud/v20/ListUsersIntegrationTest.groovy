@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.dao.FederatedUserDao
 import groovy.json.JsonSlurper
 import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.User
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Ignore
@@ -562,6 +563,57 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUser(disabledUser)
         utils.deleteUsers(users)
+    }
+
+    @Unroll
+    def "Assert contactId is exposed on list users when using correct access level, accept = #acceptContentType"() {
+        given:
+        def domainId = utils.createDomain()
+        def contactId = testUtils.getRandomUUID("contactId")
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin]
+
+        when: "Update users contactId"
+        for(def user : users) {
+            def userForUpdate = new User().with {
+                it.contactId = contactId
+                it
+            }
+            cloud20.updateUser(utils.getIdentityAdminToken(), user.id, userForUpdate)
+        }
+
+        then: "List Users"
+        for (def user : users) {
+            def token = utils.getToken(user.username)
+            def listUsersResponse = cloud20.listUsers(token, acceptContentType)
+            listUsersResponse.status == 200
+            def userList = getUsersFromListUsers(listUsersResponse)
+            for(def usr : userList) {
+                if (acceptContentType == MediaType.APPLICATION_JSON_TYPE){
+                    assert usr["RAX-AUTH:contactId"] == contactId
+                } else {
+                    assert usr.contactId == contactId
+                }
+            }
+        }
+
+        cleanup:
+        utils.deleteUsers(users)
+
+        where:
+        acceptContentType               | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def getUsersFromListUsers(response) {
+        if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
+            def returnedUsers = response.getEntity(UserList).value
+            return returnedUsers.user
+        } else {
+            return new JsonSlurper().parseText(response.getEntity(String)).users
+        }
     }
 
     def deleteFederatedUserQuietly(username) {
