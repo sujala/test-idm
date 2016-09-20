@@ -215,6 +215,36 @@ class UserUpdate(base.AutoMarshallingModel):
         return json.dumps(update_user_request)
 
         # TODO: insert update user request xml part
+class PasswordCredentialsAdd(base.AutoMarshallingModel):
+    """Marshalling for Add Credentials Request"""
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+
+    def _obj_to_json(self):
+        postdata = {const.PASSWORD_CREDENTIALS: {
+                        const.USERNAME: self.username,
+                        const.PASSWORD: self.password}}
+        return json.dumps(postdata)
+
+    def _obj_to_xml(self):
+        raise Exception("Not implemented yet")
+
+
+class ApiKeyCredentialsUpdate(base.AutoMarshallingModel):
+    """Marshalling for Update Api key Request"""
+    def __init__(self, username, apikey):
+        self.username = username
+        self.apikey = apikey
+
+    def _obj_to_json(self):
+        postdata = {const.NS_API_KEY_CREDENTIALS: {
+                        const.USERNAME: self.username,
+                        const.API_KEY: self.apikey}}
+        return json.dumps(postdata)
+
+    def _obj_to_xml(self):
+        raise Exception("Not implemented yet")
 
 
 class RoleAdd(base.AutoMarshallingModel):
