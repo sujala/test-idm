@@ -3638,7 +3638,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantDO.setDescription(tenant.getDescription());
             tenantDO.setDisplayName(tenant.getDisplayName());
             tenantDO.setEnabled(tenant.isEnabled());
-            tenantDO.setName(tenant.getName());
+            if (identityConfig.getReloadableConfig().getAllowTenantNameToBeChangedViaUpdateTenant()) {
+                tenantDO.setName(tenant.getName());
+            }
 
             this.tenantService.updateTenant(tenantDO);
 
