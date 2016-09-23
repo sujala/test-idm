@@ -1,0 +1,82 @@
+{
+    "update_email": {
+        "update_input": {
+            "email": "cid_test@rackspace.com"
+        },
+        "update_schema_fields": [
+            "email"
+        ]
+    },
+    "update_name": {
+        "update_input": {
+            "user_name": "new_name"
+        },
+        "update_schema_fields": []
+    },
+    "update_enabled": {
+        "update_input": {
+            "enabled": false
+        },
+        "update_schema_fields": []
+    },
+    "update_domain_id": {
+        "update_input": {
+            "domain_id": "Test_new_domain12345"
+        },
+        "update_schema_fields": []
+    },
+    "update_contact_id": {
+        "update_input": {
+            "contact_id": "Test_new_contact12345"
+        },
+        "update_schema_fields": []
+    },
+    "update_password": {
+        "update_input": {
+            "password": "Pas$word01"
+        },
+        "update_schema_fields": []
+    },
+    "update_default_regrion": {
+        "update_input": {
+            "default_region": "ORD"
+        },
+        "update_schema_fields": []
+    },
+    "update_mfa_attrs_1": {
+        "update_input": {
+            "mfa_enabled": true
+        },
+        "update_schema_fields": []
+    },
+    "update_mfa_attrs_2": {
+        "update_input": {
+            "mfa_state": "ACTIVE"
+        },
+        "update_schema_fields": []
+    },
+    "update_mfa_attrs_3": {
+        "update_input": {
+            "mf_enforcement_level": "OPTIONAL"
+        },
+        "update_schema_fields": []
+    },
+    "update_mfa_attrs_4": {
+        "update_input": {
+            "mf_enforcement_level": "REQUIRED"
+        },
+        "update_schema_fields": []
+    },
+    "update_mfa_attrs_5": {
+        "update_input": {
+            "factor_type": "OTP"
+        },
+        "update_schema_fields": []
+    },
+    "update_mfa_attrs_6": {
+        "update_input": {
+            "factor_type": "SMS"
+        },
+        "update_schema_fields": []
+    }
+}

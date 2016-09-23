@@ -1,0 +1,47 @@
+{
+    "update_mfa_attrs_1": {
+        "update_input": {
+            "mfa_state": "ACTIVE",
+            "mfa_enabled": true,
+            "factor_type": "SMS",
+            "mf_enforcement_level": "OPTIONAL"
+        },
+        "update_schema_fields":[]
+    },
+    "update_mfa_attrs_2": {
+        "update_input": {
+            "mfa_state": "ACTIVE",
+            "mfa_enabled": true,
+            "factor_type": "OTP",
+            "mf_enforcement_level": "OPTIONAL"
+        },
+        "update_schema_fields":[]
+    },
+    "update_mfa_attrs_3": {
+        "update_input": {
+            "mfa_state": "ACTIVE",
+            "mfa_enabled": true,
+            "factor_type": "OTP",
+            "mf_enforcement_level": "REQUIRED"
+        },
+        "update_schema_fields":[]
+    },
+    "update_mfa_attrs_4": {
+        "update_input": {
+            "mfa_state": "ACTIVE",
+            "mfa_enabled": true,
+            "factor_type": "SMS",
+            "mf_enforcement_level": "REQUIRED"
+        },
+        "update_schema_fields":[]
+    },
+    "update_mfa_attrs_5": {
+        "update_input": {
+            "mfa_state": "ACTIVE",
+            "mfa_enabled": true,
+            "factor_type": "SMS",
+            "mf_enforcement_level": "DEFAULT"
+        },
+        "update_schema_fields":[]
+    }
+}

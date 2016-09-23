@@ -216,6 +216,73 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def update_user(self, user_id, request_object,
+                    requestslib_kwargs=None):
+
+        """
+        Return response object from update user api call
+        POST /v2.0/users/{user_id}
+        In case of XML response, add a json() method to the response object
+        that will create a JSON equivalent of the XML response
+        """
+        url = self.url + const.UPDATE_USER_URL.format(user_id=user_id)
+
+        resp = self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+        # If the response is xml, adds a json() menthod to the object.
+        # The json() method should return a json equivalent of the
+        # xml response.
+
+        if self.deserialize_format == const.XML:
+            def json(self):
+                resp_json = {}
+                resp_json[const.USER] = {}
+
+                root_string = resp.text.encode(const.ASCII)
+                root = objectify.fromstring(root_string)
+                resp_json[const.USER][const.USERNAME] = (
+                    root.attrib[const.USERNAME])
+                # Needed because json expects boolean
+                if root.attrib[const.ENABLED] == 'true':
+                    resp_json[const.USER][const.ENABLED] = True
+                else:
+                    resp_json[const.USER][const.ENABLED] = False
+
+                if const.EMAIL in request_object:
+                    resp_json[const.USER][const.EMAIL] = (
+                        root.attrib[const.EMAIL])
+                resp_json[const.USER][const.ID] = root.attrib[const.ID]
+
+                if const.PASSWORD not in request_object:
+                    password_key = '{' + const.XMLNS_OS_KSADM + '}' + (
+                        const.PASSWORD)
+                    resp_json[const.USER][const.NS_PASSWORD] = (
+                        root.attrib[password_key])
+
+                defaultRegion_key = (
+                    '{' + const.XMLNS_RAX_AUTH + '}' + const.DEFAULT_REGION)
+                resp_json[const.USER][const.RAX_AUTH_DEFAULT_REGION] = (
+                    root.attrib[defaultRegion_key])
+
+                mFE_key = '{' + const.XMLNS_RAX_AUTH + '}' + (
+                    const.MULTI_FACTOR_ENABLED
+                )
+                if root.attrib[mFE_key] == 'true':
+                    resp_json[const.USER][const.MULTI_FACTOR_ENABLED] = True
+                else:
+                    resp_json[const.USER][const.MULTI_FACTOR_ENABLED] = False
+
+                domainId_key = '{' + const.XMLNS_RAX_AUTH + '}' + (
+                    const.DOMAINID
+                )
+                resp_json[const.USER][const.RAX_AUTH_DOMAIN] = (
+                    root.attrib[domainId_key])
+                return resp_json
+            resp.json = types.MethodType(json, resp, type(resp))
+
+        return resp
+
     ''' THE CODE BELOW IS NOT USED IN ANY OF THE TESTS YET.
     COMMENTING THIS OUT, SO WE CAN RESURRECT THESE CLIENT METHODS WHENEVER
     WE ADD TESTS FOR THE CORRESPONDING ENDPOINTS.
