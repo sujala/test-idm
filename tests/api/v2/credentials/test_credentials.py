@@ -17,7 +17,7 @@ class TestCredentials(base.TestBaseV2):
         self.user_id, self.testusername = self.create_user()
 
     def create_user(self):
-        request_object = factory.get_add_user_request_object()
+        request_object = factory.get_add_user_request_object()[0]
         resp = self.identity_admin_client.add_user(request_object)
         self.assertEqual(resp.status_code, 201)
         user_id = resp.json()[const.USER][const.ID]

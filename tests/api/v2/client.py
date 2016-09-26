@@ -1,7 +1,7 @@
 """Identity API Base Client."""
 
 import types
-
+from urlparse import urlparse
 from lxml import objectify
 
 from cafe.engine.http import client
@@ -130,6 +130,38 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = url.format(user_id=user_id)
         return self.request('POST', url)
 
+    def add_group(self, request_object, requestslib_kwargs=None):
+        """
+        Add a new Group
+        """
+        return self.request(method='POST', url=self.url+const.GROUPS_URL,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def delete_group(self, group_id, requestslib_kwargs=None):
+        """
+        Delete Group
+        """
+        url = self.url + const.GROUPS_URL + "/" + group_id
+        return self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def add_role(self, request_object, requestslib_kwargs=None):
+        """
+        Add a new Role
+        """
+        return self.request(method='POST', url=self.url+const.ROLES_URL,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def delete_role(self, role_id, requestslib_kwargs=None):
+        """
+        Delete role
+        """
+        url = self.url + const.ROLES_URL + "/" + role_id
+        return self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+
     def get_api_key(self, user_id):
         """
         Get API key
@@ -145,6 +177,40 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url+const.APIKEY_URL
         url = url.format(user_id=user_id)
         return self.request('DELETE', url)
+
+    def list_unboundid_config(self):
+        """
+        Get current config of unboundid
+        """
+        parsedurl = urlparse(self.url)
+        url = "{0}://{1}{2}".format(parsedurl.scheme, parsedurl.netloc,
+                                    const.UNBOUNDID_CONFIG_URL)
+        return self.request('GET', url)
+
+    def get_role_by_name(self, role_name):
+        """
+        Get role by name
+        """
+        url = self.url + const.ROLES_URL
+        params = {'roleName': role_name}
+        return self.request('GET', url, params=params)
+
+    def upgrade_user_to_cloud(self, auth_token, request_object,
+                              requestslib_kwargs=None):
+        headers = {const.X_AUTH_TOKEN: auth_token,
+                   const.ACCEPT: const.CONTENT_TYPE_VALUE.format(const.JSON)}
+        """
+        Upgrade user
+        SEE: https://one.rackspace.com/pages/viewpage.action?title=
+        3.3.x+Demo&spaceKey=auth
+        e.g., groups = [{'name': 'ImAGroup'}]
+        roles = [{'name: 'ImARole'}]
+        """
+        url = self.url+const.UPGRADE_USER_TO_CLOUD_URL
+        return self.request('PUT', url=url,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs,
+                            headers=headers)
 
     def add_user(self, request_object, requestslib_kwargs=None):
         """Return response object from the add user api call
