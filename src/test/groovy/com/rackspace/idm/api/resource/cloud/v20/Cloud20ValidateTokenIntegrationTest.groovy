@@ -584,7 +584,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     }
 
     @Unroll
-    def "validate token only returns contact ID for service and Identity Admins, userType = #userType, accept = #accept, request = #request"() {
+    def "validate token returns contact ID for service and Identity Admins, userType = #userType, accept = #accept, request = #request"() {
         given:
         def domainId = utils.createDomain()
         def contactId = testUtils.getRandomUUID("contactId")
@@ -612,7 +612,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
         then:
         validateTokenResponse.status == 200
-        def returnedContactId = getContactIdFromValidateResponse(validateTokenResponse, accept)
+        def returnedContactId = getContactIdFromValidateResponse(validateTokenResponse)
         if(attributeSet) {
             assert returnedContactId == contactId
         } else {
@@ -625,7 +625,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
         then:
         impersonateResponse.status == 200
-        def impersonateContactId = getContactIdFromValidateResponse(impersonateResponse, accept)
+        def impersonateContactId = getContactIdFromValidateResponse(impersonateResponse)
         if(attributeSet) {
             assert impersonateContactId == contactId
         } else {
@@ -650,6 +650,42 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     }
 
     @Unroll
+    def "self validating a token returns contact ID, accept = #acceptContentType"() {
+        given:
+        def domainId = utils.createDomain()
+        def contactId = testUtils.getRandomUUID("contactId")
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        when: "Update users contactId"
+        for(def user : users) {
+            def userForUpdate = new User().with {
+                it.contactId = contactId
+                it
+            }
+            cloud20.updateUser(utils.getIdentityAdminToken(), user.id, userForUpdate)
+        }
+
+        then: "Self validate tokens"
+        for (def user : users) {
+            def token = utils.getToken(user.username)
+            def validateTokenResponse = cloud20.validateToken(token, token, acceptContentType)
+            assert validateTokenResponse.status == 200
+            def returnedContactId = getContactIdFromValidateResponse(validateTokenResponse)
+            assert returnedContactId == contactId
+        }
+
+        cleanup:
+        utils.deleteUsers(users)
+
+        where:
+        acceptContentType               | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
     def "contact ID is removed from auth response, accept = #accept, request = #request"() {
         given:
         def domainId = utils.createDomain()
@@ -666,7 +702,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
         then:
         response.status == 200
-        getContactIdFromValidateResponse(response, accept) == null
+        getContactIdFromValidateResponse(response) == null
 
         cleanup:
         cloud20.deleteUser(utils.getServiceAdminToken(), user.id)
@@ -723,8 +759,8 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
-    def getContactIdFromValidateResponse(validateResponse, accept) {
-        if(MediaType.APPLICATION_XML_TYPE == accept) {
+    def getContactIdFromValidateResponse(validateResponse) {
+        if(validateResponse.getType() == MediaType.APPLICATION_XML_TYPE) {
             def user = validateResponse.getEntity(AuthenticateResponse).value.user
             return user.contactId
         } else {

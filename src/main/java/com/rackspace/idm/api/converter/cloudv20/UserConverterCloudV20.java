@@ -216,12 +216,6 @@ public class UserConverterCloudV20 {
                 }
 
             }
-
-            if (!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
-                //only service or identity admins can see the core contact ID on a user
-                jaxbUser.setContactId(null);
-            }
-
         } catch (DatatypeConfigurationException e) {
             logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
         }

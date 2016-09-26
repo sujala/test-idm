@@ -161,13 +161,6 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         List<TenantRole> roles = tenantService.getTenantRolesForUser(user);
         validator20.validateTenantIdInRoles(tenantId, roles);
         authenticateResponse.setToken(tokenConverterCloudV20.toToken(sa, roles));
-
-        if (user instanceof User &&
-                !authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
-            // Only service or identity admins can see the core contact ID on a user
-            ((User) user).setContactId(null);
-        }
-
         authenticateResponse.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
 
         return authenticateResponse;
