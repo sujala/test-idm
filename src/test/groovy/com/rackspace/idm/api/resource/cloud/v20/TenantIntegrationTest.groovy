@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.DomainService
-import com.rackspace.idm.domain.service.impl.DefaultDomainService
 import groovy.json.JsonSlurper
 import org.apache.commons.httpclient.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -274,7 +273,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "updated tenant name is reflected in authenticate and validate token responses, useTenantNameFeatureFlag = #useTenantNameFeatureFlag"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.USE_TENANT_NAME_FOR_AUTH_AND_VALIDATE_RESPONSE_PROP, useTenantNameFeatureFlag)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT, useTenantNameFeatureFlag)
         def users, userAdmin
         (userAdmin, users) = utils.createUserAdminWithTenants()
         def userAdminToken = utils.getToken(userAdmin.username)
@@ -300,7 +299,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         assertAuthTenantNameAndId(authWithPasswordData, mossoTenant, useTenantNameFeatureFlag)
         assertAuthTenantNameAndId(authWithApiKeyData, mossoTenant, useTenantNameFeatureFlag)
         //NOTE: existing logic for auth w/ token and tenant always returned the correct tenant name in the response
-        assertAuthTenantNameAndId(authWithTokenData, mossoTenant, true)
+        assertAuthTenantNameAndId(authWithTokenData, mossoTenant, useTenantNameFeatureFlag)
 
         and: "assert on validate response"
         validateResponse.status == 200
@@ -321,7 +320,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         assertAuthTenantNameAndId(authWithPasswordData2, otherTenant, useTenantNameFeatureFlag)
         assertAuthTenantNameAndId(authWithApiKeyData2, otherTenant, useTenantNameFeatureFlag)
         //NOTE: existing logic for auth w/ token and tenant always returned the correct tenant name in the response
-        assertAuthTenantNameAndId(authWithTokenData2, otherTenant, true)
+        assertAuthTenantNameAndId(authWithTokenData2, otherTenant, useTenantNameFeatureFlag)
 
         and: "assert on validate response"
         validateResponse.status == 200

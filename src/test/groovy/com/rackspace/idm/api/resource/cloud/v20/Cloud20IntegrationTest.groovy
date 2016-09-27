@@ -3455,6 +3455,35 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         flag << [true, false]
     }
 
+    @Unroll
+    def "Do not allow tenant name to be changed via update tenant - allowUpdate: #allowUpdate" () {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT, allowUpdate)
+
+        def tenantId = UUID.randomUUID().toString().replace("-", "")
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
+        def updateTenant = v2Factory.createTenant(tenantId, "name")
+
+        when:
+        def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
+        cloud20.updateTenant(identityAdminToken, tenantId, updateTenant)
+        def updatedTenant = cloud20.getTenant(identityAdminToken, tenantId).getEntity(Tenant).value
+        cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+
+        then:
+        if (allowUpdate) {
+            addTenant.name != updatedTenant.name
+        } else {
+            addTenant.name == updatedTenant.name
+        }
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        allowUpdate << [true, false]
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)

@@ -77,7 +77,7 @@ public class TokenConverterCloudV20 {
             if (tenantRole.getName().equals("compute:default") && !tenantRole.getTenantIds().isEmpty()) {
                 TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
                 tenantForAuthenticateResponse.setId(tenantRole.getTenantIds().iterator().next());
-                if (identityConfig.getReloadableConfig().getUseTenantNameForAuthAndValidateResponse()) {
+                if (identityConfig.getReloadableConfig().getAllowTenantNameToBeChangedViaUpdateTenant()) {
                     Tenant tenant = tenantService.getTenant(tenantForAuthenticateResponse.getId());
                     tenantForAuthenticateResponse.setName(tenant.getName());
                 } else {
@@ -97,7 +97,7 @@ public class TokenConverterCloudV20 {
                 if (tenantId.matches("\\d+")) {
                     TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
                     tenantForAuthenticateResponse.setId(tenantId);
-                    if (identityConfig.getReloadableConfig().getUseTenantNameForAuthAndValidateResponse()) {
+                    if (identityConfig.getReloadableConfig().getAllowTenantNameToBeChangedViaUpdateTenant()) {
                         Tenant tenant = tenantService.getTenant(tenantForAuthenticateResponse.getId());
                         tenantForAuthenticateResponse.setName(tenant.getName());
                     } else {

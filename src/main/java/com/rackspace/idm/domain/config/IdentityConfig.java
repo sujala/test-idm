@@ -289,8 +289,8 @@ public class IdentityConfig {
     public static final String LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP = "feature.list.global.roles.for.user.precedence.restriction.enabled.prop";
     public static final boolean LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_DEFAULT = true;
 
-    public static final String USE_TENANT_NAME_FOR_AUTH_AND_VALIDATE_RESPONSE_PROP = "use.tenant.name.for.auth.and.validate.response";
-    public static final boolean USE_TENANT_NAME_FOR_AUTH_AND_VALIDATE_RESPONSE_DEFAULT = true;
+    public static final String FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT = "feature.allow.tenant.name.to.be.changed.via.update.tenant";
+    public static final boolean FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT_DEFAULT = true;
 
     /**
      * Required static prop
@@ -550,7 +550,7 @@ public class IdentityConfig {
 
         defaults.put(MAX_CA_DIRECTORY_PAGE_SIZE_PROP, MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT);
         defaults.put(LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP, LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_DEFAULT);
-        defaults.put(USE_TENANT_NAME_FOR_AUTH_AND_VALIDATE_RESPONSE_PROP, USE_TENANT_NAME_FOR_AUTH_AND_VALIDATE_RESPONSE_DEFAULT);
+        defaults.put(FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT, FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT_DEFAULT);
 
         defaults.put(FEEDS_MAX_CONNECTIONS_PROP, FEEDS_MAX_CONNECTIONS_DEFAULT);
         defaults.put(FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP, FEEDS_MAX_CONNECTIONS_PER_ROUTE_DEFAULT);
@@ -1698,10 +1698,9 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP);
         }
 
-        @IdmProp(key = USE_TENANT_NAME_FOR_AUTH_AND_VALIDATE_RESPONSE_PROP, versionAdded = "3.5.0", description = "Whether or not to display the tenant name or tenant ID as the tenant's name in authenticate and validate responses." +
-                "Legacy behavior was to always show the tenant name as both the tenant name and tenant ID.")
-        public boolean getUseTenantNameForAuthAndValidateResponse() {
-            return getBooleanSafely(reloadableConfiguration, USE_TENANT_NAME_FOR_AUTH_AND_VALIDATE_RESPONSE_PROP);
+        @IdmProp(key = FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT, versionAdded = "3.7.0", description = "Whether or not to allow update tenant to update tenant name")
+        public boolean getAllowTenantNameToBeChangedViaUpdateTenant() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT);
         }
 
         @IdmProp(key = FEEDS_SOCKET_TIMEOUT_MS_PROP, versionAdded = "3.5.0"
