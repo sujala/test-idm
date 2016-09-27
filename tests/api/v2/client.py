@@ -76,6 +76,60 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         return resp
 
+    def list_credentials(self, user_id):
+        """
+        Get list of creds for a particular user_id
+        """
+        url = self.url + const.CREDENTIALS_URL.format(user_id=user_id)
+        resp = self.request('GET', url)
+        return resp
+
+    def add_password_credentials(self, user_id, request_object,
+                                 requestslib_kwargs=None):
+        """
+        Add password to account
+        """
+        url = self.url + const.CREDENTIALS_URL.format(
+                user_id=user_id)
+
+        return self.request(method='POST', url=url,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def update_apikey(self, user_id, request_object, requestslib_kwargs=None):
+        """
+        Update API key on account
+        """
+        url = self.url+const.APIKEY_URL
+        url = url.format(user_id=user_id)
+        return self.request(method='POST', url=url,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def reset_api_key(self, user_id):
+        """
+        Reset API key
+        """
+        url = self.url+const.APIKEY_URL+"/"+const.RAX_AUTH+"/reset"
+        url = url.format(user_id=user_id)
+        return self.request('POST', url)
+
+    def get_api_key(self, user_id):
+        """
+        Get API key
+        """
+        url = self.url+const.APIKEY_URL
+        url = url.format(user_id=user_id)
+        return self.request('GET', url)
+
+    def delete_api_key(self, user_id):
+        """
+        Delete API key
+        """
+        url = self.url+const.APIKEY_URL
+        url = url.format(user_id=user_id)
+        return self.request('DELETE', url)
+
     def add_user(self, request_object, requestslib_kwargs=None):
         """Return response object from the add user api call
 
@@ -469,4 +523,6 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             resp.json = types.MethodType(json, resp, type(resp))
 
         return resp
-    '''
+
+
+'''

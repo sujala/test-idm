@@ -11,13 +11,15 @@ UPDATE_USER_URL = DELETE_USER_URL = GET_USER_URL = (
 TOKEN_URL = '/tokens'
 GET_TOKEN_URL = '/tokens/{token_id}'
 DOMAIN_URL = '/RAX-AUTH/domains'
-LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
-
+CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
+APIKEY_URL = CREDENTIALS_URL+"/RAX-KSKEY:apiKeyCredentials"
 """Some Constanst for values"""
 PASSWORD_PATTERN = "Password1[\d\w]{10}"
 SUB_USER_PATTERN = "sub[\-]user[\d\w]{12}"
 USER_NAME_PATTERN = "api[\-]test[\-][\d\w]{12}"
 DOMAIN_API_TEST = "api-test"
+DOMAIN_PATTERN = "[a-z]{8}"
+API_KEY_PATTERN = "[a-f][0-9]{32}"
 EMAIL_RANDOM = "randome@rackspace.coom"
 DOMAIN_TEST = "meow"
 CONTENT_TYPE_VALUE = ACCEPT_ENCODING_VALUE = "application/{0}"
@@ -64,6 +66,7 @@ TOKEN_FORMAT = "tokenFormat"
 TYPE = "type"
 XML = "xml"
 JSON = "json"
+CREDENTIALS = "credentials"
 
 API_KEY_CREDENTIALS = "apiKeyCredentials"
 PASSWORD_CREDENTIALS = "passwordCredentials"
