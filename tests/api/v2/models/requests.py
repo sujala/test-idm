@@ -5,7 +5,6 @@ from tests.api import constants as const
 
 
 class AuthenticateWithApiKey(base.AutoMarshallingModel):
-
     """Marshalling for Authentications requests with API Key."""
 
     def __init__(self, user_name, api_key):
@@ -30,7 +29,6 @@ class AuthenticateWithApiKey(base.AutoMarshallingModel):
 
 
 class AuthenticateWithPassword(base.AutoMarshallingModel):
-
     """Marshalling for Authentications requests with Password."""
 
     def __init__(self, user_name, password):
@@ -174,6 +172,7 @@ class UserAdd(base.AutoMarshallingModel):
 
 class UserUpdate(base.AutoMarshallingModel):
     """Marshalling for update user request.
+
         TODO: insert update user request xml part
     """
 
@@ -237,7 +236,7 @@ class UserUpdate(base.AutoMarshallingModel):
                 self.display_name)
         return json.dumps(update_user_request)
 
-        # TODO: insert update user request xml part
+
 class PasswordCredentialsAdd(base.AutoMarshallingModel):
     """Marshalling for Add Credentials Request"""
     def __init__(self, username, password):
@@ -246,8 +245,8 @@ class PasswordCredentialsAdd(base.AutoMarshallingModel):
 
     def _obj_to_json(self):
         postdata = {const.PASSWORD_CREDENTIALS: {
-                        const.USERNAME: self.username,
-                        const.PASSWORD: self.password}}
+            const.USERNAME: self.username,
+            const.PASSWORD: self.password}}
         return json.dumps(postdata)
 
     def _obj_to_xml(self):
@@ -262,8 +261,8 @@ class ApiKeyCredentialsUpdate(base.AutoMarshallingModel):
 
     def _obj_to_json(self):
         postdata = {const.NS_API_KEY_CREDENTIALS: {
-                        const.USERNAME: self.username,
-                        const.API_KEY: self.apikey}}
+            const.USERNAME: self.username,
+            const.API_KEY: self.apikey}}
         return json.dumps(postdata)
 
     def _obj_to_xml(self):
@@ -505,7 +504,6 @@ class EndpointTemplateUpdate(base.AutoMarshallingModel):
 
 
 class AddService(base.AutoMarshallingModel):
-
     """Marshalling for Add Service Request."""
 
     def __init__(self, service_name, service_id, service_type,
@@ -536,33 +534,6 @@ class AddService(base.AutoMarshallingModel):
         return etree.tostring(add_service_request)
 
 
-class AddTenant(base.AutoMarshallingModel):
-    """Marshalling for add tenant"""
-    # TODO: Add _obj_to_xml()
-
-    def __init__(self, tenant_name, tenant_id=None, enabled=None,
-                 description=None):
-        self.tenant_name = tenant_name
-        self.tenant_id = tenant_id
-        self.enabled = enabled
-        self.description = description
-
-    def _obj_to_json(self):
-
-        add_tenant_request = {
-            "tenant": {
-                "name": self.tenant_name,
-            }
-        }
-        if self.tenant_id is not None:
-            add_tenant_request["tenant"]["id"] = self.tenant_id
-        if self.enabled is not None:
-            add_tenant_request["tenant"]["enabled"] = self.enabled
-        if self.description is not None:
-            add_tenant_request["tenant"]["description"] = self.description
-        return json.dumps(add_tenant_request)
-
-
 class AddEndpointToTenant(base.AutoMarshallingModel):
 
     """ Marshalling for add endpoint to tenant"""
@@ -582,3 +553,51 @@ class AddEndpointToTenant(base.AutoMarshallingModel):
                 self.endpoint_template_id
             )
         return json.dumps(add_endpoint_to_tenant_request)
+
+
+class Tenant(base.AutoMarshallingModel):
+    """Marshalling for Add/ Update Tenant Request."""
+    def __init__(self, tenant_name, tenant_id, description=None, enabled=None,
+                 display_name=None, domain_id=None):
+        self.tenant_name = tenant_name
+        self.tenant_id = tenant_id
+        self.domain_id = domain_id
+        self.description = description
+        self.enabled = enabled
+        self.display_name = display_name
+
+    def _obj_to_json(self):
+        add_tenant_request = {
+            const.TENANT: {const.NAME: self.tenant_name}}
+        if self.tenant_id:
+            add_tenant_request[const.TENANT][const.ID] = self.tenant_id
+        if self.description:
+            add_tenant_request[const.TENANT][const.DESCRIPTION] = (
+                self.description)
+        if self.enabled:
+            add_tenant_request[const.TENANT][const.ENABLED] = self.enabled
+        elif self.enabled is False:
+            add_tenant_request[const.TENANT][const.ENABLED] = False
+        if self.display_name:
+            add_tenant_request[const.TENANT][const.DISPLAY_NAME] = (
+                self.display_name)
+        return json.dumps(add_tenant_request)
+
+    def _obj_to_xml(self):
+        add_tenant_request = etree.Element(
+            const.TENANT, xmlns=const.XMLNS)
+        if self.tenant_name:
+            add_tenant_request.set(const.NAME, self.tenant_name)
+        if self.tenant_id:
+            add_tenant_request.set(const.ID, self.tenant_id)
+        if self.description:
+            desc = etree.SubElement(add_tenant_request, const.DESCRIPTION)
+            desc.text = self.description
+        if self.enabled:
+            if self.enabled.lower() == 'true':
+                add_tenant_request.set(const.ENABLED, 'true')
+            else:
+                add_tenant_request.set(const.ENABLED, 'false')
+        if self.display_name:
+            add_tenant_request.set(const.DISPLAY_NAME, self.display_name)
+        return etree.tostring(add_tenant_request)
