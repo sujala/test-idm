@@ -5,8 +5,8 @@ import types
 from lxml import objectify
 
 from cafe.engine.http import client
-from tests.api.v2.models import requests
 from tests.api import constants as const
+from tests.api.v2.models import requests
 
 
 class IdentityAPIClient(client.AutoMarshallingHTTPClient):
@@ -335,6 +335,150 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
 
+        return resp
+
+    def add_endpoint_template(self, request_object, requestslib_kwargs=None):
+        """Return response object from the create endpoint template api call
+
+        POST /OS-KSCATALOG/endpointTemplates
+        """
+        # TODO: In case of XML response, add a json() method to the response
+        # object that will create a JSON equivalent of the XML response
+
+        url = self.url + const.ENDPOINT_TEMPLATE_URL
+        resp = self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def update_endpoint_template(self, template_id, request_object,
+                                 requestslib_kwargs=None):
+        """Return response object from the update endpoint template api call
+
+        PUT /OS-KSCATALOG/endpointTemplates
+        """
+        # TODO: In case of XML response, add a json() method to the response
+        # object that will create a JSON equivalent of the XML response
+
+        url = self.url + const.UPDATE_ENDPOINT_TEMPLATE_URL.format(
+            template_id=str(template_id))
+        resp = self.request('PUT', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def delete_endpoint_template(self, template_id, requestslib_kwargs=None):
+        """Return response object from the delete endpoint template api call
+
+        DELETE /OS-KSCATALOG/endpointTemplates/{template_id}
+        """
+        url = self.url + const.DELETE_ENDPOINT_TEMPLATE_URL.format(
+            template_id=str(template_id))
+        resp = self.request('DELETE', url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def get_endpoint_template(self, template_id, requestslib_kwargs=None):
+        """Return response object from the get endpoint template api call
+
+        GET /OS-KSCATALOG/endpointTemplates/{template_id}
+        """
+        # TODO: In case of XML response, add a json() method to the response
+        # object that will create a JSON equivalent of the XML response
+
+        url = self.url + const.GET_ENDPOINT_TEMPLATE_URL.format(
+            template_id=str(template_id))
+        resp = self.request('GET', url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def list_endpoint_templates(self, requestslib_kwargs=None):
+        """Return response object from the list endpoint templates api call
+
+        GET /OS-KSCATALOG/endpointTemplates
+        """
+        # TODO: In case of XML response, add a json() method to the response
+        # object that will create a JSON equivalent of the XML response
+
+        url = self.url + const.LIST_ENDPOINT_TEMPLATES_URL
+        resp = self.request('GET', url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def add_service(self, service_id, name, service_type, description,
+                    requestslib_kwargs=None):
+        """Return response object from the add service api call
+
+        POST /OS-KSADM/services
+        """
+        # TODO: In case of XML response, add a json() method to the response
+        # object that will create a JSON equivalent of the XML response
+
+        url = self.url + const.SERVICE_URL
+        request_object = requests.AddService(
+            service_id=service_id, service_name=name,
+            service_type=service_type, service_description=description)
+        resp = self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def add_tenant_by_name(self, tenant_name, tenant_id=None, enabled=None,
+                           description=None, requestslib_kwargs=None):
+        """
+        Returns response object for add tenant api call
+
+        POST /v2.0/tenants
+        """
+        # TODO: In case of XML response, add a json() method to the response
+        # object that will create a JSON equivalent of the XML response
+
+        url = self.url + const.TENANTS_URL
+        request_object = requests.AddTenant(
+            tenant_name=tenant_name, tenant_id=tenant_id,
+            enabled=enabled, description=description)
+        resp = self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def add_endpoint_to_tenant(self, tenant_id, endpoint_template_id,
+                               requestslib_kwargs=None):
+        """
+        POST /v2.0/tenants/{tenantId}/OS-KSCATALOG/endpoints
+        """
+        # TODO: In case of XML response, add a json() method to the response
+        # object that will create a JSON equivalent of the XML response
+
+        url = self.url + const.ADD_ENDPOINT_TO_TENANT_URL.format(
+            tenant_id=tenant_id)
+        request_object = requests.AddEndpointToTenant(
+            endpoint_template_id=endpoint_template_id)
+        resp = self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def delete_endpoint_from_tenant(self, tenant_id, endpoint_template_id,
+                                    requestslib_kwargs=None):
+        """
+        DELETE /v2.0/tenants/{tenantId}/OS-KSCATALOG/
+            endpoints/{endpoint_template_id}
+        """
+        url = self.url + const.DELETE_ENDPOINT_FROM_TENANT_URL.format(
+            tenant_id=str(tenant_id),
+            endpoint_template_id=str(endpoint_template_id))
+        resp = self.request('DELETE', url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def list_endpoints_for_token(self, token, requestslib_kwargs=None):
+        """Return response object from the list endpoints for token api call
+
+        GET /v2.0/tokens/{token}/endpoints
+        """
+        # TODO: In case of XML response, add a json() method to the response
+        # object that will create a JSON equivalent of the XML response
+
+        url = self.url + const.LIST_ENDPOINTS_FOR_TOKEN_URL.format(
+            token_id=token)
+        resp = self.request('GET', url,
+                            requestslib_kwargs=requestslib_kwargs)
         return resp
 
     ''' THE CODE BELOW IS NOT USED IN ANY OF THE TESTS YET.

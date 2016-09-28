@@ -1,0 +1,139 @@
+{
+    "with_assignment_type_Mosso_default_false_global_false": {
+        "additional_input_for_create": {
+            "assignment_type": "MOSSO"
+        },
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": false,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": false
+    },
+    "with_assignment_type_Mosso_default_false_global_true": {
+        "additional_input_for_create": {
+            "assignment_type": "MOSSO"
+        },
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": true,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_assignment_type_Mosso_default_true_global_false": {
+        "additional_input_for_create": {
+            "assignment_type": "MOSSO"
+        },
+        "additional_input_for_update": {
+            "default": true,
+            "global_attr": false,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_assignment_type_Mosso_default_true_global_true": {
+        "additional_input_for_create": {
+            "assignment_type": "MOSSO"
+        },
+        "additional_input_for_update": {
+            "default": true,
+            "global_attr": true,
+            "enabled": true
+        },
+        "expected_update_response": 400
+    },
+    "with_assignment_type_Nast_default_false_global_false": {
+        "additional_input_for_create": {
+            "assignment_type": "NAST"
+        },
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": false,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": false
+    },
+    "with_assignment_type_Nast_default_false_global_true": {
+        "additional_input_for_create": {
+            "assignment_type": "NAST"
+        },
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": true,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_assignment_type_Nast_default_true_global_false": {
+        "additional_input_for_create": {
+            "assignment_type": "NAST"
+        },
+        "additional_input_for_update": {
+            "default": true,
+            "global_attr": false,
+            "enabled": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_assignment_type_Nast_default_true_global_true": {
+        "additional_input_for_create": {
+            "assignment_type": "NAST"
+        },
+        "additional_input_for_update": {
+            "default": true,
+            "global_attr": true,
+            "enabled": true
+        },
+        "expected_update_response": 400
+    },
+    "with_assignment_type_Manual_default_false_global_false": {
+        "additional_input_for_create": {
+            "assignment_type": "MANUAL"
+        },
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": false
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_assignment_type_Manual_default_false_global_true": {
+        "additional_input_for_create": {
+            "assignment_type": "MANUAL"
+        },
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": true
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_assignment_type_Manual_default_true_global_false": {
+        "additional_input_for_create": {
+            "assignment_type": "MANUAL"
+        },
+        "additional_input_for_update": {
+            "default": true,
+            "global_attr": false
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": true
+    },
+    "with_assignment_type_Manual_default_true_global_true": {
+        "additional_input_for_create": {
+            "assignment_type": "MANUAL"
+        },
+        "additional_input_for_update": {
+            "default": true,
+            "global_attr": true
+        },
+        "expected_update_response": 400
+    }
+}

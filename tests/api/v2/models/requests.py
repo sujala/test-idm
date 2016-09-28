@@ -5,6 +5,7 @@ from tests.api import constants as const
 
 
 class AuthenticateWithApiKey(base.AutoMarshallingModel):
+
     """Marshalling for Authentications requests with API Key."""
 
     def __init__(self, user_name, api_key):
@@ -29,7 +30,9 @@ class AuthenticateWithApiKey(base.AutoMarshallingModel):
 
 
 class AuthenticateWithPassword(base.AutoMarshallingModel):
+
     """Marshalling for Authentications requests with Password."""
+
     def __init__(self, user_name, password):
         self.user_name = user_name
         self.password = password
@@ -58,7 +61,8 @@ class UserAdd(base.AutoMarshallingModel):
                  default_region=None, token_format=None, password=None,
                  email=None, enabled=None, mf_enabled=None,
                  user_mf_enforcement_level=None, factor_type=None,
-                 display_name=None):
+                 display_name=None, roles=None,
+                 groups=None, secret_qa=None):
         self.user_name = user_name
         self.domain_id = domain_id
         self.contact_id = contact_id
@@ -71,6 +75,9 @@ class UserAdd(base.AutoMarshallingModel):
         self.user_mf_enforcement_level = user_mf_enforcement_level
         self.factor_type = factor_type
         self.display_name = display_name
+        self.roles = roles
+        self.groups = groups
+        self.secret_qa = secret_qa
 
     def _obj_to_json(self):
         add_user_request = {
@@ -104,13 +111,19 @@ class UserAdd(base.AutoMarshallingModel):
         if self.display_name:
             add_user_request[const.USER][const.DISPLAY_NAME] = (
                 self.display_name)
+        if self.roles:
+            add_user_request[const.USER][const.ROLES] = self.roles
+        if self.groups:
+            add_user_request[const.USER][const.NS_GROUPS] = self.groups
+        if self.secret_qa:
+            add_user_request[const.USER][const.NS_SECRETQA] = self.secret_qa
         return json.dumps(add_user_request)
 
     def _obj_to_xml(self):
         # ET.register_namespace(
         #     'RAX-AUTH',
         #     'http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0')
-        # ET.register_namespace('OS-KSADM', XMLNS_OS_KSADM)
+        # ET.register_namespace('OS-KSADM', const.XMLNS_OS_KSADM)
         add_user_request = etree.Element(
             const.USER, xmlns=const.XMLNS,
             username=self.user_name)
@@ -146,6 +159,16 @@ class UserAdd(base.AutoMarshallingModel):
                 self.factor_type)
         if self.display_name:
             add_user_request.set(const.DISPLAY_NAME, self.display_name)
+        if self.roles:
+            add_user_request.set(const.ROLES, self.roles)
+        if self.groups:
+            add_user_request.attrib[
+                etree.QName(const.XMLNS_RAX_KSGRP,
+                            const.GROUPS)] = self.groups
+        if self.secret_qa:
+            add_user_request.attrib[
+                etree.QName(const.XMLNS_RAX_KSQA,
+                            const.SECRET_QA)] = self.secret_qa
         return etree.tostring(add_user_request)
 
 
@@ -175,7 +198,7 @@ class UserUpdate(base.AutoMarshallingModel):
         self.display_name = display_name
 
     def _obj_to_json(self):
-        update_user_request = {'user': {}}
+        update_user_request = {const.USER: {}}
         if self.user_name:
             update_user_request[const.USER][const.USERNAME] = self.user_name
         if self.domain_id:
@@ -249,6 +272,7 @@ class ApiKeyCredentialsUpdate(base.AutoMarshallingModel):
 
 class RoleAdd(base.AutoMarshallingModel):
     """Marshalling for Add Role Request."""
+
     def __init__(self, role_name, role_id, role_description):
         self.role_name = role_name
         self.role_id = role_id
@@ -268,3 +292,293 @@ class RoleAdd(base.AutoMarshallingModel):
             const.ROLE, xmlns=const.XMLNS, id=self.role_id,
             name=self.role_name, description=self.role_description)
         return etree.tostring(add_role_request)
+
+
+class EndpointTemplateAdd(base.AutoMarshallingModel):
+
+    """Marshalling for Add Endpoint Template Request."""
+
+    def __init__(self, template_id, region, template_type=None,
+                 name=None, service_id=None, assignment_type=None,
+                 public_url=None, internal_url=None, admin_url=None,
+                 tenant_alias=None, version_id=None, version_info=None,
+                 version_list=None, global_attr=None, enabled=None,
+                 default=None):
+        self.id = template_id
+        self.region = region
+        self.template_type = template_type
+        self.name = name
+        self.service_id = service_id
+        self.assignment_type = assignment_type
+        self.public_url = public_url
+        self.internal_url = internal_url
+        self.admin_url = admin_url
+        self.tenant_alias = tenant_alias
+        self.version_id = version_id
+        self.version_info = version_info
+        self.version_list = version_list
+        self.global_attr = global_attr
+        self.enabled = enabled
+        self.default = default
+
+    def _obj_to_json(self):
+        add_endpoint_template_request = {
+            const.OS_KSCATALOG_ENDPOINT_TEMPLATE: {
+                const.ID: self.id
+            }
+        }
+        if self.region:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.REGION] = self.region
+        if self.name:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.SERVICE_NAME] = self.name
+        if self.template_type:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.SERVICE_TYPE] = (
+                self.template_type)
+        if self.service_id:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.SERVICE_ID] = self.service_id
+        if self.assignment_type:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.RAX_AUTH_ASSIGNMENT_TYPE] = self.assignment_type
+        if self.public_url:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.PUBLIC_URL] = self.public_url
+        if self.internal_url:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.INTERNAL_URL] = self.internal_url
+        if self.admin_url:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.ADMIN_URL] = (
+                self.admin_url)
+        if self.version_id:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.VERSION_ID] = (
+                self.version_id)
+        if self.version_info:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.VERSION_INFO] = (
+                self.version_info)
+        if self.version_list:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.VERSION_LIST] = (
+                self.version_list)
+        if self.global_attr:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.GLOBAL] = (
+                self.global_attr)
+        if self.default:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.DEFAULT] = (
+                self.default)
+        if self.enabled:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.ENABLED] = (
+                self.enabled)
+        return json.dumps(add_endpoint_template_request)
+
+    def _obj_to_xml(self):
+        etree.register_namespace(const.OS_KSADM_NAMESPACE,
+                                 const.XMLNS_OS_KSADM)
+        add_endpoint_template_request = etree.Element(
+            const.ENDPOINT_TEMPLATE, xmlns=const.XMLNS, id=str(self.id),
+            name=self.name, publicURL=self.public_url, type=self.template_type,
+            internalURL=self.internal_url, adminURL=self.admin_url,
+            versionId=self.version_id, versionInfo=self.version_info,
+            versionList=self.version_list, global_attr=self.global_attr,
+            default=self.default, enabled=self.enabled, region=self.region,
+            service_id=self.service_id, assignment_type=self.assignment_type)
+        return etree.tostring(add_endpoint_template_request)
+
+
+class EndpointTemplateUpdate(base.AutoMarshallingModel):
+
+    """Marshalling for Update Endpoint Template Request."""
+
+    def __init__(self, template_id, region=None, template_type=None,
+                 name=None, service_id=None, assignment_type=None,
+                 public_url=None, internal_url=None, admin_url=None,
+                 tenant_alias=None, version_id=None, version_info=None,
+                 version_list=None, global_attr=None, enabled=None,
+                 default=None):
+        self.id = template_id
+        self.region = region
+        self.template_type = template_type
+        self.name = name
+        self.service_id = service_id
+        self.assignment_type = assignment_type
+        self.public_url = public_url
+        self.internal_url = internal_url
+        self.admin_url = admin_url
+        self.tenant_alias = tenant_alias
+        self.version_id = version_id
+        self.version_info = version_info
+        self.version_list = version_list
+        self.global_attr = global_attr
+        self.enabled = enabled
+        self.default = default
+
+    def _obj_to_json(self):
+        add_endpoint_template_request = {
+            const.OS_KSCATALOG_ENDPOINT_TEMPLATE: {
+                const.ID: self.id
+            }
+        }
+        if self.region:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.REGION] = self.region
+        if self.name:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.SERVICE_NAME] = self.name
+        if self.template_type:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.SERVICE_TYPE] = (
+                self.template_type)
+        if self.service_id:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.SERVICE_ID] = self.service_id
+        if self.assignment_type:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.RAX_AUTH_ASSIGNMENT_TYPE] = self.assignment_type
+        if self.public_url:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.PUBLIC_URL] = self.public_url
+        if self.internal_url:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                const.INTERNAL_URL] = self.internal_url
+        if self.admin_url:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.ADMIN_URL] = (
+                self.admin_url)
+        if self.version_id:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.VERSION_ID] = (
+                self.version_id)
+        if self.version_info:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.VERSION_INFO] = (
+                self.version_info)
+        if self.version_list:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.VERSION_LIST] = (
+                self.version_list)
+        if self.global_attr:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.GLOBAL] = (
+                self.global_attr)
+        if self.default:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.DEFAULT] = (
+                self.default)
+        if self.enabled:
+            add_endpoint_template_request[
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.ENABLED] = (
+                self.enabled)
+        return json.dumps(add_endpoint_template_request)
+
+    def _obj_to_xml(self):
+        etree.register_namespace(const.OS_KSADM_NAMESPACE,
+                                 const.XMLNS_OS_KSADM)
+        update_endpoint_template_request = etree.Element(
+            const.ENDPOINT_TEMPLATE, xmlns=const.XMLNS, id=str(self.id),
+            name=self.name, publicURL=self.public_url, type=self.template_type,
+            internalURL=self.internal_url, adminURL=self.admin_url,
+            versionId=self.version_id, versionInfo=self.version_info,
+            versionList=self.version_list, global_attr=self.global_attr,
+            default=self.default, enabled=self.enabled, region=self.region,
+            service_id=self.service_id, assignment_type=self.assignment_type)
+        return etree.tostring(update_endpoint_template_request)
+
+
+class AddService(base.AutoMarshallingModel):
+
+    """Marshalling for Add Service Request."""
+
+    def __init__(self, service_name, service_id, service_type,
+                 service_description=None):
+        self.service_name = service_name
+        self.service_id = service_id
+        self.service_description = service_description
+        self.service_type = service_type
+
+    def _obj_to_json(self):
+        add_service_request = {
+            const.SERVICE: {
+                const.SERVICE_NAME: self.service_name,
+                const.ID: self.service_id,
+                const.SERVICE_TYPE: self.service_type}}
+        if self.service_description:
+            add_service_request[const.SERVICE][const.DESCRIPTION] = (
+                self.service_description)
+        return json.dumps(add_service_request)
+
+    def _obj_to_xml(self):
+        etree.register_namespace('OS-KSADM', const.XMLNS_OS_KSADM)
+        add_service_request = etree.Element(
+            'service', xmlns=const.XMLNS, id=str(self.service_id),
+            name=self.service_name, type=self.service_type)
+        if self.service_description:
+            add_service_request.set('description', self.service_description)
+        return etree.tostring(add_service_request)
+
+
+class AddTenant(base.AutoMarshallingModel):
+    """Marshalling for add tenant"""
+    # TODO: Add _obj_to_xml()
+
+    def __init__(self, tenant_name, tenant_id=None, enabled=None,
+                 description=None):
+        self.tenant_name = tenant_name
+        self.tenant_id = tenant_id
+        self.enabled = enabled
+        self.description = description
+
+    def _obj_to_json(self):
+
+        add_tenant_request = {
+            "tenant": {
+                "name": self.tenant_name,
+            }
+        }
+        if self.tenant_id is not None:
+            add_tenant_request["tenant"]["id"] = self.tenant_id
+        if self.enabled is not None:
+            add_tenant_request["tenant"]["enabled"] = self.enabled
+        if self.description is not None:
+            add_tenant_request["tenant"]["description"] = self.description
+        return json.dumps(add_tenant_request)
+
+
+class AddEndpointToTenant(base.AutoMarshallingModel):
+
+    """ Marshalling for add endpoint to tenant"""
+    # TODO: Add _obj_to_xml()
+
+    ROOT_TAG = const.OS_KSCATALOG_ENDPOINT_TEMPLATE
+
+    def __init__(self, endpoint_template_id):
+        self.endpoint_template_id = endpoint_template_id
+
+    def _obj_to_json(self):
+        add_endpoint_to_tenant_request = {
+            self.ROOT_TAG: {}
+        }
+        if self.endpoint_template_id is not None:
+            add_endpoint_to_tenant_request[self.ROOT_TAG][const.ID] = (
+                self.endpoint_template_id
+            )
+        return json.dumps(add_endpoint_to_tenant_request)

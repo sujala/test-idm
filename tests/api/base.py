@@ -118,18 +118,21 @@ class TestBase(fixtures.BaseTestFixture):
                     '<data type="boolean">'
                     '<except><value>0</value><value>1</value></except>'
                     '</data>')
+            elif attr_type == 'integer':
+                xml_attribute_type = '<data type="string"/>'
             return xml_attribute_type
 
         name_space = '''
         <grammar xmlns="http://relaxng.org/ns/structure/1.0"
             xmlns:atom="http://www.w3.org/2005/Atom"
-            xmlns:RAX-AUTH="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0"       # noqa
-            xmlns:identity="http://docs.openstack.org/identity/api/v2.0"                    # noqa
-            xmlns:ns4="http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0"           # noqa
-            xmlns:rax-ksqa="http://docs.rackspace.com/identetity/api/ext/RAX-KSQA/v1.0"     # noqa
-            xmlns:OS-KSADM="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0"       # noqa
-            xmlns:os-ksec2="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0"       # noqa
-            xmlns:rax-kskey="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0"     # noqa
+            xmlns:RAX-AUTH="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0"
+            xmlns:OS-KSCATALOG="http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0"
+            xmlns:identity="http://docs.openstack.org/identity/api/v2.0"
+            xmlns:ns4="http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0"
+            xmlns:rax-ksqa="http://docs.rackspace.com/identetity/api/ext/RAX-KSQA/v1.0"
+            xmlns:OS-KSADM="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0"
+            xmlns:os-ksec2="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0"
+            xmlns:rax-kskey="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0"
             datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
            <start>'''
 
@@ -212,3 +215,20 @@ class TestBase(fixtures.BaseTestFixture):
     def tearDownClass(cls):
         """Deletes the added resources."""
         super(TestBase, cls).tearDownClass()
+
+
+def skip_if_no_service_admin_available(func):
+    """
+    Function used to raise SkipTest if the service admin-level tests are not
+    runnable.
+    :param func: test method
+    :return: wrapper
+    """
+
+    def wrapper(*args, **kwargs):
+        test_config = config.TestConfig()
+        if not test_config.run_service_admin_tests:
+            import unittest
+            raise unittest.SkipTest('Service Admin user is not available')
+        return func(*args, **kwargs)
+    return wrapper
