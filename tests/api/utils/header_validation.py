@@ -8,12 +8,18 @@ tests for v1.0 & v1.1 calls
 """
 
 
-def validate_header_vary(response):
+def validate_header_vary(value):
+    """
+    :param value: as a list
+    :return:
+    """
+    header = 'vary'
 
-    header = 'Vary'
-    basic_header_validations(response=response, header=header)
+    def validation(response):
+        basic_header_validations(response=response, header=header)
+        assert value in response.headers[header]
 
-    # TODO : Assert the content of this header. e.g. its pattern
+    return validation
 
 
 def validate_header_server(response):
@@ -75,6 +81,36 @@ def validate_header_access_control_allow_origin(value):
     return validation
 
 
+def validate_header_access_control_allow_methods(value):
+    header = 'access-control-allow-methods'
+
+    def validation(response):
+        basic_header_validations(response=response, header=header)
+        assert value in response.headers[header]
+
+    return validation
+
+
+def validate_header_access_control_allow_credentials(value):
+    header = 'access-control-allow-credentials'
+
+    def validation(response):
+        basic_header_validations(response=response, header=header)
+        assert response.headers[header] == value
+
+    return validation
+
+
+def validate_header_access_control_allow_headers(values):
+    header = 'access-control-allow-headers'
+
+    def validation(response):
+        basic_header_validations(response=response, header=header)
+        assert values in response.headers[header]
+
+    return validation
+
+
 def validate_header_origin(value):
     header = 'origin'
 
@@ -102,6 +138,16 @@ def validate_header_not_present(unexpected_headers):
             assert header not in response.headers, (
                 "header %s should not be present in response" % header)
 
+    return validation
+
+
+def validate_expected_headers(expected_headers):
+
+    def validation(response):
+        for header in expected_headers:
+            assert header in response.headers, (
+                "header %s not in response headers" % header
+            )
     return validation
 
 

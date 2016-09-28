@@ -631,7 +631,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         # object that will create a JSON equivalent of the XML response
 
         url = self.url + const.TENANTS_URL
-        request_object = requests.AddTenant(
+        request_object = requests.Tenant(
             tenant_name=tenant_name, tenant_id=tenant_id,
             enabled=enabled, description=description)
         resp = self.request('POST', url, request_entity=request_object,
@@ -801,8 +801,21 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         return resp
 
+    def verify_cors(self, method, url, headers=None, requestslib_kwargs=None):
+        """
+        Support calls to verify CORS headers enable in Identity
+        For now CORS headers only allow for POST /tokens
+        :param method:
+        :param url:
+        :param requestslib_kwargs:
+        :return:
+        """
+        url = self.url + url
+        resp = self.request(method=method, url=url, headers=headers,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
 
-''' THE CODE BELOW IS NOT USED IN ANY OF THE TESTS YET.
+    ''' THE CODE BELOW IS NOT USED IN ANY OF THE TESTS YET.
     COMMENTING THIS OUT, SO WE CAN RESURRECT THESE CLIENT METHODS WHENEVER
     WE ADD TESTS FOR THE CORRESPONDING ENDPOINTS.
 
