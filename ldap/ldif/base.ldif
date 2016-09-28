@@ -4354,7 +4354,7 @@ passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20120627230933.121Z
 rsApiKey:: 0p5Hq3v9YYI4c2yPHmegVg==
 rsNastId: asdfgh1234
-rsRegion: US
+rsRegion: ORD
 uid: kurtDefaultUser
 userPassword: {SSHA512}ej+i+M1f4fEQQMwSF/iz32ppvp7z2Wg8rnRhpt+M0iuJU+dO2flSx
  Z9BmP080rlcyD3Mud9/U1Ad8FIIRb3c2LkOe4s=
@@ -4382,6 +4382,7 @@ enabled: TRUE
 mail: john.smith@example.org
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20120628153616.334Z
+rsRegion: ORD
 uid: hectorUserAdmin
 userPassword: {SSHA512}p3hYI8bUm4ciUEZ0iuFvt/4HVFUbbxSMfHEjbvKG+vB0kRHvvvDKu
  WRtnY/YP+ltOS675dVHjypV1Nnnw+N3aGP0avo=
@@ -4408,6 +4409,7 @@ enabled: TRUE
 mail: testEmail@rackspace.com
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20120914232353.407Z
+rsRegion: ORD
 uid: testServiceAdmin_doNotDelete
 userPassword: {SSHA512}XnKfwm1hiQbTNxTObpm7mI21caR2T9vK/6KRmgb+io6Pt2HT4Jts0
  1ZFv8qnx2ch3BHSwk42NSqQhj88mvJ1e3fCAtE=
@@ -4436,6 +4438,7 @@ enabled: FALSE
 mail: testEmail@rackspace.com
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20120918154508.749Z
+rsRegion: ORD
 uid: testDisabledUser_doNotDelete
 userPassword: {SSHA512}0L3YXuC3aluPyPjEWEYDU0scnUb+5VW7kdlf5lMlR44ka4ZrhCKqL
  0xhiBX0uExYYc9mPcGqKLqQvAYC7lchs7f80vE=
@@ -4460,6 +4463,7 @@ enabled: TRUE
 mail: testEmail@rackspace.com
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20120920181026.587Z
+rsRegion: ORD
 uid: testIdentityAdmin_doNotDelete
 userPassword: {SSHA512}09y37gXSy8nv4CuIRw8oqB/x+zcDs944ytOvVOWYeh1GkTTgLf/T8
  3x6MrjwXsuwi+pHpoTzrnfYEjUJNHply8keUq4=
@@ -4488,6 +4492,7 @@ mail: testuser@example.org
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20120924211954.976Z
 rsDomainId: 135792468
+rsRegion: ORD
 uid: testUserAdmin_doNotDelete
 userPassword: {SSHA512}aE2fQnQ5jCMcPy6CKs7Zbq2jRFN1NDkbyeAC0BTtqWds60d/aRz6w
  7iUwmMKOTwvybGs8KlSJnzYF26UfZ8EOSQ1cMM=
@@ -4515,6 +4520,7 @@ mail: testEmail@rackspace.com
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20120924211957.825Z
 rsDomainId: 135792468
+rsRegion: ORD
 uid: testUserNoRoles_doNotDelete
 userPassword: {SSHA512}JskKc+Ud0q8FAuPLlb9ylGE+N2pNBehjMu7mZV5LUg2zMHlKWPLcj
  N9MEmgtRp7c5YXhbMYGnu2ehDDvBFCZzNIyolM=
@@ -4538,6 +4544,7 @@ mail: testEmail@rackspace.com
 passwordSelfUpdated: FALSE
 passwordUpdatedTimestamp: 20121012202521.754Z
 rsDomainId: 135792468
+rsRegion: ORD
 uid: testDefaultUser_doNotDelete
 userPassword: {SSHA512}QRtJi12bue/ZTNzZUieelqacz3sNF3nZD7PxpbgvsmN622blGqGEo
  DfazK1rhnBwXRt9noW3EAwNIjQoGb0QUdISaOw=

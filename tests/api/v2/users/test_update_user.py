@@ -71,6 +71,7 @@ class TestUpdateUser(base.TestBaseV2):
     def setUp(self):
         super(TestUpdateUser, self).setUp()
         self.user_ids = []
+        self.sub_user_ids = []
         self.test_identity_adm_id = ""
         self.test_user_admin_id = ""
         self.test_sub_user_id = ""
@@ -99,7 +100,7 @@ class TestUpdateUser(base.TestBaseV2):
                                           domain_id=const.DOMAIN_TEST)
         resp = self.user_admin_client.add_user(request_object=request_object)
         self.test_sub_user_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(resp.json()[const.USER][const.ID])
+        self.sub_user_ids.append(resp.json()[const.USER][const.ID])
 
     @ddt.file_data('data_update_user_info.json')
     def test_update_identity_admin_user_info(self, test_data):
@@ -456,6 +457,8 @@ class TestUpdateUser(base.TestBaseV2):
 
     def tearDown(self):
         # Delete all users created in the tests
+        for id in self.sub_user_ids:
+            self.identity_admin_client.delete_user(user_id=id)
         for id in self.user_ids:
             self.service_admin_client.delete_user(user_id=id)
         super(TestUpdateUser, self).tearDown()
@@ -465,10 +468,10 @@ class TestUpdateUser(base.TestBaseV2):
         # Delete all users created in the setUpClass
         cls.delete_client(client=cls.user_client,
                           parent_client=cls.user_admin_client)
-        cls.delete_client(client=cls.user_admin_client,
-                          parent_client=cls.identity_admin_client)
         cls.delete_client(client=cls.test_user_client,
                           parent_client=cls.user_admin_client)
+        cls.delete_client(client=cls.user_admin_client,
+                          parent_client=cls.identity_admin_client)
         cls.delete_client(client=cls.test_user_admin_client,
                           parent_client=cls.identity_admin_client)
         cls.delete_client(client=cls.test_identity_admin_client,
