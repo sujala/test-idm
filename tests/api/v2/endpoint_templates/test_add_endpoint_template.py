@@ -35,6 +35,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
 
     def setUp(self):
         super(TestAddEndpointTemplate, self).setUp()
+        self.service_ids = []
         self.template_ids = []
         self.user_ids = []
 
@@ -58,10 +59,16 @@ class TestAddEndpointTemplate(base.TestBaseV2):
         service_type = self.generate_random_string(
             pattern=const.SERVICE_TYPE_PATTERN)
         service_id = int(self.generate_random_string(pattern='[\d]{8}'))
+
+        req_object = requests.ServiceAdd(service_id=service_id,
+                                         service_name=service_name,
+                                         service_type=service_type,
+                                         service_description='Test Service')
         resp = self.service_admin_client.add_service(
-            service_id=service_id, name=service_name,
-            service_type=service_type, description='Test Service')
+            request_object=req_object)
         self.assertEqual(resp.status_code, 201)
+        service_id = resp.json()[const.NS_SERVICE][const.ID]
+        self.service_ids.append(service_id)
 
         template_id = int(self.generate_random_string(pattern='[\d]{8}'))
         endpoint_template = requests.EndpointTemplateAdd(
@@ -225,11 +232,15 @@ class TestAddEndpointTemplate(base.TestBaseV2):
         service_type = self.generate_random_string(
             pattern=const.SERVICE_TYPE_PATTERN)
         service_id = int(self.generate_random_string(pattern='[\d]{8}'))
+        req_object = requests.ServiceAdd(service_id=service_id,
+                                         service_name=service_name,
+                                         service_type=service_type,
+                                         service_description='Test Service')
         resp = self.service_admin_client.add_service(
-            service_id=service_id, name=service_name,
-            service_type=service_type, description='Test Service')
+            request_object=req_object)
         self.assertEqual(resp.status_code, 201)
-        service_id = resp.json()[const.SERVICE][const.ID]
+        service_id = resp.json()[const.NS_SERVICE][const.ID]
+        self.service_ids.append(service_id)
 
         endpoint_template = requests.EndpointTemplateAdd(
             template_id=template_id, service_id=service_id, **input_data)
@@ -518,6 +529,9 @@ class TestAddEndpointTemplate(base.TestBaseV2):
 
                 resp = self.identity_admin_client.delete_endpoint_template(
                     template_id=id_)
+                self.assertEqual(resp.status_code, 204)
+            for id_ in self.service_ids:
+                resp = self.service_admin_client.delete_service(service_id=id_)
                 self.assertEqual(resp.status_code, 204)
         # Delete users created during the tests
         for id_ in self.user_ids:

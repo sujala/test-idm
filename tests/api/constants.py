@@ -19,6 +19,7 @@ UPDATE_ENDPOINT_TEMPLATE_URL = GET_ENDPOINT_TEMPLATE_URL = (
     DELETE_ENDPOINT_TEMPLATE_URL) = (
     "/OS-KSCATALOG/endpointTemplates/{template_id}")
 SERVICE_URL = "/OS-KSADM/services"
+DELETE_SERVICE_URL = GET_SERVICE_URL = "/OS-KSADM/services/{service_id}"
 TENANTS_URL = "/tenants"
 ADD_ENDPOINT_TO_TENANT_URL = "/tenants/{tenant_id}/OS-KSCATALOG/endpoints"
 DELETE_ENDPOINT_FROM_TENANT_URL = (
@@ -41,6 +42,7 @@ DOMAIN_TEST = "meow"
 CONTENT_TYPE_VALUE = ACCEPT_ENCODING_VALUE = "application/{0}"
 SERVICE_NAME_PATTERN = "service[\-][\w\d]{8}"
 SERVICE_TYPE_PATTERN = "service[\-]type[\-][\w\d]{8}"
+SERVICE_ID_PATTERN = "[\d]{8}"
 
 """Headers"""
 X_AUTH_TOKEN = "X-Auth-Token"
@@ -139,7 +141,7 @@ RAX_AUTH_USER_MULTI_FACTOR_ENFORCEMENT_LEVEL = (
 RAX_AUTH_FACTOR_TYPE = "RAX-AUTH:factorType"
 RAX_AUTH_ADMINISTRATOR_ROLE = "RAX-AUTH:administratorRole"
 RAX_AUTH_PROPAGATE = "RAX-AUTH:propagate"
-SERVICE = "OS-KSADM:service"
+NS_SERVICE = OS_KSADM_NAMESPACE + ":service"
 USER_MULTI_FACTOR_ENFORCEMENT_LEVEL = "userMultiFactorEnforcementLevel"
 RAX_AUTH_PEDERATED_IDP = "RAX-AUTH:federatedIdp"
 

@@ -1,0 +1,32 @@
+{
+    "with_default_false_global_false": {
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": false,
+            "version_id": "2"
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": false
+    },
+    "with_default_false_global_false_2": {
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": false,
+            "version_id": "2",
+            "version_info": "cdm.test.public.com/v2/"
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": false
+    },
+    "with_default_false_global_false_3": {
+        "additional_input_for_update": {
+            "default": false,
+            "global_attr": false,
+            "version_id": "3",
+            "version_info": "cdm.test.public.com/v3/beta",
+            "version_list": "cdm.test.public.com/"
+        },
+        "expected_update_response": 200,
+        "expected_endpoint_in_catalog": false
+    }
+}
