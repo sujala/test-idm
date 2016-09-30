@@ -503,7 +503,7 @@ class EndpointTemplateUpdate(base.AutoMarshallingModel):
         return etree.tostring(update_endpoint_template_request)
 
 
-class AddService(base.AutoMarshallingModel):
+class ServiceAdd(base.AutoMarshallingModel):
     """Marshalling for Add Service Request."""
 
     def __init__(self, service_name, service_id, service_type,
@@ -515,12 +515,12 @@ class AddService(base.AutoMarshallingModel):
 
     def _obj_to_json(self):
         add_service_request = {
-            const.SERVICE: {
+            const.NS_SERVICE: {
                 const.SERVICE_NAME: self.service_name,
                 const.ID: self.service_id,
                 const.SERVICE_TYPE: self.service_type}}
         if self.service_description:
-            add_service_request[const.SERVICE][const.DESCRIPTION] = (
+            add_service_request[const.NS_SERVICE][const.DESCRIPTION] = (
                 self.service_description)
         return json.dumps(add_service_request)
 

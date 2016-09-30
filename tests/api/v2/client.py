@@ -513,7 +513,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
-    def add_service(self, service_id, name, service_type, description,
+    def add_service(self, request_object,
                     requestslib_kwargs=None):
         """Return response object from the add service api call
 
@@ -523,10 +523,18 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         # object that will create a JSON equivalent of the XML response
 
         url = self.url + const.SERVICE_URL
-        request_object = requests.AddService(
-            service_id=service_id, service_name=name,
-            service_type=service_type, service_description=description)
         resp = self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def delete_service(self, service_id, requestslib_kwargs=None):
+        """Return response object from the delete service api call
+
+        DELETE /v2.0/OS-KSADM/services/{serviceId}
+        """
+        url = self.url + const.DELETE_SERVICE_URL.format(
+            service_id=service_id)
+        resp = self.request('DELETE', url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
