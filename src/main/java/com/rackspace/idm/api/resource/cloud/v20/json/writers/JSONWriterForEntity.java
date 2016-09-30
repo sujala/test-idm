@@ -20,6 +20,8 @@ import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
@@ -51,7 +53,15 @@ public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
         write(entity, entityStream, prefixValues, ALWAYS_PLURALIZE_HANDLER);
     }
 
+    protected void write(T entity, OutputStream entityStream, Map prefixValues, List<String> removeIfEmpty) {
+        write(entity, entityStream, prefixValues, ALWAYS_PLURALIZE_HANDLER, removeIfEmpty);
+    }
+
     protected void write(T entity, OutputStream entityStream, Map prefixValues, JsonArrayTransformerHandler handler) {
+        write(entity, entityStream, prefixValues, handler, new ArrayList<String>());
+    }
+
+    protected void write(T entity, OutputStream entityStream, Map prefixValues, JsonArrayTransformerHandler handler, List<String> removeIfEmpty) {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
             getMarshaller().marshallToJSON(entity, outputStream);
@@ -60,12 +70,10 @@ public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
             JSONParser parser = new JSONParser();
             JSONObject outer = (JSONObject) parser.parse(jsonString);
 
-            JSONObject jsonObject;
+            JSONObject jsonObject = outer;
 
             if(prefixValues != null){
-                jsonObject = prefixMapper.mapPrefix(outer, prefixValues);
-            }else{
-                jsonObject = outer;
+                jsonObject = prefixMapper.mapPrefix(jsonObject, prefixValues, removeIfEmpty);
             }
 
             arrayTransformer.transformRemoveWrapper(jsonObject, null, handler);

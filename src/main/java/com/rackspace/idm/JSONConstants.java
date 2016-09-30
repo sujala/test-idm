@@ -26,6 +26,7 @@ public final class JSONConstants {
     public static final String DEFAULT_REGION = "defaultRegion";
     public static final String DOMAIN = "domain";
     public static final String DOMAIN_ID = "domainId";
+    public static final String TYPES = "types";
     public static final String MULTI_FACTOR_ENABLED = "multiFactorEnabled";
     public static final String MULTI_FACTOR_ENFORCEMENT_LEVEL_ = "userMultiFactorEnforcementLevel";
     public static final String MULTI_FACTOR_STATE = "multiFactorState";
@@ -165,6 +166,7 @@ public final class JSONConstants {
     public static final String RAX_AUTH_DOMAIN = "RAX-AUTH:domain";
     public static final String RAX_AUTH_DOMAINS = "RAX-AUTH:domains";
     public static final String RAX_AUTH_DOMAIN_ID = "RAX-AUTH:domainId";
+    public static final String RAX_AUTH_TYPES = "RAX-AUTH:types";
     public static final String RAX_AUTH_MULTI_FACTOR_ENABLED = "RAX-AUTH:multiFactorEnabled";
     public static final String RAX_AUTH_MULTI_FACTOR_STATE = "RAX-AUTH:multiFactorState";
     public static final String RAX_AUTH_MULTI_FACTOR_TYPE = "RAX-AUTH:factorType";
@@ -272,6 +274,8 @@ public final class JSONConstants {
 
     public static final String TENANT_DOMAIN_ID_PATH = "tenant.domainId";
     public static final String TENANT_RAX_AUTH_DOMAIN_ID_PATH = "tenant.RAX-AUTH:domainId";
+    public static final String TENANT_TYPES_PATH = "tenant.types";
+    public static final String TENANT_RAX_AUTH_TYPES_PATH = "tenant.RAX-AUTH:types";
     public static final String TENANTS_DOMAIN_ID_PATH = "tenants.tenant.domainId";
 
     public static final String CONTACT_ID = "contactId";

@@ -36,7 +36,10 @@ public class JSONWriterForTenants extends JSONWriterForArrayEntity<Tenants> {
                 arrayEntry.remove("domainId");
                 arrayEntry.put(JSONConstants.RAX_AUTH_DOMAIN_ID, domainId);
             }
-        }
 
+            if (arrayEntry.containsKey(JSONConstants.TYPES)) {
+                arrayEntry.remove(JSONConstants.TYPES);
+            }
+        }
     }
 }

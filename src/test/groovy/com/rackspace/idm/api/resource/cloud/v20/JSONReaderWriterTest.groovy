@@ -83,6 +83,9 @@ class JSONReaderWriterTest extends RootServiceTest {
     @Shared JSONReaderForAuthenticationRequest readerForAuthenticationRequest = new JSONReaderForAuthenticationRequest()
     @Shared JSONWriterForAuthenticationRequest writerForAuthenticationRequest = new JSONWriterForAuthenticationRequest()
 
+    @Shared JSONReaderForTenant readerForTenant = new JSONReaderForTenant()
+    @Shared JSONWriterForTenant writerForTenant = new JSONWriterForTenant()
+
     @Shared JSONReaderForTenants readerForTenants = new JSONReaderForTenants()
     @Shared JSONWriterForTenants writerForTenants = new JSONWriterForTenants()
 
@@ -532,6 +535,23 @@ class JSONReaderWriterTest extends RootServiceTest {
         authObject.token.id == token
         authObject.domain.name ==  domain
         authObject.tenantId == null
+    }
+
+    def "create read/writer for tenant" () {
+        given:
+        def tenant = v2Factory.createTenant("id", "name", ["type1"])
+
+        when:
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForTenant.writeTo(tenant, Tenant.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+        ByteArrayInputStream arrayInputStream = new ByteArrayInputStream(json.getBytes())
+        Tenant tenantObject = readerForTenant.readFrom(Tenant.class, null, null, null, null, arrayInputStream)
+
+        then:
+        tenantObject != null
+        tenantObject.name == tenant.name
+        tenantObject.types.type.get(0) == tenant.types.type.get(0)
     }
 
     def "create read/writer for tenants" () {

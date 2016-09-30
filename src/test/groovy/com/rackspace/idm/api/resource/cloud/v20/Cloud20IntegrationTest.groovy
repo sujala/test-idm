@@ -18,6 +18,7 @@ import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
+import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.Modification
 import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.SearchScope
@@ -3482,6 +3483,93 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         where:
         allowUpdate << [true, false]
+    }
+
+    @Unroll
+    def "Create tenant with type can be retrieved and matches: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "Type1", "TYPE2"])
+
+        when:
+        def addTenant = cloud20.addTenant(identityAdminToken, tenant, acceptContentType, requestContentType).getEntity(Tenant)
+        if (acceptContentType == MediaType.APPLICATION_XML_TYPE) {
+            addTenant = addTenant.value
+        }
+        def createdTenant = cloud20.getTenantByName(identityAdminToken, tenantId, acceptContentType).getEntity(Tenant)
+        if (acceptContentType == MediaType.APPLICATION_XML_TYPE) {
+            createdTenant = createdTenant.value
+        }
+        List<String> types = createdTenant.types.type
+
+        cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+
+        then: "duplicates removed and stored as lowercase"
+        types as Set == ["type1", "type2"] as Set
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "A maximum of 16 unique tenant types can be assigned to any given tenant: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "type2", "type3", "type4", "type5", "type6",
+            "type7", "type8", "type9", "type10", "type11", "type12", "type13", "type14", "type15", "type16", "type17"])
+
+        when:
+        def response = cloud20.addTenant(identityAdminToken, tenant, acceptContentType, requestContentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_CANNOT_EXCEED_MAXIMUM)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Tenant type can only contain alphanumeric characters: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, [type])
+
+        when:
+        def response = cloud20.addTenant(identityAdminToken, tenant, acceptContentType, requestContentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC)
+
+        where:
+        requestContentType              | acceptContentType               | type
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | "type*"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type()"
+    }
+
+    @Unroll
+    def "Tenant type must possess a length > 0 and <= 15: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, [type])
+
+        when:
+        def response = cloud20.addTenant(identityAdminToken, tenant, acceptContentType, requestContentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE)
+
+        where:
+        requestContentType              | acceptContentType               | type
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | ""
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type567890123456"
     }
 
     def authAndExpire(String username, String password) {

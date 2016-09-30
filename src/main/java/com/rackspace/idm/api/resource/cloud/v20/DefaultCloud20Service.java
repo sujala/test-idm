@@ -110,6 +110,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_MESSAGE = "Deleting enabled templates or templates associated with one or more tenants is not allowed";
 
+
+
     public static final String ROLE_ID_NOT_FOUND_ERROR_MESSAGE = "Role with ID %s not found.";
 
     public static final String USER_NOT_FOUND_ERROR_MESSAGE = "User with ID %s not found.";
@@ -563,6 +565,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 logger.warn(errMsg);
                 throw new BadRequestException(errMsg);
             }
+
+            validator20.validateTenantType(tenant);
 
             // Our implementation has the id and the name the same
             tenant.setId(tenant.getName());

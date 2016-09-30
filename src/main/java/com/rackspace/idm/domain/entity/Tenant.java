@@ -46,6 +46,9 @@ public class Tenant implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_DOMAIN_ID, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String domainId;
 
+    @LDAPField(attribute = LdapRepository.ATTR_TYPE, objectClass = LdapRepository.OBJECTCLASS_TENANT, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private HashSet<String> types;
+
     @Override
     public String getAuditContext() {
         String format = "tenantId=%s";
@@ -66,6 +69,13 @@ public class Tenant implements Auditable, UniqueId {
         return v1Defaults;
     }
 
+    public HashSet<String> getTypes() {
+        if (types == null) {
+            types = new HashSet<String>();
+        }
+        return types;
+    }
+
     private void doPostEncode(final Entry entry) throws LDAPPersistException {
         String[] baseUrls = entry.getAttributeValues(LdapRepository.ATTR_BASEURL_ID);
         if (baseUrls != null && baseUrls.length == 0) {
@@ -75,6 +85,11 @@ public class Tenant implements Auditable, UniqueId {
         String[] v1Defaults = entry.getAttributeValues(LdapRepository.ATTR_V_ONE_DEFAULT);
         if (v1Defaults != null && v1Defaults.length == 0) {
             entry.removeAttribute(LdapRepository.ATTR_V_ONE_DEFAULT);
+        }
+
+        String[] types = entry.getAttributeValues(LdapRepository.ATTR_TYPE);
+        if (types != null && types.length == 0) {
+            entry.removeAttribute(LdapRepository.ATTR_TYPE);
         }
     }
 }

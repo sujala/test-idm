@@ -76,6 +76,7 @@
                     </xsd:documentation>
                 </annotation>
             </element>
+            <element ref="RAX-AUTH:types" />
             <any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
         </sequence>
         <attribute name="id" type="xsd:ID" use="optional">
