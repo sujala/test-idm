@@ -68,6 +68,10 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_MFA_MIGRATION_MFA_NOT_ENABLED = "MFAM-000";
     public static final String ERROR_CODE_MFA_MIGRATION_OTP_ENABLED = "MFAM-001";
 
+    //Endpoint Assignment
+    public static final String ERROR_CODE_EP_MISSING_ENDPOINT = "EP-000";
+
+
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
         if (StringUtils.isNotBlank(errorCode)) {
             return String.format("Error code: '%s'; %s", errorCode, message);

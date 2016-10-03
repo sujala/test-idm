@@ -20,6 +20,7 @@ public enum IdentityRole {
     , IDENTITY_QUERY_PROPS("identity:query-props")
     , IDENTITY_UPGRADE_USER_TO_CLOUD("identity:upgrade-user-to-cloud")
     , IDENTITY_PURGE_TOKEN_REVOCATION_RECORDS("identity:purge-trr")
+    , IDENTITY_ENDPOINT_RULE_ADMIN("identity:endpoint-rule-admin")
     ;
 
     @Getter

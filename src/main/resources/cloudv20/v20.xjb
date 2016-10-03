@@ -286,6 +286,16 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="tokenRevocationRecordDeletionRequest"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='TenantTypeEndpointRule']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="tenantTypeEndpointRule"/>
+            </annox:annotate>
+        </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='EndpointAssignmentRules']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="endpointAssignmentRules"/>
+            </annox:annotate>
+        </jaxb:bindings>
     </jaxb:bindings>
 
     <jaxb:bindings schemaLocation="RAX-KSGRP-groups.xsd" node="/xs:schema">

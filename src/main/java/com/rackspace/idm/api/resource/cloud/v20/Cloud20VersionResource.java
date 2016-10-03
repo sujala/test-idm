@@ -8,7 +8,7 @@ import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.exception.*;
-import com.rackspace.idm.util.SamlUnmarshaller;
+import com.rackspace.idm.modules.endpointassignment.api.resource.EndpointAssignmentRuleResource;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
 import org.openstack.docs.common.api.v1.VersionChoice;
@@ -52,16 +52,13 @@ public class Cloud20VersionResource {
     private DefaultCloud20Service cloud20Service;
 
     @Autowired
-    private SamlUnmarshaller samlUnmarshaller;
-
-    @Autowired
-    private MultiFactorCloud20Service multiFactorCloud20Service;
-
-    @Autowired
     private CloudMultifactorResource multifactorResource;
 
     @Autowired
     private CloudMultifactorDomainResource multifactorDomainResource;
+
+    @Autowired
+    private EndpointAssignmentRuleResource endpointAssignmentRuleResource;
 
     @Autowired
     private ExceptionHandler exceptionHandler;
@@ -1288,6 +1285,11 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/domains/{domainId}/multi-factor")
     public CloudMultifactorDomainResource getMultifactorDomainResource() {
         return multifactorDomainResource;
+    }
+
+    @Path("OS-KSCATALOG/endpointTemplates/RAX-AUTH/rules")
+    public EndpointAssignmentRuleResource getEndpointAssignmentRuleResource() {
+        return endpointAssignmentRuleResource;
     }
 
     protected int validateMarker(Integer offset) {
