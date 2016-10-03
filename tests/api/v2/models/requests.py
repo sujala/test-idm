@@ -72,6 +72,24 @@ class TenantWithTokenAuth(base.AutoMarshallingModel):
         raise Exception("Not implemented yet")
 
 
+class AuthenticateWithMFA(base.AutoMarshallingModel):
+    """Marshalling for Authentication request with MFA cred"""
+    def __init__(self, pass_code):
+        self.pass_code = pass_code
+
+    def _obj_to_json(self):
+        mfa_auth_request = {
+            const.AUTH: {
+                const.NS_PASSCODE_CREDENTIALS: {
+                    const.PASSCODE: self.pass_code
+                }
+            }
+        }
+        return json.dumps(mfa_auth_request)
+
+    # TODO: add xml obj
+
+
 class UserAdd(base.AutoMarshallingModel):
     """Marshalling for Add Identity Admin User Request."""
 
@@ -749,3 +767,50 @@ class TenantTypeToEndpointMappingRule(base.AutoMarshallingModel):
                     const.OS_KSCATALOG_ENDPOINT_TEMPLATES].append(
                         endpoint_dict)
         return json.dumps(tenant_type_to_endpoint_mapping_rule_request)
+
+
+class OTPDeviceAdd(base.AutoMarshallingModel):
+    """Marshalling for Add OTP Devive request"""
+    def __init__(self, device_name):
+        self.device_name = device_name
+
+    def _obj_to_json(self):
+        add_otp_request = {const.NS_OTP_DEVICE: {
+            const.NAME: self.device_name}}
+        return json.dumps(add_otp_request)
+
+
+class OTPDeviceVerify(base.AutoMarshallingModel):
+    """Marshalling for Verify OTP Device request"""
+    def __init__(self, code):
+        self.code = code
+
+    def _obj_to_json(self):
+        add_otp_request = {const.NS_VERIFICATION_CODE: {
+            const.CODE: self.code}}
+        return json.dumps(add_otp_request)
+
+
+class MFAUpdate(base.AutoMarshallingModel):
+    """Marshalling for MFA Update request"""
+    def __init__(self, enabled=None, mfa_enforce_level=None, unlock=None):
+        self.enabled = enabled
+        self.mfa_enforce_level = mfa_enforce_level
+        self.unlock = unlock
+
+    def _obj_to_json(self):
+        update_mfa_request = {const.RAX_AUTH_MULTI_FACTOR: {}}
+        if self.enabled is not None:
+            update_mfa_request[const.RAX_AUTH_MULTI_FACTOR][const.ENABLED] = (
+                self.enabled
+            )
+        if self.mfa_enforce_level:
+            update_mfa_request[const.RAX_AUTH_MULTI_FACTOR][
+                const.USER_MULTI_FACTOR_ENFORCEMENT_LEVEL] = (
+                self.mfa_enforce_level
+            )
+        if self.unlock is not None:
+            update_mfa_request[const.RAX_AUTH_MULTI_FACTOR][const.UNLOCK] = (
+                self.unlock
+            )
+        return json.dumps(update_mfa_request)

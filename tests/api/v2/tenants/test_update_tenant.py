@@ -36,7 +36,7 @@ class TestUpdateTenant(base.TestBaseV2):
                 update_tenant_name_flag_properties.json())
             cls.update_tenant_name_feature_flag = (
                 update_tenant_name_resp_dict[
-                    const.RELOADABLE_PROP_FILE][0][const.VALUE])
+                    const.IDM_RELOADABLE_PROPERTIES][0][const.VALUE])
 
     def setUp(self):
         super(TestUpdateTenant, self).setUp()

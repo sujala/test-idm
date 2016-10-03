@@ -82,3 +82,8 @@ class TestConfig(data_interfaces.ConfigSectionInterface):
             return True
         else:
             return False
+
+    @property
+    def repose_container_name(self):
+        """Repose image name the test run against"""
+        return self.get('repose_container_name')
