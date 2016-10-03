@@ -18,7 +18,7 @@ add_user = {
                 const.ENABLED: {'type': 'boolean'},
                 const.RAX_AUTH_DEFAULT_REGION: {
                     'type': 'string',
-                    'enum': ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']},
+                    'enum': const.DC_LIST},
                 const.PASSWORD: {'type': 'string'},
                 const.ID: {'type': 'string'},
                 const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
@@ -46,7 +46,7 @@ get_user = {
                 const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
                 const.RAX_AUTH_DEFAULT_REGION: {
                     'type': 'string',
-                    'enum': ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']},
+                    'enum': const.DC_LIST},
                 const.ID: {'type': 'string'}},
             'required': [const.USERNAME, const.EMAIL, const.ENABLED,
                          const.RAX_AUTH_DEFAULT_REGION,
@@ -69,7 +69,7 @@ update_user = {
                 const.RAX_AUTH_CONTACTID: {'type': 'string'},
                 const.RAX_AUTH_DEFAULT_REGION: {
                     'type': 'string',
-                    'enum': ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']},
+                    'enum': const.DC_LIST},
                 const.ID: {'type': 'string'},
                 const.CREATED: {'type': 'string', 'format': 'dateTime'},
                 const.UPDATED: {'type': 'string', 'format': 'dateTime'}},
@@ -97,7 +97,7 @@ user_item = {
         const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
         const.RAX_AUTH_DEFAULT_REGION: {
             'type': 'string',
-            'enum': ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']},
+            'enum': const.DC_LIST},
         const.ID: {'type': 'string'}
     },
     "required": [const.USERNAME, const.ENABLED,
@@ -110,5 +110,32 @@ user_item = {
 list_users = {
     'type': 'object', 'properties': {
         const.USERS: {'type': 'array', 'items': user_item}
+    }
+}
+
+get_admins_of_user_item = {
+    'type': 'object', 'properties': {
+            const.USERNAME: {'type': 'string'},
+            const.EMAIL: {'type': 'string', 'format': 'email'},
+            const.RAX_AUTH_MULTI_FACTOR_ENABLED: {'type': 'boolean'},
+            const.ENABLED: {'type': 'boolean'},
+            const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
+            const.RAX_AUTH_CONTACTID: {'type': 'string'},
+            const.RAX_AUTH_DEFAULT_REGION: {
+                'type': 'string',
+                'enum': const.DC_LIST},
+            const.ID: {'type': 'string'},
+            const.CREATED: {'type': 'string', 'format': 'dateTime'}},
+    'required': [const.USERNAME, const.ID, const.ENABLED,
+                 const.RAX_AUTH_DEFAULT_REGION, const.RAX_AUTH_DOMAIN_ID,
+                 const.RAX_AUTH_MULTI_FACTOR_ENABLED,
+                 const.CREATED],
+    'additionalProperties': False}
+
+get_admins_of_user = {
+    'type': 'object', 'properties': {
+        const.USERS: {
+            'type': 'array', 'items': get_admins_of_user_item
+        }
     }
 }

@@ -29,6 +29,12 @@ LIST_ENDPOINTS_FOR_TOKEN_URL = "/tokens/{token_id}/endpoints"
 ADD_TENANT_URL = LIST_TENANTS = '/tenants'
 UPDATE_TENANT_URL = DELETE_TENANT_URL = GET_TENANT_URL = (
     '/tenants/{tenant_id}')
+VALIDATE_TOKENS_URL = '/tokens/{0}'
+LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
+NEW_FED_AUTH_URL = '/RAX-AUTH/federation/saml/auth'
+ADMINS_OF_A_USER_URL = '/users/{user_id}/RAX-AUTH/admins'
+FED_LOGOUT_URL = '/RAX-AUTH/federation/saml/logout'
+ADD_ROLE_TO_USER_URL = '/users/{user_id}/roles/OS-KSADM/{role_id}'
 
 """Some Constanst for values"""
 PASSWORD_PATTERN = "Password1[\d\w]{10}"
@@ -88,6 +94,7 @@ REQUIRED = "required"
 CREATED = "created"
 ROLE = "role"
 ROLES = "roles"
+ROLE_NAME = 'name'
 SECRET_ANSWER = "answer"
 SECRET_QA = "secretQA"
 SECRET_QUESTION = "question"
@@ -113,6 +120,7 @@ VERSION_LIST = "versionList"
 XML = "xml"
 JSON = "json"
 CREDENTIALS = "credentials"
+OS_KSADM_PASSWORD = 'OS-KSADM:password'
 
 API_KEY_CREDENTIALS = "apiKeyCredentials"
 OS_KSCATALOG_ENDPOINT_TEMPLATE = "OS-KSCATALOG:endpointTemplate"
@@ -131,6 +139,7 @@ NS_SECRETQA = RAX_KSQA_NAMESPACE + ":secretQA"
 NS_API_KEY_CREDENTIALS = RAX_KSKEY_NAMESPACE + ":apiKeyCredentials"
 RAX_AUTH = "RAX-AUTH"
 RAX_AUTH_ASSIGNMENT_TYPE = "RAX-AUTH:assignmentType"
+RAX_AUTH_DOMAIN = "RAX-AUTH:domain"
 RAX_AUTH_DOMAIN_ID = "RAX-AUTH:domainId"
 RAX_AUTH_CONTACTID = "RAX-AUTH:contactId"
 RAX_AUTH_DEFAULT_REGION = "RAX-AUTH:defaultRegion"
@@ -154,3 +163,7 @@ XMLNS_RAX_KSGRP = (
 XMLNS_RAX_KSQA = "http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0"
 XMLNS_RAX_KSKEY = (
     "http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0")
+
+"""CONSTANTS"""
+USER_MANAGER_ROLE_ID = '7'
+DC_LIST = ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']

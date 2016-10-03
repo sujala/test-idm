@@ -236,6 +236,8 @@ class UserUpdate(base.AutoMarshallingModel):
                 self.display_name)
         return json.dumps(update_user_request)
 
+        # TODO: insert update user request xml part
+
 
 class PasswordCredentialsAdd(base.AutoMarshallingModel):
     """Marshalling for Add Credentials Request"""
@@ -525,12 +527,14 @@ class ServiceAdd(base.AutoMarshallingModel):
         return json.dumps(add_service_request)
 
     def _obj_to_xml(self):
-        etree.register_namespace('OS-KSADM', const.XMLNS_OS_KSADM)
+        etree.register_namespace(const.OS_KSADM_NAMESPACE,
+                                 const.XMLNS_OS_KSADM)
         add_service_request = etree.Element(
-            'service', xmlns=const.XMLNS, id=str(self.service_id),
+            const.SERVICE, xmlns=const.XMLNS, id=str(self.service_id),
             name=self.service_name, type=self.service_type)
         if self.service_description:
-            add_service_request.set('description', self.service_description)
+            add_service_request.set(
+                const.DESCRIPTION, self.service_description)
         return etree.tostring(add_service_request)
 
 
@@ -600,4 +604,31 @@ class Tenant(base.AutoMarshallingModel):
                 add_tenant_request.set(const.ENABLED, 'false')
         if self.display_name:
             add_tenant_request.set(const.DISPLAY_NAME, self.display_name)
-        return etree.tostring(add_tenant_request)
+
+
+class Domain(base.AutoMarshallingModel):
+    """Marshalling for Add/ Update Tenant Request."""
+    # TODO: Add _obj_to_xml()
+
+    def __init__(self, domain_name, domain_id=None,
+                 description=None, enabled=True):
+        self.domain_name = domain_name
+        self.domain_id = domain_id or domain_name
+        self.description = description
+        self.enabled = enabled
+
+    def _obj_to_json(self):
+        add_domain_request = {const.RAX_AUTH_DOMAIN: {
+            const.NAME: self.domain_name}}
+        if self.domain_id:
+            add_domain_request[const.RAX_AUTH_DOMAIN][const.ID] = (
+                self.domain_id)
+        if self.description:
+            add_domain_request[const.RAX_AUTH_DOMAIN][const.DESCRIPTION] = (
+                self.description)
+        if self.enabled:
+            add_domain_request[const.RAX_AUTH_DOMAIN][const.ENABLED] = (
+                self.enabled)
+        elif self.enabled is False:
+            add_domain_request[const.RAX_AUTH_DOMAIN][const.ENABLED] = False
+        return json.dumps(add_domain_request)
