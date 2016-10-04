@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.EndpointAssignmentRule;
 import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
@@ -103,10 +104,20 @@ public class XMLReader implements MessageBodyReader<Object> {
             xif.setProperty(XMLInputFactory.SUPPORT_DTD, false);
             try {
                 XMLStreamReader xsr = xif.createXMLStreamReader(entityStream);
-                StringWriter writer = new StringWriter();
-                IOUtils.copy(entityStream, writer);
-                String en = writer.toString();
                 Unmarshaller m = getContext().createUnmarshaller();
+
+                if (EndpointAssignmentRule.class.equals(type)) {
+                    /* Rule is a base class. Need to unmarshall the subclass. Adding this as the
+                     exception to minimize any unintended side effects to existing services.
+                      */
+                    JAXBElement unMarshal = (JAXBElement) m.unmarshal(xsr);
+                    return unMarshal.getValue();
+                }
+                /*
+                  Need this here due to stuff like UserForCreate in which can't distinguish between a User and
+                  UserForCreate since the XmlRootElement for both are the same and they contain same attributes.
+                  The only way to create one vs the other is to explicitly specify the class to be created.
+                  */
                 JAXBElement<?> unMarshal = m.unmarshal(xsr, (Class) genericType);
                 return unMarshal.getValue();
             } catch (XMLStreamException e) {

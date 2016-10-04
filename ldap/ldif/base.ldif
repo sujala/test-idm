@@ -1168,6 +1168,14 @@ cn: identity:query-props
 description: Can query current state of properties
 rsWeight: 50
 
+dn: rsId=67f155a58ae841d28a745a99200a583a,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:endpoint-rule-admin
+description: Can manage endpoint assignment rules
+rsWeight: 50
+
 dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicati
  ons,o=rackspace,dc=rackspace,dc=com
 objectClass: rsContainer
@@ -4718,6 +4726,12 @@ objectClass: tenantRole
 roleRsId: c637d7153b7c41bf9153d46107dadcc7
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
+dn: roleRsId=67f155a58ae841d28a745a99200a583a,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: top
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
 dn: roleRsId=b49a3fb2b8d148919b90abf395f9a1a2,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
  m
 objectClass: top
@@ -5517,3 +5531,12 @@ objectClass: organizationalUnit
 objectClass: top
 ou: roles
 
+dn: ou=rules,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+description: Defines container for rules
+
+dn: ou=baseUrlRules,ou=rules,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+description: Defines container for baseUrl assignment rules

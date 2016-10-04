@@ -10,6 +10,7 @@
         xmlns:identity="http://docs.openstack.org/identity/api/v2.0"
         xmlns:RAX-AUTH="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+        xmlns:OS-KSCATALOG="http://docs.openstack.org/identity/api/ext/OS-KSCATALOG/v1.0"
         xmlns:xsdxt="http://docs.rackspacecloud.com/xsd-ext/v1.0"
         targetNamespace="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0">
 
@@ -126,6 +127,21 @@
         <annotation>
             <xsd:documentation>
                 <p>A list of multi factor devices.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
+    <element name="tenantTypeEndpointRule" type="RAX-AUTH:TenantTypeEndpointRule"/>
+    <element name="endpointAssignmentRules" type="RAX-AUTH:EndpointAssignmentRules" >
+        <annotation>
+            <xsd:documentation>
+                <p>A list of endpoint assignment rules.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
+    <element name="tenantTypeEndpointRules" type="RAX-AUTH:TenantTypeEndpointRules" >
+        <annotation>
+            <xsd:documentation>
+                <p>A list of tenant type endpoint assignment rules.</p>
             </xsd:documentation>
         </annotation>
     </element>
@@ -858,4 +874,55 @@
         </attribute>
     </complexType>
 
+    <complexType name="EndpointAssignmentRule" abstract="true">
+        <attribute name="id" type="xsd:string">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        An ID uniquely identifying the rule.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="description" type="xsd:string">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A description of the rule.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+    <complexType name="TenantTypeEndpointRule">
+        <complexContent>
+            <extension base="RAX-AUTH:EndpointAssignmentRule">
+                <sequence>
+                    <element ref="OS-KSCATALOG:endpointTemplates" minOccurs="0" maxOccurs="1"/>
+                </sequence>
+                <attribute name="tenantType" type="xsd:string">
+                    <annotation>
+                        <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                            <p>
+                                The tenant type to which the endpoint templates are assigned.
+                            </p>
+                        </xsd:documentation>
+                    </annotation>
+                </attribute>
+            </extension>
+        </complexContent>
+    </complexType>
+    <complexType name="EndpointAssignmentRules">
+        <sequence>
+            <element ref="RAX-AUTH:tenantTypeEndpointRules" minOccurs="0" maxOccurs="1"/>
+        </sequence>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+    <complexType name="TenantTypeEndpointRules">
+        <sequence>
+            <element ref="RAX-AUTH:tenantTypeEndpointRule"  minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
 </schema>
