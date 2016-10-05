@@ -562,7 +562,7 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
             cloud20.deleteRole(serviceAdminToken, createRole.id)
             cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
         } catch (Exception ex) {
-            //eat any exception during cleanup as it may hide
+            // Eat any exception during cleanup as it may hide
         }
     }
 

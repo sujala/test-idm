@@ -21,7 +21,7 @@ import javax.ws.rs.core.MediaType
 
 /**
  * This test presumes the standard Identity Admin (auth) has the appropriate authorization to manage endpoint rules and
- * that the base endpoints 1003 and 1026
+ * that the base endpoints 1003 and 1026 exist in the base data set.
  */
 class CreateTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest {
 

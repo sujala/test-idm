@@ -62,6 +62,7 @@ class Cloud20Methods {
     //Constants
     static def X_AUTH_TOKEN = "X-Auth-Token"
     static def X_SESSION_ID = MultiFactorCloud20Service.X_SESSION_ID_HEADER_NAME
+    static def GET_RULE_DETAIL_PARAM = "responseDetail"
 
     //path constants
     static def SERVICE_PATH_MOBILE_PHONES = "mobile-phones"
@@ -926,5 +927,14 @@ class Cloud20Methods {
     def deleteEndpointAssignmentRule(String token, ruleId) {
         initOnUse()
         resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(RAX_AUTH).path(SERVICE_PATH_RULES).path(ruleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
+    def getEndpointAssignmentRule(String token, ruleId, detailLevel = null, MediaType requestType=MediaType.APPLICATION_XML_TYPE, MediaType accept=MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        WebResource webResource = resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(RAX_AUTH).path(SERVICE_PATH_RULES).path(ruleId)
+        if (detailLevel != null) {
+            webResource = webResource.queryParam(GET_RULE_DETAIL_PARAM, detailLevel)
+        }
+        webResource.type(requestType).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 }
