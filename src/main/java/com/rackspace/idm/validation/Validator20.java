@@ -25,6 +25,7 @@ import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.openstack.docs.identity.api.v2.Role;
+import org.openstack.docs.identity.api.v2.Tenant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,9 +33,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.security.cert.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -62,6 +61,13 @@ public class Validator20 {
             "where both the prefix and role name must start with an alphanumeric character.  The rest of the prefix and " +
             "role name can be comprised of alphanumeric characters, '-', and '_'.";
     public static final Pattern ROLE_NAME_REGEX = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9_\\-]*(?:\\:[a-zA-Z0-9][a-zA-Z0-9_\\-]*)?$");
+
+    public static final String ERROR_TENANT_TYPE_CANNOT_EXCEED_MAXIMUM = "A maximum of 16 unique tenant types can be assigned to any given tenant.";
+
+    public static final String ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC = "Tenant type can only contain alphanumeric characters.";
+
+
+    public static final String ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE = "Tenant type must possess a length > 0 and <= 15";
 
     private EmailValidator emailValidator = new EmailValidator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -507,5 +513,37 @@ public class Validator20 {
 
     public void setTenantService(TenantService tenantService) {
         this.tenantService = tenantService;
+    }
+
+    public void validateTenantType(Tenant tenant) {
+        Set<String> tenantTypes = new HashSet<String>();
+
+        if (tenant.getTypes() == null) {
+            return;
+        }
+
+        for(String type : tenant.getTypes().getType()) {
+            tenantTypes.add(type.toLowerCase());
+        }
+
+        tenant.getTypes().getType().clear();
+        tenant.getTypes().getType().addAll(tenantTypes);
+
+        if(tenant.getTypes().getType().size() > 16) {
+            String errMsg = String.format(ERROR_TENANT_TYPE_CANNOT_EXCEED_MAXIMUM);
+            throw new BadRequestException(errMsg);
+        }
+
+        for (String type : tenant.getTypes().getType()) {
+            if (!StringUtils.isAlphanumeric(type)) {
+                String errMsg = String.format(ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC);
+                throw new BadRequestException(errMsg);
+            }
+
+            if (type.length() == 0 || type.length() > 15) {
+                String errMsg = String.format(ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE);
+                throw new BadRequestException(errMsg);
+            }
+        }
     }
 }

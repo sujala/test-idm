@@ -15,9 +15,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-import static com.rackspace.idm.JSONConstants.DOMAIN_ID;
-import static com.rackspace.idm.JSONConstants.TENANT_RAX_AUTH_DOMAIN_ID_PATH;
-import static com.rackspace.idm.JSONConstants.USER_RAX_AUTH_DOMAIN_ID_PATH;
+import static com.rackspace.idm.JSONConstants.*;
 
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
@@ -30,6 +28,7 @@ public class JSONReaderForTenant extends JSONReaderForEntity<Tenant> {
         throws IOException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
         prefixValues.put(TENANT_RAX_AUTH_DOMAIN_ID_PATH, DOMAIN_ID);
+        prefixValues.put(TENANT_RAX_AUTH_TYPES_PATH, TYPES);
 
         return read(inputStream, JSONConstants.TENANT, prefixValues);
     }

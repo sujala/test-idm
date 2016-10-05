@@ -145,8 +145,21 @@
             </xsd:documentation>
         </annotation>
     </element>
+    <element name="types" type="RAX-AUTH:Types" >
+        <annotation>
+            <xsd:documentation>
+                <p>A list of tenant type.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
 
     <!-- Complex Types -->
+    <complexType name="Types">
+        <sequence>
+            <element name="type" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
     <complexType name="AuthenticatedBy">
         <sequence>
             <element name="credential" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>

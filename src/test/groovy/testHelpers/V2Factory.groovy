@@ -16,9 +16,11 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.Constants
+import com.rackspace.idm.RaxAuthConstants
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
@@ -29,6 +31,7 @@ import org.openstack.docs.identity.api.v2.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import org.springframework.stereotype.Component
 
+import javax.xml.bind.JAXBElement
 import javax.xml.datatype.DatatypeConstants
 import javax.xml.datatype.DatatypeFactory
 import javax.xml.datatype.Duration
@@ -376,6 +379,16 @@ class V2Factory {
     }
     def createTenant() {
         return createTenant(ID, NAME)
+    }
+
+    def createTenant(String id, String name, List<String> typelist) {
+        def tenant = createTenant(id, name)
+        Types types = new Types()
+        for (String type : typelist) {
+            types.type.add(type)
+        }
+        tenant.setTypes(types)
+        return tenant
     }
 
     def createTenant(String id, String name) {

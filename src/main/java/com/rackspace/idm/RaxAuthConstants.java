@@ -14,5 +14,6 @@ public class RaxAuthConstants {
     public static final QName QNAME_WEIGHT = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "weight");
     public static final QName QNAME_PROPAGATE = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "propagate");
     public static final QName QNAME_AUTHENTICATED_BY = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "authenticatedBy");
+    public static final QName QNAME_TYPES = new QName("http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0", "types");
 }
 

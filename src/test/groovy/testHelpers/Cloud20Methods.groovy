@@ -174,6 +174,11 @@ class Cloud20Methods {
         resource.path(path20).path(TENANTS).path(tenantId).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
+    def getTenantByName(String token, String tenantName, accept = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(TENANTS).queryParam(NAME, tenantName).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
     def listTenants(String token, accept = APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(TENANTS).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
