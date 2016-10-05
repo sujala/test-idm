@@ -401,6 +401,28 @@ class TestAddEndpointTemplate(base.TestBaseV2):
 
         if 'expected_error_message' in test_data:
             expected_error_message = test_data['expected_error_message']
+
+            # Checking config property value to determine the expected
+            # error message. Using devops client to get config properties
+            disable_service_name_type_prop_value = None
+            if self.test_config.run_service_admin_tests:
+                disable_service_name_type_prop_resp = (
+                    self.devops_client.get_devops_properties(
+                        const.FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE))
+                disable_service_name_type_prop_dict = (
+                    disable_service_name_type_prop_resp.json())
+                disable_service_name_type_prop_value = (
+                    disable_service_name_type_prop_dict[
+                        const.RELOADABLE_PROP_FILE][0][
+                        const.PROP_VALUE])
+
+            # This is the test for CID-353
+            if (disable_service_name_type_prop_value and
+                    not test_data['additional_input_for_create']):
+                expected_error_message = (
+                    "'{0}' and '{1}' are "
+                    "required attributes.".format(
+                        const.SERVICE_ID, const.RAX_AUTH_ASSIGNMENT_TYPE))
             self.assertEqual(resp.json()['badRequest']['message'],
                              expected_error_message)
 

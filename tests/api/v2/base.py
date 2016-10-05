@@ -1,4 +1,5 @@
 from tests.api import base
+from tests.api import devops_client
 from tests.api.v2 import client
 from tests.api.v2.models import requests
 from tests.api import constants as const
@@ -40,6 +41,12 @@ class TestBaseV2(base.TestBase):
                 serialize_format=cls.test_config.serialize_format,
                 deserialize_format=cls.test_config.deserialize_format)
             cls.service_admin_client.default_headers[const.X_AUTH_TOKEN] = (
+                cls.identity_config.service_admin_auth_token)
+            cls.devops_client = devops_client.IdentityDevopsClient(
+                cls.devops_url,
+                serialize_format=cls.test_config.serialize_format,
+                deserialize_format=cls.test_config.deserialize_format)
+            cls.devops_client.default_headers[const.X_AUTH_TOKEN] = (
                 cls.identity_config.service_admin_auth_token)
 
     @classmethod

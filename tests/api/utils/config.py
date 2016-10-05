@@ -13,6 +13,14 @@ class IdentityConfig(data_interfaces.ConfigSectionInterface):
         return self.get('base_url')
 
     @property
+    def cloud_url(self):
+        """
+        identity cloud url, which gets appended to the base url
+        when hitting individual node.
+        """
+        return self.get('cloud_url')
+
+    @property
     def api_version(self):
         """identity API version."""
         return self.get('api_version')

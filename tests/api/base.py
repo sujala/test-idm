@@ -7,6 +7,7 @@ import urlparse
 
 from cafe.drivers.unittest import fixtures
 
+from tests.api import constants as const
 from tests.api.utils import config
 from tests.api.utils import header_validation
 
@@ -31,7 +32,11 @@ class TestBase(fixtures.BaseTestFixture):
         cls.identity_config = config.IdentityConfig()
         cls.test_config = config.TestConfig()
         cls.url = urlparse.urljoin(
-            cls.identity_config.base_url, cls.identity_config.api_version)
+            cls.identity_config.base_url, cls.identity_config.cloud_url)
+        cls.url = urlparse.urljoin(cls.url, cls.identity_config.api_version)
+
+        cls.devops_url = urlparse.urljoin(cls.identity_config.base_url,
+                                          const.DEVOPS_URL)
         cls.default_header_validations = [
             header_validation.validate_header_vary,
             header_validation.validate_header_server,
