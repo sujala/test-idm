@@ -9,7 +9,9 @@ import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.EndpointService;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ExceptionHandler;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
 import org.apache.commons.collections.CollectionUtils;
@@ -38,6 +40,7 @@ import java.net.URI;
 public class EndpointAssignmentRuleResource {
 
     private static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
+    public static final String INVALID_LINKED_TEMPLATE_MSG = "Rule '%s' references an invalid endpoint template with id '%s'.";
 
     @Autowired
     private RequestContextHolder requestContextHolder;
@@ -80,12 +83,12 @@ public class EndpointAssignmentRuleResource {
             if (endpointAssignmentRule instanceof TenantTypeEndpointRule) {
                 TenantTypeEndpointRule inputRule = (TenantTypeEndpointRule) endpointAssignmentRule;
 
-                //convert from web to entity format
+                // Convert from web to entity format
                 TenantTypeRule ruleEntity = convertToEntityForCreate(inputRule);
 
                 TenantTypeRule outputRule = (TenantTypeRule) ruleService.addEndpointAssignmentRule(ruleEntity);
 
-                //convert from entity to web format
+                // Convert from entity to web format
                 TenantTypeEndpointRule outputWeb = convertRuleToWeb(outputRule, true);
                 UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
                 String id = String.valueOf(outputRule.getId());
@@ -112,8 +115,29 @@ public class EndpointAssignmentRuleResource {
     @Path("{ruleId}")
     public Response getRule(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            @PathParam("ruleId") String ruleId) {
-            return Response.status(HttpStatus.SC_NOT_IMPLEMENTED).build();
+            @PathParam("ruleId") String ruleId,
+            @QueryParam("responseDetail") String responseDetail
+    ) {
+        try {
+            verifyAdminAccess(authToken);
+
+            RuleDetailLevelEnum ruleDetail = RuleDetailLevelEnum.fromString(responseDetail);
+            if (ruleDetail == null && StringUtils.isNotBlank(responseDetail)) {
+                throw new BadRequestException("responseDetail: Invalid value");
+            }
+
+            /* Only current supported rules are TenantTypeRules. When add next, should abstract more (e.g. strategy)
+               to avoid ifs and instanceof tests. */
+            com.rackspace.idm.modules.endpointassignment.entity.Rule ruleEntity = ruleService.getEndpointAssignmentRule(ruleId);
+            if (ruleEntity == null) {
+                throw new NotFoundException("The specified rule does not exist");
+            }
+
+            TenantTypeEndpointRule outputWeb = convertRuleToWeb((TenantTypeRule) ruleEntity, true, ruleDetail);
+            return Response.ok(outputWeb).build();
+        } catch (Exception e) {
+            return exceptionHandler.exceptionResponse(e).build();
+        }
     }
 
     @DELETE
@@ -132,10 +156,10 @@ public class EndpointAssignmentRuleResource {
     }
 
     private void verifyAdminAccess(String authToken) {
-        //verify the token
+        // Verify the token
         requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
-        //verify user has appropriate role
+        // Verify user has appropriate role
         authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_ENDPOINT_RULE_ADMIN.getRoleName());
     }
 
@@ -156,6 +180,10 @@ public class EndpointAssignmentRuleResource {
     }
 
     private TenantTypeEndpointRule convertRuleToWeb(TenantTypeRule ruleEntity, boolean includeEndpoints) {
+        return convertRuleToWeb(ruleEntity, includeEndpoints, RuleDetailLevelEnum.MINIMUM);
+    }
+
+    private TenantTypeEndpointRule convertRuleToWeb(TenantTypeRule ruleEntity, boolean includeEndpoints, RuleDetailLevelEnum ruleDetailLevelEnum) {
         ObjectFactory openStackIdentityExtKscatalogV1Factory = objFactories.getOpenStackIdentityExtKscatalogV1Factory();
         TenantTypeEndpointRule outputWeb = raxAuthObjectFactory.createTenantTypeEndpointRule();
 
@@ -166,26 +194,40 @@ public class EndpointAssignmentRuleResource {
         if (includeEndpoints && CollectionUtils.isNotEmpty(ruleEntity.getEndpointTemplateIds())) {
             outputWeb.setEndpointTemplates(openStackIdentityExtKscatalogV1Factory.createEndpointTemplateList());
             for (String templateId : ruleEntity.getEndpointTemplateIds()) {
-                CloudBaseUrl baseUrl = endpointService.getBaseUrlById(templateId);
-                if (baseUrl != null) {
-                    try {
-                        EndpointTemplate et = convertToEndpointTemplate(baseUrl);
-                        outputWeb.getEndpointTemplates().getEndpointTemplate().add(et);
-                    } catch (NumberFormatException e) {
-                        //Log the error, but an error with one endpoint must not cause the whole rule to fail
-                        String msg = ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_EP_MISSING_ENDPOINT, String.format(
-                                "Tenant rule '%s' references an invalid endpoint template with id '%s'. Ids must be numeric.", ruleEntity.getId(), templateId));
-                        logger.error(msg);
+                EndpointTemplate et = null;
+                if (RuleDetailLevelEnum.BASIC == ruleDetailLevelEnum) {
+                    // Pull the endpoint to populate the details
+                    CloudBaseUrl baseUrl = endpointService.getBaseUrlById(templateId);
+                    if (baseUrl != null) {
+                        try {
+                            et = convertToEndpointTemplate(baseUrl);
+                        } catch (NumberFormatException e) {
+                            // Log the error, but an error with one endpoint must not cause the whole rule to fail
+                            logger.error(generateMissingEndpointError(ruleEntity.getId(), templateId));
+                        }
+                    } else {
+                        // Log the error, but an error with one endpoint must not cause the whole rule to fail
+                        logger.error(generateMissingEndpointError(ruleEntity.getId(), templateId));
                     }
                 } else {
-                    //Log the error, but an error with one endpoint must not cause the whole rule to fail
-                    String msg = ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_EP_MISSING_ENDPOINT, String.format(
-                            "Tenant rule '%s' references an invalid endpoint template with id '%s'", ruleEntity.getId(), templateId));
-                    logger.error(msg);
+                    try {
+                        et = createEndpointTemplate(Integer.parseInt(templateId));
+                    } catch (NumberFormatException e) {
+                        // Log the error, but an error with one endpoint must not cause the whole rule to fail
+                        logger.error(generateMissingEndpointError(ruleEntity.getId(), templateId));
+                    }
+                }
+                if (et != null) {
+                    outputWeb.getEndpointTemplates().getEndpointTemplate().add(et);
                 }
             }
         }
         return outputWeb;
+    }
+
+    private String generateMissingEndpointError(String ruleId, String invalidTemplateId) {
+        return ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_EP_MISSING_ENDPOINT, String.format(
+                INVALID_LINKED_TEMPLATE_MSG, ruleId, invalidTemplateId));
     }
 
     /**
@@ -195,15 +237,20 @@ public class EndpointAssignmentRuleResource {
      * @return
      */
     private EndpointTemplate convertToEndpointTemplate(CloudBaseUrl baseUrl) {
-        EndpointTemplate et = objFactories.getOpenStackIdentityExtKscatalogV1Factory().createEndpointTemplate();
-        et.setId(Integer.parseInt(baseUrl.getBaseUrlId()));
-        et.setEnabled(baseUrl.getEnabled());
+        EndpointTemplate et = createEndpointTemplate(Integer.parseInt(baseUrl.getBaseUrlId()));
 
-        //these properties are displayed for endpoints in service catalogs, so include them
+        // These properties are displayed for endpoints in service catalogs, so include them
         et.setType(baseUrl.getOpenstackType());
         et.setName(baseUrl.getServiceName());
         et.setRegion(baseUrl.getRegion());
         et.setPublicURL(baseUrl.getPublicUrl());
+        et.setEnabled(baseUrl.getEnabled());
+        return et;
+    }
+
+    private EndpointTemplate createEndpointTemplate(int id) {
+        EndpointTemplate et = objFactories.getOpenStackIdentityExtKscatalogV1Factory().createEndpointTemplate();
+        et.setId(id);
         return et;
     }
 }
