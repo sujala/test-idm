@@ -45,7 +45,7 @@ class EntityFactory extends Specification {
     def createApplication(String clientId, String name) {
         def id = clientId ? clientId : CLIENT
         new Application().with {
-            it.uniqueId = "clientId=$id,ou=applications,o=rackspace"
+            it.uniqueId = "clientId=$id,ou=applications,o=rackspace,dc=rackspace,dc=com"
             it.clientId = clientId
             it.name = name
             it.enabled = true

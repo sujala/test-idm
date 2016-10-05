@@ -953,25 +953,27 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     def "Duplicate tenant reference in roles doesn't create duplicate endpoints" (){
         given:
-            mockAuthorizationService(service)
-            def role = Mock(com.rackspace.idm.domain.entity.TenantRole)
-            def listRoles = [role, role].asList()
-            def token = Mock(ScopeAccess)
-            def endPoint = Mock(OpenstackEndpoint)
-            def tenant = Mock(com.rackspace.idm.domain.entity.Tenant)
-            def tenant2 = Mock(com.rackspace.idm.domain.entity.Tenant)
+        mockAuthorizationService(service)
+        mockIdentityConfig(service)
+        def role = Mock(com.rackspace.idm.domain.entity.TenantRole)
+        def listRoles = [role, role].asList()
+        def token = Mock(ScopeAccess)
+        def endPoint = Mock(OpenstackEndpoint)
+        def tenant = Mock(com.rackspace.idm.domain.entity.Tenant)
+        def tenant2 = Mock(com.rackspace.idm.domain.entity.Tenant)
 
-            tenantService.getTenantRolesForUser(_) >>listRoles
-            tenantService.getTenant(_)>>>[tenant, tenant2];
-            role.getTenantIds() >> ["1"].asList()
-            endPoint.getBaseUrls() >> [Mock(CloudBaseUrl)].asList()
-            endpointService.getOpenStackEndpointForTenant(_, _, _) >> endPoint
+        tenantService.getTenantRolesForUser(_) >>listRoles
+        tenantService.getTenant(_)>>>[tenant, tenant2];
+        role.getTenantIds() >> ["1"].asList()
+        endPoint.getBaseUrls() >> [Mock(CloudBaseUrl)].asList()
+        endpointService.getOpenStackEndpointForTenant(_, _, _) >> endPoint
+        identityConfig.reloadableConfig.getFeatureGlobalEndpointsForAllRoles() >> false
 
         when:
-            def endPointList = service.getOpenstackEndpointsForScopeAccess(token)
+        def endPointList = service.getOpenstackEndpointsForScopeAccess(token)
 
         then:
-            endPointList.size() == 1
+        endPointList.size() == 1
     }
 
     def "Verify provision user scope access adds token expiration entropy"() {

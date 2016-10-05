@@ -137,6 +137,8 @@ public class IdentityConfig {
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP = "feature.endpoint.template.type.mosso.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP = "feature.endpoint.template.type.nast.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP = "feature.endpoint.template.disable.name.type";
+    public static final String FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED = "feature.global.endpoints.for.all.roles.enabled";
+    public static final boolean FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED_DEFAULT = false;
     public static final boolean FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_DEFAULT = false;
     public static final String OTP_ISSUER = "feature.otp.issuer";
     public static final String OTP_ENTROPY = "feature.otp.entropy";
@@ -563,7 +565,6 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP, FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_DEFAULT);
 
-
         defaults.put(LDAP_SERVER_POOL_SIZE_INIT_PROP, LDAP_SERVER_POOL_SIZE_INIT_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_SIZE_MAX_PROP, LDAP_SERVER_POOL_SIZE_MAX_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_AGE_MAX_PROP, LDAP_SERVER_POOL_AGE_MAX_DEFAULT);
@@ -572,6 +573,8 @@ public class IdentityConfig {
         defaults.put(LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP, LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_PROP, LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT);
+
+        defaults.put(FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED, FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED_DEFAULT);
 
         return defaults;
     }
@@ -1727,6 +1730,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP, versionAdded = "3.5.0", description = "Whether or not endpoint template creation is allowed using service name and type.")
         public boolean getFeatureEndpointTemplateDisableNameType() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED, versionAdded = "3.7.0", description = "Whether or not a user will receive global endpoints associated will all roles the user has on any given tenant.")
+        public boolean getFeatureGlobalEndpointsForAllRoles() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED);
         }
     }
 

@@ -18,6 +18,7 @@ import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -141,34 +142,42 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser) {
-        final List<OpenstackEndpoint> endpoints = new ArrayList<>();
+        final Set<OpenstackEndpoint> endpoints = new HashSet<>();
         final List<Tenant> tenants = new ArrayList<>();
 
         // First get the tenantRoles for the token
         final List<TenantRole> tenantRoles = this.tenantService.getTenantRolesForUser(baseUser);
 
+        String region = null;
+        if (baseUser != null && EndUser.class.isAssignableFrom(baseUser.getClass())) {
+            EndUser user = (EndUser) baseUser;
+            region = user.getRegion();
+        }
+
+        Map<Tenant, HashSet<OpenstackType>> tenantMap = new HashedMap<>();
         // Second get the tenants from each of those roles
         if (CollectionUtils.isNotEmpty(tenantRoles)) {
-            final Map<Tenant, OpenstackType> tenantMap = getTenantsAndOpenstackTypesForRoles(tenantRoles);
-            CollectionUtils.addAll(tenants, tenantMap.keySet());
-
-            String region = null;
-            if (baseUser != null && EndUser.class.isAssignableFrom(baseUser.getClass())) {
-                EndUser user = (EndUser) baseUser;
-                region = user.getRegion();
+            if (identityConfig.getReloadableConfig().getFeatureGlobalEndpointsForAllRoles()) {
+                tenantMap = mapTenantsAndOpenstackTypesForRoles(tenantRoles);
+            } else {
+                Map<Tenant, OpenstackType> tenantOpenstackTypeMap = getTenantsAndOpenstackTypesForRoles(tenantRoles);
+                for (Tenant tenant : tenantOpenstackTypeMap.keySet()) {
+                    tenantMap.put(tenant, new HashSet<>(Collections.singletonList(tenantOpenstackTypeMap.get(tenant))));
+                }
             }
-
-            // Third get the endpoints for each tenant
+            CollectionUtils.addAll(tenants, tenantMap.keySet());
             for (Tenant tenant : tenantMap.keySet()) {
-                final OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, tenantMap.get(tenant), region);
-                if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
-                    endpoints.add(endpoint);
+                for (OpenstackType openstackType : tenantMap.get(tenant)) {
+                    final OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, openstackType, region);
+                    if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
+                        endpoints.add(endpoint);
+                    }
                 }
             }
         }
 
         IdentityUserTypeEnum userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);
-        return new ServiceCatalogInfo(tenantRoles, tenants, endpoints, userTypeEnum);
+        return new ServiceCatalogInfo(tenantRoles, tenants, new ArrayList<>(endpoints), userTypeEnum);
     }
 
     /**
@@ -191,6 +200,32 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                 }
             }
         }
+        return tenants;
+    }
+
+    private Map<Tenant, HashSet<OpenstackType>> mapTenantsAndOpenstackTypesForRoles(Collection<TenantRole> roles) {
+        // Map all types to a tenantId
+        Map<String, HashSet<OpenstackType>> tenantsMap = new HashMap<>();
+        for (TenantRole role : roles) {
+            for (String tenantId : role.getTenantIds()) {
+                OpenstackType type = getOpenStackType(role);
+                if (tenantsMap.containsKey(tenantId)) {
+                    tenantsMap.get(tenantId).add(type);
+                } else {
+                    tenantsMap.put(tenantId, new HashSet<>(Collections.singletonList(type)));
+                }
+            }
+        }
+
+        // Get all existing tenant objects and map to corresponding openstackTypes
+        Map<Tenant, HashSet<OpenstackType>> tenants = new HashMap<>();
+        for (String tenantId : tenantsMap.keySet()) {
+            Tenant tenant = this.tenantService.getTenant(tenantId);
+            if(tenant != null){
+                tenants.put(tenant, tenantsMap.get(tenantId));
+            }
+        }
+
         return tenants;
     }
 

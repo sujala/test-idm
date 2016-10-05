@@ -124,6 +124,7 @@ class UpgradeUserToCloudIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUser(upgradeUser)
         utils.deleteUser(identityAdmin)
+        utils.disableAndDeleteEndpointTemplate(globalEndpointTemplateId)
 
         where:
         request | accept
