@@ -57,7 +57,7 @@ def get_add_service_object(service_name=None, service_id=None,
 
     if not service_id:
         service_id = TestBase.generate_random_string(
-            pattern=const.SERVICE_ID_PATTERN
+            pattern=const.ID_PATTERN
         )
 
     if not service_type:
@@ -83,7 +83,7 @@ def get_add_endpoint_template_object(template_id=None, name=None,
     """
     if not template_id:
         template_id = TestBase.generate_random_string(
-            pattern='[\d]{8}'
+            pattern=const.ID_PATTERN
         )
 
     if not name and not service_id:
@@ -124,20 +124,21 @@ def get_add_group_request_object(group_name=None, group_desc=None):
     return requests.GroupAdd(**default_data)
 
 
-def get_add_role_request_object(role_name=None, role_description=None,
-                                administrator_role=None, service_id=None):
-    # Gather all args into dictionary
-    input_data = locals()
+def get_add_role_request_object(role_name=None, role_id=None,
+                                role_description=None,
+                                administrator_role=None,
+                                service_id=None):
+    """Generate Basic RoleAdd Object"""
 
-    default_data = {}
-    default_data["role_name"] = "newrole"+TestBase.generate_random_string(
-                                pattern=const.LOWER_CASE_LETTERS)
-    default_data["role_description"] = (
-        "roledesc"+TestBase.generate_random_string(
-            pattern=const.LOWER_CASE_LETTERS))
-    default_data["service_id"] = None
+    if not role_name:
+        role_name = TestBase.generate_random_string(
+            pattern=const.ROLE_NAME_PATTERN)
+    if not role_id:
+        role_id = TestBase.generate_random_string(const.ID_PATTERN)
+    if not role_description:
+        role_description = "CID Test Role"
 
-    for k in input_data.keys():
-        if input_data[k] is not None:
-            default_data[k] = input_data[k]
-    return requests.RoleAdd(**default_data)
+    return requests.RoleAdd(role_name=role_name, role_id=role_id,
+                            role_description=role_description,
+                            administrator_role=administrator_role,
+                            service_id=service_id)

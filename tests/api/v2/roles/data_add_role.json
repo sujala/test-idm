@@ -1,0 +1,14 @@
+{
+  "with_only_role_name": {
+    "additional_input": {}
+  },
+  "with_role_name_and_id": {
+    "additional_input": {"role_id": "12345678"}
+  },
+  "with_no_service_id": {
+    "additional_input": {
+      "role_id": "123456789",
+      "role_description": "cid test role"
+    }
+  }
+}
