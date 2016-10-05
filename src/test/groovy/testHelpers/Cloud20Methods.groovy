@@ -77,6 +77,8 @@ class Cloud20Methods {
     static def SERVICE_PATH_RULES = "rules"
 
     static def ENDPOINTS = "endpoints"
+    static def ENDPOINT_TEMPLATES = "endpointTemplates"
+    static def RULES = "rules"
 
     def init(){
         mediaType = new MediaTypeContext()
@@ -919,5 +921,10 @@ class Cloud20Methods {
     def addEndpointAssignmentRule(String token, endpointAssignmentRule, MediaType requestType=MediaType.APPLICATION_XML_TYPE, MediaType accept=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(RAX_AUTH).path(SERVICE_PATH_RULES).header(X_AUTH_TOKEN, token).type(requestType).accept(accept).entity(endpointAssignmentRule).post(ClientResponse)
+    }
+
+    def deleteEndpointAssignmentRule(String token, ruleId) {
+        initOnUse()
+        resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(RAX_AUTH).path(SERVICE_PATH_RULES).path(ruleId).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 }

@@ -121,7 +121,14 @@ public class EndpointAssignmentRuleResource {
     public Response deleteEndpointAssignmentRule(
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("ruleId") String ruleId) {
-            return Response.status(HttpStatus.SC_NOT_IMPLEMENTED).build();
+        try {
+            verifyAdminAccess(authToken);
+
+            ruleService.deleteEndpointAssignmentRule(ruleId);
+            return Response.status(HttpServletResponse.SC_NO_CONTENT).build();
+        } catch (Exception e) {
+            return exceptionHandler.exceptionResponse(e).build();
+        }
     }
 
     private void verifyAdminAccess(String authToken) {

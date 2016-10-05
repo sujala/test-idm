@@ -1070,4 +1070,10 @@ class Cloud20Utils {
         def userAdminToken = token.id
         return userAdminToken
     }
+
+    def addEndpointTemplateAssignmentRule(token, rule) {
+        def response = methods.addEndpointAssignmentRule(token, rule)
+        assert response.status == SC_CREATED
+        return response.getEntity(rule.class)
+    }
 }
