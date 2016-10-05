@@ -556,10 +556,14 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         authData.serviceCatalog.service[index].endpoint.adminURL[0] == null
 
         cleanup:
-        cloud20.deleteRoleFromUserOnTenant(utils.getServiceAdminToken(), addTenant.id, identityAdmin.id, createRole.id)
-        cloud20.deleteTenant(serviceAdminToken, addTenant.id)
-        cloud20.deleteRole(serviceAdminToken, createRole.id)
-        cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+        try {
+            cloud20.deleteRoleFromUserOnTenant(utils.getServiceAdminToken(), addTenant.id, identityAdmin.id, createRole.id)
+            cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+            cloud20.deleteRole(serviceAdminToken, createRole.id)
+            cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
+        } catch (Exception ex) {
+            //eat any exception during cleanup as it may hide
+        }
     }
 
     def "Get service catalog for user should not display the admin urls" () {
