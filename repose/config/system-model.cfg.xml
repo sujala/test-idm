@@ -8,10 +8,11 @@
         <node id="repose_node1" hostname="localhost" http-port="8080"/>
     </nodes>
     <filters>
+      <filter name="rackspace-auth-user" />
+      <filter name="header-translation" />
       <filter name="ip-identity" />
       <filter name="uri-identity" />
       <filter name="slf4j-http-logging" />
-      <filter name="rackspace-auth-user" />
       <filter name="rate-limiting" />
       <filter name="cors"/>
       <filter name="content-type-stripper" />
