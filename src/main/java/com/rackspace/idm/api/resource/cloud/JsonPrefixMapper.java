@@ -20,32 +20,31 @@ public class JsonPrefixMapper {
      */
 
     public JSONObject mapPrefix(JSONObject object, Map prefixValues) {
-        return mapPrefix(object, prefixValues, new ArrayList<String>());
+        return mapPrefix(object, prefixValues, null);
     }
 
-    public JSONObject mapPrefix(JSONObject object, Map prefixValues, List<String> removeIfEmpty){
+    public JSONObject mapPrefix(JSONObject object, Map prefixValues, JsonArrayEntryTransformer entryTransformer){
 
         for(Object key : prefixValues.keySet()){
             String[] elements = ((String)key).split("\\.");
 
-            replaceJsonObject(object, elements, prefixValues.get(key).toString(), removeIfEmpty);
+            replaceJsonObject(object, elements, prefixValues.get(key).toString(), entryTransformer);
         }
 
         return object;
     }
 
-    private void replaceJsonObject(JSONObject object, String[] elements, String newValue, List<String> removeIfEmpty){
+    private void replaceJsonObject(JSONObject object, String[] elements, String newValue, JsonArrayEntryTransformer entryTransformer){
         if(object != null && object.containsKey(elements[0])){
             if(elements.length > 1){
-                replaceJsonObject((JSONObject) object.get(elements[0]), Arrays.copyOfRange(elements, 1, elements.length), newValue, removeIfEmpty);
+                replaceJsonObject((JSONObject) object.get(elements[0]), Arrays.copyOfRange(elements, 1, elements.length), newValue, entryTransformer);
             } else{
-                Object value = object.get(elements[0]);
-
-                if(!removeIfEmpty.contains(newValue) || value != null) {
-                    object.put(newValue, value);
-                }
-
+                object.put(newValue, object.get(elements[0]));
                 object.remove(elements[0]);
+
+                if (entryTransformer != null && object instanceof JSONObject) {
+                    entryTransformer.transform((JSONObject) object);
+                }
             }
         }
     }

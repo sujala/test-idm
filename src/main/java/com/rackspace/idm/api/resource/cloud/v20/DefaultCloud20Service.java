@@ -3637,6 +3637,8 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
+            validator20.validateTenantType(tenant);
+
             Tenant tenantDO = tenantService.checkAndGetTenant(tenantId);
 
             tenantDO.setDescription(tenant.getDescription());
@@ -3644,6 +3646,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenantDO.setEnabled(tenant.isEnabled());
             if (identityConfig.getReloadableConfig().getAllowTenantNameToBeChangedViaUpdateTenant()) {
                 tenantDO.setName(tenant.getName());
+            }
+
+            if (tenant.getTypes() != null) {
+                tenantDO.getTypes().clear();
+                tenantDO.getTypes().addAll(tenant.getTypes().getType());
             }
 
             this.tenantService.updateTenant(tenantDO);

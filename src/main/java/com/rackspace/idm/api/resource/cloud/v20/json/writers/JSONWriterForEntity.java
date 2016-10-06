@@ -53,15 +53,15 @@ public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
         write(entity, entityStream, prefixValues, ALWAYS_PLURALIZE_HANDLER);
     }
 
-    protected void write(T entity, OutputStream entityStream, Map prefixValues, List<String> removeIfEmpty) {
-        write(entity, entityStream, prefixValues, ALWAYS_PLURALIZE_HANDLER, removeIfEmpty);
+    protected void write(T entity, OutputStream entityStream, Map prefixValues, JsonArrayEntryTransformer entryTransformer) {
+        write(entity, entityStream, prefixValues, ALWAYS_PLURALIZE_HANDLER, entryTransformer);
     }
 
     protected void write(T entity, OutputStream entityStream, Map prefixValues, JsonArrayTransformerHandler handler) {
-        write(entity, entityStream, prefixValues, handler, new ArrayList<String>());
+        write(entity, entityStream, prefixValues, handler, null);
     }
 
-    protected void write(T entity, OutputStream entityStream, Map prefixValues, JsonArrayTransformerHandler handler, List<String> removeIfEmpty) {
+    protected void write(T entity, OutputStream entityStream, Map prefixValues, JsonArrayTransformerHandler handler, JsonArrayEntryTransformer entryTransformer) {
         OutputStream outputStream = new ByteArrayOutputStream();
         try {
             getMarshaller().marshallToJSON(entity, outputStream);
@@ -73,7 +73,7 @@ public abstract class JSONWriterForEntity <T> implements MessageBodyWriter<T> {
             JSONObject jsonObject = outer;
 
             if(prefixValues != null){
-                jsonObject = prefixMapper.mapPrefix(jsonObject, prefixValues, removeIfEmpty);
+                jsonObject = prefixMapper.mapPrefix(jsonObject, prefixValues, entryTransformer);
             }
 
             arrayTransformer.transformRemoveWrapper(jsonObject, null, handler);
