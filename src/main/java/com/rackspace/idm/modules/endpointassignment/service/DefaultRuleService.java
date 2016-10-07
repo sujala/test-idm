@@ -4,6 +4,7 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.endpointassignment.dao.GlobalRuleDao;
 import com.rackspace.idm.modules.endpointassignment.dao.TenantTypeRuleDao;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
@@ -36,7 +37,11 @@ public class DefaultRuleService implements RuleService {
 
     @Override
     public void deleteEndpointAssignmentRule(String ruleId) {
-        globalRuleDao.deleteEndpointAssignmentRule(ruleId);
+        try {
+            globalRuleDao.deleteEndpointAssignmentRule(ruleId);
+        } catch (NotFoundException e) {
+            throw new NotFoundException("The specified rule does not exist");
+        }
     }
 
     @Override

@@ -50,7 +50,7 @@ class DeleteTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
         def response2 = cloud20.deleteEndpointAssignmentRule(token, nonexistantRule)
 
         then: "Not Found"
-        IdmAssert.assertOpenStackV2FaultResponseWithMessagePattern(response2, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, Pattern.compile("Object .* not found"))
+        IdmAssert.assertOpenStackV2FaultResponseWithMessagePattern(response2, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, Pattern.compile("The specified rule does not exist"))
 
         cleanup:
         deleteUserQuietly(newAdmin)
