@@ -239,6 +239,7 @@ class UserUpdate(base.AutoMarshallingModel):
         # TODO: insert update user request xml part
 
 
+#  TODO: insert update user request xml part
 class PasswordCredentialsAdd(base.AutoMarshallingModel):
     """Marshalling for Add Credentials Request"""
     def __init__(self, username, password):
@@ -271,18 +272,63 @@ class ApiKeyCredentialsUpdate(base.AutoMarshallingModel):
         raise Exception("Not implemented yet")
 
 
+class GroupAdd(base.AutoMarshallingModel):
+    """Marshalling for Adding a group"""
+    def __init__(self, group_name, group_desc):
+        self.group_name = group_name
+        self.group_desc = group_desc
+
+    def _obj_to_json(self):
+        return json.dumps({const.NS_GROUP: {
+                               const.NAME: self.group_name,
+                               const.DESCRIPTION: self.group_desc}})
+
+    def _obj_to_xml(self):
+        raise Exception("Not implemented yet")
+
+
+class UserUpgrade(base.AutoMarshallingModel):
+    """Marshalling for Upgrade User Request."""
+    def __init__(self, user_id, domain_id, secret_q, secret_a, groups, roles):
+        self.user_id = user_id
+        self.domain_id = domain_id
+        self.secret_q = secret_q
+        self.secret_a = secret_a
+        self.groups = groups
+        self.roles = roles
+
+    def _obj_to_json(self):
+        return json.dumps(
+                {const.USER: {
+                    const.ID: self.user_id,
+                    const.RAX_AUTH_DOMAIN_ID: self.domain_id,
+                    const.SECRETQA: {
+                        const.SECRET_QUESTION: self.secret_q,
+                        const.SECRET_ANSWER: self.secret_a},
+                    const.GROUPS: self.groups,
+                    const.ROLES: self.roles}})
+
+    def _obj_to_xml(self):
+        raise Exception("Not implemented yet")
+
+
 class RoleAdd(base.AutoMarshallingModel):
     """Marshalling for Add Role Request."""
 
-    def __init__(self, role_name, role_id, role_description):
+    def __init__(self, role_name, role_id=None, role_description=None,
+                 administrator_role=None, service_id=None):
         self.role_name = role_name
         self.role_id = role_id
         self.role_description = role_description
+        self.administrator_role = administrator_role
+        self.service_id = service_id
 
     def _obj_to_json(self):
         add_role_request = {
             const.ROLE: {const.NAME: self.role_name,
                          const.ID: self.role_id,
+                         const.ADMINISTRATOR_ROLE: self.administrator_role,
+                         const.SERVICE_ID: self.service_id,
                          const.DESCRIPTION: self.role_description}}
         return json.dumps(add_role_request)
 

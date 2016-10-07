@@ -4,14 +4,18 @@
 
 
 """URLs"""
+UNBOUNDID_CONFIG_URL = "/idm/devops/props"
 USER_URL = '/users'
-UPDATE_USER_URL = DELETE_USER_URL = GET_USER_URL = (
-    '/users/{user_id}')
+ROLES_URL = "/OS-KSADM/roles"
+GROUPS_URL = "/RAX-GRPADM/groups"
+UPGRADE_USER_TO_CLOUD_URL = "/users/RAX-AUTH/upgradeUserToCloud"
+UPDATE_USER_URL = DELETE_USER_URL = GET_USER_URL = '/users/{user_id}'
 TOKEN_URL = '/tokens'
 GET_TOKEN_URL = '/tokens/{token_id}'
 DOMAIN_URL = '/RAX-AUTH/domains'
 CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
-APIKEY_URL = CREDENTIALS_URL + "/RAX-KSKEY:apiKeyCredentials"
+GET_USER_API_CRED_URL = ("/users/{user_id}/OS-KSADM/credentials/"
+                         "RAX-KSKEY:apiKeyCredentials")
 LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 ENDPOINT_TEMPLATE_URL = LIST_ENDPOINT_TEMPLATES_URL = (
     "/OS-KSCATALOG/endpointTemplates")
@@ -25,7 +29,6 @@ ADD_ENDPOINT_TO_TENANT_URL = "/tenants/{tenant_id}/OS-KSCATALOG/endpoints"
 DELETE_ENDPOINT_FROM_TENANT_URL = (
     "/tenants/{tenant_id}/OS-KSCATALOG/endpoints/{endpoint_template_id}")
 LIST_ENDPOINTS_FOR_TOKEN_URL = "/tokens/{token_id}/endpoints"
-
 ADD_TENANT_URL = LIST_TENANTS = '/tenants'
 UPDATE_TENANT_URL = DELETE_TENANT_URL = GET_TENANT_URL = (
     '/tenants/{tenant_id}')
@@ -44,7 +47,12 @@ DOMAIN_API_TEST = "api-test"
 DOMAIN_PATTERN = "[a-z]{8}"
 API_KEY_PATTERN = "[a-f][0-9]{32}"
 EMAIL_RANDOM = "randome@rackspace.com"
+MD5_PATTERN = "[a-f][0-9]{40}"
 DOMAIN_TEST = "meow"
+MIXED_CASE_LETTERS = "[A-Z][a-z]{8}"
+UPPER_CASE_LETTERS = "[A-Z]{8}"
+LOWER_CASE_LETTERS = "[a-z]{8}"
+NUMBERS_PATTERN = "[1-9]{1}[0-9]{8}"
 CONTENT_TYPE_VALUE = ACCEPT_ENCODING_VALUE = "application/{0}"
 SERVICE_NAME_PATTERN = "service[\-][\w\d]{8}"
 SERVICE_TYPE_PATTERN = "service[\-]type[\-][\w\d]{8}"
@@ -72,6 +80,11 @@ CONTENT_TYPE = "Content-Type"
 DEFAULT = "default"
 DEFAULT_REGION = "defaultRegion"
 DESCRIPTION = "description"
+VALUE = "value"
+VERSION_ADDED = "versionAdded"
+DEFAULT_VALUE = "defaultValue"
+CONFIG_PATH = "configPath"
+IDM_PROPERTIES = "idm.properties"
 DOMAIN = "domain"
 DOMAINID = "domainId"
 DISPLAY_NAME = "display-name"
@@ -80,6 +93,7 @@ ENABLED = "enabled"
 ENDPOINTS = "endpoints"
 ENDPOINT_TEMPLATE = "endpointTemplate"
 GLOBAL = "global"
+GROUP = "group"
 GROUPS = "groups"
 ID = "id"
 INTERNAL_URL = "internalURL"
@@ -112,7 +126,7 @@ TOKEN = "token"
 TOKEN_FORMAT = "tokenFormat"
 TENANT = "tenant"
 TENANTS = "tenants"
-
+ITEMS = "items"
 TYPE = "type"
 VERSION_ID = "versionId"
 VERSION_INFO = "versionInfo"
@@ -121,6 +135,8 @@ XML = "xml"
 JSON = "json"
 CREDENTIALS = "credentials"
 OS_KSADM_PASSWORD = 'OS-KSADM:password'
+SECRETQA = "secretQA"
+IDM_RELOADABLE_PROPERTIES = "idm.reloadable.properties"
 
 API_KEY_CREDENTIALS = "apiKeyCredentials"
 OS_KSCATALOG_ENDPOINT_TEMPLATE = "OS-KSCATALOG:endpointTemplate"
@@ -131,16 +147,21 @@ MULTI_FACTOR_STATE = "multiFactorState"
 OS_KSADM_NAMESPACE = "OS-KSADM"
 PASSWORD_CREDENTIALS = "passwordCredentials"
 RAX_KSGRP_NAMESPACE = "RAX-KSGRP"
-NS_GROUPS = RAX_KSGRP_NAMESPACE + ":groups"
+NS_GROUP = "RAX-KSGRP:group"
+NS_GROUPS = "RAX-KSGRP:groups"
 RAX_KSKEY_NAMESPACE = "RAX-KSKEY"
+RAX_KSGRP_NAMESPACE = "RAX-KSGRP"
+RAX_GRPADMN_NAMESPACE = "RAX-GRPADM"
 NS_PASSWORD = OS_KSADM_NAMESPACE + ":password"
 RAX_KSQA_NAMESPACE = "RAX-KSQA"
-NS_SECRETQA = RAX_KSQA_NAMESPACE + ":secretQA"
-NS_API_KEY_CREDENTIALS = RAX_KSKEY_NAMESPACE + ":apiKeyCredentials"
+NS_SECRETQA = "RAX-KSQA:secretQA"
+NS_API_KEY_CREDENTIALS = "RAX-KSKEY:apiKeyCredentials"
 RAX_AUTH = "RAX-AUTH"
 RAX_AUTH_ASSIGNMENT_TYPE = "RAX-AUTH:assignmentType"
 RAX_AUTH_DOMAIN = "RAX-AUTH:domain"
 RAX_AUTH_DOMAIN_ID = "RAX-AUTH:domainId"
+NS_ADMINISTRATOR_ROLE = "RAX-AUTH:administratorRole"
+NS_PROPAGATE = RAX_AUTH + ":" + PROPAGATE
 RAX_AUTH_CONTACTID = "RAX-AUTH:contactId"
 RAX_AUTH_DEFAULT_REGION = "RAX-AUTH:defaultRegion"
 RAX_AUTH_MULTI_FACTOR_ENABLED = "RAX-AUTH:multiFactorEnabled"
