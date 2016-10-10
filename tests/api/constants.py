@@ -12,6 +12,8 @@ UPGRADE_USER_TO_CLOUD_URL = "/users/RAX-AUTH/upgradeUserToCloud"
 UPDATE_USER_URL = DELETE_USER_URL = GET_USER_URL = '/users/{user_id}'
 TOKEN_URL = '/tokens'
 GET_TOKEN_URL = '/tokens/{token_id}'
+DEVOPS_PROPS_URL = '/props'
+DEVOPS_URL = '/idm/devops'
 DOMAIN_URL = '/RAX-AUTH/domains'
 CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 GET_USER_API_CRED_URL = ("/users/{user_id}/OS-KSADM/credentials/"
@@ -102,6 +104,7 @@ NAST_PREFIX = "MossoCloudFS_"
 PASSWORD = "password"
 PROPAGATE = "propagate"
 PROPERTIES = "properties"
+PROP_VALUE = 'value'
 PUBLIC_URL = "publicURL"
 REGION = "region"
 REQUIRED = "required"
@@ -188,3 +191,8 @@ XMLNS_RAX_KSKEY = (
 """CONSTANTS"""
 USER_MANAGER_ROLE_ID = '7'
 DC_LIST = ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']
+RELOADABLE_PROP_FILE = 'idm.reloadable.properties'
+
+"""FEATURE FLAGS"""
+FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
+    "feature.endpoint.template.disable.name.type")
