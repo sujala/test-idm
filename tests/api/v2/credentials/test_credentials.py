@@ -17,7 +17,7 @@ class TestCredentials(base.TestBaseV2):
         self.user_id, self.testusername = self.create_user()
 
     def create_user(self):
-        request_object = factory.get_add_user_request_object()[0]
+        request_object = factory.get_add_user_request_object()
         resp = self.identity_admin_client.add_user(request_object)
         self.assertEqual(resp.status_code, 201)
         user_id = resp.json()[const.USER][const.ID]
@@ -91,8 +91,8 @@ class TestCredentials(base.TestBaseV2):
         apikey = self.generate_random_string(pattern=const.API_KEY_PATTERN)
         request_object = requests.ApiKeyCredentialsUpdate(self.testusername,
                                                           apikey)
-        resp = self.identity_admin_client.update_apikey(self.user_id,
-                                                        request_object)
+        resp = self.identity_admin_client.update_api_key(self.user_id,
+                                                         request_object)
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp,
                           json_schema=credentials_json.get_apikey_response)
