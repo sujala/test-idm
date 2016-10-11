@@ -63,6 +63,14 @@ SERVICE_ID_PATTERN = "[\d]{8}"
 """Headers"""
 X_AUTH_TOKEN = "X-Auth-Token"
 X_USER_ID = "X-User-Id"
+ORIGIN = 'origin'
+ACCESS_CONTROL_REQUEST_HEADERS = 'access-control-request-headers'
+ACCESS_CONTROL_REQUEST_METHOD = 'access-control-request-method'
+ACCESS_CONTROL_ALLOW_ORIGIN = 'Access-Control-Allow-Origin'
+ACCESS_CONTROL_ALLOW_CREDENTIALS = 'access-control-allow-credentials'
+ACCESS_CONTROL_ALLOW_METHODS = 'Access-Control-Allow-Methods'
+ACCESS_CONTROL_ALLOW_HEADERS = 'access-control-allow-headers'
+ACCESS_CONTROL_EXPOSE_HEADERS = 'access-control-expose-headers'
 
 """Some constants used for attributes"""
 ACCESS = "access"
@@ -149,7 +157,6 @@ MULTI_FACTOR_ENABLED = "multiFactorEnabled"
 MULTI_FACTOR_STATE = "multiFactorState"
 OS_KSADM_NAMESPACE = "OS-KSADM"
 PASSWORD_CREDENTIALS = "passwordCredentials"
-RAX_KSGRP_NAMESPACE = "RAX-KSGRP"
 NS_GROUP = "RAX-KSGRP:group"
 NS_GROUPS = "RAX-KSGRP:groups"
 RAX_KSKEY_NAMESPACE = "RAX-KSKEY"
