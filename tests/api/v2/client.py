@@ -75,6 +75,21 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             resp.json = types.MethodType(json, resp, type(resp))
         return resp
 
+    def auth_as_tenant_with_token(self, request_object, headers=None,
+                                  requestslib_kwargs=None):
+        """
+        Returns response object from auth as tenant with token api call
+        GET /v2.0/tokens/{token_id}
+        In case of XML response, add a json() method to the response object
+        that will create a JSON equivalent of the XML response
+        """
+        url = self.url + const.TOKEN_URL
+        resp = self.request(method='POST', url=url,
+                            request_entity=request_object,
+                            headers=headers,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
     def validate_token(self, token_id, belongs_to=None,
                        requestslib_kwargs=None):
         """
@@ -104,8 +119,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         Add password to account
         """
-        url = self.url + const.CREDENTIALS_URL.format(
-                user_id=user_id)
+        url = self.url + const.CREDENTIALS_URL.format(user_id=user_id)
 
         return self.request(method='POST', url=url,
                             request_entity=request_object,
@@ -115,7 +129,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         Update API key on account
         """
-        url = self.url+const.UPDATE_USER_API_CRED_URL
+        url = self.url + const.UPDATE_USER_API_CRED_URL
         url = url.format(user_id=user_id)
         return self.request(method='POST', url=url,
                             request_entity=request_object,
@@ -125,8 +139,8 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         Reset API key
         """
-        url = self.url+"{0}/{1}/reset".format(const.RESET_USER_API_CRED_URL,
-                                              const.RAX_AUTH)
+        url = self.url + "{0}/{1}/reset".format(
+            const.RESET_USER_API_CRED_URL, const.RAX_AUTH)
         url = url.format(user_id=user_id)
         return self.request('POST', url)
 
@@ -134,7 +148,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         Add a new Group
         """
-        return self.request(method='POST', url=self.url+const.GROUPS_URL,
+        return self.request(method='POST', url=self.url + const.GROUPS_URL,
                             request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
 
@@ -150,7 +164,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         Get API key
         """
-        url = self.url+const.GET_USER_API_CRED_URL
+        url = self.url + const.GET_USER_API_CRED_URL
         url = url.format(user_id=user_id)
         return self.request('GET', url)
 
@@ -158,7 +172,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         Delete API key
         """
-        url = self.url+const.DELETE_USER_API_CRED_URL
+        url = self.url + const.DELETE_USER_API_CRED_URL
         url = url.format(user_id=user_id)
         return self.request('DELETE', url)
 
@@ -190,7 +204,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         e.g., groups = [{'name': 'ImAGroup'}]
         roles = [{'name: 'ImARole'}]
         """
-        url = self.url+const.UPGRADE_USER_TO_CLOUD_URL
+        url = self.url + const.UPGRADE_USER_TO_CLOUD_URL
         return self.request('PUT', url=url,
                             request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs,
@@ -750,6 +764,18 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         url = self.url + const.ADD_ROLE_TO_USER_URL.format(user_id=user_id,
                                                            role_id=role_id)
+        resp = self.request('PUT', url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def add_role_to_user_for_tenant(
+            self, role_id, user_id, tenant_id, requestslib_kwargs=None):
+        """Return response object from the add role to user for tenant api call
+
+        PUT /v2.0/tenants/{tenantId}users/{user_id}/roles/OS-KSADM/{role_id}
+        """
+        url = self.url + const.ADD_ROLE_TO_USER_FOR_TENANT_URL.format(
+            user_id=user_id, tenant_id=tenant_id, role_id=role_id)
         resp = self.request('PUT', url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp

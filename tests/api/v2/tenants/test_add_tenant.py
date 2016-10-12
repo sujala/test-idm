@@ -3,6 +3,7 @@ import copy
 
 import ddt
 
+from tests.api import constants as const
 from tests.api.v2 import base
 from tests.api.v2.models import requests
 from tests.api.v2.models import responses
@@ -31,8 +32,8 @@ class TestAddTenant(base.TestBaseV2):
         '''
         test_data = data_schema.get('test_data', {})
         tenant_name = (
-            test_data.get('tenant_name',
-                          self.generate_random_string('Tenant')))
+            test_data.get('tenant_name', self.generate_random_string(
+                          pattern=const.TENANT_NAME_PATTERN)))
         tenant_id = (test_data.get('tenant_id', tenant_name))
         description = (test_data.get('description', None))
         enabled = (test_data.get('enabled', None))

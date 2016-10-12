@@ -52,6 +52,26 @@ class AuthenticateWithPassword(base.AutoMarshallingModel):
         return etree.tostring(auth)
 
 
+class TenantWithTokenAuth(base.AutoMarshallingModel):
+    """Marshalling for Authentications requests as tenant with token."""
+
+    def __init__(self, tenant_id, token_id):
+        self.tenant_id = tenant_id
+        self.token_id = token_id
+
+    def _obj_to_json(self):
+        tenant_with_token_auth = {
+            const.AUTH: {
+                const.TENANT_ID: self.tenant_id,
+                const.TOKEN: {
+                    const.ID: self.token_id}
+            }}
+        return json.dumps(tenant_with_token_auth)
+
+    def _obj_to_xml(self):
+        raise Exception("Not implemented yet")
+
+
 class UserAdd(base.AutoMarshallingModel):
     """Marshalling for Add Identity Admin User Request."""
 
@@ -280,8 +300,8 @@ class GroupAdd(base.AutoMarshallingModel):
 
     def _obj_to_json(self):
         return json.dumps({const.NS_GROUP: {
-                               const.NAME: self.group_name,
-                               const.DESCRIPTION: self.group_desc}})
+            const.NAME: self.group_name,
+            const.DESCRIPTION: self.group_desc}})
 
     def _obj_to_xml(self):
         raise Exception("Not implemented yet")
@@ -299,14 +319,14 @@ class UserUpgrade(base.AutoMarshallingModel):
 
     def _obj_to_json(self):
         return json.dumps(
-                {const.USER: {
-                    const.ID: self.user_id,
-                    const.RAX_AUTH_DOMAIN_ID: self.domain_id,
-                    const.SECRETQA: {
-                        const.SECRET_QUESTION: self.secret_q,
-                        const.SECRET_ANSWER: self.secret_a},
-                    const.GROUPS: self.groups,
-                    const.ROLES: self.roles}})
+            {const.USER: {
+                const.ID: self.user_id,
+                const.RAX_AUTH_DOMAIN_ID: self.domain_id,
+                const.SECRET_QA: {
+                    const.SECRET_QUESTION: self.secret_q,
+                    const.SECRET_ANSWER: self.secret_a},
+                const.GROUPS: self.groups,
+                const.ROLES: self.roles}})
 
     def _obj_to_xml(self):
         raise Exception("Not implemented yet")

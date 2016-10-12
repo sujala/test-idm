@@ -3,16 +3,36 @@ from tests.api import constants as const
 from tests.api.base import TestBase
 
 
-def get_add_user_request_object(username=None, input_data=None):
+def get_add_user_request_object(
+        username=None, password=None, input_data=None):
     if not username:
         username = "testacct" + TestBase.generate_random_string(
             pattern=const.USER_NAME_PATTERN)
     if not input_data:
         domain_id = TestBase.generate_random_string(
-                        pattern=const.DOMAIN_PATTERN)
+            pattern=const.DOMAIN_PATTERN)
         input_data = {'email': 'test@avex.jp', 'domain_id': domain_id}
 
     return requests.UserAdd(user_name=username, **input_data)
+
+
+def get_add_user_one_call_request_object():
+        user_name = TestBase.generate_random_string(pattern='Username[\w]{12}')
+        secret_q = 'Who Me?'
+        secret_a = 'Yes You!'
+        secret_qa = {
+            const.SECRET_QUESTION: secret_q,
+            const.SECRET_ANSWER: secret_a
+        }
+        domain_id = TestBase.generate_random_string(
+            pattern=const.MOSSO_TENANT_ID_PATTERN)
+
+        return requests.UserAdd(
+            user_name=user_name,
+            enabled=True,
+            domain_id=domain_id,
+            secret_qa=secret_qa
+        )
 
 
 def get_add_user_request_object_pull(user_name=None, enabled=True,
@@ -106,6 +126,22 @@ def get_add_endpoint_template_object(template_id=None, name=None,
                                         template_type=template_type,
                                         service_id=service_id,
                                         **input_data)
+
+
+def get_add_tenant_object(tenant_name=None, tenant_id=None, enabled=True,
+                          description='Describing API Test Tenant',
+                          display_name='API Test Displayed Name',
+                          domain_id=None):
+    if not tenant_name:
+        tenant_name = TestBase.generate_random_string(
+            pattern=const.TENANT_NAME_PATTERN)
+
+    if not tenant_id:
+        tenant_id = tenant_name
+
+    return requests.Tenant(
+        tenant_name=tenant_name, tenant_id=tenant_id, description=description,
+        enabled=enabled, display_name=display_name, domain_id=domain_id)
 
 
 def get_add_group_request_object(group_name=None, group_desc=None):

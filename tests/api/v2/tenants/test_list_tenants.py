@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
+
 from tests.api.v2 import base
-from tests.api.v2.models import requests
+from tests.api.v2.models import factory
 from tests.api.v2.models import responses
 from tests.api.v2.schema import tenants
 
@@ -12,11 +13,7 @@ class TestListTenants(base.TestBaseV2):
     def setUp(self):
         super(TestListTenants, self).setUp()
 
-        self.tenant_name = self.generate_random_string('Tenant')
-        self.description = ('Orginal description')
-        tenant_object = requests.Tenant(
-            tenant_name=self.tenant_name, tenant_id=self.tenant_name,
-            description=self.description)
+        tenant_object = factory.get_add_tenant_object()
         resp = self.identity_admin_client.add_tenant(tenant=tenant_object)
         tenant = responses.Tenant(resp.json())
         self.tenant_id = tenant.id
