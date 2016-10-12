@@ -31,14 +31,16 @@ public class JSONWriterForTenants extends JSONWriterForArrayEntity<Tenants> {
 
         @Override
         public void transform(JSONObject arrayEntry) {
-            if (arrayEntry.containsKey("domainId")) {
-                Object domainId = arrayEntry.get("domainId");
-                arrayEntry.remove("domainId");
+            if (arrayEntry.containsKey(JSONConstants.DOMAIN_ID)) {
+                Object domainId = arrayEntry.get(JSONConstants.DOMAIN_ID);
+                arrayEntry.remove(JSONConstants.DOMAIN_ID);
                 arrayEntry.put(JSONConstants.RAX_AUTH_DOMAIN_ID, domainId);
             }
 
             if (arrayEntry.containsKey(JSONConstants.TYPES)) {
+                Object types = arrayEntry.get(JSONConstants.TYPES);
                 arrayEntry.remove(JSONConstants.TYPES);
+                arrayEntry.put(JSONConstants.RAX_AUTH_TYPES, ((JSONObject) types).get(JSONConstants.TYPE));
             }
         }
     }

@@ -747,6 +747,184 @@ class TenantIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type567890123456"
     }
 
+
+
+    @Unroll
+    def "Get Tenant By ID/NAME returns the tenant types in the response - accept = #acceptContentType" () {
+        given:
+        def adminToken = utils.getIdentityAdminToken()
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1"])
+
+        when: "Create new tenant"
+        def createTenantResponse = cloud20.addTenant(adminToken, tenant)
+
+        then: "Assert created tenant"
+        createTenantResponse.status == 201
+
+        when: "Get tenant by id"
+        def getTenantResponse = cloud20.getTenant(adminToken, tenantId, acceptContentType)
+
+        then: "Assert types on tenant"
+        assert getTenantResponse.status == 200
+        def tenantEntity = getTenant(getTenantResponse)
+        assert tenantEntity.types.type.size == 1
+        assert tenantEntity.types.type[0] == "type1"
+
+        when: "Get tenant by name"
+        def getTenantByNameResponse = cloud20.getTenantByName(adminToken, tenantId, acceptContentType)
+
+        then: "Assert types on tenant"
+        assert getTenantByNameResponse.status == 200
+        def tenantNameEntity = getTenant(getTenantByNameResponse)
+        assert tenantNameEntity.types.type.size == 1
+        assert tenantNameEntity.types.type[0] == "type1"
+
+        cleanup:
+        utils.deleteTenant(tenant)
+
+        where:
+        acceptContentType               | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Assert get Tenant By ID/NAME does not return tenant types for empty list - accept = #acceptContentType, type = #type" () {
+        given:
+        def adminToken = utils.getIdentityAdminToken()
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = v2Factory.createTenant(tenantId, tenantId, type)
+
+        when: "Create new tenant"
+        def createTenantResponse = cloud20.addTenant(adminToken, tenant)
+
+        then: "Assert created tenant"
+        createTenantResponse.status == 201
+
+        when: "Get tenant by id"
+        def getTenantResponse = cloud20.getTenant(adminToken, tenantId, acceptContentType)
+
+        then: "Assert null value for types"
+        getTenantResponse.status == 200
+        def tenantEntity = getTenant(getTenantResponse)
+        assert tenantEntity.types == null
+
+        when: "Get tenant by name"
+        def getTenantByNameResponse = cloud20.getTenant(adminToken, tenantId, acceptContentType)
+
+        then: "Assert null value for types"
+        getTenantResponse.status == 200
+        def tenantNameEntity = getTenant(getTenantByNameResponse)
+        assert tenantNameEntity.types == null
+
+        cleanup:
+        utils.deleteTenant(tenant)
+
+        where:
+        acceptContentType               | type | _
+        MediaType.APPLICATION_XML_TYPE  | []   | _
+        MediaType.APPLICATION_JSON_TYPE | []   | _
+        MediaType.APPLICATION_XML_TYPE  | null | _
+        MediaType.APPLICATION_JSON_TYPE | null | _
+    }
+
+    @Unroll
+    def "Assert get List Tenants returns tenant types - accept = #acceptContentType" () {
+        given: "A new user and tenant"
+        def adminToken = utils.getIdentityAdminToken()
+        def username = testUtils.getRandomUUID("name")
+        def domainId = testUtils.getRandomUUID("domainId")
+        def user = utils.createUser(adminToken, username, domainId)
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, ["type1"]))
+        utils.addRoleToUserOnTenant(user, tenant)
+        def userToken = utils.getToken(username)
+
+        when: "List tenants"
+        def listTenantResponse = cloud20.listTenants(userToken, acceptContentType)
+
+        then: "Assert correct values for types"
+        assert listTenantResponse.status == 200
+        def tenantsEntity = getTenantsFromResponse(listTenantResponse)
+        assert tenantsEntity.tenant.size == 1
+        assert tenantsEntity.tenant[0].types.type.size == 1
+        assert tenantsEntity.tenant[0].types.type[0] == "type1"
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteDomain(domainId)
+        utils.deleteTenant(tenant)
+
+        where:
+        acceptContentType               | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Assert get List Tenants does not return tenant types for empty list - accept = #acceptContentType" () {
+        given: "A new user and tenant"
+        def adminToken = utils.getIdentityAdminToken()
+        def username = testUtils.getRandomUUID("name")
+        def domainId = testUtils.getRandomUUID("domainId")
+        def user = utils.createUser(adminToken, username, domainId)
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, type))
+        utils.addRoleToUserOnTenant(user, tenant)
+        def userToken = utils.getToken(username)
+
+        when: "List tenants"
+        def listTenantResponse = cloud20.listTenants(userToken, acceptContentType)
+
+        then: "Assert null values for types"
+        assert listTenantResponse.status == 200
+        def tenantsEntity = getTenantsFromResponse(listTenantResponse)
+        tenantsEntity.tenant[0].types == null
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteDomain(domainId)
+        utils.deleteTenant(tenant)
+
+        where:
+        acceptContentType               | type
+        MediaType.APPLICATION_XML_TYPE  | []
+        MediaType.APPLICATION_JSON_TYPE | []
+        MediaType.APPLICATION_XML_TYPE  | null
+        MediaType.APPLICATION_JSON_TYPE | null
+    }
+
+    @Unroll
+    def "Assert get domain tenants returns tenant types - accept = #acceptContentType" () {
+        given: "A new user and tenant"
+        def adminToken = utils.getIdentityAdminToken()
+        def domainId = testUtils.getRandomUUID("domainId")
+        utils.createDomainEntity(domainId)
+        def tenantId = testUtils.getRandomUUID("tenant")
+        def tenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, ["type1"]))
+        utils.addTenantToDomain(domainId, tenantId)
+
+        when: "List tenants"
+        def domainTenantsResponse = cloud20.getDomainTenants(adminToken, domainId, true, acceptContentType)
+
+        then: "Assert correct value for types"
+        assert domainTenantsResponse.status == 200
+        def tenantsEntity = getTenantsFromResponse(domainTenantsResponse)
+        assert tenantsEntity.tenant.size == 1
+        assert tenantsEntity.tenant[0].types.type.size == 1
+        assert tenantsEntity.tenant[0].types.type[0] == "type1"
+
+        cleanup:
+        utils.deleteDomain(domainId)
+        utils.deleteTenant(tenant)
+
+        where:
+        acceptContentType               | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
     def getTenant(response) {
         def tenant = response.getEntity(Tenant)
 
@@ -754,6 +932,15 @@ class TenantIntegrationTest extends RootIntegrationTest {
             tenant = tenant.value
         }
         return tenant
+    }
+
+    def getTenantsFromResponse(response) {
+        def tenants = response.getEntity(Tenants)
+
+        if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
+            tenants = tenants.value
+        }
+        return tenants
     }
 
     def assertAuthTenantNameAndId(AuthenticateResponse authData, tenant, boolean nameAndIdShouldNotMatch) {
