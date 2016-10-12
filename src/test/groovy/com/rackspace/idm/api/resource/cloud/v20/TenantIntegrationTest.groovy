@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.DomainService
+import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.httpclient.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -459,6 +460,300 @@ class TenantIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Do not allow tenant name to be changed via update tenant - allowUpdate: #allowUpdate" () {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT, allowUpdate)
+
+        def tenantId = UUID.randomUUID().toString().replace("-", "")
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
+        def updateTenant = v2Factory.createTenant(tenantId, "name")
+
+        when:
+        def addTenant = cloud20.addTenant(utils.getServiceAdminToken(), tenant).getEntity(Tenant).value
+        cloud20.updateTenant(utils.getServiceAdminToken(), tenantId, updateTenant)
+        def updatedTenant = cloud20.getTenant(utils.getServiceAdminToken(), tenantId).getEntity(Tenant).value
+        cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
+
+        then:
+        if (allowUpdate) {
+            addTenant.name != updatedTenant.name
+        } else {
+            addTenant.name == updatedTenant.name
+        }
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        allowUpdate << [true, false]
+    }
+
+    @Unroll
+    def "Create tenant with type can be retrieved and matches: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "Type1", "TYPE2"])
+
+        when:
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+        def addTenant = getTenant(response)
+
+        response = cloud20.getTenantByName(utils.getServiceAdminToken(), tenantId, acceptContentType)
+        def createdTenant = getTenant(response)
+        List<String> types = createdTenant.types.type
+
+        cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
+
+        then: "duplicates removed and stored as lowercase"
+        types as Set == ["type1", "type2"] as Set
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "A maximum of 16 unique tenant types can be assigned to any given tenant: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "type2", "type3", "type4", "type5", "type6",
+            "type7", "type8", "type9", "type10", "type11", "type12", "type13", "type14", "type15", "type16", "type17"])
+
+        when:
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_CANNOT_EXCEED_MAXIMUM)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Tenant type can only contain alphanumeric characters: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, [type])
+
+        when:
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC)
+
+        where:
+        requestContentType              | acceptContentType               | type
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | "type*"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type()"
+    }
+
+    @Unroll
+    def "Tenant type must possess a length > 0 and <= 15: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, [type])
+
+        when:
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE)
+
+        where:
+        requestContentType              | acceptContentType               | type
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | ""
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type567890123456"
+    }
+
+    @Unroll
+    def "Update tenant with type can be retrieved and matches: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "Type1", "TYPE2"])
+        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, ["type3", "Type3", "TYPE4"])
+
+        when:
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+        def addTenant = getTenant(response)
+
+        response = cloud20.updateTenant(utils.getServiceAdminToken(), tenantId, tenantToUpdate, acceptContentType, requestContentType)
+        def updateTenant = getTenant(response)
+
+        response = cloud20.getTenantByName(utils.getServiceAdminToken(), tenantId, acceptContentType)
+        def createdTenant = getTenant(response)
+
+        then: "duplicates removed and stored as lowercase"
+        updateTenant.types.type as Set == ["type3", "type4"] as Set
+        createdTenant.types.type as Set == ["type3", "type4"] as Set
+
+        cleanup:
+        cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Update tenant with empty type deletes all tenant types: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "Type1", "TYPE2"])
+        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, [])
+
+        when:
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+        def addTenant = getTenant(response)
+
+        response = cloud20.updateTenant(utils.getServiceAdminToken(), tenantId, tenantToUpdate, acceptContentType, requestContentType)
+        def updateTenant = getTenant(response)
+
+        response = cloud20.getTenantByName(utils.getServiceAdminToken(), tenantId, acceptContentType)
+        def createdTenant = getTenant(response)
+
+        then: "tenant types is empty"
+        updateTenant.types == null
+        createdTenant.types == null
+
+        cleanup:
+        cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Update tenant without type does not change tenant types: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "Type1", "TYPE2"])
+        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId)
+
+        when:
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+        def addTenant = getTenant(response)
+
+        response = cloud20.updateTenant(utils.getServiceAdminToken(), tenantId, tenantToUpdate, acceptContentType, requestContentType)
+        def updateTenant = getTenant(response)
+
+        response = cloud20.getTenantByName(utils.getServiceAdminToken(), tenantId, acceptContentType)
+        def createdTenant = getTenant(response)
+
+        then: "The values are not modified in update tenant"
+        updateTenant.types.type as Set == ["type1", "type2"] as Set
+        createdTenant.types.type as Set == ["type1", "type2"] as Set
+
+        cleanup:
+        cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Update type a maximum of 16 unique tenant types can be assigned to any given tenant: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
+        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, ["type1", "type2", "type3", "type4", "type5", "type6",
+            "type7", "type8", "type9", "type10", "type11", "type12", "type13", "type14", "type15", "type16", "type17"])
+
+        when:
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+        def addTenant = getTenant(response)
+
+        response = cloud20.updateTenant(utils.getServiceAdminToken(), tenantId, tenantToUpdate, acceptContentType, requestContentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_CANNOT_EXCEED_MAXIMUM)
+
+        cleanup:
+        cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Update tenant type can only contain alphanumeric characters: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
+        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, [type])
+
+        when:
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+        def addTenant = getTenant(response)
+
+        response = cloud20.updateTenant(utils.getServiceAdminToken(), tenantId, tenantToUpdate, acceptContentType, requestContentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC)
+
+        cleanup:
+        cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
+
+        where:
+        requestContentType              | acceptContentType               | type
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | "type*"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type()"
+    }
+
+    @Unroll
+    def "Update tenant type must possess a length > 0 and <= 15: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
+        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, [type])
+
+        when:
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+        def addTenant = getTenant(response)
+
+        response = cloud20.updateTenant(utils.getServiceAdminToken(), tenantId, tenantToUpdate, acceptContentType, requestContentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE)
+
+        cleanup:
+        cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
+
+        where:
+        requestContentType              | acceptContentType               | type
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | ""
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type567890123456"
+    }
+
+    def getTenant(response) {
+        def tenant = response.getEntity(Tenant)
+
+        if (response.getType() == MediaType.APPLICATION_XML_TYPE) {
+            tenant = tenant.value
+        }
+        return tenant
     }
 
     def assertAuthTenantNameAndId(AuthenticateResponse authData, tenant, boolean nameAndIdShouldNotMatch) {

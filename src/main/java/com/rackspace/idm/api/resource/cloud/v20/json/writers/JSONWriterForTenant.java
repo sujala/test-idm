@@ -1,7 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.JsonArrayEntryTransformer;
 import com.rackspace.idm.api.resource.cloud.JsonArrayTransformerHandler;
+import org.json.simple.JSONObject;
 import org.openstack.docs.identity.api.v2.Tenant;
 
 import javax.ws.rs.Produces;
@@ -33,22 +35,40 @@ public class JSONWriterForTenant extends JSONWriterForEntity<Tenant> {
         prefixValues.put(JSONConstants.TENANT_DOMAIN_ID_PATH, JSONConstants.RAX_AUTH_DOMAIN_ID);
         prefixValues.put(JSONConstants.TENANT_TYPES_PATH, JSONConstants.RAX_AUTH_TYPES);
         removeIfEmpty.add(JSONConstants.RAX_AUTH_TYPES);
-        write(tenant, entityStream, prefixValues, new TenantJsonArrayTransformerHandler(), removeIfEmpty);
+        write(tenant, entityStream, prefixValues, new TenantJsonArrayTransformerHandler(), new TenantJsonArrayEntryTransformer(tenant));
     }
 
     public static class TenantJsonArrayTransformerHandler implements JsonArrayTransformerHandler {
 
-    @Override
-    public boolean pluralizeJSONArrayWithName(String elementName) {
-        return true;
+        @Override
+        public boolean pluralizeJSONArrayWithName(String elementName) {
+            return true;
+        }
+
+        @Override
+        public String getPluralizedNamed(String elementName) {
+            if (JSONConstants.TYPE.equals(elementName)) {
+                return JSONConstants.RAX_AUTH_TYPES;
+            }
+            return elementName + "s";
+        }
     }
 
-    @Override
-    public String getPluralizedNamed(String elementName) {
-        if (JSONConstants.TYPE.equals(elementName)) {
-            return JSONConstants.RAX_AUTH_TYPES;
+    private static class  TenantJsonArrayEntryTransformer implements JsonArrayEntryTransformer {
+
+        private Tenant tenant;
+
+        public TenantJsonArrayEntryTransformer(Tenant tenant) {
+            this.tenant = tenant;
         }
-        return elementName + "s";
+
+        @Override
+        public void transform(JSONObject arrayEntry) {
+            if (arrayEntry.containsKey(JSONConstants.RAX_AUTH_TYPES)) {
+                if (tenant.getTypes() == null) {
+                    arrayEntry.remove(JSONConstants.RAX_AUTH_TYPES);
+                }
+            }
+        }
     }
-}
 }

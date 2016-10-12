@@ -28,7 +28,11 @@ public class TenantConverterCloudV20 {
         for (String type : tenantEntity.getTypes()) {
             types.getType().add(type);
         }
-        tenant.setTypes(types);
+        if (types.getType().size() > 0) {
+            tenant.setTypes(types);
+        } else {
+            tenant.setTypes(null);
+        }
         return tenant;
     }
     
