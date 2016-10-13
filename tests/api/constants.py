@@ -205,6 +205,16 @@ XMLNS_RAX_KSKEY = (
 USER_MANAGER_ROLE_ID = '7'
 DC_LIST = ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']
 RELOADABLE_PROP_FILE = 'idm.reloadable.properties'
+IDM_PROPERTIES = "idm.properties"
+IDM_RELOADABLE_PROPERTIES = "idm.reloadable.properties"
+EXPECTED_UNBOUNDID_TIMEOUT_CONFIGS = [
+    'ldap.server.pool.age.max',
+    'ldap.server.pool.create.if.necessary',
+    'ldap.server.pool.max.wait.time',
+    'ldap.server.pool.health.check.interval',
+    'ldap.server.pool.check.connection.age.on.release',
+    'ldap.server.pool.allow.concurrent.socketfactory.use']
+
 
 """FEATURE FLAGS"""
 FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
