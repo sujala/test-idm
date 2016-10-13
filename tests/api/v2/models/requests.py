@@ -325,11 +325,19 @@ class RoleAdd(base.AutoMarshallingModel):
 
     def _obj_to_json(self):
         add_role_request = {
-            const.ROLE: {const.NAME: self.role_name,
-                         const.ID: self.role_id,
-                         const.ADMINISTRATOR_ROLE: self.administrator_role,
-                         const.SERVICE_ID: self.service_id,
-                         const.DESCRIPTION: self.role_description}}
+            const.ROLE: {const.NAME: self.role_name}
+        }
+        if self.role_id:
+            add_role_request[const.ROLE][const.ID] = self.role_id
+        if self.role_description:
+            add_role_request[const.ROLE][const.DESCRIPTION] = (
+                self.role_description)
+        if self.service_id:
+            add_role_request[const.ROLE][const.SERVICE_ID] = self.service_id
+        if self.administrator_role:
+            add_role_request[const.ROLE][const.ADMINISTRATOR_ROLE] = (
+                self.administrator_role
+            )
         return json.dumps(add_role_request)
 
     def _obj_to_xml(self):
@@ -337,7 +345,9 @@ class RoleAdd(base.AutoMarshallingModel):
             const.RAX_AUTH, const.XMLNS_RAX_AUTH)
         add_role_request = etree.Element(
             const.ROLE, xmlns=const.XMLNS, id=self.role_id,
-            name=self.role_name, description=self.role_description)
+            name=self.role_name, description=self.role_description,
+            serviceId=self.service_id
+        )
         return etree.tostring(add_role_request)
 
 

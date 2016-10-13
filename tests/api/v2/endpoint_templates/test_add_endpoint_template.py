@@ -414,7 +414,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
                 disable_service_name_type_prop_value = (
                     disable_service_name_type_prop_dict[
                         const.RELOADABLE_PROP_FILE][0][
-                        const.PROP_VALUE])
+                        const.VALUE])
 
             # This is the test for CID-353
             if (disable_service_name_type_prop_value and

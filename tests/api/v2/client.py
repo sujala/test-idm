@@ -73,7 +73,6 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 resp_json[const.ACCESS][const.USER] = user
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
-
         return resp
 
     def validate_token(self, token_id, belongs_to=None,
@@ -143,22 +142,6 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         Delete Group
         """
         url = self.url + const.GROUPS_URL + "/" + group_id
-        return self.request(method='DELETE', url=url,
-                            requestslib_kwargs=requestslib_kwargs)
-
-    def add_role(self, request_object, requestslib_kwargs=None):
-        """
-        Add a new Role
-        """
-        return self.request(method='POST', url=self.url+const.ROLES_URL,
-                            request_entity=request_object,
-                            requestslib_kwargs=requestslib_kwargs)
-
-    def delete_role(self, role_id, requestslib_kwargs=None):
-        """
-        Delete role
-        """
-        url = self.url + const.ROLES_URL + "/" + role_id
         return self.request(method='DELETE', url=url,
                             requestslib_kwargs=requestslib_kwargs)
 
@@ -768,37 +751,6 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                                                            role_id=role_id)
         resp = self.request('PUT', url,
                             requestslib_kwargs=requestslib_kwargs)
-
-        if self.deserialize_format == 'xml':
-            def json(self):
-                resp_json = {}
-                resp_json[const.ROLE] = {}
-
-                root_string = resp.text.encode('ascii')
-                root = objectify.fromstring(root_string)
-
-                resp_json[const.ROLE][const.ID] = root.attrib[const.ID]
-                resp_json[const.ROLE][const.ROLE_NAME] = root.attrib[
-                    const.ROLE_NAME]
-                resp_json[const.ROLE][const.DESCRIPTION] = root.attrib[
-                    const.DESCRIPTION]
-                resp_json[const.ROLE][const.SERVICE_ID] = root.attrib[
-                    const.SERVICE_ID]
-
-                admin_role_key = \
-                    '{' + const.XMLNS_RAX_AUTH + '}' + const.ADMINISTRATOR_ROLE
-                resp_json[const.ROLE][const.RAX_AUTH_ADMINISTRATOR_ROLE] = (
-                    root.attrib[admin_role_key])
-
-                propagate_key = '{' + const.XMLNS_RAX_AUTH + '}' + (
-                    const.PROPAGATE)
-                if root.attrib[propagate_key] == 'true':
-                    resp_json[const.ROLE][const.RAX_AUTH_PROPAGATE] = True
-                else:
-                    resp_json[const.ROLE][const.RAX_AUTH_PROPAGATE] = False
-                return resp_json
-            resp.json = types.MethodType(json, resp, type(resp))
-
         return resp
 
     def verify_cors(self, method, url, headers=None, requestslib_kwargs=None):
@@ -815,33 +767,35 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
-    ''' THE CODE BELOW IS NOT USED IN ANY OF THE TESTS YET.
-    COMMENTING THIS OUT, SO WE CAN RESURRECT THESE CLIENT METHODS WHENEVER
-    WE ADD TESTS FOR THE CORRESPONDING ENDPOINTS.
+    def delete_role_from_user(self, role_id, user_id, requestslib_kwargs=None):
+        """Delete role from user
+        DELETE /v2.0/users/{userId}/roles/OS-KSADM/{roleid}
+        """
+        url = self.url + const.DELETE_ROLE_FR_USER_URL.format(user_id=user_id,
+                                                              role_id=role_id)
+        resp = self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
 
-    def add_role(self, role_name, role_id=None, role_description=None,
-                 requestslib_kwargs=None):
+    def add_role(self, request_object, requestslib_kwargs=None):
         """Return response object from the add role api call
 
         POST /v2.0/OS-KSADM/roles
         In case of XML response, add a json() method to the response object
         that will create a JSON equivalent of the XML response
         """
-        url = self.url + '/OS-KSADM/roles'
-        request_object = requests.AddRole(
-            role_name=role_name, role_id=role_id,
-            role_description=role_description)
+        url = self.url + const.ROLE_URL
         resp = self.request(method='POST', url=url,
                             request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
+
         # If the response is xml, adds a json() menthod to the object.
         # The json() method should return a json equivalent of the
         # xml response.
-        if self.deserialize_format == const.XML:
+        if self.deserialize_format == 'xml':
             def json(self):
                 resp_json = {}
                 resp_json[const.ROLE] = {}
-
                 root_string = resp.text.encode(const.ASCII)
                 root = objectify.fromstring(root_string)
 
@@ -857,15 +811,14 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 resp_json[const.ROLE][const.RAX_AUTH_ADMINISTRATOR_ROLE] = (
                     root.attrib[admin_role_key])
 
-                propagate_key = '{' + const.XMLNS_RAX_AUTH + '}' +
-                    const.PROPAGATE
+                propagate_key = '{' + const.XMLNS_RAX_AUTH + '}' + (
+                    const.PROPAGATE)
                 if root.attrib[propagate_key] == 'true':
                     resp_json[const.ROLE][const.RAX_AUTH_PROPAGATE] = True
                 else:
                     resp_json[const.ROLE][const.RAX_AUTH_PROPAGATE] = False
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
-
         return resp
 
     def get_role(self, role_id, requestslib_kwargs=None):
@@ -875,9 +828,10 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         In case of XML response, add a json() method to the response object
         that will create a JSON equivalent of the XML response
         """
-        url = self.url + '/OS-KSADM/roles/' + role_id
-        resp = self.request('GET', url,
+        url = self.url + const.GET_ROLE_URL.format(role_id=role_id)
+        resp = self.request(method='GET', url=url,
                             requestslib_kwargs=requestslib_kwargs)
+
         if self.deserialize_format == const.XML:
             def json(self):
                 resp_json = {}
@@ -899,8 +853,8 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 resp_json[const.ROLE][const.RAX_AUTH_ADMINISTRATOR_ROLE] = (
                     root.attrib[admin_role_key])
 
-                propagate_key = '{' + const.XMLNS_RAX_AUTH + '}' +
-                    const.PROPAGATE
+                propagate_key = '{' + const.XMLNS_RAX_AUTH + '}' + (
+                    const.PROPAGATE)
                 if root.attrib[propagate_key] == 'true':
                     resp_json[const.ROLE][const.RAX_AUTH_PROPAGATE] = True
                 else:
@@ -916,51 +870,118 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         In case of XML response, add a json() method to the response object
         that will create a JSON equivalent of the XML response
         """
-        url = self.url + '/OS-KSADM/roles/' + role_id
-        resp = self.request(const.DELETE, url,
+        url = self.url + const.DELETE_ROLE_URL.format(role_id=role_id)
+        resp = self.request(method='DELETE', url=url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
-    def list_roles(self, requestslib_kwargs=None):
+    def list_roles(self, option=None, requestslib_kwargs=None):
         """Return response object from the list roles api call
 
-        GET /v2.0/OS-KSADM/roles
-        @todo:
-        In case of XML response, add a json() method to the response object
-        that will create a JSON equivalent of the XML response
+        GET /v2.0/OS-KSADM/roles{?limit,marker}
         """
-        url = self.url + '/OS-KSADM/roles'
-        resp = self.request('GET', url,
+        url = self.url + const.ROLE_URL
+        resp = self.request(method='GET', url=url, params=option,
                             requestslib_kwargs=requestslib_kwargs)
-        return resp.status_code, resp.json()
 
-    def get_users_with_role(self, role_id, requestslib_kwargs=None):
-        """Return response object from the list roles api call
-
-        GET /v2.0/OS-KSADM/roles
-        @todo:
-        In case of XML response, add a json() method to the response object
-        that will create a JSON equivalent of the XML response
-        """
-        url = self.url + '/OS-KSADM/roles/' + role_id + '/RAX-AUTH/users'
-        resp = self.request('GET', url,
-                            requestslib_kwargs=requestslib_kwargs)
-        # If the response is xml, adds a json() menthod to the object.
-        # The json() method should return a json equivalent of the
-        # xml response.
         if self.deserialize_format == const.XML:
             def json(self):
                 resp_json = {}
-                resp_json[const.ROLE] = {}
+                resp_json[const.ROLES] = []
 
                 root_string = resp.text.encode(const.ASCII)
                 root = objectify.fromstring(root_string)
 
-                resp_json[const.ROLE][const.USERS] = root.attrib[const.USERS]
-                return resp_json
-            resp.json = types.MethodType(json, resp, type(resp))
+                for child in root:
+                    item = {}
+                    item[const.ID] = child.attrib[const.ID]
+                    item[const.NAME] = child.attrib[const.NAME]
+                    item[const.DESCRIPTION] = child.attrib[const.DESCRIPTION]
+                    item[const.SERVICE_ID] = child.attrib[const.SERVICE_ID]
 
+                    propagate = '{' + const.XMLNS_RAX_AUTH + '}' + (
+                        const.PROPAGATE)
+                    if child.attrib[propagate] == 'true':
+                        item[const.RAX_AUTH_PROPAGATE] = True
+                    else:
+                        item[const.RAX_AUTH_PROPAGATE] = False
+                    resp_json[const.ROLES].append(item)
+
+            resp.json = types.MethodType(json, resp, type(resp))
         return resp
 
+    def list_roles_for_user(self, user_id, requestslib_kwargs=None):
+        """
+        List global roles assigned to a user
+        GET /v2.0/users/{userId}/roles
+        :return return a list of roles assigned to a user
+        """
+        url = self.url + const.LIST_USER_ROLES_URL.format(user_id=user_id)
+        resp = self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        if self.deserialize_format == const.XML:
+            def json(self):
+                resp_json = {}
+                resp_json[const.ROLES] = []
 
-'''
+                root_string = resp.text.encode(const.ASCII)
+                root = objectify.fromstring(root_string)
+
+                for child in root:
+                    item = {}
+                    item[const.ID] = child.attrib[const.ID]
+                    item[const.NAME] = child.attrib[const.NAME]
+                    item[const.DESCRIPTION] = child.attrib[const.DESCRIPTION]
+                    item[const.SERVICE_ID] = child.attrib[const.SERVICE_ID]
+
+                    propagate = '{' + const.XMLNS_RAX_AUTH + '}' + (
+                        const.PROPAGATE)
+                    if child.attrib[propagate] == 'true':
+                        item[const.RAX_AUTH_PROPAGATE] = True
+                    else:
+                        item[const.RAX_AUTH_PROPAGATE] = False
+                    resp_json[const.ROLES].append(item)
+
+            resp.json = types.MethodType(json, resp, type(resp))
+        return resp
+
+    def get_users_for_role(self, role_id, requestslib_kwargs=None):
+        """Gets users who have the specified role.
+        GET /v2.0/OS-KSADM/roles/{roleId}/RAX-AUTH/users
+        :return list of users associated with specific role
+        """
+        url = self.url + const.GET_USERS_FOR_ROLE_URL.format(role_id=role_id)
+        resp = self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        if self.deserialize_format == 'xml':
+            def json(self):
+                resp_json = {}
+                resp_json[const.USERS] = []
+
+                root_string = resp.text.encode(const.ASCII)
+                root = objectify.fromstring(root_string)
+
+                for child in root:
+                    item = {}
+                    item[const.ID] = child.attrib[const.ID]
+                    item[const.USERNAME] = child.attrib[const.USERNAME]
+                    item[const.EMAIL] = child.attrib[const.EMAIL]
+                    item[const.RAX_AUTH_DOMAIN_ID] = child.attrib[
+                        const.RAX_AUTH_DOMAIN_ID
+                    ]
+                    item[const.RAX_AUTH_DEFAULT_REGION] = child.attrib[
+                        const.RAX_AUTH_DEFAULT_REGION
+                    ]
+                    if child.attrib[const.RAX_AUTH_MULTI_FACTOR_ENABLED] == (
+                            'true'):
+                        item[const.RAX_AUTH_MULTI_FACTOR_ENABLED] = True
+                    else:
+                        item[const.RAX_AUTH_MULTI_FACTOR_ENABLED] = False
+                    if child.attrib[const.ENABLED] == 'true':
+                        item[const.ENABLED] = True
+                    else:
+                        item[const.ENABLED] = False
+
+                    resp_json[const.USERS].append(item)
+            resp.json = types.MethodType(json, resp, type(resp))
+        return resp
