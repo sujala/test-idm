@@ -281,7 +281,7 @@ public class DefaultAuthorizationService implements AuthorizationService {
     }
 
     @Override
-    public boolean hasSameDomain(User caller, User retrievedUser) {
+    public boolean hasSameDomain(EndUser caller, EndUser retrievedUser) {
         return caller.getDomainId() != null && caller.getDomainId().equals(retrievedUser.getDomainId());
     }
 
