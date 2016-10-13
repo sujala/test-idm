@@ -14,10 +14,11 @@ GET_TOKEN_URL = '/tokens/{token_id}'
 DEVOPS_PROPS_URL = '/props'
 DEVOPS_URL = '/idm/devops'
 DOMAIN_URL = '/RAX-AUTH/domains'
-CREDENTIALS_URL = '/users/{user_id}/OS-KSADM/credentials'
-GET_USER_API_CRED_URL = ('/users/{user_id}/OS-KSADM/credentials/'
-                         'RAX-KSKEY:apiKeyCredentials')
-LIST_CREDENTIALS_URL = '/users/{user_id}/OS-KSADM/credentials'
+CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
+GET_USER_API_CRED_URL = UPDATE_USER_API_CRED_URL = RESET_USER_API_CRED_URL = \
+    DELETE_USER_API_CRED_URL = ("/users/{user_id}/OS-KSADM/credentials/"
+                                "RAX-KSKEY:apiKeyCredentials")
+LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 ENDPOINT_TEMPLATE_URL = LIST_ENDPOINT_TEMPLATES_URL = (
     '/OS-KSCATALOG/endpointTemplates')
 UPDATE_ENDPOINT_TEMPLATE_URL = GET_ENDPOINT_TEMPLATE_URL = (
