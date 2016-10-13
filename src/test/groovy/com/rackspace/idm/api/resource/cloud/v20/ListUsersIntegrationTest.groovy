@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -18,6 +19,9 @@ import testHelpers.saml.SamlFactory
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
+import static org.apache.http.HttpStatus.SC_CREATED
+import static org.apache.http.HttpStatus.SC_FORBIDDEN
+import static org.apache.http.HttpStatus.SC_OK
 
 class ListUsersIntegrationTest extends RootIntegrationTest {
 
@@ -605,6 +609,258 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         acceptContentType               | _
         MediaType.APPLICATION_XML_TYPE  | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def "List users - users filtered by caller type"() {
+        given:
+
+        def domainId = utils.createDomain()
+        def contactId = testUtils.getRandomUUID("contactId")
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def userManage2 = utils.createUserWithUser(userAdmin, testUtils.getRandomUUID(), domainId)
+        utils.addRoleToUser(userManage2, Constants.USER_MANAGE_ROLE_ID)
+        def users = [defaultUser, userManage, userAdmin, userManage2]
+
+        when: "User-admin w/ flag disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, false)
+        List<User> returnedUsers = utils.listUsers(utils.getToken(userAdmin.username))
+
+        then: "legacy behavior returns all users"
+        returnedUsers.find {it.id == userAdmin.id} != null
+        returnedUsers.find {it.id == userManage.id} != null
+        returnedUsers.find {it.id == userManage2.id} != null
+        returnedUsers.find {it.id == defaultUser.id} != null
+
+        when: "User-manager w/ flag disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, false)
+        returnedUsers = utils.listUsers(utils.getToken(userManage.username))
+
+        then: "legacy behavior filters user-admins, but returns user-managers"
+        returnedUsers.find {it.id == userAdmin.id} == null
+        returnedUsers.find {it.id == userManage.id} != null
+        returnedUsers.find {it.id == userManage2.id} != null
+        returnedUsers.find {it.id == defaultUser.id} != null
+
+        when: "default user w/ flag disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, false)
+        returnedUsers = utils.listUsers(utils.getToken(defaultUser.username))
+
+        then: "legacy behavior filters all users but caller"
+        returnedUsers.find {it.id == userAdmin.id} == null
+        returnedUsers.find {it.id == userManage.id} == null
+        returnedUsers.find {it.id == userManage2.id} == null
+        returnedUsers.find {it.id == defaultUser.id} != null
+
+        when: "User-admin w/ flag enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, true)
+        returnedUsers = utils.listUsers(utils.getToken(userAdmin.username))
+
+        then: "new behavior filter still returns admin and all managers"
+        returnedUsers.find {it.id == userAdmin.id} != null
+        returnedUsers.find {it.id == userManage.id} != null
+        returnedUsers.find {it.id == userManage2.id} != null
+        returnedUsers.find {it.id == defaultUser.id} != null
+
+        when: "User-manager w/ flag enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, true)
+        returnedUsers = utils.listUsers(utils.getToken(userManage.username))
+
+        then: "new behavior filters user-admins and user-managers"
+        returnedUsers.find {it.id == userAdmin.id} == null
+        returnedUsers.find {it.id == userManage.id} != null
+        returnedUsers.find {it.id == userManage2.id} == null
+        returnedUsers.find {it.id == defaultUser.id} != null
+
+        when: "default user w/ flag enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, false)
+        returnedUsers = utils.listUsers(utils.getToken(defaultUser.username))
+
+        then: "new behavior filters all users but caller"
+        returnedUsers.find {it.id == userAdmin.id} == null
+        returnedUsers.find {it.id == userManage.id} == null
+        returnedUsers.find {it.id == userManage2.id} == null
+        returnedUsers.find {it.id == defaultUser.id} != null
+
+        cleanup:
+        reloadableConfiguration.reset()
+        utils.deleteUsersQuietly(users)
+    }
+
+    def "List users by email - users filtered by caller type"() {
+        given:
+
+        def domainId = utils.createDomain()
+        def contactId = testUtils.getRandomUUID("contactId")
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def userManage2 = utils.createUserWithUser(userAdmin, testUtils.getRandomUUID(), domainId)
+        utils.addRoleToUser(userManage2, Constants.USER_MANAGE_ROLE_ID)
+        def users = [defaultUser, userManage, userAdmin, userManage2]
+
+        def commonEmail = testUtils.getRandomUUID() + "@rackspace.com"
+        users.each {
+            it.email = commonEmail
+            def updatedUser = utils.updateUser(it, it.id)
+        }
+
+        when: "User-admin w/ flag disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, false)
+        List<User> returnedUsers = utils.getUsersByEmail(commonEmail, utils.getToken(userAdmin.username))
+
+        then: "legacy behavior returns all users"
+        returnedUsers.find {it.id == userAdmin.id} != null
+        returnedUsers.find {it.id == userManage.id} != null
+        returnedUsers.find {it.id == userManage2.id} != null
+        returnedUsers.find {it.id == defaultUser.id} != null
+
+        when: "User-manager w/ flag disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, false)
+        returnedUsers = utils.getUsersByEmail(commonEmail, utils.getToken(userManage.username))
+
+        then: "legacy behavior returns all users including user-managers and user-admins"
+        returnedUsers.find {it.id == userAdmin.id} != null
+        returnedUsers.find {it.id == userManage.id} != null
+        returnedUsers.find {it.id == userManage2.id} != null
+        returnedUsers.find {it.id == defaultUser.id} != null
+
+        when: "default user w/ flag disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, false)
+        def response = cloud20.getUsersByEmail(utils.getToken(defaultUser.username), commonEmail)
+
+        then: "default users not allowed to use"
+        response.status == SC_FORBIDDEN
+
+        when: "User-admin w/ flag enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, true)
+        returnedUsers = utils.getUsersByEmail(commonEmail, utils.getToken(userAdmin.username))
+
+        then: "new behavior filter still returns all users in domain"
+        returnedUsers.find {it.id == userAdmin.id} != null
+        returnedUsers.find {it.id == userManage.id} != null
+        returnedUsers.find {it.id == userManage2.id} != null
+        returnedUsers.find {it.id == defaultUser.id} != null
+
+        when: "User-manager w/ flag enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, true)
+        returnedUsers = utils.getUsersByEmail(commonEmail, utils.getToken(userManage.username))
+
+        then: "new behavior filters out user-admins and other user-managers"
+        returnedUsers.find {it.id == userAdmin.id} == null
+        returnedUsers.find {it.id == userManage.id} != null
+        returnedUsers.find {it.id == userManage2.id} == null
+        returnedUsers.find {it.id == defaultUser.id} != null
+
+        when: "default user w/ flag enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, false)
+        response = cloud20.getUsersByEmail(utils.getToken(defaultUser.username), commonEmail)
+
+        then: "default users still not allowed to use"
+        response.status == SC_FORBIDDEN
+
+        cleanup:
+        reloadableConfiguration.reset()
+        utils.deleteUsersQuietly(users)
+    }
+
+    def "List users by name - filtered by caller type"() {
+        given:
+
+        def domainId = utils.createDomain()
+        def contactId = testUtils.getRandomUUID("contactId")
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def userManage2 = utils.createUserWithUser(userAdmin, testUtils.getRandomUUID(), domainId)
+        utils.addRoleToUser(userManage2, Constants.USER_MANAGE_ROLE_ID)
+        def users = [defaultUser, userManage, userAdmin, userManage2]
+
+        when: "User-admin w/ flag disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, false)
+        def token = utils.getToken(userAdmin.username)
+        def userAdminResponse = cloud20.getUserByName(token, userAdmin.username)
+        def userManageResponse = cloud20.getUserByName(token, userManage.username)
+        def userManage2Response = cloud20.getUserByName(token, userManage2.username)
+        def defaultUserResponse = cloud20.getUserByName(token, defaultUser.username)
+
+        then: "legacy behavior returns all users"
+        userAdminResponse.status == SC_OK
+        userManageResponse.status == SC_OK
+        userManage2Response.status == SC_OK
+        defaultUserResponse.status == SC_OK
+
+        when: "User-manager w/ flag disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, false)
+        token = utils.getToken(userManage.username)
+        userAdminResponse = cloud20.getUserByName(token, userAdmin.username)
+        userManageResponse = cloud20.getUserByName(token, userManage.username)
+        userManage2Response = cloud20.getUserByName(token, userManage2.username)
+        defaultUserResponse = cloud20.getUserByName(token, defaultUser.username)
+
+        then: "legacy behavior returns all users"
+        userAdminResponse.status == SC_OK
+        userManageResponse.status == SC_OK
+        userManage2Response.status == SC_OK
+        defaultUserResponse.status == SC_OK
+
+        when: "default user w/ flag disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, false)
+        token = utils.getToken(defaultUser.username)
+        userAdminResponse = cloud20.getUserByName(token, userAdmin.username)
+        userManageResponse = cloud20.getUserByName(token, userManage.username)
+        userManage2Response = cloud20.getUserByName(token, userManage2.username)
+        defaultUserResponse = cloud20.getUserByName(token, defaultUser.username)
+
+        then: "legacy behavior only allows self"
+        userAdminResponse.status == SC_FORBIDDEN
+        userManageResponse.status == SC_FORBIDDEN
+        userManage2Response.status == SC_FORBIDDEN
+        defaultUserResponse.status == SC_OK
+
+        when: "User-admin w/ flag enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, true)
+        token = utils.getToken(userAdmin.username)
+        userAdminResponse = cloud20.getUserByName(token, userAdmin.username)
+        userManageResponse = cloud20.getUserByName(token, userManage.username)
+        userManage2Response = cloud20.getUserByName(token, userManage2.username)
+        defaultUserResponse = cloud20.getUserByName(token, defaultUser.username)
+
+        then: "new behavior returns all users"
+        userAdminResponse.status == SC_OK
+        userManageResponse.status == SC_OK
+        userManage2Response.status == SC_OK
+        defaultUserResponse.status == SC_OK
+
+        when: "User-manager w/ flag enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, true)
+        token = utils.getToken(userManage.username)
+        userAdminResponse = cloud20.getUserByName(token, userAdmin.username)
+        userManageResponse = cloud20.getUserByName(token, userManage.username)
+        userManage2Response = cloud20.getUserByName(token, userManage2.username)
+        defaultUserResponse = cloud20.getUserByName(token, defaultUser.username)
+
+        then: "new behavior only allows self and default users"
+        userAdminResponse.status == SC_FORBIDDEN
+        userManageResponse.status == SC_OK
+        userManage2Response.status == SC_FORBIDDEN
+        defaultUserResponse.status == SC_OK
+
+        when: "default user w/ flag enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, false)
+        token = utils.getToken(defaultUser.username)
+        userAdminResponse = cloud20.getUserByName(token, userAdmin.username)
+        userManageResponse = cloud20.getUserByName(token, userManage.username)
+        userManage2Response = cloud20.getUserByName(token, userManage2.username)
+        defaultUserResponse = cloud20.getUserByName(token, defaultUser.username)
+
+        then: "new behavior returns only self"
+        userAdminResponse.status == SC_FORBIDDEN
+        userManageResponse.status == SC_FORBIDDEN
+        userManage2Response.status == SC_FORBIDDEN
+        defaultUserResponse.status == SC_OK
+
+        cleanup:
+        reloadableConfiguration.reset()
+        utils.deleteUsersQuietly(users)
     }
 
     def getUsersFromListUsers(response) {

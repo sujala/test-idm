@@ -31,7 +31,7 @@ public interface AuthorizationService {
     boolean hasUserAdminRole(EndUser user);
     boolean hasUserManageRole(EndUser user);
     boolean hasServiceAdminRole(EndUser user);
-    boolean hasSameDomain(User caller, User retrievedUser);
+    boolean hasSameDomain(EndUser caller, EndUser retrievedUser);
 
     void verifyServiceAdminLevelAccess(ScopeAccess authScopeAccess);
 

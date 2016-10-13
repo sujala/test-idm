@@ -294,6 +294,15 @@ public class IdentityConfig {
     public static final String FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT = "feature.allow.tenant.name.to.be.changed.via.update.tenant";
     public static final boolean FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT_DEFAULT = true;
 
+    public static final String FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP = "feature.restrict.user.manager.list.users.usage";
+    public static final boolean FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_DEFAULT = true;
+
+    public static final String FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP = "feature.restrict.user.manager.list.users.by.email.usage";
+    public static final boolean FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_DEFAULT = true;
+
+    public static final String FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP = "feature.restrict.user.manager.list.users.by.name.usage";
+    public static final boolean FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -575,6 +584,10 @@ public class IdentityConfig {
         defaults.put(LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT);
 
         defaults.put(FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED, FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED_DEFAULT);
+
+        defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_DEFAULT);
+        defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_DEFAULT);
+        defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_DEFAULT);
 
         return defaults;
     }
@@ -1735,6 +1748,21 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED, versionAdded = "3.7.0", description = "Whether or not a user will receive global endpoints associated will all roles the user has on any given tenant.")
         public boolean getFeatureGlobalEndpointsForAllRoles() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED);
+        }
+
+        @IdmProp(key = FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, versionAdded = "3.7.0", description = "When true, if a user-manager calls the 'list users' service without a filter other user managers within the domain will not be returned.")
+        public boolean restrictUserManagersFromListingOtherUserManagers() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, versionAdded = "3.7.0", description = "When true, if a user-manager calls the 'list users' service with email filter other user managers within the domain will not be returned.")
+        public boolean restrictUserManagersFromListingOtherUserManagersByEmail() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, versionAdded = "3.7.0", description = "When true, if a user-manager calls the 'list users' service with name filter they can't get other user managers within the domain.")
+        public boolean restrictUserManagersFromListingOtherUserManagersByName() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP);
         }
     }
 

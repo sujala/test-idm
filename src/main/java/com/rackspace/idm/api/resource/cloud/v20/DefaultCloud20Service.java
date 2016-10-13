@@ -1967,11 +1967,28 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User requester = (User) userService.getUserByScopeAccess(requesterScopeAccess);
 
-            if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
-                    authorizationService.authorizeCloudUserAdmin(requesterScopeAccess)) {
-                authorizationService.verifyDomain(requester, user);
-            } else if (authorizationService.authorizeCloudUser(requesterScopeAccess)) {
-                authorizationService.verifySelf(requester, user);
+            if (identityConfig.getReloadableConfig().restrictUserManagersFromListingOtherUserManagersByName()) {
+                // Filter based on CID-468
+
+                /*
+                    By time get here we know the specified user exists and the caller is a User. Only check left is to
+                    make sure the caller has access to the specified user.
+                 */
+                List<User> userList = new ArrayList<>();
+                userList.add(user);
+                Iterable<? extends EndUser> result = filterOutUsersInaccessibleByCaller(userList, requester);
+                if (!result.iterator().hasNext()) {
+                    // If the user was filtered, the caller doesn't have access to that user
+                    throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
+                }
+            } else {
+                // Pre-CID-468 filtering
+                if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
+                        authorizationService.authorizeCloudUserAdmin(requesterScopeAccess)) {
+                    authorizationService.verifyDomain(requester, user);
+                } else if (authorizationService.authorizeCloudUser(requesterScopeAccess)) {
+                    authorizationService.verifySelf(requester, user);
+                }
             }
 
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)).getValue());
@@ -1990,16 +2007,71 @@ public class DefaultCloud20Service implements Cloud20Service {
             Iterable<User> users = userService.getUsersByEmail(email);
 
             User caller = (User) userService.getUserByScopeAccess(requesterScopeAccess);
-            if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
-                     authorizationService.authorizeCloudUserAdmin(requesterScopeAccess)) {
-                users = filterUsersInDomain(users, caller);
+
+            Iterable<? extends EndUser> filteredUsers;
+            if (identityConfig.getReloadableConfig().restrictUserManagersFromListingOtherUserManagersByEmail()) {
+                // Filter based on CID-468
+                filteredUsers = filterOutUsersInaccessibleByCaller(users, caller);
+            } else {
+                // Legacy filtering
+                if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
+                        authorizationService.authorizeCloudUserAdmin(requesterScopeAccess)) {
+                    filteredUsers = filterUsersInDomain(users, caller);
+                } else {
+                    filteredUsers = users;
+                }
             }
 
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
+            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
 
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+
+    /**
+     * Returns an Iterable that contains the subset of the provides users for which the specified caller can operate on.
+     *
+     * Note - this currently would return all user-admins in a domain for a user-admin. This is pre-existing and expected
+     * as a domain should only ever have one and only one user-admin. In the case that a domain does have multiple user-
+     * admins, all should be returned.
+     *
+     * @param users
+     * @param caller
+     * @return
+     */
+    private Iterable<? extends EndUser> filterOutUsersInaccessibleByCaller(Iterable<? extends EndUser> users, EndUser caller) {
+        Iterable<? extends EndUser> result;
+
+        IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+        if (callerType.isDomainBasedAccessLevel()) {
+            List<EndUser> domainUsers = new ArrayList<EndUser>();
+
+            // Filter results based on domain
+            for (EndUser user : users) {
+                if (authorizationService.hasSameDomain(caller, user)) {
+                    if (caller.getId().equals(user.getId())) {
+                        // Can always see self regardless of role
+                        domainUsers.add(user);
+                    } else if (callerType == IdentityUserTypeEnum.USER_MANAGER) {
+                        // Can see all domain users except user-admins and other user-managers
+                        if (!authorizationService.hasUserAdminRole(user)
+                                && !authorizationService.hasUserManageRole(user)) {
+                            domainUsers.add(user);
+                        }
+                    } else if (callerType == IdentityUserTypeEnum.USER_ADMIN) {
+                        // Can see all domain users - including other user-admins for now
+                        domainUsers.add(user);
+                    }
+                }
+            }
+            result = domainUsers;
+        } else {
+            result = users;
+        }
+
+        return result;
     }
 
     private List<User> filterUsersInDomain(Iterable<User> users, User caller) {
@@ -3455,15 +3527,17 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             BaseUser caller = userService.getUserByScopeAccess(scopeAccessByAccessToken);
 
-            //if default user & NOT user-manage
+            // If default user & NOT user-manage
             if (authorizationService.authorizeCloudUser(scopeAccessByAccessToken)
                     && !authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
                 List<EndUser> users = new ArrayList<EndUser>();
-                //at this point, we know that the user is not a racker and can cast to an EndUser
+                // At this point, we know that the user is not a racker and can cast to an EndUser
                 users.add((EndUser) caller);
                 return Response.ok(objFactories.getOpenStackIdentityV2Factory()
                         .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
             }
+
+            // This proves caller is an EndUser (e.g. not a Racker)
             authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
 
             PaginatorContext<EndUser> paginatorContext;
@@ -3479,17 +3553,25 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            List<EndUser> users = new ArrayList<EndUser>();
+            Iterable<? extends EndUser> filteredUsers;
 
-            // If role is identity:user-manage then we need to filter out the identity:user-admin
-            if (authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
-                for (EndUser user : paginatorContext.getValueList()) {
-                    if (!authorizationService.hasUserAdminRole(user)) {
-                        users.add(user);
-                    }
-                }
+            // If role is identity:user-manage then we need to filter out the identity:user-admin and other user-managers
+            if (identityConfig.getReloadableConfig().restrictUserManagersFromListingOtherUserManagers()) {
+                // Filter based on CID-468
+                filteredUsers = filterOutUsersInaccessibleByCaller(paginatorContext.getValueList(), (EndUser) caller);
             } else {
-                users = paginatorContext.getValueList();
+                // Pre-CID-468 filtering
+                List<EndUser> users = new ArrayList<EndUser>();
+                if (authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
+                    for (EndUser user : paginatorContext.getValueList()) {
+                        if (!authorizationService.hasUserAdminRole(user)) {
+                            users.add(user);
+                        }
+                    }
+                } else {
+                    users = paginatorContext.getValueList();
+                }
+                filteredUsers = users;
             }
 
             String linkHeader = endUserPaginator.createLinkHeader(uriInfo, paginatorContext);
@@ -3497,7 +3579,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.status(200)
                     .header("Link", linkHeader)
                     .entity(objFactories.getOpenStackIdentityV2Factory()
-                            .createUsers(this.userConverterCloudV20.toUserList(users)).getValue());
+                            .createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
