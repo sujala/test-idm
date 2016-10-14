@@ -1,0 +1,35 @@
+{
+    "invalid_chars": {
+        "tenant_types": ["tenanttypeis1", "tenanttypeis///$%*2"],
+        "error_message": "Tenant type can only contain alphanumeric characters."
+    },
+    "empty_string": {
+        "tenant_types": ["tenanttypeis1", "tenanttypeis2", ""],
+        "error_message": "Tenant type must possess a length > 0 and <= 15"
+
+    },
+    "too_long": {
+        "tenant_types": ["tenanttypeis1", "tenanttypeis0123456789ABCDEF"],
+        "error_message": "Tenant type must possess a length > 0 and <= 15"
+    },
+    "too_many": {
+        "tenant_types": ["tenanttypeis0",
+                         "tenanttypeis1",
+                         "tenanttypeis2",
+                         "tenanttypeis3",
+                         "tenanttypeis4",
+                         "tenanttypeis5",
+                         "tenanttypeis6",
+                         "tenanttypeis7",
+                         "tenanttypeis8",
+                         "tenanttypeis9",
+                         "tenanttypeisA",
+                         "tenanttypeisB",
+                         "tenanttypeisC",
+                         "tenanttypeisD",
+                         "tenanttypeisE",
+                         "tenanttypeisF",
+                         "tenanttypeisG"],
+        "error_message": "A maximum of 16 unique tenant types can be assigned to any given tenant."
+    }
+}
