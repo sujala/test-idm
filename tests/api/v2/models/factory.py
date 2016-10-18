@@ -97,6 +97,7 @@ def get_add_service_object(service_name=None, service_id=None,
 def get_add_endpoint_template_object(template_id=None, name=None,
                                      template_type=None,
                                      service_id=None,
+                                     assignment_type=None,
                                      input_data=None):
     """
     Generate EndpointTemplateAdd object
@@ -106,9 +107,12 @@ def get_add_endpoint_template_object(template_id=None, name=None,
             pattern=const.ID_PATTERN
         )
 
-    if not name and not service_id:
+    if (not name or not template_type) and not service_id:
         name = "cloudServers"
         template_type = "compute"
+
+    if service_id and not assignment_type:
+        assignment_type = 'MOSSO'
 
     if not input_data:
         input_data = {
@@ -118,13 +122,13 @@ def get_add_endpoint_template_object(template_id=None, name=None,
             "version_info": "test_version_info",
             "version_id": "1",
             "version_list": "test_version_list",
-            "region": "ORD",
-            "assignment_type": "MOSSO"
+            "region": "ORD"
         }
 
     return requests.EndpointTemplateAdd(template_id=template_id, name=name,
                                         template_type=template_type,
                                         service_id=service_id,
+                                        assignment_type=assignment_type,
                                         **input_data)
 
 
@@ -178,3 +182,26 @@ def get_add_role_request_object(role_name=None, role_id=None,
                             role_description=role_description,
                             administrator_role=administrator_role,
                             service_id=service_id)
+
+
+def get_add_tenant_request_object(tenant_name=None, tenant_types=None,
+                                  enabled=None, domain_id=None,
+                                  input_data=None):
+    """Generate Basic Tenant Object"""
+
+    if not tenant_name:
+        tenant_name = TestBase.generate_random_string(
+            pattern=const.TENANT_NAME_PATTERN)
+
+    if enabled is None:
+        enabled = True
+
+    if not input_data:
+        input_data = {
+            "tenant_id": TestBase.generate_random_string(
+                pattern=const.NUMBERS_PATTERN),
+            "description": "Api test tenant",
+            "display_name": "Api tenant display name"
+        }
+    return requests.Tenant(tenant_name=tenant_name, tenant_types=tenant_types,
+                           enabled=enabled, domain_id=domain_id, **input_data)

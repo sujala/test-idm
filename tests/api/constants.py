@@ -14,6 +14,7 @@ TOKEN_URL = '/tokens'
 GET_TOKEN_URL = '/tokens/{token_id}'
 DEVOPS_PROPS_URL = '/props'
 DEVOPS_URL = '/idm/devops'
+DELETE_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}'
 DOMAIN_URL = '/RAX-AUTH/domains'
 CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 GET_USER_API_CRED_URL = UPDATE_USER_API_CRED_URL = RESET_USER_API_CRED_URL = \
@@ -47,6 +48,7 @@ NEW_FED_AUTH_URL = '/RAX-AUTH/federation/saml/auth'
 ADMINS_OF_A_USER_URL = '/users/{user_id}/RAX-AUTH/admins'
 FED_LOGOUT_URL = '/RAX-AUTH/federation/saml/logout'
 ADD_ROLE_TO_USER_URL = '/users/{user_id}/roles/OS-KSADM/{role_id}'
+
 DELETE_ROLE_FR_USER_URL = ADD_ROLE_TO_USER_URL
 ROLE_URL = '/OS-KSADM/roles'
 GET_ROLE_URL = DELETE_ROLE_URL = '/OS-KSADM/roles/{role_id}'
@@ -74,7 +76,7 @@ SERVICE_NAME_PATTERN = 'service[\-][\w\d]{8}'
 SERVICE_TYPE_PATTERN = 'service[\-]type[\-][\w\d]{8}'
 SUB_USER_PATTERN = 'sub[\-]user[\d\w]{12}'
 TENANT_ID_PATTERN = '[\d]{8}'
-TENANT_NAME_PATTERN = 'api[\-]test[\-]tenant[\-][\d\w]{12}'
+TENANT_NAME_PATTERN = 'api[\-]test[\-]tenant[\-][\d\w]{8}'
 UPPER_CASE_LETTERS = '[A-Z]{8}'
 USER_NAME_PATTERN = 'api[\-]test[\-][\d\w]{12}'
 MAPPING_RULE_DESCRIPTION_PATTERN = (
@@ -127,7 +129,6 @@ GLOBAL = 'global'
 GROUP = 'group'
 GROUPS = 'groups'
 ID = 'id'
-IDM_PROPERTIES = 'idm.properties'
 ITEMS = 'items'
 INTERNAL_URL = 'internalURL'
 MESSAGE = 'message'
@@ -152,10 +153,10 @@ SERVICE_ENDPOINTS = 'endpoints'
 SERVICE_ID = 'serviceId'
 SERVICE_NAME = 'name'
 SERVICE_TYPE = 'type'
-TENANT = 'tenant'
 TENANT_ALIAS = 'tenantAlias'
-TENANT_ID = 'tenantId'
+TENANT = 'tenant'
 TENANTS = 'tenants'
+TENANT_ID = 'tenantId'
 TOKEN = 'token'
 TOKEN_FORMAT = 'tokenFormat'
 TYPE = 'type'
@@ -171,7 +172,6 @@ VERSION_LIST = 'versionList'
 XML = 'xml'
 JSON = 'json'
 OS_KSADM_PASSWORD = 'OS-KSADM:password'
-IDM_RELOADABLE_PROPERTIES = 'idm.reloadable.properties'
 
 API_KEY_CREDENTIALS = 'apiKeyCredentials'
 OS_KSCATALOG_ENDPOINT_TEMPLATE = 'OS-KSCATALOG:endpointTemplate'
@@ -206,11 +206,13 @@ RAX_AUTH_USER_MULTI_FACTOR_ENFORCEMENT_LEVEL = (
 RAX_AUTH_FACTOR_TYPE = 'RAX-AUTH:factorType'
 RAX_AUTH_ADMINISTRATOR_ROLE = 'RAX-AUTH:administratorRole'
 RAX_AUTH_PROPAGATE = 'RAX-AUTH:propagate'
+RAX_AUTH_TYPES = 'RAX-AUTH:types'
 NS_SERVICE = OS_KSADM_NAMESPACE + ':service'
 NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = (
     RAX_AUTH + ':tenantTypeEndpointRule')
 TENANT_TYPE = 'tenantType'
 TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = 'tenantTypeEndpointRule'
+NS_SERVICES = OS_KSADM_NAMESPACE + ':services'
 USER_MULTI_FACTOR_ENFORCEMENT_LEVEL = 'userMultiFactorEnforcementLevel'
 
 '''Query parameters'''
@@ -244,9 +246,10 @@ EXPECTED_UNBOUNDID_TIMEOUT_CONFIGS = [
 ENDPOINT_RULE_ADMIN_ROLE_NAME = 'identity:endpoint-rule-admin'
 USER_MANAGER_ROLE_ID = '7'
 
-
 '''FEATURE FLAGS'''
 FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
     "feature.endpoint.template.disable.name.type")
 FEATURE_FLAG_ALLOW_TENANT_NAME_UPDATE = (
     'feature.allow.tenant.name.to.be.changed.via.update.tenant')
+FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED = (
+    'feature.global.endpoints.for.all.roles.enabled')

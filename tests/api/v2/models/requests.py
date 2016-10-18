@@ -553,15 +553,15 @@ class EndpointTemplateUpdate(base.AutoMarshallingModel):
             add_endpoint_template_request[
                 const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.VERSION_LIST] = (
                 self.version_list)
-        if self.global_attr:
+        if self.global_attr is not None:
             add_endpoint_template_request[
                 const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.GLOBAL] = (
                 self.global_attr)
-        if self.default:
+        if self.default is not None:
             add_endpoint_template_request[
                 const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.DEFAULT] = (
                 self.default)
-        if self.enabled:
+        if self.enabled is not None:
             add_endpoint_template_request[
                 const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.ENABLED] = (
                 self.enabled)
@@ -638,12 +638,13 @@ class AddEndpointToTenant(base.AutoMarshallingModel):
 class Tenant(base.AutoMarshallingModel):
     """Marshalling for Add/ Update Tenant Request."""
     def __init__(self, tenant_name, tenant_id, description=None, enabled=None,
-                 display_name=None, domain_id=None):
+                 tenant_types=None, display_name=None, domain_id=None):
         self.tenant_name = tenant_name
         self.tenant_id = tenant_id
         self.domain_id = domain_id
         self.description = description
         self.enabled = enabled
+        self.tenant_types = tenant_types
         self.display_name = display_name
 
     def _obj_to_json(self):
@@ -658,6 +659,9 @@ class Tenant(base.AutoMarshallingModel):
             add_tenant_request[const.TENANT][const.ENABLED] = self.enabled
         elif self.enabled is False:
             add_tenant_request[const.TENANT][const.ENABLED] = False
+        if self.tenant_types:
+            add_tenant_request[const.TENANT][const.RAX_AUTH_TYPES] = (
+                self.tenant_types)
         if self.display_name:
             add_tenant_request[const.TENANT][const.DISPLAY_NAME] = (
                 self.display_name)
@@ -678,6 +682,9 @@ class Tenant(base.AutoMarshallingModel):
                 add_tenant_request.set(const.ENABLED, 'true')
             else:
                 add_tenant_request.set(const.ENABLED, 'false')
+
+        # TODO update tenant types when have docment
+
         if self.display_name:
             add_tenant_request.set(const.DISPLAY_NAME, self.display_name)
 

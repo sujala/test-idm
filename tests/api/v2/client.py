@@ -618,6 +618,20 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def list_services(self, option=None, requestslib_kwargs=None):
+        """
+        Return response object from list services api call
+
+        GET /v2.0//OS-KSADM/services{?name,limit,marker}
+        :param option:
+        :param requestslib_kwargs:
+        :return:
+        """
+        url = self.url + const.SERVICE_URL
+        resp = self.request(method='GET', url=url, params=option,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
     def add_tenant_by_name(self, tenant_name, tenant_id=None, enabled=None,
                            description=None, requestslib_kwargs=None):
         """
@@ -768,15 +782,17 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
-    def add_role_to_user_for_tenant(
-            self, role_id, user_id, tenant_id, requestslib_kwargs=None):
-        """Return response object from the add role to user for tenant api call
-
-        PUT /v2.0/tenants/{tenantId}users/{user_id}/roles/OS-KSADM/{role_id}
+    def add_role_to_user_for_tenant(self, tenant_id, user_id, role_id,
+                                    requestslib_kwargs=None):
+        """ Return response object from the add role to user on tenant
+            no response body
+        PUT /v2.0/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/(role_id}
+        :return: 204 no response body
         """
         url = self.url + const.ADD_ROLE_TO_USER_FOR_TENANT_URL.format(
-            user_id=user_id, tenant_id=tenant_id, role_id=role_id)
-        resp = self.request('PUT', url,
+            tenant_id=tenant_id, user_id=user_id, role_id=role_id
+        )
+        resp = self.request(method='PUT', url=url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
@@ -1068,4 +1084,13 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
                     resp_json[const.USERS].append(item)
             resp.json = types.MethodType(json, resp, type(resp))
+        return resp
+
+    def delete_domain(self, domain_id, requestslib_kwargs=None):
+        """Delete a domain
+        :return 204 no response body
+        """
+        url = self.url + const.DELETE_DOMAIN_URL.format(domain_id=domain_id)
+        resp = self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
         return resp
