@@ -87,6 +87,7 @@ class TestBaseV2(base.TestBase):
         domain_id = (additional_input_data.get('domain_id', None))
         password = (additional_input_data.get('password', None))
         contact_id = (additional_input_data.get('contact_id', None))
+        email = (additional_input_data.get('email', None))
 
         if not parent_client:
             if cls.test_config.run_service_admin_tests:
@@ -96,7 +97,8 @@ class TestBaseV2(base.TestBase):
 
         request_object = requests.UserAdd(
             user_name=user_name, domain_id=domain_id, password=password,
-            contact_id=contact_id
+            contact_id=contact_id,
+            email=email
         )
         resp = parent_client.add_user(request_object)
         user_id = resp.json()[const.USER][const.ID]

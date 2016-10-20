@@ -25,6 +25,8 @@ class TestListUsers(base.TestBaseV2):
         cls.DOMAIN_ID_TEST = "test-spec-user-list"
         contact_id = randrange(start=const.CONTACT_ID_MIN,
                                stop=const.CONTACT_ID_MAX)
+        cls.DOMAIN_ID_TEST = cls.generate_random_string(
+            pattern='test[\-]spec[\-]user[\-]list[\-][\d]{5}')
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.DOMAIN_ID_TEST,
