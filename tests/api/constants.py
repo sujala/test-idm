@@ -2,8 +2,9 @@
 
 '''This contains all constants using in api test. '''
 
-
 '''URLs'''
+ADD_ROLE_TO_USER_FOR_TENANT_URL = (
+    '/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/{role_id}')
 USER_URL = '/users'
 ROLES_URL = '/OS-KSADM/roles'
 GROUPS_URL = '/RAX-GRPADM/groups'
@@ -58,12 +59,16 @@ ID_PATTERN = '[\d]{8}'
 LOWER_CASE_LETTERS = '[a-z]{8}'
 MD5_PATTERN = '[a-f][0-9]{40}'
 MIXED_CASE_LETTERS = '[A-Z][a-z]{8}'
+MOSSO_TENANT_ID_PATTERN = '[\d]{6}'
+NAST_TENANT_ID_PATTERN = 'NAST[\d]{6}'
 NUMBERS_PATTERN = '[1-9]{1}[0-9]{8}'
 PASSWORD_PATTERN = 'Password1[\d\w]{10}'
 ROLE_NAME_PATTERN = 'cid_test_role[\-][\d]{8}'
 SERVICE_NAME_PATTERN = 'service[\-][\w\d]{8}'
 SERVICE_TYPE_PATTERN = 'service[\-]type[\-][\w\d]{8}'
 SUB_USER_PATTERN = 'sub[\-]user[\d\w]{12}'
+TENANT_ID_PATTERN = '[\d]{8}'
+TENANT_NAME_PATTERN = 'api[\-]test[\-]tenant[\-][\d\w]{12}'
 UPPER_CASE_LETTERS = '[A-Z]{8}'
 USER_NAME_PATTERN = 'api[\-]test[\-][\d\w]{12}'
 
@@ -107,6 +112,7 @@ EMAIL = 'email'
 ENABLED = 'enabled'
 ENDPOINTS = 'endpoints'
 ENDPOINT_TEMPLATE = 'endpointTemplate'
+EXPIRES = 'expires'
 GLOBAL = 'global'
 GROUP = 'group'
 GROUPS = 'groups'
@@ -135,16 +141,17 @@ SERVICE_ENDPOINTS = 'endpoints'
 SERVICE_ID = 'serviceId'
 SERVICE_NAME = 'name'
 SERVICE_TYPE = 'type'
+TENANT = 'tenant'
+TENANT_ALIAS = 'tenantAlias'
+TENANT_ID = 'tenantId'
+TENANTS = 'tenants'
+TOKEN = 'token'
+TOKEN_FORMAT = 'tokenFormat'
+TYPE = 'type'
 UPDATED = 'updated'
 USER = 'user'
 USERS = 'users'
 USERNAME = 'username'
-TENANT_ALIAS = 'tenantAlias'
-TOKEN = 'token'
-TOKEN_FORMAT = 'tokenFormat'
-TENANT = 'tenant'
-TENANTS = 'tenants'
-TYPE = 'type'
 VALUE = 'value'
 VERSION_ADDED = 'versionAdded'
 VERSION_ID = 'versionId'
@@ -153,7 +160,6 @@ VERSION_LIST = 'versionList'
 XML = 'xml'
 JSON = 'json'
 OS_KSADM_PASSWORD = 'OS-KSADM:password'
-SECRETQA = 'secretQA'
 IDM_RELOADABLE_PROPERTIES = 'idm.reloadable.properties'
 
 API_KEY_CREDENTIALS = 'apiKeyCredentials'
@@ -217,6 +223,8 @@ EXPECTED_UNBOUNDID_TIMEOUT_CONFIGS = [
     'ldap.server.pool.allow.concurrent.socketfactory.use']
 
 
-"""FEATURE FLAGS"""
+'''FEATURE FLAGS'''
 FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
     "feature.endpoint.template.disable.name.type")
+FEATURE_FLAG_ALLOW_TENANT_NAME_UPDATE = (
+    'feature.allow.tenant.name.to.be.changed.via.update.tenant')
