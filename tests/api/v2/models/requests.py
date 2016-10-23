@@ -708,3 +708,37 @@ class Domain(base.AutoMarshallingModel):
         elif self.enabled is False:
             add_domain_request[const.RAX_AUTH_DOMAIN][const.ENABLED] = False
         return json.dumps(add_domain_request)
+
+
+class TenantTypeToEndpointMappingRule(base.AutoMarshallingModel):
+    """Marshalling for Tenant Type to Endpoint Mapping Rule Request."""
+    # TODO: Add _obj_to_xml()
+
+    def __init__(self, tenant_type, endpoint_ids, description=None):
+        self.tenant_type = tenant_type
+        self.description = description
+        self.endpoint_ids = endpoint_ids
+
+    def _obj_to_json(self):
+        tenant_type_to_endpoint_mapping_rule_request = {
+            const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE: {
+                const.TENANT_TYPE: self.tenant_type
+            }
+        }
+        if self.description is not None:
+            tenant_type_to_endpoint_mapping_rule_request[
+                const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE][
+                const.DESCRIPTION] = self.description
+        if self.endpoint_ids is not None:
+            tenant_type_to_endpoint_mapping_rule_request[
+                const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE][
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATES] = []
+            for endpoint_id in self.endpoint_ids:
+                endpoint_dict = {
+                    const.ID: endpoint_id
+                }
+                tenant_type_to_endpoint_mapping_rule_request[
+                    const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE][
+                    const.OS_KSCATALOG_ENDPOINT_TEMPLATES].append(
+                        endpoint_dict)
+        return json.dumps(tenant_type_to_endpoint_mapping_rule_request)

@@ -103,3 +103,50 @@ class Access(object):
 
         self.access = access_tuple(
             token=token_tuple_obj, user=user_obj, service_catalog={})
+
+
+class Service(object):
+
+    def __init__(self, resp_json):
+
+        service = resp_json[const.NS_SERVICE]
+        self.type = service.get(const.SERVICE_TYPE, None)
+        self.id = service.get(const.ID, None)
+        self.name = service.get(const.SERVICE_NAME, None)
+        self.description = service.get(const.DESCRIPTION, None)
+
+
+class EndpointTemplate(object):
+
+    def __init__(self, resp_json):
+
+        endpoint_template = resp_json[const.OS_KSCATALOG_ENDPOINT_TEMPLATE]
+        self.template_type = endpoint_template.get(const.TYPE, None)
+        self.name = endpoint_template.get(const.NAME, None)
+        self.id = endpoint_template.get(const.ID, None)
+        self.service_id = endpoint_template.get(const.SERVICE_ID, None)
+        self.assignment_type = endpoint_template.get(const.ID, None)
+        self.region = endpoint_template.get(const.REGION, None)
+        self.public_url = endpoint_template.get(const.PUBLIC_URL, None)
+        self.internal_url = endpoint_template.get(const.INTERNAL_URL, None)
+        self.admin_url = endpoint_template.get(const.ADMIN_URL, None)
+        self.tenant_alias = endpoint_template.get(const.TENANT_ALIAS, None)
+        self.version_id = endpoint_template.get(const.VERSION_ID, None)
+        self.version_info = endpoint_template.get(const.VERSION_INFO, None)
+        self.version_list = endpoint_template.get(const.VERSION_LIST, None)
+        self.global_attr = endpoint_template.get(const.GLOBAL, None)
+        self.enabled = endpoint_template.get(const.ENABLED, None)
+        self.default = endpoint_template.get(const.DEFAULT, None)
+
+
+class TenantTypeToEndpointMappingRule(object):
+
+    def __init__(self, resp_json):
+
+        mapping_rule = resp_json[
+            const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE]
+        self.id = mapping_rule.get(const.ID, None)
+        self.tenant_type = mapping_rule.get(const.TENANT_TYPE)
+        self.endpoint_templates = mapping_rule.get(
+            const.OS_KSCATALOG_ENDPOINT_TEMPLATES)
+        self.description = mapping_rule.get(const.DESCRIPTION, None)

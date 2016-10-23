@@ -1,0 +1,69 @@
+{
+    "with_basic_response_detail": {
+        "response_detail": "basic",
+        "schema_to_validate": "basic"
+    },
+    "with_no_response_detail": {
+        "schema_to_validate": "minimum"
+    },
+    "with_minimum_response_detail": {
+        "response_detail": "minimum",
+        "schema_to_validate": "minimum"
+    },
+    "with_empty_string_response_detail": {
+        "response_detail": "",
+        "schema_to_validate": "minimum"
+    },
+    "with_null_response_detail": {
+        "response_detail": null,
+        "schema_to_validate": "minimum"
+    },
+    "with_truncated_minimum_response_detail": {
+        "response_detail": "minimu",
+        "schema_to_validate": "invalid"
+    },
+    "with_appended_minimum_response_detail": {
+        "response_detail": "minimuma",
+        "schema_to_validate": "invalid"
+    },
+    "with_truncated_basic_response_detail": {
+        "response_detail": "basi",
+        "schema_to_validate": "invalid"
+    },
+    "with_appended_basic_response_detail": {
+        "response_detail": "basica",
+        "schema_to_validate": "invalid"
+    },
+    "with_uppercase_basic_response_detail": {
+        "response_detail": "BASIC",
+        "schema_to_validate": "basic"
+    },
+    "with_uppercase_minimum_response_detail": {
+        "response_detail": "MINIMUM",
+        "schema_to_validate": "minimum"
+    },
+    "with_mixed_case_basic_response_detail": {
+        "response_detail": "bASiC",
+        "schema_to_validate": "basic"
+    },
+    "with_mixed_case_minimum_response_detail": {
+        "response_detail": "mINiMUm",
+        "schema_to_validate": "minimum"
+    },
+    "with_space_before_basic_response_detail": {
+        "response_detail": " basic",
+        "schema_to_validate": "invalid"
+    },
+    "with_space_before_minimum_response_detail": {
+        "response_detail": " minimum",
+        "schema_to_validate": "invalid"
+    },
+    "with_space_after_basic_response_detail": {
+        "response_detail": "basic ",
+        "schema_to_validate": "invalid"
+    },
+    "with_space_after_minimum_response_detail": {
+        "response_detail": "minimum ",
+        "schema_to_validate": "invalid"
+    }
+}

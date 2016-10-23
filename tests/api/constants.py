@@ -29,6 +29,12 @@ SERVICE_URL = '/OS-KSADM/services'
 DELETE_SERVICE_URL = GET_SERVICE_URL = '/OS-KSADM/services/{service_id}'
 TENANTS_URL = '/tenants'
 ADD_ENDPOINT_TO_TENANT_URL = '/tenants/{tenant_id}/OS-KSCATALOG/endpoints'
+TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES_URL = (
+    ENDPOINT_TEMPLATE_URL + '/RAX-AUTH/rules')
+GET_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL = (
+    ENDPOINT_TEMPLATE_URL + '/RAX-AUTH/rules/{rule_id}')
+DELETE_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL = (
+    GET_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL)
 DELETE_ENDPOINT_FROM_TENANT_URL = (
     '/tenants/{tenant_id}/OS-KSCATALOG/endpoints/{endpoint_template_id}')
 LIST_ENDPOINTS_FOR_TOKEN_URL = '/tokens/{token_id}/endpoints'
@@ -71,6 +77,9 @@ TENANT_ID_PATTERN = '[\d]{8}'
 TENANT_NAME_PATTERN = 'api[\-]test[\-]tenant[\-][\d\w]{12}'
 UPPER_CASE_LETTERS = '[A-Z]{8}'
 USER_NAME_PATTERN = 'api[\-]test[\-][\d\w]{12}'
+MAPPING_RULE_DESCRIPTION_PATTERN = (
+    'mapping[\-]rule[\-]description[\-][\w\d]{8}')
+TENANT_TYPE_PATTERN = 'ttype[a-z0-9]{10}'
 
 '''Headers'''
 X_AUTH_TOKEN = 'X-Auth-Token'
@@ -97,6 +106,7 @@ ASSIGNMENT_TYPE_MOSSO = 'MOSSO'
 ASSIGNMENT_TYPE_NAST = 'NAST'
 ASSIGNMENT_TYPE_MANUAL = 'MANUAL'
 AUTH = 'auth'
+BAD_REQUEST = 'badRequest'
 CONFIG_PATH = 'configPath'
 CONTACTID = 'contactId'
 CONTENT_TYPE = 'Content-Type'
@@ -120,6 +130,7 @@ ID = 'id'
 IDM_PROPERTIES = 'idm.properties'
 ITEMS = 'items'
 INTERNAL_URL = 'internalURL'
+MESSAGE = 'message'
 NAME = 'name'
 NAST_PREFIX = 'MossoCloudFS_'
 PASSWORD = 'password'
@@ -170,6 +181,7 @@ MULTI_FACTOR_ENABLED = 'multiFactorEnabled'
 MULTI_FACTOR_STATE = 'multiFactorState'
 OS_KSADM_NAMESPACE = 'OS-KSADM'
 PASSWORD_CREDENTIALS = 'passwordCredentials'
+NS_FEDERATED_IDP = 'RAX-AUTH:federatedIdp'
 NS_GROUP = 'RAX-KSGRP:group'
 NS_GROUPS = 'RAX-KSGRP:groups'
 RAX_KSKEY_NAMESPACE = 'RAX-KSKEY'
@@ -195,8 +207,15 @@ RAX_AUTH_FACTOR_TYPE = 'RAX-AUTH:factorType'
 RAX_AUTH_ADMINISTRATOR_ROLE = 'RAX-AUTH:administratorRole'
 RAX_AUTH_PROPAGATE = 'RAX-AUTH:propagate'
 NS_SERVICE = OS_KSADM_NAMESPACE + ':service'
+NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = (
+    RAX_AUTH + ':tenantTypeEndpointRule')
+TENANT_TYPE = 'tenantType'
+TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = 'tenantTypeEndpointRule'
 USER_MULTI_FACTOR_ENFORCEMENT_LEVEL = 'userMultiFactorEnforcementLevel'
-RAX_AUTH_PEDERATED_IDP = 'RAX-AUTH:federatedIdp'
+
+'''Query parameters'''
+PARAM_ROLE_NAME = 'roleName'
+RESPONSE_DETAIL = 'responseDetail'
 
 '''Some constants used for namespace'''
 XMLNS = 'http://docs.openstack.org/identity/api/v2.0'
@@ -209,7 +228,6 @@ XMLNS_RAX_KSKEY = (
     'http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0')
 
 '''CONSTANTS'''
-USER_MANAGER_ROLE_ID = '7'
 DC_LIST = ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']
 RELOADABLE_PROP_FILE = 'idm.reloadable.properties'
 IDM_PROPERTIES = "idm.properties"
@@ -221,6 +239,10 @@ EXPECTED_UNBOUNDID_TIMEOUT_CONFIGS = [
     'ldap.server.pool.health.check.interval',
     'ldap.server.pool.check.connection.age.on.release',
     'ldap.server.pool.allow.concurrent.socketfactory.use']
+
+'''ROLES'''
+ENDPOINT_RULE_ADMIN_ROLE_NAME = 'identity:endpoint-rule-admin'
+USER_MANAGER_ROLE_ID = '7'
 
 
 '''FEATURE FLAGS'''

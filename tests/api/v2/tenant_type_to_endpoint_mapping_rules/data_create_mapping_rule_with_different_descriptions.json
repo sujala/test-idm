@@ -1,0 +1,41 @@
+{
+    "with_description_empty": {
+        "description": "",
+        "expected_response": 201
+    },
+    "with_no_description": {
+        "expected_response": 201
+    },
+    "with_description_with_int": {
+        "description": "rule1234",
+        "expected_response": 201
+    },
+    "with_description_with_int_uppercase_string": {
+        "description": "RULE1234",
+        "expected_response": 201
+    },
+    "with_int_only_description": {
+        "description": "12345678",
+        "expected_response": 201
+    },
+    "with_description_with_all_uppercase_string": {
+        "description": "UPPERCASE",
+        "expected_response": 201
+    },
+    "with_description_with_mixed_case_string": {
+        "description": "UPPERlowerCase",
+        "expected_response": 201
+    },
+    "with_description_with_spaces": {
+        "description": "Rule 1234",
+        "expected_response": 201
+    },
+    "with_description_greater_than_255_in_length": {
+        "description": "12aaaaa5aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa34",
+        "expected_response": 400,
+        "error_message": "description: length must be between 0 and 255"
+    },
+    "with_description_exactly_255_in_length": {
+        "description": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "expected_response": 201
+    }}
