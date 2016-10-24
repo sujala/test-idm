@@ -53,12 +53,35 @@ class CreateTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
         cloud20.addUserRole(specificationServiceAdminToken, newAdmin.id, Constants.IDENTITY_ENDPOINT_RULE_ADMIN_ROLE_ID)
         def response2 = cloud20.addEndpointAssignmentRule(token, rule)
 
-        then: "Forbidden"
+        then: "Allowed"
         response2.status == HttpStatus.SC_CREATED
 
         cleanup:
         deleteRuleQuietly(rule)
         deleteUserQuietly(newAdmin)
+    }
+
+    @Unroll
+    def "Create Tenant Type Rule: description can be null or empty string: description = #description"() {
+        def rule = new TenantTypeEndpointRule().with {
+            it.tenantType = "tenantType"
+            it.description = description
+            it
+        }
+
+        when: "create rule w/ missing description"
+        def response2 = cloud20.addEndpointAssignmentRule(specificationIdentityAdminToken, rule)
+
+        then: "Allowed"
+        response2.status == HttpStatus.SC_CREATED
+
+        cleanup:
+        deleteRuleQuietly(rule)
+
+        where:
+        description | _
+        null | _
+        "" | _
     }
 
     @Unroll

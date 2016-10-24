@@ -67,6 +67,11 @@ public class DefaultRuleService implements RuleService {
         //perform validation of the rule
         validate(tenantTypeRule);
 
+        //On create, both an empty string and null mean the same thing - the attribute should NOT be set.
+        if (StringUtils.isBlank(tenantTypeRule.getDescription())) {
+            tenantTypeRule.setDescription(null);
+        }
+
         //validate the linked endpoint templates exist
         for (String id : tenantTypeRule.getEndpointTemplateIds()) {
             CloudBaseUrl cloudBaseUrl = endpointService.getBaseUrlById(id);
