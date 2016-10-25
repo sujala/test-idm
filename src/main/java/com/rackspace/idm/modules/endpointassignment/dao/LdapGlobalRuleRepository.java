@@ -12,8 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @LDAPComponent
 public class LdapGlobalRuleRepository extends LdapGenericRepository<Rule> implements GlobalRuleDao, DaoGetEntityType {
@@ -53,6 +55,22 @@ public class LdapGlobalRuleRepository extends LdapGenericRepository<Rule> implem
     }
 
     @Override
+    public List<Rule> findByTenantTypes(Set<String> types) {
+        try {
+            List<Rule> rules = getUnpagedUnsortedObjects(searchFilterGetRuleByTypes(types, ALL_ENDPOINT_ASSIGNMENT_CLASS_FILTERS), getBaseDn(), SearchScope.SUB);
+            return rules;
+        } catch (LDAPSearchException ldapEx) {
+            if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
+                logger.debug(String.format("Aborting loading all assignment rules. Result size exceeded max directory limit"), ldapEx);
+                throw new SizeLimitExceededException(String.format("Result size exceeded."), ldapEx);
+            } else {
+                throw new IllegalStateException(ldapEx);
+            }
+        }
+
+    }
+
+    @Override
     public String getBaseDn() {
         return Constants.ENDPOINT_ASSIGNMENT_RULE_BASE_DN;
     }
@@ -76,5 +94,17 @@ public class LdapGlobalRuleRepository extends LdapGenericRepository<Rule> implem
     private Filter searchFilterGetAllRulesByClass(List<Filter> classFilterList) {
         Filter classFilter = Filter.createORFilter(classFilterList);
         return classFilter;
+    }
+
+    private Filter searchFilterGetRuleByTypes(Set<String> types, List<Filter> classFilterList) {
+        Filter classFilter = Filter.createORFilter(classFilterList);
+
+        List<Filter> typeFilterList = new ArrayList<>();
+
+        for (String type : types) {
+            typeFilterList.add(Filter.createEqualityFilter(TenantTypeRule.LDAP_ATTRIBUTE_TYPE, type));
+        }
+
+        return Filter.createANDFilter(classFilter, Filter.createORFilter(typeFilterList));
     }
 }

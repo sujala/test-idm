@@ -16,6 +16,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantTypeEndpointRule
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
@@ -27,6 +28,8 @@ import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.apache.commons.collections4.CollectionUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList
 import org.openstack.docs.identity.api.v2.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.*;
 import org.springframework.stereotype.Component
@@ -701,6 +704,26 @@ class V2Factory {
     def createPasswordReset(String password) {
         new PasswordReset().with {
             it.password = password
+            it
+        }
+    }
+
+    def createTenantTypeEndpointRule(String tenantType = "tenantType", List<String> endpointTemplateIds = [], String description = "description") {
+        new TenantTypeEndpointRule().with {
+            it.tenantType = tenantType
+            it.description = description
+
+            EndpointTemplateList endpointTemplateList = new EndpointTemplateList()
+
+            for (String endpointTemplateId : endpointTemplateIds) {
+                EndpointTemplate endpointTemplate = new EndpointTemplate().with {
+                    it.id = endpointTemplateId as int
+                    it
+                }
+                endpointTemplateList.endpointTemplate.add(endpointTemplate)
+            }
+
+            it.setEndpointTemplates(endpointTemplateList)
             it
         }
     }

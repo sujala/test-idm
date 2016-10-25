@@ -10,6 +10,8 @@ import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.domain.service.OpenstackType;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.modules.endpointassignment.entity.Rule;
+import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -18,10 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import static com.rackspace.idm.GlobalConstants.TENANT_ALIAS_PATTERN;
 
@@ -188,7 +187,7 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
-    public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, OpenstackType baseUrlType, String region) {
+    public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, Set<OpenstackType> baseUrlTypes, String region, List<Rule> rules) {
         HashMap<String, CloudBaseUrl> baseUrls = new HashMap<String, CloudBaseUrl>();
 
         HashSet<String> tenantBaseUrlIds = new HashSet<String>();
@@ -201,13 +200,27 @@ public class DefaultEndpointService implements EndpointService {
             tenantBaseUrlIds.addAll(tenant.getV1Defaults());
         }
 
+        if (rules != null) {
+            for (Rule rule : rules) {
+                if (rule instanceof TenantTypeRule) {
+                    TenantTypeRule tenantTypeRule = (TenantTypeRule) rule;
+
+                    if (tenant.getTypes().contains(tenantTypeRule.getTenantType())) {
+                        tenantBaseUrlIds.addAll(tenantTypeRule.getEndpointTemplateIds());
+                    }
+                }
+            }
+        }
+
         for (CloudBaseUrl baseUrl : endpointDao.getBaseUrlsById(new ArrayList<>(tenantBaseUrlIds))) {
             processBaseUrl(baseUrl, tenant);
             baseUrls.put(baseUrl.getBaseUrlId(), baseUrl);
         }
 
-        if (baseUrlType != null && region != null) {
-            addGlobalBaseUrls(baseUrls, tenant, baseUrlType, region);
+        if (baseUrlTypes != null && region != null) {
+            for (OpenstackType baseUrlType : baseUrlTypes) {
+                addGlobalBaseUrls(baseUrls, tenant, baseUrlType, region);
+            }
         }
 
         OpenstackEndpoint point = new OpenstackEndpoint();
@@ -220,7 +233,7 @@ public class DefaultEndpointService implements EndpointService {
 
     @Override
     public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant) {
-        return this.getOpenStackEndpointForTenant(tenant, null, null);
+        return this.getOpenStackEndpointForTenant(tenant, null, null, null);
     }
 
     private void addGlobalBaseUrls(HashMap<String, CloudBaseUrl> baseUrls, Tenant tenant, OpenstackType baseUrlType, String region) {

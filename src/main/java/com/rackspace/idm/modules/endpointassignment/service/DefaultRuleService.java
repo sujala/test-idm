@@ -55,6 +55,11 @@ public class DefaultRuleService implements RuleService {
     }
 
     @Override
+    public List<Rule> findEndpointAssignmentRulesForTenantType(Set<String> types) {
+        return globalRuleDao.findByTenantTypes(types);
+    }
+
+    @Override
     public Rule addEndpointAssignmentRule(Rule endpointAssignmentRule) {
         if (endpointAssignmentRule instanceof TenantTypeRule) {
             TenantTypeRule rule = (TenantTypeRule) endpointAssignmentRule;

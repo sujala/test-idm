@@ -3,6 +3,7 @@ package com.rackspace.idm.modules.endpointassignment.service;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -44,4 +45,11 @@ public interface RuleService {
      */
     List<Rule> findAllEndpointAssignmentRules();
 
+    /**
+     * Retrieves a list of endpoint assignment rules. Returns an empty list if no rules are found.
+     *
+     * @return
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException If more than allowed number of results are returned
+     */
+    List<Rule> findEndpointAssignmentRulesForTenantType(Set<String> types);
 }
