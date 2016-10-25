@@ -804,6 +804,63 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def add_tenant_type_to_endpoint_mapping_rule(
+            self, request_object, requestslib_kwargs=None):
+        """
+        Return response object from create tenant type to endpoints
+        mapping rule
+        POST OS-KSCATALOG/endpointTemplates/RAX-AUTH/rules
+        In case of XML response, add a json() method to the response object
+        that will create a JSON equivalent of the XML response
+        """
+
+        url = self.url + const.TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES_URL
+
+        resp = self.request(method='POST', url=url,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def get_tenant_type_to_endpoint_mapping_rule(
+            self, rule_id, response_detail=None, requestslib_kwargs=None):
+        """
+        Return response object from get a rule for tenant type to endpoints
+        mapping
+        GET OS-KSCATALOG/endpointTemplates/RAX-AUTH/rules/{rule_id}
+        This api call supports a query param 'responseDetail', with
+        two possible values 'minimum' and 'basic'
+        @todo: In case of XML response, add a json() method to the response
+        object that will create a JSON equivalent of the XML response
+        """
+
+        url = self.url + (
+            const.GET_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL.format(
+                rule_id=rule_id))
+        params = None
+        if response_detail is not None:
+            params = {const.RESPONSE_DETAIL: response_detail}
+
+        resp = self.request(method='GET', url=url, params=params,
+                            requestslib_kwargs=requestslib_kwargs)
+
+        return resp
+
+    def delete_tenant_type_to_endpoint_mapping_rule(
+            self, rule_id, requestslib_kwargs=None):
+        """
+        Delete specified rule for tenant type to endpoints mapping
+        DELETE OS-KSCATALOG/endpointTemplates/RAX-AUTH/rules/{rule_id}
+        """
+
+        url = self.url + (
+            const.DELETE_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL.format(
+                rule_id=rule_id))
+
+        resp = self.request(
+            method='DELETE', url=url, requestslib_kwargs=requestslib_kwargs)
+
+        return resp
+
     def add_role(self, request_object, requestslib_kwargs=None):
         """Return response object from the add role api call
 

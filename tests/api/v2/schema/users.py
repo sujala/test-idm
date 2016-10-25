@@ -90,7 +90,7 @@ user_item = {
         const.EMAIL: {'type': 'string', 'format': 'email'},
         const.ENABLED: {'type': 'boolean'},
         const.CREATED: {'type': 'string', 'format': 'date'},
-        const.RAX_AUTH_PEDERATED_IDP: {'type': 'string'},
+        const.NS_FEDERATED_IDP: {'type': 'string'},
         const.RAX_AUTH_MULTI_FACTOR_ENABLED: {'type': 'boolean'},
         const.RAX_AUTH_FACTOR_TYPE: {'type': 'string'},
         const.RAX_AUTH_MULTI_FACTOR_STATE: {'type': 'string'},
