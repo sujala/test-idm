@@ -1176,6 +1176,36 @@ cn: identity:endpoint-rule-admin
 description: Can manage endpoint assignment rules
 rsWeight: 50
 
+dn: rsId=a2e0811ceedc46d4a87f6b8230e94267,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: testRole1
+rsId: a2e0811ceedc46d4a87f6b8230e94267
+description: test a role for global endpoint point
+rsPropagate: FALSE
+rsWeight: 500
+
+dn: rsId=b2e0811ceedc46d4a87f6b8230e94267,cn=CLIENT ROLES,clientId=a45b14e394a
+ 57e3fd4e45d59ff3693ead204998b,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
+cn: testRole2
+rsId: b2e0811ceedc46d4a87f6b8230e94267
+description: test a role for global endpoint point
+rsPropagate: FALSE
+rsWeight: 500
+
+dn: rsId=c2e0811ceedc46d4a87f6b8230e94267,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: testRole3
+rsId: c2e0811ceedc46d4a87f6b8230e94267
+description: test a role for global endpoint point
+rsPropagate: FALSE
+rsWeight: 500
+
 dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicati
  ons,o=rackspace,dc=rackspace,dc=com
 objectClass: rsContainer

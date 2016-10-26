@@ -73,3 +73,12 @@ class TestConfig(data_interfaces.ConfigSectionInterface):
             return True
         else:
             return False
+
+    @property
+    def run_local_and_jenkins_only(self):
+        """Flag to indicate if tests only run against local and jenkins"""
+        run_local_and_jenkins_only = self.get('run_local_and_jenkins_only')
+        if run_local_and_jenkins_only.lower() == 'true':
+            return True
+        else:
+            return False
