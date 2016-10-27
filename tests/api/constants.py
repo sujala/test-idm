@@ -58,6 +58,8 @@ UNBOUNDID_CONFIG_URL = '/idm/devops/props'
 
 '''Some Constanst for values'''
 API_KEY_PATTERN = '[a-f][0-9]{32}'
+CONTACT_ID_MIN = 10000000
+CONTACT_ID_MAX = 99999999
 CONTENT_TYPE_VALUE = ACCEPT_ENCODING_VALUE = 'application/{0}'
 DOMAIN_API_TEST = 'api-test'
 DOMAIN_PATTERN = '[a-z]{8}'
@@ -108,6 +110,7 @@ ASSIGNMENT_TYPE_MOSSO = 'MOSSO'
 ASSIGNMENT_TYPE_NAST = 'NAST'
 ASSIGNMENT_TYPE_MANUAL = 'MANUAL'
 AUTH = 'auth'
+RAX_AUTH_AUTHENTICATED_BY = 'RAX-AUTH:authenticatedBy'
 BAD_REQUEST = 'badRequest'
 CONFIG_PATH = 'configPath'
 CONTACTID = 'contactId'
@@ -230,6 +233,7 @@ XMLNS_RAX_KSKEY = (
     'http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0')
 
 '''CONSTANTS'''
+AUTH_BY_LIST = ['APIKEY']
 DC_LIST = ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']
 RELOADABLE_PROP_FILE = 'idm.reloadable.properties'
 IDM_PROPERTIES = "idm.properties"

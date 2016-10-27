@@ -3,6 +3,7 @@ from tests.api import devops_client
 from tests.api.v2 import client
 from tests.api.v2.models import requests
 from tests.api import constants as const
+from tests.api.utils import header_validation
 
 
 class TestBaseV2(base.TestBase):
@@ -49,6 +50,21 @@ class TestBaseV2(base.TestBase):
             cls.devops_client.default_headers[const.X_AUTH_TOKEN] = (
                 cls.identity_config.service_admin_auth_token)
 
+        cls.unexpected_headers_HTTP_201 = [
+            header_validation.validate_transfer_encoding_header_not_present]
+        cls.unexpected_headers_HTTP_400 = [
+            header_validation.validate_location_header_not_present,
+            header_validation.validate_content_length_header_not_present]
+        cls.header_validation_functions_HTTP_201 = (
+            cls.default_header_validations +
+            cls.unexpected_headers_HTTP_201 + [
+                header_validation.validate_header_location,
+                header_validation.validate_header_content_length])
+        cls.header_validation_functions_HTTP_400 = (
+            cls.default_header_validations +
+            cls.unexpected_headers_HTTP_400 + [
+                header_validation.validate_header_transfer_encoding])
+
     @classmethod
     def generate_client(cls, parent_client=None, additional_input_data=None):
         """Return a client object
@@ -70,6 +86,7 @@ class TestBaseV2(base.TestBase):
             cls.generate_random_string(pattern=const.USER_NAME_PATTERN)))
         domain_id = (additional_input_data.get('domain_id', None))
         password = (additional_input_data.get('password', None))
+        contact_id = (additional_input_data.get('contact_id', None))
 
         if not parent_client:
             if cls.test_config.run_service_admin_tests:
@@ -78,7 +95,8 @@ class TestBaseV2(base.TestBase):
                 parent_client = cls.identity_admin_client
 
         request_object = requests.UserAdd(
-            user_name=user_name, domain_id=domain_id, password=password
+            user_name=user_name, domain_id=domain_id, password=password,
+            contact_id=contact_id
         )
         resp = parent_client.add_user(request_object)
         user_id = resp.json()[const.USER][const.ID]
