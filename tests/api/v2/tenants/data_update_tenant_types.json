@@ -1,0 +1,23 @@
+{
+    "1_to_2_to_3": {
+        "tenant_types_from": ["tenantType1"],
+        "tenant_types_to": ["tenantType1", "tenantType2"],
+        "tenant_types_to2": ["tenantType1", "tenantType2", "tenantType3"]
+    },
+    "2_to_1_to_3": {
+        "tenant_types_from": ["tenantType1", "tenantType2"],
+        "tenant_types_to": ["tenantType1"],
+        "tenant_types_to2": ["tenantType1", "tenantType2", "tenantType3"]
+    },
+    "3_to_2_to_1": {
+        "tenant_types_from": ["tenantType1", "tenantType2", "tenantType3"],
+        "tenant_types_to": ["tenantType1", "tenantType2"],
+        "tenant_types_to2": ["tenantType1"]
+    },
+    "3_to_2_to_0": {
+        "tenant_types_from": ["tenantType1", "tenantType2", "tenantType3"],
+        "tenant_types_to": ["tenantType1", "tenantType2"],
+        "tenant_types_to2": []
+    }
+}
+

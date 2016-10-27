@@ -40,8 +40,10 @@ DELETE_ENDPOINT_FROM_TENANT_URL = (
     '/tenants/{tenant_id}/OS-KSCATALOG/endpoints/{endpoint_template_id}')
 LIST_ENDPOINTS_FOR_TOKEN_URL = '/tokens/{token_id}/endpoints'
 ADD_TENANT_URL = LIST_TENANTS = '/tenants'
+LIST_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/tenants'
 UPDATE_TENANT_URL = DELETE_TENANT_URL = GET_TENANT_URL = (
     '/tenants/{tenant_id}')
+
 VALIDATE_TOKENS_URL = '/tokens/{0}'
 LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
 NEW_FED_AUTH_URL = '/RAX-AUTH/federation/saml/auth'
@@ -192,6 +194,7 @@ RAX_KSQA_NAMESPACE = 'RAX-KSQA'
 NS_SECRETQA = 'RAX-KSQA:secretQA'
 NS_API_KEY_CREDENTIALS = 'RAX-KSKEY:apiKeyCredentials'
 RAX_AUTH = 'RAX-AUTH'
+NS_TYPES = 'RAX-AUTH:types'
 RAX_AUTH_ASSIGNMENT_TYPE = 'RAX-AUTH:assignmentType'
 RAX_AUTH_DOMAIN = 'RAX-AUTH:domain'
 RAX_AUTH_DOMAIN_ID = 'RAX-AUTH:domainId'
@@ -206,7 +209,6 @@ RAX_AUTH_USER_MULTI_FACTOR_ENFORCEMENT_LEVEL = (
 RAX_AUTH_FACTOR_TYPE = 'RAX-AUTH:factorType'
 RAX_AUTH_ADMINISTRATOR_ROLE = 'RAX-AUTH:administratorRole'
 RAX_AUTH_PROPAGATE = 'RAX-AUTH:propagate'
-RAX_AUTH_TYPES = 'RAX-AUTH:types'
 NS_SERVICE = OS_KSADM_NAMESPACE + ':service'
 NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = (
     RAX_AUTH + ':tenantTypeEndpointRule')

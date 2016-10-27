@@ -40,7 +40,8 @@ class TestUpdateTenant(base.TestBaseV2):
 
     def setUp(self):
         super(TestUpdateTenant, self).setUp()
-
+        self.description = 'Orginal description'
+        self.display_name = 'A name to display'
         self.tenant_name = self.generate_random_string(
             const.TENANT_NAME_PATTERN)
         tenant_object = factory.get_add_tenant_object(
@@ -55,8 +56,115 @@ class TestUpdateTenant(base.TestBaseV2):
         self.role_ids = []
         self.domain_ids = []
 
+    def create_tenant_with_types(self, tenant_types):
+        tenant_name = tenant_id = 'tname{0}'.format(
+            self.generate_random_string(const.LOWER_CASE_LETTERS))
+        # Create Tenant with type
+        request_object = requests.Tenant(
+                tenant_name=tenant_name,
+                description=self.description,
+                tenant_id=tenant_id,
+                enabled=True,
+                tenant_types=tenant_types,
+                display_name=self.display_name)
+        resp = self.identity_admin_client.add_tenant(tenant=request_object)
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(
+            len(resp.json()[const.TENANT][const.NS_TYPES]),
+            len(tenant_types))
+        self.tenant_ids.append(tenant_id)
+        return tenant_id
+
+    @ddt.file_data('data_update_tenant_types.json')
+    def test_update_tenant_types(self, test_data):
+        add_tenant_with_types_schema = copy.deepcopy(tenants.add_tenant)
+        tenant_types_from = test_data.get('tenant_types_from')
+        tenant_types_to = test_data.get('tenant_types_to')
+        tenant_types_to2 = test_data.get('tenant_types_to2')
+        (add_tenant_with_types_schema['properties'][const.TENANT]
+            ['properties'].update(
+                {const.NS_TYPES: {'type': 'array'}}))
+        (add_tenant_with_types_schema['properties'][const.TENANT]
+            ['required'].append(const.NS_TYPES))
+
+        tenant_id = self.create_tenant_with_types(tenant_types_from)
+
+        # Update Tenant with type
+        request_object = requests.Tenant(
+                tenant_name=tenant_id,
+                description=self.description,
+                tenant_id=tenant_id,
+                enabled=True,
+                tenant_types=tenant_types_to,
+                display_name=self.display_name)
+        resp = self.identity_admin_client.update_tenant(
+            tenant_id=tenant_id, request_object=request_object)
+        self.assertEqual(resp.status_code, 200)
+        self.assertSchema(response=resp,
+                          json_schema=add_tenant_with_types_schema)
+        self.assertEqual(
+            len(resp.json()[const.TENANT][const.NS_TYPES]),
+            len(tenant_types_to))
+        for tenant_type in tenant_types_to:
+            self.assertIn(tenant_type.lower(),
+                          resp.json()[const.TENANT][const.NS_TYPES],
+                          msg="Not found {0}".format(tenant_type.lower()))
+
+        # AGAIN Update Tenant with type
+        request_object = requests.Tenant(
+                tenant_name=tenant_id,
+                description=self.description,
+                tenant_id=tenant_id,
+                enabled=True,
+                tenant_types=tenant_types_to2,
+                display_name=self.display_name)
+        resp = self.identity_admin_client.update_tenant(
+            tenant_id=tenant_id, request_object=request_object)
+        self.assertEqual(resp.status_code, 200)
+        if(len(tenant_types_to2) == 0):
+            target_schema = tenants.add_tenant
+        else:
+            target_schema = add_tenant_with_types_schema
+        self.assertSchema(response=resp,
+                          json_schema=target_schema)
+        if(len(tenant_types_to2)):
+            self.assertEqual(len(resp.json()[const.TENANT]
+                             [const.NS_TYPES]), len(tenant_types_to2))
+        for tenant_type in tenant_types_to2:
+            self.assertIn(tenant_type.lower(),
+                          resp.json()[const.TENANT][const.NS_TYPES],
+                          msg="Not found {0}".format(tenant_type.lower()))
+
+    @ddt.file_data('data_invalid_tenant_types.json')
+    def test_update_invalid_tenant_types(self, test_data):
+        tenant_types = test_data.get('tenant_types')
+        error_message = test_data.get('error_message')
+        tenant_name = tenant_id = 'tname{0}'.format(
+            self.generate_random_string(const.LOWER_CASE_LETTERS))
+        request_object = requests.Tenant(
+                tenant_name=tenant_name,
+                description=self.description,
+                tenant_id=tenant_id,
+                enabled=True,
+                display_name=self.display_name)
+        resp = self.identity_admin_client.add_tenant(tenant=request_object)
+        self.assertEqual(resp.status_code, 201)
+        self.tenant_ids.append(tenant_id)
+        request_object = requests.Tenant(
+                tenant_name=tenant_name,
+                description=self.description,
+                tenant_id=tenant_id,
+                enabled=True,
+                tenant_types=tenant_types,
+                display_name=self.display_name)
+        resp = self.identity_admin_client.update_tenant(
+            tenant_id=tenant_id, request_object=request_object)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
+                         error_message)
+
     @ddt.file_data('data_update_tenant.json')
-    def test_update_tenant(self, data_schema):
+    def test_update_tenant(self, test_data):
         '''Tests for update tenant API
 
         @todo: The test_data file needs to be updated to include all possible
@@ -67,7 +175,7 @@ class TestUpdateTenant(base.TestBaseV2):
             tenant_id=self.tenant_id)
         tenant = responses.Tenant(before.json())
 
-        test_data = data_schema.get('test_data', {})
+        test_data = test_data.get('test_data', {})
         tenant_name = test_data.get('tenant_name', self.tenant_name)
         tenant_id = test_data.get('tenant_id', None)
         description = test_data.get('description', None)
@@ -84,10 +192,10 @@ class TestUpdateTenant(base.TestBaseV2):
         self.assertEqual(update_resp.status_code, 200)
 
         update_tenant_schema = copy.deepcopy(tenants.update_tenant)
-        if 'additional_schema' in 'data_schema':
+        if 'additional_schema' in 'test_data':
             update_tenant_schema['properties']['tenant']['required'] = (
                 update_tenant_schema['properties']['tenant']['required'] +
-                data_schema['additonal_schema'])
+                test_data['additonal_schema'])
         self.assertSchema(
             response=update_resp, json_schema=update_tenant_schema)
 
@@ -302,5 +410,4 @@ class TestUpdateTenant(base.TestBaseV2):
             self.identity_admin_client.delete_role(role_id=role_id)
         for tenant_id in self.tenant_ids:
             self.identity_admin_client.delete_tenant(tenant_id=tenant_id)
-
         super(TestUpdateTenant, self).tearDown()

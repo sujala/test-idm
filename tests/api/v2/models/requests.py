@@ -659,8 +659,8 @@ class Tenant(base.AutoMarshallingModel):
             add_tenant_request[const.TENANT][const.ENABLED] = self.enabled
         elif self.enabled is False:
             add_tenant_request[const.TENANT][const.ENABLED] = False
-        if self.tenant_types:
-            add_tenant_request[const.TENANT][const.RAX_AUTH_TYPES] = (
+        if self.tenant_types is not None:  # Because [] needs to send
+            add_tenant_request[const.TENANT][const.NS_TYPES] = (
                 self.tenant_types)
         if self.display_name:
             add_tenant_request[const.TENANT][const.DISPLAY_NAME] = (
