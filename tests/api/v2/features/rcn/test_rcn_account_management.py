@@ -38,9 +38,9 @@ class TestRCNAccountManagement(base.TestBaseV2):
         feature_flag_resp = (
             self.devops_client.get_devops_properties(flag_name))
         feature_flag_value = feature_flag_resp.json()[
-            const.RELOADABLE_PROP_FILE][0][const.VALUE]
+            const.IDM_RELOADABLE_PROPERTIES][0][const.VALUE]
         feature_flag_default_value = feature_flag_resp.json()[
-            const.RELOADABLE_PROP_FILE][0][const.DEFAULT_VALUE]
+            const.IDM_RELOADABLE_PROPERTIES][0][const.DEFAULT_VALUE]
         return feature_flag_value, feature_flag_default_value
 
     def setUp(self):

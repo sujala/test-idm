@@ -90,6 +90,19 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def auth_with_mfa_cred(self, session_id, pass_code, headers=None,
+                           requestslib_kwargs=None):
+        if not headers:
+            headers = {}
+        headers[const.X_SESSION_ID] = session_id
+        req_obj = requests.AuthenticateWithMFA(pass_code=pass_code)
+        url = self.url + const.TOKEN_URL
+        resp = self.request(method='POST', url=url, request_entity=req_obj,
+                            headers=headers,
+                            requestslib_kwargs=requestslib_kwargs)
+        # TODO: add equivalent xml to json response
+        return resp
+
     def validate_token(self, token_id, belongs_to=None,
                        requestslib_kwargs=None):
         """
@@ -139,8 +152,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         Reset API key
         """
-        url = self.url + "{0}/{1}/reset".format(
-            const.RESET_USER_API_CRED_URL, const.RAX_AUTH)
+        url = self.url+const.RESET_USER_API_KEY_URL
         url = url.format(user_id=user_id)
         return self.request('POST', url)
 
@@ -184,6 +196,89 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = "{0}://{1}{2}".format(parsedurl.scheme, parsedurl.netloc,
                                     const.UNBOUNDID_CONFIG_URL)
         return self.request('GET', url)
+
+    def create_otp_device(self, user_id, request_object,
+                          requestslib_kwargs=None):
+        """
+        Add OTP (one time password) device to user
+        POST /v2.0/users/{user_id}/RAX-AUTH/multi-factor/otp-devices
+        """
+        url = self.url + const.ADD_OTP_DEVICE_URL.format(user_id=user_id)
+        resp = self.request(method='POST', url=url,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+        if self.deserialize_format == const.XML:
+            def json(self):
+                resp_json = {}
+                resp_json[const.RAX_AUTH_OTP_DEVICE] = {}
+                root_string = resp.text.encode(const.ASCII)
+                root = objectify.fromstring(root_string)
+                resp_json[const.RAX_AUTH_OTP_DEVICE][const.ID] = (
+                    root.attrib[const.ID]
+                )
+                resp_json[const.RAX_AUTH_OTP_DEVICE][const.KEY_URI] = (
+                    root.attrib[const.KEY_URI]
+                )
+                resp_json[const.RAX_AUTH_OTP_DEVICE][const.QR_CODE] = (
+                    root.attrib[const.QR_CODE]
+                )
+                resp_json[const.RAX_AUTH_OTP_DEVICE][const.NAME] = (
+                    root.attrib[const.NAME]
+                )
+                return resp_json
+            resp.json = types.MethodType(json, resp, type(resp))
+        return resp
+
+    def verify_otp_device(self, user_id, otp_device_id, request_object,
+                          requestslib_kwargs=None):
+        """
+        Verify OTP device
+        Sends the mobile passcode from the mobile passcode application to the
+        Identity service to pair the OTP device instance with the account
+        POST /v2.0/users/{userId}/RAX-AUTH/multi-factor/otp-devices/\
+              {deiviceId}/verify
+        :param user_id:
+        :return: 204 no content
+        """
+        url = self.url + const.VERIFY_OTP_DEVICE_URL.format(
+            user_id=user_id, device_id=otp_device_id)
+        resp = self.request(method='POST', url=url,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+        return resp
+
+    def delete_otp_device(self, user_id, otp_device_id,
+                          requestslib_kwargs=None):
+        """
+        Remove Otp device from user account
+        DELETE '/v2.0/users/{userId}/RAX-AUTH/multi-factor/otp-devices/\
+                {otpDeviceId}'
+        :param user_id:
+        :param otp_device_id:
+        :return: 204 no content
+        """
+        url = self.url + const.DELETE_OTP_DEVICE_URL.format(
+            user_id=user_id, device_id=otp_device_id
+        )
+        resp = self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def update_mfa(self, user_id, request_object, requestslib_kwargs=None):
+        """
+        Updates the multi-factor authentication settings for the
+        specified account.
+        PUT /v2.0/users/{userId}/RAX-AUTH/multi-factor
+        :param user_id:
+        :return: 204 no response body
+        """
+        url = self.url + const.UPDATE_MFA_URL.format(user_id=user_id)
+        resp = self.request(method='PUT', url=url,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
 
     def get_role_by_name(self, role_name):
         """
