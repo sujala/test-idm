@@ -487,7 +487,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ClientRole role = checkAndGetClientRole(roleId);
 
-            if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
+            if (IdentityUserTypeEnum.isIdentityUserTypeRoleName(role.getName())) {
                 throw new ForbiddenException("Cannot add specified role to tenants on users.");
             }
 
