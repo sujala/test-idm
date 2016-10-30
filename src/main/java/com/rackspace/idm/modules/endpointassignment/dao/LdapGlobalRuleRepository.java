@@ -1,6 +1,7 @@
 package com.rackspace.idm.modules.endpointassignment.dao;
 
 import com.rackspace.idm.annotation.LDAPComponent;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.DaoGetEntityType;
 import com.rackspace.idm.domain.dao.impl.LdapGenericRepository;
 import com.rackspace.idm.exception.SizeLimitExceededException;
@@ -27,6 +28,9 @@ public class LdapGlobalRuleRepository extends LdapGenericRepository<Rule> implem
     @Autowired
     LdapTenantTypeRuleRepository ldapTenantTypeRuleRepository;
 
+    @Autowired
+    IdentityConfig identityConfig;
+
     @Override
     public Rule getById(String id) {
         return getObject(searchFilterGetRuleById(id, ALL_ENDPOINT_ASSIGNMENT_CLASS_FILTERS), SearchScope.SUB);
@@ -35,7 +39,7 @@ public class LdapGlobalRuleRepository extends LdapGenericRepository<Rule> implem
     @Override
     public List<Rule> findAll() {
         try {
-            List<Rule> rules = getUnpagedUnsortedObjects(searchFilterGetAllRulesByClass(ALL_ENDPOINT_ASSIGNMENT_CLASS_FILTERS), getBaseDn(), SearchScope.SUB);
+            List<Rule> rules = getUnpagedUnsortedObjects(searchFilterGetAllRulesByClass(ALL_ENDPOINT_ASSIGNMENT_CLASS_FILTERS), getBaseDn(), SearchScope.SUB, identityConfig.getReloadableConfig().getMaxDirectoryPageSize());
             return rules;
         } catch (LDAPSearchException ldapEx) {
             if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {

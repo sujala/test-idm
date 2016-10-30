@@ -1,6 +1,7 @@
 package com.rackspace.idm.modules.endpointassignment.api.resource;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.EndpointAssignmentRule;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.EndpointAssignmentRules;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantTypeEndpointRule;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
@@ -12,6 +13,7 @@ import com.rackspace.idm.domain.service.EndpointService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ExceptionHandler;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.SizeLimitExceededException;
 import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
 import org.apache.commons.collections.CollectionUtils;
@@ -28,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.net.URI;
+import java.util.List;
 
 /**
  * Implements endpoint assignment services. Initial support is solely for TenantType rules. When the next rule is added
@@ -108,7 +111,32 @@ public class EndpointAssignmentRuleResource {
     public Response getRules(
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken) {
-            return Response.status(HttpStatus.SC_NOT_IMPLEMENTED).build();
+        try {
+            verifyAdminAccess(authToken);
+
+            List<com.rackspace.idm.modules.endpointassignment.entity.Rule> rules = ruleService.findAllEndpointAssignmentRules();
+
+            EndpointAssignmentRules outputWeb = raxAuthObjectFactory.createEndpointAssignmentRules();
+            outputWeb.setTenantTypeEndpointRules(raxAuthObjectFactory.createTenantTypeEndpointRules());
+
+            for (com.rackspace.idm.modules.endpointassignment.entity.Rule rule : rules) {
+                if (rule instanceof TenantTypeRule) {
+                    outputWeb.getTenantTypeEndpointRules().getTenantTypeEndpointRule().add(convertRuleToWeb((TenantTypeRule) rule, false));
+                } else {
+                    /* Log if unexpected rule type found. This shouldn't happen as only one rule type currently exists.
+                       However, as new rule types are added a coding mistake may lead to the rule not being properly added
+                       to the list
+                      */
+                    logger.warn(String.format("An endpoint assignment rule was returned for list rules, but the type '%s' is not supported", rule.getClass().getCanonicalName()));
+                }
+            }
+
+            return Response.ok(outputWeb).build();
+        } catch (SizeLimitExceededException ex) {
+            return exceptionHandler.serviceUnavailableExceptionResponse("The search resulted in too many results").build();
+        } catch (Exception e) {
+            return exceptionHandler.exceptionResponse(e).build();
+        }
     }
 
     @GET
