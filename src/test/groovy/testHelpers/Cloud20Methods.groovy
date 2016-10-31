@@ -942,4 +942,10 @@ class Cloud20Methods {
         }
         webResource.type(requestType).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
+
+    def listEndpointAssignmentRules(String token, MediaType requestType=MediaType.APPLICATION_XML_TYPE, MediaType accept=MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(RAX_AUTH).path(SERVICE_PATH_RULES).type(requestType).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
 }

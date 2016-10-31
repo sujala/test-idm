@@ -531,12 +531,6 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.verify_get_and_delete_given_rule(mapping_rule_id)
 
         ia_client = self.identity_admin_client
-        # empty string rule id
-        get_resp = ia_client.get_tenant_type_to_endpoint_mapping_rule(
-            rule_id='')
-        # This behavior will change once CID-369 is ready in 3.8.0
-        self.assertEqual(get_resp.status_code, 501)
-
         delete_resp = ia_client.delete_tenant_type_to_endpoint_mapping_rule(
             rule_id='')
         self.assertEqual(delete_resp.status_code, 405)
