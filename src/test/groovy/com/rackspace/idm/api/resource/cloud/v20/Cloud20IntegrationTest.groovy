@@ -115,6 +115,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     @Shared def defaultUserRoleId = "2"
     @Shared def userAdminRoleId = "3"
+    @Shared def userManageRoleId = "7"
     @Shared def identityAdminRoleId = "1"
     @Shared def serviceAdminRoleId = "4"
 
@@ -1861,18 +1862,31 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         ]
     }
 
-    def "adding identity:* roles to user on tenant returns 400"() {
+    def "Identity User type roles can not be granted to a user on a tenant"() {
         expect:
         response.status == 403
 
         where:
         response << [
                 cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), defaultUserRoleId),
+                cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), userManageRoleId),
                 cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), userAdminRoleId),
                 cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), identityAdminRoleId),
                 cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), serviceAdminRoleId)
         ]
     }
+
+    def "Identity product roles that are not user type roles can be added to a user on a tenant"() {
+        Role identityProductRole = utils.createRole(v2Factory.createRole("identity:" + getRandomUUID()))
+
+        expect:
+        cloud20.addRoleToUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), identityProductRole.id).status == HttpStatus.SC_OK
+
+        cleanup:
+        cloud20.deleteRoleFromUserOnTenant(serviceAdminToken, tenant.id, defaultUser.getId(), identityProductRole.id)
+        cloud20.deleteRole(serviceAdminToken, identityProductRole.id)
+    }
+
 
     def "Tenant role assignment"() {
         when:

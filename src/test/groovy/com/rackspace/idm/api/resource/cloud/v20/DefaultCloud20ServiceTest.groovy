@@ -1145,7 +1145,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.status == 403
     }
 
-    def "addRolesToUserOnTenant verifies role"() {
+    def "addRolesToUserOnTenant verifies role is not a user type role"() {
         given:
         allowUserAccess()
 
@@ -1153,7 +1153,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def response = service.addRolesToUserOnTenant(headers, authToken, "tenant1", "user1", "role1").build()
 
         then:
-        1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole("identity:role")
+        1 * applicationService.getClientRoleById(_) >> entityFactory.createClientRole("identity:user-admin")
         response.status == 403
     }
 
