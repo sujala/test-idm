@@ -3470,6 +3470,136 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         flag << [true, false]
     }
 
+    @Unroll
+    def "include endpoints based on endpoint rules: content-type=#contentType useEndpointRules=#useEndpointRules" () {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, useEndpointRules)
+
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "username$random"
+        def tenantType = "mosso"
+        def tenant = v2Factory.createTenant("12345$random", "12345$random", [tenantType])
+        def role = v2Factory.createRole("roleName$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def endpointId = testUtils.getRandomInteger().toString()
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointId, "compute", "http://bananas.$random", "cloudServers")
+        def endpointRule = v2Factory.createTenantTypeEndpointRule(tenantType, [endpointId])
+
+        when:
+        def createUser = getEntity(cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(
+            username, username, "email@email.email", true, "DFW", "domain$random", password), contentType, contentType), User)
+
+        def addTenant = getEntity(cloud20.addTenant(identityAdminToken, tenant, contentType, contentType), Tenant)
+        def createRole = getEntity(cloud20.createRole(identityAdminToken, role, contentType, contentType), Role)
+        def createEndpointTemplate = getEntity(cloud20.addEndpointTemplate(identityAdminToken, endpointTemplate, contentType, contentType), EndpointTemplate)
+        def createEndpointRule = cloud20.addEndpointAssignmentRule(identityAdminToken, endpointRule, contentType, contentType).getEntity(TenantTypeEndpointRule)
+        def addRoleToUserOnTenant = cloud20.addRoleToUserOnTenant(identityAdminToken, addTenant.id, createUser.id, createRole.id, contentType)
+
+        AuthenticateResponse authenticateResponse = getEntity(cloud20.authenticate(username, password, contentType, contentType), AuthenticateResponse)
+        def service = authenticateResponse.serviceCatalog.service.find {it.name.equals("cloudServers")}
+        def endpointList = getEntity(cloud20.listEndpointsForToken(identityAdminToken, authenticateResponse.token.id, contentType), EndpointList)
+
+        cloud20.deleteEndpointAssignmentRule(serviceAdminToken, createEndpointRule.id)
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+        cloud20.deleteRole(serviceAdminToken, createRole.id)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, createEndpointTemplate.id.toString())
+
+        then:
+        createUser != null
+        addTenant != null
+        createRole != null
+        createEndpointTemplate != null
+        createEndpointRule != null
+        addRoleToUserOnTenant.status == 200
+
+        if (useEndpointRules) {
+            service != null
+            assert service.endpoint.find {it.publicURL.contains("bananas.$random")}
+            endpointList.endpoint != null
+            assert endpointList.endpoint.find {it.publicURL.contains("bananas.$random")}
+        } else {
+            service == null
+            endpointList.endpoint == null
+        }
+
+        where:
+        contentType                     | useEndpointRules
+        MediaType.APPLICATION_XML_TYPE  | true
+        MediaType.APPLICATION_XML_TYPE  | false
+        MediaType.APPLICATION_JSON_TYPE | true
+        MediaType.APPLICATION_JSON_TYPE | false
+    }
+
+    @Unroll
+    def "duplicate endpoints removed based on endpoint rules: content-type=#contentType useEndpointRules=#useEndpointRules" () {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, useEndpointRules)
+
+        def password = "Password1"
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def username = "username$random"
+        def tenantType = "mosso"
+        def tenant = v2Factory.createTenant("12345$random", "12345$random", [tenantType])
+        def role = v2Factory.createRole("roleName$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
+        def endpointId = testUtils.getRandomInteger().toString()
+        def endpointTemplate = v1Factory.createEndpointTemplate(endpointId, "compute", "http://bananas.$random", "cloudServers")
+        def endpointRule = v2Factory.createTenantTypeEndpointRule(tenantType, [endpointId])
+
+        when:
+        def createUser = getEntity(cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(
+            username, username, "email@email.email", true, "DFW", "domain$random", password), contentType, contentType), User)
+
+        def addTenant = getEntity(cloud20.addTenant(identityAdminToken, tenant, contentType, contentType), Tenant)
+        def createRole = getEntity(cloud20.createRole(identityAdminToken, role, contentType, contentType), Role)
+        def createEndpointTemplate = getEntity(cloud20.addEndpointTemplate(identityAdminToken, endpointTemplate, contentType, contentType), EndpointTemplate)
+        def createEndpointRule = cloud20.addEndpointAssignmentRule(identityAdminToken, endpointRule, contentType, contentType).getEntity(TenantTypeEndpointRule)
+        def addRoleToUserOnTenant = cloud20.addRoleToUserOnTenant(identityAdminToken, addTenant.id, createUser.id, createRole.id, contentType)
+
+        //Includes both endpoint based on tenant and endpoint rule.  Duplicates should be removed.
+        def addEndpointToTenant = cloud20.addEndpoint(identityAdminToken, addTenant.id, endpointTemplate, contentType, contentType)
+
+        AuthenticateResponse authenticateResponse = getEntity(cloud20.authenticate(username, password, contentType, contentType), AuthenticateResponse)
+        def service = authenticateResponse.serviceCatalog.service.find {it.name.equals("cloudServers")}
+        def endpointList = getEntity(cloud20.listEndpointsForToken(identityAdminToken, authenticateResponse.token.id, contentType), EndpointList)
+
+        cloud20.deleteEndpointAssignmentRule(serviceAdminToken, createEndpointRule.id)
+        cloud20.destroyUser(serviceAdminToken, createUser.id)
+        cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+        cloud20.deleteRole(serviceAdminToken, createRole.id)
+        cloud20.deleteEndpointTemplate(serviceAdminToken, createEndpointTemplate.id.toString())
+
+        then:
+        createUser != null
+        addTenant != null
+        createRole != null
+        createEndpointTemplate != null
+        createEndpointRule != null
+        addRoleToUserOnTenant.status == 200
+        addEndpointToTenant.status == 200
+
+        service != null
+        assert service.endpoint.findAll {it.publicURL.contains("bananas.$random")}.size() == 1
+        endpointList.endpoint != null
+        assert endpointList.endpoint.findAll {it.publicURL.contains("bananas.$random")}.size() == 1
+
+        where:
+        contentType                     | useEndpointRules
+        MediaType.APPLICATION_XML_TYPE  | true
+        MediaType.APPLICATION_XML_TYPE  | false
+        MediaType.APPLICATION_JSON_TYPE | true
+        MediaType.APPLICATION_JSON_TYPE | false
+    }
+
+    def getEntity(response, type) {
+        def entity = response.getEntity(type)
+
+        if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
+            entity = entity.value
+        }
+        return entity
+    }
+
     def authAndExpire(String username, String password) {
         Token token = cloud20.authenticatePassword(username, password).getEntity(AuthenticateResponse).value.token
         cloud20.revokeUserToken(token.id, token.id)

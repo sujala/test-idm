@@ -16,6 +16,8 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.modules.endpointassignment.entity.Rule;
+import com.rackspace.idm.modules.endpointassignment.service.RuleService;
 import com.rackspace.idm.util.AuthHeaderHelper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.map.HashedMap;
@@ -107,6 +109,9 @@ public class DefaultScopeAccessService implements ScopeAccessService {
     @Qualifier("tokenRevocationService")
     private TokenRevocationService tokenRevocationService;
 
+    @Autowired
+    private RuleService ruleService;
+
     @Override
     public List<OpenstackEndpoint> getOpenstackEndpointsForUser(User user) {
         List<OpenstackEndpoint> endpoints = new ArrayList<OpenstackEndpoint>();
@@ -119,11 +124,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         }
 
         // Second get the tenants from each of those roles
-        Map<Tenant, OpenstackType> tenants = getTenantsAndOpenstackTypesForRoles(roles);
+        Map<Tenant, HashSet<OpenstackType>> tenants = getTenantsAndOpenstackTypesForRoles(roles);
 
         // Third get the endppoints for each tenant
         for (Tenant tenant : tenants.keySet()) {
-            OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, tenants.get(tenant), user.getRegion());
+            OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, tenants.get(tenant), user.getRegion(), null);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
@@ -160,18 +165,21 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             if (identityConfig.getReloadableConfig().getFeatureGlobalEndpointsForAllRoles()) {
                 tenantMap = mapTenantsAndOpenstackTypesForRoles(tenantRoles);
             } else {
-                Map<Tenant, OpenstackType> tenantOpenstackTypeMap = getTenantsAndOpenstackTypesForRoles(tenantRoles);
+                Map<Tenant, HashSet<OpenstackType>> tenantOpenstackTypeMap = getTenantsAndOpenstackTypesForRoles(tenantRoles);
                 for (Tenant tenant : tenantOpenstackTypeMap.keySet()) {
-                    tenantMap.put(tenant, new HashSet<>(Collections.singletonList(tenantOpenstackTypeMap.get(tenant))));
+                    tenantMap.put(tenant, tenantOpenstackTypeMap.get(tenant));
                 }
             }
             CollectionUtils.addAll(tenants, tenantMap.keySet());
             for (Tenant tenant : tenantMap.keySet()) {
-                for (OpenstackType openstackType : tenantMap.get(tenant)) {
-                    final OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, openstackType, region);
-                    if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
-                        endpoints.add(endpoint);
-                    }
+                List<Rule> rules = null;
+                if (identityConfig.getReloadableConfig().includeEndpointsBasedOnRules()) {
+                    rules = ruleService.findEndpointAssignmentRulesForTenantType(tenant.getTypes());
+                }
+
+                final OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, tenantMap.get(tenant), region, rules);
+                if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
+                    endpoints.add(endpoint);
                 }
             }
         }
@@ -184,8 +192,8 @@ public class DefaultScopeAccessService implements ScopeAccessService {
      * Given a Collection of roles, returns a Map containing all referenced tenants (by the role.tenantId relationship)
      * with keys as the tenant and the value as the openstack type (MOSSO, NAST, other) as the value
      */
-    private Map<Tenant, OpenstackType> getTenantsAndOpenstackTypesForRoles(Collection<TenantRole> roles) {
-        HashMap<Tenant, OpenstackType> tenants = new HashMap<>();
+    private Map<Tenant, HashSet<OpenstackType>> getTenantsAndOpenstackTypesForRoles(Collection<TenantRole> roles) {
+        Map<Tenant, HashSet<OpenstackType>> tenants = new HashedMap<>();
         Set<String> tenantIds = new HashSet<>();
         for (TenantRole role : roles) {
             if (role.getTenantIds() != null) {
@@ -194,7 +202,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                         tenantIds.add(tenantId);
                         Tenant tenant = this.tenantService.getTenant(tenantId);
                         if (tenant != null) {
-                            tenants.put(tenant, getOpenStackType(role));
+                            tenants.put(tenant, new HashSet<>(Collections.singletonList(getOpenStackType(role))));
                         }
                     }
                 }

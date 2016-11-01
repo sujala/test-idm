@@ -3,6 +3,7 @@ package com.rackspace.idm.modules.endpointassignment.dao;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Performs operations that span all endpoint assignment rule types.
@@ -35,4 +36,12 @@ public interface GlobalRuleDao {
      * @param endpointAssignmentRuleId
      */
     void deleteEndpointAssignmentRule(String endpointAssignmentRuleId);
+
+    /**
+     * Retrieve endpoint assignment rules that match tenant type
+     *
+     * @throws com.rackspace.idm.exception.SizeLimitExceededException if returns too many results.
+     * @return
+     */
+    List<Rule> findByTenantTypes(Set<String> types);
 }

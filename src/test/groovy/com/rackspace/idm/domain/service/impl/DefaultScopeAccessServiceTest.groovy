@@ -734,7 +734,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         endpoints.size() == 1
         tenantService.getTenantRolesForUser(user) >> tenantRoles
         tenantService.getTenant(_) >> tenant
-        endpointService.getOpenStackEndpointForTenant(_, _, _) >> endpoint
+        endpointService.getOpenStackEndpointForTenant(_, _, _,_) >> endpoint
     }
 
     def "isScopeAccessExpired returns true when scopeAccess is null"() {
@@ -966,7 +966,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         tenantService.getTenant(_)>>>[tenant, tenant2];
         role.getTenantIds() >> ["1"].asList()
         endPoint.getBaseUrls() >> [Mock(CloudBaseUrl)].asList()
-        endpointService.getOpenStackEndpointForTenant(_, _, _) >> endPoint
+        endpointService.getOpenStackEndpointForTenant(_, _, _,_) >> endPoint
         identityConfig.reloadableConfig.getFeatureGlobalEndpointsForAllRoles() >> false
 
         when:

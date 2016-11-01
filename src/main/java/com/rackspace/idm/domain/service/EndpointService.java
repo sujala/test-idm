@@ -4,9 +4,11 @@ import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public interface EndpointService {
     void addBaseUrl(CloudBaseUrl baseUrl);
@@ -35,7 +37,7 @@ public interface EndpointService {
 
     OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant);
 
-    OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, OpenstackType openStackType, String region);
+    OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, Set<OpenstackType> openStackTypes, String region, List<Rule> rules);
 
     void updateBaseUrl(CloudBaseUrl baseUrl);
 

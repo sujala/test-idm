@@ -303,6 +303,9 @@ public class IdentityConfig {
     public static final String FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP = "feature.restrict.user.manager.list.users.by.name.usage";
     public static final boolean FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_DEFAULT = true;
 
+    public static final String FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP = "feature.include.endpoints.based.on.rules";
+    public static final boolean FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -588,6 +591,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_DEFAULT);
         defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_DEFAULT);
         defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_DEFAULT);
+        defaults.put(FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT);
 
         return defaults;
     }
@@ -1763,6 +1767,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, versionAdded = "3.7.0", description = "When true, if a user-manager calls the 'list users' service with name filter they can't get other user managers within the domain.")
         public boolean restrictUserManagersFromListingOtherUserManagersByName() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, versionAdded = "3.8.0", description = "When true, endpoints based on rules are included in 'authentication' and 'list endpoints for token'")
+        public boolean includeEndpointsBasedOnRules() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP);
         }
     }
 

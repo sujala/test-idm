@@ -15,7 +15,7 @@ edir:
         - ./edir/config:/config
         - ./edir/ldif:/data
 directory:
-    image: docker.ciidentity.com/ca-directory
+    image: docker.ciidentity.com/ca-directory-sp18
     ports:
         - 10636:10636
     volumes:
