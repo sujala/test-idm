@@ -95,6 +95,7 @@ user_item = {
         const.RAX_AUTH_FACTOR_TYPE: {'type': 'string'},
         const.RAX_AUTH_MULTI_FACTOR_STATE: {'type': 'string'},
         const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
+        const.RAX_AUTH_CONTACTID: {'type': 'string'},
         const.RAX_AUTH_DEFAULT_REGION: {
             'type': 'string',
             'enum': const.DC_LIST},

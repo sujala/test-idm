@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*
 import copy
 
 import ddt
 
-from tests.api.utils import header_validation
 from tests.api.v2 import base
 from tests.api.v2.schema import users as users_json
 from tests.api import constants as const
 from tests.api.v2.models import requests
+from random import randrange
 
 
 @ddt.ddt
@@ -36,6 +35,9 @@ class TestUpdateUser(base.TestBaseV2):
                 'domain_id': const.DOMAIN_API_TEST,
                 'user_name': sub_user_name})
 
+        contact_id = randrange(start=const.CONTACT_ID_MIN,
+                               stop=const.CONTACT_ID_MAX)
+
         # these client will be updated by the test
         cls.test_identity_admin_client = cls.generate_client(
             parent_client=cls.service_admin_client,
@@ -43,7 +45,8 @@ class TestUpdateUser(base.TestBaseV2):
 
         cls.test_user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': const.DOMAIN_API_TEST})
+            additional_input_data={'domain_id': const.DOMAIN_API_TEST,
+                                   'contact_id': contact_id})
 
         sub_user_name = cls.generate_random_string(
             pattern=const.SUB_USER_PATTERN)
@@ -52,21 +55,6 @@ class TestUpdateUser(base.TestBaseV2):
             additional_input_data={
                 'domain_id': const.DOMAIN_API_TEST,
                 'user_name': sub_user_name})
-
-        cls.unexpected_headers_HTTP_201 = [
-            header_validation.validate_transfer_encoding_header_not_present]
-        cls.unexpected_headers_HTTP_400 = [
-            header_validation.validate_location_header_not_present,
-            header_validation.validate_content_length_header_not_present]
-        cls.header_validation_functions_HTTP_201 = (
-            cls.default_header_validations +
-            cls.unexpected_headers_HTTP_201 + [
-                header_validation.validate_header_location,
-                header_validation.validate_header_content_length])
-        cls.header_validation_functions_HTTP_400 = (
-            cls.default_header_validations +
-            cls.unexpected_headers_HTTP_400 + [
-                header_validation.validate_header_transfer_encoding])
 
     def setUp(self):
         super(TestUpdateUser, self).setUp()
@@ -209,8 +197,10 @@ class TestUpdateUser(base.TestBaseV2):
         update_data = test_data['update_input']
         # avoid update password
         if 'password' not in update_data:
+            sub_user_name = self.generate_random_string(
+                pattern=const.SUB_USER_PATTERN)
             if 'user_name' in update_data:
-                update_data['user_name'] = 'testsomething123'
+                update_data['user_name'] = sub_user_name
             request_object = requests.UserUpdate(**update_data)
             resp = self.test_user_admin_client.update_user(
                 user_id=user_id, request_object=request_object)
@@ -233,8 +223,10 @@ class TestUpdateUser(base.TestBaseV2):
         update_data = test_data['update_input']
         # avoid update password
         if 'password' not in update_data:
+            sub_user_name = self.generate_random_string(
+                pattern=const.SUB_USER_PATTERN)
             if 'user_name' in update_data:
-                update_data['user_name'] = 'testsomething1234'
+                update_data['user_name'] = sub_user_name
             request_object = requests.UserUpdate(**update_data)
             resp = self.test_user_client.update_user(
                 user_id=user_id, request_object=request_object)
@@ -280,6 +272,11 @@ class TestUpdateUser(base.TestBaseV2):
                     const.REQUIRED] = (
                     users_json.update_user[const.PROPERTIES][const.USER][
                         const.REQUIRED] + ['RAX-AUTH:contactId'])
+                iac = self.identity_admin_client
+                t_id = iac.default_headers[const.X_AUTH_TOKEN]
+                validate_resp = self.identity_admin_client.validate_token(
+                    token_id=t_id)
+                print(validate_resp)
             self.assertSchema(response=resp, json_schema=updated_json_schema)
 
     @ddt.file_data('data_update_user_multi_attrs.json')

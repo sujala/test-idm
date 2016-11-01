@@ -36,20 +36,6 @@ class TestAddUser(base.TestBaseV2):
             additional_input_data={
                 'domain_id': const.DOMAIN_API_TEST,
                 'user_name': sub_user_name})
-        cls.unexpected_headers_HTTP_201 = [
-            header_validation.validate_transfer_encoding_header_not_present]
-        cls.unexpected_headers_HTTP_400 = [
-            header_validation.validate_location_header_not_present,
-            header_validation.validate_content_length_header_not_present]
-        cls.header_validation_functions_HTTP_201 = (
-            cls.default_header_validations +
-            cls.unexpected_headers_HTTP_201 + [
-                header_validation.validate_header_location,
-                header_validation.validate_header_content_length])
-        cls.header_validation_functions_HTTP_400 = (
-            cls.default_header_validations +
-            cls.unexpected_headers_HTTP_400 + [
-                header_validation.validate_header_transfer_encoding])
 
     def setUp(self):
         super(TestAddUser, self).setUp()

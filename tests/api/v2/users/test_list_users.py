@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*
 import ddt
 
-from tests.api.utils import header_validation
 from tests.api.v2 import base
 from tests.api.v2.schema import users as users_json
 from tests.api import constants as const
 from tests.api.v2.models import requests
-
+from random import randrange
 # TODO: update user list schema validator when defect CID-408 is fixed
 
 
@@ -24,9 +23,12 @@ class TestListUsers(base.TestBaseV2):
         """
         super(TestListUsers, cls).setUpClass()
         cls.DOMAIN_ID_TEST = "test-spec-user-list"
+        contact_id = randrange(start=const.CONTACT_ID_MIN,
+                               stop=const.CONTACT_ID_MAX)
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': cls.DOMAIN_ID_TEST})
+            additional_input_data={'domain_id': cls.DOMAIN_ID_TEST,
+                                   'contact_id': contact_id})
 
         sub_user_name = cls.generate_random_string(
             pattern=const.SUB_USER_PATTERN)
@@ -35,21 +37,6 @@ class TestListUsers(base.TestBaseV2):
             additional_input_data={
                 'domain_id': cls.DOMAIN_ID_TEST,
                 'user_name': sub_user_name})
-
-        cls.unexpected_headers_HTTP_201 = [
-            header_validation.validate_transfer_encoding_header_not_present]
-        cls.unexpected_headers_HTTP_400 = [
-            header_validation.validate_location_header_not_present,
-            header_validation.validate_content_length_header_not_present]
-        cls.header_validation_functions_HTTP_201 = (
-            cls.default_header_validations +
-            cls.unexpected_headers_HTTP_201 + [
-                header_validation.validate_header_location,
-                header_validation.validate_header_content_length])
-        cls.header_validation_functions_HTTP_400 = (
-            cls.default_header_validations +
-            cls.unexpected_headers_HTTP_400 + [
-                header_validation.validate_header_transfer_encoding])
 
     def setUp(self):
         super(TestListUsers, self).setUp()
