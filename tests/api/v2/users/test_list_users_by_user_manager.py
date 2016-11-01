@@ -103,15 +103,14 @@ class TestListUsersByUserManager(base.TestBaseV2):
         super(TestListUsersByUserManager, self).setUp()
         self.user_id = []
 
-    @classmethod
     def get_feature_flag_value_and_default_value(self, flag_name):
         feature_flag_resp = (
             self.devops_client.get_devops_properties(
                 flag_name))
         feature_flag_value = feature_flag_resp.json()[
-            const.RELOADABLE_PROP_FILE][0][const.VALUE]
+            const.IDM_RELOADABLE_PROPERTIES][0][const.VALUE]
         feature_flag_default_value = feature_flag_resp.json()[
-            const.RELOADABLE_PROP_FILE][0][const.DEFAULT_VALUE]
+            const.IDM_RELOADABLE_PROPERTIES][0][const.DEFAULT_VALUE]
         return feature_flag_value, feature_flag_default_value
 
     def test_list_users_by_user_manager(self):
@@ -255,6 +254,7 @@ class TestListUsersByUserManager(base.TestBaseV2):
     def tearDown(self):
         for id_ in self.domain_ids:
             self.identity_admin_client.delete_tenant(tenant_id=id_)
+            self.identity_admin_client.delete_domain(domain_id=id_)
         super(TestListUsersByUserManager, self).tearDown()
 
     @classmethod
