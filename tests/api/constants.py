@@ -96,6 +96,7 @@ USER_NAME_PATTERN = 'api[\-]test[\-][\d\w]{12}'
 MAPPING_RULE_DESCRIPTION_PATTERN = (
     'mapping[\-]rule[\-]description[\-][\w\d]{8}')
 TENANT_TYPE_PATTERN = 'ttype[a-z0-9]{10}'
+USER_MANAGER_NAME_PATTERN = 'user[\-]manager[\d\w]{12}'
 
 '''Headers'''
 ACCESS_CONTROL_REQUEST_HEADERS = 'access-control-request-headers'
@@ -317,3 +318,9 @@ FEATURE_FLAG_ALLOW_TENANT_NAME_UPDATE = (
     'feature.allow.tenant.name.to.be.changed.via.update.tenant')
 FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED = (
     'feature.global.endpoints.for.all.roles.enabled')
+FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE = (
+    'feature.restrict.user.manager.list.users.usage')
+FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE = (
+    'feature.restrict.user.manager.list.users.by.email.usage')
+FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE = (
+    'feature.restrict.user.manager.list.users.by.name.usage')
