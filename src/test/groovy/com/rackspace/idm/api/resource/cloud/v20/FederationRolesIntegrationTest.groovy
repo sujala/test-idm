@@ -361,6 +361,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
     def "trying to pass a saml assertion for a domain with more than one user admin returns 500 if 'domain.restricted.to.one.user.admin.enabled' == true"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")

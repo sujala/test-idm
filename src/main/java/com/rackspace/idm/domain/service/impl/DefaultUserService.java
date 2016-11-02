@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.google.common.collect.Iterables;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
@@ -43,6 +44,11 @@ public class DefaultUserService implements UserService {
     private static final String ERROR_MSG_SAVE_OR_UPDATE_USER = "Error updating user %s";
     private static final String ERROR_MSG_TENANT_ALREADY_EXISTS = "Tenant with Id '%s' already exists";
     private static final String ERROR_MSG_TENANT_DOES_NOT_EXIST = "Tenant with Id '%s' does not exist";
+    private static final String ERROR_MSG_NEW_ACCOUNT_IN_DEFAULT_DOMAIN = "Can not create a new account in the default domain";
+    private static final String ERROR_MSG_NEW_ACCOUNT_IN_DISABLED_DOMAIN = "Can not create a new account in a disabled domain";
+    private static final String ERROR_MSG_NEW_ACCOUNT_IN_DOMAIN_WITH_USERS = "Can not create a new account in an existing domain with users";
+    private static final String ERROR_MSG_NEW_ACCOUNT_EXISTING_TENANT_DIFFERENT_DOMAIN = "Can not create new account with an an existing tenant in a different domain";
+    private static final String ERROR_MSG_NEW_ACCOUNT_EXISTING_TENANT_WITH_USERS = "Can not create new account with an existing tenant that has users";
 
     public static final String ERROR_MSG_TOKEN_NOT_FOUND = "Token not found.";
 
@@ -155,27 +161,44 @@ public class DefaultUserService implements UserService {
 
         userDao.addUser(user);
 
-        assignUserRoles(user);
+        assignUserRoles(user, false);
 
         addExpiredScopeAccessesForUser(user);
     }
 
     @Override
-    public void addUserV20(User user) {
-        addUserV20(user, false, false);
+    public void addIdentityAdminV20(User user) {
+        addUserV20(user, false, false, false);
     }
 
     @Override
-    public void addUserV20(User user, boolean isCreateUserInOneCall, boolean provisionMossoAndNast) {
+    public void addSubUserV20(User user, boolean isCreateUserOneCall) {
+        //creating a sub-user so always a one-user call but do not provision the mosso and nast
+        addUserV20(user, isCreateUserOneCall, false, false);
+    }
+
+    @Override
+    public void addUserAdminV20(User user, boolean isCreateUserOneCall) {
+        //only provision mosso and nast tenants if this is a one-user call and the domain is numeric
+        addUserV20(user, isCreateUserOneCall,  isCreateUserOneCall && isNumeric(user.getDomainId()), true);
+    }
+
+    private void addUserV20(User user, boolean isCreateUserInOneCall, boolean provisionMossoAndNast, boolean isUserAdmin) {
+
         logger.info("Adding User: {}", user);
 
         validator.validateUser(user);
 
-        createDomainIfItDoesNotExist(user.getDomainId());
+        if (isUserAdmin || isCreateUserInOneCall) {
+            createDomainUserInCreateOneCall(user.getDomainId(), isUserAdmin);
+        } else {
+            createDomainIfItDoesNotExist(user.getDomainId());
+        }
+
         if (isCreateUserInOneCall) {
             verifyUserRolesExist(user);
             if(userContainsRole(user, identityConfig.getStaticConfig().getIdentityUserAdminRoleName())) {
-                verifyUserTenantsDoNotExist(user);
+                verifyUserTenantsInCreateOneCall(user);
             } else if(userContainsRole(user, identityConfig.getStaticConfig().getIdentityDefaultUserRoleName())) {
                 verifyUserTenantsExist(user);
             } else {
@@ -183,8 +206,9 @@ public class DefaultUserService implements UserService {
                 //this should not happen but checking anyways
                 throw new BadRequestException();
             }
+
             if(provisionMossoAndNast) {
-                createDefaultDomainTenantsIfNecessary(user.getDomainId());
+                createDefaultDomainTenantsInCreateOneCall(user.getDomainId());
             }
             createTenantsIfNecessary(user);
         }
@@ -207,7 +231,7 @@ public class DefaultUserService implements UserService {
 
         userDao.addUser(user);
 
-        assignUserRoles(user);
+        assignUserRoles(user, isCreateUserInOneCall);
 
         addExpiredScopeAccessesForUser(user);
     }
@@ -900,7 +924,7 @@ public class DefaultUserService implements UserService {
         createDefaultDomainTenantsIfNecessary(user.getDomainId());
         createTenantsIfNecessary(user);
         userDao.updateUserAsIs(user);
-        assignUserRoles(user);
+        assignUserRoles(user, false);
 
         //remove any upgrade eligibilty roles from the user now that they hvae been upgraded.
         final List<String> eligibilityRoleNames = new ArrayList<String>();
@@ -1339,6 +1363,43 @@ public class DefaultUserService implements UserService {
         }
     }
 
+    private void createDomainUserInCreateOneCall(String domainId, boolean isUserAdminCreateInOneCall) {
+        if (StringUtils.isNotBlank(domainId)) {
+            if (identityConfig.getReloadableConfig().restrictCreateUserInDefaultDomain() && domainId.equals(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
+                throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_IN_DEFAULT_DOMAIN );
+            }
+            Domain domain = domainService.getDomain(domainId);
+            if (domain != null) {
+                if (identityConfig.getReloadableConfig().restrictCreateUserInDisabledDomain() && !domain.getEnabled()) {
+                    throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_IN_DISABLED_DOMAIN);
+                }
+
+                if (isUserAdminCreateInOneCall && identityConfig.getReloadableConfig().restrictCreateUserInDomainWithUsers() && Iterables.size(domainService.getDomainAdmins(domainId)) != 0) {
+                    throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_IN_DOMAIN_WITH_USERS);
+                }
+            } else {
+                domainService.createNewDomain(domainId);
+            }
+        }
+    }
+
+    private void verifyUserTenantsInCreateOneCall(User user) {
+        for (TenantRole role : user.getRoles()) {
+            for (String tenantId : role.getTenantIds()) {
+                Tenant tenant = tenantService.getTenant(tenantId);
+                if (tenant != null) {
+
+                    if (!user.getDomainId().equals(tenant.getDomainId())) {
+                        throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_EXISTING_TENANT_DIFFERENT_DOMAIN);
+                    }
+                    if (domainService.getDomain(tenant.getDomainId()) == null) {
+                        throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_EXISTING_TENANT_WITH_USERS);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * creates default tenants in the new domain
      *
@@ -1352,12 +1413,43 @@ public class DefaultUserService implements UserService {
             String mossoId = domainId;
             String nastId = getNastTenantId(domainId);
 
-            createTenantForDomain(mossoId, domainId, MOSSO_BASE_URL_TYPE);
-            createTenantForDomain(nastId, domainId, NAST_BASE_URL_TYPE);
+            Tenant mossoTenant = createTenant(mossoId, domainId, MOSSO_BASE_URL_TYPE);
+            Tenant nastTenant = createTenant(nastId, domainId, NAST_BASE_URL_TYPE);
+
+            createTenantForDomain(mossoTenant);
+            createTenantForDomain(nastTenant);
         }
     }
 
-    private void createTenantForDomain(String tenantId, String domainId, String baseUrlType) {
+    private void createDefaultDomainTenantsInCreateOneCall(String domainId) {
+        String mossoId = domainId;
+        String nastId = getNastTenantId(domainId);
+
+        try {
+            Tenant mossoTenant = createTenant(mossoId, domainId, MOSSO_BASE_URL_TYPE);
+            createTenantForDomain(mossoTenant);
+        } catch (DuplicateException e) {
+            Tenant storedMossoTenant = tenantService.getTenant(mossoId);
+            attachEndpointsToTenant(storedMossoTenant, endpointService.getBaseUrlsByBaseUrlType(MOSSO_BASE_URL_TYPE));
+            tenantService.updateTenant(storedMossoTenant);
+        }
+
+        try {
+            Tenant nastTenant = createTenant(nastId, domainId, NAST_BASE_URL_TYPE);
+            createTenantForDomain(nastTenant);
+        } catch (DuplicateException e) {
+            Tenant storedNastTenant = tenantService.getTenant(nastId);
+            attachEndpointsToTenant(storedNastTenant, endpointService.getBaseUrlsByBaseUrlType(NAST_BASE_URL_TYPE));
+            tenantService.updateTenant(storedNastTenant);
+        }
+    }
+
+    private void createTenantForDomain(Tenant tenant) {
+        tenantService.addTenant(tenant);
+        domainService.addTenantToDomain(tenant.getTenantId(), tenant.getDomainId());
+    }
+
+    private Tenant createTenant(String tenantId, String domainId, String baseUrlType) {
         Tenant tenant = new Tenant();
         tenant.setTenantId(tenantId);
         tenant.setName(tenantId);
@@ -1365,9 +1457,7 @@ public class DefaultUserService implements UserService {
         tenant.setEnabled(true);
         tenant.setDomainId(domainId);
         attachEndpointsToTenant(tenant, endpointService.getBaseUrlsByBaseUrlType(baseUrlType));
-
-        tenantService.addTenant(tenant);
-        domainService.addTenantToDomain(tenantId, domainId);
+        return tenant;
     }
 
     private void attachEndpointsToTenant(Tenant tenant, List<CloudBaseUrl> baseUrls) {
@@ -1398,7 +1488,7 @@ public class DefaultUserService implements UserService {
         }
     }
 
-    private void assignUserRoles(User user) {
+    private void assignUserRoles(User user, boolean isCreateUserInOneCall) {
         for (TenantRole role : user.getRoles()) {
             ClientRole roleObj = roleService.getRoleByName(role.getName());
 
@@ -1409,7 +1499,13 @@ public class DefaultUserService implements UserService {
             tenantRole.setUserId(user.getId());
             tenantRole.getTenantIds().addAll(role.getTenantIds());
 
-            tenantService.addTenantRoleToUser(user, tenantRole);
+            try {
+                tenantService.addTenantRoleToUser(user, tenantRole);
+            } catch (ClientConflictException e) {
+                if (!isCreateUserInOneCall){
+                    throw e;
+                }
+            }
         }
     }
 
@@ -1463,6 +1559,17 @@ public class DefaultUserService implements UserService {
         if (!user.getRoles().contains(tenantRole)) {
             user.getRoles().add(tenantRole);
         }
+    }
+
+    boolean isUserAdmin(User user) {
+        boolean hasRole = false;
+        for (TenantRole tenantRole : user.getRoles()) {
+            String name = tenantRole.getName();
+            if (name.equals("identity:user-admin")) {
+                hasRole = true;
+            }
+        }
+        return hasRole;
     }
 
     int getMaxNumberOfUsersInDomain() {

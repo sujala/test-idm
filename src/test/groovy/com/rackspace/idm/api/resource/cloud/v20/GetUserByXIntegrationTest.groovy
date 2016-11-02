@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.service.EndpointService
@@ -167,6 +168,7 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
     @Unroll
     def "test get user shows contact ID, userType = #userType, request = #request, accept = #accept"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId = utils.createDomain()
         def contactId = testUtils.getRandomUUID("contactId")
         def email = testUtils.getRandomUUID() + "@example.com"

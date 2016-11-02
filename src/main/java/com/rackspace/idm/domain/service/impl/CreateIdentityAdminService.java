@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
-import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -35,7 +34,7 @@ public class CreateIdentityAdminService implements CreateUserService {
     public User setDefaultsAndCreateUser(org.openstack.docs.identity.api.v2.User userForCreate, User userForDefaults) {
         User user = this.userConverterCloudV20.fromUser(userForCreate);
         setUserDefaults(user);
-        userService.addUserV20(user);
+        userService.addIdentityAdminV20(user);
         return user;
     }
 

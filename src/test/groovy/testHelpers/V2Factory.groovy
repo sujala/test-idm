@@ -403,11 +403,12 @@ class V2Factory {
         }
     }
 
-    def createTenant(name, displayName, boolean enabled) {
+    def createTenant(name, displayName, boolean enabled, domainId=null) {
         new Tenant().with {
             it.name = name.toString()
             it.displayName = displayName.toString()
             it.enabled = enabled
+            it.domainId = domainId
             return it
         }
     }

@@ -988,7 +988,8 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def adminToken = utils.getIdentityAdminToken()
         def username = testUtils.getRandomUUID("name")
         def domainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId()
-        def user = utils.createUser(adminToken, username, domainId)
+        def userDomainId = getRandomUUID()
+        def user = utils.createUser(adminToken, username, userDomainId)
         def tenantId1 = testUtils.getRandomUUID("tenant")
 
         def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["type1"]).with {

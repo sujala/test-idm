@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UserDao
@@ -32,6 +33,7 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
 
     def setup() {
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId1 = utils.createDomain()
         def domainId2 = utils.createDomain()
         (identityAdmin1, userAdmin1Domain1, userManage1Domain1, defaultUser1Domain1) = utils.createUsers(domainId1)

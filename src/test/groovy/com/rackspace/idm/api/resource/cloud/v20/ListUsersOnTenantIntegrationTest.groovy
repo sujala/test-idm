@@ -148,6 +148,8 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
     def "List Users for Tenants: Automatic assignment of tenant access ignores tenants associated with default domain" () {
         given: "A new user and 2 tenants"
         reloadableConfiguration.setProperty(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, "identity:tenant-access")
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def adminToken = utils.getIdentityAdminToken()
         def domainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId()
 

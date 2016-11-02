@@ -546,8 +546,8 @@ class Cloud20Utils {
         }
     }
 
-    def createTenant(name=testUtils.getRandomUUID("tenant"), enabled=true, displayName=testUtils.getRandomUUID("tenant")) {
-        def tenant = factory.createTenant(name, displayName, enabled)
+    def createTenant(name=testUtils.getRandomUUID("tenant"), enabled=true, displayName=testUtils.getRandomUUID("tenant"), domainId=null) {
+        def tenant = factory.createTenant(name, displayName, enabled, domainId)
         def response = methods.addTenant(getServiceAdminToken(), tenant)
         assert (response.status == SC_CREATED)
         response.getEntity(Tenant).value

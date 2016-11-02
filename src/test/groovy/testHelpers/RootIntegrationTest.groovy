@@ -1,6 +1,7 @@
 package testHelpers
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.helpers.Cloud10Utils
 import com.rackspace.idm.helpers.Cloud11Utils
 import com.rackspace.idm.helpers.Cloud20Utils
@@ -51,6 +52,8 @@ class RootIntegrationTest extends Specification {
     @Shared SingletonConfiguration staticIdmConfiguration = SingletonConfiguration.getInstance();
     @Shared SingletonReloadableConfiguration reloadableConfiguration = SingletonReloadableConfiguration.getInstance();
 
+    @Shared IdentityConfig identityConfig
+
     //MFA mocks
     @Shared SingletonMockMobilePhoneVerification mockMobilePhoneVerification = SingletonMockMobilePhoneVerification.getInstance()
     @Shared SingletonMockMultiFactorAuthenticationService mockMultiFactorAuthenticationService = SingletonMockMultiFactorAuthenticationService.getInstance()
@@ -66,6 +69,7 @@ class RootIntegrationTest extends Specification {
     public setupSpec(){
         staticIdmConfiguration.reset()
         reloadableConfiguration.reset()
+        identityConfig = new IdentityConfig(staticIdmConfiguration, reloadableConfiguration)
         clearEmailServerMessages()
         startCloudFeedsMock()
         mockMobilePhoneVerification.reset()
