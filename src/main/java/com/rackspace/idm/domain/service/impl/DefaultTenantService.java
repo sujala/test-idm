@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.google.common.collect.Lists;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
@@ -18,6 +19,7 @@ import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -208,11 +210,63 @@ public class DefaultTenantService implements TenantService {
 
         logger.info("Getting Tenants for Parent");
 
-        Iterable<TenantRole> tenantRoles = this.tenantRoleDao.getTenantRolesForUser(user);
+        Iterable<TenantRole> tenantRoles = getEffectiveTenantRolesForUser(user);
         List<Tenant> tenants = getTenants(tenantRoles, new TenantEnabledPredicate());
 
         logger.info("Got {} tenants", tenants.size());
         return tenants;
+    }
+
+    /**
+     * Returns a list of effective tenant roles the user has assigned. This includes all roles the user explicitly has
+     * assigned on tenants and, if enabled, the automatically assigned "access" role to all tenants within the user's
+     * domain.
+     *
+     * @param user
+     * @return
+     */
+    private List<TenantRole> getEffectiveTenantRolesForUser(BaseUser user) {
+        // Get a list of explicit tenant roles assigned
+        Iterable<TenantRole> itTenantRoles = this.tenantRoleDao.getTenantRolesForUser(user);
+        List<TenantRole> userTenantRoles = Lists.newArrayList(itTenantRoles);
+
+        // If enabled, auto-assign access role to all tenants within user's domain
+        if (StringUtils.isNotBlank(user.getDomainId())
+                && identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()
+                && !user.getDomainId().equalsIgnoreCase(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
+            /*
+             There's a 2 way linkage between Domains and Tenants. The link from domains to tenants needs to be retired,
+             but all existing code is really based on using the domain's list of tenants as the source of truth for
+             tenants in the domain. As part of v3 keystone reconciliation we updated tenants to point to the domain.
+             All tenants were updated to point to the appropriate domain, but there were various subsequent defects found
+             where the pointer may not have been updated. Until we switch all code to use the tenant linkage as the source
+             of truth, we need to still use the domain list.
+             */
+            Domain domain = domainService.getDomain(user.getDomainId());
+            String[] tenantIds = domain.getTenantIds();
+            if (ArrayUtils.isNotEmpty(tenantIds)) {
+                // Get the autoassigned role. Must be an "identity:" product role so it's cached. Otherwise performance
+                // will be bad
+                ImmutableClientRole autoAssignedRole = authorizationService
+                        .getCachedIdentityRoleByName(identityConfig.getReloadableConfig()
+                                .getAutomaticallyAssignUserRoleOnDomainTenantsRoleName());
+                if (autoAssignedRole != null) {
+                    // Add the autoassigned role for all tenants in domain.
+                    TenantRole implicitRole = new TenantRole();
+                    implicitRole.setName(autoAssignedRole.getName());
+                    implicitRole.setDescription(autoAssignedRole.getDescription());
+                    implicitRole.setClientId(autoAssignedRole.getClientId());
+                    implicitRole.setPropagate(autoAssignedRole.getPropagate());
+                    implicitRole.setRoleRsId(autoAssignedRole.getId());
+                    implicitRole.setUserId(user.getId());
+                    Collections.addAll(implicitRole.getTenantIds(), tenantIds);
+
+                    userTenantRoles.add(implicitRole);
+                }
+            }
+        }
+
+        return userTenantRoles;
     }
 
     @Override
@@ -253,26 +307,6 @@ public class DefaultTenantService implements TenantService {
         }
 
         return tenants;
-    }
-
-    @Override
-    public boolean hasTenantAccess(EndUser user, String tenantId) {
-        if(user ==null){
-            return false;
-        }
-        if(StringUtils.isBlank(tenantId)){
-            return false;
-        }
-        List<Tenant> tenantList = getTenantsForUserByTenantRoles(user);
-        for(Tenant tenant : tenantList){
-            if(tenant.getTenantId()!=null && tenant.getTenantId().equals(tenantId)){
-                return true;
-            }
-            if(tenant.getName()!=null && tenant.getName().equals(tenantId)){
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override

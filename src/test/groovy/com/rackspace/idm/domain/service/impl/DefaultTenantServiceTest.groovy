@@ -98,40 +98,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         1 * tenantDao.getTenant(_) >> tenant
     }
 
-    def "hasTenantAccess returns false if user is null or tenantId is blank"() {
-        expect:
-        result == false
-
-        where:
-        result << [
-                service.hasTenantAccess(null, "tenantId"),
-                service.hasTenantAccess(entityFactory.createUser(), ""),
-                service.hasTenantAccess(entityFactory.createUser(), null)
-        ]
-    }
-
-    def "hasTenantAccess returns true if it contains tenant; false otherwise"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole("tenantName").with { it.tenantIds = [ "tenantId" ]; return it }
-        def tenantRoles = [ tenantRole ].asList()
-        def tenantWithMatchingId = entityFactory.createTenant("tenantId", "noMatch")
-        def tenantWithMatchingName = entityFactory.createTenant("notTenantId", "match")
-        def user = entityFactory.createUser()
-
-        when:
-        def result1 = service.hasTenantAccess(user, "tenantId")
-        def result2 = service.hasTenantAccess(user, "tenantId")
-        def result3 = service.hasTenantAccess(user, "match")
-
-        then:
-        3 * tenantRoleDao.getTenantRolesForUser(_) >>> [ [].asList() ] >> tenantRoles
-        2 * tenantDao.getTenant(_) >>> [ tenantWithMatchingId, tenantWithMatchingName]
-
-        result1 == false
-        result2 == true
-        result3 == true
-    }
-
     def "addCallerTenantRolesToUser gets callers tenant roles by userObject"() {
         given:
         def caller = entityFactory.createUser()

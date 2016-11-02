@@ -1206,6 +1206,15 @@ description: test a role for global endpoint point
 rsPropagate: FALSE
 rsWeight: 500
 
+dn: rsId=51ce91246bfc4a5982f77b55fe786fa1,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:tenant-access
+description: Role to simply grant user access to tenant
+rsPropagate: FALSE
+rsWeight: 100
+
 dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicati
  ons,o=rackspace,dc=rackspace,dc=com
 objectClass: rsContainer

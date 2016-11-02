@@ -164,7 +164,4 @@ class AuthWithTokenTest extends RootServiceTest {
         then:
         thrown(NotAuthenticatedException)
     }
-    def passTenantAccess() {
-        tenantService.hasTenantAccess(_, _) >> true
-    }
 }

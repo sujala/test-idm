@@ -71,14 +71,6 @@ public interface TenantService {
      */
     boolean allTenantsDisabledForUser(EndUser user);
 
-    /**
-     * Whether the user has access to the specified tenant. The provided tenantId is compared against both the tenant
-     * name and tenant id. If either match, and the user has access to that tenant, returns true.
-     * @param user
-     * @param tenantId
-     * @return
-     */
-    boolean hasTenantAccess(EndUser user, String tenantId);
     PaginatorContext<User> getUsersForTenant(String tenantId, int offset, int limit);
     PaginatorContext<User> getUsersWithTenantRole(Tenant tenant, ClientRole role, int offset, int limit);
     List<TenantRole> getTenantRolesForTenant(String tenantId);

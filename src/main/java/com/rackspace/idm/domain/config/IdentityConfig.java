@@ -306,6 +306,12 @@ public class IdentityConfig {
     public static final String FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP = "feature.include.endpoints.based.on.rules";
     public static final boolean FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT = false;
 
+    public static final String FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP = "feature.auto.assign.role.on.domain.tenants";
+    public static final boolean FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_DEFAULT = false;
+
+    public static final String AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP = "auto.assign.role.on.domain.tenants.role.name";
+    public static final String AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT = "identity:tenant-access";
+
     /**
      * Required static prop
      */
@@ -592,6 +598,9 @@ public class IdentityConfig {
         defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_DEFAULT);
         defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_DEFAULT);
         defaults.put(FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT);
+
+        defaults.put(FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_DEFAULT);
+        defaults.put(AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT);
 
         return defaults;
     }
@@ -1772,6 +1781,16 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, versionAdded = "3.8.0", description = "When true, endpoints based on rules are included in 'authentication' and 'list endpoints for token'")
         public boolean includeEndpointsBasedOnRules() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP);
+        }
+
+        @IdmProp(key = FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, versionAdded = "3.8.0", description = "When true, automatically assigns the use the role specified by '" + AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP + "' on all tenants within the user's domain")
+        public boolean isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP);
+        }
+
+        @IdmProp(key = AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, versionAdded = "3.8.0", description = "When '" + FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP + "' is set to true, the role to automatically assign.")
+        public String getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() {
+            return getStringSafely(reloadableConfiguration, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP);
         }
     }
 
