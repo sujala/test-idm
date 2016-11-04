@@ -1,14 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
-import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.NotAuthenticatedException
 import com.rackspace.idm.exception.NotAuthorizedException
 import com.rackspace.idm.exception.NotFoundException
 import org.joda.time.DateTime
-import org.openstack.docs.identity.api.v2.AuthenticationRequest
-import org.openstack.docs.identity.api.v2.TokenForAuthenticationRequest
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -72,8 +68,6 @@ class AuthWithTokenTest extends RootServiceTest {
 
     def "authenticate gets impersonated scopeAccess; sets value in returnValues and gets the token being impersonated"() {
         given:
-        passTenantAccess()
-
         def authRequest = v2Factory.createAuthenticationRequest("tokenId", "tenantId", "")
         def user = entityFactory.createUser()
         def impScopeAccess = createImpersonatedScopeAccess(
@@ -119,8 +113,6 @@ class AuthWithTokenTest extends RootServiceTest {
 
     def "authenticate gets valid userScopeAccess; does not set impersonatingScopeAccess"() {
         given:
-        passTenantAccess()
-
         def authRequest = v2Factory.createAuthenticationRequest("tokenId", "tenantId", "")
         def user = entityFactory.createUser()
         def scopeAccess = createUserScopeAccess(
