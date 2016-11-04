@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.security;
 
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.TenantRole;
 
 /**
  * A wrapper around a client role to make it immutable.

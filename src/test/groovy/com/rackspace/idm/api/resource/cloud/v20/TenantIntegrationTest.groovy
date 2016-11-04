@@ -925,6 +925,103 @@ class TenantIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | _
     }
 
+    /**
+     * This tests the implicit assignment of identity:tenant-access role to all tenants within a user's domain
+     *
+     * @return
+     */
+    def "List Tenants: Automatically returns all tenants within user's domain only if feature flag enabled" () {
+        given: "A new user and 2 tenants"
+        reloadableConfiguration.setProperty(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, "identity:tenant-access")
+        def adminToken = utils.getIdentityAdminToken()
+        def username = testUtils.getRandomUUID("name")
+        def domainId = testUtils.getRandomUUID("domainId")
+        def user = utils.createUser(adminToken, username, domainId)
+        def tenantId1 = testUtils.getRandomUUID("tenant")
+        def tenantId2 = testUtils.getRandomUUID("tenant")
+
+        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["type1"]).with {
+            it.domainId = domainId
+            it
+        })
+        def tenant2 = utils.createTenant(v2Factory.createTenant(tenantId2, tenantId2, ["type2"]).with {
+            it.domainId = domainId
+            it
+        })
+
+        def userToken = utils.getToken(username)
+
+        when: "List tenants w/ feature disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
+        def listTenantResponse = cloud20.listTenants(userToken)
+
+        then: "Do not have role auto assigned on tenants"
+        assert listTenantResponse.status == 200
+        def tenantsEntity = getTenantsFromResponse(listTenantResponse)
+        assert tenantsEntity.tenant.size == 0
+
+        when: "List tenants w/ feature enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
+        def listTenantResponse2 = cloud20.listTenants(userToken)
+
+        then: "Have role auto assigned on tenants"
+        assert listTenantResponse2.status == 200
+        def tenantsEntity2 = getTenantsFromResponse(listTenantResponse2)
+        assert tenantsEntity2.tenant.size == 2
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteDomain(domainId)
+        utils.deleteTenant(tenant1)
+        utils.deleteTenant(tenant2)
+    }
+
+    /**
+     * This tests the implicit assignment of identity:tenant-access role to all tenants within a user's domain excludes
+     * when user is assigned the same domain as the default tenant domain. This test assumes the default domain exists.
+     *
+     * @return
+     */
+    def "List Tenants: Automatic assignment of tenant access ignores tenants associated with default domain" () {
+        given: "A new user and 2 tenants"
+        reloadableConfiguration.setProperty(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, "identity:tenant-access")
+        def adminToken = utils.getIdentityAdminToken()
+        def username = testUtils.getRandomUUID("name")
+        def domainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId()
+        def user = utils.createUser(adminToken, username, domainId)
+        def tenantId1 = testUtils.getRandomUUID("tenant")
+
+        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["type1"]).with {
+            it.domainId = domainId
+            it
+        })
+
+        def userToken = utils.getToken(username)
+
+        when: "List tenants w/ feature disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
+        def listTenantResponse = cloud20.listTenants(userToken)
+
+        then: "Do not have role auto assigned on tenants"
+        assert listTenantResponse.status == 200
+        def tenantsEntity = getTenantsFromResponse(listTenantResponse)
+        assert tenantsEntity.tenant.size == 0
+
+        when: "List tenants w/ feature enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
+        def listTenantResponse2 = cloud20.listTenants(userToken)
+
+        then: "Do not have role auto assigned on tenants"
+        assert listTenantResponse2.status == 200
+        def tenantsEntity2 = getTenantsFromResponse(listTenantResponse2)
+        assert tenantsEntity2.tenant.size == 0
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteTenant(tenant1)
+    }
+
+
     def getTenant(response) {
         def tenant = response.getEntity(Tenant)
 

@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
-import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
@@ -23,6 +22,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
     def setup() {
         mockConfiguration(service)
+        mockIdentityConfig(service)
         mockDomainService(service)
         mockTenantDao(service)
         mockTenantRoleDao(service)
@@ -96,40 +96,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
         tenants == [ tenant ].asList()
         1 * tenantRoleDao.getTenantRolesForUser(_) >> tenantRoles
         1 * tenantDao.getTenant(_) >> tenant
-    }
-
-    def "hasTenantAccess returns false if user is null or tenantId is blank"() {
-        expect:
-        result == false
-
-        where:
-        result << [
-                service.hasTenantAccess(null, "tenantId"),
-                service.hasTenantAccess(entityFactory.createUser(), ""),
-                service.hasTenantAccess(entityFactory.createUser(), null)
-        ]
-    }
-
-    def "hasTenantAccess returns true if it contains tenant; false otherwise"() {
-        given:
-        def tenantRole = entityFactory.createTenantRole("tenantName").with { it.tenantIds = [ "tenantId" ]; return it }
-        def tenantRoles = [ tenantRole ].asList()
-        def tenantWithMatchingId = entityFactory.createTenant("tenantId", "noMatch")
-        def tenantWithMatchingName = entityFactory.createTenant("notTenantId", "match")
-        def user = entityFactory.createUser()
-
-        when:
-        def result1 = service.hasTenantAccess(user, "tenantId")
-        def result2 = service.hasTenantAccess(user, "tenantId")
-        def result3 = service.hasTenantAccess(user, "match")
-
-        then:
-        3 * tenantRoleDao.getTenantRolesForUser(_) >>> [ [].asList() ] >> tenantRoles
-        2 * tenantDao.getTenant(_) >>> [ tenantWithMatchingId, tenantWithMatchingName]
-
-        result1 == false
-        result2 == true
-        result3 == true
     }
 
     def "addCallerTenantRolesToUser gets callers tenant roles by userObject"() {
