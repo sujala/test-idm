@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
-import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -133,6 +133,7 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         assert usersEntity3.user.size == 2
 
         cleanup:
+        utils.deleteUserQuietly(subUser)
         utils.deleteUserQuietly(user)
         utils.deleteTestDomainQuietly(domainId)
         utils.deleteTenantQuietly(tenant1)
@@ -182,6 +183,79 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUserQuietly(user)
         utils.deleteTenantQuietly(tenant1)
+    }
+
+    @Unroll
+    def "listUsersOnTenantForRole: Allows searching on auto assignment role"() {
+        given: "A new user and 2 tenants"
+        reloadableConfiguration.setProperty(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, "identity:tenant-access")
+        def adminToken = utils.getIdentityAdminToken()
+        def username = testUtils.getRandomUUID("name")
+        def domainId = testUtils.getRandomUUID("domainId")
+        def user = utils.createUser(adminToken, username, domainId)
+        def userAdminToken = utils.getToken(username)
+
+        // Create subuser & explicitly assign the role
+        def subUser = utils.createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), domainId)
+
+        // Create tenant on which to test access
+        def tenantId1 = testUtils.getRandomUUID("tenant")
+        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["type1"]).with {
+            it.domainId = domainId
+            it
+        })
+
+        when: "List users for tenant w/ role when feature disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
+        def response = cloud20.listUsersWithTenantIdAndRole(adminToken, tenantId1, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID)
+
+        then: "Do not get back any users"
+        assert response.status == 200
+        def usersEntity = getUsersFromResponse(response)
+        assert usersEntity.user.size == 0
+
+        when: "Explicit assign role, then list users for tenant w/ role when feature disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
+        utils.addRoleToUserOnTenant(subUser, tenant1, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID)
+        response = cloud20.listUsersWithTenantIdAndRole(adminToken, tenantId1, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID)
+
+        then: "Get back the explicitly assigned user"
+        response.status == 200
+        def usersEntity2 = getUsersFromResponse(response)
+        usersEntity2.user.size == 1
+        usersEntity2.user[0].id == subUser.id;
+
+        when: "List users for tenant w/ feature enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
+        response = cloud20.listUsersWithTenantIdAndRole(adminToken, tenantId1, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID)
+
+        then: "All users in same domain are returned"
+        assert response.status == 200
+        def usersEntity3 = getUsersFromResponse(response)
+        usersEntity3.user.size == 2
+        usersEntity3.user.find {it.id == user.id} != null
+        usersEntity3.user.find {it.id == subUser.id} != null
+
+        when: "Add new subuser, list users for tenant w/ feature enabled returns new user"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
+        def subUser2 = utils.createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), domainId)
+        response = cloud20.listUsersWithTenantId(adminToken, tenantId1)
+
+        then: "User in same domain is returned"
+        assert response.status == 200
+        def usersEntity4 = getUsersFromResponse(response)
+        assert usersEntity4.user.size == 3
+
+        and: "order is based on id. lowest first"
+        assert usersEntity4.user[0].id.compareToIgnoreCase(usersEntity4.user[1].id) < 0
+        assert usersEntity4.user[1].id.compareToIgnoreCase(usersEntity4.user[2].id) < 0
+
+        cleanup:
+        utils.deleteUserQuietly(subUser2)
+        utils.deleteUserQuietly(subUser)
+        utils.deleteUserQuietly(user)
+        utils.deleteTenantQuietly(tenant1)
+        utils.deleteTestDomainQuietly(domainId)
     }
 
     def getUsersFromResponse(response) {

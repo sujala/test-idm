@@ -3622,7 +3622,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ClientRole role = checkAndGetClientRole(roleId);
 
-            PaginatorContext<User> pageContext = this.tenantService.getUsersWithTenantRole(tenant, role, marker, limit);
+            PaginatorContext<User> pageContext = this.tenantService.getEnabledUsersWithTenantRole(tenant, role, marker, limit);
             String linkHeader = userPaginator.createLinkHeader(uriInfo, pageContext);
 
             return Response.status(200)

@@ -40,7 +40,8 @@ class Constants {
     static def UPGRADE_USER_ELIGIBILITY_ROLE_ID = "a66e717ef5f011e5aa224f755bc52f48"
     static def UPGRADE_USER_ELIGIBILITY_ROLE_NAME = "identity:eligible-for-upgrade"
     static def PURGE_TRR_ROLE_ID = "6e567515bacb4ba18a04d99915198b55"
-    static def IDENTITY_ENDPOINT_RULE_ADMIN_ROLE_ID = "67f155a58ae841d28a745a99200a583a";
+    static def IDENTITY_ENDPOINT_RULE_ADMIN_ROLE_ID = "67f155a58ae841d28a745a99200a583a"
+    static def IDENTITY_TENANT_ACCESS_ROLE_ID = "51ce91246bfc4a5982f77b55fe786fa1"
 
     static def DEFAULT_GROUP = "Default"
 
