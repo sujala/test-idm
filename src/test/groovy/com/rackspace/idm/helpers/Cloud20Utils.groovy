@@ -257,7 +257,6 @@ class Cloud20Utils {
                 updateDomain(domainId, domain, saToken)
             }
             def response = methods.deleteDomain(getServiceAdminToken(), domainId)
-            assert (response.status == SC_NO_CONTENT)
         } catch (Exception ex) {
             //eat
         }
@@ -557,6 +556,15 @@ class Cloud20Utils {
     def deleteTenant(def tenant) {
         def response = methods.deleteTenant(getServiceAdminToken(), tenant.id)
         assert (response.status == SC_NO_CONTENT)
+    }
+
+    def deleteTenantQuietly(def tenant) {
+        try {
+            def response = methods.deleteTenant(getServiceAdminToken(), tenant.id)
+            assert (response.status == SC_NO_CONTENT)
+        } catch (Exception ex) {
+            //ignore
+        }
     }
 
     def deleteTenantById(String tenantId) {
