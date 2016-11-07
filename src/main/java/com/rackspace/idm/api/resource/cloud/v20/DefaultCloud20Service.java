@@ -3596,7 +3596,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Tenant tenant = tenantService.checkAndGetTenant(tenantId);
 
-            PaginatorContext<User> pageContext = this.tenantService.getUsersForTenant(tenant.getTenantId(), marker, limit);
+            PaginatorContext<User> pageContext = this.tenantService.getPaginatedEffectiveEnabledUsersForTenant(tenant.getTenantId(), marker, limit);
             String linkHeader = userPaginator.createLinkHeader(uriInfo, pageContext);
 
             return Response.status(200)

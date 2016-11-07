@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
@@ -50,6 +52,9 @@ public class DefaultTenantService implements TenantService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private IdentityUserService identityUserService;
 
     @Autowired
     private EndpointService endpointService;
@@ -694,13 +699,34 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public PaginatorContext<User> getUsersForTenant(String tenantId, int offset, int limit) {
+    public PaginatorContext<User> getPaginatedEffectiveEnabledUsersForTenant(String tenantId, int offset, int limit) {
         logger.debug("Getting Users for Tenant {}", tenantId);
+        List<User> users = getEffectiveEnabledUsersForTenant(tenantId);
+
+        // Sort the users by Id to provide for paging
+        Ordering<User> byId = Ordering.natural().onResultOf(
+                new Function<User, Comparable>() {
+                    public String apply(User user) {
+                        return StringUtils.lowerCase(user.getId());
+                    }
+                });
+        List<User> orderedUsers = byId.sortedCopy(users);
+
+        logger.debug("Got {} Users for Tenant {}", orderedUsers.size(), tenantId);
+        PaginatorContext<User> pageContext = new PaginatorContext<User>();
+        pageContext.update(orderedUsers, offset, limit);
+        return pageContext;
+    }
+
+    private List<User> getEffectiveEnabledUsersForTenant(String tenantId) {
         List<User> users = new ArrayList<User>();
+        Set<String> userIds = new HashSet<String>();
 
-        List<String> userIds = new ArrayList<String>();
+        Tenant tenant = getTenant(tenantId);
 
+        // Retrieve explicitly assigned roles on tenant
         for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenant(tenantId)) {
+            // TODO: This is inefficient. Uses userId on role for comparison, then uses logic to get userId based on DN
             if (!userIds.contains(role.getUserId())) {
                 String userId = tenantRoleDao.getUserIdForParent(role);
                 if(!StringUtils.isBlank(userId)){
@@ -709,8 +735,23 @@ public class DefaultTenantService implements TenantService {
             }
         }
 
-        Collections.sort(userIds, String.CASE_INSENSITIVE_ORDER);
+        // Retrieve all the enabled users on the tenant's domain, if appropriate
+        if (tenant != null && StringUtils.isNotBlank(tenant.getDomainId())
+                && identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()
+                && !tenant.getDomainId().equalsIgnoreCase(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
 
+            // Retrieve all provisioned users within domain as these users implicitly have access
+            // TODO: Update to retrieve Fed users
+            Iterable<User> domainUsers = userService.getUsersWithDomainAndEnabledFlag(tenant.getDomainId(), true);
+
+            // Iterate through the users, removing the userId from the list of users to found via explicit tenant role
+            for (User domainUser : domainUsers) {
+                users.add(domainUser);
+                userIds.remove(domainUser.getId());
+            }
+        }
+
+        // Look up any users from explicit assignment list that weren't already looked up due to implicit role
         for (String userId : userIds) {
             User user = this.userService.getUserById(userId);
             if (user != null && user.getEnabled()) {
@@ -718,10 +759,7 @@ public class DefaultTenantService implements TenantService {
             }
         }
 
-        logger.debug("Got {} Users for Tenant {}", users.size(), tenantId);
-        PaginatorContext<User> pageContext = new PaginatorContext<User>();
-        pageContext.update(users, offset, limit);
-        return pageContext;
+        return users;
     }
 
     @Override
