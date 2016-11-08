@@ -704,13 +704,7 @@ public class DefaultTenantService implements TenantService {
         List<User> users = getEffectiveEnabledUsersForTenant(tenantId);
 
         // Sort the users by Id to provide for paging
-        Ordering<User> byId = Ordering.natural().onResultOf(
-                new Function<User, Comparable>() {
-                    public String apply(User user) {
-                        return StringUtils.lowerCase(user.getId());
-                    }
-                });
-        List<User> orderedUsers = byId.sortedCopy(users);
+        List<User> orderedUsers = sortUsersById(users);
 
         logger.debug("Got {} Users for Tenant {}", orderedUsers.size(), tenantId);
         PaginatorContext<User> pageContext = new PaginatorContext<User>();
@@ -735,23 +729,18 @@ public class DefaultTenantService implements TenantService {
             }
         }
 
-        // Retrieve all the enabled users on the tenant's domain, if appropriate
-        if (tenant != null && StringUtils.isNotBlank(tenant.getDomainId())
-                && identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()
-                && !tenant.getDomainId().equalsIgnoreCase(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
-
-            // Retrieve all provisioned users within domain as these users implicitly have access
-            // TODO: Update to retrieve Fed users
-            Iterable<User> domainUsers = userService.getUsersWithDomainAndEnabledFlag(tenant.getDomainId(), true);
-
-            // Iterate through the users, removing the userId from the list of users to found via explicit tenant role
-            for (User domainUser : domainUsers) {
-                users.add(domainUser);
-                userIds.remove(domainUser.getId());
-            }
+        // Retrieve all the enabled users on the tenant's domain, if appropriate. Guaranteed to return a non-null list
+        List<User> domainUsersOnTenant = getUsersForAutoRoleAssignmentOnTenant(tenant);
+        /*
+          Iterate through the auto assigned users, removing the userId from the list of users with a role explicitly
+          assigned on the tenant to avoid looking up user needlessly
+        */
+        for (User domainUser : domainUsersOnTenant) {
+            users.add(domainUser);
+            userIds.remove(domainUser.getId());
         }
 
-        // Look up any users from explicit assignment list that weren't already looked up due to implicit role
+        // Look up any users from explicit assignment list that weren't already looked up due to auto assigned role
         for (String userId : userIds) {
             User user = this.userService.getUserById(userId);
             if (user != null && user.getEnabled()) {
@@ -810,33 +799,94 @@ public class DefaultTenantService implements TenantService {
         return tenantRoles;
     }
 
+    /**
+     * Whether or not the specified tenant is eligible for auto role assignment based on feature flag and tenant
+     * characteristics.
+     *
+     * @param tenant
+     * @return
+     */
+    private boolean isAutoAssignmentOfRoleEnabledForTenantDomain(Tenant tenant) {
+        return tenant != null && StringUtils.isNotBlank(tenant.getDomainId())
+                && identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()
+                && !tenant.getDomainId().equalsIgnoreCase(identityConfig.getReloadableConfig().getTenantDefaultDomainId());
+    }
+
+    /**
+     * Returns the list of provisioned users which should receive the auto assigned role. Checks for eligibility for
+     * auto-assignment first, and returns an empty list if not eligible.
+     *
+     * Only enabled users are eligible.
+     *
+     * TODO: Update to retrieve Fed users
+     *
+     * @param tenant
+     * @return
+     */
+    private List<User> getUsersForAutoRoleAssignmentOnTenant(Tenant tenant) {
+        List<User> users = Collections.EMPTY_LIST;
+        if (isAutoAssignmentOfRoleEnabledForTenantDomain(tenant)) {
+            users = new ArrayList<>();
+            Iterable<User> domainUsers = userService.getUsersWithDomainAndEnabledFlag(tenant.getDomainId(), true);
+            for (User domainUser : domainUsers) {
+                users.add(domainUser);
+            }
+        }
+        return users;
+    }
+
+    /**
+     * Sort the list of users based on the user's id.
+     *
+     * @param users
+     * @return
+     */
+    private List<User> sortUsersById(List<User> users) {
+        Ordering<User> byId = Ordering.natural().onResultOf(
+                new Function<User, Comparable>() {
+                    public String apply(User user) {
+                        return StringUtils.lowerCase(user.getId());
+                    }
+                });
+        List<User> orderedUsers = byId.sortedCopy(users);
+        return orderedUsers;
+    }
+
     @Override
-    public PaginatorContext<User> getUsersWithTenantRole(Tenant tenant, ClientRole cRole, int offset, int limit) {
+    public PaginatorContext<User> getEnabledUsersWithTenantRole(Tenant tenant, ClientRole cRole, int offset, int limit) {
         List<User> users = new ArrayList<User>();
 
-        List<String> userIds = new ArrayList<String>();
+        /*
+         If automatic assignment of role is enabled AND the specified role to search is the implicit assignment role
+         then just need to return all the domain users.
+          */
+        String autoRoleName = identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName();
+        if (StringUtils.equalsIgnoreCase(autoRoleName, cRole.getName())
+                && isAutoAssignmentOfRoleEnabledForTenantDomain(tenant)) {
 
-        for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.getTenantId(), cRole.getId())) {
-            if (!userIds.contains(role.getUserId())) {
+            users = getUsersForAutoRoleAssignmentOnTenant(tenant);
+        } else {
+            Set<String> userIds = new HashSet<String>();
+            for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.getTenantId(), cRole.getId())) {
                 userIds.add(role.getUserId());
             }
-        }
 
-        Collections.sort(userIds, String.CASE_INSENSITIVE_ORDER);
-
-        for (String userId : userIds) {
-            User user = this.userService.getUserById(userId);
-            if (user != null && user.getEnabled()) {
-                users.add(user);
+            for (String userId : userIds) {
+                User user = this.userService.getUserById(userId);
+                if (user != null && user.getEnabled()) {
+                    users.add(user);
+                }
             }
         }
 
-        logger.debug("Got {} Users for Tenant {}", users.size(),
+        // Sort the users by Id to provide for paging
+        List<User> orderedUsers = sortUsersById(users);
+
+        logger.debug("Got {} Users for Tenant {}", orderedUsers.size(),
                 tenant.getTenantId());
         PaginatorContext<User> pageContext = new PaginatorContext<User>();
-        pageContext.update(users, offset, limit);
+        pageContext.update(orderedUsers, offset, limit);
         return pageContext;
-
     }
 
     public boolean isTenantIdContainedInTenantRoles(String tenantId, List<TenantRole> roles){

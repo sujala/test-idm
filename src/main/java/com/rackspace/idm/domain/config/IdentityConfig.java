@@ -1785,7 +1785,16 @@ public class IdentityConfig {
 
         @IdmProp(key = FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, versionAdded = "3.8.0", description = "When true, automatically assigns the use the role specified by '" + AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP + "' on all tenants within the user's domain")
         public boolean isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP);
+            boolean featureEnabled = getBooleanSafely(reloadableConfiguration, FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP);
+
+            if (featureEnabled && StringUtils.isBlank(getAutomaticallyAssignUserRoleOnDomainTenantsRoleName())) {
+                // If feature is enabled, but the role name is blank, then the feature can't actually be enabled
+                logger.error(String.format("The feature '%s' is enabled, but the required property '%s' is not set. The" +
+                        "feature will be disabled.", FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP));
+                featureEnabled = false;
+            }
+
+            return featureEnabled;
         }
 
         @IdmProp(key = AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, versionAdded = "3.8.0", description = "When '" + FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP + "' is set to true, the role to automatically assign.")

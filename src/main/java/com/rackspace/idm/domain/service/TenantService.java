@@ -72,7 +72,7 @@ public interface TenantService {
     boolean allTenantsDisabledForUser(EndUser user);
 
     PaginatorContext<User> getPaginatedEffectiveEnabledUsersForTenant(String tenantId, int offset, int limit);
-    PaginatorContext<User> getUsersWithTenantRole(Tenant tenant, ClientRole role, int offset, int limit);
+    PaginatorContext<User> getEnabledUsersWithTenantRole(Tenant tenant, ClientRole role, int offset, int limit);
     List<TenantRole> getTenantRolesForTenant(String tenantId);
     boolean isTenantIdContainedInTenantRoles(String tenantId, List<TenantRole> roles);
 
