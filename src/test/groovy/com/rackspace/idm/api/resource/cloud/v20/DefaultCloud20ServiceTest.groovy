@@ -1846,58 +1846,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * user.getUsername() >> "username"
     }
 
-    def "isUserAdmin gets tenantRoles by user if role parameter is null and returns false"() {
-        given:
-        def user = entityFactory.createUser()
-        def roleList = [ entityFactory.createTenantRole() ].asList()
-
-        when:
-        def result = service.isUserAdmin(user)
-
-        then:
-        1 * tenantService.getTenantRolesForUser(user) >> roleList
-        result == false
-    }
-
-    def "isUserAdmin checks if user-admin role is in roleList"() {
-        given:
-        def user = entityFactory.createUser()
-        def roleList = [ entityFactory.createTenantRole("identity:user-admin") ].asList()
-
-        when:
-        def result = service.isUserAdmin(user)
-
-        then:
-        1 * tenantService.getTenantRolesForUser(user) >> roleList
-        result == true
-    }
-
-    def "isDefaultUser gets tenantRoles by user if role parameter is null and returns false"() {
-        given:
-        def user = entityFactory.createUser()
-        def roleList = [ entityFactory.createTenantRole() ].asList()
-
-        when:
-        def result = service.isDefaultUser(user)
-
-        then:
-        1 * tenantService.getTenantRolesForUser(user) >> roleList
-        result == false
-    }
-
-    def "isDefaultUser checks if user-admin role is in roleList"() {
-        given:
-        def user = entityFactory.createUser()
-        def roleList = [ entityFactory.createTenantRole("identity:default") ].asList()
-
-        when:
-        def result = service.isDefaultUser(user)
-
-        then:
-        1 * tenantService.getTenantRolesForUser(user) >> roleList
-        result == true
-    }
-
     def "addService checks if caller is service admin"() {
         when:
         def result = service.addService(headers, uriInfo(), authToken, null).build()

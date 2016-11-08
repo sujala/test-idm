@@ -502,6 +502,15 @@ public class DefaultUserService implements UserService {
         return user;
     }
 
+    /**
+     * This service does not use the new auto-assign role functionality for granting all users in a domain "access" to
+     * all tenants w/in the domain. This service should be updated to support, if required.
+     *
+     * @param tenantId
+     * @return
+     * @deprecated - The
+     */
+    @Deprecated
     @Override
     public Iterable<User> getUsersByTenantId(String tenantId) {
         logger.debug("Get list of users with tenant", tenantId);
@@ -519,6 +528,7 @@ public class DefaultUserService implements UserService {
     @Override
     public User getUserByTenantId(String tenantId) {
         logger.debug("Getting user by tenantId: {}", tenantId);
+        // TODO: Note - this does NOT use the new auto-assignment methods.
         Iterable<User> users = getUsersByTenantId(tenantId);
 
         User result = null;

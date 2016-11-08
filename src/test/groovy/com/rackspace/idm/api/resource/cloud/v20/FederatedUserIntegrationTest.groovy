@@ -192,6 +192,80 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
+    def "Fed user includes auto-assigned roles on authenticate when enabled"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        //specify assertion with no roles
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+
+        when: "auth w/ feature disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains appropriate content and no auto-assigned roles"
+        samlResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse disabledAuthResponse = samlResponse.getEntity(AuthenticateResponse).value
+        verifyResponseFromSamlRequest(disabledAuthResponse, username, userAdminEntity)
+        def roles0 = disabledAuthResponse.user.roles.role
+        roles0.size() == 3
+        def mossoRole0 = roles0.find {it.id == Constants.MOSSO_ROLE_ID}
+        mossoRole0 != null
+        def nastRole0 = roles0.find {it.id == Constants.NAST_ROLE_ID}
+        nastRole0 != null
+
+        roles0.find {it.id == Constants.DEFAULT_USER_ROLE_ID} != null
+        roles0.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == mossoRole0.tenantId} == null
+        roles0.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == nastRole0.tenantId} == null
+
+        when: "auth with feature enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
+        samlResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then: "Response contains appropriate content and auto-assigned roles"
+        samlResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        verifyResponseFromSamlRequest(authResponse, username, userAdminEntity)
+        def roles = authResponse.user.roles.role
+        roles.size() == 5
+        def mossoRole = roles.find {it.id == Constants.MOSSO_ROLE_ID}
+        mossoRole != null
+        def nastRole = roles.find {it.id == Constants.NAST_ROLE_ID}
+        nastRole != null
+
+        roles.find {it.id == Constants.DEFAULT_USER_ROLE_ID} != null
+        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == mossoRole.tenantId} != null
+        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == nastRole.tenantId} != null
+
+        when: "validate the token w/ feature enabled"
+        def validateSamlTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), authResponse.token.id)
+
+        then: "the token is still valid and returns auto-assigned roles"
+        validateSamlTokenResponse.status == 200
+        AuthenticateResponse valResponse = validateSamlTokenResponse.getEntity(AuthenticateResponse).value
+        def roles2 = valResponse.user.roles.role
+        roles2.size() == 5
+        def mossoRole2 = roles2.find {it.id == Constants.MOSSO_ROLE_ID}
+        mossoRole2 != null
+        def nastRole2 = roles2.find {it.id == Constants.NAST_ROLE_ID}
+        nastRole2 != null
+
+        roles2.find {it.id == Constants.DEFAULT_USER_ROLE_ID} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == mossoRole2.tenantId} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == nastRole2.tenantId} != null
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
+        reloadableConfiguration.reset()
+    }
+
     def "Can handle attribute values without datatype specified"() {
         given:
         def domainId = utils.createDomain()

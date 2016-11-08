@@ -2,14 +2,21 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.User
 import org.apache.commons.httpclient.HttpStatus
+import org.apache.commons.lang.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenants
+import org.openstack.docs.identity.api.v2.UnauthorizedFault
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
+
+import java.util.regex.Pattern
 
 class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
@@ -314,6 +321,80 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         cleanup:
         utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
+    def "Auth with PWD: Returns auto-assigned role and allows auth against tenant w/o role based on feature enabled" () {
+        given:
+        //get all tenants (nast + mosso)
+        Tenants tenants = cloud20.getDomainTenants(serviceAdminToken, domainId).getEntity(Tenants).value
+        def mossoTenant = tenants.tenant.find {
+            it.id == domainId
+        }
+        def nastTenant = tenants.tenant.find() {
+            it.id != domainId
+        }
+
+        // Create a "faws" tenant w/ in domain
+        def fawsTenantId = RandomStringUtils.randomAlphanumeric(9)
+        def fawsTenantCreate = v2Factory.createTenant(fawsTenantId, fawsTenantId).with {
+            it.domainId = mossoTenant.domainId
+            it
+        }
+        def fawsTenant = utils.createTenant(fawsTenantCreate);
+
+        def mossoAuthRequest = v2Factory.createPasswordAuthenticationRequestWithTenantId(userAdmin.username, Constants.DEFAULT_PASSWORD, mossoTenant.id)
+        def nastAuthRequest = v2Factory.createPasswordAuthenticationRequestWithTenantId(userAdmin.username, Constants.DEFAULT_PASSWORD, nastTenant.id)
+        def fawsAuthRequest = v2Factory.createPasswordAuthenticationRequestWithTenantId(userAdmin.username, Constants.DEFAULT_PASSWORD, fawsTenant.id)
+
+        when: "Auth w/ pwd w/o auto assigned enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
+        def response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
+
+        then:
+        AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
+        def roles = authResponse.user.roles.role
+        roles.size() == 3
+        roles.find {it.id == Constants.MOSSO_ROLE_ID} != null
+        roles.find {it.id == Constants.NAST_ROLE_ID} != null
+        roles.find {it.id == Constants.USER_ADMIN_ROLE_ID} != null
+        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID} == null
+
+        and: "User can auth with mosso/nast tenant"
+        cloud20.authenticate(mossoAuthRequest).status == HttpStatus.SC_OK
+        cloud20.authenticate(nastAuthRequest).status == HttpStatus.SC_OK
+
+        and: "User can not auth w/ faws tenant"
+        IdmAssert.assertOpenStackV2FaultResponseWithMessagePattern(cloud20.authenticate(fawsAuthRequest)
+                , UnauthorizedFault, HttpStatus.SC_UNAUTHORIZED, Pattern.compile("^Tenant with Name/Id.*"))
+
+        when: "Auth w/ pwd w auto assigned enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
+        def response2 = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
+
+        then: "Tenant access roles returned for all tenants"
+        AuthenticateResponse authResponse2 = response2.getEntity(AuthenticateResponse).value
+        def roles2 = authResponse2.user.roles.role
+        roles2.size() == 6
+        roles2.find {it.id == Constants.MOSSO_ROLE_ID} != null
+        roles2.find {it.id == Constants.NAST_ROLE_ID} != null
+        roles2.find {it.id == Constants.USER_ADMIN_ROLE_ID} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == mossoTenant.id} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == nastTenant.id} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == fawsTenant.id} != null
+
+        and: "User can auth with mosso/nast tenant"
+        cloud20.authenticate(mossoAuthRequest).status == HttpStatus.SC_OK
+        cloud20.authenticate(nastAuthRequest).status == HttpStatus.SC_OK
+
+        and: "User can also auth w/ faws tenant"
+        cloud20.authenticate(fawsAuthRequest).status == HttpStatus.SC_OK
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenantQuietly(mossoTenant)
+        utils.deleteTenantQuietly(nastTenant)
+        utils.deleteTenantQuietly(fawsTenant)
         utils.deleteDomain(domainId)
     }
 

@@ -19,20 +19,25 @@ import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
+import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.IdentityFault
+import org.openstack.docs.identity.api.v2.Tenants
+import org.openstack.docs.identity.api.v2.UnauthorizedFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.junit.IgnoreByRepositoryProfile
 import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
+import java.util.regex.Pattern
 
 import static com.rackspace.idm.Constants.*
 import static org.apache.http.HttpStatus.*
@@ -90,7 +95,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     }
 
     def "User with validate-token-global role can validate user tokens" () {
-        utils.createUserAdmin()
         def users
         def userAdmin
         (userAdmin, users) = utils.createUserAdmin()
@@ -757,6 +761,67 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+    }
+
+    def "Auth with PWD: Returns auto-assigned role and allows auth against tenant w/o role based on feature enabled" () {
+        given:
+        def saToken = utils.getServiceAdminToken()
+
+        def users
+        def userAdmin
+        (userAdmin, users) = utils.createUserAdminWithTenants()
+
+        //get all tenants (nast + mosso)
+        Tenants tenants = cloud20.getDomainTenants(saToken, userAdmin.domainId).getEntity(Tenants).value
+        def mossoTenant = tenants.tenant.find {
+            it.id == userAdmin.domainId
+        }
+        def nastTenant = tenants.tenant.find() {
+            it.id != userAdmin.domainId
+        }
+
+        // Create a "faws" tenant w/ in domain
+        def fawsTenantId = RandomStringUtils.randomAlphanumeric(9)
+        def fawsTenantCreate = v2Factory.createTenant(fawsTenantId, fawsTenantId).with {
+            it.domainId = mossoTenant.domainId
+            it
+        }
+        def fawsTenant = utils.createTenant(fawsTenantCreate);
+
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
+        def token = utils.getToken(userAdmin.username, Constants.DEFAULT_PASSWORD)
+
+        when: "validate token w/o auto assigned enabled"
+        AuthenticateResponse valResponse = utils.validateToken(saToken, token)
+
+        then: "validate response does not include tenant access"
+        def roles = valResponse.user.roles.role
+        roles.size() == 3
+        roles.find {it.id == Constants.MOSSO_ROLE_ID} != null
+        roles.find {it.id == Constants.NAST_ROLE_ID} != null
+        roles.find {it.id == Constants.USER_ADMIN_ROLE_ID} != null
+        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID} == null
+
+        when: "validate token w/ auto assigned enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
+        AuthenticateResponse valResponse3 = utils.validateToken(saToken, token)
+
+        then: "validate response include tenant access"
+        def roles2 = valResponse3.user.roles.role
+        roles2.size() == 6
+        roles2.find {it.id == Constants.MOSSO_ROLE_ID} != null
+        roles2.find {it.id == Constants.NAST_ROLE_ID} != null
+        roles2.find {it.id == Constants.USER_ADMIN_ROLE_ID} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == mossoTenant.id} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == nastTenant.id} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == fawsTenant.id} != null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenantQuietly(mossoTenant)
+        utils.deleteTenantQuietly(nastTenant)
+        utils.deleteTenantQuietly(fawsTenant)
+        utils.deleteDomain(userAdmin.domainId)
     }
 
     def getContactIdFromValidateResponse(validateResponse) {

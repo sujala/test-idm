@@ -1921,6 +1921,20 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    /**
+     * This feature was developed, but never enabled as it hasn't been fully tested by QE.
+     *
+     * It is no more efficient than the existing v1.1 version of the same
+     * name. The purpose was simply to allow users to use a 'v2.0' branded service rather than a 'v1.1'. Don't enable
+     * this service unless for a very good reason...
+     *
+     * @param httpHeaders
+     * @param authToken
+     * @param tenantId
+     * @return
+     * @deprecated
+     */
+    @Deprecated
     @Override
     public ResponseBuilder getUserByTenantId(HttpHeaders httpHeaders, String authToken, String tenantId) {
         try {
@@ -2210,30 +2224,6 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
-    }
-
-    boolean isUserAdmin(User user) {
-        List<TenantRole> tenantRoleList = tenantService.getTenantRolesForUser(user);
-        boolean hasRole = false;
-        for (TenantRole tenantRole : tenantRoleList) {
-            String name = tenantRole.getName();
-            if (name.equals("identity:user-admin")) {
-                hasRole = true;
-            }
-        }
-        return hasRole;
-    }
-
-    boolean isDefaultUser(User user) {
-        List<TenantRole> tenantRoleList = tenantService.getTenantRolesForUser(user);
-        boolean hasRole = false;
-        for (TenantRole tenantRole : tenantRoleList) {
-            String name = tenantRole.getName();
-            if (name.equals("identity:default")) {
-                hasRole = true;
-            }
-        }
-        return hasRole;
     }
 
     @Override
