@@ -3531,6 +3531,107 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | false
     }
 
+    def "Authentication include endpoints using endpoint rules when only have implicit role" () {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, true)
+
+        def random = UUID.randomUUID().toString().replace("-", "")
+
+        // Create the user & domain
+        def domainId = "domain$random"
+        def username = "username$random"
+        def createUser = utils.createUser(identityAdminToken, username, domainId)
+
+        // Add a tenant to the domain
+        def tenantType = "mosso"
+        def tenant = v2Factory.createTenant("12345$random", "12345$random", [tenantType]).with {it.domainId = domainId; it}
+        def addTenant = utils.createTenant(tenant)
+
+        // Create endpoint template and rule associating mosso tenant type to endpoint
+        def endpointId = testUtils.getRandomInteger().toString()
+        def publicUrl = "http://apple.$random"
+        def createEndpointTemplate = utils.createEndpointTemplate(v1Factory.createEndpointTemplate(endpointId, "compute", publicUrl, "cloudServers"))
+        def createEndpointRule = utils.addEndpointTemplateAssignmentRule(identityAdminToken, v2Factory.createTenantTypeEndpointRule(tenantType, [endpointId]))
+
+        when: "Authenticate with auto-assignment disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, false)
+        AuthenticateResponse authenticateResponse = utils.authenticate(createUser)
+        def service = authenticateResponse.serviceCatalog.service.find {it.name.equals("cloudServers")}
+
+        then: "Then service catalog does not include service"
+        service == null
+
+        when: "Authenticate with auto-assignment enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, true)
+        authenticateResponse = utils.authenticate(createUser)
+        service = authenticateResponse.serviceCatalog.service.find {it.name.equals("cloudServers")}
+
+        then: "Then service catalog includes service"
+        service != null
+        service.endpoint.find {it.publicURL.startsWith(publicUrl)} != null
+
+        cleanup:
+        try {
+            cloud20.deleteEndpointAssignmentRule(serviceAdminToken, createEndpointRule.id)
+            cloud20.destroyUser(serviceAdminToken, createUser.id)
+            cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+            cloud20.deleteEndpointTemplate(serviceAdminToken, createEndpointTemplate.id.toString())
+        } catch (Exception ex) {
+            //eat
+        }
+    }
+
+    def "List endpoints for Token include endpoints using endpoint rules when only have implicit role" () {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, true)
+
+        def random = UUID.randomUUID().toString().replace("-", "")
+
+        // Create the user & domain
+        def domainId = "domain$random"
+        def username = "username$random"
+        def createUser = utils.createUser(identityAdminToken, username, domainId)
+
+        // Add a tenant to the domain
+        def tenantType = "mosso"
+        def tenant = v2Factory.createTenant("12345$random", "12345$random", [tenantType]).with {it.domainId = domainId; it}
+        def addTenant = utils.createTenant(tenant)
+
+        // Create endpoint template and rule associating mosso tenant type to endpoint
+        def endpointId = testUtils.getRandomInteger().toString()
+        def publicUrl = "http://pear.$random"
+        def createEndpointTemplate = utils.createEndpointTemplate(v1Factory.createEndpointTemplate(endpointId, "compute", publicUrl, "cloudServers"))
+        def createEndpointRule = utils.addEndpointTemplateAssignmentRule(identityAdminToken, v2Factory.createTenantTypeEndpointRule(tenantType, [endpointId]))
+
+        def uaToken = utils.getToken(username) // User-Admin token
+
+        when: "List Endpoints for Token with auto-assignment disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, false)
+        def endpointList = utils.getEndpointsForToken(uaToken)
+
+        then: "Then response does not include endpoint"
+        endpointList.endpoint != null
+        endpointList.endpoint.find {it.publicURL.startsWith(publicUrl)} == null
+
+        when: "List Endpoints for Token with auto-assignment enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, true)
+        endpointList = utils.getEndpointsForToken(uaToken)
+
+        then: "Then response includes endpoint"
+        endpointList.endpoint != null
+        endpointList.endpoint.find {it.publicURL.startsWith(publicUrl)} != null
+
+        cleanup:
+        try {
+            cloud20.deleteEndpointAssignmentRule(serviceAdminToken, createEndpointRule.id)
+            cloud20.destroyUser(serviceAdminToken, createUser.id)
+            cloud20.deleteTenant(serviceAdminToken, addTenant.id)
+            cloud20.deleteEndpointTemplate(serviceAdminToken, createEndpointTemplate.id.toString())
+        } catch (Exception ex) {
+            //eat
+        }
+    }
+
     @Unroll
     def "duplicate endpoints removed based on endpoint rules: content-type=#contentType useEndpointRules=#useEndpointRules" () {
         given:
