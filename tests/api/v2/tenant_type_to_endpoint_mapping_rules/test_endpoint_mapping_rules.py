@@ -303,6 +303,9 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
                 resp, rules.add_tenant_type_to_endpoint_mapping_rule)
             self.assertHeaders(
                 resp, *self.header_validation_functions_HTTP_201)
+            if not description:
+                self.assertNotIn(const.DESCRIPTION, resp.json()[
+                    const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE])
 
     @ddt.data([], None, '')
     def test_create_mapping_rules_with_different_endpoint_ids(
