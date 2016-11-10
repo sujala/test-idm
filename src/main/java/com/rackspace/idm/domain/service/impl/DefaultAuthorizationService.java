@@ -598,8 +598,6 @@ public class DefaultAuthorizationService implements AuthorizationService {
             clientRoleIds.add(role.getId());
         }
 
-        tenantService.getTenantRolesForUser(user);
-
         for (String roleId : clientRoleIds) {
             if (tenantService.doesUserContainTenantRole(user, roleId)) {
                 return true;

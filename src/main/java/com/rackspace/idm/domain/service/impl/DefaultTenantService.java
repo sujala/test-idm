@@ -22,6 +22,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -227,6 +228,8 @@ public class DefaultTenantService implements TenantService {
      * assigned on tenants and, if enabled, the automatically assigned "access" role to all tenants within the user's
      * domain.
      *
+     * The returned roles are NOT necessarily populated with "role details" such as name, propagation status, etc.
+     *
      * @param user
      * @return
      */
@@ -249,29 +252,83 @@ public class DefaultTenantService implements TenantService {
              */
             Domain domain = domainService.getDomain(user.getDomainId());
             String[] tenantIds = domain.getTenantIds();
-            if (ArrayUtils.isNotEmpty(tenantIds)) {
-                // Get the autoassigned role. Must be an "identity:" product role so it's cached. Otherwise performance
-                // will be bad
-                ImmutableClientRole autoAssignedRole = authorizationService
-                        .getCachedIdentityRoleByName(identityConfig.getReloadableConfig()
-                                .getAutomaticallyAssignUserRoleOnDomainTenantsRoleName());
-                if (autoAssignedRole != null) {
-                    // Add the autoassigned role for all tenants in domain.
-                    TenantRole implicitRole = new TenantRole();
-                    implicitRole.setName(autoAssignedRole.getName());
-                    implicitRole.setDescription(autoAssignedRole.getDescription());
-                    implicitRole.setClientId(autoAssignedRole.getClientId());
-                    implicitRole.setPropagate(autoAssignedRole.getPropagate());
-                    implicitRole.setRoleRsId(autoAssignedRole.getId());
-                    implicitRole.setUserId(user.getId());
-                    Collections.addAll(implicitRole.getTenantIds(), tenantIds);
 
-                    userTenantRoles.add(implicitRole);
-                }
+            // Generate the tenant role to add
+            TenantRole implicitRole = createTenantRoleForAutoAssignment(user, tenantIds);
+            if (implicitRole != null) {
+                userTenantRoles.add(implicitRole);
             }
         }
-
         return userTenantRoles;
+    }
+
+
+    /**
+     * Create a dynamic tenant role based on auto-assignment logic for the specified user and tenants.
+     *
+     * The autoassigned role must be a non-propagating "identity:" product role. If not an identity
+     * role, performance will be bad since it's not cached. If a propagating role, it will end up getting
+     * errantly explicitly assigned to newly created subusers and federated users as roles are copied from
+     * user-admins.
+     *
+     * @param user
+     * @param tenantIds
+     * @return
+     */
+    private TenantRole createTenantRoleForAutoAssignment(BaseUser user, String[] tenantIds) {
+        TenantRole implicitRole = null;
+
+        if (ArrayUtils.isNotEmpty(tenantIds)) {
+            // Load the auto-assigned role from cache
+            ImmutableClientRole autoAssignedRole = getAutoAssignedRole();
+
+            if (autoAssignedRole != null) {
+                // Add the autoassigned role for all tenants in domain.
+                implicitRole = new TenantRole();
+                implicitRole.setName(autoAssignedRole.getName());
+                implicitRole.setDescription(autoAssignedRole.getDescription());
+                implicitRole.setClientId(autoAssignedRole.getClientId());
+                implicitRole.setPropagate(autoAssignedRole.getPropagate());
+                implicitRole.setRoleRsId(autoAssignedRole.getId());
+                implicitRole.setUserId(user.getId());
+                Collections.addAll(implicitRole.getTenantIds(), tenantIds);
+            }
+        }
+        return implicitRole;
+    }
+
+    private ImmutableClientRole getAutoAssignedRole() {
+        ImmutableClientRole autoAssignedRole = null;
+
+        if (identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()) {
+            autoAssignedRole = authorizationService
+                    .getCachedIdentityRoleByName(identityConfig.getReloadableConfig()
+                            .getAutomaticallyAssignUserRoleOnDomainTenantsRoleName());
+
+            if (autoAssignedRole == null) {
+                logger.warn(String.format("The auto-assign role '%s' is invalid. Not found in identity role cache.", autoAssignedRole.getName()));
+            } else if (BooleanUtils.isTrue(autoAssignedRole.getPropagate())) {
+                logger.warn(String.format("The auto-assign role '%s' is invalid. Propagating roles are not allowed.", autoAssignedRole.getName()));
+                autoAssignedRole = null; // Null out role as role is not valid
+            }
+        }
+        return autoAssignedRole;
+    }
+
+    /**
+     * Retrieves all the roles associated with the user, but fully populated with all the tenant details such as role
+     * name, propagation, description, etc that are stored in the "client role" rather than that "tenant role"
+     *
+     * @param user
+     * @return
+     */
+    private List<TenantRole> getEffectiveTenantRolesForUserFullyPopulated(BaseUser user) {
+        // Get the full set of tenant roles for the user
+        List<TenantRole> tenantRoles = getEffectiveTenantRolesForUser(user);
+
+        // Update all the tenant roles from that stored in the client role
+        List<TenantRole> populatedTenantRoles = getRoleDetails(tenantRoles);
+        return populatedTenantRoles;
     }
 
     @Override
@@ -643,8 +700,7 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public List<TenantRole> getTenantRolesForUser(BaseUser user) {
-        Iterable<TenantRole> roles = getTenantRolesForUserNoDetail(user);
-        return getRoleDetails(roles);
+        return getEffectiveTenantRolesForUserFullyPopulated(user);
     }
 
     public Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user) {

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.config;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.migration.ChangeType;
@@ -1783,21 +1784,29 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP);
         }
 
-        @IdmProp(key = FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, versionAdded = "3.8.0", description = "When true, automatically assigns the use the role specified by '" + AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP + "' on all tenants within the user's domain")
+        @IdmProp(key = FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, versionAdded = "3.8.0", description = "When true, automatically assigns the user the identity product role specified by '" + AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP + "' on all tenants within the user's domain")
         public boolean isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() {
             boolean featureEnabled = getBooleanSafely(reloadableConfiguration, FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP);
 
-            if (featureEnabled && StringUtils.isBlank(getAutomaticallyAssignUserRoleOnDomainTenantsRoleName())) {
-                // If feature is enabled, but the role name is blank, then the feature can't actually be enabled
-                logger.error(String.format("The feature '%s' is enabled, but the required property '%s' is not set. The" +
-                        "feature will be disabled.", FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP));
-                featureEnabled = false;
+            if (featureEnabled) {
+                if (StringUtils.isBlank(getAutomaticallyAssignUserRoleOnDomainTenantsRoleName())) {
+                    // If feature is enabled, but the role name is blank, then the feature can't actually be enabled
+                    logger.error(String.format("The feature '%s' is enabled, but the required property '%s' is not set. The" +
+                            "feature will be disabled.", FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP));
+                    featureEnabled = false;
+                } else if (!getAutomaticallyAssignUserRoleOnDomainTenantsRoleName().startsWith(GlobalConstants.IDENTITY_ROLE_PREFIX)) {
+                    // If feature is enabled, the role name must be an identity product role
+                    logger.error(String.format("The feature '%s' is enabled, but the required property '%s' is not set " +
+                            "to a valid identity product role. The" +
+                            "feature will be disabled.", FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP));
+                    featureEnabled = false;
+                }
             }
 
             return featureEnabled;
         }
 
-        @IdmProp(key = AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, versionAdded = "3.8.0", description = "When '" + FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP + "' is set to true, the role to automatically assign.")
+        @IdmProp(key = AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, versionAdded = "3.8.0", description = "When '" + FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP + "' is set to true, the identity product role to automatically assign.")
         public String getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() {
             return getStringSafely(reloadableConfiguration, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP);
         }

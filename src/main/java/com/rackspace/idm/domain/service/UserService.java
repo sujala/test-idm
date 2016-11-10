@@ -74,6 +74,12 @@ public interface UserService {
     
     Iterable<User> getUsersByTenantId(String tenantId);
 
+    /**
+     * Retrieve the first user-admin found that is associated with the specified tenantId
+     *
+     * @param tenantId
+     * @return
+     */
     User getUserByTenantId(String tenantId);
 
     Applications getUserApplications(User user);
