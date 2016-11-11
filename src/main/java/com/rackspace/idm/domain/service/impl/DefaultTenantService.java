@@ -298,10 +298,7 @@ public class DefaultTenantService implements TenantService {
             if (autoAssignedRole != null) {
                 // Add the autoassigned role for all tenants in domain.
                 implicitRole = new TenantRole();
-                implicitRole.setName(autoAssignedRole.getName());
-                implicitRole.setDescription(autoAssignedRole.getDescription());
                 implicitRole.setClientId(autoAssignedRole.getClientId());
-                implicitRole.setPropagate(autoAssignedRole.getPropagate());
                 implicitRole.setRoleRsId(autoAssignedRole.getId());
                 implicitRole.setUserId(user.getId());
                 Collections.addAll(implicitRole.getTenantIds(), tenantIds);
@@ -689,15 +686,19 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getTenantRolesForUserOnTenant(EndUser user, Tenant tenant) {
+    public List<TenantRole> getEffectiveTenantRolesForUserOnTenant(EndUser user, Tenant tenant) {
         if (tenant == null) {
             throw new IllegalArgumentException(
                     "Tenant cannot be null.");
         }
 
         logger.debug(GETTING_TENANT_ROLES);
+
+        // Original code didn't return fully populated roles (e.g. role names) so continue just returning minimal info
+        List<TenantRole> allRoles = getEffectiveTenantRolesForUser(user);
+
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
-        for (TenantRole role : this.tenantRoleDao.getTenantRolesForUser(user)) {
+        for (TenantRole role : allRoles) {
             if (role.getTenantIds().contains(tenant.getTenantId())) {
                 TenantRole newRole = new TenantRole();
                 newRole.setClientId(role.getClientId());
@@ -922,24 +923,29 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public PaginatorContext<User> getEnabledUsersWithTenantRole(Tenant tenant, ClientRole cRole, int offset, int limit) {
+    public PaginatorContext<User> getEnabledUsersWithEffectiveTenantRole(Tenant tenant, ClientRole cRole, int offset, int limit) {
         List<User> users = new ArrayList<User>();
 
         /*
          If automatic assignment of role is enabled AND the specified role to search is the implicit assignment role
-         then just need to return all the domain users.
-          */
+         then include all the domain users.
+        */
         String autoRoleName = identityConfig.getReloadableConfig().getAutomaticallyAssignUserRoleOnDomainTenantsRoleName();
-        if (StringUtils.equalsIgnoreCase(autoRoleName, cRole.getName())
-                && isAutoAssignmentOfRoleEnabledForTenantDomain(tenant)) {
+        if (StringUtils.equalsIgnoreCase(autoRoleName, cRole.getName())) {
+            users.addAll(getUsersForAutoRoleAssignmentOnTenant(tenant));
+        }
 
-            users = getUsersForAutoRoleAssignmentOnTenant(tenant);
-        } else {
-            Set<String> userIds = new HashSet<String>();
-            for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.getTenantId(), cRole.getId())) {
-                userIds.add(role.getUserId());
+        // Get list of users that are explicitly assigned this role on tenant. This could include users in other domains
+        Set<String> userIds = new HashSet<String>();
+        for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.getTenantId(), cRole.getId())) {
+            userIds.add(role.getUserId());
+        }
+
+        // Loop through domain users, removing from list of explicit to avoid looking up twice, and look up remaining
+        if (CollectionUtils.isNotEmpty(userIds)) {
+            for (User user : users) {
+                userIds.remove(user.getId());
             }
-
             for (String userId : userIds) {
                 User user = this.userService.getUserById(userId);
                 if (user != null && user.getEnabled()) {
