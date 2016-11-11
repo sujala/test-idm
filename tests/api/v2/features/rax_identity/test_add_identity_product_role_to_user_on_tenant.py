@@ -220,6 +220,8 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         :param user:
         :return:
         """
+        if not self.test_config.run_service_admin_tests:
+            self.skipTest('Skipping Service Admin Tests per config value')
         if user is 'identity-admin':
             user_id = self.identity_admin_client.default_headers[
                 const.X_USER_ID]
@@ -260,7 +262,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
 
             # delete role from tenant
             del_resp = (
-                self.identity_admin_client.delete_role_from_user_for_tenant(
+                self.service_admin_client.delete_role_from_user_for_tenant(
                     tenant_id=tenant_id, user_id=user_id, role_id=role_id
                 )
             )
