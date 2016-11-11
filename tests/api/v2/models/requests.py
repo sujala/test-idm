@@ -5,19 +5,23 @@ from tests.api import constants as const
 
 
 class AuthenticateWithApiKey(base.AutoMarshallingModel):
-    """Marshalling for Authentications requests with API Key."""
+    """Marshalling for Authentications requests with API Key.
+        Tenant_id and tenant_name as optional (either or none but not both)
+    """
 
-    def __init__(self, user_name, api_key):
+    def __init__(self, user_name, api_key, tenant_id=None, tenant_name=None):
         self.user_name = user_name
         self.api_key = api_key
+        self.tenant_id = tenant_id
+        self.tenant_name = tenant_name
 
     def _obj_to_json(self):
-        get_token_request = {
-            const.AUTH: {
-                const.NS_API_KEY_CREDENTIALS: {
-                    const.USERNAME: self.user_name,
-                    const.API_KEY: self.api_key}
-            }}
+        get_token_request = {const.AUTH: {const.NS_API_KEY_CREDENTIALS: {
+            const.USERNAME: self.user_name, const.API_KEY: self.api_key}}}
+        if self.tenant_id:
+            get_token_request[const.AUTH][const.TENANT_ID] = self.tenant_id
+        if self.tenant_name:
+            get_token_request[const.AUTH][const.TENANT_NAME] = self.tenant_name
         return json.dumps(get_token_request)
 
     def _obj_to_xml(self):
@@ -25,27 +29,40 @@ class AuthenticateWithApiKey(base.AutoMarshallingModel):
         etree.SubElement(
             auth, const.API_KEY_CREDENTIALS, xmlns=const.XMLNS_RAX_KSKEY,
             username=self.user_name, apiKey=self.api_key)
+        if self.tenant_id:
+            etree.SubElement(auth, tenantId=self.tenant_id)
+        if self.tenant_name:
+            etree.SubElement(auth, tenantName=self.tenant_name)
         return etree.tostring(auth)
 
 
 class AuthenticateWithPassword(base.AutoMarshallingModel):
-    """Marshalling for Authentications requests with Password."""
+    """Marshalling for Authentications requests with Password.
+        Auth with with username/password
+        Tenant_id and tenant_name as optional (either or none but not both)
+    """
 
-    def __init__(self, user_name, password):
+    def __init__(self, user_name, password, tenant_id=None, tenant_name=None):
         self.user_name = user_name
         self.password = password
+        self.tenant_id = tenant_id
+        self.tenant_name = tenant_name
 
     def _obj_to_json(self):
-        get_token_request = {
-            const.AUTH: {
-                const.PASSWORD_CREDENTIALS: {
-                    const.USERNAME: self.user_name,
-                    const.PASSWORD: self.password}
-            }}
+        get_token_request = {const.AUTH: {const.PASSWORD_CREDENTIALS: {
+            const.USERNAME: self.user_name, const.PASSWORD: self.password}}}
+        if self.tenant_id:
+            get_token_request[const.AUTH][const.TENANT_ID] = self.tenant_id
+        if self.tenant_name:
+            get_token_request[const.AUTH][const.TENANT_NAME] = self.tenant_name
         return json.dumps(get_token_request)
 
     def _obj_to_xml(self):
         auth = etree.Element(const.AUTH)
+        if self.tenant_id:
+            etree.SubElement(auth, tenantId=self.tenant_id)
+        if self.tenant_name:
+            etree.SubElement(auth, tenantName=self.tenant_name)
         etree.SubElement(
             auth, const.PASSWORD_CREDENTIALS, xmlns=const.XMLNS,
             username=self.user_name, password=self.password)
@@ -54,6 +71,7 @@ class AuthenticateWithPassword(base.AutoMarshallingModel):
 
 class AuthenticateWithTenantUserPassword(AuthenticateWithPassword):
     """Marshalling for Authentications requests with Tenant/User/Pass."""
+    # TODO: Deprecate
     def __init__(self, user_name, password, tenant_id=None, tenant_name=None):
         super(self.__class__, self).__init__(user_name, password)
         self.tenant_id = tenant_id
@@ -75,6 +93,7 @@ class AuthenticateWithTenantUserPassword(AuthenticateWithPassword):
 
 class AuthenticateWithTenantUserApikey(base.AutoMarshallingModel):
     """Marshalling for Authentications requests with Tenant/User/Apikey."""
+    # TODO: Deprecate
     def __init__(self, user_name, api_key, tenant_id=None, tenant_name=None):
         self.user_name = user_name
         self.api_key = api_key
@@ -96,7 +115,7 @@ class AuthenticateWithTenantUserApikey(base.AutoMarshallingModel):
 
 class TenantWithTokenAuth(base.AutoMarshallingModel):
     """Marshalling for Authentications requests as tenant with token."""
-
+    # TODO: Deprecate
     def __init__(self, token_id, tenant_id=None, tenant_name=None):
         self.token_id = token_id
         self.tenant_id = tenant_id
@@ -110,6 +129,33 @@ class TenantWithTokenAuth(base.AutoMarshallingModel):
                 const.TOKEN: {
                     const.ID: self.token_id}
             }}
+        return json.dumps(tenant_with_token_auth)
+
+    def _obj_to_xml(self):
+        raise Exception("Not implemented yet")
+
+
+class AuthenticateAsTenantWithToken(base.AutoMarshallingModel):
+    """Marshalling for Authentications requests as tenant with token.
+        auth token with either tenant_id of tenant_name or none but noth both
+    """
+    def __init__(self, token_id, tenant_id=None, tenant_name=None):
+        self.token_id = token_id
+        self.tenant_id = tenant_id
+        self.tenant_name = tenant_name
+
+    def _obj_to_json(self):
+        tenant_with_token_auth = {const.AUTH: {
+            const.TOKEN: {const.ID: self.token_id}}}
+
+        if self.tenant_id:
+            tenant_with_token_auth[const.AUTH][const.TENANT_ID] = (
+                self.tenant_id
+            )
+        if self.tenant_name:
+            tenant_with_token_auth[const.AUTH][const.TENANT_NAME] = (
+                self.tenant_name
+            )
         return json.dumps(tenant_with_token_auth)
 
     def _obj_to_xml(self):
@@ -717,6 +763,9 @@ class Tenant(base.AutoMarshallingModel):
         if self.description:
             add_tenant_request[const.TENANT][const.DESCRIPTION] = (
                 self.description)
+        if self.domain_id:
+            add_tenant_request[const.TENANT][const.RAX_AUTH_DOMAIN_ID] = (
+                self.domain_id)
         if self.enabled:
             add_tenant_request[const.TENANT][const.ENABLED] = self.enabled
         elif self.enabled is False:
@@ -739,6 +788,8 @@ class Tenant(base.AutoMarshallingModel):
         if self.description:
             desc = etree.SubElement(add_tenant_request, const.DESCRIPTION)
             desc.text = self.description
+        if self.domain_id:
+            add_tenant_request.set(const.RAX_AUTH_DOMAIN_ID, self.domain_id)
         if self.enabled:
             if self.enabled.lower() == 'true':
                 add_tenant_request.set(const.ENABLED, 'true')

@@ -5,6 +5,9 @@
 '''URLs'''
 ADD_ROLE_TO_USER_FOR_TENANT_URL = DEL_ROLE_FROM_USER_FOR_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/{role_id}')
+ADD_TENANT_TO_DOMAIN_URL = DELETE_TENANT_FROM_DOMAIN_URL = (
+    '/RAX-AUTH/domains/{domain_id}/tenants/{tenant_id}')
+GET_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/tenants'
 USER_URL = '/users'
 ROLES_URL = '/OS-KSADM/roles'
 GROUPS_URL = '/RAX-GRPADM/groups'
@@ -39,7 +42,11 @@ DELETE_ENDPOINT_FROM_TENANT_URL = (
     '/tenants/{tenant_id}/OS-KSCATALOG/endpoints/{endpoint_template_id}')
 LIST_ENDPOINTS_FOR_TOKEN_URL = '/tokens/{token_id}/endpoints'
 ADD_TENANT_URL = LIST_TENANTS = '/tenants'
+LIST_ROLES_FOR_USER_ON_TENANT_URL = (
+    '/tenants/{tenant_id}/users/{user_id}/roles')
 LIST_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/tenants'
+LIST_USERS_FOR_TENANT_URL = '/tenants/{tenant_id}/users'
+LIST_USERS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/users'
 UPDATE_TENANT_URL = DELETE_TENANT_URL = GET_TENANT_URL = (
     '/tenants/{tenant_id}')
 
@@ -302,6 +309,12 @@ UA = 'http://feeds.api.rackspacecloud.com/cadf/user-access-event'
 '''CONSTANTS'''
 AUTH_BY_LIST = ['APIKEY']
 DC_LIST = ['DFW', 'SYD', 'IAD', 'HKG', 'LON', 'ORD']
+LIST_ENDPOINT_NAMES_FOR_MOSSO_TENANT = ['cloudMonitoring',
+                                        'cloudLoadBalancers',
+                                        'cloudBlockStoragePreprod',
+                                        'cloudDatabases', 'cloudDNS',
+                                        'cloudServers', 'cloudServersPreprod']
+LIST_ENDPOINT_NAMES_FOR_NAST_TENANT = ['cloudFiles', 'cloudFilesCDN']
 
 '''PROPERTIES'''
 IDM_RELOADABLE_PROPERTIES = 'idm.reloadable.properties'
@@ -317,16 +330,20 @@ EXPECTED_UNBOUNDID_TIMEOUT_CONFIGS = [
 '''ROLES'''
 ENDPOINT_RULE_ADMIN_ROLE_NAME = 'identity:endpoint-rule-admin'
 IDENTITY_ADMIN_ROLE_ID = '1'
+OBJECT_STORE_ROLE_NANE = 'object-store:default'
+SERVICE_ADMIN_ROLE_ID = '4'
+TENANT_ACCESS_ROLE_NAME = 'identity:tenant-access'
 USER_ADMIN_ROLE_ID = '2'
 USER_DEFAULT_ROLE_ID = '3'
 USER_MANAGER_ROLE_ID = '7'
-SERVICE_ADMIN_ROLE_ID = '4'
-TENANT_ACCESS_ROLE_NAME = 'identity:tenant-access'
-
 
 '''FEATURE FLAGS'''
 FEATURE_FLAG_FOR_ENDPOINTS_BASED_ON_RULES = (
     'feature.include.endpoints.based.on.rules')
+AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME = (
+    'auto.assign.role.on.domain.tenants.role.name')
+FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS = (
+    'feature.auto.assign.role.on.domain.tenants')
 FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
     "feature.endpoint.template.disable.name.type")
 FEATURE_FLAG_ALLOW_TENANT_NAME_UPDATE = (
@@ -339,3 +356,4 @@ FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE = (
     'feature.restrict.user.manager.list.users.by.email.usage')
 FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE = (
     'feature.restrict.user.manager.list.users.by.name.usage')
+TENANT_DEFAULT_DOMAIN = 'tenant.domainId.default'
