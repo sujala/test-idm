@@ -2417,7 +2417,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             }
 
-            List<TenantRole> roles = this.tenantService.getTenantRolesForUserOnTenant(user, tenant);
+            List<TenantRole> roles = this.tenantService.getEffectiveTenantRolesForUserOnTenant(user, tenant);
 
             return Response.ok(
                     objFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
@@ -3612,7 +3612,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ClientRole role = checkAndGetClientRole(roleId);
 
-            PaginatorContext<User> pageContext = this.tenantService.getEnabledUsersWithTenantRole(tenant, role, marker, limit);
+            PaginatorContext<User> pageContext = this.tenantService.getEnabledUsersWithEffectiveTenantRole(tenant, role, marker, limit);
             String linkHeader = userPaginator.createLinkHeader(uriInfo, pageContext);
 
             return Response.status(200)

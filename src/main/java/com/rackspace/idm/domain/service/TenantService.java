@@ -54,7 +54,7 @@ public interface TenantService {
     List<TenantRole> getGlobalRolesForUser(BaseUser user);
     List<TenantRole> getRbacRolesForUser(EndUser user);
     List<TenantRole> getGlobalRolesForUser(EndUser user, String applicationId);
-    List<TenantRole> getTenantRolesForUserOnTenant(EndUser user, Tenant tenant);
+    List<TenantRole> getEffectiveTenantRolesForUserOnTenant(EndUser user, Tenant tenant);
     List<TenantRole> getTenantRolesForUser(BaseUser user);
     Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user);
 
@@ -72,7 +72,7 @@ public interface TenantService {
     boolean allTenantsDisabledForUser(EndUser user);
 
     PaginatorContext<User> getPaginatedEffectiveEnabledUsersForTenant(String tenantId, int offset, int limit);
-    PaginatorContext<User> getEnabledUsersWithTenantRole(Tenant tenant, ClientRole role, int offset, int limit);
+    PaginatorContext<User> getEnabledUsersWithEffectiveTenantRole(Tenant tenant, ClientRole role, int offset, int limit);
     List<TenantRole> getTenantRolesForTenant(String tenantId);
     boolean isTenantIdContainedInTenantRoles(String tenantId, List<TenantRole> roles);
 

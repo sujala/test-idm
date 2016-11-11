@@ -1,10 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import org.apache.commons.configuration.Configuration
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
@@ -151,7 +154,6 @@ class ListRolesOnTenantTest extends RootIntegrationTest {
         deleteUserQuietly(defaultUser)
         deleteTenantQuietly(tenant)
         deleteRoleQuietly(role)
-
     }
 
     def "User Admin CANNOT list user roles on tenants"() {
@@ -206,6 +208,38 @@ class ListRolesOnTenantTest extends RootIntegrationTest {
         cleanup:
         deleteUserQuietly(userAdmin)
         deleteUserQuietly(defaultUser)
+    }
+
+    def "List Roles on Tenant returns auto-assigned roles for a user"() {
+        def userAdmin = createUserAdmin()
+        def userAdminToken = authenticate(userAdmin.username)
+        def tenant = v2Factory.createTenant("tenant" + getNormalizedRandomString(), "tenantName" + getNormalizedRandomString()).with {
+            it.domainId = userAdmin.domainId
+            it
+        }
+        def addedTenant = utils.createTenant(tenant)
+
+        when: "implicit tenant role assignment disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
+        RoleList listUserRoleOnTenant = cloud20.listRolesForUserOnTenant(specificationIdentityAdminToken, addedTenant.id, userAdmin.id).getEntity(RoleList).value
+
+        then:
+        listUserRoleOnTenant != null
+        listUserRoleOnTenant.role.size() == 0
+
+        when: "implicit tenant role assignment enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
+        listUserRoleOnTenant = cloud20.listRolesForUserOnTenant(specificationIdentityAdminToken, addedTenant.id, userAdmin.id).getEntity(RoleList).value
+
+        then:
+        listUserRoleOnTenant != null
+        listUserRoleOnTenant.role.size() == 1
+        listUserRoleOnTenant.role[0].id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID
+
+        cleanup:
+        deleteUserQuietly(userAdmin)
+        deleteTenantQuietly(tenant)
+        reloadableConfiguration.reset()
     }
 
     def deleteUserQuietly(user) {
