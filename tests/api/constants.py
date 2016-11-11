@@ -3,7 +3,7 @@
 '''This contains all constants using in api test. '''
 
 '''URLs'''
-ADD_ROLE_TO_USER_FOR_TENANT_URL = (
+ADD_ROLE_TO_USER_FOR_TENANT_URL = DEL_ROLE_FROM_USER_FOR_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/{role_id}')
 USER_URL = '/users'
 ROLES_URL = '/OS-KSADM/roles'
@@ -76,7 +76,7 @@ DOMAIN_PATTERN = '[a-z]{8}'
 DOMAIN_TEST = 'meow'
 EMAIL_RANDOM = 'randome@rackspace.com'
 ID_PATTERN = '[\d]{8}'
-IDENTITY_PROD_ROLE_NAME_PATTERN = 'identity:testrole[\-][\d\w]{8}'
+IDENTITY_PRODUCT_ROLE_NAME_PATTERN = 'identity:testrole[\-][\d\w]{8}'
 LOWER_CASE_LETTERS = '[a-z]{8}'
 MD5_PATTERN = '[a-f][0-9]{40}'
 MIXED_CASE_LETTERS = '[A-Z][a-z]{8}'
@@ -310,7 +310,11 @@ EXPECTED_UNBOUNDID_TIMEOUT_CONFIGS = [
 
 '''ROLES'''
 ENDPOINT_RULE_ADMIN_ROLE_NAME = 'identity:endpoint-rule-admin'
+SERVICE_ADMIN_ROLE_ID = '4'
+SERVICE_ADMIN_ROLE_NAME = 'identity:service-admin'
+TENANT_ACCESS_ROLE_NAME = 'identity:tenant-access'
 USER_MANAGER_ROLE_ID = '7'
+USER_MANAGER_ROLE_NAME = 'identity:user-manager'
 
 '''FEATURE FLAGS'''
 FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (

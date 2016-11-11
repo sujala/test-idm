@@ -903,6 +903,21 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def delete_role_from_user_for_tenant(self, tenant_id, user_id, role_id,
+                                         requestslib_kwargs=None):
+        """ Return response object from the delete role to user on tenant
+            no response body
+        DELETE /v2.0/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/(
+        role_id}
+        :return: 204 no response body
+        """
+        url = self.url + const.DEL_ROLE_FROM_USER_FOR_TENANT_URL.format(
+            tenant_id=tenant_id, user_id=user_id, role_id=role_id
+        )
+        resp = self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
     def verify_cors(self, method, url, headers=None, requestslib_kwargs=None):
         """
         Support calls to verify CORS headers enable in Identity

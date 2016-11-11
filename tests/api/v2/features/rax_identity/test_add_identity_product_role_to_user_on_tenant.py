@@ -32,21 +32,9 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
 
     def setUp(self):
         super(TestAddIdentityProdRoleToUserOnTenant, self).setUp()
-        # hard code to get specific service for compute
-        self.SERVICE_NAME = 'Cloud Auth Service'
-        self.service_id = self.get_service_id_by_name(
-            service_name=self.SERVICE_NAME)
         self.role_ids = []
-        self.service_ids = []
         self.user_ids = []
         self.tenant_ids = []
-
-    def get_service_id_by_name(self, service_name):
-        option = {'name': service_name}
-        resp = self.identity_admin_client.list_services(option=option)
-        self.assertEqual(resp.status_code, 200)
-        service_id = resp.json()[const.NS_SERVICES][0][const.ID]
-        return service_id
 
     def create_user(self, parent_client):
         request_object = factory.get_add_user_request_object()
@@ -69,11 +57,10 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         self.tenant_ids.append(tenant_id)
         return tenant_id, resp
 
-    def create_role(self, service_id):
+    def create_role(self):
         role_name = self.generate_random_string(
-            pattern=const.IDENTITY_PROD_ROLE_NAME_PATTERN)
-        role_object = factory.get_add_role_request_object(
-            role_name=role_name, service_id=service_id)
+            pattern=const.IDENTITY_PRODUCT_ROLE_NAME_PATTERN)
+        role_object = factory.get_add_role_request_object(role_name=role_name)
         resp = self.identity_admin_client.add_role(request_object=role_object)
         self.assertEqual(resp.status_code, 201)
         role_id = resp.json()[const.ROLE][const.ID]
@@ -90,7 +77,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             role_id = resp.json()[const.ROLES][0][const.ID]
         return role_id
 
-    @ddt.data('user-identity-admin', 'user-admin', 'user-default')
+    @ddt.data('identity-admin', 'user-admin', 'user-default')
     def test_add_identity_product_role_to_user_admin_on_tenant(self, user):
         """
         Verify allow to add identity product roles to user on tenant
@@ -100,9 +87,12 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             - get identity Service
             - create identity product role
             - add role to user on tenant
+            - auth and verify role is added
+            - remove role from user for tenant
+            - auth and verify role is removed
         :return:
         """
-        if user is 'user-identity-admin':
+        if user is 'identity-admin':
             user_id = self.identity_admin_client.default_headers[
                 const.X_USER_ID]
             user_name = self.identity_config.identity_admin_user_name
@@ -122,12 +112,8 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         # create tenant
         tenant_id, tenant_resp = self.create_tenant()
 
-        # get identity service id
-        service_id = self.get_service_id_by_name(
-            service_name=self.SERVICE_NAME)
-
         # create identity product role
-        role_id = self.create_role(service_id=service_id)
+        role_id = self.create_role()
 
         # add role to user on tenant
         add_resp = self.identity_admin_client.add_role_to_user_for_tenant(
@@ -142,12 +128,85 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         self.assertIn(role_id, str(auth_resp.json()[const.ACCESS][const.USER][
             const.ROLES]))
 
+        # delete role from tenant
+        del_resp = self.identity_admin_client.delete_role_from_user_for_tenant(
+            tenant_id=tenant_id, user_id=user_id, role_id=role_id
+        )
+        self.assertEqual(del_resp.status_code, 204)
+
+        # verify role is removed
+        auth_resp = self.identity_admin_client.get_auth_token(
+            user=user_name, password=password)
+        self.assertEqual(auth_resp.status_code, 200)
+        self.assertNotIn(role_id, str(auth_resp.json()[const.ACCESS][
+                                          const.USER][const.ROLES]))
+
+    @ddt.data('identity-admin', 'user-admin', 'user-default')
+    def test_add_identity_tenant_access_role(self, user):
+        """
+        Verify able to add 'identity:tenant-access' role to user for tenant
+        :param user:
+        :return:
+        """
+        if user is 'identity-admin':
+            user_id = self.identity_admin_client.default_headers[
+                const.X_USER_ID]
+            user_name = self.identity_config.identity_admin_user_name
+            password = self.identity_config.identity_admin_password
+        elif user is 'user-default':
+            # create sub user
+            user_id, user_resp = self.create_user(
+                parent_client=self.user_admin_client)
+            user_name = user_resp.json()[const.USER][const.USERNAME]
+            password = user_resp.json()[const.USER][const.NS_PASSWORD]
+        else:
+            user_id, user_resp = self.create_user(
+                parent_client=self.identity_admin_client)
+            user_name = user_resp.json()[const.USER][const.USERNAME]
+            password = user_resp.json()[const.USER][const.NS_PASSWORD]
+
+        # create tenant
+        tenant_id, tenant_resp = self.create_tenant()
+
+        # get tenant-access role
+        role_id = self.get_role_by_name(
+            role_name=const.TENANT_ACCESS_ROLE_NAME)
+
+        if role_id:
+            # add role to user on tenant
+            add_resp = self.service_admin_client.add_role_to_user_for_tenant(
+                tenant_id=tenant_id, user_id=user_id, role_id=role_id
+            )
+            self.assertEqual(add_resp.status_code, 200)
+
+            # verify role added
+            auth_resp = self.identity_admin_client.get_auth_token(
+                user=user_name, password=password)
+            self.assertEqual(auth_resp.status_code, 200)
+            self.assertIn(role_id, str(auth_resp.json()[const.ACCESS][
+                                           const.USER][const.ROLES]))
+
+            # delete role from tenant
+            del_resp = (
+                self.identity_admin_client.delete_role_from_user_for_tenant(
+                    tenant_id=tenant_id, user_id=user_id, role_id=role_id
+                )
+            )
+            self.assertEqual(del_resp.status_code, 204)
+
+            # verify role is removed
+            auth_resp = self.identity_admin_client.get_auth_token(
+                user=user_name, password=password)
+            self.assertEqual(auth_resp.status_code, 200)
+            self.assertNotIn(role_id, str(auth_resp.json()[const.ACCESS][
+                                              const.USER][const.ROLES]))
+
     @ddt.data('identity:default', 'identity:admin', 'identity:user-admin',
               'identity:service-admin', 'identity:user-manager')
     def test_add_identity_user_classification_and_feature_roles(self,
                                                                 role_name):
         """
-        Verify not allow to add user-classification role
+        Verify not allow to add user-classification roles
         :param role_name:
         :return: 403
         """
@@ -161,15 +220,15 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         tenant_id, tenant_resp = self.create_tenant()
 
         # get role id
-        if role_name == 'identity:service-admin':
-            role_id = '4'
-        elif role_name == 'identity:user-manager':
-            role_id = '7'
+        if role_name == const.SERVICE_ADMIN_ROLE_NAME:
+            role_id = const.SERVICE_ADMIN_ROLE_ID
+        elif role_name == const.USER_MANAGER_ROLE_NAME:
+            role_id = const.USER_MANAGER_ROLE_ID
         else:
             role_id = self.get_role_by_name(role_name=role_name)
 
         # add role to user on tenant
-        add_resp = self.identity_admin_client.add_role_to_user_for_tenant(
+        add_resp = self.service_admin_client.add_role_to_user_for_tenant(
             tenant_id=tenant_id, user_id=user_id, role_id=role_id
         )
         self.assertEqual(add_resp.status_code, 403)
