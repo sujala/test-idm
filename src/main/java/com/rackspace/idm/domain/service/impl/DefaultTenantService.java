@@ -2,7 +2,9 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+import com.google.common.collect.Sets;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
@@ -234,11 +236,8 @@ public class DefaultTenantService implements TenantService {
      * @return
      */
     private List<TenantRole> getEffectiveTenantRolesForUser(BaseUser user) {
-        // Get a list of explicit tenant roles assigned
-        Iterable<TenantRole> itTenantRoles = this.tenantRoleDao.getTenantRolesForUser(user);
-        List<TenantRole> userTenantRoles = Lists.newArrayList(itTenantRoles);
-
         // If enabled, auto-assign access role to all tenants within user's domain
+        TenantRole implicitRole = null;
         if (StringUtils.isNotBlank(user.getDomainId())
                 && identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()
                 && !user.getDomainId().equalsIgnoreCase(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
@@ -254,14 +253,28 @@ public class DefaultTenantService implements TenantService {
             String[] tenantIds = domain.getTenantIds();
 
             // Generate the tenant role to add
-            TenantRole implicitRole = createTenantRoleForAutoAssignment(user, tenantIds);
-            if (implicitRole != null) {
-                userTenantRoles.add(implicitRole);
-            }
+            implicitRole = createTenantRoleForAutoAssignment(user, tenantIds);
         }
+
+        // Get a list of explicit tenant roles assigned and turn into a list to return
+        Iterable<TenantRole> itTenantRoles = this.tenantRoleDao.getTenantRolesForUser(user);
+
+        List<TenantRole> userTenantRoles = new ArrayList<>();
+        boolean insertImplicitRole = implicitRole != null;
+        for (TenantRole explicitTenantRole : itTenantRoles) {
+            if (implicitRole != null && explicitTenantRole.getRoleRsId().equalsIgnoreCase(implicitRole.getRoleRsId())) {
+                // Need to union the implicit tenants to any explicitly assigned tenants
+                explicitTenantRole.getTenantIds().addAll(implicitRole.getTenantIds());
+                insertImplicitRole = false;
+            }
+            userTenantRoles.add(explicitTenantRole);
+        }
+        if (insertImplicitRole) {
+            userTenantRoles.add(implicitRole);
+        }
+
         return userTenantRoles;
     }
-
 
     /**
      * Create a dynamic tenant role based on auto-assignment logic for the specified user and tenants.

@@ -398,6 +398,83 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
+    /**
+     * If the role specified as the auto-assigned implicit role to grant on every tenant within user's domain is already
+     * assigned as an explicit role on the user for same tenant, the role is only returned once for that tenant
+     * @return
+     */
+    def "Auth with PWD: Auto-assigned role is merged with explicit role when enabled" () {
+        given:
+        //get all tenants (nast + mosso)
+        Tenants tenants = cloud20.getDomainTenants(serviceAdminToken, domainId).getEntity(Tenants).value
+        def mossoTenant = tenants.tenant.find {
+            it.id == domainId
+        }
+        def nastTenant = tenants.tenant.find() {
+            it.id != domainId
+        }
+
+        // Create a "faws" tenant w/ in domain
+        def fawsTenantId = RandomStringUtils.randomAlphanumeric(9)
+        def fawsTenantCreate = v2Factory.createTenant(fawsTenantId, fawsTenantId).with {
+            it.domainId = mossoTenant.domainId
+            it
+        }
+        def fawsTenant = utils.createTenant(fawsTenantCreate);
+
+        //create a faws tenant in a different domain
+        def externalTenantId = RandomStringUtils.randomAlphanumeric(9)
+        def externalDomain = utils.createDomainEntity()
+        def externalTenant = v2Factory.createTenant(externalTenantId, externalTenantId).with {
+            it.domainId = externalDomain.id
+            it
+        }
+        def externalTenantCreate = utils.createTenant(externalTenant);
+
+        // Explicitly add tenant access role to internal and external tenants
+        utils.addRoleToUserOnTenantId(userAdmin, fawsTenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID)
+        utils.addRoleToUserOnTenantId(userAdmin, externalTenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID)
+
+        when: "Auth w/ pwd w/o auto assigned enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
+        def response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
+
+        then: "User has tenant access role on internal and external tenant"
+        AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
+        def roles = authResponse.user.roles.role
+        roles.size() == 5
+        roles.find {it.id == Constants.MOSSO_ROLE_ID} != null
+        roles.find {it.id == Constants.NAST_ROLE_ID} != null
+        roles.find {it.id == Constants.USER_ADMIN_ROLE_ID} != null
+        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == fawsTenantId} != null
+        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == externalTenantId} != null
+        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == mossoTenant.id} == null
+        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == nastTenant.id} == null
+
+        when: "Auth w/ pwd w auto assigned enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
+        def response2 = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
+
+        then: "Tenant access roles returned for all tenants"
+        AuthenticateResponse authResponse2 = response2.getEntity(AuthenticateResponse).value
+        def roles2 = authResponse2.user.roles.role
+        roles2.size() == 7
+        roles2.find {it.id == Constants.MOSSO_ROLE_ID} != null
+        roles2.find {it.id == Constants.NAST_ROLE_ID} != null
+        roles2.find {it.id == Constants.USER_ADMIN_ROLE_ID} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == fawsTenantId} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == externalTenantId} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == mossoTenant.id} != null
+        roles2.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == nastTenant.id} != null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenantQuietly(mossoTenant)
+        utils.deleteTenantQuietly(nastTenant)
+        utils.deleteTenantQuietly(fawsTenant)
+        utils.deleteDomain(domainId)
+    }
+
     def void assertHasServiceCatalog(response) {
         AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
 
