@@ -526,6 +526,9 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
     def "auth call not should display admin urls in service catalog for admin user - userKeyCredentials" () {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         String adminUrl = "http://adminUrl"
         String key = "1234567890"
         def mossoId = -1 * getRandomNumber(1000000, 2000000);

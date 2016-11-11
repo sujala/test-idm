@@ -313,6 +313,15 @@ public class IdentityConfig {
     public static final String AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP = "auto.assign.role.on.domain.tenants.role.name";
     public static final String AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT = "identity:tenant-access";
 
+    public static final String FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_PROP = "feature.restrict.create.user.in.default.domain";
+    public static final boolean FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_DEFAULT = true;
+
+    public static final String FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_PROP = "feature.restrict.create.user.in.disabled.domain";
+    public static final boolean FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_DEFAULT = true;
+
+    public static final String FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP = "feature.restrict.create.user.in.domain.with.users";
+    public static final boolean FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -599,6 +608,9 @@ public class IdentityConfig {
         defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_DEFAULT);
         defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE_DEFAULT);
         defaults.put(FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT);
+        defaults.put(FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_PROP, FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_DEFAULT);
+        defaults.put(FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_PROP, FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_DEFAULT);
+        defaults.put(FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_DEFAULT);
 
         defaults.put(FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_DEFAULT);
         defaults.put(AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT);
@@ -1809,6 +1821,21 @@ public class IdentityConfig {
         @IdmProp(key = AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, versionAdded = "3.8.0", description = "When '" + FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP + "' is set to true, the identity product role to automatically assign.")
         public String getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() {
             return getStringSafely(reloadableConfiguration, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP);
+        }
+
+        @IdmProp(key = FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_PROP, versionAdded = "3.8.0", description = "When true, generic account and cloud account creating cannot be created in a default domain")
+        public boolean restrictCreateUserInDefaultDomain() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_PROP);
+        }
+
+        @IdmProp(key = FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_PROP, versionAdded = "3.8.0", description = "When true, generic account and cloud account creating cannot be created in a disabled domain")
+        public boolean restrictCreateUserInDisabledDomain() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_PROP);
+        }
+
+        @IdmProp(key = FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP , versionAdded = "3.8.0", description = "When true, generic account and cloud account creating cannot be created in domain with users")
+        public boolean restrictCreateUserInDomainWithUsers() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP );
         }
     }
 

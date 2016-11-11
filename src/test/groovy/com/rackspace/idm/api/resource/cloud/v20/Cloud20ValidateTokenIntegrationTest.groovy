@@ -590,6 +590,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     @Unroll
     def "validate token returns contact ID for service and Identity Admins, userType = #userType, accept = #accept, request = #request"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId = utils.createDomain()
         def contactId = testUtils.getRandomUUID("contactId")
         def username = testUtils.getRandomUUID("defaultUser")

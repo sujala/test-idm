@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.Racker;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
+import com.rackspace.idm.domain.service.impl.CreateUserUtil;
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;

@@ -45,8 +45,7 @@ public class CreateSubUserService implements CreateUserService {
     public User setDefaultsAndCreateUser(org.openstack.docs.identity.api.v2.User userForCreate, User userForDefaults) {
         User user = this.userConverterCloudV20.fromUser(userForCreate);
         setUserDefaults(user, userForDefaults);
-        //creating a sub-user so always a one-user call but do not provision the mosso and nast
-        userService.addUserV20(user, true, false);
+        userService.addSubUserV20(user, CreateUserUtil.isCreateUserOneCall(userForCreate));
         return user;
     }
 

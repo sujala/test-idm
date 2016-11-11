@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.Constants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -15,9 +16,14 @@ import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
+import org.apache.commons.httpclient.HttpStatus
 import org.apache.commons.lang.RandomStringUtils
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.ForbiddenFault
+import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,6 +31,7 @@ import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+import testHelpers.IdmAssert
 
 import javax.ws.rs.core.MediaType
 
@@ -39,6 +46,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
     @Autowired def UserService userService
     @Autowired def Configuration config
     @Autowired def EndpointService endpointService
+    @Autowired def DomainDao domainDao
 
     def setup() {
         identityAdminToken = utils.getIdentityAdminToken()
@@ -289,6 +297,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
     def "Allow more than one userAdmin per domain" () {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
@@ -354,6 +363,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
 
     def "Subuser can be created in domain with 2 existing user-admins" () {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def userAdmin2Region = "DFW"
         def userAdmin3Region = "ORD"
         def domainId = utils.createDomain()
@@ -674,6 +684,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
     def "a default user CAN be added by identity admin in domain with a disabled user-admin IF there is also an enabled user-admin"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId = utils.createDomain()
         def username1 = testUtils.getRandomUUID("defaultUser")
         def userAdmin1, users1
@@ -705,6 +716,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "#userType setting contact ID on user on create, #userType, accept = #accept, request = #request"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId = utils.createDomain()
         def contactId = testUtils.getRandomUUID("contactId")
         def username = testUtils.getRandomUUID("defaultUser")
@@ -1236,9 +1248,10 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUserQuietly(idmAdmin)
     }
 
-    def "cannot create user admin in one call if mosso or nast tenants already exist"() {
+    def "can create user admin in one call if mosso or nast tenants already exist"() {
         given:
         def domainId = utils.createDomain()
+        def domain = v2Factory.createDomain(domainId, domainId)
         def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.secretQA = v2Factory.createSecretQA()
             it
@@ -1247,19 +1260,23 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def nastTenantId = utils.getNastTenant(domainId)
 
         when: "create the mosso tenant and try to create the user in one-call"
-        utils.createTenant(mossoTenantId)
+        utils.createDomain(domain)
+        utils.createTenant(mossoTenantId, true, mossoTenantId, domainId)
         def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+        def user = response.getEntity(User).value
 
-        then: "error"
-        response.status == 400
+        then: "User created"
+        response.status == 201
 
-        when: "delete the mosso tenant, create the nast tenant, and try to create the user again"
+        when: "delete the tenants and user, create the nast tenant, and try to create the user again"
         utils.deleteTenant(mossoTenantId)
-        utils.createTenant(nastTenantId)
+        utils.deleteTenant(nastTenantId)
+        utils.deleteUser(user)
+        utils.createTenant(nastTenantId, true, nastTenantId, domainId)
         response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
 
-        then: "error"
-        response.status == 400
+        then: "User created"
+        response.status == 201
     }
 
     @Unroll
@@ -1288,6 +1305,245 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE | MediaType.APPLICATION_JSON_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Can not create a new account in the default domain: useOneCall = #useOneCall"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_PROP, true)
+        def domainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId()
+        reloadableConfiguration.getProperty(DefaultUserService.NAST_TENANT_PREFIX_PROP_NAME)
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            if (useOneCall) {
+                it.secretQA = v2Factory.createSecretQA()
+            }
+            it
+        }
+
+        when: "try to create the user in one-call"
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+
+        then: "forbidden"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultUserService.ERROR_MSG_NEW_ACCOUNT_IN_DEFAULT_DOMAIN)
+
+        where:
+        useOneCall  | _
+        true        | _
+        false       | _
+    }
+
+    @Unroll
+    def "Can not create a new account in a disabled domain: useOneCall = #useOneCall"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v2Factory.createDomain(domainId, domainId).with {
+            it.enabled = false
+            it
+        }
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            if (useOneCall) {
+                it.secretQA = v2Factory.createSecretQA()
+            }
+            it
+        }
+
+        when: "try to create the user in one-call"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_PROP, true)
+        utils.createDomain(domain)
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+
+        then: "forbidden"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultUserService.ERROR_MSG_NEW_ACCOUNT_IN_DISABLED_DOMAIN)
+
+        when: "update feature flag, and try to create the user again"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_PROP, false)
+        response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+        def user = response.getEntity(User).value
+
+        then: "User created"
+        response.status == 201
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteDomain(domainId)
+
+        where:
+        useOneCall  | _
+        true        | _
+        false       | _
+    }
+
+    @Unroll
+    def "Can not create a new account in an existing domain with users: useOneCall = #useOneCall"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v2Factory.createDomain(domainId, domainId)
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.secretQA = v2Factory.createSecretQA()
+            it
+        }
+        def userAdminToCreate2 = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            if (useOneCall) {
+                it.secretQA = v2Factory.createSecretQA()
+            }
+            it
+        }
+
+        when: "try to create the user in one-call"
+        utils.createDomain(domain)
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+        def user = response.getEntity(User).value
+
+        then: "User created"
+        response.status == 201
+
+        when: "try to create the user again"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, true)
+        response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate2)
+
+        then: "forbidden"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultUserService.ERROR_MSG_NEW_ACCOUNT_IN_DOMAIN_WITH_USERS)
+
+        when: "allow and try to create the user again"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
+        response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate2)
+        def user2 = response.getEntity(User).value
+
+        then: "user created"
+        response.status == 201
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteUser(user2)
+        utils.deleteDomain(domainId)
+
+        where:
+        useOneCall  | _
+        true        | _
+        false       | _
+    }
+
+    def "Can not create new account with an an existing tenant in a different domain"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v2Factory.createDomain(domainId, domainId)
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.secretQA = v2Factory.createSecretQA()
+            it
+        }
+        def mossoTenantId = domainId
+
+        when: "create the mosso tenant and try to create the user in one-call"
+        utils.createDomain(domain)
+        utils.createTenant(mossoTenantId, true, mossoTenantId)
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+
+        then: "forbidden"
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultUserService.ERROR_MSG_NEW_ACCOUNT_EXISTING_TENANT_DIFFERENT_DOMAIN)
+
+        cleanup:
+        utils.deleteDomain(domainId)
+        utils.deleteTenant(domainId)
+    }
+
+    def "Multiple tenants can be specified within a call. The specified tenants can be a mixture of new tenants and existing tenants"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v2Factory.createDomain(domainId, domainId)
+        def mossoTenantId = domainId
+        def nastTenantId = utils.getNastTenant(domainId)
+        def otherTenantId = getRandomUUID("other")
+        def otherRoleId = getRandomUUID("other")
+        def mossoRole = v2Factory.createRole("compute:default ").with {
+            it.tenantId = mossoTenantId
+            it
+        }
+        def nastRole = v2Factory.createRole("object-store:default").with {
+            it.tenantId = nastTenantId
+            it
+        }
+        def otherRole = v2Factory.createRole(otherRoleId)
+        def otherTenantRole = v2Factory.createRole(otherRoleId).with {
+            it.tenantId = otherTenantId
+            it
+        }
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.secretQA = v2Factory.createSecretQA()
+            it.roles = new RoleList().with {
+                it.role.add(mossoRole)
+                it.role.add(nastRole)
+                it.role.add(otherTenantRole)
+                it
+            }
+            it
+        }
+
+        when: "create the mosso and nast tenant and the user"
+        utils.createDomain(domain)
+        utils.createTenant(mossoTenantId, true, mossoTenantId, domainId)
+        utils.createTenant(nastTenantId, true, nastTenantId, domainId)
+        def createdRole = cloud20.createRole(getIdentityAdminToken(), otherRole).getEntity(Role).value
+
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+        User user = response.getEntity(User).value
+        def authResponse = cloud20.authenticate(user.username, DEFAULT_PASSWORD)
+        AuthenticateResponse authenticateResponse = authResponse.getEntity(AuthenticateResponse).value
+
+        then: "User created"
+        response.status == 201
+
+        then: "tenant got created"
+        def role = authenticateResponse.user.roles.role.find {it.name.equals(otherRole.name)}
+        assert role != null
+        assert role.tenantId == otherTenantId
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteDomain(domainId)
+        utils.deleteRole(createdRole)
+    }
+
+    def "Create user with existing tenants adds nast and mosso roles and tenant contains endpoints"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v2Factory.createDomain(domainId, domainId)
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.secretQA = v2Factory.createSecretQA()
+            it
+        }
+        def mossoTenantId = domainId
+        def nastTenantId = utils.getNastTenant(domainId)
+
+        when: "create the mosso and nast tenant and the user"
+        utils.createDomain(domain)
+        utils.createTenant(mossoTenantId, true, mossoTenantId, domainId)
+        utils.createTenant(nastTenantId, true, nastTenantId, domainId)
+
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+        User user = response.getEntity(User).value
+        def authResponse = cloud20.authenticate(user.username, DEFAULT_PASSWORD)
+        AuthenticateResponse authenticateResponse = authResponse.getEntity(AuthenticateResponse).value
+
+        then: "User created"
+        response.status == 201
+
+        then: "The user must be assigned the object-store:default role on the nast tenant"
+        def nastRole = authenticateResponse.user.roles.role.find {it.name.equals("object-store:default")}
+        assert nastRole != null
+        assert nastRole.tenantId == nastTenantId
+
+        then: "The user must be assigned the compute:default role on the mosso tenant"
+        def mossoRole = authenticateResponse.user.roles.role.find {it.name.equals("compute:default")}
+        assert mossoRole != null
+        assert mossoRole.tenantId == mossoTenantId
+
+        then: "All endpoints must be assigned to these tenants as if the tenants did not already exist"
+        assert authenticateResponse.serviceCatalog.service.findAll{it.endpoint.findAll{it.tenantId.equals(mossoTenantId)}}
+        assert authenticateResponse.serviceCatalog.service.findAll{it.endpoint.findAll{it.tenantId.equals(nastTenantId)}}
+
+        cleanup:
+        utils.deleteUser(user)
+        utils.deleteDomain(domainId)
     }
 
 }

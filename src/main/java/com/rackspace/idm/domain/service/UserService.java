@@ -17,9 +17,11 @@ public interface UserService {
 
     void addUserv11(User user);
 
-    void addUserV20(User user);
+    void addIdentityAdminV20(User user);
 
-    void addUserV20(User user, boolean isCreateUserInOneCall, boolean provisionMossoAndNast);
+    void addSubUserV20(User user, boolean isCreateUserOneCall);
+
+    void addUserAdminV20(User user, boolean isCreateUserOneCall);
 
     void addRacker(Racker racker);
 

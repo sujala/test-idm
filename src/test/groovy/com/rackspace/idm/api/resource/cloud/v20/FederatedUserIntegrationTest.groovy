@@ -841,6 +841,8 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     def "federated user is disabled when last user admin on domain is disabled"() {
         given:
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
+
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
@@ -966,6 +968,8 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     def "federated and provisioned user tokens are revoked when the last user admin for the domain is disabled"() {
         given:
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
+
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS

@@ -44,20 +44,7 @@ public class CreateUserAdminService implements CreateUserService {
             user.setTokenFormat(null);
         }
 
-        //always provision mosso and nast tenants when create a user admin
-        boolean isCreateUserOneCall = CreateUserUtil.isCreateUserOneCall(userForCreate);
-        //only provision mosso and nast tenants if this is a one-user call and the domain is numeric
-        userService.addUserV20(user, isCreateUserOneCall,  isCreateUserOneCall && isNumeric(userForCreate.getDomainId()));
+        userService.addUserAdminV20(user, CreateUserUtil.isCreateUserOneCall(userForCreate));
         return user;
     }
-
-    private boolean isNumeric(String domainId) {
-        try {
-            Integer.parseInt(domainId);
-        } catch(NumberFormatException e) {
-            return false;
-        }
-        return true;
-    }
-
 }
