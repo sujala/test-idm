@@ -28,9 +28,10 @@
     identity:tenant-access roles on all tenants within the user's domain
 """
 import collections
+import time
 
 from tests.api.v2 import base
-from tests.api.v2.models import factory
+from tests.api.v2.models import factory, responses
 
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
@@ -64,6 +65,15 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         cls.tenant_access_role_id = cls.get_role_by_name(
             role_name=const.TENANT_ACCESS_ROLE_NAME)
 
+        cls.create_endpoint_input = {
+            'public_url': 'https://www.test_public_endpoint_special.com',
+            'internal_url': 'https://www.test_internal_endpoint_special.com',
+            'admin_url': 'https://www.test_admin_endpoint_special.com',
+            'version_info': 'test_version_special_info',
+            'version_id': '1',
+            'version_list': 'test_version_special_list',
+            'region': 'ORD'}
+
     @classmethod
     def get_feature_flag_value_and_default_value(self, flag_name):
         feature_flag_resp = (
@@ -88,6 +98,8 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         self.user_ids = []
         self.tenant_ids = []
         self.domain_ids = []
+        self.service_ids = []
+        self.template_ids = []
 
     def create_user_one_call(self):
         domain_id = self.generate_random_string(pattern=const.NUMBERS_PATTERN)
@@ -210,9 +222,10 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
                 endpoints.append(endpoint[const.NAME])
         # check for duplicate in list of endpoint name for tenant
         for item, count in collections.Counter(endpoints).items():
-            self.assertFalse(count > 1, "Duplicatate item {0}".format(item))
+            self.assertFalse(count > 1, "Duplicated item {0}".format(item))
 
-    def verify_auth_w_password(self, user_name, password):
+    def verify_auth_w_password(self, user_name, password, tenant=None,
+                               expected_output=200):
         """
         Authenticate with user name and password
         Verify tenant access role with feature flag true/false
@@ -221,46 +234,49 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         :return: mosso_tenant, nast_tenant, and user_token for next validation
         """
         auth_obj = requests.AuthenticateWithPassword(user_name=user_name,
-                                                     password=password)
+                                                     password=password,
+                                                     tenant_id=tenant)
         auth_resp = self.identity_admin_client.get_auth_token(auth_obj)
-        self.assertEqual(auth_resp.status_code, 200)
-        user_token = auth_resp.json()[const.ACCESS][const.TOKEN][const.ID]
+        self.assertEqual(auth_resp.status_code, expected_output)
+        if expected_output == 200:
+            user_token = auth_resp.json()[const.ACCESS][const.TOKEN][const.ID]
 
-        # check if tenants return in auth call
-        mosso_tenant = None
-        nast_tenant = None
-        if const.TENANT in str(auth_resp.json()[const.ACCESS][const.TOKEN]):
-            mosso_tenant = auth_resp.json()[const.ACCESS][const.TOKEN][
-                const.TENANT][const.ID]
-            for item in auth_resp.json()[const.ACCESS][const.USER][
-                             const.ROLES]:
-                if item[const.NAME] == const.OBJECT_STORE_ROLE_NAME:
-                    nast_tenant = item[const.TENANT_ID]
+            # check if tenants return in auth call
+            mosso_tenant = None
+            nast_tenant = None
+            if const.TENANT in str(
+                    auth_resp.json()[const.ACCESS][const.TOKEN]):
+                mosso_tenant = auth_resp.json()[const.ACCESS][const.TOKEN][
+                    const.TENANT][const.ID]
+                for item in auth_resp.json()[const.ACCESS][const.USER][
+                                 const.ROLES]:
+                    if item[const.NAME] == const.OBJECT_STORE_ROLE_NAME:
+                        nast_tenant = item[const.TENANT_ID]
 
-        if (self.feature_flag_value | self.feature_flag_default_value) and (
-                    self.auto_assign_role_name == (
-                        const.TENANT_ACCESS_ROLE_NAME)):
-            # verify auth resp include tenant access role
-            self.assertIn(const.TENANT_ACCESS_ROLE_NAME,
-                          str(auth_resp.json()[
-                                  const.ACCESS][const.USER][const.ROLES]))
-        else:
-            # verify auth response not contain tenant access role
-            self.assertNotIn(const.TENANT_ACCESS_ROLE_NAME,
-                             str(auth_resp.json()[
-                                     const.ACCESS][const.USER][const.ROLES]))
+            if (self.feature_flag_value |
+                    self.feature_flag_default_value) and (
+                        self.auto_assign_role_name == (
+                            const.TENANT_ACCESS_ROLE_NAME)):
+                # verify auth resp include tenant access role
+                self.assertIn(const.TENANT_ACCESS_ROLE_NAME,
+                              str(auth_resp.json()[
+                                      const.ACCESS][const.USER][const.ROLES]))
+            else:
+                # verify auth response not contain tenant access role
+                self.assertNotIn(const.TENANT_ACCESS_ROLE_NAME, str(
+                    auth_resp.json()[const.ACCESS][const.USER][const.ROLES]))
 
-        if mosso_tenant:
-            # verify endpoint no duplicate for mosso tanant
-            self.verify_endpoint_for_tenant_from_service_catalog(
-                auth_resp=auth_resp, tenant_id=mosso_tenant)
+            if mosso_tenant:
+                # verify endpoint no duplicate for mosso tanant
+                self.verify_endpoint_for_tenant_from_service_catalog(
+                    auth_resp=auth_resp, tenant_id=mosso_tenant)
 
-        if nast_tenant:
-            # verify endpoint no duplicate for mosso tanant
-            self.verify_endpoint_for_tenant_from_service_catalog(
-                auth_resp=auth_resp, tenant_id=nast_tenant)
+            if nast_tenant:
+                # verify endpoint no duplicate for mosso tanant
+                self.verify_endpoint_for_tenant_from_service_catalog(
+                    auth_resp=auth_resp, tenant_id=nast_tenant)
 
-        return mosso_tenant, nast_tenant, user_token
+            return mosso_tenant, nast_tenant, user_token
 
     def verify_validate_token(self, token):
         """
@@ -312,7 +328,8 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
                              str(auth_tenant_n_token_resp.json()[
                                      const.ACCESS][const.USER][const.ROLES]))
 
-    def verify_auth_w_new_tenant_token(self, tenant_id, token):
+    def verify_auth_w_new_tenant_token(self, tenant_id, token,
+                                       expected_output=None):
         """
         Auth with new tenant (not default) and token
         Verify tenant access with feature flag true/false
@@ -326,15 +343,19 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
             self.identity_admin_client.get_auth_token(request_object=auth_obj)
         )
 
-        if (self.feature_flag_value | self.feature_flag_default_value) and (
-            self.auto_assign_role_name == (
-                        const.TENANT_ACCESS_ROLE_NAME)):
-            self.assertIn(const.TENANT_ACCESS_ROLE_NAME,
-                          str(auth_tenant_n_token_resp.json()[
-                                  const.ACCESS][const.USER][const.ROLES]))
-            self.assertEqual(auth_tenant_n_token_resp.status_code, 200)
-        else:
+        if expected_output == 401:
             self.assertEqual(auth_tenant_n_token_resp.status_code, 401)
+        else:
+            if ((self.feature_flag_value |
+                self.feature_flag_default_value) and (
+                        self.auto_assign_role_name == (
+                            const.TENANT_ACCESS_ROLE_NAME))):
+                self.assertIn(const.TENANT_ACCESS_ROLE_NAME,
+                              str(auth_tenant_n_token_resp.json()[
+                                      const.ACCESS][const.USER][const.ROLES]))
+                self.assertEqual(auth_tenant_n_token_resp.status_code, 200)
+            else:
+                self.assertEqual(auth_tenant_n_token_resp.status_code, 401)
 
     def verify_auth_w_username_password_n_tenant(self, username, password,
                                                  tenant_id):
@@ -452,7 +473,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
             self.assertEqual(new_tenant_endpoints, [])
 
     def verify_list_tenant(self, token, mosso_tenant=None, nast_tenant=None,
-                           new_tenant=None):
+                           new_tenant=None, new_tenant_enabled=True):
         """
         List tenants
         Check user with feature flag true/false
@@ -476,11 +497,10 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
                     found_nast_tenant = True
             self.assertTrue(found_nast_tenant)
         if new_tenant:
-            if (self.feature_flag_value |
-                    self.feature_flag_default_value) and (
-                        self.auto_assign_role_name == (
-                            const.TENANT_ACCESS_ROLE_NAME)
-            ):
+            if new_tenant_enabled and (self.feature_flag_value |
+                                       self.feature_flag_default_value) and (
+                    self.auto_assign_role_name == (
+                            const.TENANT_ACCESS_ROLE_NAME)):
                 self.assertIn(new_tenant,
                               str(tenant_resp.json()[const.TENANTS]))
             else:
@@ -488,7 +508,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
                                  str(tenant_resp.json()[const.TENANTS]))
 
     def verify_list_users_for_tenant(self, token, tenant_id, user_id,
-                                     resp_code):
+                                     resp_code, tenant_enabled=True):
         """
         List users for tenants
         Check response with feature flag true/false
@@ -503,21 +523,17 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
             tenant_id=tenant_id)
 
         if (self.feature_flag_value | self.feature_flag_default_value) and (
-                    self.auto_assign_role_name == (
-                        const.TENANT_ACCESS_ROLE_NAME)):
+                self.auto_assign_role_name == (
+                        const.TENANT_ACCESS_ROLE_NAME)) and tenant_enabled:
             self.assertEqual(users_tenant_resp.status_code, 200)
+        else:
+            self.assertEqual(users_tenant_resp.status_code, resp_code)
+        if resp_code == 200:
             self.assertIn(user_id,
                           str(users_tenant_resp.json()[const.USERS]))
-        else:
-            if resp_code == 200:
-                self.assertEqual(users_tenant_resp.status_code, resp_code)
-                self.assertIn(user_id,
-                              str(users_tenant_resp.json()[const.USERS]))
-            else:
-                self.assertEqual(users_tenant_resp.status_code, resp_code)
 
-    def verify_list_users_for_tenant_w_identity_admin(self, tenant_id,
-                                                      user_id):
+    def verify_list_users_for_tenant_w_identity_admin(
+            self, tenant_id, user_id, tenant_on_the_domain=True):
         """
         List users for new tenant with identity admin
         Check response with feature flag true/false
@@ -528,10 +544,11 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         users_tenant_resp = self.identity_admin_client.list_users_for_tenant(
             tenant_id=tenant_id)
         self.assertEqual(users_tenant_resp.status_code, 200)
-        if (self.feature_flag_value | self.feature_flag_default_value) and (
-                    self.auto_assign_role_name == (
-                        const.TENANT_ACCESS_ROLE_NAME)):
-            self.assertIn(user_id, str(users_tenant_resp.json()[const.USERS]))
+        if tenant_on_the_domain and (
+            (self.feature_flag_value | self.feature_flag_default_value) and (
+                self.auto_assign_role_name == const.TENANT_ACCESS_ROLE_NAME)):
+            self.assertIn(user_id, str(
+                users_tenant_resp.json()[const.USERS]))
         else:
             self.assertNotIn(user_id, str(users_tenant_resp.json()[
                                              const.USERS]))
@@ -553,7 +570,8 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         self.assertNotIn(user_id, str(users_new_tenant_resp_post.json()[
                                           const.USERS]))
 
-    def verify_list_roles_for_user_on_tenant(self, tenant_id, user_id):
+    def verify_list_roles_for_user_on_tenant(self, tenant_id, user_id,
+                                             tenant_on_the_domain=True):
         """
         List roles for user on tenant
         Check response with feature flag true/false
@@ -567,12 +585,10 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         )
         self.assertEqual(roles_tenant_resp.status_code, 200)
 
-        if (self.feature_flag_value | self.feature_flag_default_value) and (
-                    self.auto_assign_role_name == (
-                        const.TENANT_ACCESS_ROLE_NAME)):
-            # verify List roles for user on tenant resp include tenant access
-            # since contract list roles only contain role ids
-            # get tenant access role id to verify
+        if tenant_on_the_domain and (
+            (self.feature_flag_value | self.feature_flag_default_value) and (
+                self.auto_assign_role_name == const.TENANT_ACCESS_ROLE_NAME)):
+
             self.assertIn(self.tenant_access_role_id,
                           str(roles_tenant_resp.json()[const.ROLES]))
         else:
@@ -595,6 +611,83 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         self.assertEqual(roles_resp_post.status_code, 200)
         self.assertNotIn(self.tenant_access_role_id,
                          str(roles_resp_post.json()[const.ROLES]))
+
+    def create_endpoint_template(self, endpoint_attributes):
+        """
+        Creates a new endpoint template
+        returns the template id and service name used in creation
+        """
+        template_id = self.generate_random_string(
+            pattern=const.NUMERIC_DOMAIN_ID_PATTERN)
+        service_name = self.generate_random_string(
+            pattern=const.SERVICE_NAME_PATTERN)
+        service_type = self.generate_random_string(
+            pattern=const.SERVICE_TYPE_PATTERN)
+        service_id = self.generate_random_string(pattern='[\d]{8}')
+        service_description = 'SERVICEMETEST'
+
+        request_object = requests.ServiceAdd(
+            service_id=service_id, service_name=service_name,
+            service_type=service_type,
+            service_description=service_description)
+
+        resp = self.service_admin_client.add_service(
+            request_object=request_object)
+        self.assertEqual(resp.status_code, 201)
+        service = responses.Service(resp.json())
+        service_id = service.id
+        self.service_ids.append(service_id)
+
+        endpoint_template = requests.EndpointTemplateAdd(
+            template_id=template_id, name=service_name,
+            template_type=service_type, **endpoint_attributes)
+        resp = self.identity_admin_client.add_endpoint_template(
+            endpoint_template)
+        self.assertEqual(resp.status_code, 201)
+        template_id = resp.json()[const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+                                  const.ID]
+        self.template_ids.append(template_id)
+
+        return template_id, service_name
+
+    def verify_endpoint_present_in_service_catalog(
+            self, user_name, password, tenant):
+
+        # Create endpoint template, to verify its presence in service catalog
+        template_id, service_name = self.create_endpoint_template(
+            self.create_endpoint_input)
+        add_ep_resp = self.identity_admin_client.add_endpoint_to_tenant(
+            tenant_id=tenant, endpoint_template_id=template_id)
+        self.assertEqual(add_ep_resp.status_code, 200)
+        endpoint_url = '/'.join(
+            [self.create_endpoint_input['public_url'], tenant])
+
+        auth_obj = requests.AuthenticateWithPassword(user_name=user_name,
+                                                     password=password)
+        auth_resp = self.identity_admin_client.get_auth_token(auth_obj)
+        self.assertEqual(auth_resp.status_code, 200)
+        catalog = auth_resp.json()[const.ACCESS][const.SERVICE_CATALOG]
+
+        # when feature flag set to true
+        if (self.feature_flag_value | self.feature_flag_default_value) and (
+                    self.auto_assign_role_name == (
+                        const.TENANT_ACCESS_ROLE_NAME)):
+            for service in catalog:
+                if service['name'] == service_name:
+                    self.assertEqual(
+                        endpoint_url, service['endpoints'][0]['publicURL'])
+                    self.assertEqual(
+                        tenant, service['endpoints'][0]['tenantId'])
+
+            # verify endpoint no duplicate for the given tenant
+            self.verify_endpoint_for_tenant_from_service_catalog(
+                auth_resp=auth_resp, tenant_id=tenant)
+        else:
+            self.assertNotIn(endpoint_url, str(catalog))
+
+        # For cleanup
+        self.service_admin_client.delete_endpoint_from_tenant(
+            tenant_id=tenant, endpoint_template_id=template_id)
 
     def test_implicitly_grant_tenant_access_role_create_user_one_call(self):
         """
@@ -805,8 +898,144 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         self.verify_list_roles_for_user_on_tenant(tenant_id=tenant_id,
                                                   user_id=user_id)
 
+        # verify endpoint in the service catalog
+        self.verify_endpoint_present_in_service_catalog(
+            user_name=user_name, password=password, tenant=tenant_id)
+
+    def test_implicit_tenant_access_role_on_user_when_user_or_tenant_disabled(
+            self):
+        """
+        Test verify implicitly grant identity tenant access role to user on all
+        tenants within user domain, for the following scenarios :
+          a. When user is disabled
+          b. When tenant is disabled
+        Test with steps:
+        - create user one call logic
+        - create tenant
+        - verify exception rule for default domain (AC 1.1)
+        - add tenant to user domain
+        - verify the following which are valid for the scenarios covered here:
+            (AC 1, 2.1 to 2.6 and 3 coverage)
+            - auth,
+            - validate token,
+            - auth with new tenant and token
+            - auth with new tenant
+            - list tenants
+            - list users for tenant
+            - list roles for user on tenant
+            - remove new tenant from user domain
+            - auth with new tenant
+            - list user for new tenant
+        """
+        # create user
+        user_id, user_resp = self.create_user_one_call()
+        user_name = user_resp.json()[const.USER][const.USERNAME]
+        password = user_resp.json()[const.USER][const.NS_PASSWORD]
+        domain_id = user_resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
+
+        # create tenant with default domain
+        tenant_id, tenant_resp = self.create_tenant()
+        # get default domain
+        default_domain = tenant_resp.json()[const.TENANT][
+            const.RAX_AUTH_DOMAIN_ID]
+
+        # verify belong to default domain not implicitly add tenant-access
+        if self.tenant_default_domain_value == default_domain:
+            self.verify_user_belong_to_default_domain(
+                domain_id=default_domain, tenant_id=tenant_id)
+
+        # add tenant to user domain
+        add_resp = self.identity_admin_client.add_tenant_to_domain(
+            domain_id=domain_id, tenant_id=tenant_id)
+        self.assertEqual(add_resp.status_code, 204)
+
+        # # # # what happens when user is disabled
+        update_user_object = requests.UserUpdate(enabled=False)
+        self.identity_admin_client.update_user(
+            user_id=user_id, request_object=update_user_object)
+
+        # Most of the other calls are not valid as user can't auth or
+        # its existing token is revoked when user is disabled.
+        # Testing only the ones which still work even after user is disabled
+
+        # verify List roles for user on tenant resp include tenant access
+        self.verify_list_roles_for_user_on_tenant(tenant_id=tenant_id,
+                                                  user_id=user_id)
+
+        # # # # what happens when tenant is disabled
+        update_tenant_object = requests.Tenant(tenant_id=tenant_id,
+                                               tenant_name=tenant_id,
+                                               enabled=False)
+
+        update_resp = self.identity_admin_client.update_tenant(
+            tenant_id=tenant_id, request_object=update_tenant_object)
+        self.assertEqual(update_resp.status_code, 200)
+
+        # re-enable the user
+        update_user_object = requests.UserUpdate(enabled=True)
+        self.identity_admin_client.update_user(
+            user_id=user_id, request_object=update_user_object)
+
+        self.verify_list_roles_for_user_on_tenant(tenant_id=tenant_id,
+                                                  user_id=user_id)
+
+        # # authenticate
+        time.sleep(1)
+        mosso_tenant, nast_tenant, user_token = self.verify_auth_w_password(
+            user_name=user_name, password=password)
+
+        # Validate token
+        self.verify_validate_token(user_token)
+
+        # Auth with new tenant and token
+        self.verify_auth_w_new_tenant_token(tenant_id=tenant_id,
+                                            token=user_token,
+                                            expected_output=401)
+
+        # Auth with new tenant...as tenant disabled, so expect a 401
+        self.verify_auth_w_password(user_name=user_name, password=password,
+                                    tenant=tenant_id, expected_output=401)
+
+        # # List tenants
+        self.verify_list_tenant(token=user_token, mosso_tenant=mosso_tenant,
+                                nast_tenant=nast_tenant,
+                                new_tenant=tenant_id,
+                                new_tenant_enabled=False)
+
+        # List users for tenants
+        self.verify_list_users_for_tenant(
+            token=user_token, tenant_id=tenant_id, user_id=user_id,
+            resp_code=403, tenant_enabled=False)
+
+        # List users in new tenant with identity admin
+        self.verify_list_users_for_tenant_w_identity_admin(
+            tenant_id=tenant_id, user_id=user_id)
+
+        # remove new tenant from domain
+        del_resp = self.identity_admin_client.delete_tenant_from_domain(
+            domain_id=domain_id, tenant_id=tenant_id)
+        self.assertEqual(del_resp.status_code, 204)
+
+        # auth with new tenant again regardless feature flag
+        self.verify_auth_w_password(user_name=user_name, password=password,
+                                    tenant=tenant_id, expected_output=401)
+
+        # get users for tenant after delete regardless feature flag
+        self.verify_list_users_for_tenant_w_identity_admin(
+            tenant_id=tenant_id, user_id=user_id, tenant_on_the_domain=False)
+
+        # List roles for user on tenant post delete regardless feature flag
+        self.verify_list_roles_for_user_on_tenant(tenant_id=tenant_id,
+                                                  user_id=user_id,
+                                                  tenant_on_the_domain=False)
+
     def tearDown(self):
         # Delete all resources created in the tests
+        for id_ in self.service_ids:
+            self.service_admin_client.delete_service(service_id=id_)
+        for id_ in self.template_ids:
+            self.identity_admin_client.delete_endpoint_template(
+                template_id=id_)
         for id_ in self.user_ids:
             self.identity_admin_client.delete_user(user_id=id_)
         for id_ in self.tenant_ids:
