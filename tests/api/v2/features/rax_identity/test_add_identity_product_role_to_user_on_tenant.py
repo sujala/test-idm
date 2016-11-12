@@ -83,7 +83,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             role_id = resp.json()[const.ROLES][0][const.ID]
         return role_id
 
-    @ddt.data('identity-admin', 'user-admin', 'user-default')
+    @ddt.data('identity-admin', 'user-admin', 'user-default', 'user-manager')
     def test_add_identity_product_role_to_user_on_tenant(self, user):
         """
         Verify allow to add identity product roles to user on tenant
@@ -109,6 +109,14 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
                 parent_client=self.user_admin_client)
             user_name = user_resp.json()[const.USER][const.USERNAME]
             password = user_resp.json()[const.USER][const.NS_PASSWORD]
+        elif user is 'user-manager':
+            # create sub user
+            user_id, user_resp = self.create_user(
+                parent_client=self.user_admin_client)
+            user_name = user_resp.json()[const.USER][const.USERNAME]
+            password = user_resp.json()[const.USER][const.NS_PASSWORD]
+            self.user_admin_client.add_role_to_user(
+                role_id=const.USER_MANAGER_ROLE_ID)
         else:
             user_id, user_resp = self.create_user(
                 parent_client=self.identity_admin_client)
@@ -147,7 +155,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         self.assertNotIn(role_id, str(auth_resp.json()[const.ACCESS][
                                           const.USER][const.ROLES]))
 
-    @ddt.data('identity-admin', 'user-admin', 'user-default')
+    @ddt.data('identity-admin', 'user-admin', 'user-default', 'user-manager')
     def test_add_identity_product_role_weight50_to_user_on_tenant(self, user):
         """
         Verify allow to add identity product roles to user on tenant
@@ -175,6 +183,14 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
                 parent_client=self.user_admin_client)
             user_name = user_resp.json()[const.USER][const.USERNAME]
             password = user_resp.json()[const.USER][const.NS_PASSWORD]
+        elif user is 'user-manager':
+            # create sub user
+            user_id, user_resp = self.create_user(
+                parent_client=self.user_admin_client)
+            user_name = user_resp.json()[const.USER][const.USERNAME]
+            password = user_resp.json()[const.USER][const.NS_PASSWORD]
+            self.user_admin_client.add_role_to_user(
+                role_id=const.USER_MANAGER_ROLE_ID)
         else:
             user_id, user_resp = self.create_user(
                 parent_client=self.identity_admin_client)
@@ -213,7 +229,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         self.assertNotIn(role_id, str(auth_resp.json()[const.ACCESS][
                                           const.USER][const.ROLES]))
 
-    @ddt.data('identity-admin', 'user-admin', 'user-default')
+    @ddt.data('identity-admin', 'user-admin', 'user-default', 'user-manager')
     def test_add_identity_tenant_access_role(self, user):
         """
         Verify able to add 'identity:tenant-access' role to user for tenant
@@ -233,6 +249,14 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
                 parent_client=self.user_admin_client)
             user_name = user_resp.json()[const.USER][const.USERNAME]
             password = user_resp.json()[const.USER][const.NS_PASSWORD]
+        elif user is 'user-manager':
+            # create sub user
+            user_id, user_resp = self.create_user(
+                parent_client=self.user_admin_client)
+            user_name = user_resp.json()[const.USER][const.USERNAME]
+            password = user_resp.json()[const.USER][const.NS_PASSWORD]
+            self.user_admin_client.add_role_to_user(
+                role_id=const.USER_MANAGER_ROLE_ID)
         else:
             user_id, user_resp = self.create_user(
                 parent_client=self.identity_admin_client)
