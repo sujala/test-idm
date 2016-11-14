@@ -59,3 +59,47 @@ tenant_type_to_endpoint_mapping_rule_basic = {
     'required': [const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE],
     'additionalProperties': False
 }
+
+list_tenant_type_to_endpoint_mapping_rules_item = {
+    'type': 'object', 'properties': {
+                const.DESCRIPTION: {'type': 'string'},
+                const.ID: {'type': 'string'},
+                const.TENANT_TYPE: {'type': 'string',
+                                    'pattern': "[0-9a-z]{1,15}"}},
+            'required': [const.TENANT_TYPE, const.ID],
+            'additionalProperties': False
+}
+
+list_tenant_type_to_endpoint_mapping_rules = {
+    'type': 'object', 'properties':
+        {
+            const.RAX_AUTH_ENDPOINT_ASSIGNMENT_RULES:
+            {
+                'type': 'object', 'properties': {
+                    const.TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES: {
+                        'type': 'array',
+                        'items': (
+                            list_tenant_type_to_endpoint_mapping_rules_item)
+                    }
+                },
+                'required': [const.TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES]
+            }
+        },
+    'required': [const.RAX_AUTH_ENDPOINT_ASSIGNMENT_RULES],
+    'additionalProperties': False
+}
+
+list_dummy_tenant_type_to_endpoint_mapping_rules_item = {
+    'type': 'object', 'properties':
+        {const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE: {
+            'type': 'object',
+            'properties': {
+                const.DESCRIPTION: {'type': 'string'},
+                const.ID: {'type': 'string'},
+                const.TENANT_TYPE: {'type': 'string',
+                                    'pattern': "[0-9a-z]{1,15}"}},
+            'required': [const.TENANT_TYPE, const.ID],
+            'additionalProperties': False}},
+    'required': [const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE],
+    'additionalProperties': False
+}

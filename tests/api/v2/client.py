@@ -984,6 +984,24 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         return resp
 
+    def list_tenant_type_to_endpoint_mapping_rules(
+            self, requestslib_kwargs=None):
+        """
+        Return response object from list rules for tenant type to endpoints
+        mapping
+        GET OS-KSCATALOG/endpointTemplates/RAX-AUTH/rules
+        @todo: In case of XML response, add a json() method to the response
+        object that will create a JSON equivalent of the XML response
+        """
+
+        url = self.url + (
+            const.TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES_URL)
+
+        resp = self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+
+        return resp
+
     def add_role(self, request_object, requestslib_kwargs=None):
         """Return response object from the add role api call
 
