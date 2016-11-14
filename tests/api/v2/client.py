@@ -90,6 +90,26 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def auth_with_tenant_username_password(self, request_object, headers=None,
+                                           requestslib_kwargs=None):
+        """
+        Returns response object from auth as tenant with username & password
+        POST /v2.0/tokens
+        In case of XML response, add a json() method to the response object
+        that will create a JSON equivalent of the XML response
+        """
+        url = self.url + const.TOKEN_URL
+        return self.request(method='POST', url=url,
+                            request_entity=request_object,
+                            headers=headers,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    """
+    Because there's no difference in the auth besides the request_object
+    that only differs in replacing password with api_key
+    """
+    auth_with_tenant_username_api_key = auth_with_tenant_username_password
+
     def auth_with_mfa_cred(self, session_id, pass_code, headers=None,
                            requestslib_kwargs=None):
         if not headers:
