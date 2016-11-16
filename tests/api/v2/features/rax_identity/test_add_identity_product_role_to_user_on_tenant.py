@@ -98,30 +98,38 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             - auth and verify role is removed
         :return:
         """
-        if user is 'identity-admin':
+        if user == 'identity-admin':
+            if not self.test_config.run_service_admin_tests:
+                self.skipTest('Skipping Service Admin Tests per config value')
             user_id = self.identity_admin_client.default_headers[
                 const.X_USER_ID]
             user_name = self.identity_config.identity_admin_user_name
             password = self.identity_config.identity_admin_password
-        elif user is 'user-default':
+        elif user == 'user-default':
             # create sub user
             user_id, user_resp = self.create_user(
                 parent_client=self.user_admin_client)
             user_name = user_resp.json()[const.USER][const.USERNAME]
             password = user_resp.json()[const.USER][const.NS_PASSWORD]
-        elif user is 'user-manager':
+        elif user == 'user-manager':
             # create sub user
             user_id, user_resp = self.create_user(
                 parent_client=self.user_admin_client)
             user_name = user_resp.json()[const.USER][const.USERNAME]
             password = user_resp.json()[const.USER][const.NS_PASSWORD]
             self.user_admin_client.add_role_to_user(
-                role_id=const.USER_MANAGER_ROLE_ID)
+                user_id=user_id, role_id=const.USER_MANAGER_ROLE_ID)
         else:
             user_id, user_resp = self.create_user(
                 parent_client=self.identity_admin_client)
             user_name = user_resp.json()[const.USER][const.USERNAME]
             password = user_resp.json()[const.USER][const.NS_PASSWORD]
+
+        client = None
+        if user == 'identity-admin':
+            client = self.service_admin_client
+        else:
+            client = self.identity_admin_client
 
         # create tenant
         tenant_id, tenant_resp = self.create_tenant()
@@ -130,26 +138,26 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         role_id = self.create_role()
 
         # add role to user on tenant
-        add_resp = self.identity_admin_client.add_role_to_user_for_tenant(
+        add_resp = client.add_role_to_user_for_tenant(
             tenant_id=tenant_id, user_id=user_id, role_id=role_id
         )
         self.assertEqual(add_resp.status_code, 200)
 
         # verify role added
-        auth_resp = self.identity_admin_client.get_auth_token(
+        auth_resp = client.get_auth_token(
             user=user_name, password=password)
         self.assertEqual(auth_resp.status_code, 200)
         self.assertIn(role_id, str(auth_resp.json()[const.ACCESS][const.USER][
             const.ROLES]))
 
         # delete role from tenant
-        del_resp = self.identity_admin_client.delete_role_from_user_for_tenant(
+        del_resp = client.delete_role_from_user_for_tenant(
             tenant_id=tenant_id, user_id=user_id, role_id=role_id
         )
         self.assertEqual(del_resp.status_code, 204)
 
         # verify role is removed
-        auth_resp = self.identity_admin_client.get_auth_token(
+        auth_resp = client.get_auth_token(
             user=user_name, password=password)
         self.assertEqual(auth_resp.status_code, 200)
         self.assertNotIn(role_id, str(auth_resp.json()[const.ACCESS][
