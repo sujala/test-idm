@@ -132,6 +132,69 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         template_id = endpoint_template.id
         return template_id
 
+    def get_rules_list_from_response(self, list_resp):
+        """
+        Obtain the list of mapping rules from the response
+        """
+        if const.RAX_AUTH_ENDPOINT_ASSIGNMENT_RULES in list_resp:
+            return list_resp[const.RAX_AUTH_ENDPOINT_ASSIGNMENT_RULES][
+                const.TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES]
+        else:
+            return list_resp
+
+    def check_if_rule_is_present_in_the_list(
+            self, mapping_rule_id, list_resp):
+        """
+        Verify if a given mapping rule is in the provided list
+        """
+
+        rules_list = self.get_rules_list_from_response(list_resp)
+        rule_ids = [rule['id'] for rule in rules_list]
+        self.assertIn(mapping_rule_id, rule_ids)
+
+    def verify_no_duplicates_in_list_rules(self, list_resp):
+        """
+        Assert that there are no duplicates in the list mapping rules response
+        """
+
+        rules_list = self.get_rules_list_from_response(list_resp)
+        if rules_list:
+            rule_ids = [rule['id'] for rule in rules_list]
+            rule_ids_set = set(rule_ids)
+            self.assertEqual(sorted(rule_ids), sorted(list(rule_ids_set)))
+
+    def get_mapping_rule_id_from_response(self, response, teardown=True):
+        """
+        Return rule id from the response provided.
+        Choice to add the rule for teardown cleanup
+        """
+        mapping_rule = responses.TenantTypeToEndpointMappingRule(
+            response.json())
+        if teardown:
+            self.rule_ids.append(mapping_rule.id)
+        return mapping_rule.id
+
+    def validate_list_rules_response(self, mapping_rule_id=None):
+        """
+        Test list mapping rules response. Check for the schema, headers.
+        Verify the provided rule is present in the list.
+        Also, confirm if there are no duplicates in the list
+        """
+        ia_client = self.identity_admin_client
+        # List tenant type to endpoints mapping rules
+        list_resp = ia_client.list_tenant_type_to_endpoint_mapping_rules()
+        self.assertEqual(list_resp.status_code, 200)
+        if self.get_rules_list_from_response(list_resp.json()):
+            self.assertSchema(
+                list_resp, rules.list_tenant_type_to_endpoint_mapping_rules)
+        self.assertHeaders(
+            list_resp, *self.header_validation_functions_HTTP_200)
+        if mapping_rule_id:
+            self.check_if_rule_is_present_in_the_list(
+                mapping_rule_id=mapping_rule_id, list_resp=list_resp.json())
+        self.verify_no_duplicates_in_list_rules(list_resp=list_resp.json())
+        return list_resp
+
     def test_create_tenant_type_to_endpoint_mapping_rules(self):
         """
         Tests to check creation of rule works with one and multiple
@@ -140,6 +203,10 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         any existing tenant
         Lastly, tests check if creation of rule works even if tenant type is
         already used in other rule
+        Test positive cases on delete, list mapping rules
+        503 for if the search for list rules results in more than the
+        threshold rules, is currently tested manually.
+
         """
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
@@ -163,6 +230,9 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         self.assertSchema(
             resp, rules.add_tenant_type_to_endpoint_mapping_rule)
+
+        mapping_rule_id = self.get_mapping_rule_id_from_response(
+            response=resp)
 
         # second endpoint template
         template_id = (
@@ -189,8 +259,8 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
 
         # Tests for GET a rule call....CID-370
         # Obtaining the rule-id first
-        mapping_rule = responses.TenantTypeToEndpointMappingRule(resp.json())
-        mapping_rule_id = mapping_rule.id
+        mapping_rule_id = self.get_mapping_rule_id_from_response(
+            response=resp, teardown=False)
 
         # GET mapping rule call, without the required role
         domain_id = self.generate_random_string(const.DOMAIN_PATTERN)
@@ -221,6 +291,9 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             endpoints_in_get_resp, endpoint_ids)
         self.assertEqual(get_mapping_rule.tenant_type, tenant_type)
 
+        # # List tenant type to endpoints mapping rules
+        self.validate_list_rules_response(mapping_rule_id=mapping_rule_id)
+
         # DELETE mapping rule call, with the required role...CID-364
         delete_resp = ia_client.delete_tenant_type_to_endpoint_mapping_rule(
             rule_id=mapping_rule_id)
@@ -235,6 +308,11 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         'data_create_mapping_rules_with_different_tenant_types.json')
     def test_create_mapping_rules_with_different_tenant_types(
             self, test_data):
+        """
+        Test create mapping rules with different positive & negative
+        cases for tenant types.
+        Test list mapping rules in those cases
+        """
 
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
@@ -264,6 +342,13 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
                 resp, rules.add_tenant_type_to_endpoint_mapping_rule)
             self.assertHeaders(
                 resp, *self.header_validation_functions_HTTP_201)
+
+            mapping_rule_id = self.get_mapping_rule_id_from_response(
+                response=resp)
+
+            # Checking if this rule appears in List rules response & also
+            # validate the list rules response
+            self.validate_list_rules_response(mapping_rule_id=mapping_rule_id)
 
     @ddt.file_data(
         'data_create_mapping_rule_with_different_descriptions.json')
@@ -307,6 +392,13 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
                 self.assertNotIn(const.DESCRIPTION, resp.json()[
                     const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE])
 
+            mapping_rule_id = self.get_mapping_rule_id_from_response(
+                response=resp)
+
+            # Checking if this rule appears in List rules response & also
+            # validate the list rules response
+            self.validate_list_rules_response(mapping_rule_id=mapping_rule_id)
+
     @ddt.data([], None, '')
     def test_create_mapping_rules_with_different_endpoint_ids(
             self, endpoint_ids):
@@ -326,6 +418,13 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             resp, rules.add_tenant_type_to_endpoint_mapping_rule)
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_201)
+
+        mapping_rule_id = self.get_mapping_rule_id_from_response(
+            response=resp)
+
+        # Checking if this rule appears in List rules response & also
+        # validate the list rules response
+        self.validate_list_rules_response(mapping_rule_id=mapping_rule_id)
 
     def verify_no_duplicate_endpoint_ids(self, response_list, request_list):
         """
@@ -361,6 +460,9 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         resp = ia_client.add_tenant_type_to_endpoint_mapping_rule(
             request_object=mapping_rule_object)
         self.assertEqual(resp.status_code, 201)
+        mapping_rule_id = resp.json()[
+            const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE][const.ID]
+        self.rule_ids.append(mapping_rule_id)
 
         # Creating another endpoint template
         template_id_2 = self.create_endpoint_template_using_service_id()
@@ -379,6 +481,9 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_201)
+        mapping_rule_id = resp.json()[
+            const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE][const.ID]
+        self.rule_ids.append(mapping_rule_id)
 
         endpoints_list_in_resp = resp.json()[
             const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE][
@@ -412,6 +517,11 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         get_resp = user_admin_client.get_tenant_type_to_endpoint_mapping_rule(
             rule_id=mapping_rule_id)
         self.assertEqual(get_resp.status_code, 403)
+
+        # LIST mapping rules call, without the required role
+        list_resp = (
+            user_admin_client.list_tenant_type_to_endpoint_mapping_rules())
+        self.assertEqual(list_resp.status_code, 403)
 
         # DELETE mapping rule call, without the required role
         ua_client = user_admin_client
@@ -552,9 +662,8 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             description=self.description)
         resp = ia_client.add_tenant_type_to_endpoint_mapping_rule(
             request_object=mapping_rule_object)
-        mapping_rule = responses.TenantTypeToEndpointMappingRule(resp.json())
-        mapping_rule_id = mapping_rule.id
-        self.rule_ids.append(mapping_rule_id)
+        mapping_rule_id = self.get_mapping_rule_id_from_response(
+            response=resp)
 
         # existing rule id appended with a letter
         rule_id = mapping_rule_id + 'a'
@@ -589,8 +698,8 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         ia_client = self.identity_admin_client
         resp = ia_client.add_tenant_type_to_endpoint_mapping_rule(
             request_object=mapping_rule_object)
-        mapping_rule = responses.TenantTypeToEndpointMappingRule(resp.json())
-        mapping_rule_id = mapping_rule.id
+        mapping_rule_id = self.get_mapping_rule_id_from_response(
+            response=resp)
 
         resp_detail = None
         if 'response_detail' in test_data:
@@ -611,6 +720,35 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             self.assertEqual(get_resp.status_code, 400)
             self.assertEqual(get_resp.json()[const.BAD_REQUEST][const.MESSAGE],
                              INVALID_RESPONSE_DETAIL)
+
+    def test_empty_list_of_mapping_rules(self):
+        """
+        Tests when there are no rules, list call returns empty list
+        """
+
+        # Running only locally & Jenkins, as this deletes all existing rules
+        if not self.test_config.run_local_and_jenkins_only:
+            self.skipTest('Skipping if not local and jenkins')
+        ia_client = self.identity_admin_client
+
+        # First remove all the rules to cause an empty list
+        list_resp = self.validate_list_rules_response()
+        rules_list = self.get_rules_list_from_response(list_resp.json())
+
+        if rules_list:
+            mapping_rule_ids = [rule['id'] for rule in rules_list]
+            for id_ in mapping_rule_ids:
+                resp = ia_client.delete_tenant_type_to_endpoint_mapping_rule(
+                    rule_id=id_)
+                self.assertEqual(resp.status_code, 204)
+                if id_ in self.rule_ids:
+                    self.rule_ids.remove(id_)
+
+            # Now, call List and verify empty list
+            list_resp = self.validate_list_rules_response()
+            rules_list = self.get_rules_list_from_response(list_resp.json())
+        # We may need to change this once defect CID-536 is fixed
+        self.assertEqual(rules_list, None)
 
     def tearDown(self):
         for id_ in self.template_ids:

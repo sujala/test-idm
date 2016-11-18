@@ -229,6 +229,8 @@ CADF_CONTENT = 'cadf:content'
 CADF_INITIATOR = 'cadf:initiator'
 CADF_HOST = 'cadf:host'
 CADF_REASON = 'cadf:reason'
+ENDPOINT_ASSIGNMENT_RULES = 'endpointAssignmentRules'
+RAX_AUTH_ENDPOINT_ASSIGNMENT_RULES = 'RAX-AUTH:endpointAssignmentRules'
 OS_KSCATALOG_ENDPOINT_TEMPLATE = 'OS-KSCATALOG:endpointTemplate'
 OS_KSCATALOG_ENDPOINT_TEMPLATES = 'OS-KSCATALOG:endpointTemplates'
 MULTI_FACTOR_ENABLED = 'multiFactorEnabled'
@@ -267,6 +269,7 @@ NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = (
     RAX_AUTH + ':tenantTypeEndpointRule')
 TENANT_TYPE = 'tenantType'
 TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = 'tenantTypeEndpointRule'
+TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES = 'tenantTypeEndpointRules'
 NS_SERVICES = OS_KSADM_NAMESPACE + ':services'
 
 '''Query parameters'''
