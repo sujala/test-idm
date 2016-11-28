@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.ClientRole;
@@ -78,6 +79,12 @@ public class RoleConverterCloudV20 {
         }
         clientRole.setRsWeight(roleWeight);
 
+        if (role.getAssignment() != null) {
+            clientRole.setAssignmentType(role.getAssignment().value());
+        } else {
+            clientRole.setAssignmentType(RoleAssignmentEnum.BOTH.value());
+        }
+
         return clientRole;
     }
 
@@ -139,6 +146,12 @@ public class RoleConverterCloudV20 {
 
         if (administratorRole != null) {
             roleEntity.setAdministratorRole(administratorRole.getRoleName());
+        }
+
+        if (role.getAssignmentType() != null) {
+            roleEntity.setAssignment(RoleAssignmentEnum.fromValue(role.getAssignmentType()));
+        } else {
+            roleEntity.setAssignment(RoleAssignmentEnum.BOTH);
         }
 
         return roleEntity;

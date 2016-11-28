@@ -178,7 +178,9 @@ public final class JSONConstants {
     public static final String RAX_AUTH_RSA_CREDENTIALS = "RAX-AUTH:rsaCredentials";
     public static final String TOKEN_KEY = "tokenKey";
     public static final String RAX_AUTH_PROPAGATE = "RAX-AUTH:propagate";
+    public static final String RAX_AUTH_ASSIGNMENT = "RAX-AUTH:assignment";
     public static final String PROPAGATE = "propagate";
+    public static final String ASSIGNMENT = "assignment";
     public static final String RAX_AUTH_ADMINISTRATOR_ROLE = "RAX-AUTH:administratorRole";
     public static final String ADMINISTRATOR_ROLE = "administratorRole";
 
@@ -252,9 +254,11 @@ public final class JSONConstants {
     public static final String ENDPOINT_TEMPLATE_RAX_AUTH_TENANT_ALIAS_PATH = "endpointTemplate.RAX-AUTH:tenantAlias";
     public static final String GROUPS_LIST_PATH = "groups.group";
     public static final String ROLE_PROPAGATE_PATH = "role.propagate";
+    public static final String ROLE_ASSIGNMENT_PATH = "role.assignment";
     public static final String ROLE_ADMINISTRATOR_ROLE_PATH = "role.administratorRole";
     public static final String ROLE_RAX_AUTH_WEIGHT_PATH = "role.RAX-AUTH:weight";
     public static final String ROLE_RAX_AUTH_PROPAGATE_PATH = "role.RAX-AUTH:propagate";
+    public static final String ROLE_RAX_AUTH_ASSIGNMENT_PATH = "role.RAX-AUTH:assignment";
     public static final String ROLE_RAX_AUTH_ADMINISTRATOR_ROLE_PATH = "role.RAX-AUTH:administratorRole";
     public static final String ROLE_WEIGHT_PATH = "role.weight";
     public static final String TOKEN_AUTHENTICATED_BY = "token.authenticatedBy";

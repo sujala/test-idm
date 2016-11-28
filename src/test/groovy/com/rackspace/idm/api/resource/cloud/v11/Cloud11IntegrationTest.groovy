@@ -1,4 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v11
+
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspacecloud.docs.auth.api.v1.AuthData
@@ -535,7 +537,10 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def baseURLId = getRandomNumber(1000000, 2000000)
         def baseUrl = v1Factory.createBaseUrl(baseURLId, validServiceName, "ORD", true, false, "http:publicUrl", adminUrl, null)
         Tenant tenant = v2Factory.createTenant(mossoId.toString(), mossoId.toString())
-        def role = v2Factory.createRole("listUsersByTenantRole$randomness")
+        def role = v2Factory.createRole("listUsersByTenantRole$randomness").with {
+            it.assignment = RoleAssignmentEnum.TENANT
+            it
+        }
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value

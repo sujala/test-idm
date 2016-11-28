@@ -106,6 +106,7 @@ public abstract class LdapRepository {
     public static final String ATTR_APPROVED_DOMAIN_IDS = "rsApprovedDomainIds";
     public static final String ATTR_AUTHENTICATION_URL = "rsAuthenticationUrl";
     public static final String ATTR_FEDERATED_USER_EXPIRED_TIMESTAMP = "rsFederatedUserExpiredTimestamp";
+    public static final String ATTR_ASSIGNMENT = "rsAssignment";
 
     public static final String ATTR_DESCRIPTION = "description";
     public static final String ATTR_POLICYTYPE = "policyType";

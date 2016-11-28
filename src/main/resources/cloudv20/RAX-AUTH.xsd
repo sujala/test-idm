@@ -39,6 +39,7 @@
     <attribute name="tokenFormat" type="RAX-AUTH:TokenFormatEnum" />
     <attribute name="factorType" type="RAX-AUTH:FactorTypeEnum" />
     <attribute name="assignmentType" type="RAX-AUTH:EndpointTemplateAssignmentTypeEnum" />
+    <attribute name="assignment" type="RAX-AUTH:RoleAssignmentEnum" />
 
     <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />
@@ -653,6 +654,44 @@
                             xmlns="http://www.w3.org/1999/xhtml">
                         <p>
                             The value for manually assigning endpoint templates.
+                        </p>
+                    </xsd:documentation>
+                </annotation>
+            </enumeration>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="RoleAssignmentEnum">
+        <restriction base="xsd:string">
+            <enumeration value="GLOBAL">
+                <annotation>
+                    <xsd:documentation
+                            xml:lang="EN"
+                            xmlns="http://www.w3.org/1999/xhtml">
+                        <p>
+                            The value specifies roles should be assigned globally.
+                        </p>
+                    </xsd:documentation>
+                </annotation>
+            </enumeration>
+            <enumeration value="TENANT">
+                <annotation>
+                    <xsd:documentation
+                            xml:lang="EN"
+                            xmlns="http://www.w3.org/1999/xhtml">
+                        <p>
+                            The value specifies roles should be assigned to tenants.
+                        </p>
+                    </xsd:documentation>
+                </annotation>
+            </enumeration>
+            <enumeration value="BOTH">
+                <annotation>
+                    <xsd:documentation
+                            xml:lang="EN"
+                            xmlns="http://www.w3.org/1999/xhtml">
+                        <p>
+                            The value specifies roles can be assigned assigned to both.
                         </p>
                     </xsd:documentation>
                 </annotation>

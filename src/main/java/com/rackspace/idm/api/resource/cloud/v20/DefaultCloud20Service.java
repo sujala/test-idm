@@ -110,7 +110,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String ERROR_CANNOT_DELETE_ENDPOINT_TEMPLATE_MESSAGE = "Deleting enabled templates or templates associated with one or more tenants is not allowed";
 
+    public static final String ERROR_CANNOT_ASSIGN_GLOBAL_ONLY_ROLES_VIA_TENANT_ASSIGNMENT = "The assignment of 'global only' roles via tenant assignment is not allowed";
 
+    public static final String ERROR_CANNOT_ASSIGN_TENANT_ONLY_ROLES_VIA_GLOBAL_ASSIGNMENT = "The assignment of 'tenant only' roles via global assignment is not allowed";
 
     public static final String ROLE_ID_NOT_FOUND_ERROR_MESSAGE = "Role with ID %s not found.";
 
@@ -486,6 +488,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             ClientRole role = checkAndGetClientRole(roleId);
+            if (role.getAssignmentType() != null && RoleAssignmentEnum.fromValue(role.getAssignmentType()) == RoleAssignmentEnum.GLOBAL) {
+                throw new ForbiddenException(ERROR_CANNOT_ASSIGN_GLOBAL_ONLY_ROLES_VIA_TENANT_ASSIGNMENT);
+            }
 
             if (IdentityUserTypeEnum.isIdentityUserTypeRoleName(role.getName())) {
                 throw new ForbiddenException("Cannot add specified role to tenants on users.");
@@ -859,6 +864,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
 
             ClientRole cRole = checkAndGetClientRole(roleId);
+            if (cRole.getAssignmentType() != null && RoleAssignmentEnum.fromValue(cRole.getAssignmentType()) == RoleAssignmentEnum.TENANT) {
+                throw new ForbiddenException(ERROR_CANNOT_ASSIGN_TENANT_ONLY_ROLES_VIA_GLOBAL_ASSIGNMENT);
+            }
 
             User user = userService.checkAndGetUserById(userId);
             User caller = userService.getUserByAuthToken(authToken);

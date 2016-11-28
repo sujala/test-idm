@@ -18,6 +18,7 @@ import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
+import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.Modification
 import com.unboundid.ldap.sdk.SearchResultEntry
@@ -3690,6 +3691,177 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE  | false
         MediaType.APPLICATION_JSON_TYPE | true
         MediaType.APPLICATION_JSON_TYPE | false
+    }
+
+    @Unroll
+    def "Add new optional attribute for role to specify how a role can be assigned: content-type=#contentType assignment=#assignment" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.assignment = assignment
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        def role = getEntity(response, Role)
+
+        then:
+        role.assignment == assignment
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+
+        where:
+        contentType                     | assignment
+        MediaType.APPLICATION_XML_TYPE  | RoleAssignmentEnum.GLOBAL
+        MediaType.APPLICATION_JSON_TYPE | RoleAssignmentEnum.GLOBAL
+        MediaType.APPLICATION_XML_TYPE  | RoleAssignmentEnum.TENANT
+        MediaType.APPLICATION_JSON_TYPE | RoleAssignmentEnum.TENANT
+        MediaType.APPLICATION_XML_TYPE  | RoleAssignmentEnum.BOTH
+        MediaType.APPLICATION_JSON_TYPE | RoleAssignmentEnum.BOTH
+    }
+
+    @Unroll
+    def "Default optional role assignment is both if specified as null or blank: content-type=#contentType assignment=#assignment" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        def createRole;
+
+        if (contentType == MediaType.APPLICATION_JSON_TYPE) {
+            createRole = """{"role":{"name":"${name}","serviceId":"${serviceId}","RAX-AUTH:assignment":${assignment}}}"""
+        } else {
+            createRole = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ns3:role xmlns:ns1="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" xmlns:ns2="http://www.w3.org/2005/Atom" xmlns:ns3="http://docs.openstack.org/identity/api/v2.0" xmlns:ns4="http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0" xmlns:ns5="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0" xmlns:ns6="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0" xmlns:ns7="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0" xmlns:ns8="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" ns1:assignment="${assignment}" serviceId="${serviceId}" name="${name}"/>"""
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        def role = getEntity(response, Role)
+
+        then:
+        role.assignment == RoleAssignmentEnum.BOTH
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+
+        where:
+        contentType                     | assignment
+        MediaType.APPLICATION_JSON_TYPE | '""'
+        MediaType.APPLICATION_JSON_TYPE | null
+        MediaType.APPLICATION_XML_TYPE  | ""
+    }
+
+    @Unroll
+    def "Default optional role assignment to both if not specified: content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        def role = getEntity(response, Role)
+
+        then:
+        role.assignment == RoleAssignmentEnum.BOTH
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "The assignment of 'global only' roles via global assignment. If attempted to be assigned to a user on a tenant, a 403 must be returned: content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.assignment = RoleAssignmentEnum.GLOBAL
+            it
+        }
+        def createUser = v2Factory.createUserForCreate(getRandomUUID("user"), "displayName", "test@rackspace.com", true, "ORD", getRandomUUID("domain"), "Password1")
+        def tenantId = getRandomNumber(7000000, 8000000)
+        def createTenant = v2Factory.createTenant(tenantId.toString(), tenantId.toString())
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        def role = getEntity(response, Role)
+
+        response = cloud20.createUser(identityAdminToken, createUser, contentType, contentType)
+        def user = getEntity(response, User)
+
+        response = cloud20.addTenant(identityAdminToken, createTenant, contentType, contentType)
+        def tenant = getEntity(response, Tenant)
+
+        response = cloud20.addRoleToUserOnTenant(identityAdminToken, tenant.id, user.id, role.id, contentType, contentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultCloud20Service.ERROR_CANNOT_ASSIGN_GLOBAL_ONLY_ROLES_VIA_TENANT_ASSIGNMENT)
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+        cloud20.deleteTenant(identityAdminToken, tenant.id)
+        cloud20.deleteUser(identityAdminToken, user.id)
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "The assignment of 'tenant only' roles via tenant assignment. If attempted to be assigned to a user globally, a 403 must be returned: content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.assignment = RoleAssignmentEnum.TENANT
+            it
+        }
+        def createUser = v2Factory.createUserForCreate(getRandomUUID("user"), "displayName", "test@rackspace.com", true, "ORD", getRandomUUID("domain"), "Password1")
+        def tenantId = getRandomNumber(7000000, 8000000)
+        def createTenant = v2Factory.createTenant(tenantId.toString(), tenantId.toString())
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        def role = getEntity(response, Role)
+
+        response = cloud20.createUser(identityAdminToken, createUser, contentType, contentType)
+        def user = getEntity(response, User)
+
+        response = cloud20.addTenant(identityAdminToken, createTenant, contentType, contentType)
+        def tenant = getEntity(response, Tenant)
+
+        response = cloud20.addUserRole(identityAdminToken, user.id, role.id, contentType, contentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultCloud20Service.ERROR_CANNOT_ASSIGN_TENANT_ONLY_ROLES_VIA_GLOBAL_ASSIGNMENT)
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+        cloud20.deleteTenant(identityAdminToken, tenant.id)
+        cloud20.deleteUser(identityAdminToken, user.id)
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
     }
 
     def getEntity(response, type) {

@@ -33,6 +33,7 @@ public class JSONWriterForRole extends JSONWriterForEntity<Role> {
         prefixValues.put(ROLE_ADMINISTRATOR_ROLE_PATH, RAX_AUTH_ADMINISTRATOR_ROLE);
         prefixValues.put(ROLE_WEIGHT_PATH, RAX_AUTH_WEIGHT);
         prefixValues.put(ROLE_PROPAGATE_PATH, RAX_AUTH_PROPAGATE);
+        prefixValues.put(ROLE_ASSIGNMENT_PATH, RAX_AUTH_ASSIGNMENT);
 
         write(role, entityStream, prefixValues);
     }
