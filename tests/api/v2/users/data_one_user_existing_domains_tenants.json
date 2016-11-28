@@ -1,0 +1,80 @@
+{
+    "no_tenant_domain_enabled_no_users" : {
+        "tenant" : [],
+        "domain": {
+            "default" : false,
+            "enabled" : true,
+            "users" : false
+        },
+        "validator" : "one_user_validator",
+        "additional_schema_fields": ["roles", "RAX-KSQA:secretQA"]
+    },
+    "no_tenant_domain_default" : {
+        "tenant" : [],
+        "domain": {
+            "default" : true,
+            "enabled" : true,
+            "users" : true
+        },
+        "validator" : "one_user_validator",
+        "additional_schema_fields": ["roles", "RAX-KSQA:secretQA"]
+    },
+    "no_tenant_in_domain_domain_disabled_no_users" : {
+        "tenant" : {},
+        "domain": {
+            "default" : false,
+            "enabled" : false,
+            "users" : false
+        },
+        "validator" : "one_user_validator",
+        "additional_schema_fields": ["roles", "RAX-KSQA:secretQA"]
+},
+    "no_tenant_in_domain_domain_enabled_with_users" : {
+        "tenant" : {},
+        "domain": {
+            "default" : false,
+            "enabled" : true,
+            "users" : true
+        },
+        "validator" : "one_user_validator",
+        "additional_schema_fields": ["roles", "RAX-KSQA:secretQA"]
+},
+    "tenant_not_in_domain_domain_enabled_no_users" : {
+        "tenant" : {
+            "in_domain" : false,
+            "existing" :["mosso"]
+        },
+        "domain": {
+            "default" : false,
+            "enabled" : true,
+            "users" : false
+        },
+        "validator" : "one_user_validator",
+        "additional_schema_fields": ["roles", "RAX-KSQA:secretQA"]
+},
+    "tenant_one_mosso_one_new_domain_enabled_no_users" : {
+
+        "tenant" : {
+            "in_domain": true,
+            "existing": ["mosso"]},
+        "domain": {
+            "default" : false,
+            "enabled" : true,
+            "users" : false
+        },
+        "validator" : "one_user_validator",
+        "additional_schema_fields": ["roles", "RAX-KSQA:secretQA"]
+},
+    "tenant_one_nast_one_new_domain_enabled_no_users" : {
+        "tenant" : {
+            "in_domain": true,
+            "existing": ["nast"]},
+        "domain": {
+            "default" : false,
+            "enabled" : true,
+            "users" : false
+        },
+        "validator" : "one_user_validator",
+        "additional_schema_fields": ["roles", "RAX-KSQA:secretQA"]
+}
+}

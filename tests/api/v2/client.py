@@ -128,7 +128,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         Reset API key
         """
-        url = self.url+const.RESET_USER_API_KEY_URL
+        url = self.url + const.RESET_USER_API_KEY_URL
         url = url.format(user_id=user_id)
         return self.request('POST', url)
 
@@ -419,6 +419,19 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         return resp
 
+    def add_domain(self, request_object, requestslib_kwargs=None):
+        """Return response object from the add domain api call
+
+        POST /domains
+        @todo: In case of XML response, add a json() method to the response
+        object that will create a JSON equivalent of the XML response
+        """
+        url = self.url + const.DOMAIN_URL
+        resp = self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+        return resp
+
     def update_tenant(self, tenant_id,
                       request_object, requestslib_kwargs=None):
         """Return response object from the update tenant api call
@@ -472,7 +485,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         that will create a JSON equivalent of the XML response
         """
         url = self.url + const.LIST_TENANTS_IN_DOMAIN_URL.format(
-                             domainId=domain_id)
+            domainId=domain_id)
         resp = self.request('GET', url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
@@ -518,7 +531,6 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
     def update_user(self, user_id, request_object,
                     requestslib_kwargs=None):
-
         """
         Return response object from update user api call
         POST /v2.0/users/{user_id}

@@ -95,6 +95,8 @@ NUMBERS_PATTERN = '[1-9]{1}[0-9]{8}'
 OTP_NAME_PATTERN = 'otp[\-][\d]{8}'
 PASSWORD_PATTERN = 'Password1[\d\w]{10}'
 ROLE_NAME_PATTERN = 'cid_test_role[\-][\d]{8}'
+SECRETQ_PATTERN = 'SecretQ[\w]{15}'
+SECRETA_PATTERN = 'SecretA[\w]{15}'
 SERVICE_NAME_PATTERN = 'service[\-][\w\d]{8}'
 SERVICE_TYPE_PATTERN = 'service[\-]type[\-][\w\d]{8}'
 SERVICE_ID_PATTERN = '[\d]{8}'
@@ -333,9 +335,10 @@ EXPECTED_UNBOUNDID_TIMEOUT_CONFIGS = [
     'ldap.server.pool.allow.concurrent.socketfactory.use']
 
 '''ROLES'''
+COMPUTE_ROLE_NAME = "compute:default"
 ENDPOINT_RULE_ADMIN_ROLE_NAME = 'identity:endpoint-rule-admin'
 IDENTITY_ADMIN_ROLE_ID = '1'
-OBJECT_STORE_ROLE_NANE = 'object-store:default'
+OBJECT_STORE_ROLE_NAME = 'object-store:default'
 SERVICE_ADMIN_ROLE_ID = '4'
 TENANT_ACCESS_ROLE_NAME = 'identity:tenant-access'
 USER_ADMIN_ROLE_ID = '2'
@@ -351,6 +354,11 @@ FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS = (
     'feature.auto.assign.role.on.domain.tenants')
 FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
     "feature.endpoint.template.disable.name.type")
+# Sorry for the abbreviations, but need them to fit < 80 chars
+FEATURE_RESTRICTING_USER_CREATE_IN_EXIST_DOM = (
+    "feature.restrict.create.user.in.domain.with.users")
+FEATURE_RESTRICTING_USER_CREATE_IN_DISABLED_DOM = (
+    "feature.restrict.create.user.in.disabled.domain")
 FEATURE_FLAG_ALLOW_TENANT_NAME_UPDATE = (
     'feature.allow.tenant.name.to.be.changed.via.update.tenant')
 FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED = (

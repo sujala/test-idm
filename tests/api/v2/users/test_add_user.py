@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*
 import copy
-
 import ddt
 from hypothesis import given, strategies
 
 from tests.api.utils import header_validation
 from tests.api.v2 import base
+from tests.api.v2.models import factory
 from tests.api.v2.models import requests
 from tests.api.v2.schema import users as users_json
 from tests.api import constants as const
@@ -101,7 +101,7 @@ class TestAddUser(base.TestBaseV2):
                     const.REQUIRED] + self.add_schema_fields)
 
             self.assertEqual(resp.json()[const.USER][
-                                 const.RAX_AUTH_MULTI_FACTOR_ENABLED], False)
+                const.RAX_AUTH_MULTI_FACTOR_ENABLED], False)
             self.assertSchema(response=resp, json_schema=updated_json_schema)
             self.assertHeaders(response=resp)
 
@@ -138,7 +138,7 @@ class TestAddUser(base.TestBaseV2):
                     const.REQUIRED] + self.add_schema_fields)
 
             self.assertEqual(resp.json()[const.USER][
-                                 const.RAX_AUTH_MULTI_FACTOR_ENABLED], False)
+                const.RAX_AUTH_MULTI_FACTOR_ENABLED], False)
             self.assertSchema(response=resp, json_schema=updated_json_schema)
             self.assertHeaders(response=resp)
 
@@ -234,6 +234,221 @@ class TestAddUser(base.TestBaseV2):
 
 
 @ddt.ddt
+class TestAddUserExistingRolesTenants(base.TestBaseV2):
+    """Add User With Existing Roles and Tenants Tests."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Class level set up for the tests
+
+        Create users needed for the tests and generate clients for those users.
+        """
+        super(TestAddUserExistingRolesTenants, cls).setUpClass()
+
+    def setUp(self):
+        super(TestAddUserExistingRolesTenants, self).setUp()
+        self.user_ids = []
+
+    def one_user_validator(self, resp, test_data):
+        # error cases
+        dom_dis_feat_flag = const.FEATURE_RESTRICTING_USER_CREATE_IN_EXIST_DOM
+
+        if ("domain" in test_data and "enabled" in test_data["domain"] and
+                not test_data["domain"]["enabled"] and
+                self.devops_client.get_feature_flag(dom_dis_feat_flag)):
+            self.assertEqual(resp.status_code, 403)
+            return
+        if ("domain" in test_data and "default" in test_data["domain"] and
+                test_data["domain"]["default"]):
+            self.assertEqual(resp.status_code, 400)
+            return
+
+        feat_flag = const.FEATURE_RESTRICTING_USER_CREATE_IN_EXIST_DOM
+
+        if ("domain" in test_data and "default" in test_data["domain"] and
+                not test_data["domain"]["default"] and
+                "users" in test_data["domain"] and
+                test_data["domain"]["users"] and
+                self.devops_client.get_feature_flag(feat_flag)):
+            self.assertEqual(resp.status_code, 403)
+            return
+        # possible bug
+        if ("tenant" in test_data and "in_domain" in test_data["tenant"] and
+                not test_data["tenant"]["in_domain"]):
+            self.assertEqual(resp.status_code, 400)
+            return
+
+        self.assertEqual(resp.status_code, 201)
+        self.user_ids.append(resp.json()[const.USER][const.ID])
+
+        updated_json_schema = copy.deepcopy(users_json.add_user)
+        updated_json_schema[const.PROPERTIES][const.USER][const.REQUIRED] = (
+            users_json.add_user[const.PROPERTIES][const.USER][const.REQUIRED] +
+            test_data['additional_schema_fields'])
+
+        self.assertSchema(response=resp, json_schema=updated_json_schema)
+
+        self.assertHeaders(
+            resp, *self.header_validation_functions_HTTP_201)
+
+        # authenticate with new user
+        if (not test_data["domain"]["enabled"] and
+                self.devops_client.get_feature_flag(dom_dis_feat_flag)):
+            username = resp.json()[const.USER][const.USERNAME]
+            pw = resp.json()[const.USER][const.NS_PASSWORD]
+            auth_obj = requests.AuthenticateWithPassword(user_name=username,
+                                                         password=pw)
+            auth_resp = self.identity_admin_client.get_auth_token(
+                request_object=auth_obj)
+            domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
+            for arole in auth_resp.json()[const.ACCESS][
+                    const.USER][const.ROLES]:
+                if (arole[const.NAME] == const.OBJECT_STORE_ROLE_NAME and
+                        const.TENANT_ID in arole):
+                    nast_tenant = arole[const.TENANT_ID]
+                    self.assertEqual(const.NAST_PREFIX +
+                                     "{0}".format(domain_id),
+                                     nast_tenant)
+                if (arole[const.NAME] == const.COMPUTE_ROLE_NAME and
+                        const.TENANT_ID in arole):
+                    mosso_tenant = arole[const.TENANT_ID]
+                    self.assertEqual(domain_id,
+                                     mosso_tenant)
+
+    def get_validator(self, validator):
+        if validator == "one_user_validator":
+            return self.one_user_validator
+
+    def create_domain(self, domain_req):
+        dom = factory.get_domain_request_object(domain_req)
+        dom_resp = self.identity_admin_client.add_domain(dom)
+        domain_id = dom_resp.json()[const.RAX_AUTH_DOMAIN][const.ID]
+
+        return domain_id
+
+    def create_user(self, domain_id=None):
+        if domain_id:
+            request_object = factory.get_add_user_request_object_pull(
+                domain_id=domain_id)
+        else:
+            request_object = factory.get_add_user_request_object()
+        resp = self.identity_admin_client.add_user(
+            request_object=request_object)
+        user_json = resp.json()
+        if const.USER in user_json and const.ID in user_json[const.USER]:
+            self.user_ids.append(resp.json()[const.USER][const.ID])
+
+        return resp
+
+    def get_sqsa(self):
+        secret_q = self.generate_random_string(pattern=const.SECRETQ_PATTERN)
+        secret_a = self.generate_random_string(pattern=const.SECRETA_PATTERN)
+        secret_qa = {
+            const.SECRET_QUESTION: secret_q,
+            const.SECRET_ANSWER: secret_a
+        }
+        return secret_qa
+
+    def create_tenant(self, domain_id, tenant_req, secret_qa):
+        # easiest to just create user and then delete tenants
+        user_name_del = self.generate_random_string()
+        ten_domain_id = domain_id
+        if "in_domain" in tenant_req and not tenant_req["in_domain"]:
+            ten_domain_id = self.generate_random_string(
+                const.ID_PATTERN)
+        request_object = requests.UserAdd(user_name=user_name_del,
+                                          domain_id=ten_domain_id,
+                                          secret_qa=secret_qa)
+
+        resp = self.identity_admin_client.add_user(
+            request_object=request_object)
+        user_id = resp.json()[const.USER][const.ID]
+        for arole in resp.json()[const.USER][const.ROLES]:
+            if (arole[const.NAME] == const.OBJECT_STORE_ROLE_NAME and
+                    const.TENANT_ID in arole):
+                mosso_tenant = arole[const.TENANT_ID]
+                mosso_tenant_role = arole
+            if (arole[const.NAME] == const.COMPUTE_ROLE_NAME and
+                    const.TENANT_ID in arole):
+                nast_tenant = arole[const.TENANT_ID]
+                nast_tenant_role = arole
+        # remove not used tenants.
+        if "existing" in tenant_req:
+            if "mosso" not in tenant_req["existing"]:
+                self.identity_admin_client.delete_tenant(mosso_tenant)
+            if "nast" not in tenant_req["existing"]:
+                self.identity_admin_client.delete_tenant(nast_tenant)
+        else:
+                self.identity_admin_client.delete_tenant(nast_tenant)
+                self.identity_admin_client.delete_tenant(mosso_tenant)
+
+        # delete user
+        self.identity_admin_client.delete_user(user_id=user_id)
+
+        result = []
+        if "existing" in tenant_req and "mosso" in tenant_req["existing"]:
+            result.append(mosso_tenant_role)
+        if "existing" in tenant_req and "nast" in tenant_req["existing"]:
+            result.append(nast_tenant_role)
+
+        return result
+
+    @ddt.file_data('data_one_user_existing_domains_tenants.json')
+    def test_add_user_admin_user_existing_doms_tenants(self, test_data):
+        '''Add user_admin type users where the domains and tenants exist.'''
+        user_name = self.generate_random_string()
+        domain_req = test_data['domain']
+        tenant_req = test_data['tenant']
+
+        domain_id = const.ID_PATTERN
+        # create domain
+        create_domain = False
+        if domain_req:
+            if not ("default" in domain_req and domain_req["default"]):
+                create_domain = True
+            if create_domain:
+                domain_id = self.create_domain(domain_req=domain_req)
+            if "users" in domain_req and domain_req["users"]:
+                if create_domain:
+                    resp = self.create_user(domain_id=domain_id)
+                    self.assertEqual(resp.status_code, 201)
+                else:
+                    resp = self.create_user()
+                    self.assertEqual(resp.status_code, 201)
+        secret_qa = self.get_sqsa()
+
+        roles = []
+        if tenant_req:
+            roles = self.create_tenant(domain_id=domain_id,
+                                       tenant_req=tenant_req,
+                                       secret_qa=secret_qa)
+        if create_domain:
+            request_object = requests.UserAdd(user_name=user_name,
+                                              domain_id=domain_id,
+                                              secret_qa=secret_qa,
+                                              )
+        else:
+            request_object = requests.UserAdd(user_name=user_name,
+                                              secret_qa=secret_qa)
+        request_object.roles = roles
+        resp = self.identity_admin_client.add_user(
+            request_object=request_object)
+        if "validator" in test_data:
+            self.get_validator(test_data["validator"])(resp, test_data)
+
+    def tearDown(self):
+        # Delete all users created in the tests
+        for id in self.user_ids:
+            resp = self.identity_admin_client.delete_user(user_id=id)
+            self.assertEqual(resp.status_code, 204)
+        super(TestAddUserExistingRolesTenants, self).tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(TestAddUserExistingRolesTenants, cls).tearDownClass()
+
+
+@ddt.ddt
 class TestServiceAdminLevelAddUser(base.TestBaseV2):
 
     """Add User Tests
@@ -285,13 +500,7 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
 
     @ddt.file_data('data_add_user_w_mfa_attrs.json')
     def test_add_user_identity_admin_w_mfa_attrs(self, test_data):
-        '''Add identity_admin type users
-
-        test_data comes from a json data file that can contain various possible
-        input combinations. Each of these data combination is a separate test
-        case.
-        NOTE: This test case illustrates providing test_data in a json file.
-        '''
+        '''Add identity_admin type users'''
         mfa_input = test_data['mfa_input']
         data_list = self.generate_data_combinations(data_dict=mfa_input)
         # run multiple combination of mfa input attributes
@@ -315,7 +524,7 @@ class TestServiceAdminLevelAddUser(base.TestBaseV2):
                     const.REQUIRED] + self.add_schema_fields)
 
             self.assertEqual(resp.json()[const.USER][
-                                 const.RAX_AUTH_MULTI_FACTOR_ENABLED], False)
+                const.RAX_AUTH_MULTI_FACTOR_ENABLED], False)
             self.assertSchema(response=resp, json_schema=updated_json_schema)
             self.assertHeaders(response=resp)
 
