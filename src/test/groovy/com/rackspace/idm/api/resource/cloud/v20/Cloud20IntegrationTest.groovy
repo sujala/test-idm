@@ -3632,6 +3632,28 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         }
     }
 
+    def "List endpoints for Token returns empty list for rackers regardless of implicit role feature" () {
+        given:
+        AuthenticateResponse resp = utils.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD)
+        def token = resp.token.id
+
+        when: "List Endpoints for Token with auto-assignment disabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, false)
+        def endpointList = utils.getEndpointsForToken(token)
+
+        then: "Then response does not include endpoint"
+        endpointList.endpoint != null
+        endpointList.endpoint.size() == 0
+
+        when: "List Endpoints for Token with auto-assignment enabled"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, true)
+        endpointList = utils.getEndpointsForToken(token)
+
+        then: "Then response does not include endpoint"
+        endpointList.endpoint != null
+        endpointList.endpoint.size() == 0
+    }
+
     @Unroll
     def "duplicate endpoints removed based on endpoint rules: content-type=#contentType useEndpointRules=#useEndpointRules" () {
         given:

@@ -230,49 +230,61 @@ public class DefaultTenantService implements TenantService {
      * assigned on tenants and, if enabled, the automatically assigned "access" role to all tenants within the user's
      * domain.
      *
-     * The returned roles are NOT necessarily populated with "role details" such as name, propagation status, etc.
+     * The returned roles are NOT populated with "role details" such as name, propagation status, etc.
      *
      * @param user
      * @return
      */
     private List<TenantRole> getEffectiveTenantRolesForUser(BaseUser user) {
-        // If enabled, auto-assign access role to all tenants within user's domain
-        TenantRole implicitRole = null;
-        if (StringUtils.isNotBlank(user.getDomainId())
-                && identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()
-                && !user.getDomainId().equalsIgnoreCase(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
-            /*
-             There's a 2 way linkage between Domains and Tenants. The link from domains to tenants needs to be retired,
-             but all existing code is really based on using the domain's list of tenants as the source of truth for
-             tenants in the domain. As part of v3 keystone reconciliation we updated tenants to point to the domain.
-             All tenants were updated to point to the appropriate domain, but there were various subsequent defects found
-             where the pointer may not have been updated. Until we switch all code to use the tenant linkage as the source
-             of truth, we need to still use the domain list.
-             */
-            Domain domain = domainService.getDomain(user.getDomainId());
-            String[] tenantIds = domain.getTenantIds();
-
-            // Generate the tenant role to add
-            implicitRole = createTenantRoleForAutoAssignment(user, tenantIds);
-        }
-
-        // Get a list of explicit tenant roles assigned and turn into a list to return
-        Iterable<TenantRole> itTenantRoles = this.tenantRoleDao.getTenantRolesForUser(user);
-
+        logger.debug("Getting effective tenant roles for user");
         List<TenantRole> userTenantRoles = new ArrayList<>();
-        boolean insertImplicitRole = implicitRole != null;
-        for (TenantRole explicitTenantRole : itTenantRoles) {
-            if (implicitRole != null && explicitTenantRole.getRoleRsId().equalsIgnoreCase(implicitRole.getRoleRsId())) {
-                // Need to union the implicit tenants to any explicitly assigned tenants
-                explicitTenantRole.getTenantIds().addAll(implicitRole.getTenantIds());
-                insertImplicitRole = false;
-            }
-            userTenantRoles.add(explicitTenantRole);
-        }
-        if (insertImplicitRole) {
-            userTenantRoles.add(implicitRole);
-        }
 
+        if (user instanceof Racker) {
+            /*
+             Rackers only have one "tenant role" which is the racker role. All other roles are from eDir which are not
+             returned by this service as callers expect all roles returned to exist within Identity LDAP
+             */
+            TenantRole rackerRole = getEphemeralRackerTenantRole();
+            if (rackerRole != null) {
+                userTenantRoles.add(rackerRole);
+            }
+        } else if (user instanceof EndUser) {
+            // If enabled, auto-assign access role to all tenants within user's domain
+            TenantRole implicitRole = null;
+            if (StringUtils.isNotBlank(user.getDomainId())
+                    && identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()
+                    && !user.getDomainId().equalsIgnoreCase(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
+                /*
+                 There's a 2 way linkage between Domains and Tenants. The link from domains to tenants needs to be retired,
+                 but all existing code is really based on using the domain's list of tenants as the source of truth for
+                 tenants in the domain. As part of v3 keystone reconciliation we updated tenants to point to the domain.
+                 All tenants were updated to point to the appropriate domain, but there were various subsequent defects found
+                 where the pointer may not have been updated. Until we switch all code to use the tenant linkage as the source
+                 of truth, we need to still use the domain list.
+                 */
+                Domain domain = domainService.getDomain(user.getDomainId());
+                String[] tenantIds = domain.getTenantIds();
+
+                // Generate the tenant role to add
+                implicitRole = createTenantRoleForAutoAssignment(user, tenantIds);
+            }
+
+            // Get a list of explicit tenant roles assigned and turn into a list to return
+            Iterable<TenantRole> itTenantRoles = this.tenantRoleDao.getTenantRolesForUser(user);
+
+            boolean insertImplicitRole = implicitRole != null;
+            for (TenantRole explicitTenantRole : itTenantRoles) {
+                if (implicitRole != null && explicitTenantRole.getRoleRsId().equalsIgnoreCase(implicitRole.getRoleRsId())) {
+                    // Need to union the implicit tenants to any explicitly assigned tenants
+                    explicitTenantRole.getTenantIds().addAll(implicitRole.getTenantIds());
+                    insertImplicitRole = false;
+                }
+                userTenantRoles.add(explicitTenantRole);
+            }
+            if (insertImplicitRole) {
+                userTenantRoles.add(implicitRole);
+            }
+        }
         return userTenantRoles;
     }
 
@@ -717,6 +729,12 @@ public class DefaultTenantService implements TenantService {
         return getEffectiveTenantRolesForUserFullyPopulated(user);
     }
 
+    /**
+     * Retrieves a list of tenant roles for a user without the details such as name, propagate, etc populated
+     * @param user
+     * @return
+     * @deprecated Use {@link #getEffectiveTenantRolesForUser}
+     */
     public Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user) {
         logger.debug(GETTING_TENANT_ROLES);
 
@@ -735,6 +753,7 @@ public class DefaultTenantService implements TenantService {
         for (TenantRole role : roles) {
             if (role != null) {
                 ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
+                //TODO: If the cRole returns null, this will cause NPE. Should just not populate role details
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
                 role.setPropagate(cRole.getPropagate());
