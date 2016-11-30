@@ -1,7 +1,7 @@
 from tests.api import base
 from tests.api import devops_client
 from tests.api.v2 import client
-from tests.api.v2.models import requests
+from tests.api.v2.models import factory
 from tests.api import constants as const
 from tests.api.utils import header_validation
 
@@ -71,59 +71,75 @@ class TestBaseV2(base.TestBase):
                 header_validation.validate_header_transfer_encoding])
 
     @classmethod
-    def generate_client(cls, parent_client=None, additional_input_data=None):
+    def generate_client(cls, parent_client=None, request_object=None,
+                        additional_input_data=None, token=None):
         """Return a client object
-
+        the object will be added few default headers for later use such as
+        x-auth-token, x-user-id, x-domain, x-tenant-id
         :param parent_client: client object of the parent user. The parent user
         type can be identity_admin or user_admin. If no parent_client is given,
         uses the service_admin (or) identity_admin level user's client
         depending on wherther run_service_admin_tests in the config file is
         True or False respectively.
-
-        :param additional_input_data: A dictionary with any additional fields
-        that are required to add a user before generating the
-        corresponding client.
-        eg. {'domain_id': 'meow', 'user_name': 'cat'}
+        :param request_object: is a create user request object which give users
+        flexibility to build object outside to create user as they desire
+        :param additional_input_data: any additional input need to add to user
+        eg. {'domain_id': '123456', 'is_user_manager': True}
+        :param token: a token user passing in to generate client in this case
+        regardless additionl_input_data
         """
-
-        user_name = (additional_input_data.get(
-            'user_name',
-            cls.generate_random_string(pattern=const.USER_NAME_PATTERN)))
-        domain_id = (additional_input_data.get('domain_id', None))
-        password = (additional_input_data.get('password', None))
-        contact_id = (additional_input_data.get('contact_id', None))
-        email = (additional_input_data.get('email', None))
-
-        if not parent_client:
-            if cls.test_config.run_service_admin_tests:
-                parent_client = cls.service_admin_client
-            else:
-                parent_client = cls.identity_admin_client
-
-        request_object = requests.UserAdd(
-            user_name=user_name, domain_id=domain_id, password=password,
-            contact_id=contact_id,
-            email=email
-        )
-        resp = parent_client.add_user(request_object)
-        user_id = resp.json()[const.USER][const.ID]
-        if ('is_user_manager' in additional_input_data and
-                additional_input_data['is_user_manager'] is True):
-            parent_client.add_role_to_user(
-                user_id=user_id, role_id=const.USER_MANAGER_ROLE_ID)
-
         id_client = client.IdentityAPIClient(
             url=cls.url,
             serialize_format=cls.test_config.serialize_format,
             deserialize_format=cls.test_config.deserialize_format)
-        if const.PASSWORD not in additional_input_data:
-            password = resp.json()[const.USER][const.NS_PASSWORD]
-        resp = id_client.get_auth_token(
-            user=user_name, password=password)
-        auth_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
-        user_id = resp.json()[const.ACCESS][const.USER][const.ID]
-        id_client.default_headers[const.X_USER_ID] = user_id
-        id_client.default_headers[const.X_AUTH_TOKEN] = auth_token
+
+        if token:
+            # generate client from existing user token
+            id_client.default_headers['X-Auth-Token'] = token
+        else:
+            # create user as client
+            if not parent_client:
+                if cls.test_config.run_service_admin_tests:
+                    parent_client = cls.service_admin_client
+                else:
+                    parent_client = cls.identity_admin_client
+            if not request_object:
+                user_name = (additional_input_data.get(
+                    'user_name',
+                    cls.generate_random_string(
+                        pattern=const.USER_NAME_PATTERN)))
+                password = (additional_input_data.get('password', None))
+                input_data = {
+                    'domain_id': additional_input_data.get('domain_id', None),
+                    'email': additional_input_data.get('email', None),
+                    'contact_id': additional_input_data.get('contact_id', None)
+                }
+                request_object = factory.get_add_user_request_object(
+                    username=user_name, password=password,
+                    input_data=input_data)
+
+            user_resp = parent_client.add_user(request_object=request_object)
+            user_id = user_resp.json()[const.USER][const.ID]
+
+            if ('is_user_manager' in additional_input_data and
+                    additional_input_data['is_user_manager'] is True):
+                parent_client.add_role_to_user(
+                    user_id=user_id, role_id=const.USER_MANAGER_ROLE_ID)
+
+            username = user_resp.json()[const.USER][const.USERNAME]
+            password = user_resp.json()[const.USER][const.NS_PASSWORD]
+            if const.TENANT_ID in str(user_resp.json()[const.USER]):
+                id_client.default_headers[const.TENANT_ID] = (
+                    user_resp.json()[const.USER][const.TENANT_ID])
+            if const.DOMAINID in str(user_resp.json()[const.USER]):
+                id_client.default_headers[const.DOMAINID] = (
+                    user_resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID])
+            resp = id_client.get_auth_token(
+                user=username, password=password)
+            auth_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+            user_id = resp.json()[const.ACCESS][const.USER][const.ID]
+            id_client.default_headers[const.X_USER_ID] = user_id
+            id_client.default_headers[const.X_AUTH_TOKEN] = auth_token
         return id_client
 
     def generate_client_with_x_auth_token(cls, x_auth_token=None):
@@ -132,6 +148,7 @@ class TestBaseV2(base.TestBase):
         with the client generated by this method will be a call made by the
         user to whom the token belongs
         """
+        # TODO: deprecate
         id_client = client.IdentityAPIClient(
             url=cls.url,
             serialize_format=cls.test_config.serialize_format,
@@ -143,7 +160,7 @@ class TestBaseV2(base.TestBase):
     @classmethod
     def delete_client(cls, client, parent_client=None):
         """Return delete client object
-
+        Clean up all resources create if generated client added user.
         :param parent_client: client object of the parent user. The parent user
         type can be identity_admin or user_admin. If no parent_client is given,
         uses the service_admin (or) identity_admin level user's client
@@ -155,9 +172,15 @@ class TestBaseV2(base.TestBase):
                 parent_client = cls.service_admin_client
             else:
                 parent_client = cls.identity_admin_client
-        user_id = client.default_headers[const.X_USER_ID]
-        resp = parent_client.delete_user(user_id=user_id)
-
+        if const.X_USER_ID in client.default_headers:
+            user_id = client.default_headers[const.X_USER_ID]
+            resp = parent_client.delete_user(user_id=user_id)
+        if const.X_DOMAIN_ID in client.default_headers:
+            domain_id = client.default_headers[const.X_DOMAIN_ID]
+            parent_client.delete_domain(domain_id=domain_id)
+        if const.X_TENANT_ID in client.default_headers:
+            tenant_id = client.default_headers[const.X_TENANT_ID]
+            parent_client.delete_tenant(tenant_id=tenant_id)
         return resp
 
     @classmethod

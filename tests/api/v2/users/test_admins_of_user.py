@@ -26,8 +26,9 @@ class TestAdminsOfUser(base.TestBaseV2):
         cls.test_email = "random@rackspace.com"
         cls.issuer = 'http://identityqe.rackspace.com'
 
-    def setUp(cls):
-        cls.user_ids = []
+    def setUp(self):
+        self.user_ids = []
+        self.clients = []
 
     @ddt.file_data('data_get_admins_for_fed_user.json')
     def test_admins_of_fed_user(self, test_data):
@@ -47,8 +48,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         auth = self.identity_admin_client.get_auth_token(
             user=user_name, password=password)
         user_admin_token = auth.json()[const.ACCESS][const.TOKEN][const.ID]
-        user_admin_client = self.generate_client_with_x_auth_token(
-            x_auth_token=user_admin_token)
+        user_admin_client = self.generate_client(token=user_admin_token)
 
         # Get admins of user-admin user using its own token
         resp = user_admin_client.get_admins_for_a_user(user_id)
@@ -72,8 +72,7 @@ class TestAdminsOfUser(base.TestBaseV2):
             base64_url_encode=base64_url_encode, new_url=new_url)
         fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
         fed_user_auth_token = auth.json()[const.ACCESS][const.TOKEN][const.ID]
-        fed_user_client = self.generate_client_with_x_auth_token(
-            x_auth_token=fed_user_auth_token)
+        fed_user_client = self.generate_client(token=fed_user_auth_token)
 
         # Get admins of fed user using identity admin's token
         admins_of_fed_user = self.identity_admin_client.get_admins_for_a_user(
@@ -157,8 +156,7 @@ class TestAdminsOfUser(base.TestBaseV2):
             base64_url_encode=base64_url_encode, new_url=new_url)
         fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
         fed_user_auth_token = auth.json()[const.ACCESS][const.TOKEN][const.ID]
-        fed_user_client = self.generate_client_with_x_auth_token(
-            x_auth_token=fed_user_auth_token)
+        fed_user_client = self.generate_client(token=fed_user_auth_token)
 
         # creating second fed user under same domain
         subject_2 = self.generate_random_string(
@@ -174,8 +172,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         fed_user_id_2 = auth.json()[const.ACCESS][const.USER][const.ID]
         fed_user_auth_token_2 = auth.json()[const.ACCESS][const.TOKEN][
             const.ID]
-        fed_user_client_2 = self.generate_client_with_x_auth_token(
-            x_auth_token=fed_user_auth_token_2)
+        fed_user_client_2 = self.generate_client(token=fed_user_auth_token_2)
 
         # Get admins of second fed user using first fed user's token
         admins_of_fed_user_2 = fed_user_client.get_admins_for_a_user(
@@ -260,8 +257,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         auth = self.identity_admin_client.get_auth_token(
             user=user_name, password=password)
         user_admin_token = auth.json()[const.ACCESS][const.TOKEN][const.ID]
-        user_admin_client = self.generate_client_with_x_auth_token(
-            x_auth_token=user_admin_token)
+        user_admin_client = self.generate_client(token=user_admin_token)
 
         sub_user_name = self.generate_random_string(
             pattern='sub[\-]user[\d\w]{12}')
@@ -274,6 +270,8 @@ class TestAdminsOfUser(base.TestBaseV2):
         option = {
             'name': sub_user_name
         }
+        self.clients.append(sub_user_client)
+
         list_resp = self.identity_admin_client.list_users(option=option)
         sub_user_id = list_resp.json()[const.USER][const.ID]
 
@@ -293,8 +291,7 @@ class TestAdminsOfUser(base.TestBaseV2):
             base64_url_encode=base64_url_encode, new_url=new_url)
         fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
         fed_user_auth_token = auth.json()[const.ACCESS][const.TOKEN][const.ID]
-        fed_user_client = self.generate_client_with_x_auth_token(
-            x_auth_token=fed_user_auth_token)
+        fed_user_client = self.generate_client(token=fed_user_auth_token)
 
         # Get admins of fed user using default user's token
         admins_of_fed_user = sub_user_client.get_admins_for_a_user(
@@ -338,8 +335,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         auth = self.identity_admin_client.get_auth_token(
             user=user_name, password=password)
         user_admin_token = auth.json()[const.ACCESS][const.TOKEN][const.ID]
-        user_admin_client = self.generate_client_with_x_auth_token(
-            x_auth_token=user_admin_token)
+        user_admin_client = self.generate_client(token=user_admin_token)
 
         user_manager_name = self.generate_random_string(
             pattern='user[\-]manager[\d\w]{12}')
@@ -353,6 +349,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         option = {
             'name': user_manager_name
         }
+        self.clients.append(user_manager_client)
         list_resp = self.identity_admin_client.list_users(option=option)
         user_manager_id = list_resp.json()[const.USER][const.ID]
 
@@ -372,8 +369,7 @@ class TestAdminsOfUser(base.TestBaseV2):
             base64_url_encode=base64_url_encode, new_url=new_url)
         fed_user_id = auth.json()[const.ACCESS][const.USER][const.ID]
         fed_user_auth_token = auth.json()[const.ACCESS][const.TOKEN][const.ID]
-        fed_user_client = self.generate_client_with_x_auth_token(
-            x_auth_token=fed_user_auth_token)
+        fed_user_client = self.generate_client(token=fed_user_auth_token)
 
         # Get admins of fed user using user manager's token
         # This should be a 200 and hence is a defect. This behavior may
@@ -574,4 +570,12 @@ class TestAdminsOfUser(base.TestBaseV2):
         # Delete all users created in the tests
         for id_ in self.user_ids:
             self.service_admin_client.delete_user(user_id=id_)
+        for client in self.clients:
+            self.delete_client(client=client)
         super(TestAdminsOfUser, self).tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.delete_client(client=cls.common_user_admin_client,
+                          parent_client=cls.service_admin_client)
+        super(TestAdminsOfUser, cls).tearDownClass()
