@@ -161,6 +161,25 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         return self.request(method='GET', url=url,
                             requestslib_kwargs=requestslib_kwargs)
 
+    def revoke_token(self, token_id='', requestslib_kwargs=None):
+        """
+        Returns response object from revoke token api call
+        - A user can revoke their own authentication token by submitting the
+        DELETE request without specifying the tokenId parameter.
+        DELETE /v2.0/tokens/
+        - Identity and User administrators can revoke the token for another
+        user by including the tokenId parameter in the request
+        DELETE /v2.0/tokens/{token_id}
+        Delete user token
+        :param token_id:
+        :param requestlib_kwargs:
+        :return:
+        """
+        url = self.url + const.DELETE_TOKEN_URL.format(token_id=token_id)
+        resp = self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
     def list_credentials(self, user_id):
         """
         Get list of creds for a particular user_id
