@@ -90,8 +90,10 @@ SERVICE_NAME_PATTERN = 'service[\-][\w\d]{8}'
 SERVICE_TYPE_PATTERN = 'service[\-]type[\-][\w\d]{8}'
 SERVICE_ID_PATTERN = '[\d]{8}'
 SUB_USER_PATTERN = 'sub[\-]user[\d\w]{12}'
+USER_ADMIN_PATTERN = 'uadm_[\d\w]{12}'
 TENANT_ID_PATTERN = '[\d]{8}'
 TENANT_NAME_PATTERN = 'api[\-]test[\-]tenant[\-][\d\w]{8}'
+NUMERIC_DOMAIN_ID_PATTERN = '[1-9]{1}[0-9]{6}'
 UPPER_CASE_LETTERS = '[A-Z]{8}'
 USER_NAME_PATTERN = 'api[\-]test[\-][\d\w]{12}'
 MAPPING_RULE_DESCRIPTION_PATTERN = (
@@ -201,6 +203,7 @@ TENANT = 'tenant'
 TENANT_ALIAS = 'tenantAlias'
 TENANTS = 'tenants'
 TENANT_ID = 'tenantId'
+TENANT_NAME = 'tenantName'
 TOKEN = 'token'
 TOKEN_FORMAT = 'tokenFormat'
 TYPE = 'type'
@@ -322,6 +325,8 @@ TENANT_ACCESS_ROLE_NAME = 'identity:tenant-access'
 
 
 '''FEATURE FLAGS'''
+FEATURE_FLAG_FOR_ENDPOINTS_BASED_ON_RULES = (
+    'feature.include.endpoints.based.on.rules')
 FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
     "feature.endpoint.template.disable.name.type")
 FEATURE_FLAG_ALLOW_TENANT_NAME_UPDATE = (
