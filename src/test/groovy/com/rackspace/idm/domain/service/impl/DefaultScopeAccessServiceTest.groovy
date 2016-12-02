@@ -4,6 +4,7 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UUIDScopeAccessDao
+import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.CloudBaseUrl
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Racker
@@ -735,6 +736,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         tenantService.getTenantRolesForUser(user) >> tenantRoles
         tenantService.getTenant(_) >> tenant
         endpointService.getOpenStackEndpointForTenant(_, _, _,_) >> endpoint
+        applicationService.getById(_) >> new Application().with {
+            it.openStackType = "compute"
+            it
+        }
     }
 
     def "isScopeAccessExpired returns true when scopeAccess is null"() {
@@ -968,6 +973,10 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         endPoint.getBaseUrls() >> [Mock(CloudBaseUrl)].asList()
         endpointService.getOpenStackEndpointForTenant(_, _, _,_) >> endPoint
         identityConfig.reloadableConfig.getFeatureGlobalEndpointsForAllRoles() >> false
+        applicationService.getById(_) >> new Application().with {
+            it.openStackType = "compute"
+            it
+        }
 
         when:
         def endPointList = service.getOpenstackEndpointsForScopeAccess(token)
@@ -1100,13 +1109,18 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
         then:
         1 * applicationService.getById(_) >> application
-        result.getName() == expectedResult
+        if(result){
+            result.getName() == expectedResult
+        } else {
+            result == expectedResult
+        }
 
         where:
         applicationType | expectedResult
         "object-store"  | "NAST"
         "compute"       | "MOSSO"
         null            | null
+        ""              | null
     }
 
     def "calling getRegion returns correct value"() {
