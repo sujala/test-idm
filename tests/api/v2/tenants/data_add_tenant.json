@@ -1,8 +1,4 @@
 {
-    "numeric_domain_id": {
-        "test_data": {
-            "domain_id": 12345}
-    },
     "empty_domain_id": {
         "test_data": {
             "domain_id": ""}

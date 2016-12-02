@@ -27,6 +27,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
     def get_auth_token(self, user, password=None, api_key=None,
                        headers=None, requestslib_kwargs=None):
+        # TODO: deprecate
         if api_key:
             request_object = requests.AuthenticateWithApiKey(
                 user_name=user, api_key=api_key)
@@ -75,8 +76,21 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             resp.json = types.MethodType(json, resp, type(resp))
         return resp
 
+    def get_token(self, request_object, headers=None, requestslib_kwargs=None):
+        """Returns response object from auth"""
+        url = self.url + const.TOKEN_URL
+        resp = self.request(method='POST', url=url,
+                            request_entity=request_object,
+                            headers=headers,
+                            requestslib_kwargs=requestslib_kwargs)
+
+        if self.deserialize_format == const.XML:
+            raise Exception("Not implemented yet")
+        return resp
+
     def auth_as_tenant_with_token(self, request_object, headers=None,
                                   requestslib_kwargs=None):
+        # TODO: deprecate
         """
         Returns response object from auth as tenant with token api call
         GET /v2.0/tokens/{token_id}
@@ -231,19 +245,19 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         if self.deserialize_format == const.XML:
             def json(self):
                 resp_json = {}
-                resp_json[const.RAX_AUTH_OTP_DEVICE] = {}
+                resp_json[const.NS_OTP_DEVICE] = {}
                 root_string = resp.text.encode(const.ASCII)
                 root = objectify.fromstring(root_string)
-                resp_json[const.RAX_AUTH_OTP_DEVICE][const.ID] = (
+                resp_json[const.NS_OTP_DEVICE][const.ID] = (
                     root.attrib[const.ID]
                 )
-                resp_json[const.RAX_AUTH_OTP_DEVICE][const.KEY_URI] = (
+                resp_json[const.NS_OTP_DEVICE][const.KEY_URI] = (
                     root.attrib[const.KEY_URI]
                 )
-                resp_json[const.RAX_AUTH_OTP_DEVICE][const.QR_CODE] = (
+                resp_json[const.NS_OTP_DEVICE][const.QR_CODE] = (
                     root.attrib[const.QR_CODE]
                 )
-                resp_json[const.RAX_AUTH_OTP_DEVICE][const.NAME] = (
+                resp_json[const.NS_OTP_DEVICE][const.NAME] = (
                     root.attrib[const.NAME]
                 )
                 return resp_json
@@ -518,6 +532,30 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + const.LIST_TENANTS_IN_DOMAIN_URL.format(
                              domainId=domain_id)
         resp = self.request('GET', url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def list_users_for_tenant(self, tenant_id, option=None,
+                              requestslib_kwargs=None):
+        """ Return response object from the list users on tenant call
+        GET /v2.0/tenants/{tenant_id}/users{?marker,limit}
+        """
+        url = self.url + const.LIST_USERS_FOR_TENANT_URL.format(
+            tenant_id=tenant_id)
+        resp = self.request(method='GET', url=url, params=option,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def list_roles_for_user_on_tenant(self, tenant_id, user_id,
+                                      requestslib_kwargs=None):
+        """ Return response object from list roles for specific user on
+        specific tenant
+
+        GET /v2.0/tenants/{tenant_id}/users/{user_id}/roles
+        """
+        url = self.url + const.LIST_ROLES_FOR_USER_ON_TENANT_URL.format(
+            tenant_id=tenant_id, user_id=user_id)
+        resp = self.request(method='GET', url=url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
@@ -962,6 +1000,42 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def add_tenant_to_domain(self, domain_id, tenant_id,
+                             requestslib_kwargs=None):
+        """ Return response object from add a tenant to a domain
+        PUT /v2.0/RAX-AUTH/domains/{domainId}/tenants/{tenantId}
+        :return:
+        """
+        url = self.url + const.ADD_TENANT_TO_DOMAIN_URL.format(
+            domain_id=domain_id, tenant_id=tenant_id)
+        resp = self.request(method='PUT', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def get_tenants_in_domain(self, domain_id, requestslib_kwargs=None):
+        """ Return response object from get tenants in domain
+        GET '/v2.0/RAX-AUTH/domains/{domainId}/tenants'
+        :param domain_id:
+        :return:
+        """
+        url = self.url + const.GET_TENANTS_IN_DOMAIN_URL.format(
+            domain_id=domain_id)
+        resp = self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def delete_tenant_from_domain(self, domain_id, tenant_id,
+                                  requestslib_kwargs=None):
+        """ Return response object from add a tenant to a domain
+        DELETE /v2.0/RAX-AUTH/domains/{domainId}/tenants/{tenantId}
+        :return:
+        """
+        url = self.url + const.DELETE_TENANT_FROM_DOMAIN_URL.format(
+            domain_id=domain_id, tenant_id=tenant_id)
+        resp = self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
     def add_tenant_type_to_endpoint_mapping_rule(
             self, request_object, requestslib_kwargs=None):
         """
@@ -1252,5 +1326,25 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         url = self.url + const.DELETE_DOMAIN_URL.format(domain_id=domain_id)
         resp = self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def list_users_in_domain(self, domain_id,
+                             enabled=None, requestslib_kwargs=None):
+        """Return response object from list users in domain
+        GET '/v2.0//RAX-AUTH/domains/{domain_id}/users{?enabled}
+        :param domain_id:
+        :param requestslib_kwargs:
+        :return:
+        """
+        url = self.url + const.LIST_USERS_IN_DOMAIN_URL.format(
+            domain_id=domain_id)
+        if enabled is True:
+            enabled = {'enabled': True}
+        elif enabled is False:
+            enabled = {'enabled': False}
+        else:
+            enabled = None
+        resp = self.request(method='GET', url=url, params=enabled,
                             requestslib_kwargs=requestslib_kwargs)
         return resp

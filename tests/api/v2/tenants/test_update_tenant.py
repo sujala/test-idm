@@ -284,10 +284,9 @@ class TestUpdateTenant(base.TestBaseV2):
         auth_resp = responses.Access(resp.json())
 
         # Auth as Tenant with token
-        tenant_with_token_obj = requests.TenantWithTokenAuth(
+        tenant_with_token_obj = requests.AuthenticateAsTenantWithToken(
             tenant_id=self.tenant_id, token_id=auth_resp.access.token.id)
-        resp = user_client.auth_as_tenant_with_token(
-            request_object=tenant_with_token_obj)
+        resp = user_client.get_token(request_object=tenant_with_token_obj)
 
         auth_tenant_with_token = responses.Access(resp.json())
         tenant_id_after_update = [
