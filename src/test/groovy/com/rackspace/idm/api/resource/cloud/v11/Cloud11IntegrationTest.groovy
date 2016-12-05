@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v11
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspacecloud.docs.auth.api.v1.AuthData
@@ -544,7 +545,8 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
-        def createRole = cloud20.createRole(identityAdminToken, role).getEntity(Role).value
+        def response = cloud20.createRole(identityAdminToken, role)
+        def createRole = response.getEntity(Role).value
         def baseUrlResponse = cloud11.addBaseUrl(baseUrl)
         def endpointTemplate = new EndpointTemplate().with {
             it.id = baseURLId

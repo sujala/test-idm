@@ -1,13 +1,14 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.domain.service.RoleLevelEnum;
-import com.rackspace.idm.exception.ErrorCodeIdmException;
 import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -85,6 +86,18 @@ public class RoleConverterCloudV20 {
             clientRole.setAssignmentType(RoleAssignmentEnum.BOTH.value());
         }
 
+        if (role.getRoleType() != null) {
+            clientRole.setRoleType(role.getRoleType());
+        } else {
+            clientRole.setRoleType(RoleTypeEnum.STANDARD);
+        }
+
+        if (role.getRoleType() == RoleTypeEnum.RCN && role.getTypes() != null) {
+            for (String tenantType : role.getTypes().getType()) {
+                clientRole.getTenantTypes().add(tenantType.toLowerCase());
+            }
+        }
+
         return clientRole;
     }
 
@@ -116,6 +129,12 @@ public class RoleConverterCloudV20 {
 
         return jaxbRole;
     }
+
+    /** +
+     *  Tenant types in only returned for RCN type roles.
+     * @param role
+     * @return role
+     */
 
     public Role toRoleFromClientRole(com.rackspace.idm.domain.entity.ClientRole role) {
         Role roleEntity = mapper.map(role, Role.class);
@@ -152,6 +171,26 @@ public class RoleConverterCloudV20 {
             roleEntity.setAssignment(RoleAssignmentEnum.fromValue(role.getAssignmentType()));
         } else {
             roleEntity.setAssignment(RoleAssignmentEnum.BOTH);
+        }
+
+        if (role.getRoleType() != null) {
+            roleEntity.setRoleType(role.getRoleType());
+        } else {
+            roleEntity.setRoleType(RoleTypeEnum.STANDARD);
+        }
+
+        if (roleEntity.getRoleType() == RoleTypeEnum.RCN) {
+            Types tenantTypes = new Types();
+
+            for (String tenantType : role.getTenantTypes()) {
+                tenantTypes.getType().add(tenantType);
+            }
+
+            if (tenantTypes.getType().size() > 0) {
+                roleEntity.setTypes(tenantTypes);
+            }
+        } else {
+            roleEntity.setTypes(null);
         }
 
         return roleEntity;

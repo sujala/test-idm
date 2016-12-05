@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.converter.cloudv20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleLevelEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import org.dozer.DozerBeanMapper
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -46,12 +48,16 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         def propagate = true
         def serviceId = "serviceId"
         def assignment = RoleAssignmentEnum.TENANT.value()
+        def roleType = RoleTypeEnum.RCN.value()
+        def tenantTypes = ['type']
 
         def clientRole = entityFactory.createClientRole().with {
             it.rsWeight = weight
             it.propagate = propagate
             it.clientId = serviceId
             it.assignmentType = assignment
+            it.roleType = roleType
+            it.tenantTypes = tenantTypes
             return it
         }
 
@@ -62,18 +68,25 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         result.propagate == propagate
         result.serviceId == serviceId
         result.assignment == RoleAssignmentEnum.fromValue(assignment)
+        result.roleType == RoleTypeEnum.valueOf(roleType)
+        result.types.type == tenantTypes
     }
 
     def "can convert jaxb role to clientRole"() {
         given:
         def propagate = false
         def serviceId = "serviceId"
+        def tenantTypes = ['type']
 
         def jaxbRole = v2Factory.createRole()
         jaxbRole.propagate = propagate
         jaxbRole.serviceId = serviceId
         jaxbRole.administratorRole = IdentityUserTypeEnum.USER_MANAGER.roleName
         jaxbRole.assignment = RoleAssignmentEnum.TENANT
+        jaxbRole.roleType = RoleTypeEnum.RCN
+        Types type = new Types()
+        type.type.addAll(tenantTypes)
+        jaxbRole.setTypes(type)
 
         when:
         def result = converter.fromRole(jaxbRole, serviceId);
@@ -83,6 +96,8 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         result.propagate == propagate
         result.clientId == serviceId
         result.assignmentType == RoleAssignmentEnum.TENANT.value()
+        result.roleType == RoleTypeEnum.RCN
+        result.tenantTypes as HashSet == tenantTypes as HashSet
     }
 
     @Unroll

@@ -1,5 +1,9 @@
 package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
+import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.resource.cloud.JsonArrayEntryTransformer;
+import com.rackspace.idm.api.resource.cloud.JsonArrayTransformerHandler;
+import org.json.simple.JSONObject;
 import org.openstack.docs.identity.api.v2.Role;
 
 import javax.ws.rs.Produces;
@@ -34,7 +38,49 @@ public class JSONWriterForRole extends JSONWriterForEntity<Role> {
         prefixValues.put(ROLE_WEIGHT_PATH, RAX_AUTH_WEIGHT);
         prefixValues.put(ROLE_PROPAGATE_PATH, RAX_AUTH_PROPAGATE);
         prefixValues.put(ROLE_ASSIGNMENT_PATH, RAX_AUTH_ASSIGNMENT);
+        prefixValues.put(ROLE_ROLE_TYPE_PATH, RAX_AUTH_ROLE_TYPE);
+        prefixValues.put(ROLE_TYPE_PATH, RAX_AUTH_TYPES);
 
-        write(role, entityStream, prefixValues);
+        write(role, entityStream, prefixValues, new RoleJsonArrayTransformerHandler(), new RoleJsonArrayEntryTransformer(role));
+    }
+
+    public static class RoleJsonArrayTransformerHandler implements JsonArrayTransformerHandler {
+
+        @Override
+        public boolean pluralizeJSONArrayWithName(String elementName) {
+            return true;
+        }
+
+        @Override
+        public String getPluralizedNamed(String elementName) {
+            if (JSONConstants.TYPE.equals(elementName)) {
+                return JSONConstants.RAX_AUTH_TYPES;
+            }
+            return elementName + "s";
+        }
+    }
+
+    private static class  RoleJsonArrayEntryTransformer implements JsonArrayEntryTransformer {
+
+        private Role role;
+
+        public RoleJsonArrayEntryTransformer(Role role) {
+            this.role = role;
+        }
+
+        @Override
+        public void transform(JSONObject arrayEntry) {
+            if (arrayEntry.containsKey(JSONConstants.RAX_AUTH_TYPES)) {
+                if (role.getTypes() == null) {
+                    arrayEntry.remove(JSONConstants.RAX_AUTH_TYPES);
+                }
+            }
+
+            if (arrayEntry.containsKey(JSONConstants.TYPES)) {
+                Object tenantTypes = arrayEntry.get(JSONConstants.TYPES);
+                arrayEntry.remove(JSONConstants.TYPES);
+                arrayEntry.put(JSONConstants.RAX_AUTH_TYPES, tenantTypes);
+            }
+        }
     }
 }

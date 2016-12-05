@@ -98,6 +98,7 @@ public final class JSONConstants {
     public static final String TOKEN = "token";
     public static final String TOKENS = "tokens";
     public static final String TYPE = "type";
+    public static final String TENANT_TYPE = "tenantType";
     public static final String UPDATED = "updated";
     public static final String USER = "user";
     public static final String USERS = "users";
@@ -179,8 +180,10 @@ public final class JSONConstants {
     public static final String TOKEN_KEY = "tokenKey";
     public static final String RAX_AUTH_PROPAGATE = "RAX-AUTH:propagate";
     public static final String RAX_AUTH_ASSIGNMENT = "RAX-AUTH:assignment";
+    public static final String RAX_AUTH_ROLE_TYPE = "RAX-AUTH:roleType";
     public static final String PROPAGATE = "propagate";
     public static final String ASSIGNMENT = "assignment";
+    public static final String ROLE_TYPE = "roleType";
     public static final String RAX_AUTH_ADMINISTRATOR_ROLE = "RAX-AUTH:administratorRole";
     public static final String ADMINISTRATOR_ROLE = "administratorRole";
 
@@ -255,10 +258,14 @@ public final class JSONConstants {
     public static final String GROUPS_LIST_PATH = "groups.group";
     public static final String ROLE_PROPAGATE_PATH = "role.propagate";
     public static final String ROLE_ASSIGNMENT_PATH = "role.assignment";
+    public static final String ROLE_ROLE_TYPE_PATH = "role.roleType";
+    public static final String ROLE_TYPE_PATH = "role.type";
     public static final String ROLE_ADMINISTRATOR_ROLE_PATH = "role.administratorRole";
     public static final String ROLE_RAX_AUTH_WEIGHT_PATH = "role.RAX-AUTH:weight";
     public static final String ROLE_RAX_AUTH_PROPAGATE_PATH = "role.RAX-AUTH:propagate";
     public static final String ROLE_RAX_AUTH_ASSIGNMENT_PATH = "role.RAX-AUTH:assignment";
+    public static final String ROLE_RAX_AUTH_ROLE_TYPE = "role.RAX-AUTH:roleType";
+    public static final String ROLE_RAX_AUTH_TYPES = "role.RAX-AUTH:types";
     public static final String ROLE_RAX_AUTH_ADMINISTRATOR_ROLE_PATH = "role.RAX-AUTH:administratorRole";
     public static final String ROLE_WEIGHT_PATH = "role.weight";
     public static final String TOKEN_AUTHENTICATED_BY = "token.authenticatedBy";

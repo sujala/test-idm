@@ -172,6 +172,7 @@ public abstract class LdapRepository {
     public static final String ATTR_RS_WEIGHT = "rsWeight";
     public static final String ATTR_RS_PROPAGATE = "rsPropagate";
     public static final String ATTR_RS_TYPE = "rsType";
+    public static final String ATTR_RS_TENANT_TYPE = "rsTenantType";
     public static final String ATTR_VALUE = "value";
     public static final String ATTR_ENCRYPTION_SALT = "encryptionSalt";
     public static final String ATTR_ENCRYPTION_VERSION_ID = "encryptionVersionId";

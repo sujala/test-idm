@@ -62,10 +62,13 @@ public class Validator20 {
             "role name can be comprised of alphanumeric characters, '-', and '_'.";
     public static final Pattern ROLE_NAME_REGEX = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9_\\-]*(?:\\:[a-zA-Z0-9][a-zA-Z0-9_\\-]*)?$");
 
-    public static final String ERROR_TENANT_TYPE_CANNOT_EXCEED_MAXIMUM = "A maximum of 16 unique tenant types can be assigned to any given tenant.";
+    public static final String ERROR_TENANT_REQUIRED_WHEN_TYPE_IS_RCN = "Tenant types are required when role type is 'rcn'.";
+
+    public static final String ERROR_TENANT_RCN_ROLE_MUST_HAVE_GLOBAL_ASSIGNMENT = "An RCN role must have global assignment.";
+
+    public static final String ERROR_TENANT_TYPE_CANNOT_EXCEED_MAXIMUM = "A maximum of 16 unique tenant types can be assigned.";
 
     public static final String ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC = "Tenant type can only contain alphanumeric characters.";
-
 
     public static final String ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE = "Tenant type must possess a length > 0 and <= 15";
 
@@ -516,25 +519,56 @@ public class Validator20 {
     }
 
     public void validateTenantType(Tenant tenant) {
+        validateTypes(tenant.getTypes(), false);
+    }
+
+    public void validateRoleType(Role role) {
+
+        validateTypes(role.getTypes(), true);
+
+        if (role.getRoleType() == RoleTypeEnum.RCN) {
+            if(role.getAssignment() == null) {
+                role.setAssignment(RoleAssignmentEnum.GLOBAL);
+            }
+
+            if (role.getAssignment() != RoleAssignmentEnum.GLOBAL) {
+                String errMsg = String.format(ERROR_TENANT_RCN_ROLE_MUST_HAVE_GLOBAL_ASSIGNMENT);
+                throw new BadRequestException(errMsg);
+            }
+
+            if (role.getTypes() == null || role.getTypes().getType().size() == 0) {
+                String errMsg = String.format(ERROR_TENANT_REQUIRED_WHEN_TYPE_IS_RCN);
+                throw new BadRequestException(errMsg);
+            }
+        }
+    }
+
+    private void validateTypes(Types types, boolean allowAllTenantTypes) {
         Set<String> tenantTypes = new HashSet<String>();
 
-        if (tenant.getTypes() == null) {
+        if (types == null) {
             return;
         }
 
-        for(String type : tenant.getTypes().getType()) {
+        for(String type : types.getType()) {
             tenantTypes.add(type.toLowerCase());
         }
 
-        tenant.getTypes().getType().clear();
-        tenant.getTypes().getType().addAll(tenantTypes);
+        types.getType().clear();
+        types.getType().addAll(tenantTypes);
 
-        if(tenant.getTypes().getType().size() > 16) {
+        if(types.getType().size() > 16) {
             String errMsg = String.format(ERROR_TENANT_TYPE_CANNOT_EXCEED_MAXIMUM);
             throw new BadRequestException(errMsg);
         }
 
-        for (String type : tenant.getTypes().getType()) {
+        for (String type : types.getType()) {
+            if (allowAllTenantTypes) {
+                if (type.equals("*")) {
+                    continue;
+                }
+            }
+
             if (!StringUtils.isAlphanumeric(type)) {
                 String errMsg = String.format(ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC);
                 throw new BadRequestException(errMsg);

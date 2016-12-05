@@ -24,7 +24,6 @@ import com.unboundid.ldap.sdk.Modification
 import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.SearchScope
 import com.unboundid.ldap.sdk.persist.LDAPPersister
-import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
@@ -3884,6 +3883,366 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         contentType                     | _
         MediaType.APPLICATION_XML_TYPE  | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Default optional role type is standard if specified as null or blank: content-type=#contentType roleType=#roleType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        def createRole;
+
+        if (contentType == MediaType.APPLICATION_JSON_TYPE) {
+            createRole = """{"role":{"name":"${name}","serviceId":"${serviceId}","RAX-AUTH:roleType":${roleType}}}"""
+        } else {
+            createRole = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><ns3:role xmlns:ns1="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0" xmlns:ns2="http://www.w3.org/2005/Atom" xmlns:ns3="http://docs.openstack.org/identity/api/v2.0" xmlns:ns4="http://docs.rackspace.com/identity/api/ext/RAX-KSGRP/v1.0" xmlns:ns5="http://docs.rackspace.com/identity/api/ext/RAX-KSQA/v1.0" xmlns:ns6="http://docs.openstack.org/identity/api/ext/OS-KSADM/v1.0" xmlns:ns7="http://docs.openstack.org/identity/api/ext/OS-KSEC2/v1.0" xmlns:ns8="http://docs.rackspace.com/identity/api/ext/RAX-KSKEY/v1.0" ns1:roleType="${roleType}" serviceId="${serviceId}" name="${name}"/>"""
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        def role = getEntity(response, Role)
+
+        then:
+        role.roleType == RoleTypeEnum.STANDARD
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+
+        where:
+        contentType                     | roleType
+        MediaType.APPLICATION_JSON_TYPE | '""'
+        MediaType.APPLICATION_JSON_TYPE | null
+        MediaType.APPLICATION_XML_TYPE  | ""
+    }
+
+    @Unroll
+    def "'standard' is the default if type is not specified: content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        def role = getEntity(response, Role)
+
+        then:
+        role.roleType == RoleTypeEnum.STANDARD
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Add ability for user to set 'tenantTypes' additional attribute on role creation: content-type=#contentType tenantTypes=#tenantTypes" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Types types = new Types().with {
+            it.type = tenantTypes
+            it
+        }
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.roleType = RoleTypeEnum.RCN
+            it.types = types
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        Role role = getEntity(response, Role)
+
+        then:
+        role.types.type as HashSet == tenantTypes as HashSet
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+
+        where:
+        contentType                     | tenantTypes
+        MediaType.APPLICATION_XML_TYPE  | ["type1", "type2"]
+        MediaType.APPLICATION_JSON_TYPE | ["type1", "type2"]
+    }
+
+    @Unroll
+    def "The specified tenant types must meet the standard tenant type validation with the exception that '*' is reserved, to represent all tenant types.: content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Types types = new Types().with {
+            it.type = tenantTypes
+            it
+        }
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.roleType = RoleTypeEnum.RCN
+            it.types = types
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        Role role = getEntity(response, Role)
+
+        then:
+        role.types.type as HashSet == tenantTypes as HashSet
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+
+        where:
+        contentType                     | tenantTypes
+        MediaType.APPLICATION_XML_TYPE  | ["*"]
+        MediaType.APPLICATION_JSON_TYPE | ["*"]
+    }
+
+    @Unroll
+    def "The response for create role and get role by ID must be updated to include 'standard' if no type is stored: content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        Role createdRole = getEntity(response, Role)
+
+        response = cloud20.getRole(identityAdminToken, createdRole.id)
+        Role role = getEntity(response, Role)
+
+        then:
+        createdRole.roleType == RoleTypeEnum.STANDARD
+        role.roleType == RoleTypeEnum.STANDARD
+
+        then: "tenantTypes only if RCN was specified (attribute must not be returned if not an RCN role)"
+        createdRole.types == null
+        role.types == null
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "The provided tenant types must be automatically lower-cased prior to any validation: content-type=#contentType tenantTypes=#tenantTypes" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Types types = new Types().with {
+            it.type = tenantTypes
+            it
+        }
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.roleType = RoleTypeEnum.RCN
+            it.types = types
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        Role role = getEntity(response, Role)
+
+        then:
+        role.types.type as HashSet == tenantTypes.collect {it.toLowerCase()} as HashSet
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+
+        where:
+        contentType                     | tenantTypes
+        MediaType.APPLICATION_XML_TYPE  | ["Type1", "TYPE2"]
+        MediaType.APPLICATION_JSON_TYPE | ["Type1", "TYPE2"]
+    }
+
+    @Unroll
+    def "'rcn' as the type and assignment is not specified default to 'global' assignment: content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Types types = new Types().with {
+            it.type = ["Type1", "type2"]
+            it
+        }
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.roleType = RoleTypeEnum.RCN
+            it.types = types
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+        Role role = getEntity(response, Role)
+
+        then: "default the assignment to 'global'"
+        role.assignment == RoleAssignmentEnum.GLOBAL
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, role.id)
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "role 'tenantTypes' required if type is 'rcn': content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.roleType = RoleTypeEnum.RCN
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_REQUIRED_WHEN_TYPE_IS_RCN)
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "When 'rcn' type is specified the 'assignment' MUST be 'global': content-type=#contentType assignment=#assignment" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.assignment = assignment
+            it.roleType = RoleTypeEnum.RCN
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_RCN_ROLE_MUST_HAVE_GLOBAL_ASSIGNMENT)
+
+        where:
+        contentType                     | assignment
+        MediaType.APPLICATION_XML_TYPE  | RoleAssignmentEnum.TENANT
+        MediaType.APPLICATION_JSON_TYPE | RoleAssignmentEnum.BOTH
+    }
+
+    @Unroll
+    def "A maximum of 16 unique tenant types can be assigned to any given role: content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Types types = new Types().with {
+            it.type = ["type1", "type2", "type3", "type4", "type5", "type6", "type7", "type8", "type9", "type10", "type11", "type12", "type13", "type14", "type15", "type16", "type17"]
+            it
+        }
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.roleType = RoleTypeEnum.RCN
+            it.types = types
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_CANNOT_EXCEED_MAXIMUM)
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Tenant type can only contain alphanumeric characters: content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Types types = new Types().with {
+            it.type = [type]
+            it
+        }
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.roleType = RoleTypeEnum.RCN
+            it.types = types
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC)
+
+        where:
+        contentType                     | type
+        MediaType.APPLICATION_XML_TYPE  | "type*"
+        MediaType.APPLICATION_JSON_TYPE | "type()"
+    }
+
+    @Unroll
+    def "Tenant type must possess a length > 0 and <= 15: content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Types types = new Types().with {
+            it.type = [type]
+            it
+        }
+        Role createRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.roleType = RoleTypeEnum.RCN
+            it.types = types
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE)
+
+        where:
+        contentType                     | type
+        MediaType.APPLICATION_XML_TYPE  | ""
+        MediaType.APPLICATION_JSON_TYPE | "type567890123456"
     }
 
     def getEntity(response, type) {

@@ -437,6 +437,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             validator20.validateRoleForCreation(role);
+            validator20.validateRoleType(role);
 
             Application service = applicationService.checkAndGetApplication(role.getServiceId());
 

@@ -49,6 +49,7 @@
     <!-- Complex Types -->
     <complexType name="Role">
         <sequence>
+            <element ref="RAX-AUTH:types" />
             <element vc:minVersion="1.1" ref="atom:link" minOccurs="0" maxOccurs="unbounded" />
             <any namespace="##other" processContents="lax" minOccurs="0" maxOccurs="unbounded" />
         </sequence>
@@ -61,6 +62,7 @@
         <attribute ref="RAX-AUTH:propagate"/>
         <attribute ref="RAX-AUTH:administratorRole"/>
         <attribute ref="RAX-AUTH:assignment" use="optional"/>
+        <attribute ref="RAX-AUTH:roleType"/>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
     
