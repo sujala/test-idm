@@ -279,14 +279,15 @@ class TestUpdateTenant(base.TestBaseV2):
             url=self.url,
             serialize_format=self.test_config.serialize_format,
             deserialize_format=self.test_config.deserialize_format)
-        resp = user_client.get_auth_token(
-            user=user.name, password=user.password)
+        auth_obj = requests.AuthenticateWithPassword(user_name=user.name,
+                                                     password=user.password)
+        resp = user_client.get_auth_token(request_object=auth_obj)
         auth_resp = responses.Access(resp.json())
 
         # Auth as Tenant with token
         tenant_with_token_obj = requests.AuthenticateAsTenantWithToken(
             tenant_id=self.tenant_id, token_id=auth_resp.access.token.id)
-        resp = user_client.get_token(request_object=tenant_with_token_obj)
+        resp = user_client.get_auth_token(request_object=tenant_with_token_obj)
 
         auth_tenant_with_token = responses.Access(resp.json())
         tenant_id_after_update = [
@@ -303,8 +304,9 @@ class TestUpdateTenant(base.TestBaseV2):
                 before_tenant.name)
 
         # Auth as user with password
-        resp = user_client.get_auth_token(
-            user=user.name, password=user.password)
+        auth_obj = requests.AuthenticateWithPassword(user_name=user.name,
+                                                     password=user.password)
+        resp = user_client.get_auth_token(request_object=auth_obj)
         auth_user_with_password = responses.Access(resp.json())
         tenant_id_after_update = [
             item.tenant_id
@@ -386,9 +388,9 @@ class TestUpdateTenant(base.TestBaseV2):
             url=self.url,
             serialize_format=self.test_config.serialize_format,
             deserialize_format=self.test_config.deserialize_format)
-
-        resp = user_client.get_auth_token(
-            user=one_call_user.name, password=one_call_user.password)
+        auth_obj = requests.AuthenticateWithPassword(
+            user_name=one_call_user.name, password=one_call_user.password)
+        resp = user_client.get_auth_token(request_object=auth_obj)
         auth_one_call_user_with_password = responses.Access(resp.json())
 
         # Auth response will/not reflect updated tenant name based on flag.

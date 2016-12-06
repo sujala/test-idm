@@ -112,8 +112,11 @@ class TestUserPrefixes(base.TestBaseV2):
 
         # Get IdenttyAdm userID
         iadm_password = resp.json()[const.USER][const.NS_PASSWORD]
+        auth_obj = requests.AuthenticateWithPassword(
+            user_name=iadm_username, password=iadm_password
+        )
         resp = self.identity_admin_client.get_auth_token(
-                   user=iadm_username, password=iadm_password)
+            request_object=auth_obj)
         iadm_user_id = resp.json()[const.ACCESS][const.USER][const.ID]
         self.user_ids.append(iadm_user_id)
 
@@ -130,7 +133,7 @@ class TestUserPrefixes(base.TestBaseV2):
 
         # Get IdentityAdm token after getting upgrade-ability
         resp = self.identity_admin_client.get_auth_token(
-                   user=iadm_username, password=iadm_password)
+            request_object=auth_obj)
         iadm_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
 
         # create group

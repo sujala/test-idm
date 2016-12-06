@@ -155,7 +155,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         # auth with apikey
         auth_obj = requests.AuthenticateWithApiKey(user_name=pick_username,
                                                    api_key=api_key)
-        api_auth_resp = self.identity_admin_client.get_token(
+        api_auth_resp = self.identity_admin_client.get_auth_token(
             request_object=auth_obj)
         self.assertEqual(api_auth_resp.status_code, 200)
         user_token = api_auth_resp.json()[const.ACCESS][const.TOKEN][const.ID]
@@ -220,7 +220,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         """
         auth_obj = requests.AuthenticateWithPassword(user_name=user_name,
                                                      password=password)
-        auth_resp = self.identity_admin_client.get_token(auth_obj)
+        auth_resp = self.identity_admin_client.get_auth_token(auth_obj)
         self.assertEqual(auth_resp.status_code, 200)
         user_token = auth_resp.json()[const.ACCESS][const.TOKEN][const.ID]
 
@@ -295,7 +295,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         auth_obj = requests.AuthenticateAsTenantWithToken(token_id=token,
                                                           tenant_id=tenant_id)
         auth_tenant_n_token_resp = (
-            self.identity_admin_client.get_token(request_object=auth_obj)
+            self.identity_admin_client.get_auth_token(request_object=auth_obj)
         )
         self.assertEqual(auth_tenant_n_token_resp.status_code, 200)
 
@@ -321,7 +321,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         auth_obj = requests.AuthenticateAsTenantWithToken(tenant_id=tenant_id,
                                                           token_id=token)
         auth_tenant_n_token_resp = (
-            self.identity_admin_client.get_token(request_object=auth_obj)
+            self.identity_admin_client.get_auth_token(request_object=auth_obj)
         )
 
         if (self.feature_flag_value | self.feature_flag_default_value) and (
@@ -347,7 +347,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         auth_obj = requests.AuthenticateWithPassword(
             user_name=username, password=password, tenant_id=tenant_id)
         auth_username_pwd_tenant_resp = (
-            self.identity_admin_client.get_token(request_object=auth_obj)
+            self.identity_admin_client.get_auth_token(request_object=auth_obj)
         )
         self.assertEqual(auth_username_pwd_tenant_resp.status_code, 200)
 
@@ -375,7 +375,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         auth_obj = requests.AuthenticateWithPassword(
             user_name=username, password=password, tenant_id=tenant_id)
         auth_username_pwd_tenant_resp = (
-            self.identity_admin_client.get_token(request_object=auth_obj)
+            self.identity_admin_client.get_auth_token(request_object=auth_obj)
         )
 
         if (self.feature_flag_value | self.feature_flag_default_value) and (
@@ -400,7 +400,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         auth_obj = requests.AuthenticateWithPassword(
             user_name=username, password=password, tenant_id=tenant_id)
         auth_username_pwd_tenant_resp = (
-            self.identity_admin_client.get_token(request_object=auth_obj)
+            self.identity_admin_client.get_auth_token(request_object=auth_obj)
         )
         self.assertEqual(auth_username_pwd_tenant_resp.status_code, 401)
 
@@ -457,8 +457,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         :param tenant_id:
         :return: None
         """
-        client = self.generate_client_with_x_auth_token(
-            x_auth_token=token)
+        client = self.generate_client(token=token)
         tenant_resp = client.list_tenants()
         self.assertEqual(tenant_resp.status_code, 200)
         # verify return all tenants within the user's domain
@@ -496,7 +495,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         :param tenant_id:
         :return:
         """
-        client = self.generate_client_with_x_auth_token(x_auth_token=token)
+        client = self.generate_client(token=token)
 
         users_tenant_resp = client.list_users_for_tenant(
             tenant_id=tenant_id)

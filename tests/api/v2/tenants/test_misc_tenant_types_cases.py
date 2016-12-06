@@ -83,9 +83,11 @@ class TestTenantTypes(base.TestBaseV2):
                    tenant_id=tenant_name, role_id=new_role_id,
                    user_id=new_user_id)
         self.assertEqual(resp.status_code, 200)
-
+        auth_obj = requests.AuthenticateWithPassword(
+            user_name=uadm_username, password=uadm_password
+        )
         resp = self.identity_admin_client.get_auth_token(
-                   user=uadm_username, password=uadm_password)
+                   request_object=auth_obj)
         self.assertEqual(resp.status_code, 200)
         uadm_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
 

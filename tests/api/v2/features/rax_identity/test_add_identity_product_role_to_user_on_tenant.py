@@ -4,6 +4,7 @@ import ddt
 from tests.api.v2 import base
 from tests.api import constants as const
 from tests.api.v2.models import factory
+from tests.api.v2.models import requests
 
 """
 Test verify:
@@ -144,8 +145,9 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         self.assertEqual(add_resp.status_code, 200)
 
         # verify role added
-        auth_resp = client.get_auth_token(
-            user=user_name, password=password)
+        req_obj = requests.AuthenticateWithPassword(user_name=user_name,
+                                                    password=password)
+        auth_resp = client.get_auth_token(request_object=req_obj)
         self.assertEqual(auth_resp.status_code, 200)
         self.assertIn(role_id, str(auth_resp.json()[const.ACCESS][const.USER][
             const.ROLES]))
@@ -157,8 +159,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         self.assertEqual(del_resp.status_code, 204)
 
         # verify role is removed
-        auth_resp = client.get_auth_token(
-            user=user_name, password=password)
+        auth_resp = client.get_auth_token(request_object=req_obj)
         self.assertEqual(auth_resp.status_code, 200)
         self.assertNotIn(role_id, str(auth_resp.json()[const.ACCESS][
                                           const.USER][const.ROLES]))
@@ -218,8 +219,10 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         self.assertEqual(add_resp.status_code, 200)
 
         # verify role added
+        req_obj = requests.AuthenticateWithPassword(user_name=user_name,
+                                                    password=password)
         auth_resp = self.identity_admin_client.get_auth_token(
-            user=user_name, password=password)
+            request_object=req_obj)
         self.assertEqual(auth_resp.status_code, 200)
         self.assertIn(role_id, str(auth_resp.json()[const.ACCESS][const.USER][
             const.ROLES]))
@@ -232,7 +235,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
 
         # verify role is removed
         auth_resp = self.identity_admin_client.get_auth_token(
-            user=user_name, password=password)
+            request_object=req_obj)
         self.assertEqual(auth_resp.status_code, 200)
         self.assertNotIn(role_id, str(auth_resp.json()[const.ACCESS][
                                           const.USER][const.ROLES]))
@@ -286,8 +289,10 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             self.assertEqual(add_resp.status_code, 200)
 
             # verify role added
+            req_obj = requests.AuthenticateWithPassword(user_name=user_name,
+                                                        password=password)
             auth_resp = self.identity_admin_client.get_auth_token(
-                user=user_name, password=password)
+                request_object=req_obj)
             self.assertEqual(auth_resp.status_code, 200)
             self.assertIn(role_id, str(auth_resp.json()[const.ACCESS][
                                            const.USER][const.ROLES]))
@@ -302,7 +307,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
 
             # verify role is removed
             auth_resp = self.identity_admin_client.get_auth_token(
-                user=user_name, password=password)
+                request_object=req_obj)
             self.assertEqual(auth_resp.status_code, 200)
             self.assertNotIn(role_id, str(auth_resp.json()[const.ACCESS][
                                               const.USER][const.ROLES]))

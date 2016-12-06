@@ -51,8 +51,13 @@ class TestCredentials(base.TestBaseV2):
                                     [const.USERNAME], self.testusername)
         self.assertEqual(resp.json()[const.PASSWORD_CREDENTIALS]
                                     [const.PASSWORD], password)
-        resp = self.identity_admin_client.get_auth_token(self.testusername,
-                                                         password)
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=self.testusername,
+            password=password
+        )
+        resp = self.identity_admin_client.get_auth_token(
+            request_object=req_obj
+        )
         self.assertEqual(resp.status_code, 200)
 
     def test_get_apikey(self):
