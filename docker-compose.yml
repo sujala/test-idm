@@ -6,6 +6,8 @@ cloudfeeds:
     image: docker.ciidentity.com/cloud-feeds
     ports:
         - 8888:8080
+    environment:
+        HOST: localhost:8888
 edir:
     image: docker.ciidentity.com/e-directory
     ports:

@@ -201,8 +201,11 @@ public class DefaultScopeAccessService implements ScopeAccessService {
                     if(!tenantIds.contains(tenantId)) {
                         tenantIds.add(tenantId);
                         Tenant tenant = this.tenantService.getTenant(tenantId);
-                        if (tenant != null) {
-                            tenants.put(tenant, new HashSet<>(Collections.singletonList(getOpenStackType(role))));
+                        OpenstackType type = getOpenStackType(role);
+                        // NOTE: Null check for type can be removed once CID-463 (Add OpenstackType to all applications)
+                        // has been completed.
+                        if (tenant != null && type != null) {
+                            tenants.put(tenant, new HashSet<>(Collections.singletonList(type)));
                         }
                     }
                 }
@@ -217,10 +220,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         for (TenantRole role : roles) {
             for (String tenantId : role.getTenantIds()) {
                 OpenstackType type = getOpenStackType(role);
-                if (tenantsMap.containsKey(tenantId)) {
-                    tenantsMap.get(tenantId).add(type);
-                } else {
-                    tenantsMap.put(tenantId, new HashSet<>(Collections.singletonList(type)));
+                if(type != null){
+                    if (tenantsMap.containsKey(tenantId)) {
+                        tenantsMap.get(tenantId).add(type);
+                    } else {
+                        tenantsMap.put(tenantId, new HashSet<>(Collections.singletonList(type)));
+                    }
+
                 }
             }
         }
@@ -268,7 +274,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
             }
         }
 
-        return new OpenstackType(type);
+        try {
+            return new OpenstackType(type);
+        } catch (IllegalArgumentException e) {
+            logger.warn(String.format("Unable to get OpenstackType for Role with ID %s belonging to Application with ID %s.",
+                    role.getRoleRsId(), role.getClientId()), e);
+            return null;
+        }
     }
 
     private String getRegion(ScopeAccess token) {

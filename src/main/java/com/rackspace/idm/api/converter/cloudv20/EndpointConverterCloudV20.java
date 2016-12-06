@@ -252,6 +252,11 @@ public class EndpointConverterCloudV20 {
 
         for (CloudBaseUrl baseUrl : endPoint.getBaseUrls()) {
 
+            // Break from current iteration if OpenstackType is not set for baseUrl in order to avoid adding endpoints
+            // to service catalog belonging to an application that has no openstackType set.
+            if (baseUrl.getOpenstackType() == null) {
+                continue;
+            }
             ServiceForCatalog currentService = new OpenStackServiceCatalogHelper(serviceCatalog)
                     .getEndPointService(baseUrl.getServiceName(), baseUrl.getOpenstackType());
 
