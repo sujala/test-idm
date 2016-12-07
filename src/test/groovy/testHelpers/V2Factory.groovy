@@ -14,6 +14,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasscodeCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordReset
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantTypeEndpointRule
@@ -337,13 +338,14 @@ class V2Factory {
         }
     }
 
-    def createRole(Object propagate) {
+    def createRole(Object propagate, Object assignment = RoleAssignmentEnum.BOTH) {
         def other = createOtherMap(propagate)
         def random = UUID.randomUUID().toString().replace("-", "")
         return new Role().with {
             it.name = "role$random"
             it.description = "desc"
             it.propagate = propagate
+            it.assignment = assignment
             it.otherAttributes = other
             return it
         }

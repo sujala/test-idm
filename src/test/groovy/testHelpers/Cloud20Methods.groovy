@@ -469,6 +469,11 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSADM).path(ROLES).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(role).post(ClientResponse)
     }
 
+    def createRole(String token, String role, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(OS_KSADM).path(ROLES).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(role).post(ClientResponse)
+    }
+
     def deleteRole(String token, String roleId) {
         initOnUse()
         resource.path(path20).path(OS_KSADM).path(ROLES).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
@@ -504,9 +509,9 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(ROLES).path(OS_KSADM).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
-    def addRoleToUserOnTenant(String token, String tenantId, String userId, String roleId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def addRoleToUserOnTenant(String token, String tenantId, String userId, String roleId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE, requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(TENANTS).path(tenantId).path(USERS).path(userId) .path(ROLES).path(OS_KSADM).path(roleId) .header(X_AUTH_TOKEN, token).accept(acceptMediaType).put(ClientResponse)
+        resource.path(path20).path(TENANTS).path(tenantId).path(USERS).path(userId) .path(ROLES).path(OS_KSADM).path(roleId) .header(X_AUTH_TOKEN, token).accept(acceptMediaType).type(requestContentMediaType).put(ClientResponse)
     }
 
     def addPhoneToUser(String token, String userId, MobilePhone requestMobilePhone, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
@@ -627,11 +632,11 @@ class Cloud20Methods {
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).delete(ClientResponse)
     }
 
-    def addUserRole(String token, String userId, String roleId) {
+    def addUserRole(String token, String userId, String roleId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).path(userId)
                 .path(ROLES).path(OS_KSADM).path(roleId)
-                .header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
+                .header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).put(ClientResponse)
     }
 
     def deleteRoleFromUserOnTenant(String token, String tenantId, String userId, String roleId) {

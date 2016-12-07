@@ -325,7 +325,7 @@ class JSONReaderWriterTest extends RootServiceTest {
 
     def "can read/write roles as json"() {
         when:
-        def role = v2Factory.createRole(propagate)
+        def role = v2Factory.createRole(propagate, assignment)
 
         ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
         writerForRole.writeTo(role, Role, null, null, null, null, arrayOutputStream)
@@ -338,8 +338,13 @@ class JSONReaderWriterTest extends RootServiceTest {
             readJSONObject.propagate as boolean == propagate
         }
 
+        readJSONObject.assignment == assignment
+
         where:
-        propagate << [true, false, null]
+        propagate | assignment
+        true      | RoleAssignmentEnum.GLOBAL
+        false     | RoleAssignmentEnum.TENANT
+        null      | RoleAssignmentEnum.BOTH
     }
 
     def "can read/write user as json" () {

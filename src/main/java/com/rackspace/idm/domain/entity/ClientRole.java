@@ -39,6 +39,9 @@ public class ClientRole implements Auditable, UniqueId {
     @LDAPField(attribute=LdapRepository.ATTR_RS_PROPAGATE, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Boolean propagate;
 
+    @LDAPField(attribute = LdapRepository.ATTR_ASSIGNMENT, objectClass = LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String assignmentType;
+
     public Boolean getPropagate() {
         if (propagate == null) {
             return false;

@@ -1,4 +1,6 @@
 package com.rackspace.idm.api.converter.cloudv20
+
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleLevelEnum
@@ -43,10 +45,13 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         def weight = 100
         def propagate = true
         def serviceId = "serviceId"
+        def assignment = RoleAssignmentEnum.TENANT.value()
+
         def clientRole = entityFactory.createClientRole().with {
             it.rsWeight = weight
             it.propagate = propagate
             it.clientId = serviceId
+            it.assignmentType = assignment
             return it
         }
 
@@ -56,6 +61,7 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         then:
         result.propagate == propagate
         result.serviceId == serviceId
+        result.assignment == RoleAssignmentEnum.fromValue(assignment)
     }
 
     def "can convert jaxb role to clientRole"() {
@@ -67,6 +73,7 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         jaxbRole.propagate = propagate
         jaxbRole.serviceId = serviceId
         jaxbRole.administratorRole = IdentityUserTypeEnum.USER_MANAGER.roleName
+        jaxbRole.assignment = RoleAssignmentEnum.TENANT
 
         when:
         def result = converter.fromRole(jaxbRole, serviceId);
@@ -75,6 +82,7 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         result.rsWeight == RoleLevelEnum.LEVEL_1000.levelAsInt
         result.propagate == propagate
         result.clientId == serviceId
+        result.assignmentType == RoleAssignmentEnum.TENANT.value()
     }
 
     @Unroll

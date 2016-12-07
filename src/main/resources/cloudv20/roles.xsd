@@ -60,6 +60,7 @@
         <!-- used for development -->
         <attribute ref="RAX-AUTH:propagate"/>
         <attribute ref="RAX-AUTH:administratorRole"/>
+        <attribute ref="RAX-AUTH:assignment" use="optional"/>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
     
