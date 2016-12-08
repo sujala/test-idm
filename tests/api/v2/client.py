@@ -153,6 +153,14 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
+    def list_groups(self, user_id, requestslib_kwargs=None):
+        """
+        List Group
+        """
+        url = self.url + const.LIST_GROUPS_URL.format(user_id=user_id)
+        return self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+
     def list_credentials(self, user_id):
         """
         Get list of creds for a particular user_id

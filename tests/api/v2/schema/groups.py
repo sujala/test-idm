@@ -13,3 +13,15 @@ add_group = {
             'additionalProperties': False}},
     'required': [const.NS_GROUP],
     'additionalProperties': False}
+
+list_groups = {
+  'type': 'object', 'properties': {
+    const.NS_GROUPS: {
+      const.ITEMS: {
+        'type': 'object', 'properties': {
+          const.NAME: {'type': 'string'},
+          const.DESCRIPTION: {'type': 'string'},
+          const.ID: {'type': 'string'}},
+        'required': [const.NAME, const.DESCRIPTION, const.ID],
+        'additionalProperties': False}},
+    }, 'required': [const.NS_GROUPS], 'additionalProperties': False}
