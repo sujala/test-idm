@@ -18,7 +18,6 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateUsernameException;
 import com.rackspace.idm.exception.ForbiddenException;
-import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.DateHelper;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
@@ -30,8 +29,6 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.opensaml.saml2.core.LogoutResponse;
-import org.opensaml.saml2.core.StatusCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -144,10 +141,10 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
     public SamlLogoutResponse processLogoutRequestForProvider(LogoutRequestDecorator logoutRequestDecorator, IdentityProvider provider) {
         String username = logoutRequestDecorator.checkAndGetUsername();
 
-        FederatedUser user = identityUserService.getFederatedUserByUsernameAndIdentityProviderName(username, provider.getName());
+        FederatedUser user = identityUserService.getFederatedUserByUsernameAndIdentityProviderId(username, provider.getProviderId());
 
         if (user == null) {
-            log.error(String.format("Unable to process federated user logout request. Domain federated user %s does not exist for provider %s.", username, provider.getName()));
+            log.error(String.format("Unable to process federated user logout request. Domain federated user %s does not exist for provider %s.", username, provider.getProviderId()));
             throw new BadRequestException("Not Found");
         }
 
@@ -410,16 +407,16 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
      * @return
      */
     private FederatedUser getFederatedUserForIdp(String username, IdentityProvider provider) {
-        FederatedUser user = federatedUserDao.getUserByUsernameForIdentityProviderName(username, provider.getName());
+        FederatedUser user = federatedUserDao.getUserByUsernameForIdentityProviderId(username, provider.getProviderId());
         return user;
     }
 
     private FederatedUser createUserForRequest(FederatedUserRequest request) {
         final Integer maxUserCount = identityConfig.getReloadableConfig().getIdentityFederationMaxUserCountPerDomainForIdp(request.getIdentityProvider().getUri());
         if (maxUserCount != null && maxUserCount > 0) {
-            final String idpName = request.getIdentityProvider().getName();
+            final String providerId = request.getIdentityProvider().getProviderId();
             final String domainId = request.getUser().getDomainId();
-            final int count = identityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(domainId, idpName);
+            final int count = identityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(domainId, providerId);
             if (count >= maxUserCount) {
                 throw new BadRequestException("maximum number of users reached for this domain: " + domainId);
             }

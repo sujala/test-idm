@@ -32,8 +32,13 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
     }
 
     @Override
+    public IdentityProvider getIdentityProviderById(String Id) {
+        return mapper.fromSQL(repository.findOne(Id));
+    }
+
+    @Override
     public IdentityProvider getIdentityProviderByName(String name) {
-        return mapper.fromSQL(repository.findOne(name));
+        throw new NotImplementedException();
     }
 
     @Override
@@ -77,9 +82,9 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
     }
 
     @Override
-    public void deleteIdentityProviderById(String identityProviderName) {
-        final SqlIdentityProvider sqlProvider = repository.findOne(identityProviderName);
-        repository.delete(identityProviderName);
+    public void deleteIdentityProviderById(String identityProviderId) {
+        final SqlIdentityProvider sqlProvider = repository.findOne(identityProviderId);
+        repository.delete(identityProviderId);
 
         final IdentityProvider newProvider = mapper.fromSQL(sqlProvider);
         applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newProvider.getUniqueId(), null));

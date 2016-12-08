@@ -121,7 +121,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)
         def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
         samlProducerForSharedIdp = new SamlProducer(SamlCredentialUtils.generateX509Credential(cert1, keyPair1))
-        sharedIdentityProvider = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL, null).with {
+        sharedIdentityProvider = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL, null).with {
             it.publicCertificates = publicCertificates
             it
         }
@@ -1619,10 +1619,10 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
     def deleteFederatedUserQuietly(username) {
         try {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, DEFAULT_IDP_ID)
             if (federatedUser != null) {
                 if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                    federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpName(username, DEFAULT_IDP_NAME)
+                    federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpId(username, DEFAULT_IDP_ID)
                     sqlFederatedUserRepository.delete(federatedUser)
                 } else {
                     federatedUserRepository.deleteObject(federatedUser)

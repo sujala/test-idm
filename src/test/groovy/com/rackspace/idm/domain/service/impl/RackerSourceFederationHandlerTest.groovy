@@ -39,7 +39,7 @@ class RackerSourceFederationHandlerTest extends Specification {
     IdentityConfig.ReloadableConfig reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
 
     //constants & test helpers
-    @Shared def IDP_NAME = "nam";
+    @Shared def IDP_ID = "nam";
     @Shared def IDP_URI = "http://my.test.idp"
     @Shared def IDP_PUBLIC_CERTIFICATE = "--BEGIN CERTIFICATE-- bla bla bla --END CERTIFICATE--"
     @Shared def RACKER_USERNAME = "rackerJoe"
@@ -48,7 +48,7 @@ class RackerSourceFederationHandlerTest extends Specification {
 
     IdentityProvider identityProvider = new IdentityProvider().with {
         it.uri = IDP_URI
-        it.name = IDP_NAME
+        it.providerId = IDP_ID
         it.federationType = IdentityProviderFederationTypeEnum.RACKER.name()
         it
     }

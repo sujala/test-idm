@@ -6,8 +6,6 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspacecloud.docs.auth.api.v1.BaseURL
-import com.rsa.cryptoj.c.id
-import com.unboundid.ldap.sdk.Entry
 import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.lang.RandomStringUtils
@@ -430,15 +428,16 @@ class EntityFactory extends Specification {
 
     def createIdentityProviderWithoutCertificate() {
         IdentityProvider provider = new IdentityProvider().with {
+            it.providerId = RandomStringUtils.randomAlphabetic(10)
             it.name = RandomStringUtils.randomAlphabetic(10)
-            it.uri = it.name
+            it.uri = it.providerId
             it.approvedDomainGroup = ApprovedDomainGroupEnum.GLOBAL.getStoredVal()
             return it
         }
         return provider
     }
 
-    def createIdentityProviderWithCredential(name = RandomStringUtils.randomAlphabetic(5), X509Credential credential = SamlCredentialUtils.generateX509Credential()) {
+    def createIdentityProviderWithCredential(X509Credential credential = SamlCredentialUtils.generateX509Credential()) {
         return createIdentityProviderWithCertificates([credential.entityCertificate])
     }
 

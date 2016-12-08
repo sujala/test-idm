@@ -15,14 +15,14 @@ public interface FederatedUserRepository extends JpaSpecificationExecutor<SqlFed
 
     Iterable<SqlFederatedUserRax> findByDomainId(String domainId);
 
-    @Query("select u from SqlFederatedUserRax u where u.domainId = :domainId and u.federatedIdpUri = (select idp.uri from SqlIdentityProvider idp where idp.name = :idpName)")
-    Iterable<SqlFederatedUserRax> findByDomainIdAndFederatedIdpName(@Param("domainId") String domainId, @Param("idpName") String federatedIdpName);
+    @Query("select u from SqlFederatedUserRax u where u.domainId = :domainId and u.federatedIdpUri = (select idp.uri from SqlIdentityProvider idp where idp.id = :idpId)")
+    Iterable<SqlFederatedUserRax> findByDomainIdAndFederatedIdpId(@Param("domainId") String domainId, @Param("idpId") String federatedIdpId);
 
-    @Query("select count(u) from SqlFederatedUserRax u where u.domainId = :domainId and u.federatedIdpUri = (select idp.uri from SqlIdentityProvider idp where idp.name = :idpName)")
-    int countByDomainIdAndFederatedIdpName(@Param("domainId") String domainId, @Param("idpName") String federatedIdpName);
+    @Query("select count(u) from SqlFederatedUserRax u where u.domainId = :domainId and u.federatedIdpUri = (select idp.uri from SqlIdentityProvider idp where idp.id = :idId)")
+    int countByDomainIdAndFederatedIdpId(@Param("domainId") String domainId, @Param("idpId") String federatedIdpId);
 
-    @Query("select u from SqlFederatedUserRax u where u.username = :username and u.federatedIdpUri = (select idp.uri from SqlIdentityProvider idp where idp.name = :idpName)")
-    SqlFederatedUserRax findOneByUsernameAndFederatedIdpName(@Param("username") String username, @Param("idpName") String federatedIdpName);
+    @Query("select u from SqlFederatedUserRax u where u.username = :username and u.federatedIdpUri = (select idp.uri from SqlIdentityProvider idp where idp.name = :idpId)")
+    SqlFederatedUserRax findOneByUsernameAndFederatedIdpId(@Param("username") String username, @Param("idpId") String federatedIdpId);
 
     Iterable<SqlFederatedUserRax> findByRsGroupIdIn(Collection<String> rsGroupId);
 

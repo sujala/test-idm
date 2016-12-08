@@ -1239,8 +1239,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             com.rackspace.idm.domain.entity.IdentityProvider newProvider = identityProviderConverterCloudV20.fromIdentityProvider(provider);
             federatedIdentityService.addIdentityProvider(newProvider);
-            ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(newProvider.getName()).build());
+            ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(newProvider.getProviderId()).build());
             return builder.entity(identityProviderConverterCloudV20.toIdentityProvider(newProvider));
+        } catch (DuplicateException de) {
+            return exceptionHandler.conflictExceptionResponse(de.getMessage());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -1261,7 +1263,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             existingProvider.setAuthenticationUrl(provider.getAuthenticationUrl()); //copy over the only attribute allowed to be updated
 
             federatedIdentityService.updateIdentityProvider(existingProvider); //update
-            ResponseBuilder builder = Response.ok(uriInfo.getRequestUriBuilder().path(existingProvider.getName()).build());
+            ResponseBuilder builder = Response.ok(uriInfo.getRequestUriBuilder().path(existingProvider.getProviderId()).build());
             return builder.entity(identityProviderConverterCloudV20.toIdentityProvider(existingProvider));
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

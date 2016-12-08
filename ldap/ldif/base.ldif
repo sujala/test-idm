@@ -59,6 +59,7 @@ objectClass: rsExternalProvider
 objectClass: organizationalUnit
 objectClass: top
 ou: dedicated
+cn: dedicated
 labeledUri: http://my.rackspace.com
 rsApprovedDomainGroup: GLOBAL
 description: Identity provider for dedicated
@@ -98,6 +99,7 @@ objectClass: rsExternalProvider
 objectClass: organizationalUnit
 objectClass: top
 ou: identityqe
+cn: identityqe
 labeledUri: http://identityqe.rackspace.com
 rsApprovedDomainGroup: GLOBAL
 description: Identity provider for testing
@@ -205,6 +207,7 @@ objectClass: rsExternalProvider
 objectClass: organizationalUnit
 objectClass: top
 ou: rackertest
+cn: rackertest
 labeledUri: http://racker.rackspace.com
 rsTargetUserSource: RACKER
 description: Identity provider for racker testing
@@ -269,6 +272,7 @@ objectClass: rsExternalProvider
 objectClass: organizationalUnit
 objectClass: top
 ou: test
+cn: test
 labeledUri: http://test.rackspace.com
 description: Identity provider for testing
 rsApprovedDomainGroup: GLOBAL

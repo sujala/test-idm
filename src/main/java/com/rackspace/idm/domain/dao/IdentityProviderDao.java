@@ -8,6 +8,8 @@ public interface IdentityProviderDao {
 
     IdentityProvider getIdentityProviderByUri(String uri);
 
+    IdentityProvider getIdentityProviderById(String Id);
+
     IdentityProvider getIdentityProviderByName(String name);
 
     /**
@@ -59,8 +61,8 @@ public interface IdentityProviderDao {
     /**
      * Delete the specified Identity Provider
      *
-     * @param identityProviderName
+     * @param identityProviderId
      */
-    void deleteIdentityProviderById(String identityProviderName);
+    void deleteIdentityProviderById(String identityProviderId);
 
 }

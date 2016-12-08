@@ -72,7 +72,7 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
     }
 
     def setup() {
-        commonIdentityProvider = ldapIdentityProviderRepository.getIdentityProviderByName(Constants.DEFAULT_IDP_NAME)
+        commonIdentityProvider = ldapIdentityProviderRepository.getIdentityProviderById(Constants.DEFAULT_IDP_ID)
 
         if (ldapConnectionPools != null) {
             con = ldapConnectionPools.getAppConnPoolInterface()
@@ -280,7 +280,7 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
 
     String getExpectedFederatedUserDn(IdentityProvider provider, FederatedUser fedUser) {
         if (ldapConnectionPools != null) {
-            return new LdapRepository.LdapDnBuilder(LdapRepository.EXTERNAL_PROVIDERS_BASE_DN).addAttribute(LdapRepository.ATTR_UID, fedUser.username).addAttribute(LdapRepository.ATTR_OU, LdapRepository.EXTERNAL_PROVIDERS_USER_CONTAINER_NAME).addAttribute(LdapRepository.ATTR_OU, provider.name).build()
+            return new LdapRepository.LdapDnBuilder(LdapRepository.EXTERNAL_PROVIDERS_BASE_DN).addAttribute(LdapRepository.ATTR_UID, fedUser.username).addAttribute(LdapRepository.ATTR_OU, LdapRepository.EXTERNAL_PROVIDERS_USER_CONTAINER_NAME).addAttribute(LdapRepository.ATTR_OU, provider.providerId).build()
         }
         return null;
     }

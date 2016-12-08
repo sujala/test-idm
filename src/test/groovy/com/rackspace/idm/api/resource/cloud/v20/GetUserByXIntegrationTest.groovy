@@ -154,7 +154,7 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
             return
         }
         try {
-            def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(samlUser.id, DEFAULT_IDP_NAME)
+            def federatedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderId(samlUser.id, DEFAULT_IDP_ID)
             if (federatedUser != null) {
                 ldapFederatedUserRepository.deleteObject(federatedUser)
             }

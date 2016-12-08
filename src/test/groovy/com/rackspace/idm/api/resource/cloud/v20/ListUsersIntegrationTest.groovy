@@ -19,7 +19,6 @@ import testHelpers.saml.SamlFactory
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
-import static org.apache.http.HttpStatus.SC_CREATED
 import static org.apache.http.HttpStatus.SC_FORBIDDEN
 import static org.apache.http.HttpStatus.SC_OK
 
@@ -874,10 +873,10 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
 
     def deleteFederatedUserQuietly(username) {
         try {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, DEFAULT_IDP_ID)
             if (federatedUser != null) {
                 if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                    federatedUser = federatedUserRepository.findOneByUsernameAndFederatedIdpName(username, DEFAULT_IDP_NAME)
+                    federatedUser = federatedUserRepository.findOneByUsernameAndFederatedIdpName(username, DEFAULT_IDP_ID)
                     federatedUserRepository.delete(federatedUser)
                 } else {
                     federatedUserRepository.deleteObject(federatedUser)

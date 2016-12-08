@@ -24,7 +24,7 @@ import testHelpers.saml.SamlCredentialUtils
 import javax.servlet.http.HttpServletResponse
 import java.security.cert.X509Certificate
 
-import static com.rackspace.idm.Constants.DEFAULT_IDP_NAME
+import static com.rackspace.idm.Constants.DEFAULT_IDP_ID
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest {
@@ -85,14 +85,14 @@ class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest
         def email = "fedIntTest@invalid.rackspace.com"
 
         when: "Generate samlResponse using first certificate"
-        def samlAssertion = cred1Factory.generateSamlAssertion(provider.name, username, expSecs, domainId, null, email);
+        def samlAssertion = cred1Factory.generateSamlAssertion(provider.providerId, username, expSecs, domainId, null, email);
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then: "Was processed successfully"
         samlResponse.status == HttpServletResponse.SC_OK
 
         when: "Generate samlResponse using second certificate"
-        def samlAssertion2 = cred2Factory.generateSamlAssertion(provider.name, username, expSecs, domainId, null, email);
+        def samlAssertion2 = cred2Factory.generateSamlAssertion(provider.providerId, username, expSecs, domainId, null, email);
         def samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
 
         then: "Was processed successfully"
@@ -133,9 +133,9 @@ class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest
         cleanup:
         if (provider != null) {
             if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                sqlIdentityProviderRepository.delete(provider.getName())
+                sqlIdentityProviderRepository.delete(provider.getProviderId())
             } else {
-                ldapIdentityProviderRepository.deleteIdentityProviderById(provider.getName())
+                ldapIdentityProviderRepository.deleteIdentityProviderById(provider.getProviderId())
             }
         }
 
@@ -144,10 +144,10 @@ class FederationRotatingKeyIntegrationTest extends RootConcurrentIntegrationTest
     def deleteFederatedUserQuietly(username) {
         try {
             if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpName(username, DEFAULT_IDP_NAME)
+                def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpId(username, DEFAULT_IDP_ID)
                 if(federatedUser != null) sqlFederatedUserRepository.delete(federatedUser)
             } else {
-                def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+                def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, DEFAULT_IDP_ID)
                 if(federatedUser != null) federatedUserRepository.deleteObject(federatedUser)
             }
         } catch (Exception e) {

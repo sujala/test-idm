@@ -43,7 +43,7 @@ class LdapFederatedUserRepositoryIntegrationTest extends Specification {
         random = ("$randomness").replace('-', "")
         username = "someName"+random
 
-        commonIdentityProvider = ldapIdentityProviderRepository.getIdentityProviderByName(Constants.DEFAULT_IDP_NAME)
+        commonIdentityProvider = ldapIdentityProviderRepository.getIdentityProviderById(Constants.DEFAULT_IDP_ID)
     }
 
     def "add and get a federated user"() {
@@ -58,7 +58,7 @@ class LdapFederatedUserRepositoryIntegrationTest extends Specification {
         user.getUniqueId() != null
 
         when:
-        def addedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderName(username, Constants.DEFAULT_IDP_NAME)
+        def addedUser = ldapFederatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
 
         then:
         addedUser != null
@@ -85,7 +85,7 @@ class LdapFederatedUserRepositoryIntegrationTest extends Specification {
         def user = createFederatedUser(random, username)
         ldapFederatedUserRepository.addUser(commonIdentityProvider, user)
 
-        def federatedToken = createFederatedToken(user.id, username, random, new Date().plus(1), Constants.DEFAULT_IDP_NAME)
+        def federatedToken = createFederatedToken(user.id, username, random, new Date().plus(1), Constants.DEFAULT_IDP_ID)
         scopeAccessService.addUserScopeAccess(user, federatedToken)
 
         when:

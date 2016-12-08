@@ -284,10 +284,10 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
     def deleteFederatedUser(username) {
         if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpName(username, DEFAULT_IDP_NAME)
+            def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpId(username, DEFAULT_IDP_ID)
             if(federatedUser != null) sqlFederatedUserRepository.delete(federatedUser)
         } else {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, DEFAULT_IDP_ID)
             if(federatedUser != null) ldapFederatedUserRepository.deleteObject(federatedUser)
         }
     }

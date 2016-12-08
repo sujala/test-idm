@@ -828,6 +828,16 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="name" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The name of the provider. Must consist of only alphanumeric, '-', '.', and be less than 255
+                        characters.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
         <attribute name="description" type="xsd:string" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">

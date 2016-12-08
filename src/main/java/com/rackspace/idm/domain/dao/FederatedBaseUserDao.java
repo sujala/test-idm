@@ -35,12 +35,12 @@ public interface FederatedBaseUserDao<T extends BaseUser> {
     T getUserById(String id);
 
     /**
-     * Retrieve the appropriate users by username for the specified identity provider with the given name
+     * Retrieve the appropriate users by username for the specified identity provider with the given id
      * @param username
-     * @param identityProviderName
+     * @param identityProviderId
      * @return
      */
-    T getUserByUsernameForIdentityProviderName(String username, String identityProviderName);
+    T getUserByUsernameForIdentityProviderId(String username, String identityProviderId);
 
     /**
      * Update the user. This will only update non-null values that have changed from the previous value. Not all

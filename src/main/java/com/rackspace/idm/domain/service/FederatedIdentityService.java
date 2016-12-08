@@ -37,14 +37,21 @@ public interface FederatedIdentityService {
     void updateIdentityProvider(IdentityProvider identityProvider);
 
     /**
-     * Return the identity provider with the given id. The id is synonymous with the identity provider name.
+     * Return the identity provider with the given id.
      * @param id
      * @return
      */
     IdentityProvider getIdentityProvider(String id);
 
     /**
-     * Return the identity provider with the given id. The id is synonymous with the identity provider name.
+     * Return the identity provider with the given identity provider name.
+     * @param name
+     * @return
+     */
+    IdentityProvider getIdentityProviderByName(String name);
+
+    /**
+     * Return the identity provider with the given id.
      *
      * @param id
      * @return

@@ -35,11 +35,11 @@ public class IdentityProvider implements Auditable, UniqueId {
     @LDAPDNField
     private String uniqueId;
 
-    /**
-     * The name is also the id
-     */
     @Mapping("id")
     @LDAPField(attribute = LdapRepository.ATTR_OU, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, inRDN = true, requiredForEncode = true)
+    private String providerId;
+
+    @LDAPField(attribute = LdapRepository.ATTR_NAME, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = true)
     private String name;
 
     @Mapping("issuer")
@@ -68,8 +68,8 @@ public class IdentityProvider implements Auditable, UniqueId {
 
     @Override
     public String getAuditContext() {
-        String format = "identityProviderName=%s";
-        return String.format(format, getName());
+        String format = "identityProviderId=%s";
+        return String.format(format, getProviderId());
     }
 
     @Override

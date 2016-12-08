@@ -27,17 +27,17 @@ class DefaultFederatedIdentityServiceTest extends Specification {
 
     SamlFactory assertionFactory = new SamlFactory()
 
-    def IDP_NAME = "nam";
+    def IDP_ID = "nam";
     def IDP_URI = "http://my.test.idp"
     IdentityProvider provisionedIdentityProvider = new IdentityProvider().with {
         it.uri = IDP_URI
-        it.name = IDP_NAME
+        it.providerId = IDP_ID
         it.federationType = IdentityProviderFederationTypeEnum.DOMAIN.name()
         it
     }
     IdentityProvider rackerIdentityProvider = new IdentityProvider().with {
         it.uri = IDP_URI
-        it.name = IDP_NAME
+        it.providerId = IDP_ID
         it.federationType = IdentityProviderFederationTypeEnum.RACKER.name()
         it
     }

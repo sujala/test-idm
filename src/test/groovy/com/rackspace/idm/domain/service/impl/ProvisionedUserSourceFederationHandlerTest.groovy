@@ -43,7 +43,7 @@ import testHelpers.saml.SamlFactory
 class ProvisionedUserSourceFederationHandlerTest extends Specification {
     @Shared ProvisionedUserSourceFederationHandler provisionedUserSourceFederationHandler
 
-    @Shared def IDP_NAME = "dedicated";
+    @Shared def IDP_ID = "dedicated";
     @Shared def IDP_URI = "http://my.test.idp"
     @Shared def IDP_PUBLIC_CERTIFICATE = "--BEGIN CERTIFICATE-- bla bla bla --END CERTIFICATE--"
     @Shared def ROLE_NAME = "rbacRole1"
@@ -135,7 +135,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
 
         }
         theIdentityProvider = new IdentityProvider().with {
-            it.name = IDP_NAME
+            it.providerId = IDP_ID
             it.uri = IDP_URI
             it.approvedDomainGroup = ApprovedDomainGroupEnum.GLOBAL.storedVal
             it.federationType = IdentityProviderFederationTypeEnum.DOMAIN.name()
@@ -251,8 +251,8 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
-        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(_, _) >> 0
-        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(_, _) >> null
+        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderIdCount(_, _) >> 0
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderId(_, _) >> null
         def idp = createIdentityProvider()
         mockTenantService.getTenantsByDomainId(_) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
@@ -575,8 +575,8 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
-        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(_, _) >> 0
-        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(_, _) >> null
+        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderIdCount(_, _) >> 0
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderId(_, _) >> null
         def idp = createIdentityProvider()
         mockTenantService.getTenantsByDomainId(_) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
@@ -650,7 +650,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
-        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderName(_, _) >> [].asList()
+        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderId(_, _) >> [].asList()
         def idp = createIdentityProvider()
 
         and:
@@ -720,7 +720,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         samlResponse = samlUnmarshaller.unmarshallResponse(samlStr)
         samlResponseDecorator = new SamlResponseDecorator(samlResponse)
         mockDomainService.getDomainAdmins(_) >> [domainAdmin].asList()
-        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderNameCount(_, _) >> 0
+        mockIdentityUserService.getFederatedUsersByDomainIdAndIdentityProviderIdCount(_, _) >> 0
         def idp = createIdentityProvider()
 
         and:
@@ -737,7 +737,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
     def "Generate authentication info from saml response when user does not exist"() {
         samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
 
-        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(USERNAME, IDP_NAME) >> null
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderId(USERNAME, IDP_ID) >> null
         mockTenantService.getTenantsByDomainId(_) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
@@ -767,7 +767,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         samlResponse = new SamlUnmarshaller().unmarshallResponse(samlStr)
 
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> theIdentityProvider
-        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(USERNAME, IDP_NAME) >> user
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderId(USERNAME, IDP_ID) >> user
         mockTenantService.getTenantsByDomainId(DOMAIN_ID) >> tenants
         mockScopeAccessService.getOpenstackEndpointsForScopeAccess(_) >> endpoints
         mockTenantService.getTenantRolesForUser(_) >> roles
@@ -804,7 +804,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         }
 
         mockIdentityProviderDao.getIdentityProviderByUri(IDP_URI) >> theIdentityProvider
-        mockFederatedUserDao.getUserByUsernameForIdentityProviderName(USERNAME, IDP_NAME) >> existingUser
+        mockFederatedUserDao.getUserByUsernameForIdentityProviderId(USERNAME, IDP_ID) >> existingUser
         mockDomainService.getDomainAdmins(_) >> [Mock(User)].asList()
         reloadableConfig.getIdentityFederationMaxUserCountPerDomainForIdp(_) >> 1000
         mockRoleService.getRoleByName(ROLE_NAME) >> dummyRbacRole
@@ -890,7 +890,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
 
     def createIdentityProvider() {
         new IdentityProvider().with({
-            it.name = IDP_NAME
+            it.providerId = IDP_ID
             it.uri = IDP_URI
             it.approvedDomainGroup = ApprovedDomainGroupEnum.GLOBAL.storedVal
             return it

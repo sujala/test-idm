@@ -500,10 +500,10 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
 
     def deleteFederatedUserQuietly(username) {
         try {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, DEFAULT_IDP_ID)
             if (federatedUser != null) {
                 if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                    federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpName(username, DEFAULT_IDP_NAME)
+                    federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpId(username, DEFAULT_IDP_ID)
                     sqlFederatedUserRepository.delete(federatedUser)
                 } else {
                     federatedUserRepository.deleteObject(federatedUser)

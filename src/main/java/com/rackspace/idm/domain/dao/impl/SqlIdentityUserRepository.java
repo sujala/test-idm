@@ -45,18 +45,18 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
     }
 
     @Override
-    public FederatedUser getFederatedUserByUsernameAndIdpName(String username, String idpName) {
-        return fedUserDao.getUserByUsernameForIdentityProviderName(username, idpName);
+    public FederatedUser getFederatedUserByUsernameAndIdpId(String username, String idpId) {
+        return fedUserDao.getUserByUsernameForIdentityProviderId(username, idpId);
     }
 
     @Override
-    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName) {
-        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderName(domainId, idpName);
+    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String idpId) {
+        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderId(domainId, idpId);
     }
 
     @Override
-    public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String idpName) {
-        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderNameCount(domainId, idpName);
+    public int getFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String idpId) {
+        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderIdCount(domainId, idpId);
     }
 
     @Override

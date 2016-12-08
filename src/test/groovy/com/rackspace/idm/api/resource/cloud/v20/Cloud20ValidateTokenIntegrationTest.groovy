@@ -25,19 +25,15 @@ import org.apache.log4j.Logger
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.Tenants
-import org.openstack.docs.identity.api.v2.UnauthorizedFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
-import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.junit.IgnoreByRepositoryProfile
 import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
-import java.util.regex.Pattern
 
 import static com.rackspace.idm.Constants.*
 import static org.apache.http.HttpStatus.*
@@ -847,7 +843,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     def deleteFederatedUserQuietly(username) {
         try {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, DEFAULT_IDP_ID)
             if (federatedUser != null) {
                 if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
                     sqlFederatedUserRepository.delete(federatedUser)
