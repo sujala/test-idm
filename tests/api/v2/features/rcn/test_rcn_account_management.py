@@ -172,8 +172,11 @@ class TestRCNAccountManagement(base.TestBaseV2):
         password = user_resp.json()[const.USER][const.NS_PASSWORD]
 
         # authenticate with user info
-        resp1 = self.identity_admin_client.get_auth_token(user=user_name,
-                                                          password=password)
+        auth_obj = requests.AuthenticateWithPassword(
+            user_name=user_name, password=password
+        )
+        resp1 = self.identity_admin_client.get_auth_token(
+            request_object=auth_obj)
         self.assertEqual(resp1.status_code, 200)
 
         # create tenant
@@ -206,7 +209,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
 
         # authenticate with user info
         auth_resp = self.identity_admin_client.get_auth_token(
-            user=user_name, password=password)
+            request_object=auth_obj)
         self.assertEqual(auth_resp.status_code, 200)
 
         endpoints_list = auth_resp.json()[const.ACCESS][
@@ -247,8 +250,11 @@ class TestRCNAccountManagement(base.TestBaseV2):
         password = user_resp.json()[const.USER][const.NS_PASSWORD]
 
         # authenticate with user info
-        resp1 = self.identity_admin_client.get_auth_token(user=user_name,
-                                                          password=password)
+        auth_obj = requests.AuthenticateWithPassword(
+            user_name=user_name, password=password
+        )
+        resp1 = self.identity_admin_client.get_auth_token(
+            request_object=auth_obj)
         self.assertEqual(resp1.status_code, 200)
 
         # create tenant
@@ -281,7 +287,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
 
         # authenticate with user info
         auth_resp = self.identity_admin_client.get_auth_token(
-            user=user_name, password=password)
+            request_object=auth_obj)
         self.assertEqual(auth_resp.status_code, 200)
 
         endpoints_list = auth_resp.json()[const.ACCESS][
@@ -312,8 +318,11 @@ class TestRCNAccountManagement(base.TestBaseV2):
         self.domain_ids.append(domain_id)
 
         # authenticate with user info
-        resp1 = self.identity_admin_client.get_auth_token(user=user_name,
-                                                          password=password)
+        auth_obj = requests.AuthenticateWithPassword(
+            user_name=user_name, password=password
+        )
+        resp1 = self.identity_admin_client.get_auth_token(
+            request_object=auth_obj)
         self.assertEqual(resp1.status_code, 200)
 
         # get mosso tenant
@@ -341,7 +350,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
 
         # authenticate with user info
         auth_resp = self.identity_admin_client.get_auth_token(
-            user=user_name, password=password)
+            request_object=auth_obj)
         self.assertEqual(auth_resp.status_code, 200)
 
         endpoints_list = auth_resp.json()[const.ACCESS][

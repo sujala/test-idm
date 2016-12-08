@@ -2,6 +2,7 @@ from tests.api import base
 from tests.api import devops_client
 from tests.api.v2 import client
 from tests.api.v2.models import factory
+from tests.api.v2.models import requests
 from tests.api import constants as const
 from tests.api.utils import header_validation
 
@@ -24,9 +25,10 @@ class TestBaseV2(base.TestBase):
             url=cls.url,
             serialize_format=cls.test_config.serialize_format,
             deserialize_format=cls.test_config.deserialize_format)
-        resp = cls.identity_admin_client.get_auth_token(
-            user=cls.identity_config.identity_admin_user_name,
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=cls.identity_config.identity_admin_user_name,
             password=cls.identity_config.identity_admin_password)
+        resp = cls.identity_admin_client.get_auth_token(request_object=req_obj)
         identity_admin_auth_token = resp.json()[const.ACCESS][const.TOKEN][
             const.ID]
         identity_admin_id = resp.json()[const.ACCESS][const.USER][const.ID]
@@ -134,12 +136,16 @@ class TestBaseV2(base.TestBase):
             if const.DOMAINID in str(user_resp.json()[const.USER]):
                 id_client.default_headers[const.DOMAINID] = (
                     user_resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID])
-            resp = id_client.get_auth_token(
-                user=username, password=password)
+
+            req_obj = requests.AuthenticateWithPassword(
+                user_name=username, password=password
+            )
+            resp = id_client.get_auth_token(request_object=req_obj)
             auth_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
             user_id = resp.json()[const.ACCESS][const.USER][const.ID]
             id_client.default_headers[const.X_USER_ID] = user_id
             id_client.default_headers[const.X_AUTH_TOKEN] = auth_token
+
         return id_client
 
     def generate_client_with_x_auth_token(cls, x_auth_token=None):

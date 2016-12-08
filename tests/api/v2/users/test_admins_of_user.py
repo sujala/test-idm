@@ -45,8 +45,11 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.user_ids.append(user_id)
 
         password = resp.json()[const.USER][const.OS_KSADM_PASSWORD]
+        auth_obj = requests.AuthenticateWithPassword(
+            user_name=user_name, password=password
+        )
         auth = self.identity_admin_client.get_auth_token(
-            user=user_name, password=password)
+            request_object=auth_obj)
         user_admin_token = auth.json()[const.ACCESS][const.TOKEN][const.ID]
         user_admin_client = self.generate_client(token=user_admin_token)
 
@@ -254,8 +257,11 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.user_ids.append(user_id)
 
         password = resp.json()[const.USER][const.OS_KSADM_PASSWORD]
+        auth_obj = requests.AuthenticateWithPassword(
+            user_name=user_name, password=password
+        )
         auth = self.identity_admin_client.get_auth_token(
-            user=user_name, password=password)
+            request_object=auth_obj)
         user_admin_token = auth.json()[const.ACCESS][const.TOKEN][const.ID]
         user_admin_client = self.generate_client(token=user_admin_token)
 
@@ -332,8 +338,11 @@ class TestAdminsOfUser(base.TestBaseV2):
         self.user_ids.append(user_id)
 
         password = resp.json()[const.USER][const.OS_KSADM_PASSWORD]
+        auth_obj = requests.AuthenticateWithPassword(
+            user_name=user_name, password=password
+        )
         auth = self.identity_admin_client.get_auth_token(
-            user=user_name, password=password)
+            request_object=auth_obj)
         user_admin_token = auth.json()[const.ACCESS][const.TOKEN][const.ID]
         user_admin_client = self.generate_client(token=user_admin_token)
 

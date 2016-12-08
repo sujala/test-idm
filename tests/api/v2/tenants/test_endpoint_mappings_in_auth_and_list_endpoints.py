@@ -305,9 +305,12 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         Login with user and pass
         returns response object
         """
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=acct_info['user_name'],
+            password=acct_info['password']
+        )
         resp = self.identity_admin_client.get_auth_token(
-            user=acct_info['user_name'],
-            password=acct_info['password'])
+            request_object=req_obj)
         self.assertEqual(resp.status_code, 200)
         return resp
 
@@ -320,9 +323,12 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         api_key = (resp.json()[const.NS_API_KEY_CREDENTIALS]
                    [const.API_KEY])
+        req_obj = requests.AuthenticateWithApiKey(
+            user_name=acct_info['user_name'],
+            api_key=api_key
+        )
         resp = self.identity_admin_client.get_auth_token(
-            user=acct_info['user_name'],
-            api_key=api_key)
+            request_object=req_obj)
         self.assertEqual(resp.status_code, 200)
         return resp
 
@@ -335,8 +341,8 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         kwargs = {'user_name': acct_info['user_name'],
                   'password': acct_info['password'],
                   key: acct_info[key]}
-        request_object = requests.AuthenticateWithTenantUserPassword(**kwargs)
-        resp = self.identity_admin_client.auth_with_tenant_username_password(
+        request_object = requests.AuthenticateWithPassword(**kwargs)
+        resp = self.identity_admin_client.get_auth_token(
             request_object=request_object)
         self.assertEqual(resp.status_code, 200)
         return resp
@@ -354,8 +360,8 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         kwargs = {'user_name': acct_info['user_name'],
                   'api_key': api_key,
                   key: acct_info[key]}
-        request_object = requests.AuthenticateWithTenantUserApikey(**kwargs)
-        resp = self.identity_admin_client.auth_with_tenant_username_password(
+        request_object = requests.AuthenticateWithApiKey(**kwargs)
+        resp = self.identity_admin_client.get_auth_token(
             request_object=request_object)
         self.assertEqual(resp.status_code, 200)
         return resp
@@ -365,17 +371,19 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         get response for auth with tenant token
         """
         key = use_tenant_name and 'tenant_name' or 'tenant_id'
-
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=acct_info['user_name'],
+            password=acct_info['password']
+        )
         resp = self.identity_admin_client.get_auth_token(
-            user=acct_info['user_name'],
-            password=acct_info['password'])
+            request_object=req_obj)
         self.assertEqual(resp.status_code, 200)
 
         token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
         kwargs = {'token_id': token, key: acct_info[key]}
 
-        request_object = requests.TenantWithTokenAuth(**kwargs)
-        resp = self.identity_admin_client.auth_as_tenant_with_token(
+        request_object = requests.AuthenticateAsTenantWithToken(**kwargs)
+        resp = self.identity_admin_client.get_auth_token(
             request_object=request_object)
         self.assertEqual(resp.status_code, 200)
         return resp
@@ -547,10 +555,12 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         that were created and added to this user's tenant
         """
         acct_info = self.create_user_with_endpoint_from_mapping_rules()
-
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=acct_info['user_name'],
+            password=acct_info['password']
+        )
         resp = self.identity_admin_client.get_auth_token(
-            user=acct_info['user_name'],
-            password=acct_info['password'])
+            request_object=req_obj)
         self.assertEqual(resp.status_code, 200)
 
         token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
@@ -566,10 +576,12 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         that were created and added to this user's tenant via mapping rule
         """
         acct_info = self.create_user_with_endpoint_from_mapping_rules()
-
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=acct_info['user_name'],
+            password=acct_info['password']
+        )
         resp = self.identity_admin_client.get_auth_token(
-            user=acct_info['user_name'],
-            password=acct_info['password'])
+            request_object=req_obj)
         self.assertEqual(resp.status_code, 200)
 
         token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
@@ -613,10 +625,12 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         that contains multiple template ids
         """
         acct_info = self.create_user_with_endpoint_from_mapping_rules()
-
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=acct_info['user_name'],
+            password=acct_info['password']
+        )
         resp = self.identity_admin_client.get_auth_token(
-            user=acct_info['user_name'],
-            password=acct_info['password'])
+            request_object=req_obj)
         self.assertEqual(resp.status_code, 200)
 
         token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
@@ -655,10 +669,12 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         a 2nd role that added them is deleted.
         """
         acct_info = self.create_user_with_endpoint_from_mapping_rules()
-
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=acct_info['user_name'],
+            password=acct_info['password']
+        )
         resp = self.identity_admin_client.get_auth_token(
-            user=acct_info['user_name'],
-            password=acct_info['password'])
+            request_object=req_obj)
         self.assertEqual(resp.status_code, 200)
 
         token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
@@ -710,10 +726,12 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         the mapping rule that made them appear, is deleted
         """
         acct_info = self.create_user_with_endpoint_from_mapping_rules()
-
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=acct_info['user_name'],
+            password=acct_info['password']
+        )
         resp = self.identity_admin_client.get_auth_token(
-            user=acct_info['user_name'],
-            password=acct_info['password'])
+            request_object=req_obj)
         self.assertEqual(resp.status_code, 200)
 
         token = resp.json()[const.ACCESS][const.TOKEN][const.ID]

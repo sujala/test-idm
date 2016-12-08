@@ -500,8 +500,11 @@ class TestAddEndpointTemplate(base.TestBaseV2):
                 tenant_id=tenant_id, endpoint_template_id=template_id)
 
         expected_url = urlparse.urljoin(public_url, tenant_id)
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=user_name, password=password
+        )
         resp = self.identity_admin_client.get_auth_token(
-            user=user_name, password=password)
+            request_object=req_obj)
         catalog = resp.json()[const.ACCESS][const.SERVICE_CATALOG]
         assert_endpoint_present = False
         for service_ in catalog:

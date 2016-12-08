@@ -99,8 +99,11 @@ class TestUserAccessEvents(base.TestBaseV2):
         user_id, resp = self.create_user()
         username = resp.json()[const.USER][const.USERNAME]
         password = resp.json()[const.USER][const.NS_PASSWORD]
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=username, password=password
+        )
         auth_resp = self.identity_admin_client.get_auth_token(
-            user=username, password=password)
+            request_object=req_obj)
         self.assertEqual(auth_resp.status_code, 200)
         token_id = auth_resp.json()[const.ACCESS][const.TOKEN][const.ID]
         return token_id, user_id, username
@@ -111,8 +114,10 @@ class TestUserAccessEvents(base.TestBaseV2):
         resp = self.identity_admin_client.get_api_key(user_id=user_id)
         username = resp.json()[const.NS_API_KEY_CREDENTIALS][const.USERNAME]
         apikey = resp.json()[const.NS_API_KEY_CREDENTIALS][const.API_KEY]
-        auth_resp = self.identity_admin_client.get_auth_token(user=username,
-                                                              api_key=apikey)
+        req_obj = requests.AuthenticateWithApiKey(user_name=username,
+                                                  api_key=apikey)
+        auth_resp = self.identity_admin_client.get_auth_token(
+            request_object=req_obj)
         self.assertEqual(auth_resp.status_code, 200)
         token_id = auth_resp.json()[const.ACCESS][const.TOKEN][const.ID]
         return token_id, user_id, username
@@ -270,8 +275,10 @@ class TestUserAccessEvents(base.TestBaseV2):
                                                      request_object=update_obj)
         self.assertEqual(resp.status_code, 204)
         # authenticate with pwd
+        auth_obj = requests.AuthenticateWithPassword(user_name=user_name,
+                                                     password=password)
         auth_resp = self.identity_admin_client.get_auth_token(
-            user=user_name, password=password
+            request_object=auth_obj
         )
         # get events from log
         search_str = self.search_uae_log

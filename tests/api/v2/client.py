@@ -25,58 +25,8 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         self.serialize_format = serialize_format
         self.deserialize_format = deserialize_format
 
-    def get_auth_token(self, user, password=None, api_key=None,
-                       headers=None, requestslib_kwargs=None):
-        # TODO: deprecate
-        if api_key:
-            request_object = requests.AuthenticateWithApiKey(
-                user_name=user, api_key=api_key)
-        else:
-            request_object = requests.AuthenticateWithPassword(
-                user_name=user, password=password)
-
-        url = self.url + const.TOKEN_URL
-        resp = self.request(method='POST', url=url,
-                            request_entity=request_object,
-                            headers=headers,
-                            requestslib_kwargs=requestslib_kwargs)
-
-        # If the response is xml, adds a json() method to the object.
-        # The json() method should return a json equivalent of the
-        # xml response.
-        if self.deserialize_format == const.XML:
-            def json(self):
-                # NOTE: Partially implemented for the purpose of extracting
-                # auth token. Needs to be revisited when implementing tests for
-                # the endpoint
-                resp_json = {}
-                resp_json[const.ACCESS] = {}
-
-                root_string = resp.text.encode(const.ASCII)
-                root = objectify.fromstring(root_string)
-                token = root[const.TOKEN].attrib
-
-                services = root[const.SERVICE_CATALOG]
-                serviceCatalog = []
-
-                for service in services.getchildren():
-                    item = {}
-                    item[const.NAME] = service.attrib[const.NAME]
-                    item[const.TYPE] = service.attrib[const.TYPE]
-                    links = []
-                    for endpoint in service.endpoint:
-                        links.append(endpoint.attrib)
-                    item[const.ENDPOINTS] = links
-                    serviceCatalog.append(item)
-
-                resp_json[const.ACCESS][const.SERVICE_CATALOG] = serviceCatalog
-                resp_json[const.ACCESS][const.TOKEN] = token
-                resp_json[const.ACCESS][const.USER] = user
-                return resp_json
-            resp.json = types.MethodType(json, resp, type(resp))
-        return resp
-
-    def get_token(self, request_object, headers=None, requestslib_kwargs=None):
+    def get_auth_token(self, request_object, headers=None,
+                       requestslib_kwargs=None):
         """Returns response object from auth"""
         url = self.url + const.TOKEN_URL
         resp = self.request(method='POST', url=url,
@@ -86,43 +36,8 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         if self.deserialize_format == const.XML:
             raise Exception("Not implemented yet")
+
         return resp
-
-    def auth_as_tenant_with_token(self, request_object, headers=None,
-                                  requestslib_kwargs=None):
-        # TODO: deprecate
-        """
-        Returns response object from auth as tenant with token api call
-        GET /v2.0/tokens/{token_id}
-        In case of XML response, add a json() method to the response object
-        that will create a JSON equivalent of the XML response
-        """
-        url = self.url + const.TOKEN_URL
-        resp = self.request(method='POST', url=url,
-                            request_entity=request_object,
-                            headers=headers,
-                            requestslib_kwargs=requestslib_kwargs)
-        return resp
-
-    def auth_with_tenant_username_password(self, request_object, headers=None,
-                                           requestslib_kwargs=None):
-        """
-        Returns response object from auth as tenant with username & password
-        POST /v2.0/tokens
-        In case of XML response, add a json() method to the response object
-        that will create a JSON equivalent of the XML response
-        """
-        url = self.url + const.TOKEN_URL
-        return self.request(method='POST', url=url,
-                            request_entity=request_object,
-                            headers=headers,
-                            requestslib_kwargs=requestslib_kwargs)
-
-    """
-    Because there's no difference in the auth besides the request_object
-    that only differs in replacing password with api_key
-    """
-    auth_with_tenant_username_api_key = auth_with_tenant_username_password
 
     def auth_with_mfa_cred(self, session_id, pass_code, headers=None,
                            requestslib_kwargs=None):

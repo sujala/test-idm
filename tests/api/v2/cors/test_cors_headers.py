@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 from tests.api.utils import header_validation
 from tests.api.v2 import base
+from tests.api.v2.models import requests
 from tests.api import constants as const
 import ddt
 
@@ -18,10 +19,12 @@ class TestCorsHeaders(base.TestBaseV2):
         request_origin = 'example.rackspace.com'
         headers = {const.ORIGIN: request_origin}
         # Get a token
+        req_obj = requests.AuthenticateWithPassword(
+            user_name=self.identity_config.identity_admin_user_name,
+            password=self.identity_config.identity_admin_password
+        )
         response = self.identity_admin_client.get_auth_token(
-            self.identity_config.identity_admin_user_name,
-            self.identity_config.identity_admin_password,
-            headers=headers)
+            request_object=req_obj, headers=headers)
 
         self.assertEqual(response.status_code, 200)
         header_validation.validate_header_access_control_allow_origin(
