@@ -57,8 +57,10 @@ class AuthAndValidateTokens(base.TestBaseV2):
         password = resp.json()[const.USER][const.NS_PASSWORD]
 
         # Get user's tenant ID
+        auth_obj = requests.AuthenticateWithPassword(user_name=username,
+                                                     password=password)
         resp = self.identity_admin_client.get_auth_token(
-            user=username, password=password)
+            request_object=auth_obj)
         self.assertEqual(resp.status_code, 200)
         auth_user_pass_resp = responses.Access(resp.json())
         self.tenant_ids.append(auth_user_pass_resp.access.token.tenant.id)
@@ -96,8 +98,10 @@ class AuthAndValidateTokens(base.TestBaseV2):
                    [const.API_KEY])
 
         # Auth with apikey
+        auth_obj = requests.AuthenticateWithApiKey(user_name=username,
+                                                   api_key=api_key)
         resp = self.identity_admin_client.get_auth_token(
-            user=username, api_key=api_key)
+            request_object=auth_obj)
         self.assertEqual(resp.status_code, 200)
         access_resp = responses.Access(resp.json())
         self.assertIsNotNone(access_resp.access.token.id)
@@ -109,11 +113,11 @@ class AuthAndValidateTokens(base.TestBaseV2):
         password = self.acct_info['password']
 
         # do auth with Tenant+User+Password
-        request_object = requests.AuthenticateWithTenantUserPassword(
+        request_object = requests.AuthenticateWithPassword(
                              user_name=username,
                              password=password,
                              tenant_id=tenant_name)
-        resp = self.identity_admin_client.auth_with_tenant_username_password(
+        resp = self.identity_admin_client.get_auth_token(
             request_object=request_object)
         self.assertEqual(resp.status_code, 200)
         access_resp = responses.Access(resp.json())
@@ -140,11 +144,11 @@ class AuthAndValidateTokens(base.TestBaseV2):
                    [const.API_KEY])
 
         # do auth with Tenant+User+Apikey
-        request_object = requests.AuthenticateWithTenantUserApikey(
+        request_object = requests.AuthenticateWithApiKey(
                              user_name=username,
                              api_key=api_key,
-                             tenant_id=tenant_name)
-        resp = self.identity_admin_client.auth_with_tenant_username_password(
+                             tenant_name=tenant_name)
+        resp = self.identity_admin_client.get_auth_token(
             request_object=request_object)
         self.assertEqual(resp.status_code, 200)
         access_resp = responses.Access(resp.json())

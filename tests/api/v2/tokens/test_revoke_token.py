@@ -5,6 +5,7 @@ from random import randrange
 from tests.api import constants as const
 from tests.api.v2 import base
 from tests.api.v2.models import factory
+from tests.api.v2.models import requests
 from tests.api.v2.schema import tokens as tokens_json
 
 
@@ -82,8 +83,10 @@ class TestRevokeToken(base.TestBaseV2):
         """
         # create and auth with new user and password
         username, password = self.create_user()
+        auth_obj = requests.AuthenticateWithPassword(user_name=username,
+                                                     password=password)
         auth_resp = self.identity_admin_client.get_auth_token(
-            user=username, password=password)
+            request_object=auth_obj)
         self.assertEqual(auth_resp.status_code, 200)
         user_token_id = auth_resp.json()[const.ACCESS][const.TOKEN][const.ID]
 
