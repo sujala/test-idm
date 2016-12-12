@@ -3,9 +3,11 @@ package com.rackspace.idm.api.converter.cloudv20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleLevelEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.dozer.DozerBeanMapper
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -18,6 +20,9 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         converter = new RoleConverterCloudV20()
         converter.objFactories = new JAXBObjectFactories()
         converter.mapper = new DozerBeanMapper()
+        def reloadableConfig= new PropertiesConfiguration();
+        def staticConfig = new PropertiesConfiguration();
+        converter.identityConfig = new IdentityConfig(staticConfig, reloadableConfig)
     }
 
     def setup() {

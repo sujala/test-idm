@@ -29,6 +29,7 @@ import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 
@@ -838,7 +839,7 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def listRoles(String token, String serviceId = null, String masker = null, String limit = null, String roleName = null) {
+    def listRoles(String token, String serviceId = null, String marker = null, String limit = null, String roleName = null, accept = APPLICATION_XML_TYPE) {
         initOnUse()
         def queryParams = new MultivaluedMapImpl()
         if (serviceId != null) {
@@ -847,13 +848,13 @@ class Cloud20Methods {
         if (roleName != null) {
             queryParams.add("roleName", roleName)
         }
-        if (masker != null) {
-            queryParams.add("marker", masker)
+        if (marker != null) {
+            queryParams.add("marker", marker)
         }
         if (limit != null) {
             queryParams.add("limit", limit)
         }
-        resource.path(path20).path(OS_KSADM).path(ROLES).queryParams(queryParams).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
+        resource.path(path20).path(OS_KSADM).path(ROLES).queryParams(queryParams).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
     }
 
     def updateCredentials(String token, String userId, creds) {

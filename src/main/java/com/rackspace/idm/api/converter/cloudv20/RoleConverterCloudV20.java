@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
@@ -35,6 +36,9 @@ public class RoleConverterCloudV20 {
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     public RoleList toRoleListJaxb(List<TenantRole> roles) {
         RoleList jaxbRoles = objFactories.getOpenStackIdentityV2Factory().createRoleList();
@@ -190,6 +194,12 @@ public class RoleConverterCloudV20 {
                 roleEntity.setTypes(tenantTypes);
             }
         } else {
+            roleEntity.setTypes(null);
+        }
+
+        if (!identityConfig.getReloadableConfig().listSupportAdditionalRoleProperties()) {
+            roleEntity.setAssignment(null);
+            roleEntity.setRoleType(null);
             roleEntity.setTypes(null);
         }
 
