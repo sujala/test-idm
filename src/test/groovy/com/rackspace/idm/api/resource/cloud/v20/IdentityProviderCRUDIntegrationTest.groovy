@@ -50,7 +50,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
 
         when: "create a DOMAIN IDP with no certs and approvedDomainGroup"
-        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
         IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
 
@@ -64,6 +64,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         creationResultIdp.publicCertificates == null
         creationResultIdp.federationType == IdentityProviderFederationTypeEnum.DOMAIN
         creationResultIdp.id != null
+        creationResultIdp.name != null
         response.headers.getFirst("Location") != null
         response.headers.getFirst("Location").contains(creationResultIdp.id)
 
@@ -81,6 +82,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getResultIdp.federationType == IdentityProviderFederationTypeEnum.DOMAIN
         getResultIdp.publicCertificates == null
         getResultIdp.id != null
+        getResultIdp.name != null
 
         when: "update the provider"
         def newAuthUrl = RandomStringUtils.randomAlphanumeric(10)
@@ -125,7 +127,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
 
         when: "create a RACKER IDP with no certs and approvedDomainGroup"
-        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, null)
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, null)
         def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
         IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
 
@@ -138,6 +140,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         creationResultIdp.authenticationUrl == domainGroupIdp.authenticationUrl
         creationResultIdp.publicCertificates == null
         creationResultIdp.id != null
+        creationResultIdp.name != null
         creationResultIdp.federationType == IdentityProviderFederationTypeEnum.RACKER
         response.headers.getFirst("Location") != null
         response.headers.getFirst("Location").contains(creationResultIdp.id)
@@ -156,6 +159,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getResultIdp.federationType == IdentityProviderFederationTypeEnum.RACKER
         getResultIdp.publicCertificates == null
         getResultIdp.id != null
+        getResultIdp.name != null
 
         when: "delete the provider"
         def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
@@ -186,7 +190,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
 
         when: "create a DOMAIN IDP with approvedDomainGroup, empty approvedDomainId list"
-        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, Collections.EMPTY_LIST)
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, Collections.EMPTY_LIST)
         def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE) //our json reader would send NULL rather than empty array so json would pass (appropriately)
 
         then: "bad request"
@@ -194,7 +198,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
         when: "create a DOMAIN IDP with approvedDomainGroup, empty string approvedDomainId"
-        domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, [""])
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, [""])
         response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
 
         then: "bad request"
@@ -202,7 +206,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
         when: "create a DOMAIN IDP with empty string approvedDomainGroup, empty string approvedDomainId"
-        domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, "", [""])
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, "", [""])
         response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
 
         then: "bad request"
@@ -210,7 +214,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
         when: "create a DOMAIN IDP with empty string approvedDomainGroup and valid approvedDomainId"
-        IdentityProvider domainIdIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, "", [domainId])
+        IdentityProvider domainIdIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, "", [domainId])
         response = cloud20.createIdentityProvider(idpManagerToken, domainIdIdp, requestContentType, requestContentType)
 
         then: "bad request"
@@ -218,7 +222,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
         when: "create a DOMAIN IDP with null approvedDomainGroup, empty string approvedDomainId"
-        domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [""])
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [""])
         response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
 
         then: "bad request"
@@ -226,7 +230,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN)
 
         when: "create a DOMAIN IDP with null authenticationUrl"
-        domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
             it.authenticationUrl = null
             it
         }
@@ -237,7 +241,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
 
         when: "create a RACKER IDP with null authenticationUrl"
-        def rackidp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, null).with {
+        def rackidp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, null).with {
             it.authenticationUrl = null
             it
         }
@@ -265,7 +269,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
 
         when: "create a IDP with approvedDomainGroup, null list"
-        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
 
         then: "bad request"
@@ -273,7 +277,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
         when: "create a IDP with null approvedDomainGroup, entry in list"
-        domainGroupIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, [domainId])
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, [domainId])
         response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
 
         then: "bad request"
@@ -296,7 +300,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
 
         when: "create a DOMAIN IDP with approvedDomainGroup, empty string description"
-        def domainGroupIdp = v2Factory.createIdentityProvider("", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
 
         then: "successful"
@@ -315,7 +319,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     def "Error if try to update IDP without specifying authenticationUrl - request: #requestContentType"() {
         given:
         def idpManagerToken = utils.getServiceAdminToken()
-        def domainGroupIdp = v2Factory.createIdentityProvider("", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
         def createdIdp = response.getEntity(IdentityProvider)
         def updateIdp = new IdentityProvider()
@@ -344,8 +348,9 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response.status == SC_BAD_REQUEST
 
         where:
-        prop | idp
+        prop  | idp
         "id"  | new IdentityProvider().with {it.authenticationUrl = "url"; it.id = "as"; it}
+        "name"  | new IdentityProvider().with {it.authenticationUrl = "url"; it.name = "name"; it}
     }
 
     @Unroll
@@ -364,7 +369,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
 
         when: "create a DOMAIN IDP with single certs and approvedDomains"
-        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
+        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
             it.publicCertificates = publicCertificates
             it
         }
@@ -384,6 +389,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         creationResultIdp.publicCertificates.publicCertificate.size() == 1
         creationResultIdp.publicCertificates.publicCertificate.get(0).pemEncoded == pubCertPemString1
         creationResultIdp.id != null
+        creationResultIdp.name != null
         response.headers.getFirst("Location") != null
         response.headers.getFirst("Location").contains(creationResultIdp.id)
 
@@ -403,6 +409,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getResultIdp.publicCertificates.publicCertificate.size() == 1
         getResultIdp.publicCertificates.publicCertificate.get(0).pemEncoded == pubCertPemString1
         getResultIdp.id != null
+        getResultIdp.name != null
 
         when: "delete the provider"
         def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
@@ -455,7 +462,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 
         //create a DOMAIN IDP with single certs and approvedDomains
-        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
+        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
             it.publicCertificates = publicCertificates
             it
         }
@@ -491,7 +498,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         def domainId = UUID.randomUUID().toString()
         cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
-        IdentityProvider idp1ToCreate = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
+        def idp1Name = getRandomUUID("idp1")
+        IdentityProvider idp1ToCreate = v2Factory.createIdentityProvider(idp1Name, "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
             it.publicCertificates = publicCertificates
             it
         }
@@ -503,19 +511,23 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         def domainId2 = UUID.randomUUID().toString()
         cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId2, domainId2))
-        IdentityProvider idp2ToCreate = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId2]).with {
+
+        def idp2Name = getRandomUUID("idp2")
+        IdentityProvider idp2ToCreate = v2Factory.createIdentityProvider(idp2Name, "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId2]).with {
             it.publicCertificates = publicCertificates
             it
         }
         IdentityProvider idp2 = utils.createIdentityProvider(idpManagerToken, idp2ToCreate)
 
-        IdentityProvider idp3ToCreate = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null).with {
+        def idp3Name = getRandomUUID("idp3")
+        IdentityProvider idp3ToCreate = v2Factory.createIdentityProvider(idp3Name, "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null).with {
             it.publicCertificates = publicCertificates
             it
         }
         IdentityProvider idp3 = utils.createIdentityProvider(idpManagerToken, idp3ToCreate)
 
-        IdentityProvider idp4ToCreate = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, null).with {
+        def idp4Name = getRandomUUID("idp4")
+        IdentityProvider idp4ToCreate = v2Factory.createIdentityProvider(idp4Name, "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, null).with {
             it.publicCertificates = publicCertificates
             it
         }
@@ -530,9 +542,13 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         providers != null
         providers.identityProvider.size() >= 4
         providers.identityProvider.find{it.id == idp1.id} != null
+        providers.identityProvider.find{it.name == idp1Name} != null
         providers.identityProvider.find{it.id == idp2.id} != null
+        providers.identityProvider.find{it.name == idp2Name} != null
         providers.identityProvider.find{it.id == idp3.id} != null
+        providers.identityProvider.find{it.name == idp3Name} != null
         providers.identityProvider.find{it.id == idp4.id} != null
+        providers.identityProvider.find{it.name == idp4Name} != null
 
         when: "get all idps for specific domain"
         def domainSpecificIdpResponse = cloud20.listIdentityProviders(idpManagerToken, domainId, null, null, requestContentType, requestContentType)
@@ -732,75 +748,171 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
 
         when: "caller doesn't have role"
-        IdentityProvider validIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        IdentityProvider validIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         def response = cloud20.createIdentityProvider(utils.getIdentityAdminToken(), validIdp)
 
         then: "403"
         response.status == SC_FORBIDDEN
 
         when: "Domain IDP without either approvedDomains or approvedDomainGroup"
-        IdentityProvider invalid = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, null)
+        IdentityProvider invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
         when: "Domain IDP with both approvedDomains and approvedDomainGroup"
-        invalid = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, [domainId])
+        invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, [domainId])
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
         when: "Racker IDP with approvedDomainGroup"
-        invalid = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
 
         when: "Domain IDP with invalid approvedDomainGroup"
-        invalid = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, "Invalid", null)
+        invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, "Invalid", null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_GROUP)
 
         when: "Domain IDP with invalid approvedDomains"
-        invalid = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, ["non-existent-domain"])
+        invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, ["non-existent-domain"])
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN)
 
         when: "IDP with issuer already exists"
-        invalid = v2Factory.createIdentityProvider("blah", Constants.DEFAULT_IDP_URI, IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", Constants.DEFAULT_IDP_URI, IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "409"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_CONFLICT, ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS)
 
         when: "IDP with issuer length exceeded 255"
-        invalid = v2Factory.createIdentityProvider("blah", RandomStringUtils.randomAlphabetic(256), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", RandomStringUtils.randomAlphabetic(256), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
 
         when: "IDP with missing issuer"
-        invalid = v2Factory.createIdentityProvider("blah", null, IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah", null, IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
 
         when: "IDP with missing fed type"
-        invalid = v2Factory.createIdentityProvider("blah",  getRandomUUID(), null, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        invalid = v2Factory.createIdentityProvider(getRandomUUID(), "blah",  getRandomUUID(), null, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         response = cloud20.createIdentityProvider(idpManagerToken, invalid)
 
         then: "400"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
 
+        when: "IDP with name length exceeded 255"
+        invalid = v2Factory.createIdentityProvider(RandomStringUtils.randomAlphabetic(256), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        response = cloud20.createIdentityProvider(idpManagerToken, invalid)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
+
+        when: "IDP with name having special characters"
+        invalid = v2Factory.createIdentityProvider(getRandomUUID("@"), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        response = cloud20.createIdentityProvider(idpManagerToken, invalid)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE)
+
+        when: "IDP with no name"
+        invalid = v2Factory.createIdentityProvider(null, "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        response = cloud20.createIdentityProvider(idpManagerToken, invalid)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
+
+        when: "IDP with empty name"
+        invalid = v2Factory.createIdentityProvider("", "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        response = cloud20.createIdentityProvider(idpManagerToken, invalid)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
+    }
+
+    @Unroll
+    def "Create Identity provider with name #name - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when: "Create IDP"
+        IdentityProvider identityProvider = v2Factory.createIdentityProvider(name, "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, identityProvider)
+        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
+
+        then: "Assert created idp"
+        response.status == org.springframework.http.HttpStatus.CREATED.value()
+        creationResultIdp.name == name
+
+        cleanup:
+        if (creationResultIdp) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        }
+        utils.deleteUserQuietly(idpManager)
+
+        where:
+        name                            | content                         | accept
+        getRandomUUID("idp")            | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        getRandomUUID("idp")            | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        getRandomUUID("idp.other-name") | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        getRandomUUID("idp.other-name") | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    def "Identity provider name must be unique"() {
+        given:
+        def domainId = utils.createDomain()
+        cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def idpName = getRandomUUID("idp")
+
+        when: "Create IDP"
+        IdentityProvider identityProvider = v2Factory.createIdentityProvider(idpName, "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, identityProvider)
+        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
+
+        then: "Assert created idp"
+        response.status == org.springframework.http.HttpStatus.CREATED.value()
+        creationResultIdp.name == idpName
+
+        when: "Create IDP with existing name"
+        IdentityProvider invalid = v2Factory.createIdentityProvider(idpName, "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        response = cloud20.createIdentityProvider(idpManagerToken, invalid)
+
+        then: "Assert conflict"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_CONFLICT, ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS)
+
+        when: "Create IDP with existing name - upper case"
+        invalid = v2Factory.createIdentityProvider(idpName.toUpperCase(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        response = cloud20.createIdentityProvider(idpManagerToken, invalid)
+
+        then: "Assert conflict"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_CONFLICT, ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS)
+
+        cleanup:
+        if (creationResultIdp) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        }
+        utils.deleteUserQuietly(idpManager)
     }
 
     def "Create domain with dup domainIds ignores dups"() {
@@ -811,7 +923,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
 
         when: "create a DOMAIN IDP with single certs and approvedDomains"
-        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId, domainId])
+        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId, domainId])
         def response = cloud20.createIdentityProvider(idpManagerToken, approvedDomainsIdp)
 
         then: "created successfully"
@@ -844,7 +956,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def pem = IOUtils.toString(new ClassPathResource(Constants.DEFAULT_IDP_PUBLIC_KEY).getInputStream()).replace("-----BEGIN CERTIFICATE-----", "").replace("-----END CERTIFICATE-----", "").replace("\n", "")
         def pubCerts1 = v2Factory.createPublicCertificate(pem)
         def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
-        IdentityProvider idp = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
+        IdentityProvider idp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId]).with {
             it.publicCertificates = publicCertificates
             it
         }
@@ -933,7 +1045,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         given:
         def user = utils.createIdentityAdmin()
         def token = utils.getToken(user.username)
-        def idpRequest = v2Factory.createIdentityProvider("blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN)
+        def idpRequest = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN)
 
         when: "try to create the IDP w/o any federation access role"
         def response = cloud20.createIdentityProvider(token, idpRequest)

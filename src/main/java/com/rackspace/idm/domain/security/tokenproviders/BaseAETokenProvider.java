@@ -131,7 +131,7 @@ public abstract class BaseAETokenProvider implements TokenProvider {
         } else if (user instanceof FederatedUser) {
             FederatedUser user1 = (FederatedUser) user;
             IdentityProvider provider = identityProviderRepository.getIdentityProviderByUri(user1.getFederatedIdpUri());
-            return TokenDNCalculator.calculateFederatedUserTokenDN(user1.getUsername(), provider.getName(), webSafeToken);
+            return TokenDNCalculator.calculateFederatedUserTokenDN(user1.getUsername(), provider.getProviderId(), webSafeToken);
         } else if (user instanceof Racker) {
             return TokenDNCalculator.calculateRackerTokenDN(((Racker) user).getRackerId(), webSafeToken);
         }

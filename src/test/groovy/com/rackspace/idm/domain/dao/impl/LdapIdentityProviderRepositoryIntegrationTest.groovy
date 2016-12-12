@@ -34,7 +34,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
     public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     // These attributes should be loaded in directory via ldif
-    @Shared def IDP_NAME = "dedicated";
+    @Shared def IDP_ID = "dedicated";
     @Shared def IDP_URI = "http://my.rackspace.com"
 
     @Shared
@@ -53,12 +53,12 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
      * identity provider with a single certificate. This is used to demonstrate loading providers
      * inserted via LDIF.
      */
-    def "get external provider by name"() {
+    def "get external provider by id"() {
         when:
-        def provider = ldapIdentityProviderRepository.getIdentityProviderByName(IDP_NAME)
+        def provider = ldapIdentityProviderRepository.getIdentityProviderById(IDP_ID)
 
         then:
-        provider.name == IDP_NAME
+        provider.providerId == IDP_ID
         provider.uri == IDP_URI
         provider.description != null
         provider.userCertificates != null
@@ -79,7 +79,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         def provider = ldapIdentityProviderRepository.getIdentityProviderByUri(IDP_URI)
 
         then:
-        provider.name == IDP_NAME
+        provider.providerId == IDP_ID
         provider.uri == IDP_URI
         provider.description != null
         provider.userCertificates != null
@@ -105,7 +105,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         entry != null
 
         when: "retrieve via dao"
-        IdentityProvider retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderByName(provider.name)
+        IdentityProvider retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderById(provider.providerId)
 
         then: "certs retrieved appropriately"
         retrievedProvider != null
@@ -137,7 +137,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         entry != null
 
         when: "retrieve via dao"
-        IdentityProvider retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderByName(provider.name)
+        IdentityProvider retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderById(provider.providerId)
 
         then: "certs retrieved appropriately"
         retrievedProvider != null
@@ -166,7 +166,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         entry != null
 
         when: "retrieve via dao"
-        IdentityProvider retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderByName(provider.name)
+        IdentityProvider retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderById(provider.providerId)
 
         then: "certs retrieved appropriately"
         retrievedProvider != null
@@ -177,7 +177,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         Credential cred1 = SamlCredentialUtils.generateX509Credential();
         retrievedProvider.addUserCertificate(cred1.entityCertificate)
         ldapIdentityProviderRepository.updateObject(retrievedProvider)
-        retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderByName(provider.name)
+        retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderById(provider.providerId)
 
         then:
         retrievedProvider.getUserCertificatesAsX509().size() == 1
@@ -185,7 +185,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         when: "add same cert twice"
         retrievedProvider.addUserCertificate(cred1.entityCertificate)
         ldapIdentityProviderRepository.updateObject(retrievedProvider)
-        retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderByName(provider.name)
+        retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderById(provider.providerId)
 
         then: "doesn't get added again"
         retrievedProvider.getUserCertificatesAsX509().size() == 1
@@ -193,7 +193,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
         when: "remove cert"
         retrievedProvider.removeUserCertificate(cred1.entityCertificate)
         ldapIdentityProviderRepository.updateObject(retrievedProvider)
-        retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderByName(provider.name)
+        retrievedProvider = ldapIdentityProviderRepository.getIdentityProviderById(provider.providerId)
 
         then:
         retrievedProvider.getUserCertificatesAsX509().size() == 0
@@ -205,7 +205,7 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
 
 
     private String getExpectedProviderDn(IdentityProvider provider) {
-        new LdapRepository.LdapDnBuilder(LdapRepository.EXTERNAL_PROVIDERS_BASE_DN).addAttribute("ou", provider.name).build()
+        new LdapRepository.LdapDnBuilder(LdapRepository.EXTERNAL_PROVIDERS_BASE_DN).addAttribute("ou", provider.providerId).build()
     }
 
     /**

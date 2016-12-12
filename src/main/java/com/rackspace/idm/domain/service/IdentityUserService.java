@@ -38,7 +38,7 @@ public interface IdentityUserService {
      * @param idpName
      * @return
      */
-    FederatedUser getFederatedUserByUsernameAndIdentityProviderName(String username, String idpName);
+    FederatedUser getFederatedUserByUsernameAndIdentityProviderId(String username, String idpName);
 
     /**
      * Search for a federated user with the specified username within the specified idp. Throws NotFoundException if the user is not found.

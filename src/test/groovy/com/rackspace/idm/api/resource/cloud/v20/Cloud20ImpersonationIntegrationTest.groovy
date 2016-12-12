@@ -1488,7 +1488,7 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
 
     def deleteFederatedUserQuietly(username) {
         try {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, DEFAULT_IDP_ID)
             if (federatedUser != null) {
                 federatedUserRepository.deleteObject(federatedUser)
             }

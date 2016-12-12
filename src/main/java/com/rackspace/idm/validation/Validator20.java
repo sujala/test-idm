@@ -1,13 +1,12 @@
 package com.rackspace.idm.validation;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum;
-import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
-import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
@@ -61,6 +60,9 @@ public class Validator20 {
             "where both the prefix and role name must start with an alphanumeric character.  The rest of the prefix and " +
             "role name can be comprised of alphanumeric characters, '-', and '_'.";
     public static final Pattern ROLE_NAME_REGEX = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9_\\-]*(?:\\:[a-zA-Z0-9][a-zA-Z0-9_\\-]*)?$");
+    public static final String INVALID_IDENTITY_PROVIDER_NAME_ERROR_MSG = "Identity provider name must consist of only alphanumeric, '.', and '-' characters.";
+    public static final String DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG = "Identity provider with name %s already exist.";
+    public static final Pattern IDENTITY_PROVIDER_NAME_REGEX = Pattern.compile("[\\p{Alnum}.\\-']*");
 
     public static final String ERROR_TENANT_TYPE_CANNOT_EXCEED_MAXIMUM = "A maximum of 16 unique tenant types can be assigned to any given tenant.";
 
@@ -83,6 +85,7 @@ public class Validator20 {
     public static final int MAX_ROLE_NAME = MAX_LENGTH_255;
     public static final int MAX_ROLE_DESC = MAX_LENGTH_255;
 
+    public static final int MAX_IDENTITY_PROVIDER_NAME = Constants.MAX_255;
     public static final int MAX_IDENTITY_PROVIDER_ISSUER = Constants.MAX_255;
     public static final int MAX_IDENTITY_PROVIDER_AUTH_URL = Constants.MAX_255;
     public static final int MAX_IDENTITY_PROVIDER_DESCRIPTION = Constants.MAX_255;
@@ -306,6 +309,8 @@ public class Validator20 {
             throw new BadRequestException("Must provide an identity provider");
         }
 
+        validateIdentityProviderName(identityProvider.getName());
+
         validateStringNotNullWithMaxLength("issuer", identityProvider.getIssuer(), MAX_IDENTITY_PROVIDER_ISSUER);
         if (federatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) != null) {
             throw new DuplicateException("Provider already exists with this issuer", ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS);
@@ -364,12 +369,25 @@ public class Validator20 {
         }
     }
 
+    private void validateIdentityProviderName(String name) {
+        validateStringNotNullWithMaxLength("name", name, MAX_IDENTITY_PROVIDER_NAME);
+
+        if (!IDENTITY_PROVIDER_NAME_REGEX.matcher(name).matches()) {
+            throw new BadRequestException(INVALID_IDENTITY_PROVIDER_NAME_ERROR_MSG, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+        }
+
+        if (federatedIdentityService.getIdentityProviderByName(name) != null) {
+            throw new DuplicateException(String.format(DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, name), ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS);
+        }
+    }
+
     public void validateIdentityProviderForUpdate(IdentityProvider identityProvider) {
         if (identityProvider == null) {
             throw new BadRequestException("Must provide an identity provider");
         }
 
         validateAttributeisNull("issuer", identityProvider.getIssuer());
+        validateAttributeisNull("name", identityProvider.getName());
         validateAttributeisNull("federationType", identityProvider.getFederationType());
         validateAttributeisNull("description", identityProvider.getIssuer());
         validateAttributeisNull("id", identityProvider.getId());

@@ -48,17 +48,16 @@ public class DefaultIdentityUserService implements IdentityUserService {
         return identityUserRepository.getProvisionedUserById(userId);
     }
 
-    @Override
-    public FederatedUser getFederatedUserByUsernameAndIdentityProviderName(String username, String idpName) {
-        return identityUserRepository.getFederatedUserByUsernameAndIdpName(username, idpName);
+    public FederatedUser getFederatedUserByUsernameAndIdentityProviderId(String username, String providerId) {
+        return identityUserRepository.getFederatedUserByUsernameAndIdpId(username, providerId);
     }
 
     @Override
-    public FederatedUser checkAndGetFederatedUserByUsernameAndIdentityProviderName(String username, String idpName) {
-        FederatedUser user = getFederatedUserByUsernameAndIdentityProviderName(username, idpName);
+    public FederatedUser checkAndGetFederatedUserByUsernameAndIdentityProviderName(String username, String providerId) {
+        FederatedUser user = getFederatedUserByUsernameAndIdentityProviderId(username, providerId);
 
         if (user == null) {
-            String errMsg = String.format("Federated user %s not found for IDP with name %s", username, idpName);
+            String errMsg = String.format("Federated user %s not found for IDP with id %s", username, providerId);
             throw new NotFoundException(errMsg);
         }
 
@@ -71,7 +70,7 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
         FederatedUser user = null;
         if(idp != null) {
-            user = getFederatedUserByUsernameAndIdentityProviderName(username, idp.getName());
+            user = getFederatedUserByUsernameAndIdentityProviderId(username, idp.getProviderId());
         }
 
         if (user == null) {
@@ -89,12 +88,12 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
     @Override
     public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName) {
-        return identityUserRepository.getFederatedUsersByDomainIdAndIdentityProviderName(domainId, idpName);
+        return identityUserRepository.getFederatedUsersByDomainIdAndIdentityProviderId(domainId, idpName);
     }
 
     @Override
     public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String idpName) {
-        return identityUserRepository.getFederatedUsersByDomainIdAndIdentityProviderNameCount(domainId, idpName);
+        return identityUserRepository.getFederatedUsersByDomainIdAndIdentityProviderIdCount(domainId, idpName);
     }
 
     @Override

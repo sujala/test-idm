@@ -53,6 +53,7 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_GROUP = "FED_IDP-002";
     public static final String ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN = "FED_IDP-003";
     public static final String ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS = "FED_IDP-004";
+    public static final String ERROR_CODE_IDP_NAME_ALREADY_EXISTS = "FED_IDP-005";
 
     //generic errors
     public static final String ERROR_CODE_GENERIC_BAD_REQUEST = "GEN-000";

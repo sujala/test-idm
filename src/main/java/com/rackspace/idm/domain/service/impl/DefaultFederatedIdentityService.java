@@ -14,11 +14,9 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.SignatureValidationException;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
-import org.aspectj.weaver.ast.Not;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.opensaml.saml2.core.*;
-import org.opensaml.saml2.core.impl.*;
 import org.opensaml.xml.signature.Signature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,7 +153,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
     @Override
     public void addIdentityProvider(IdentityProvider identityProvider) {
-        identityProvider.setName(getNextId());
+        identityProvider.setProviderId(getNextId());
         identityProviderDao.addIdentityProvider(identityProvider);
     }
 
@@ -166,7 +164,12 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
     @Override
     public IdentityProvider getIdentityProvider(String id) {
-        return identityProviderDao.getIdentityProviderByName(id);
+        return identityProviderDao.getIdentityProviderById(id);
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderByName(String name) {
+        return identityProviderDao.getIdentityProviderByName(name);
     }
 
     @Override

@@ -5,7 +5,6 @@ import com.rackspace.idm.domain.dao.FederatedRackerDao;
 import com.rackspace.idm.domain.entity.Racker;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
-import org.springframework.stereotype.Component;
 
 /**
  * Persistence methods for racker based identity providers.
@@ -39,8 +38,8 @@ public class LdapFederatedRackerRepository extends LdapFederatedGenericRepositor
     }
 
     @Override
-    public Racker getUserByUsernameForIdentityProviderName(String username, String identityProviderName) {
-        return getObject(searchFilterGetUserByUsername(username), getBaseDnWithIdpName(identityProviderName), SearchScope.ONE);
+    public Racker getUserByUsernameForIdentityProviderId(String username, String identityProviderId) {
+        return getObject(searchFilterGetUserByUsername(username), getBaseDnWithIdpId(identityProviderId), SearchScope.ONE);
     }
 
     private Filter searchFilterGetUserById(String id) {

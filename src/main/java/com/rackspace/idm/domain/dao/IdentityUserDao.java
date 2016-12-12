@@ -29,31 +29,31 @@ public interface IdentityUserDao {
     FederatedUser getFederatedUserById(String userId);
 
     /**
-     * Search for a federated user with the specified username and idpName
+     * Search for a federated user with the specified username and idpId
      *
      * @param username
-     * @param idpName
+     * @param idpId
      * @return
      */
-    FederatedUser getFederatedUserByUsernameAndIdpName(String username, String idpName);
+    FederatedUser getFederatedUserByUsernameAndIdpId(String username, String idpId);
 
     /**
-     * Search for federated users with the specified domain id and identity provider name
+     * Search for federated users with the specified domain id and identity provider id
      *
      * @param domainId
-     * @param idpName
+     * @param idpId
      * @return
      */
-    Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName);
+    Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String idpId);
 
     /**
-     * Search for the number of federated users with the specified domain id and identity provider name
+     * Search for the number of federated users with the specified domain id and identity provider id
      *
      * @param domainId
-     * @param idpName
+     * @param idpId
      * @return
      */
-    int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String idpName);
+    int getFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String idpId);
 
     /**
      * Search for end users with the specified domain id.

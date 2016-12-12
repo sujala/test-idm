@@ -40,18 +40,18 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
     }
 
     @Override
-    public FederatedUser getUserByUsernameForIdentityProviderName(String username, String identityProviderName) {
-        return getObject(searchFilterGetUserByUsername(username), getBaseDnWithIdpName(identityProviderName), SearchScope.ONE);
+    public FederatedUser getUserByUsernameForIdentityProviderId(String username, String identityProviderId) {
+        return getObject(searchFilterGetUserByUsername(username), getBaseDnWithIdpId(identityProviderId), SearchScope.ONE);
     }
 
     @Override
-    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String identityProviderName) {
-        return (Iterable) getObjects(searchFilterGetUsersByDomainId(domainId), getBaseDnWithIdpName(identityProviderName));
+    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String identityProviderName) {
+        return (Iterable) getObjects(searchFilterGetUsersByDomainId(domainId), getBaseDnWithIdpId(identityProviderName));
     }
 
     @Override
-    public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String identityProviderName) {
-        return countObjects(searchFilterGetUsersByDomainId(domainId), getBaseDnWithIdpName(identityProviderName));
+    public int getFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId) {
+        return countObjects(searchFilterGetUsersByDomainId(domainId), getBaseDnWithIdpId(identityProviderId));
     }
 
     @Override

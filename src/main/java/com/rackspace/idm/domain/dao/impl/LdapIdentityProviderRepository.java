@@ -1,12 +1,10 @@
 package com.rackspace.idm.domain.dao.impl;
 
-import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum;
 import com.rackspace.idm.domain.entity.IdentityProvider;
-import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.SizeLimitExceededException;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPSearchException;
@@ -34,6 +32,11 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
     @Override
     public IdentityProvider getIdentityProviderByUri(String uri) {
         return getObject(searchByUriFilter(uri));
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderById(String Id) {
+        return getObject(searchByIdFilter(Id));
     }
 
     @Override
@@ -115,9 +118,15 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER).build();
     }
 
+    Filter searchByIdFilter(String id) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OU, id)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER).build();
+    }
+
     Filter searchByNameFilter(String name) {
         return new LdapSearchBuilder()
-                .addEqualAttribute(ATTR_OU, name)
+                .addEqualAttribute(ATTR_NAME, name)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER).build();
     }
 
@@ -177,7 +186,7 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
 
     @Override
     public void deleteIdentityProviderById(String id) {
-        deleteObject(searchByNameFilter(id));
+        deleteObject(searchByIdFilter(id));
     }
 
     @Override

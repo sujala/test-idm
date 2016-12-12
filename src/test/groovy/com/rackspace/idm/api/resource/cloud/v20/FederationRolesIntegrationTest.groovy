@@ -22,7 +22,7 @@ import org.springframework.test.context.ContextConfiguration
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
 
-import static com.rackspace.idm.Constants.DEFAULT_IDP_NAME
+import static com.rackspace.idm.Constants.DEFAULT_IDP_ID
 import static com.rackspace.idm.Constants.DEFAULT_IDP_URI
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
@@ -457,10 +457,10 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
     def deleteFederatedUser(username) {
         if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpName(username, DEFAULT_IDP_NAME)
+            def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpId(username, DEFAULT_IDP_ID)
             if(federatedUser != null) sqlFederatedUserRepository.delete(federatedUser)
         } else {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(username, DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, DEFAULT_IDP_ID)
             if(federatedUser != null) ldapFederatedUserRepository.deleteObject(federatedUser)
         }
     }

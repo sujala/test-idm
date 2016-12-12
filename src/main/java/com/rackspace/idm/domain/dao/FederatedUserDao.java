@@ -18,19 +18,19 @@ public interface FederatedUserDao extends FederatedBaseUserDao<FederatedUser> {
     /**
      * Retrieve all federated users that belong to the specified domain and identity provider
      * @param domainId
-     * @param identityProviderName
+     * @param identityProviderId
      * @return
      */
-    Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String identityProviderName);
+    Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String identityProviderId);
 
 
     /**
      * Count federated users that belong to the specified domain and identity provider
      * @param domainId
-     * @param identityProviderName
+     * @param identityProviderId
      * @return
      */
-    int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String identityProviderName);
+    int getFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId);
 
     /**
      * Get the groups for that user.

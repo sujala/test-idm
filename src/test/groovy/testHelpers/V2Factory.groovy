@@ -651,8 +651,9 @@ class V2Factory {
         }
     }
 
-    def createIdentityProvider(description, issuerUri, federationType) {
+    def createIdentityProvider(name, description, issuerUri, federationType) {
         new IdentityProvider().with {
+            it.name = name
             it.description = description
             it.issuer = issuerUri
             it.authenticationUrl = "https://log.me.in"
@@ -665,8 +666,9 @@ class V2Factory {
         }
     }
 
-    def createIdentityProvider(description, issuerUri, federationType, approvedDomainGroup, List<String> approvedDomainIdsList) {
+    def createIdentityProvider(name, description, issuerUri, federationType, approvedDomainGroup, List<String> approvedDomainIdsList) {
         new IdentityProvider().with {
+            it.name = name
             it.description = description
             it.issuer = issuerUri
             it.authenticationUrl = "http://random.url"

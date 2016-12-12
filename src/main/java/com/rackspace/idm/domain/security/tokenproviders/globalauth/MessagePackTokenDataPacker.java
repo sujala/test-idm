@@ -278,7 +278,7 @@ public class MessagePackTokenDataPacker implements TokenDataPacker {
 
             IdentityProvider idp = identityProviderRepository.getIdentityProviderByUri(user.getFederatedIdpUri());
 
-            scopeAccess.setUniqueId(TokenDNCalculator.calculateFederatedUserTokenDN(user.getUsername(), idp.getName(), webSafeToken));
+            scopeAccess.setUniqueId(TokenDNCalculator.calculateFederatedUserTokenDN(user.getUsername(), idp.getProviderId(), webSafeToken));
             scopeAccess.setClientId(getCloudAuthClientId());
         } else {
             throw new UnmarshallTokenException(ERROR_CODE_UNPACK_INVALID_DATAPACKING_VERSION, String.format("Unrecognized data version '%s'", version));

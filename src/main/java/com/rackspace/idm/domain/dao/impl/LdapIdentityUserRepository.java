@@ -9,7 +9,6 @@ import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,8 +44,8 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
         return searchForUserById(userId, FEDERATED_USER_CLASS_FILTERS, FederatedUser.class);
     }
 
-    public FederatedUser getFederatedUserByUsernameAndIdpName(String username, String idpName) {
-        return searchForUserByUsername(username, FEDERATED_USER_CLASS_FILTERS, FederatedUser.class, getBaseDnWithIdpName(idpName));
+    public FederatedUser getFederatedUserByUsernameAndIdpId(String username, String idpId) {
+        return searchForUserByUsername(username, FEDERATED_USER_CLASS_FILTERS, FederatedUser.class, getBaseDnWithIdpName(idpId));
     }
 
     @Override
@@ -55,13 +54,13 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
-    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName) {
-        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderName(domainId, idpName);
+    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String idpId) {
+        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderId(domainId, idpId);
     }
 
     @Override
-    public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String idpName) {
-        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderNameCount(domainId, idpName);
+    public int getFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String idpId) {
+        return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderIdCount(domainId, idpId);
     }
 
     @Override

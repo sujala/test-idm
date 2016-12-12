@@ -70,9 +70,9 @@ class TenantRoleDaoIntegrationTest extends RootIntegrationTest {
         applicationRepository.addApplication(getApplication("app$sharedRandom"))
         application = applicationRepository.getApplicationByClientId("app$sharedRandom")
 
-        commonIdentityProvider = ldapIdentityProviderRepository.getIdentityProviderByName(Constants.DEFAULT_IDP_NAME)
+        commonIdentityProvider = ldapIdentityProviderRepository.getIdentityProviderById(Constants.DEFAULT_IDP_ID)
         federatedUserRepository.addUser(commonIdentityProvider, getFederatedUser("$sharedRandom"))
-        federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName("username$sharedRandom", commonIdentityProvider.getName())
+        federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId("username$sharedRandom", commonIdentityProvider.getProviderId())
 
         federatedToken = getFederatedToken(federatedUser)
         scopeAccessRepository.addScopeAccess(federatedUser, federatedToken)
@@ -82,10 +82,10 @@ class TenantRoleDaoIntegrationTest extends RootIntegrationTest {
         userRepository.deleteUser(user)
         applicationRepository.deleteApplication(application)
         if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpName(federatedUser.username, Constants.DEFAULT_IDP_NAME)
+            def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpId(federatedUser.username, Constants.DEFAULT_IDP_ID)
             if(federatedUser != null) sqlFederatedUserRepository.delete(federatedUser)
         } else {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderName(federatedUser.username, Constants.DEFAULT_IDP_NAME)
+            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(federatedUser.username, Constants.DEFAULT_IDP_ID)
             if(federatedUser != null) federatedUserRepository.deleteObject(federatedUser)
         }
     }

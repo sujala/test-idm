@@ -1,13 +1,8 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.dao.FederatedBaseUserDao;
-import com.rackspace.idm.domain.dao.FederatedUserDao;
-import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.*;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 /**
@@ -23,7 +18,7 @@ public abstract class LdapFederatedGenericRepository<T extends FederatedBaseUser
         if (StringUtils.isBlank(user.getId())) {
             user.setId(getNextId());
         }
-        addObject(getBaseDnWithIdpName(provider.getName()), user);
+        addObject(getBaseDnWithIdpId(provider.getProviderId()), user);
     }
 
     @Override
@@ -51,8 +46,8 @@ public abstract class LdapFederatedGenericRepository<T extends FederatedBaseUser
         return EXTERNAL_PROVIDERS_BASE_DN;
     }
 
-    protected String getBaseDnWithIdpName(String idpName) {
-        return String.format("ou=%s,ou=%s,%s", EXTERNAL_PROVIDERS_USER_CONTAINER_NAME, idpName, EXTERNAL_PROVIDERS_BASE_DN);
+    protected String getBaseDnWithIdpId(String idpId) {
+        return String.format("ou=%s,ou=%s,%s", EXTERNAL_PROVIDERS_USER_CONTAINER_NAME, idpId, EXTERNAL_PROVIDERS_BASE_DN);
     }
 
     @Override

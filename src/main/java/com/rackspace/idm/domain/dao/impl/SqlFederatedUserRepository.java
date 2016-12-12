@@ -92,13 +92,13 @@ public class SqlFederatedUserRepository implements FederatedUserDao {
     }
 
     @Override
-    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String identityProviderName) {
-        return federatedUserRaxMapper.fromSQL(federatedUserRepository.findByDomainIdAndFederatedIdpName(domainId, identityProviderName));
+    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String identityProviderName) {
+        return federatedUserRaxMapper.fromSQL(federatedUserRepository.findByDomainIdAndFederatedIdpId(domainId, identityProviderName));
     }
 
     @Override
-    public int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String identityProviderName) {
-        return federatedUserRepository.countByDomainIdAndFederatedIdpName(domainId, identityProviderName);
+    public int getFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId) {
+        return federatedUserRepository.countByDomainIdAndFederatedIdpId(domainId, identityProviderId);
     }
 
     @Override
@@ -124,8 +124,8 @@ public class SqlFederatedUserRepository implements FederatedUserDao {
     }
 
     @Override
-    public FederatedUser getUserByUsernameForIdentityProviderName(String username, String identityProviderName) {
-        return federatedUserRaxMapper.fromSQL(federatedUserRepository.findOneByUsernameAndFederatedIdpName(username, identityProviderName));
+    public FederatedUser getUserByUsernameForIdentityProviderId(String username, String identityProviderId) {
+        return federatedUserRaxMapper.fromSQL(federatedUserRepository.findOneByUsernameAndFederatedIdpId(username, identityProviderId));
     }
 
     @Override
