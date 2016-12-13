@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20.json.writers;
 
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.JsonArrayEntryTransformer;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.openstack.docs.identity.api.v2.RoleList;
 
@@ -50,6 +51,14 @@ public class JSONWriterForRoles extends JSONWriterForArrayEntity<RoleList> {
                 Object prop = arrayEntry.get(JSONConstants.ROLE_TYPE);
                 arrayEntry.remove(JSONConstants.ROLE_TYPE);
                 arrayEntry.put(JSONConstants.RAX_AUTH_ROLE_TYPE, prop);
+            }
+
+            if (arrayEntry.containsKey(JSONConstants.TYPES)) {
+                Object prop = ((JSONArray)((JSONObject)arrayEntry.get(JSONConstants.TYPES)).get(JSONConstants.TYPE)).get(0);
+                JSONArray array = new JSONArray();
+                array.add(prop);
+                arrayEntry.remove(JSONConstants.TYPES);
+                arrayEntry.put(JSONConstants.RAX_AUTH_TYPES, array);
             }
         }
     }

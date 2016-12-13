@@ -19,12 +19,14 @@ import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.util.JSONReaderForRoles
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.Modification
 import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.SearchScope
 import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.apache.commons.configuration.Configuration
+import org.apache.commons.io.IOUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.joda.time.DateTime
@@ -129,6 +131,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Shared def rackerRoleName = "team-cloud-identity"
     @Shared def rackerToken
     @Shared def randomSuffix
+
+    @Shared JSONReaderForRoles readerForRoles = new JSONReaderForRoles()
+
 
     def setupSpec() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -4245,7 +4250,130 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | "type567890123456"
     }
 
+    @Unroll
+    def "Roles returned for list roles (/v2.0/OS-KSADM/roles) should include the attributes as applicable: content-type=#contentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def rcnName = getRandomUUID("role")
+        def standardName = getRandomUUID("role")
+        Types types = new Types().with {
+            it.type = ["type"]
+            it
+        }
+        def rcnRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = rcnName
+            it.roleType = RoleTypeEnum.RCN
+            it.types = types
+            it
+        }
+
+        def standardRole = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = standardName
+            it.types = types
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, rcnRole, contentType, contentType)
+        def createdRcnRole = getEntity(response, Role)
+
+        response = cloud20.createRole(identityAdminToken, standardRole, contentType, contentType)
+        def createdStandardRole = getEntity(response, Role)
+
+        response = cloud20.listRoles(identityAdminToken, null, null, null, rcnName, contentType)
+        RoleList roles = getEntity(response, RoleList)
+        def retrievedRcnRole = roles.role.get(0)
+
+        response = cloud20.listRoles(identityAdminToken, null, null, null, standardName, contentType)
+        roles = getEntity(response, RoleList)
+        def retrievedStandardRole =  roles.role.get(0)
+
+        then: "Assignment must always be returned. When not set on the role, must return value 'both'"
+        createdRcnRole.assignment == RoleAssignmentEnum.GLOBAL
+        createdStandardRole.assignment == RoleAssignmentEnum.BOTH
+
+        retrievedRcnRole.assignment == RoleAssignmentEnum.GLOBAL
+        retrievedStandardRole.assignment == RoleAssignmentEnum.BOTH
+
+        then: "type must always be returned. When not set on the role, must return value 'standard'"
+        createdRcnRole.roleType == RoleTypeEnum.RCN
+        createdStandardRole.roleType == RoleTypeEnum.STANDARD
+
+        retrievedRcnRole.roleType == RoleTypeEnum.RCN
+        retrievedStandardRole.roleType == RoleTypeEnum.STANDARD
+
+        then: "Tenant Type must only be returned when type is 'rcn'"
+        createdRcnRole.types.type as HashSet == ["type"] as HashSet
+        createdStandardRole.types == null
+
+        retrievedRcnRole.types.type as HashSet == ["type"] as HashSet
+        retrievedStandardRole.types == null
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, createdRcnRole.id)
+        cloud20.deleteRole(identityAdminToken, createdStandardRole.id)
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Changes to the above services as specified must be enabled via a feature flag 'feature.list.support.additional.role.properties': content-type=#contentType" () {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_PROP, false)
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Types types = new Types().with {
+            it.type = ["type"]
+            it
+        }
+        def role = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.roleType = RoleTypeEnum.RCN
+            it.types = types
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(identityAdminToken, role, contentType, contentType)
+        def createdRole = getEntity(response, Role)
+
+        response = cloud20.listRoles(identityAdminToken, null, null, null, name, contentType)
+        RoleList roles = getEntity(response, RoleList)
+        def retrievedRole = roles.role.get(0)
+
+        then: "Assignment must not be returned."
+        createdRole.assignment == null
+        retrievedRole.assignment == null
+
+        then: "Type must not be returned."
+        createdRole.roleType == null
+        retrievedRole.roleType == null
+
+        then: "Tenant Type must not be returned."
+        createdRole.types == null
+        retrievedRole.types == null
+
+        cleanup:
+        cloud20.deleteRole(identityAdminToken, createdRole.id)
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
     def getEntity(response, type) {
+        if (type == RoleList && response.getType() == MediaType.APPLICATION_JSON_TYPE) {
+            InputStream inputStream = IOUtils.toInputStream(response.getEntity(String))
+            return readerForRoles.readFrom(Role, null, null, null, null, inputStream)
+        }
+
         def entity = response.getEntity(type)
 
         if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
