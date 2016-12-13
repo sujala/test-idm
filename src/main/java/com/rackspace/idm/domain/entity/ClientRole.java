@@ -1,17 +1,23 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
-import com.unboundid.ldap.sdk.persist.FilterUsage;
-import com.unboundid.ldap.sdk.persist.LDAPDNField;
-import com.unboundid.ldap.sdk.persist.LDAPField;
-import com.unboundid.ldap.sdk.persist.LDAPObject;
+import com.unboundid.ldap.sdk.Entry;
+import com.unboundid.ldap.sdk.persist.*;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.dozer.Mapping;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 @Data
-@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE)
+@LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, postEncodeMethod="doPostEncode")
 public class ClientRole implements Auditable, UniqueId {
 
 	public static final String SUPER_ADMIN_ROLE = "3";
@@ -42,12 +48,53 @@ public class ClientRole implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_ASSIGNMENT, objectClass = LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String assignmentType;
 
+    @LDAPField(attribute=LdapRepository.ATTR_RS_TYPE, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private String roleType;
+
+    @LDAPField(attribute=LdapRepository.ATTR_RS_TENANT_TYPE, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
+    private HashSet<String> tenantTypes;
+
+    public RoleTypeEnum getRoleType() {
+        if (roleType == null) {
+            return RoleTypeEnum.STANDARD;
+        } else {
+            return RoleTypeEnum.fromValue(roleType);
+        }
+    }
+
+    public void setRoleType(RoleTypeEnum type) {
+        if (type != null) {
+            roleType = type.value();
+        } else {
+            roleType = RoleTypeEnum.STANDARD.value();
+        }
+    }
+
     public Boolean getPropagate() {
         if (propagate == null) {
             return false;
         }
         return propagate;
     }
+
+    /** +
+     * Tenant types is only valid for RCN roles.
+     * @return
+     */
+    public HashSet<String> getTenantTypes() {
+        if (tenantTypes == null) {
+            tenantTypes = new HashSet<String>();
+        }
+        return tenantTypes;
+    }
+
+    private void doPostEncode(final Entry entry) throws LDAPPersistException {
+        String[] tenantTypes = entry.getAttributeValues(LdapRepository.ATTR_RS_TENANT_TYPE);
+        if (tenantTypes != null && tenantTypes.length == 0) {
+            entry.removeAttribute(LdapRepository.ATTR_TENANT_RS_ID);
+        }
+    }
+
 
     public void copyChanges(ClientRole modifiedClient) {
 

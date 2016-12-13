@@ -30,6 +30,6 @@
                          "tenanttypeisE",
                          "tenanttypeisF",
                          "tenanttypeisG"],
-        "error_message": "A maximum of 16 unique tenant types can be assigned to any given tenant."
+        "error_message": "A maximum of 16 unique tenant types can be assigned."
     }
 }

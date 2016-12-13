@@ -45,6 +45,12 @@ public class JSONWriterForRoles extends JSONWriterForArrayEntity<RoleList> {
                 arrayEntry.remove(JSONConstants.ASSIGNMENT);
                 arrayEntry.put(JSONConstants.RAX_AUTH_ASSIGNMENT, prop);
             }
+
+            if (arrayEntry.containsKey(JSONConstants.ROLE_TYPE)) {
+                Object prop = arrayEntry.get(JSONConstants.ROLE_TYPE);
+                arrayEntry.remove(JSONConstants.ROLE_TYPE);
+                arrayEntry.put(JSONConstants.RAX_AUTH_ROLE_TYPE, prop);
+            }
         }
     }
 }

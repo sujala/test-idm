@@ -40,6 +40,7 @@
     <attribute name="factorType" type="RAX-AUTH:FactorTypeEnum" />
     <attribute name="assignmentType" type="RAX-AUTH:EndpointTemplateAssignmentTypeEnum" />
     <attribute name="assignment" type="RAX-AUTH:RoleAssignmentEnum" />
+    <attribute name="roleType" type="RAX-AUTH:RoleTypeEnum" />
 
     <element name="authenticatedBy" type="RAX-AUTH:AuthenticatedBy" />
     <element name="defaultRegionServices" type="RAX-AUTH:DefaultRegionServices" />
@@ -692,6 +693,33 @@
                             xmlns="http://www.w3.org/1999/xhtml">
                         <p>
                             The value specifies roles can be assigned assigned to both.
+                        </p>
+                    </xsd:documentation>
+                </annotation>
+            </enumeration>
+        </restriction>
+    </simpleType>
+
+    <simpleType name="RoleTypeEnum">
+        <restriction base="xsd:string">
+            <enumeration value="STANDARD">
+                <annotation>
+                    <xsd:documentation
+                            xml:lang="EN"
+                            xmlns="http://www.w3.org/1999/xhtml">
+                        <p>
+                            The value for role type when role does not have a current setting for type.
+                        </p>
+                    </xsd:documentation>
+                </annotation>
+            </enumeration>
+            <enumeration value="RCN">
+                <annotation>
+                    <xsd:documentation
+                            xml:lang="EN"
+                            xmlns="http://www.w3.org/1999/xhtml">
+                        <p>
+                            The value is used to specify an RCN role.
                         </p>
                     </xsd:documentation>
                 </annotation>

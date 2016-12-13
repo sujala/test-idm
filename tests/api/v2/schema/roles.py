@@ -13,7 +13,8 @@ role_item = {
         const.SERVICE_ID: {'type': 'string'},
         const.RAX_AUTH_PROPAGATE: {'type': 'boolean'},
         const.RAX_AUTH_ADMINISTRATOR_ROLE: {'type': 'string'},
-        const.RAX_AUTH_ASSIGNMENT: {'type': 'string'}
+        const.RAX_AUTH_ASSIGNMENT: {'type': 'string'},
+        const.RAX_AUTH_ROLE_TYPE: {'type': 'string'}
     },
     'requires': [const.NAME, const.ID, const.DESCRIPTION],
     'additionalProperties': False
