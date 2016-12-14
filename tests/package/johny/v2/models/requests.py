@@ -378,12 +378,13 @@ class RoleAdd(base.AutoMarshallingModel):
     """Marshalling for Add Role Request."""
 
     def __init__(self, role_name, role_id=None, role_description=None,
-                 administrator_role=None, service_id=None):
+                 administrator_role=None, service_id=None, assignment=None):
         self.role_name = role_name
         self.role_id = role_id
         self.role_description = role_description
         self.administrator_role = administrator_role
         self.service_id = service_id
+        self.assignment = assignment
 
     def _obj_to_json(self):
         add_role_request = {
@@ -396,6 +397,9 @@ class RoleAdd(base.AutoMarshallingModel):
                 self.role_description)
         if self.service_id:
             add_role_request[const.ROLE][const.SERVICE_ID] = self.service_id
+        if self.assignment:
+            add_role_request[const.ROLE][const.RAX_AUTH_ASSIGNMENT] = (
+                self.assignment)
         if self.administrator_role:
             add_role_request[const.ROLE][const.ADMINISTRATOR_ROLE] = (
                 self.administrator_role
