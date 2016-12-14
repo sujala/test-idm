@@ -173,6 +173,21 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     }
 
     @Override
+    public IdentityProvider getIdentityProviderApprovedForDomain(String name, String domainId) {
+        return identityProviderDao.getIdentityProviderApprovedForDomain(name, domainId);
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderExplicitlyApprovedForDomain(String name, String domainId) {
+        return identityProviderDao.getIdentityProviderExplicitlyApprovedForDomain(name, domainId);
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderExplicitlyApprovedForAnyDomain(String name) {
+        return identityProviderDao.getIdentityProvidersExplicitlyApprovedForAnyDomain(name);
+    }
+
+    @Override
     public IdentityProvider checkAndGetIdentityProvider(String id) {
         IdentityProvider provider = getIdentityProvider(id);
 

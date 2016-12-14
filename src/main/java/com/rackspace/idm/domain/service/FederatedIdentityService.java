@@ -51,6 +51,32 @@ public interface FederatedIdentityService {
     IdentityProvider getIdentityProviderByName(String name);
 
     /**
+     * Return the identity provider by name that can create tokens for the given name and domainId
+     *
+     * @param name
+     * @param domainId
+     * @return
+     */
+    IdentityProvider getIdentityProviderApprovedForDomain(String name, String domainId);
+
+    /**
+     * Return the identity provider by name that has an EXPLICIT domain restriction for the given name and domainId.
+     *
+     * @param name
+     * @param domainId
+     * @return
+     */
+    IdentityProvider getIdentityProviderExplicitlyApprovedForDomain(String name, String domainId);
+
+    /**
+     * Return the identity provider by name that has any EXPLICIT domain restriction.
+     *
+     * @param name
+     * @return
+     */
+    IdentityProvider getIdentityProviderExplicitlyApprovedForAnyDomain(String name);
+
+    /**
      * Return the identity provider with the given id.
      *
      * @param id
@@ -106,4 +132,5 @@ public interface FederatedIdentityService {
      * @param id
      */
     void deleteIdentityProviderById(String id);
+
 }
