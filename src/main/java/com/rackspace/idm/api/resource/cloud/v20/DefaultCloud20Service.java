@@ -1292,7 +1292,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String approvedDomainId, String approvedTenantId, String idpType) {
+    public ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String name, String approvedDomainId, String approvedTenantId, String idpType) {
         try {
             //verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
@@ -1337,8 +1337,23 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            List<com.rackspace.idm.domain.entity.IdentityProvider> providerEntities;
-            if (StringUtils.isNotBlank(approvedDomainId) && IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
+            List<com.rackspace.idm.domain.entity.IdentityProvider> providerEntities = new ArrayList<>();
+            if (StringUtils.isNotBlank(name)) {
+                com.rackspace.idm.domain.entity.IdentityProvider identityProvider = null;
+                if (StringUtils.isNotBlank(approvedDomainId) && IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
+                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForDomain(name, approvedDomainId);
+                } else if (StringUtils.isNotBlank(approvedDomainId)) {
+                    identityProvider = federatedIdentityService.getIdentityProviderApprovedForDomain(name, approvedDomainId);
+                } else if (IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
+                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForAnyDomain(name);
+                } else {
+                    identityProvider = federatedIdentityService.getIdentityProviderByName(name);
+                }
+
+                if (identityProvider != null) {
+                    providerEntities = Collections.singletonList(identityProvider);
+                }
+            } else if (StringUtils.isNotBlank(approvedDomainId) && IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
                 providerEntities = federatedIdentityService.findIdentityProvidersExplicitlyApprovedForDomain(approvedDomainId);
             } else if (StringUtils.isNotBlank(approvedDomainId)) {
                 providerEntities = federatedIdentityService.findIdentityProvidersApprovedForDomain(approvedDomainId);

@@ -10,7 +10,39 @@ public interface IdentityProviderDao {
 
     IdentityProvider getIdentityProviderById(String Id);
 
+    /**
+     * Return the identity provider by name
+     *
+     * @param name
+     * @return
+     */
     IdentityProvider getIdentityProviderByName(String name);
+
+    /**
+     * Return the identity provider by name that can received tokens for the given domainId
+     *
+     * @param name
+     * @param domainId
+     * @return
+     */
+    IdentityProvider getIdentityProviderApprovedForDomain(String name, String domainId);
+
+    /**
+     * Return the identity provider by name that have an EXPLICIT domain restriction for the given domainId.
+     *
+     * @param name
+     * @param domainId
+     * @return
+     */
+    IdentityProvider getIdentityProviderExplicitlyApprovedForDomain(String name, String domainId);
+
+    /**
+     * Return the identity provider by name that have any EXPLICIT domain restriction
+     *
+     * @param name
+     * @return
+     */
+    IdentityProvider getIdentityProvidersExplicitlyApprovedForAnyDomain(String name);
 
     /**
      * Return the identity provider that can received tokens for the given domainId

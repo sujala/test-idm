@@ -1,15 +1,11 @@
 package testHelpers
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
@@ -18,7 +14,6 @@ import org.apache.commons.lang.StringUtils
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import spock.lang.Shared
 
@@ -378,9 +373,12 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).get(ClientResponse)
     }
 
-    def listIdentityProviders(token, domainId = null, idpType = null, tenantId = null, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def listIdentityProviders(token, name = null, domainId = null, idpType = null, tenantId = null, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         WebResource webResource = resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS)
+        if (StringUtils.isNotBlank(name)) {
+            webResource = webResource.queryParam("name", name)
+        }
         if (StringUtils.isNotBlank(domainId)) {
             webResource = webResource.queryParam("approvedDomainId", domainId)
         }
@@ -390,7 +388,7 @@ class Cloud20Methods {
         if (StringUtils.isNotBlank(tenantId)) {
             webResource = webResource.queryParam("approvedTenantId", tenantId)
         }
-        return webResource.header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).get(ClientResponse)
+        return webResource.header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).get(ClientResponse)
     }
 
     def deleteIdentityProvider(token, identityProviderId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {

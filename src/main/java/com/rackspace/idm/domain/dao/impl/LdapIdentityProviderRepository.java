@@ -45,6 +45,21 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
     }
 
     @Override
+    public IdentityProvider getIdentityProviderApprovedForDomain(String name, String domainId) {
+        return getObject(searchFilterGetIdentityProviderApprovedForDomain(name, domainId));
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderExplicitlyApprovedForDomain(String name, String domainId) {
+        return getObject(searchFilterGetIdentityProviderExplicitlyApprovedForDomain(name, domainId));
+    }
+
+    @Override
+    public IdentityProvider getIdentityProvidersExplicitlyApprovedForAnyDomain(String name) {
+        return getObject(searchFilterGetIdentityProviderExplicitlyApprovedForAnyDomain(name));
+    }
+
+    @Override
     public List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId) {
         int maxAllowed = identityConfig.getReloadableConfig().getMaxListIdentityProviderSize();
         List<IdentityProvider> providers;
@@ -133,6 +148,49 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
     Filter searchForAll() {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER).build();
+    }
+
+    /**
+     * Either the domain is in the list of approvedDomains OR the domainGroup is global
+     * @param name
+     * @param domainId
+     * @return
+     */
+    private Filter searchFilterGetIdentityProviderApprovedForDomain(String name, String domainId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_NAME, name)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER)
+                .addOrAttributes(Arrays.asList(Filter.createEqualityFilter(ATTR_APPROVED_DOMAIN_IDS, domainId)
+                        , Filter.createEqualityFilter(ATTR_APPROVED_DOMAIN_GROUP, ApprovedDomainGroupEnum.GLOBAL.getStoredVal())))
+                .build();
+    }
+
+    /**
+     * Search filter for IDP where rsApprovedDomainIds contains domainId
+     *
+     * @param name
+     * @param domainId
+     * @return
+     */
+    private Filter searchFilterGetIdentityProviderExplicitlyApprovedForDomain(String name, String domainId) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_NAME, name)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER)
+                .addEqualAttribute(ATTR_APPROVED_DOMAIN_IDS, domainId)
+                .build();
+    }
+
+    /**
+     * Search filter for IDPs where rsApprovedDomainIds is present
+     *
+     * @return
+     */
+    private Filter searchFilterGetIdentityProviderExplicitlyApprovedForAnyDomain(String name) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_NAME, name)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_EXTERNALPROVIDER)
+                .addPresenceAttribute(ATTR_APPROVED_DOMAIN_IDS)
+                .build();
     }
 
     /**
