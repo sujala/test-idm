@@ -22,7 +22,14 @@ add_user = {
                 const.PASSWORD: {'type': 'string'},
                 const.ID: {'type': 'string'},
                 const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
-                const.NS_PASSWORD: {'type': 'string'}},
+                const.NS_PASSWORD: {'type': 'string'},
+                const.NS_SECRETQA: {
+                    'type': 'object',
+                    'properties': {
+                        const.SECRET_ANSWER: {'type': 'string'},
+                        const.SECRET_QUESTION: {'type': 'string'}
+                    }},
+                const.ROLES: {'type': 'array'}},
             'required': [const.USERNAME, const.ENABLED,
                          const.RAX_AUTH_DEFAULT_REGION, const.ID,
                          const.RAX_AUTH_DOMAIN_ID,

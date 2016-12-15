@@ -164,6 +164,24 @@ def get_add_group_request_object(group_name=None, group_desc=None):
     return requests.GroupAdd(**default_data)
 
 
+def get_domain_request_object(domain_req):
+    enabled = True
+
+    if "enabled" in domain_req:
+        enabled = domain_req["enabled"]
+
+    dom = requests.Domain(
+        domain_name=TestBase.generate_random_string(
+            const.DOMAIN_PATTERN),
+        domain_id=TestBase.generate_random_string(
+            const.ID_PATTERN),
+        description=TestBase.generate_random_string(
+            const.DOMAIN_PATTERN),
+        enabled=enabled)
+
+    return dom
+
+
 def get_add_role_request_object(role_name=None, role_id=None,
                                 role_description=None,
                                 administrator_role=None,

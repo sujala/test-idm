@@ -232,7 +232,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
                 const.TENANT][const.ID]
             for item in auth_resp.json()[const.ACCESS][const.USER][
                              const.ROLES]:
-                if item[const.NAME] == const.OBJECT_STORE_ROLE_NANE:
+                if item[const.NAME] == const.OBJECT_STORE_ROLE_NAME:
                     nast_tenant = item[const.TENANT_ID]
 
         if (self.feature_flag_value | self.feature_flag_default_value) and (

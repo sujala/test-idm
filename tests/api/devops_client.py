@@ -40,3 +40,14 @@ class IdentityDevopsClient(client.AutoMarshallingHTTPClient):
 
         resp = self.request('GET', url, params=params)
         return resp
+
+    def get_feature_flag(self, flag_name):
+        """
+        Convienence function to make getting a feature flag easier.
+        Returns the value of the flag which should be boolean indicating
+        if it's on or off
+        """
+        resp = self.get_devops_properties(
+            prop_name=flag_name)
+        assert(resp.status_code == 200)
+        return resp.json()[const.IDM_RELOADABLE_PROPERTIES][0][const.VALUE]
