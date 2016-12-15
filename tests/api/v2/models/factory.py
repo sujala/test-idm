@@ -1,6 +1,7 @@
-from tests.api.v2.models import requests
-from tests.api import constants as const
 from tests.api.base import TestBase
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 
 
 def get_add_user_request_object(

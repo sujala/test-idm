@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*
-import time
-import xml.etree.ElementTree as ET
-from tests.api.v2 import base
-from tests.api.utils import log_search as log, func_helper
-from tests.api import constants as const
-from tests.api.v2.models import factory, requests
 """
 This test run against local docker container, only verify User Access Events
     emit in repose log
@@ -55,8 +49,19 @@ This test run against local docker container, only verify User Access Events
 @TODO: how to verify event log in staging.
 """
 
+import time
+import xml.etree.ElementTree as ET
+
+from tests.api.v2 import base
+from tests.api.utils import log_search as log, func_helper
+from tests.api.v2.models import factory
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
+
 
 class TestUserAccessEvents(base.TestBaseV2):
+
     @classmethod
     def setUpClass(cls):
         super(TestUserAccessEvents, cls).setUpClass()

@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*
+from random import randrange
+
 import ddt
 
 from tests.api.v2 import base
 from tests.api.v2.schema import users as users_json
-from tests.api import constants as const
-from tests.api.v2.models import requests
-from random import randrange
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 # TODO: update user list schema validator when defect CID-408 is fixed
 
 

@@ -1,10 +1,11 @@
 from tests.api import base
 from tests.api import devops_client
-from tests.api.v2 import client
 from tests.api.v2.models import factory
-from tests.api.v2.models import requests
-from tests.api import constants as const
 from tests.api.utils import header_validation
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2 import client
+from tests.package.johny.v2.models import requests
 
 
 class TestBaseV2(base.TestBase):

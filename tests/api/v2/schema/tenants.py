@@ -5,7 +5,8 @@ defined in
 http://docs-internal.rackspace.com/auth/api/v2.0/auth-admin-devguide/content/Tenant_Calls.html
 """
 import copy
-from tests.api import constants as const
+
+from tests.package.johny import constants as const
 
 tenant_item = {
     'type': 'object',

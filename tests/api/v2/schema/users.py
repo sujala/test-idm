@@ -1,11 +1,11 @@
-from tests.api import constants as const
-
 """Schema Definitions for Users endpoints.
 
 This module will contain the json schema definitions for all API responses
 defined in
 http://docs-internal.rackspace.com/auth/api/v2.0/auth-admin-devguide/content/User_Calls.html # noqa
 """
+
+from tests.package.johny import constants as const
 
 add_user = {
     'type': 'object', 'properties':

@@ -1,9 +1,11 @@
-from tests.api import constants as const
 """
 Schema definition for Roles
 All calls response under:
 http://docs-internal.rackspace.com/auth/api/v2.0/auth-admin-devguide/content/Role_Calls.html
 """
+
+from tests.package.johny import constants as const
+
 role_item = {
     'type': 'object',
     'properties': {

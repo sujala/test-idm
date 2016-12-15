@@ -1,10 +1,13 @@
-from tests.api import constants as const
-from tests.api.v2.schema.users import user_item
 """Schema Definitions for Tokens Endpoints 
 This module will contain the json schema definitions for all API responses
 defined in
 http://docs-internal.rackspace.com/auth/api/v2.0/auth-admin-devguide/content/Token_Calls.html # noqa
 """
+
+from tests.api.v2.schema.users import user_item
+from tests.package.johny import constants as const
+
+
 tenant_item = {
     const.ID: {'type': 'string'},
     const.NAME: {'type': 'string'}

@@ -1,6 +1,6 @@
-
-from tests.api import constants as const
 from cafe.engine.http import client
+
+from tests.package.johny import constants as const
 
 
 class IdentityDevopsClient(client.AutoMarshallingHTTPClient):

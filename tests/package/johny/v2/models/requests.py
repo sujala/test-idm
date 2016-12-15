@@ -1,7 +1,7 @@
 import json
 from lxml import etree
 from cafe.engine.models import base
-from tests.api import constants as const
+from ... import constants as const
 
 
 class AuthenticateWithApiKey(base.AutoMarshallingModel):

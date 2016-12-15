@@ -1,18 +1,18 @@
-from tests.api import constants as const
-
 """Schema Definitions for tenant type to endpoint mapping rules endpoints.
 
 This module will contain the json schema definitions for all API responses
 defined in https://jira.rax.io/browse/CID-362
 """
 
+from tests.package.johny import constants as const
+
 endpoint_minimum_item = {
     'type': 'object', 'properties':
-        {const.ID: {'type': 'integer'}}
+    {const.ID: {'type': 'integer'}}
 }
 
 endpoint_basic_item = {
-            'type': 'object',
+    'type': 'object',
             'properties': {
                 const.ID: {'type': 'integer'},
                 const.SERVICE_NAME: {'type': 'string'},
@@ -28,7 +28,7 @@ endpoint_basic_item = {
 
 add_tenant_type_to_endpoint_mapping_rule = {
     'type': 'object', 'properties':
-        {const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE: {
+    {const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE: {
             'type': 'object',
             'properties': {
                 const.DESCRIPTION: {'type': 'string'},
@@ -45,7 +45,7 @@ add_tenant_type_to_endpoint_mapping_rule = {
 
 tenant_type_to_endpoint_mapping_rule_basic = {
     'type': 'object', 'properties':
-        {const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE: {
+    {const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE: {
             'type': 'object',
             'properties': {
                 const.DESCRIPTION: {'type': 'string'},
@@ -62,9 +62,9 @@ tenant_type_to_endpoint_mapping_rule_basic = {
 
 list_tenant_type_to_endpoint_mapping_rules_item = {
     'type': 'object', 'properties': {
-                const.DESCRIPTION: {'type': 'string'},
-                const.ID: {'type': 'string'},
-                const.TENANT_TYPE: {'type': 'string',
+        const.DESCRIPTION: {'type': 'string'},
+        const.ID: {'type': 'string'},
+        const.TENANT_TYPE: {'type': 'string',
                                     'pattern': "[0-9a-z]{1,15}"}},
             'required': [const.TENANT_TYPE, const.ID],
             'additionalProperties': False
@@ -72,7 +72,7 @@ list_tenant_type_to_endpoint_mapping_rules_item = {
 
 list_tenant_type_to_endpoint_mapping_rules = {
     'type': 'object', 'properties':
-        {
+    {
             const.RAX_AUTH_ENDPOINT_ASSIGNMENT_RULES:
             {
                 'type': 'object', 'properties': {
@@ -84,14 +84,14 @@ list_tenant_type_to_endpoint_mapping_rules = {
                 },
                 'required': [const.TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES]
             }
-        },
+    },
     'required': [const.RAX_AUTH_ENDPOINT_ASSIGNMENT_RULES],
     'additionalProperties': False
 }
 
 list_dummy_tenant_type_to_endpoint_mapping_rules_item = {
     'type': 'object', 'properties':
-        {const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE: {
+    {const.NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE: {
             'type': 'object',
             'properties': {
                 const.DESCRIPTION: {'type': 'string'},

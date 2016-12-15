@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*
-from tests.api.v2 import base
-from tests.api.v2.models import requests, factory
-from tests.api import constants as const
 from urlparse import urljoin
+
+from tests.api.v2 import base
+from tests.api.v2.models import factory
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 
 
 """

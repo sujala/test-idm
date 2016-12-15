@@ -1,12 +1,3 @@
-import ddt
-from tests.api.v2 import base
-from tests.api.v2.models import requests
-from tests.api.v2.models import responses
-from tests.api.v2.schema import tokens as tokens_json
-from tests.api.v2.schema import groups as groups_json
-from tests.api import constants as const
-from nose.plugins.attrib import attr
-
 """
   JIRA CID-507
   A porting of Jmeter scripts v2.0 token related smoke tests to Johny
@@ -17,6 +8,17 @@ from nose.plugins.attrib import attr
   *  Make sure useradmin can login via tenantID+username+password and that
      identityAdmin validates the resulting token
 """
+
+import ddt
+from nose.plugins.attrib import attr
+
+from tests.api.v2 import base
+from tests.api.v2.models import responses
+from tests.api.v2.schema import tokens as tokens_json
+from tests.api.v2.schema import groups as groups_json
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt

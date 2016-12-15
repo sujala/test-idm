@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*
 import ddt
+from random import randrange
 
 from tests.api.v2 import base
 from tests.api.v2.schema import tokens as tokens_json
-from tests.api import constants as const
-from random import randrange
+
+from tests.package.johny import constants as const
 
 
 @ddt.ddt

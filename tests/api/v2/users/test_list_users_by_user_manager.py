@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*
-from tests.api import constants as const
-from tests.api.v2 import base
-
-
 """
 1. When the consumer of the v2.0 list users service is a user-manager
 1.1 List users must not return any user-managers except the caller
@@ -16,6 +12,9 @@ from tests.api.v2 import base
 Notes: before change user manager able to list other user managers with the
     same domain
 """
+from tests.api.v2 import base
+
+from tests.package.johny import constants as const
 
 
 class TestListUsersByUserManager(base.TestBaseV2):

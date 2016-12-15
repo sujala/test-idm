@@ -2,11 +2,15 @@
 import copy
 import ddt
 
-from tests.api import constants as const
 from tests.api.utils import header_validation
 from tests.api.v2 import base
+from tests.api.v2.models import factory
+from tests.api.v2.models import responses
 from tests.api.v2.schema import tenant_type_to_endpoint_mapping_rules as rules
-from tests.api.v2.models import factory, requests, responses
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
+
 
 ENDPOINT_DOES_NOT_EXIST_ERROR = ("Error code: 'EP-000'; Endpoint template "
                                  "'{0}' does not exist")
