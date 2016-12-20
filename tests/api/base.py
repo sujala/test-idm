@@ -7,9 +7,10 @@ import urlparse
 
 from cafe.drivers.unittest import fixtures
 
-from tests.api import constants as const
 from tests.api.utils import config
 from tests.api.utils import header_validation
+
+from tests.package.johny import constants as const
 
 
 class TestBase(fixtures.BaseTestFixture):

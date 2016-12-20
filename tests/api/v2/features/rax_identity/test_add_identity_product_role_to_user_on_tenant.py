@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*
-import ddt
-
-from tests.api.v2 import base
-from tests.api import constants as const
-from tests.api.v2.models import factory
-from tests.api.v2.models import requests
-
 """
-Test verify:
+Tests verify
     1. Allow identity product roles (e.g. those prefixed with "identity:") to
         be assigned to users on a tenant
     1.1 This excludes identity user-classification roles
@@ -19,6 +12,14 @@ Test verify:
         on a tenant, the existing functionality of returning a 403 must be
         preserved.
 """
+
+import ddt
+
+from tests.api.v2 import base
+from tests.api.v2.models import factory
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt

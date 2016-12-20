@@ -1,6 +1,6 @@
 import collections
 
-from tests.api import constants as const
+from tests.package.johny import constants as const
 
 
 class Tenant(object):

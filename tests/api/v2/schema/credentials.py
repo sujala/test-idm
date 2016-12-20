@@ -2,7 +2,7 @@
 
 http://docs-internal.rackspace.com/auth/api/v2.0/auth-admin-devguide/content/GET_admin-listCredentials_v2.0_users__userId__OS-KSADM_credentials_User_Calls.html
 """
-from tests.api import constants as const
+from tests.package.johny import constants as const
 
 list_credentials = {
     'type': 'object', 'properties': {

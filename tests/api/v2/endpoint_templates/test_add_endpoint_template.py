@@ -5,11 +5,12 @@ import copy
 import ddt
 import urlparse
 
-from tests.api import constants as const
 from tests.api.v2 import base
 from tests.api.v2.schema import endpoint_templates
-from tests.api.v2.models import requests
 from tests.api import base as parent_base
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt

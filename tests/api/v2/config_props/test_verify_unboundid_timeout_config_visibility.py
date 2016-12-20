@@ -1,7 +1,8 @@
 import ddt
 from tests.api.v2 import base
-from tests.api import constants as const
 from tests.api.v2.schema import unboundid as unboundid_json
+
+from tests.package.johny import constants as const
 
 
 @ddt.ddt

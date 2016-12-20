@@ -1,13 +1,14 @@
 import ddt
 from tests.api.v2 import base
-from tests.api.v2.models import requests
 from tests.api.v2.schema import unboundid as unboundid_json
 from tests.api.v2.schema import groups as groups_json
 from tests.api.v2.schema import roles as roles_json
 from tests.api.v2.schema import upgrade_user as upgrade_user_json
-from tests.api import constants as const
 from tests.api.v2.models import factory
-from tests.api.v2 import client
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2 import client
+from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt

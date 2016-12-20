@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*
+import ddt
+
 from tests.api.utils import header_validation
 from tests.api.v2 import base
-from tests.api.v2.models import requests
-from tests.api import constants as const
-import ddt
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt

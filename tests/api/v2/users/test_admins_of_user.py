@@ -2,11 +2,13 @@
 import ddt
 import time
 
-from tests.api import constants as const
 from tests.api.utils import saml_helper
 from tests.api.v2 import base
-from tests.api.v2.models import requests
 from tests.api.v2.schema import users as users_json
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
+
 
 ERROR_MESSAGE_USER_NOT_FOUND = 'User {0} not found'
 

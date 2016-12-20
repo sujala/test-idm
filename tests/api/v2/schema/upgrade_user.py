@@ -1,6 +1,5 @@
-""" Schema Definition for upgradeUserToCloud
-"""
-from tests.api import constants as const
+"""Schema Definition for upgradeUserToCloud."""
+from tests.package.johny import constants as const
 
 upgrade_user_to_cloud = {
     'type': 'object', 'properties':

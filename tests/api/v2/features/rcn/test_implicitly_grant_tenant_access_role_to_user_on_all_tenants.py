@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*
-from tests.api.v2 import base
-from tests.api.v2.models import requests, factory
-from tests.api import constants as const
-import collections
-
 
 """
 1. A user must be implicitly granted the "identity:tenant-access" role to all
@@ -32,6 +27,13 @@ import collections
     disabled, the default, users are NOT implicitly granted the
     identity:tenant-access roles on all tenants within the user's domain
 """
+import collections
+
+from tests.api.v2 import base
+from tests.api.v2.models import factory
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 
 
 class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):

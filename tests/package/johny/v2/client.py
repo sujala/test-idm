@@ -5,8 +5,9 @@ from urlparse import urlparse
 from lxml import objectify
 
 from cafe.engine.http import client
-from tests.api import constants as const
-from tests.api.v2.models import requests
+
+from .. import constants as const
+from ..v2.models import requests
 
 
 class IdentityAPIClient(client.AutoMarshallingHTTPClient):

@@ -3,14 +3,14 @@ import copy
 
 import ddt
 
-# from tests.api import base as parent_base
-from tests.api import constants as const
 from tests.api.v2 import base
-from tests.api.v2 import client
-from tests.api.v2.models import requests
 from tests.api.v2.models import factory
 from tests.api.v2.models import responses
 from tests.api.v2.schema import tenants
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2 import client
+from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt

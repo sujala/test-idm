@@ -5,8 +5,10 @@ import json
 from tests.api.v2 import base
 from tests.api import base as api_base
 from tests.api.v2.schema import roles as roles_json, users as users_json
-from tests.api import constants as const
-from tests.api.v2.models import requests, factory
+from tests.api.v2.models import factory
+
+from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt
