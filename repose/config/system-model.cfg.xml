@@ -10,8 +10,8 @@
     <filters>
       <filter name="rackspace-auth-user" />
       <filter name="header-translation" />
-      <filter name="ip-identity" />
-      <filter name="uri-identity" />
+      <filter name="ip-user" />
+      <filter name="uri-user" />
       <filter name="slf4j-http-logging" />
       <filter name="rate-limiting" />
       <filter name="cors"/>
