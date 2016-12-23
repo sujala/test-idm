@@ -186,6 +186,7 @@ def get_domain_request_object(domain_req):
 def get_add_role_request_object(role_name=None, role_id=None,
                                 role_description=None,
                                 administrator_role=None,
+                                assignment=None,
                                 service_id=None):
     """Generate Basic RoleAdd Object"""
 
@@ -200,6 +201,7 @@ def get_add_role_request_object(role_name=None, role_id=None,
     return requests.RoleAdd(role_name=role_name, role_id=role_id,
                             role_description=role_description,
                             administrator_role=administrator_role,
+                            assignment=assignment,
                             service_id=service_id)
 
 
