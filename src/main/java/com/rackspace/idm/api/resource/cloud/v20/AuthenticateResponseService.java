@@ -6,6 +6,8 @@ import com.rackspace.idm.domain.entity.UserScopeAccess;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 
+import javax.ws.rs.core.Response;
+
 public interface AuthenticateResponseService {
 
     /**
@@ -17,7 +19,7 @@ public interface AuthenticateResponseService {
      * @param authenticationRequest
      * @return
      */
-    AuthenticateResponse buildAuthResponseForAuthenticate(AuthResponseTuple authResponseTuple, AuthenticationRequest authenticationRequest);
+    Response.ResponseBuilder buildAuthResponseForAuthenticate(AuthResponseTuple authResponseTuple, AuthenticationRequest authenticationRequest);
 
     /**
      * Builds the AuthenticateResponse object for a given RackerScopeAccess

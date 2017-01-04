@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
@@ -261,6 +262,85 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         flag  | _
         true  | _
         false | _
+    }
+
+    def "Authentication returns tenant ID in header"() {
+        given:
+        def domainId1 = utils.createDomain()
+        def domainId2 = utils.createDomain()
+        def userAdminOneTenant, cloudUserAdmin, users1, users2
+        (userAdminOneTenant, users1) = utils.createUserAdmin(domainId1)
+        (cloudUserAdmin, users2) = utils.createUserAdminWithTenants(domainId2)
+        def tenant = utils.createTenant()
+        def role = utils.createRole()
+
+        when: "auth w/o a tenant"
+        def response = cloud20.authenticate(userAdminOneTenant.username, Constants.DEFAULT_PASSWORD)
+
+        then: "no X-Tenant-Id in response"
+        response.status == 200
+        !response.getHeaders().containsKey(GlobalConstants.X_TENANT_ID)
+
+        when: "add tenant to user"
+        utils.addRoleToUserOnTenant(userAdminOneTenant, tenant, role.id)
+        response = cloud20.authenticate(userAdminOneTenant.username, Constants.DEFAULT_PASSWORD)
+
+        then: "returns the single tenant in the response"
+        response.status == 200
+        response.getHeaders().containsKey(GlobalConstants.X_TENANT_ID)
+        response.getHeaders().get(GlobalConstants.X_TENANT_ID)[0] == tenant.id
+
+        when: "disable the only tenant and auth again"
+        utils.updateTenant(tenant.id, false)
+        response = cloud20.authenticate(userAdminOneTenant.username, Constants.DEFAULT_PASSWORD)
+
+        then: "returns the single tenant in the response"
+        response.status == 200
+        response.getHeaders().containsKey(GlobalConstants.X_TENANT_ID)
+        response.getHeaders().get(GlobalConstants.X_TENANT_ID)[0] == tenant.id
+
+        when: "add another role to the user and auth several times"
+        def responses = []
+        def newTenant = utils.createTenant()
+        utils.addRoleToUserOnTenant(userAdminOneTenant, newTenant, role.id)
+        10.times {
+            responses << cloud20.authenticate(userAdminOneTenant.username, Constants.DEFAULT_PASSWORD)
+        }
+
+        then: "an arbitrary tenant is returned in the header"
+        def tenantsReturned = []
+        responses.size().times {
+            assert response.status == 200
+            assert response.getHeaders().containsKey(GlobalConstants.X_TENANT_ID)
+            assert response.getHeaders().get(GlobalConstants.X_TENANT_ID)[0] == tenant.id || response.getHeaders().get(GlobalConstants.X_TENANT_ID)[0] == newTenant.id
+            tenantsReturned << response.getHeaders().get(GlobalConstants.X_TENANT_ID)[0]
+        }
+
+        and: "they are all the same"
+        tenantsReturned.unique().size() == 1
+
+        when: "auth w/ cloud user"
+        response = cloud20.authenticate(cloudUserAdmin.username, Constants.DEFAULT_PASSWORD)
+
+        then: "returns the mosso tenant in the headers"
+        response.status == 200
+        response.getHeaders().containsKey(GlobalConstants.X_TENANT_ID)
+        response.getHeaders().get(GlobalConstants.X_TENANT_ID)[0] == domainId2
+
+        when: "add another role to the cloud user & auth specifying that tenant"
+        utils.updateTenant(tenant.id, true)
+        utils.addRoleToUserOnTenant(cloudUserAdmin, tenant, role.id)
+        def authRequest = v2Factory.createPasswordAuthenticationRequestWithTenantId(cloudUserAdmin.username, Constants.DEFAULT_PASSWORD, tenant.id)
+        response = cloud20.authenticate(authRequest)
+
+        then: "the response contains the X-Tenant-Id set to the specified tenant"
+        response.status == 200
+        response.getHeaders().containsKey(GlobalConstants.X_TENANT_ID)
+        response.getHeaders().get(GlobalConstants.X_TENANT_ID)[0] == tenant.id
+
+        cleanup:
+        utils.deleteUsers(users1)
+        utils.deleteUsers(users2)
     }
 
     def verifyTenantContainedInServiceCatalog(def response, def tenantId, def endpointTemplateIds) {

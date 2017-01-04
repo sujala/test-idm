@@ -1174,8 +1174,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                     authResponseTuple = scopeAccessService.createScopeAccessForUserAuthenticationResult(authResult);
                 }
             }
-            AuthenticateResponse auth = authenticateResponseService.buildAuthResponseForAuthenticate(authResponseTuple, authenticationRequest);
-            return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
+
+            return authenticateResponseService.buildAuthResponseForAuthenticate(authResponseTuple, authenticationRequest);
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

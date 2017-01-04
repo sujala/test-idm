@@ -88,4 +88,6 @@ public final class GlobalConstants {
     public static final String DELETE_USER_LOG_NAME = "userDelete";
     public static final String FORBIDDEN_DUE_TO_RESTRICTED_TOKEN = "The scope of this token does not allow access to this resource";
 
+    public static final String X_TENANT_ID = "X-Tenant-Id";
+
 }

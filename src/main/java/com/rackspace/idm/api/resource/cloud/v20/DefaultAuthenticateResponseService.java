@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
@@ -10,6 +11,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.Validator20;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -22,12 +24,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Component
-public class DefaultAuthenticateResponseService implements AuthenticateResponseService{
+public class DefaultAuthenticateResponseService implements AuthenticateResponseService {
 
     @Autowired
     private ScopeAccessService scopeAccessService;
@@ -65,7 +70,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public AuthenticateResponse buildAuthResponseForAuthenticate(AuthResponseTuple authResponseTuple, AuthenticationRequest authenticationRequest) {
+    public Response.ResponseBuilder buildAuthResponseForAuthenticate(AuthResponseTuple authResponseTuple, AuthenticationRequest authenticationRequest) {
         /**
         * Common case will be a successful auth, so get the service catalog assuming the user has access to specified tenant.
         * The user would have successfully authenticated prior to reaching this point
@@ -73,6 +78,10 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         ServiceCatalogInfo scInfo = scopeAccessService.getServiceCatalogInfo(authResponseTuple.getUser());
 
         boolean restrictingAuthByTenant = isUserRestrictingAuthByTenant(authenticationRequest);
+        Tenant tenantInRequest = null;
+        if (restrictingAuthByTenant) {
+            tenantInRequest = getTenantForAuthRequest(authenticationRequest, scInfo);
+        }
 
         /**
         * If user specified a tenantId/tenantName for auth request, must verify user has access to that tenant (regardless of
@@ -104,8 +113,6 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         AuthenticateResponse auth;
         if (restrictingAuthByTenant) {
             //tenant was specified
-            Tenant tenant = getTenantForAuthRequest(authenticationRequest, scInfo);
-
             org.openstack.docs.identity.api.v2.Token convertedToken;
             if (authResponseTuple.isImpersonation()) {
                 convertedToken = tokenConverterCloudV20.toToken(authResponseTuple.getImpersonatedScopeAccess(), null);
@@ -113,11 +120,11 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
                 convertedToken = tokenConverterCloudV20.toToken(authResponseTuple.getUserScopeAccess(), null);
             }
 
-            convertedToken.setTenant(convertTenantEntityToApi(tenant));
+            convertedToken.setTenant(convertTenantEntityToApi(tenantInRequest));
 
             // Filter the service catalog when the tenant specified is NOT the mosso tenant
-            if(!isMossoTenant(tenant.getTenantId(), scInfo.getUserTenantRoles())) {
-                scInfo = scInfo.filterEndpointsByTenant(tenant);
+            if(!isMossoTenant(tenantInRequest.getTenantId(), scInfo.getUserTenantRoles())) {
+                scInfo = scInfo.filterEndpointsByTenant(tenantInRequest);
             }
 
             auth = authConverterCloudV20.toAuthenticationResponse(authResponseTuple,
@@ -135,7 +142,40 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
             auth.setServiceCatalog(null);
         }
 
-        return auth;
+        Response.ResponseBuilder responseBuilder = Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
+
+        /*
+         * Use the following logic to set the X-Tenant-Id header on the auth response. For more details see
+          * story https://jira.rax.io/browse/CID-559.
+          *
+          * 1.1. If user specifies tenantId / tenantName in request set value to request tenantId.
+          * 1.2. If not specified and user has a single tenant id then use that value.
+          * 1.3. If not specified and user has multiple tenant ids then use the mosso tenant id.
+          * 1.4. If not specified and user has multiple tenant ids and none are mosso pick arbitrarily tenant.
+          * 1.5. If user does not have any tenants then header is not added.
+         */
+        if (tenantInRequest != null) {
+            responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantInRequest.getTenantId());
+        } else if (scInfo.getUserTenants().size() == 1) {
+            responseBuilder.header(GlobalConstants.X_TENANT_ID, scInfo.getUserTenants().get(0).getTenantId());
+        } else if (scInfo.getUserTenants().size() > 1) {
+            String mossoTenantId = tenantService.getMossoIdFromTenantRoles(scInfo.getUserTenantRoles());
+            if (mossoTenantId != null) {
+                responseBuilder.header(GlobalConstants.X_TENANT_ID, mossoTenantId);
+            } else {
+                // Sort the tenants so that the same tenant is returned across repeated calls
+                List<Tenant> sortedTenants = new ArrayList<>(scInfo.getUserTenants());
+                Collections.sort(sortedTenants, new Comparator<Tenant>() {
+                    @Override
+                    public int compare(Tenant t1, Tenant t2) {
+                        return String.CASE_INSENSITIVE_ORDER.compare(t1.getTenantId(), t2.getTenantId());
+                    }
+                });
+                responseBuilder.header(GlobalConstants.X_TENANT_ID, scInfo.getUserTenants().get(0).getTenantId());
+            }
+        }
+
+        return responseBuilder;
     }
 
     @Override
