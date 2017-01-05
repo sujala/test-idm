@@ -1260,8 +1260,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProvider(providerId);
 
-            validator20.validateIdentityProviderForUpdate(provider);
-            existingProvider.setAuthenticationUrl(provider.getAuthenticationUrl()); //copy over the only attribute allowed to be updated
+            validator20.validateIdentityProviderForUpdate(provider, existingProvider);
+
+            //copy over the only attributes allowed to be updated
+            if (provider.getName() != null) {
+                existingProvider.setName(provider.getName());
+            }
+            if (provider.getAuthenticationUrl() != null) {
+                existingProvider.setAuthenticationUrl(provider.getAuthenticationUrl());
+            }
 
             federatedIdentityService.updateIdentityProvider(existingProvider); //update
             ResponseBuilder builder = Response.ok(uriInfo.getRequestUriBuilder().path(existingProvider.getProviderId()).build());

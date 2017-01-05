@@ -97,6 +97,7 @@ public class Validator20 {
 
     private static final String REQUIRED_ATTR_MESSAGE = "'%s' is a required attribute";
     private static final String INVALID_ATTR_MESSAGE = "'%s' is not a valid attribute for this service";
+    public static final String EMPTY_ATTR_MESSAGE = "'%s' attribute cannot be empty for this service";
 
     public static final String LENGTH_EXCEEDED_ERROR_MSG = "%s length cannot exceed %s characters";
 
@@ -313,6 +314,9 @@ public class Validator20 {
         }
 
         validateIdentityProviderName(identityProvider.getName());
+        if (federatedIdentityService.getIdentityProviderByName(identityProvider.getName()) != null) {
+            throw new DuplicateException(String.format(DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, identityProvider.getName()), ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS);
+        }
 
         validateStringNotNullWithMaxLength("issuer", identityProvider.getIssuer(), MAX_IDENTITY_PROVIDER_ISSUER);
         if (federatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) != null) {
@@ -378,19 +382,14 @@ public class Validator20 {
         if (!IDENTITY_PROVIDER_NAME_REGEX.matcher(name).matches()) {
             throw new BadRequestException(INVALID_IDENTITY_PROVIDER_NAME_ERROR_MSG, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
         }
-
-        if (federatedIdentityService.getIdentityProviderByName(name) != null) {
-            throw new DuplicateException(String.format(DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, name), ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS);
-        }
     }
 
-    public void validateIdentityProviderForUpdate(IdentityProvider identityProvider) {
+    public void validateIdentityProviderForUpdate(IdentityProvider identityProvider, com.rackspace.idm.domain.entity.IdentityProvider existingProvider) {
         if (identityProvider == null) {
             throw new BadRequestException("Must provide an identity provider");
         }
 
         validateAttributeisNull("issuer", identityProvider.getIssuer());
-        validateAttributeisNull("name", identityProvider.getName());
         validateAttributeisNull("federationType", identityProvider.getFederationType());
         validateAttributeisNull("description", identityProvider.getIssuer());
         validateAttributeisNull("id", identityProvider.getId());
@@ -398,8 +397,21 @@ public class Validator20 {
         validateAttributeisNull("approvedDomainGroup", identityProvider.getApprovedDomainGroup());
         validateAttributeisNull("approvedDomainIds", identityProvider.getApprovedDomainIds());
 
-        //allowed
-        validateStringNotNullWithMaxLength("authenticationUrl", identityProvider.getAuthenticationUrl(), MAX_IDENTITY_PROVIDER_AUTH_URL);
+        // Allowed attributes for update
+        validateAttributeForUpdate("name", identityProvider.getName());
+        validateAttributeForUpdate("authenticationUrl", identityProvider.getAuthenticationUrl());
+
+        if (identityProvider.getName() != null && !identityProvider.getName().equalsIgnoreCase(existingProvider.getName())) {
+            validateIdentityProviderName(identityProvider.getName());
+            // If the provider's id found by name does not match the existing provider's id, then provider with provided name already exist.
+            com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.getIdentityProviderByName(identityProvider.getName());
+            if (provider != null && !provider.getProviderId().equals(existingProvider.getProviderId())) {
+                throw new BadRequestException(String.format(DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, existingProvider.getName()), ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS);
+            }
+        }
+        if (identityProvider.getAuthenticationUrl() != null && !identityProvider.getAuthenticationUrl().equalsIgnoreCase(existingProvider.getAuthenticationUrl())) {
+            validateStringMaxLength("authenticationUrl", identityProvider.getAuthenticationUrl(), MAX_IDENTITY_PROVIDER_AUTH_URL);
+        }
     }
 
     public void validatePublicCertificate(PublicCertificate publicCertificate) {
@@ -485,6 +497,12 @@ public class Validator20 {
         return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(certBytes));
     }
 
+    private void throwBadRequestForEmptyAttribute(String attrName) {
+        String errMsg = String.format(EMPTY_ATTR_MESSAGE, attrName);
+        logger.debug(errMsg);
+        throw new BadRequestException(errMsg);
+    }
+
     private void throwBadRequestForMissingAttr(String attrName) {
         String errMsg = String.format(REQUIRED_ATTR_MESSAGE, attrName);
         logger.debug(errMsg);
@@ -519,6 +537,12 @@ public class Validator20 {
     private void validateAttributeisNull(String propertyName, Object value) {
         if (value != null) {
             throwBadRequestForProvidedAttrWithErrorCode(propertyName);
+        }
+    }
+
+    private void validateAttributeForUpdate(String propertyName, String value) {
+        if (value != null && value.isEmpty()) {
+            throwBadRequestForEmptyAttribute(propertyName);
         }
     }
 
