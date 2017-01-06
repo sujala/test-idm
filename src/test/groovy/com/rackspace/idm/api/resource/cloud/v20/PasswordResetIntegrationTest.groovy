@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.TokenScopeEnum
@@ -55,6 +56,9 @@ class PasswordResetIntegrationTest extends RootIntegrationTest {
 
         then: "success"
         response.status == 204
+
+        and: "username returned in the headers"
+        response.getHeaders().get(GlobalConstants.X_USER_NAME)[0] == userAdmin.username
 
         and: "password token is no longer valid"
         cloud20.validateToken(utils.getServiceAdminToken(), passwordToken).status == 404

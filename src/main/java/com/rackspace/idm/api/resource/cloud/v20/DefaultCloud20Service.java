@@ -1048,7 +1048,12 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             AuthResponseTuple auth = authWithForgotPasswordCredentials.authenticateForAuthResponse(authRequestAdapter);
 
-            return Response.noContent();
+            Response.ResponseBuilder builder = Response.noContent();
+            if(auth != null && auth.getUser() != null) {
+                return builder.header(GlobalConstants.X_USER_NAME, auth.getUser().getUsername());
+            } else {
+                return builder;
+            }
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -1079,7 +1084,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Audit.logSuccessfulPasswordResetRequest(user);
 
-            return Response.noContent();
+            return Response.noContent().header(GlobalConstants.X_USER_NAME, user.getUsername());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

@@ -89,5 +89,6 @@ public final class GlobalConstants {
     public static final String FORBIDDEN_DUE_TO_RESTRICTED_TOKEN = "The scope of this token does not allow access to this resource";
 
     public static final String X_TENANT_ID = "X-Tenant-Id";
+    public static final String X_USER_NAME = "X-User-Name";
 
 }
