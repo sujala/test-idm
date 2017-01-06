@@ -185,6 +185,8 @@ def get_domain_request_object(domain_req):
 
 def get_add_role_request_object(role_name=None, role_id=None,
                                 role_description=None,
+                                role_type=None,
+                                tenant_types=None,
                                 administrator_role=None,
                                 assignment=None,
                                 service_id=None):
@@ -199,6 +201,7 @@ def get_add_role_request_object(role_name=None, role_id=None,
         role_description = "CID Test Role"
 
     return requests.RoleAdd(role_name=role_name, role_id=role_id,
+                            role_type=role_type, tenant_types=tenant_types,
                             role_description=role_description,
                             administrator_role=administrator_role,
                             assignment=assignment,

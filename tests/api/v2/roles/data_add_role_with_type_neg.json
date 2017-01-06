@@ -1,0 +1,85 @@
+{
+  "with_rcn_type_no_tenant_type": {
+    "additional_input": {
+      "role_type": "RCN"
+    },
+    "expected_resp": {
+      "code": 400,
+      "message": "Tenant types are required when role type is 'rcn'."}
+  },
+  "with_rcn_type_empty_tenant_type": {
+    "additional_input": {
+      "role_type": "RCN",
+      "tenant_types": []
+    },
+    "expected_resp": {
+      "code": 400,
+      "message": "Tenant types are required when role type is 'rcn'."}
+  },
+  "with_rcn_type_invalid_tenant_type": {
+    "additional_input": {
+      "role_type": "RCN",
+      "tenant_types": ["type-1"]
+    },
+    "expected_resp": {
+      "code": 400,
+      "message": "Tenant type can only contain alphanumeric characters."}
+  },
+  "with_rcn_type_empty_str_tenant_type": {
+    "additional_input": {
+      "role_type": "RCN",
+      "tenant_types": [""]
+    },
+    "expected_resp": {
+      "code": 400,
+      "message": "Tenant type must possess a length > 0 and <= 15"}
+  },
+    "with_rcn_type_empty_str_tenant_type_2": {
+    "additional_input": {
+      "role_type": "RCN",
+      "tenant_types": ["", "type1"]
+    },
+    "expected_resp": {
+      "code": 400,
+      "message": "Tenant type must possess a length > 0 and <= 15"}
+  },
+  "with_rcn_type_invalid_size_tenant_type": {
+    "additional_input": {
+      "role_type": "RCN",
+      "tenant_types": ["type1234567890123"]
+    },
+    "expected_resp": {
+      "code": 400,
+      "message": "Tenant type must possess a length > 0 and <= 15"}
+  },
+  "with_invalid_type": {
+    "additional_input": {
+      "role_type": "TEST"
+    },
+    "expected_resp": {
+      "code": 400,
+      "message": "Invalid json request body for value 'TEST'"}
+  },
+  "with_rcn_type_invalid_assignment": {
+    "additional_input": {
+      "role_type": "RCN",
+      "tenant_types": ["type1"],
+      "assignment": "BOTH"
+    },
+    "expected_resp": {
+      "code": 400,
+      "message": "An RCN role must have global assignment."
+    }
+  },
+  "with_rcn_type_invalid_assignment_2": {
+    "additional_input": {
+      "role_type": "RCN",
+      "tenant_types": ["type1"],
+      "assignment": "TENANT"
+    },
+    "expected_resp": {
+      "code": 400,
+      "message": "An RCN role must have global assignment."
+    }
+  }
+}
