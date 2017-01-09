@@ -75,8 +75,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
                 header_validation.validate_header_content_length])
         self.header_validation_functions_HTTP_400 = (
             self.default_header_validations +
-            self.unexpected_headers_HTTP_400 + [
-                header_validation.validate_header_transfer_encoding])
+            self.unexpected_headers_HTTP_400)
 
     def setUp(self):
         super(TestAddEndpointMappingRule, self).setUp()

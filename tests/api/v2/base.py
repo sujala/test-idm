@@ -70,8 +70,7 @@ class TestBaseV2(base.TestBase):
                 header_validation.validate_header_content_length])
         cls.header_validation_functions_HTTP_400 = (
             cls.default_header_validations +
-            cls.unexpected_headers_HTTP_400 + [
-                header_validation.validate_header_transfer_encoding])
+            cls.unexpected_headers_HTTP_400)
 
     @classmethod
     def generate_client(cls, parent_client=None, request_object=None,

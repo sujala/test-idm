@@ -7,6 +7,7 @@
     -->
     <pool id="default"
         default="true"
+        chunked-encoding="auto"
         http.conn-manager.max-total="200"
         http.conn-manager.max-per-route="100"
         http.socket.timeout="30000"

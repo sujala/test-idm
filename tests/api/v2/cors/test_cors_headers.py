@@ -18,7 +18,7 @@ class TestCorsHeaders(base.TestBaseV2):
         super(TestCorsHeaders, cls).setUpClass()
 
     def test_cors_headers_only_allow_for_post_to_tokens(self):
-        request_origin = 'example.rackspace.com'
+        request_origin = 'http://example.rackspace.com'
         headers = {const.ORIGIN: request_origin}
         # Get a token
         req_obj = requests.AuthenticateWithPassword(
