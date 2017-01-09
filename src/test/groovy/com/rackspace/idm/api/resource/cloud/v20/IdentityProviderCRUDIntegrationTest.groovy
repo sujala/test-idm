@@ -1,14 +1,17 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviders
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum
 import com.rackspace.idm.domain.service.TenantService
+import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang.RandomStringUtils
@@ -312,19 +315,23 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Error if try to update IDP without specifying authenticationUrl - request: #requestContentType"() {
+    def "Try to update IDP without specifying authenticationUrl or name - request: #requestContentType"() {
         given:
         def idpManagerToken = utils.getServiceAdminToken()
-        def domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def idpName = getRandomUUID("name")
+        def domainGroupIdp = v2Factory.createIdentityProvider(idpName, "", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
         def createdIdp = response.getEntity(IdentityProvider)
         def updateIdp = new IdentityProvider()
 
         when: "create a DOMAIN IDP with approvedDomainGroup, empty string description"
         def updateIdpResponse = cloud20.updateIdentityProvider(idpManagerToken, createdIdp.id, updateIdp)
+        def updateIdpEntity = updateIdpResponse.getEntity(IdentityProvider)
 
         then: "successful"
-        updateIdpResponse.status == SC_BAD_REQUEST
+        updateIdpResponse.status == SC_OK
+        updateIdpEntity.name == idpName
+        updateIdpEntity.authenticationUrl == "http://random.url"
 
         where:
         requestContentType | _
@@ -333,7 +340,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Error if try to update IDP with any value other than authenticationUrl - property: #prop "() {
+    def "Error if try to update IDP with any value other than authenticationUrl or name - property: #prop "() {
         given:
         def idpManagerToken = utils.getServiceAdminToken()
 
@@ -344,9 +351,14 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response.status == SC_BAD_REQUEST
 
         where:
-        prop  | idp
-        "id"  | new IdentityProvider().with {it.authenticationUrl = "url"; it.id = "as"; it}
-        "name"  | new IdentityProvider().with {it.authenticationUrl = "url"; it.name = "name"; it}
+        prop                  | idp
+        "id"                  | new IdentityProvider().with {it.id = "as"; it}
+        "issuer"              | new IdentityProvider().with {it.issuer = "as"; it}
+        "federationType"      | new IdentityProvider().with {it.federationType = IdentityProviderFederationTypeEnum.DOMAIN; it}
+        "description"         | new IdentityProvider().with {it.description = "as"; it}
+        "publicCertificates"  | new IdentityProvider().with {it.publicCertificates = new PublicCertificates(); it}
+        "approvedDomainGroup" | new IdentityProvider().with {it.approvedDomainGroup = "as"; it}
+        "approvedDomainIds"   | new IdentityProvider().with {it.approvedDomainIds = new ApprovedDomainIds(); it}
     }
 
     @Unroll
@@ -942,6 +954,73 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
     }
 
+    def "Update Identity Provider returns errors appropriately"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def domain = utils.createDomainEntity(UUID.randomUUID().toString())
+        def tenant = utils.createTenant()
+        utils.addTenantToDomain(domain.id, tenant.id)
+        def idpName = getRandomUUID("idp")
+        def idpAuthenticationUrl = getRandomUUID()
+        IdentityProvider idpToCreate = v2Factory.createIdentityProvider(idpName, "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id]).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        def idp = utils.createIdentityProvider(idpManagerToken, idpToCreate)
+
+        when: "IDP with name already exist"
+        def existingIdpName = getRandomUUID("existingIdp")
+        IdentityProvider existingIdp = v2Factory.createIdentityProvider(existingIdpName, "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id]).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        def existingIdpEntity  = utils.createIdentityProvider(idpManagerToken, existingIdp)
+        IdentityProvider invalid = new IdentityProvider().with {
+            it.name = existingIdpName
+            it
+        }
+        def response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS)
+
+        when: "Cannot unset name for IDP"
+        invalid.name = ""
+        response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
+        invalid.name = idpName
+
+        then: "400"
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, String.format(Validator20.EMPTY_ATTR_MESSAGE, "name"))
+
+        when: "Cannot unset authenticationUrl for IDP"
+        invalid.authenticationUrl = ""
+        response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
+        invalid.authenticationUrl = idpAuthenticationUrl
+
+        then: "400"
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, String.format(Validator20.EMPTY_ATTR_MESSAGE, "authenticationUrl"))
+
+        when: "IDP with name length exceeded 255"
+        invalid.name = RandomStringUtils.randomAlphabetic(256)
+        response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
+
+        when: "IDP with name having special characters"
+        invalid.name = getRandomUUID("@")
+        response = cloud20.createIdentityProvider(idpManagerToken, invalid)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE)
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, idp.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, existingIdpEntity.id)
+        utils.deleteUserQuietly(idpManager)
+    }
+
     @Unroll
     def "Create Identity provider with name #name - content-type = #content, accept = #accept"() {
         given:
@@ -963,6 +1042,41 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         if (creationResultIdp) {
             utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
         }
+        utils.deleteUserQuietly(idpManager)
+
+        where:
+        name                            | content                         | accept
+        getRandomUUID("idp")            | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        getRandomUUID("idp")            | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        getRandomUUID("idp.other-name") | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        getRandomUUID("idp.other-name") | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Update Identity provider with name #name - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        IdentityProvider identityProvider = v2Factory.createIdentityProvider(getRandomUUID("idp"), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, identityProvider)
+        IdentityProvider createdIdp = response.getEntity(IdentityProvider)
+
+        when: "Update IDP"
+        IdentityProvider idpForUpdate = new IdentityProvider().with {
+            it.name = name
+            it
+        }
+        response = cloud20.updateIdentityProvider(idpManagerToken, createdIdp.id, idpForUpdate)
+        IdentityProvider updatedIdp = response.getEntity(IdentityProvider)
+
+        then: "Assert updated idp"
+        response.status == org.springframework.http.HttpStatus.OK.value()
+        updatedIdp.name == name
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, createdIdp.id)
         utils.deleteUserQuietly(idpManager)
 
         where:
