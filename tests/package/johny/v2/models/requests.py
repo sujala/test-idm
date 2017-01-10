@@ -377,14 +377,19 @@ class UserUpgrade(base.AutoMarshallingModel):
 class RoleAdd(base.AutoMarshallingModel):
     """Marshalling for Add Role Request."""
 
-    def __init__(self, role_name, role_id=None, role_description=None,
-                 administrator_role=None, service_id=None, assignment=None):
+    def __init__(self, role_name, role_id=None,
+                 role_type=None, tenant_types=None, role_description=None,
+                 administrator_role=None, service_id=None, assignment=None,
+                 propagate=None):
         self.role_name = role_name
         self.role_id = role_id
+        self.role_type = role_type
+        self.tenant_types = tenant_types
         self.role_description = role_description
         self.administrator_role = administrator_role
         self.service_id = service_id
         self.assignment = assignment
+        self.propagate = propagate
 
     def _obj_to_json(self):
         add_role_request = {
@@ -392,6 +397,12 @@ class RoleAdd(base.AutoMarshallingModel):
         }
         if self.role_id:
             add_role_request[const.ROLE][const.ID] = self.role_id
+        if self.role_type:
+            add_role_request[const.ROLE][const.RAX_AUTH_ROLE_TYPE] = (
+                self.role_type)
+        if self.tenant_types:
+            add_role_request[const.ROLE][const.NS_TYPES] = (
+                self.tenant_types)
         if self.role_description:
             add_role_request[const.ROLE][const.DESCRIPTION] = (
                 self.role_description)
@@ -400,6 +411,9 @@ class RoleAdd(base.AutoMarshallingModel):
         if self.assignment:
             add_role_request[const.ROLE][const.RAX_AUTH_ASSIGNMENT] = (
                 self.assignment)
+        if self.propagate is not None:
+            add_role_request[const.ROLE][const.RAX_AUTH_PROPAGATE] = (
+                self.propagate)
         if self.administrator_role:
             add_role_request[const.ROLE][const.ADMINISTRATOR_ROLE] = (
                 self.administrator_role
@@ -411,7 +425,9 @@ class RoleAdd(base.AutoMarshallingModel):
             const.RAX_AUTH, const.XMLNS_RAX_AUTH)
         add_role_request = etree.Element(
             const.ROLE, xmlns=const.XMLNS, id=self.role_id,
-            name=self.role_name, description=self.role_description,
+            name=self.role_name, type=self.role_type,
+            tenantTypes=self.tenant_types,
+            description=self.role_description,
             serviceId=self.service_id
         )
         return etree.tostring(add_role_request)

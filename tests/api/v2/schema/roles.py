@@ -16,16 +16,18 @@ role_item = {
         const.RAX_AUTH_PROPAGATE: {'type': 'boolean'},
         const.RAX_AUTH_ADMINISTRATOR_ROLE: {'type': 'string'},
         const.RAX_AUTH_ASSIGNMENT: {'type': 'string'},
-        const.RAX_AUTH_ROLE_TYPE: {'type': 'string'}
+        const.RAX_AUTH_ROLE_TYPE: {'type': 'string'},
+        const.NS_TYPES: {'type': 'array',
+                         'items': {'type': 'string'}}
     },
-    'requires': [const.NAME, const.ID, const.DESCRIPTION],
+    'required': [const.NAME, const.ID],
     'additionalProperties': False
 }
 
 add_role = {
     'type': 'object',
     'properties': {const.ROLE: role_item},
-    'requires': [const.ROLE],
+    'required': [const.ROLE],
     'additionalProperties': False
 }
 
@@ -37,6 +39,6 @@ list_roles = {
             'items': role_item
         }
     },
-    'requires': [const.ROLES],
+    'required': [const.ROLES],
     'additionalProperties': False
 }
