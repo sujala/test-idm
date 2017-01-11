@@ -148,6 +148,7 @@ ASSIGNMENT_TYPE_MANUAL = 'MANUAL'
 AUTH = 'auth'
 RAX_AUTH_AUTHENTICATED_BY = 'RAX-AUTH:authenticatedBy'
 BAD_REQUEST = 'badRequest'
+BOTH = 'BOTH'
 CREDENTIALS = 'credentials'
 ATTACHMENT = 'attachment'
 ATTACHMENTS = 'attachments'
@@ -374,3 +375,5 @@ FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE = (
 FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE = (
     'feature.restrict.user.manager.list.users.by.name.usage')
 TENANT_DEFAULT_DOMAIN = 'tenant.domainId.default'
+FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES = (
+    'feature.list.support.additional.role.properties')
