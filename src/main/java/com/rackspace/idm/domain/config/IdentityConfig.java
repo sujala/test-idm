@@ -325,6 +325,9 @@ public class IdentityConfig {
     public static final String FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_PROP = "feature.list.support.additional.role.properties";
     public static final boolean FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_DEFAULT = true;
 
+    public static final String FEATURE_POST_IDP_FEED_EVENTS_PROP = "feature.post.idp.feed.events";
+    public static final boolean FEATURE_POST_IDP_FEED_EVENTS_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -615,6 +618,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_PROP, FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_DEFAULT);
         defaults.put(FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_DEFAULT);
         defaults.put(FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_PROP, FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_DEFAULT);
+        defaults.put(FEATURE_POST_IDP_FEED_EVENTS_PROP, FEATURE_POST_IDP_FEED_EVENTS_DEFAULT);
 
         defaults.put(FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_DEFAULT);
         defaults.put(AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT);
@@ -1846,6 +1850,12 @@ public class IdentityConfig {
         public boolean listSupportAdditionalRoleProperties() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_PROP);
         }
+
+        @IdmProp(key = FEATURE_POST_IDP_FEED_EVENTS_PROP, versionAdded = "3.9.0", description = "When true, whenever an IDP is created, updated, or deleted an IDP feed event is posted to the Identity feed.")
+        public boolean postIdpFeedEvents() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_POST_IDP_FEED_EVENTS_PROP);
+        }
+
     }
 
     @Deprecated

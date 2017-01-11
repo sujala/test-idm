@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
@@ -7,8 +8,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviders
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import com.rackspace.idm.domain.service.FederatedIdentityService
 import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.validation.Validator20
@@ -16,6 +19,7 @@ import groovy.json.JsonSlurper
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
+import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
@@ -42,6 +46,9 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     @Autowired
     TenantDao tenantDao
 
+    @Autowired
+    FederatedIdentityService federatedIdentityService
+
     @Unroll
     def "CRUD a DOMAIN IDP with approvedDomainGroup, but no certs - request: #requestContentType"() {
         given:
@@ -49,6 +56,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
 
         when: "create a DOMAIN IDP with no certs and approvedDomainGroup"
+        resetCloudFeedsMock()
         IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
         IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
@@ -67,6 +75,19 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response.headers.getFirst("Location") != null
         response.headers.getFirst("Location").contains(creationResultIdp.id)
 
+        and: "only one event was posted"
+        def idpEntity = federatedIdentityService.getIdentityProviderByIssuer(domainGroupIdp.issuer)
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was a CREATE event for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.CREATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "get the DOMAIN group IDP"
         def getIdpResponse = cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType)
         IdentityProvider getResultIdp = getIdpResponse.getEntity(IdentityProvider)
@@ -84,6 +105,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getResultIdp.name != null
 
         when: "update the provider"
+        resetCloudFeedsMock()
         def newAuthUrl = RandomStringUtils.randomAlphanumeric(10)
         IdentityProvider updateDomainGroupIdp = new IdentityProvider().with {
             it.authenticationUrl = newAuthUrl
@@ -100,12 +122,37 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdentityProvider getAfterUpdateIdp = getAfterUpdateIdpResponse.getEntity(IdentityProvider)
         getAfterUpdateIdp.authenticationUrl == newAuthUrl
 
+        and: "only one event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was an UPDATE event for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "delete the provider"
+        resetCloudFeedsMock()
         def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
 
         then: "idp deleted"
         deleteIdpResponse.status == SC_NO_CONTENT
         cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType).status == SC_NOT_FOUND
+
+        and: "only one event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was a DELETE event for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.DELETE),
+                VerificationTimes.exactly(1)
+        )
 
         cleanup:
         if (creationResultIdp) {
@@ -126,6 +173,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
 
         when: "create a RACKER IDP with no certs and approvedDomainGroup"
+        resetCloudFeedsMock()
         IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, null, null)
         def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
         IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
@@ -144,6 +192,19 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response.headers.getFirst("Location") != null
         response.headers.getFirst("Location").contains(creationResultIdp.id)
 
+        and: "only one event was posted"
+        def idpEntity = federatedIdentityService.getIdentityProviderByIssuer(domainGroupIdp.issuer)
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was a CREATE event for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.CREATE),
+                VerificationTimes.exactly(1)
+        )
+
         when: "get the DOMAIN group IDP"
         def getIdpResponse = cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType)
         IdentityProvider getResultIdp = getIdpResponse.getEntity(IdentityProvider)
@@ -161,11 +222,24 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getResultIdp.name != null
 
         when: "delete the provider"
+        resetCloudFeedsMock()
         def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
 
         then: "idp deleted"
         deleteIdpResponse.status == SC_NO_CONTENT
         cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType).status == SC_NOT_FOUND
+
+        and: "only one event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was a DELETE event for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.DELETE),
+                VerificationTimes.exactly(1)
+        )
 
         cleanup:
         if (creationResultIdp) {
@@ -179,6 +253,68 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | _
     }
 
+    def "test post IDP events to feed feature flag: postEvents = #postEvents"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_POST_IDP_FEED_EVENTS_PROP, postEvents)
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        resetCloudFeedsMock()
+
+        when: "create the IDP"
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp)
+
+        then: "success"
+        response.status == SC_CREATED
+        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
+
+        and: "event was posted if feature is enabled"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(postEvents ? 1 : 0)
+        )
+
+        when: "update the IDP"
+        resetCloudFeedsMock()
+        def newAuthUrl = RandomStringUtils.randomAlphanumeric(10)
+        IdentityProvider updateDomainGroupIdp = new IdentityProvider().with {
+            it.authenticationUrl = newAuthUrl
+            it
+        }
+        def updateIdpResponse = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp.id, updateDomainGroupIdp)
+
+        then: "idp updated"
+        updateIdpResponse.status == SC_OK
+
+        and: "event was posted if feature is enabled"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(postEvents ? 1 : 0)
+        )
+
+        when: "delete the provider"
+        resetCloudFeedsMock()
+        def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
+
+        then: "idp deleted"
+        deleteIdpResponse.status == SC_NO_CONTENT
+
+        and: "event was posted if feature is enabled"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(postEvents ? 1 : 0)
+        )
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        utils.deleteUserQuietly(idpManager)
+        reloadableConfiguration.reset()
+
+        where:
+        postEvents | _
+        true       | _
+        false      | _
+    }
 
     @Unroll
     def "Error check create IDP with various empty strings - request: #requestContentType"() {
@@ -187,6 +323,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
         def domainId = utils.createDomain()
         cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
+        resetCloudFeedsMock()
 
         when: "create a DOMAIN IDP with approvedDomainGroup, empty approvedDomainId list"
         IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, Collections.EMPTY_LIST)
@@ -250,6 +387,13 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response.status == SC_BAD_REQUEST
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
 
+        and: "no feed event was posted"
+        def idpEntity = federatedIdentityService.getIdentityProviderByIssuer(domainGroupIdp.issuer)
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(0)
+        )
+
         cleanup:
         utils.deleteUser(idpManager)
 
@@ -266,6 +410,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
         def domainId = utils.createDomain()
         cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
+        resetCloudFeedsMock()
 
         when: "create a IDP with approvedDomainGroup, null list"
         IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.RACKER, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
@@ -282,6 +427,13 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "bad request"
         response.status == SC_BAD_REQUEST
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+
+        and: "no feed event was posted"
+        def idpEntity = federatedIdentityService.getIdentityProviderByIssuer(domainGroupIdp.issuer)
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(0)
+        )
 
         cleanup:
         utils.deleteUser(idpManager)

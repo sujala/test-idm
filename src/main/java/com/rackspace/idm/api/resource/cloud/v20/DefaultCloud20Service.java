@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.rackspace.docs.core.event.EventType;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
@@ -1245,6 +1246,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             com.rackspace.idm.domain.entity.IdentityProvider newProvider = identityProviderConverterCloudV20.fromIdentityProvider(provider);
             federatedIdentityService.addIdentityProvider(newProvider);
+            atomHopperClient.asyncPostIdpEvent(newProvider, EventType.CREATE);
             ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(newProvider.getProviderId()).build());
             return builder.entity(identityProviderConverterCloudV20.toIdentityProvider(newProvider));
         } catch (DuplicateException de) {
@@ -1276,6 +1278,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             federatedIdentityService.updateIdentityProvider(existingProvider); //update
+            atomHopperClient.asyncPostIdpEvent(existingProvider, EventType.UPDATE);
             ResponseBuilder builder = Response.ok(uriInfo.getRequestUriBuilder().path(existingProvider.getProviderId()).build());
             return builder.entity(identityProviderConverterCloudV20.toIdentityProvider(existingProvider));
         } catch (Exception ex) {
@@ -1392,7 +1395,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             //verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
 
+            com.rackspace.idm.domain.entity.IdentityProvider idp = federatedIdentityService.getIdentityProvider(providerId);
             federatedIdentityService.deleteIdentityProviderById(providerId);
+            if (idp != null) {
+                atomHopperClient.asyncPostIdpEvent(idp, EventType.DELETE);
+            }
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -1420,6 +1427,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             provider.getUserCertificates().add(certBytes);
             federatedIdentityService.updateIdentityProvider(provider);
+            atomHopperClient.asyncPostIdpEvent(provider, EventType.UPDATE);
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -1458,6 +1466,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             provider.getUserCertificates().remove(matchingCert);
             federatedIdentityService.updateIdentityProvider(provider);
+            atomHopperClient.asyncPostIdpEvent(provider, EventType.UPDATE);
 
             return Response.noContent();
         } catch (Exception ex) {
