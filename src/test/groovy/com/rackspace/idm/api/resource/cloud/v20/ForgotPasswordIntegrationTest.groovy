@@ -101,6 +101,9 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         then:
         response.status == SC_NO_CONTENT
 
+        and: "username returned in the headers"
+        response.getHeaders().get(GlobalConstants.X_USER_NAME)[0] == userAdmin.username
+
         where:
         requestContentType | _
         MediaType.APPLICATION_JSON_TYPE | _
