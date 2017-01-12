@@ -66,6 +66,9 @@ public class IdentityProvider implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_AUTHENTICATION_URL, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
     private String authenticationUrl;
 
+    @LDAPField(attribute = LdapRepository.ATTR_IDP_POLICY, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
+    private byte[] policy;
+
     @Override
     public String getAuditContext() {
         String format = "identityProviderId=%s";

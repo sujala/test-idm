@@ -1037,6 +1037,13 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.131) = {
     description = "tenant type"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.132) = {
+    name = rsIdpPolicy
+    ldap-names = rsIdpPolicy
+    syntax = octetString
+    description = "Policy of identity provider"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -1565,7 +1572,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.35) = {
         rsTargetUserSource,
         rsApprovedDomainGroup,
         rsApprovedDomainIds,
-        rsAuthenticationUrl
+        rsAuthenticationUrl,
+        rsIdpPolicy
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.36) = {
