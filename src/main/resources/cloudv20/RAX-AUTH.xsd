@@ -856,7 +856,7 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="name" type="xsd:string" use="optional">
+        <attribute name="name" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
@@ -865,6 +865,12 @@
                     </p>
                 </xsd:documentation>
             </annotation>
+            <simpleType>
+                <restriction base="xsd:string">
+                    <maxLength value="255"/>
+                    <pattern value="(\p{L}|\p{Nd}|-|\.)+"/>
+                </restriction>
+            </simpleType>
         </attribute>
         <attribute name="description" type="xsd:string" use="optional">
             <annotation>
