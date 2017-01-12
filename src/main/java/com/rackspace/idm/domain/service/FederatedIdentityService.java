@@ -7,10 +7,11 @@ import org.opensaml.saml2.core.LogoutRequest;
 import org.opensaml.saml2.core.LogoutResponse;
 import org.opensaml.saml2.core.Response;
 
+import javax.naming.ServiceUnavailableException;
 import java.util.List;
 
 public interface FederatedIdentityService {
-    SamlAuthResponse processSamlResponse(Response samlResponse);
+    SamlAuthResponse processSamlResponse(Response samlResponse) throws ServiceUnavailableException;
 
     /**
      * Logs out/terminates the associated federated user, which removes any persistent state for that user and revokes any tokens

@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum
 import com.rackspace.idm.domain.service.TenantService
+import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.io.IOUtils
@@ -19,6 +20,7 @@ import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
+import org.openstack.docs.identity.api.v2.ServiceUnavailableFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Unroll
@@ -1313,6 +1315,146 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUser(user)
+    }
+
+    @Unroll
+    def "CRUD a BROKER IDP - request: #requestContentType"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when: "Create IDP can set federationType of 'BROKER'"
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.BROKER, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
+
+        then: "created successfully"
+        response.status == SC_CREATED
+        creationResultIdp.approvedDomainGroup == ApprovedDomainGroupEnum.GLOBAL.storedVal
+        creationResultIdp.approvedDomainIds == null
+        creationResultIdp.description == domainGroupIdp.description
+        creationResultIdp.issuer == domainGroupIdp.issuer
+        creationResultIdp.authenticationUrl == domainGroupIdp.authenticationUrl
+        creationResultIdp.publicCertificates == null
+        creationResultIdp.id != null
+        creationResultIdp.name != null
+        creationResultIdp.federationType == IdentityProviderFederationTypeEnum.BROKER
+        response.headers.getFirst("Location") != null
+        response.headers.getFirst("Location").contains(creationResultIdp.id)
+
+        when: "GET/LIST IDPs must return BROKER as appropriate"
+        def getIdpResponse = cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType)
+        IdentityProvider getResultIdp = getIdpResponse.getEntity(IdentityProvider)
+
+        then: "contains appropriate info"
+        getIdpResponse.status == SC_OK
+        creationResultIdp.approvedDomainGroup == ApprovedDomainGroupEnum.GLOBAL.storedVal
+        getResultIdp.approvedDomainIds == null
+        getResultIdp.description == domainGroupIdp.description
+        getResultIdp.issuer == domainGroupIdp.issuer
+        getResultIdp.authenticationUrl == domainGroupIdp.authenticationUrl
+        getResultIdp.federationType == IdentityProviderFederationTypeEnum.BROKER
+        getResultIdp.publicCertificates == null
+        getResultIdp.id != null
+        getResultIdp.name != null
+
+        when: "delete the provider"
+        def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
+
+        then: "idp deleted"
+        deleteIdpResponse.status == SC_NO_CONTENT
+        cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType).status == SC_NOT_FOUND
+
+        cleanup:
+        if (creationResultIdp) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        }
+        utils.deleteUserQuietly(idpManager)
+
+        where:
+        requestContentType | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    def "When BROKER is specified, the approvedDomainGroup must be set, and specified as GLOBAL"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when: "Create IDP with missing approvedDomainGroup"
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.BROKER, null, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+
+
+        when: "Create IDP with non GLOBAL approvedDomainGroup"
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.BROKER, "NONE", null)
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS)
+
+        where:
+        requestContentType              | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "When a federation auth request is made w/ a SAML Response issued by a BROKER IDP, a 503 must be returned."() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        when: "Create IDP can set federationType of 'BROKER'"
+        def keyPair = SamlCredentialUtils.generateKeyPair()
+        def certificate = SamlCredentialUtils.generateCertificate(keyPair)
+        def pubCertPemString = SamlCredentialUtils.getCertificateAsPEMString(certificate)
+        def publicCertificate = v2Factory.createPublicCertificate(pubCertPemString)
+        def publicCertificates = v2Factory.createPublicCertificates(publicCertificate)
+        def samlProducerForSharedIdp = new SamlProducer(SamlCredentialUtils.generateX509Credential(certificate, keyPair))
+
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.BROKER, ApprovedDomainGroupEnum.GLOBAL.storedVal, null).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
+
+        then: "created successfully"
+        response.status == SC_CREATED
+
+        when: "federate with BROKER IDP"
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def email = "fedIntTest@invalid.rackspace.com"
+        def assertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(domainGroupIdp.issuer, username, 5000, domainId, null, email, samlProducerForSharedIdp);
+        response = cloud20.federatedAuthenticate(assertion)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ServiceUnavailableFault, SC_SERVICE_UNAVAILABLE, DefaultFederatedIdentityService.ERROR_SERVICE_UNAVAILABLE)
+
+        when: "delete the provider"
+        def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
+
+        then: "idp deleted"
+        deleteIdpResponse.status == SC_NO_CONTENT
+        cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType).status == SC_NOT_FOUND
+
+        cleanup:
+        if (creationResultIdp) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        }
+        utils.deleteUserQuietly(idpManager)
+
+        where:
+        requestContentType | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
     }
 
 }

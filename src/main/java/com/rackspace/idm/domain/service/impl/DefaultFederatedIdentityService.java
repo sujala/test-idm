@@ -18,11 +18,13 @@ import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.opensaml.saml2.core.*;
 import org.opensaml.xml.signature.Signature;
+import org.openstack.docs.identity.api.v2.ServiceUnavailableFault;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.naming.ServiceUnavailableException;
 import java.util.List;
 import java.util.UUID;
 
@@ -50,14 +52,23 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     @Autowired
     private IdentityConfig identityConfig;
 
+    public static final String ERROR_SERVICE_UNAVAILABLE = "Service Unavailable";
 
     @Override
-    public SamlAuthResponse processSamlResponse(Response response) {
+    public SamlAuthResponse processSamlResponse(Response response) throws ServiceUnavailableException {
+
+
         //validate
         SamlResponseDecorator decoratedSamlResponse = new SamlResponseDecorator(response);
 
-        //before anything, validate the issuer and signature
         IdentityProvider provider = getIdentityProviderForResponse(decoratedSamlResponse);
+        IdentityProviderFederationTypeEnum federationType = provider.getFederationTypeAsEnum();
+
+        if (IdentityProviderFederationTypeEnum.BROKER == federationType) {
+            throw new ServiceUnavailableException(ERROR_SERVICE_UNAVAILABLE);
+        }
+
+        //before anything, validate the issuer and signature
         validateSignatureForProvider(decoratedSamlResponse.checkAndGetSignature(), provider);
 
         //sig valid. Now validate format of the request. Don't need to use results, just perform the validation
@@ -71,7 +82,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         validateIssueInstant(issueInstant);
 
         //Basic format is good. Now hand off request to handler for the user source
-        IdentityProviderFederationTypeEnum federationType = provider.getFederationTypeAsEnum();
         SamlAuthResponse authResponse = null;
 
         if (IdentityProviderFederationTypeEnum.DOMAIN == federationType) {

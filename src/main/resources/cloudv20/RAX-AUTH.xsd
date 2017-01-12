@@ -621,6 +621,7 @@
         <restriction base="xsd:string">
             <enumeration value="RACKER"/>
             <enumeration value="DOMAIN"/>
+            <enumeration value="BROKER"/>
         </restriction>
     </simpleType>
 

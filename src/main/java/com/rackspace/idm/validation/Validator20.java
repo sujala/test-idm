@@ -94,12 +94,15 @@ public class Validator20 {
     public static final int MAX_IDENTITY_PROVIDER_DESCRIPTION = Constants.MAX_255;
     public static final String APPROVED_DOMAIN_GROUP_NAME = "approvedDomainGroup";
     public static final String APPROVED_DOMAINS = "approvedDomains";
+    public static final String BROKER_DOMAIN_GROUP_NAME = "GLOBAL";
 
     private static final String REQUIRED_ATTR_MESSAGE = "'%s' is a required attribute";
     private static final String INVALID_ATTR_MESSAGE = "'%s' is not a valid attribute for this service";
     public static final String EMPTY_ATTR_MESSAGE = "'%s' attribute cannot be empty for this service";
 
     public static final String LENGTH_EXCEEDED_ERROR_MSG = "%s length cannot exceed %s characters";
+
+    public static final String ERROR_APPROVED_DOMAIN_GROUP_NAME_SHOULD_BE_GLOBAL = "When BROKER IDP is specified, the approvedDomainGroup must be set, and specified as GLOBAL";
 
     @Autowired
     private TenantService tenantService;
@@ -367,6 +370,10 @@ public class Validator20 {
                         throw new BadRequestException(String.format("The provided approved domain '%s' does not exist", providedApprovedDomain), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN);
                     }
                 }
+            }
+        } else if (identityProvider.getFederationType() == IdentityProviderFederationTypeEnum.BROKER) {
+            if (providedApprovedDomainGroup == null || !providedApprovedDomainGroup.equals(BROKER_DOMAIN_GROUP_NAME)) {
+                throw new BadRequestException(ERROR_APPROVED_DOMAIN_GROUP_NAME_SHOULD_BE_GLOBAL, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS);
             }
         } else {
             //racker provider don't contain approvedDomain stuff
