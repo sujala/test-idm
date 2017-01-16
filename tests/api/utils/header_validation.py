@@ -151,6 +151,14 @@ def validate_expected_headers(expected_headers):
     return validation
 
 
+def validate_header_tenant_id(value):
+    header = 'x-tenant-id'
+
+    def validation(response):
+        basic_header_validations(response=response, header=header)
+        assert response.headers[header] == value
+    return validation
+
 validate_location_header_not_present = validate_header_not_present('Location')
 validate_content_length_header_not_present = validate_header_not_present(
     'Content-Length')

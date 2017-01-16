@@ -86,7 +86,7 @@ class TestCorsHeaders(base.TestBaseV2):
             header_validation.validate_header_not_present(
                 unexpected_headers=[const.ACCESS_CONTROL_EXPOSE_HEADERS])
             header_validation.validate_expected_headers(
-                expected_headers=expected_resp_headers)
+                expected_headers=expected_resp_headers)(response)
         else:
             self.assertEqual(response.status_code, 403)
 
@@ -112,4 +112,4 @@ class TestCorsHeaders(base.TestBaseV2):
             const.ACCESS_CONTROL_REQUEST_METHOD)(response)
         # cors headers not included
         header_validation.validate_header_not_present(
-            unexpected_headers=unexpected_headers)
+            unexpected_headers=unexpected_headers)(response)
