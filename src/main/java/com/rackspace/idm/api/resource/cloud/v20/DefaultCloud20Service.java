@@ -1049,11 +1049,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             AuthResponseTuple auth = authWithForgotPasswordCredentials.authenticateForAuthResponse(authRequestAdapter);
 
             Response.ResponseBuilder builder = Response.noContent();
-            if(auth != null && auth.getUser() != null) {
-                return builder.header(GlobalConstants.X_USER_NAME, auth.getUser().getUsername());
-            } else {
-                return builder;
-            }
+            return builder.header(GlobalConstants.X_USER_NAME, forgotPasswordCredentials.getUsername());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
