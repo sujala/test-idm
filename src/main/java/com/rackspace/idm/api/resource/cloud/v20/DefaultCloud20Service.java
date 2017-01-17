@@ -1503,6 +1503,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             identityProvider.setPolicy(policyByteArray);
 
             federatedIdentityService.updateIdentityProvider(identityProvider);
+            atomHopperClient.asyncPostIdpEvent(identityProvider, EventType.UPDATE);
 
             return Response.noContent();
         } catch (Exception ex) {
