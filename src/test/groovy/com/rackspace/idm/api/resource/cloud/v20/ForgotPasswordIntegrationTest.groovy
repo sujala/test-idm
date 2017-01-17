@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.entity.TokenScopeEnum
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.api.resource.cloud.email.EmailTemplateConstants
+import com.rackspace.idm.helpers.CloudTestUtils
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.commons.lang.StringUtils
@@ -110,6 +111,19 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE | _
     }
 
+    def "username returned in headers for forgot pw calls if user does not exist"() {
+        given:
+        def username = "doesNotExist" + RandomStringUtils.randomAlphanumeric(30)
+
+        when:
+        ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(username, null)
+        def response = methods.forgotPassword(creds)
+
+        then:
+        response.status == SC_NO_CONTENT
+        response.getHeaders().get(GlobalConstants.X_USER_NAME)[0] == username
+    }
+
     def "When user is identity:admin or service:admin, no email sent"() {
         when: "try to reset identity admin"
         ForgotPasswordCredentials creds = v2Factory.createForgotPasswordCredentials(Constants.IDENTITY_ADMIN_USERNAME, null)
@@ -119,6 +133,9 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         response.status == SC_NO_CONTENT
         CollectionUtils.isEmpty(wiserWrapper.wiserServer.getMessages())
 
+        and: "username returned in the headers"
+        response.getHeaders().get(GlobalConstants.X_USER_NAME)[0] == Constants.IDENTITY_ADMIN_USERNAME
+
         when: "try to reset service admin"
         creds = v2Factory.createForgotPasswordCredentials(Constants.SERVICE_ADMIN_USERNAME, null)
         response = methods.forgotPassword(creds)
@@ -126,6 +143,9 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         then: "response is 204, but no email sent"
         response.status == SC_NO_CONTENT
         CollectionUtils.isEmpty(wiserWrapper.wiserServer.getMessages())
+
+        and: "username returned in the headers"
+        response.getHeaders().get(GlobalConstants.X_USER_NAME)[0] == Constants.SERVICE_ADMIN_USERNAME
     }
 
     def "When user is disabled, no email sent"() {
@@ -141,6 +161,9 @@ class ForgotPasswordIntegrationTest extends RootIntegrationTest {
         then: "response is 204, but no email sent"
         response.status == SC_NO_CONTENT
         CollectionUtils.isEmpty(wiserWrapper.wiserServer.getMessages())
+
+        and: "username returned in the headers"
+        response.getHeaders().get(GlobalConstants.X_USER_NAME)[0] == defaultUserUsername
 
         cleanup:
         deleteUserQuietly(defaultUser)
