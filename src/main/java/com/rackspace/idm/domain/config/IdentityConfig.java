@@ -228,6 +228,9 @@ public class IdentityConfig {
     public static final String IDP_MAX_SEACH_RESULT_SIZE_PROP = "identity.provider.max.search.result.size";
     public static final int IDP_MAX_SEACH_RESULT_SIZE_DEFAULT = 1000;
 
+    public static final String IDP_POLICY_MAX_KILOBYTE_SIZE_PROP = "identity.provider.policy.max.kilobyte.size";
+    public static final int IDP_POLICY_MAX_KILOBYTE_SIZE_DEFAULT = 2;
+
     public static final String FEDERATED_DELTA_EXPIRATION_SECONDS_PROP = "federated.deltaExpiration.seconds";
     public static final int FEDERATED_DELTA_EXPIRATION_SECONDS_DEFAULT = 43200;
 
@@ -622,6 +625,8 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_DEFAULT);
         defaults.put(AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT);
+
+        defaults.put(IDP_POLICY_MAX_KILOBYTE_SIZE_PROP, IDP_POLICY_MAX_KILOBYTE_SIZE_DEFAULT);
 
         return defaults;
     }
@@ -1856,6 +1861,10 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_POST_IDP_FEED_EVENTS_PROP);
         }
 
+        @IdmProp(key = IDP_POLICY_MAX_KILOBYTE_SIZE_PROP, versionAdded = "3.9.0", description = "Determines the max size in kilobytes for an IDP's policy file.")
+        public int getIdpPolicyMaxSize() {
+            return getIntSafely(reloadableConfiguration, IDP_POLICY_MAX_KILOBYTE_SIZE_PROP);
+        }
     }
 
     @Deprecated

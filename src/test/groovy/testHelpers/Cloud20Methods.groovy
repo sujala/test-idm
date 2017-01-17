@@ -72,6 +72,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_FORGOT_PASSWORD = "forgot-pwd"
     static def SERVICE_PATH_PASSWORD_RESET = "pwd-reset"
     static def SERVICE_PATH_RULES = "rules"
+    static def SERVICE_PATH_MAPPING = "mapping"
 
     static def ENDPOINTS = "endpoints"
     static def ENDPOINT_TEMPLATES = "endpointTemplates"
@@ -371,6 +372,16 @@ class Cloud20Methods {
     def getIdentityProvider(token, identityProviderId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).get(ClientResponse)
+    }
+
+    def updateIdentityProviderPolicy(token, identityProviderId, policy, MediaType requestContentMediaType = MediaType.APPLICATION_JSON_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(SERVICE_PATH_MAPPING).header(X_AUTH_TOKEN, token).type(requestContentMediaType.toString()).entity(policy).put(ClientResponse)
+    }
+
+    def getIdentityProviderPolicy(token, identityProviderId, MediaType acceptMediaType = MediaType.APPLICATION_JSON_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(SERVICE_PATH_MAPPING).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).get(ClientResponse)
     }
 
     def listIdentityProviders(token, name = null, domainId = null, idpType = null, tenantId = null, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {

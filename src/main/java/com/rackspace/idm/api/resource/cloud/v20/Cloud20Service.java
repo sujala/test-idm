@@ -15,6 +15,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -37,6 +38,10 @@ public interface Cloud20Service {
     ResponseBuilder addIdentityProvider(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, IdentityProvider provider);
 
     ResponseBuilder updateIdentityProvider(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String identityProviderId, IdentityProvider provider);
+
+    ResponseBuilder updateIdentityProviderPolicy(HttpHeaders httpHeaders, String authToken, String identityProviderId, String policy);
+
+    ResponseBuilder getIdentityProviderPolicy(HttpHeaders httpHeaders, String authToken, String identityProviderId);
 
     ResponseBuilder getIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId);
 

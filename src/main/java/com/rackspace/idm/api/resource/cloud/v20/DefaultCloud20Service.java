@@ -44,10 +44,14 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.opensaml.saml2.core.LogoutResponse;
 import org.opensaml.saml2.core.StatusCode;
 import org.opensaml.saml2.core.impl.LogoutResponseMarshaller;
@@ -76,10 +80,9 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.io.*;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Component
@@ -91,6 +94,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String RBAC = "rbac";
     public static final String SETUP_MFA_SCOPE_FORBIDDEN = "SETUP-MFA SCOPE not supported";
     public static final String MUST_SETUP_MFA = "User must setup multi-factor";
+    public static final String POLICY_INVALID_JSON_ERROR_MESSAGE = "Policy contains invalid json.";
+    public static final String POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE = "Max size exceed. Policy file must be less then %s Kilobytes.";
 
     public static final String FEATURE_USER_TOKEN_SELF_VALIDATION = "feature.user.token.selfValidation";
     public static final boolean FEATURE_USER_TOKEN_SELF_VALIDATION_DEFAULT_VALUE = false;
@@ -1465,6 +1470,68 @@ public class DefaultCloud20Service implements Cloud20Service {
             atomHopperClient.asyncPostIdpEvent(provider, EventType.UPDATE);
 
             return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder updateIdentityProviderPolicy(HttpHeaders httpHeaders, String authToken, String identityProviderId, String policy) {
+        try {
+            //verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            //verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+
+            // Ensure policy does not exceed max size allowed
+            byte [] policyByteArray = policy.getBytes(StandardCharsets.UTF_8);
+            double policyKilobyteSize = (double) policyByteArray.length / 1024;
+            if(policyKilobyteSize > identityConfig.getReloadableConfig().getIdpPolicyMaxSize()){
+                throw new BadRequestException(String.format(POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE, identityConfig.getReloadableConfig().getIdpPolicyMaxSize()));
+            }
+
+            // Ensure policy contains valid json
+            try {
+                JSONParser jsonParser = new JSONParser();
+                jsonParser.parse(new StringReader(policy));
+            } catch (ParseException ex) {
+                throw new BadRequestException(POLICY_INVALID_JSON_ERROR_MESSAGE);
+            }
+
+            com.rackspace.idm.domain.entity.IdentityProvider identityProvider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
+            identityProvider.setPolicy(policyByteArray);
+
+            federatedIdentityService.updateIdentityProvider(identityProvider);
+
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getIdentityProviderPolicy(HttpHeaders httpHeaders, String authToken, String identityProviderId) {
+        try {
+            //verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            //verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
+                    Arrays.asList(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                                  IdentityRole.IDENTITY_PROVIDER_READ_ONLY.getRoleName()));
+
+            com.rackspace.idm.domain.entity.IdentityProvider identityProvider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
+
+            // Return empty json if identity provider does not have a policy
+            String body;
+            if (identityProvider.getPolicy() == null) {
+                body = String.valueOf(new JSONObject());
+            } else {
+                body = new String(identityProvider.getPolicy());
+            }
+
+            return Response.ok(body);
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
