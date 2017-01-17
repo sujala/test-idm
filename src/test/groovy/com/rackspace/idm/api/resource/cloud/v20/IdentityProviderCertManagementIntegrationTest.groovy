@@ -1,7 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.core.event.EventType
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.service.FederatedIdentityService
 import org.joda.time.DateTime
+import org.mockserver.verify.VerificationTimes
+import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
@@ -12,6 +16,9 @@ import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
 
 class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest {
+
+    @Autowired
+    FederatedIdentityService federatedIdentityService
 
     @Unroll
     def "test full key rotation for identity provider - request: #requestContentType"() {
@@ -40,10 +47,24 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
 
         when: "add the first cert to the IDP"
+        resetCloudFeedsMock()
         def response = cloud20.createIdentityProviderCertificates(idpManagerToken, idp.id, pubCerts1, requestContentType)
 
         then: "success"
         response.status == HttpServletResponse.SC_NO_CONTENT
+
+        and: "only one event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was an UPDATE event for the IDP"
+        def idpEntity = federatedIdentityService.getIdentityProviderByIssuer(idp.issuer)
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "get the IDP"
         def identityProviderResponse = utils.getIdentityProvider(idpManagerToken, idp.id)
@@ -61,10 +82,23 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         samlResponse.status == HttpServletResponse.SC_OK
 
         when: "add the second cert to the IDP"
+        resetCloudFeedsMock()
         response = cloud20.createIdentityProviderCertificates(idpManagerToken, idp.id, pubCerts2, requestContentType)
 
         then: "success"
         response.status == HttpServletResponse.SC_NO_CONTENT
+
+        and: "only one event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was an UPDATE event for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "get the IDP"
         identityProviderResponse = utils.getIdentityProvider(idpManagerToken, idp.id)
@@ -85,10 +119,23 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         samlResponse.status == HttpServletResponse.SC_OK
 
         when: "delete the first cert"
+        resetCloudFeedsMock()
         def deleteCertsResponse = cloud20.deleteIdentityProviderCertificates(idpManagerToken, idp.id, createdCert1.id, requestContentType)
 
         then: "success"
         deleteCertsResponse.status == HttpServletResponse.SC_NO_CONTENT
+
+        and: "only one event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was an UPDATE event for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "get the IDP"
         identityProviderResponse = utils.getIdentityProvider(idpManagerToken, idp.id)
@@ -114,10 +161,23 @@ class IdentityProviderCertManagementIntegrationTest extends RootIntegrationTest 
         samlResponse.status == HttpServletResponse.SC_OK
 
         when: "delete the second cert"
+        resetCloudFeedsMock()
         deleteCertsResponse = cloud20.deleteIdentityProviderCertificates(idpManagerToken, idp.id, createdCert2.id, requestContentType)
 
         then: "success"
         deleteCertsResponse.status == HttpServletResponse.SC_NO_CONTENT
+
+        and: "only one event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was an UPDATE event for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
 
         when: "get the IDP"
         identityProviderResponse = utils.getIdentityProvider(idpManagerToken, idp.id)

@@ -10,35 +10,33 @@ import com.rackspace.docs.event.identity.user.ResourceTypes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import com.rackspace.idm.exception.IdmException;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.Validate;
-import org.apache.http.*;
+import org.apache.http.HttpException;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
-import org.apache.http.conn.ConnectionKeepAliveStrategy;
-import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.*;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.message.BasicHeaderElementIterator;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.protocol.HttpContext;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +68,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 @Component
 public class AtomHopperClient {
@@ -96,7 +93,7 @@ public class AtomHopperClient {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static final Class[] JAXB_CONTEXT_FEED_ENTRY_CONTEXT_PATH = new Class[] {UsageEntry.class, CloudIdentityType.class, com.rackspace.docs.event.identity.token.CloudIdentityType.class, com.rackspace.docs.event.identity.trr.user.CloudIdentityType.class};
+    private static final Class[] JAXB_CONTEXT_FEED_ENTRY_CONTEXT_PATH = new Class[] {UsageEntry.class, CloudIdentityType.class, com.rackspace.docs.event.identity.token.CloudIdentityType.class, com.rackspace.docs.event.identity.trr.user.CloudIdentityType.class, com.rackspace.docs.event.identity.idp.CloudIdentityType.class};
     private static final JAXBContext JAXB_CONTEXT_FEED_ENTRY;
 
     static {
@@ -255,7 +252,21 @@ public class AtomHopperClient {
         }
     }
 
-    public void postUserTrr(BaseUser user, TokenRevocationRecord trr) throws IOException {
+    @Async
+    public void asyncPostIdpEvent(IdentityProvider idp, EventType eventType) {
+        if(identityConfig.getReloadableConfig().postIdpFeedEvents()) {
+            Validate.notNull(idp);
+            Validate.notNull(idp.getUri());
+            Validate.isTrue(eventType == EventType.CREATE || eventType == EventType.UPDATE || eventType == EventType.DELETE);
+            try {
+                postIdpEvent(idp, eventType);
+            } catch (Exception e) {
+                logger.warn("AtomHopperClient Exception posting IDP event: ", e);
+            }
+        }
+    }
+
+    private void postUserTrr(BaseUser user, TokenRevocationRecord trr) throws IOException {
         Validate.isTrue(user.getId().equals(trr.getTargetIssuedToId()));
         HttpResponse response = null;
         try {
@@ -278,7 +289,7 @@ public class AtomHopperClient {
         }
     }
 
-    public void postUser(EndUser user, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
+    private void postUser(EndUser user, String userStatus) throws JAXBException, IOException, HttpException, URISyntaxException {
         HttpResponse response = null;
         try {
             UsageEntry entry = null;
@@ -325,7 +336,7 @@ public class AtomHopperClient {
         }
     }
 
-    public void postToken(EndUser user, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
+    private void postToken(EndUser user, String revokedToken) throws JAXBException, IOException, HttpException, URISyntaxException {
         HttpResponse response = null;
         try {
             final UsageEntry entry = createEntryForRevokeToken(user, revokedToken);
@@ -339,6 +350,29 @@ public class AtomHopperClient {
             }
         } catch (Exception e) {
             logger.warn("AtomHopperClient Exception posting Token TRR", e);
+        } finally {
+            if (response != null) {
+                //always close the stream to release connection back to pool
+                logger.debug("Consuming entity to release connection back to pool");
+                atomHopperHelper.entityConsume(response.getEntity());
+            }
+        }
+    }
+
+    private void postIdpEvent(IdentityProvider idp, EventType eventType) throws IOException {
+        HttpResponse response = null;
+        try {
+            final UsageEntry entry = createEntryForIdp(idp, eventType);
+
+            HttpPost httpPost = generatePostRequest(marshalEntry(entry));
+            response = httpClient.execute(httpPost);
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpServletResponse.SC_CREATED) {
+                final String errorMsg = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+                logger.warn(String.format("Failed to post IDP event for IDP: %s. Returned status code: %s; responseBody: %s", idp.getUri(), statusCode, errorMsg));
+            }
+        } catch (Exception e) {
+            logger.warn("AtomHopperClient Exception posting IDP event", e);
         } finally {
             if (response != null) {
                 //always close the stream to release connection back to pool
@@ -366,7 +400,7 @@ public class AtomHopperClient {
         return httpPost;
     }
 
-    public Writer marshalEntry(UsageEntry entry) throws JAXBException {
+    private Writer marshalEntry(UsageEntry entry) throws JAXBException {
         final Writer writer = new StringWriter();
         JAXBContext context = JAXB_CONTEXT_FEED_ENTRY;
         if (!identityConfig.getReloadableConfig().reuseJaxbContext()) {
@@ -381,11 +415,11 @@ public class AtomHopperClient {
         return writer;
     }
 
-    public InputStreamEntity createRequestEntity(String s) throws UnsupportedEncodingException {
+    private InputStreamEntity createRequestEntity(String s) throws UnsupportedEncodingException {
         return new InputStreamEntity(new ByteArrayInputStream(s.getBytes("UTF-8")), -1);
     }
 
-    public UsageEntry createEntryForUser(EndUser user, EventType eventType, Boolean migrated) throws DatatypeConfigurationException {
+    private UsageEntry createEntryForUser(EndUser user, EventType eventType, Boolean migrated) throws DatatypeConfigurationException {
         logger.debug("Creating user entry ...");
 
         final CloudIdentityType cloudIdentityType = new CloudIdentityType();
@@ -428,7 +462,7 @@ public class AtomHopperClient {
         return usageEntry;
     }
 
-    public UsageEntry createEntryForRevokeToken(EndUser user, String token) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
+    private UsageEntry createEntryForRevokeToken(EndUser user, String token) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
         logger.debug("Creating revoke token entry ...");
 
         final com.rackspace.docs.event.identity.token.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.token.CloudIdentityType();
@@ -448,6 +482,21 @@ public class AtomHopperClient {
         final String id = UUID.randomUUID().toString();
         final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, EventType.DELETE, id, token, null, AtomHopperConstants.IDENTITY_TOKEN_EVENT, null);
         logger.debug("Created Identity token entry with id: " + id);
+        return usageEntry;
+    }
+
+    private UsageEntry createEntryForIdp(IdentityProvider idp, EventType eventType) throws DatatypeConfigurationException, GeneralSecurityException, InvalidCipherTextException, UnsupportedEncodingException {
+        logger.debug("Creating IDP entry ...");
+
+        final com.rackspace.docs.event.identity.idp.CloudIdentityType cloudIdentityType = new com.rackspace.docs.event.identity.idp.CloudIdentityType();
+        cloudIdentityType.setResourceType(com.rackspace.docs.event.identity.idp.ResourceTypes.IDP);
+        cloudIdentityType.setVersion(AtomHopperConstants.VERSION);
+        cloudIdentityType.setServiceCode(AtomHopperConstants.CLOUD_IDENTITY);
+        cloudIdentityType.setIssuer(idp.getUri());
+
+        final String id = UUID.randomUUID().toString();
+        final UsageEntry usageEntry = createUsageEntry(cloudIdentityType, eventType, id, idp.getProviderId(), null, AtomHopperConstants.IDENTITY_IDP_EVENT, null);
+        logger.debug("Created IDP entry with id: " + id);
         return usageEntry;
     }
 
@@ -558,4 +607,5 @@ public class AtomHopperClient {
     public void setDefaultTenantService(DefaultTenantService defaultTenantService) {
         this.defaultTenantService = defaultTenantService;
     }
+
 }

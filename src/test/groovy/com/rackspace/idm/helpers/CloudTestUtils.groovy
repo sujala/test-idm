@@ -54,6 +54,10 @@ class CloudTestUtils {
         return "//event[@id and @resourceId='$user.id' and @type='DELETE']/product[@resourceType='TRR_USER' and @serviceCode='CloudIdentity']/tokenAuthenticatedBy[@values='$authBy']"
     }
 
+    def String getFeedsXPathForIdp(idp, eventType) {
+        return "//event[@id and @resourceId='$idp.providerId' and @type='$eventType']/product[@resourceType='IDP' and @serviceCode='CloudIdentity' and @issuer='$idp.uri']"
+    }
+
     def HttpRequest createFeedsRequest() {
         return new HttpRequest()
                 .withMethod(Constants.POST)
@@ -69,4 +73,9 @@ class CloudTestUtils {
     def HttpRequest createUserTrrFeedsRequest(user, AuthenticatedByMethodGroup authenticatedByMethodGroup) {
         return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForUserTRR(user, authenticatedByMethodGroup)))
     }
+
+    def HttpRequest createIdpFeedsRequest(idp, eventType) {
+        return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForIdp(idp, eventType)))
+    }
+
 }
