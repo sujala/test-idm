@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.naming.ServiceUnavailableException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 
@@ -121,7 +122,7 @@ public class ExceptionHandler {
             return conflictExceptionResponse(ex.getMessage());
         } else if (ex instanceof NotImplementedException) {
             return notImplementedExceptionResponse();
-        } else if (ex instanceof MigrationReadOnlyIdmException || ex instanceof MissingRequiredConfigIdmException) {
+        } else if (ex instanceof MigrationReadOnlyIdmException || ex instanceof MissingRequiredConfigIdmException || ex instanceof ServiceUnavailableException) {
             return serviceUnavailableExceptionResponse(ex.getMessage());
         } else if (ex instanceof UnrecoverableIdmException) {
             return unrecoverableExceptionResponse(ex.getMessage());

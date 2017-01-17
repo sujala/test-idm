@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dozer.converters;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
+import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum;
 import org.dozer.DozerConverter;
 
 public class IdentityProviderFederationTypeConverter extends DozerConverter<String, IdentityProviderFederationTypeEnum> {
@@ -19,6 +20,8 @@ public class IdentityProviderFederationTypeConverter extends DozerConverter<Stri
             return IdentityProviderFederationTypeEnum.DOMAIN;
         } else if(IdentityProviderFederationTypeEnum.RACKER.name().equals(source)) {
             return IdentityProviderFederationTypeEnum.RACKER;
+        } else if (IdentityProviderFederationTypeEnum.BROKER.name().equals(source)) {
+            return IdentityProviderFederationTypeEnum.BROKER;
         } else {
             throw new IllegalStateException(String.format("Invalid value for federation type: '%s'", source));
         }
