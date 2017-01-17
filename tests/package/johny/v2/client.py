@@ -1303,3 +1303,71 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         resp = self.request(method='GET', url=url, params=enabled,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
+
+    def create_idp(self, request_object, requestslib_kwargs=None):
+        """Return response object from the create idp api call
+        """
+        url = self.url + const.IDP_URL
+
+        resp = self.request(method='POST', url=url,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def update_idp(self, idp_id, request_object, requestslib_kwargs=None):
+        """Return response object from the update idp api call
+        """
+        url = self.url + const.IDP_RUD_URL.format(idp_id=idp_id)
+
+        resp = self.request(method='PUT', url=url,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def get_idp(self, idp_id, requestslib_kwargs=None):
+        """Return response object from the get_idp api call
+        """
+        url = self.url + const.IDP_RUD_URL.format(idp_id=idp_id)
+
+        resp = self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def list_idp(self, requestslib_kwargs=None):
+        """Return response object from the list idp api call
+        """
+        url = self.url + const.IDP_URL
+
+        resp = self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def delete_idp(self, idp_id, requestslib_kwargs=None):
+        """Return response object from the delete provider api call
+        """
+        url = self.url + const.IDP_RUD_URL.format(idp_id=idp_id)
+
+        resp = self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def add_certificate(self, idp_id, request_object, requestslib_kwargs=None):
+        """Return response object from the add certificate api call
+        """
+        url = self.url + const.CERTIFICATE_ADD_URL.format(idp_id=idp_id)
+
+        resp = self.request(method='POST', url=url,
+                            request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def delete_certificate(self, idp_id, certificate_id,
+                           requestslib_kwargs=None):
+        """Return response object from the delete certificate api call
+        """
+        url = self.url + const.IDP_RUD_URL.format(idp_id=idp_id,
+                                                  cert_id=certificate_id)
+
+        resp = self.request(method='DELETE', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp

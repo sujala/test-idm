@@ -3,97 +3,111 @@
 '''This contains all constants using in api test. '''
 
 '''URLs'''
+ADD_ENDPOINT_TO_TENANT_URL = '/tenants/{tenant_id}/OS-KSCATALOG/endpoints'
+ADD_OTP_DEVICE_URL = '/users/{user_id}/RAX-AUTH/multi-factor/otp-devices'
 ADD_ROLE_TO_USER_FOR_TENANT_URL = DEL_ROLE_FROM_USER_FOR_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/{role_id}')
+ADD_ROLE_TO_USER_URL = '/users/{user_id}/roles/OS-KSADM/{role_id}'
 ADD_TENANT_TO_DOMAIN_URL = DELETE_TENANT_FROM_DOMAIN_URL = (
     '/RAX-AUTH/domains/{domain_id}/tenants/{tenant_id}')
-GET_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/tenants'
-USER_URL = '/users'
-ROLES_URL = '/OS-KSADM/roles'
-GROUPS_URL = '/RAX-GRPADM/groups'
-LIST_GROUPS_URL = '/users/{user_id}/RAX-KSGRP'
-UPGRADE_USER_TO_CLOUD_URL = '/users/RAX-AUTH/upgradeUserToCloud'
-UPDATE_USER_URL = DELETE_USER_URL = GET_USER_URL = '/users/{user_id}'
-TOKEN_URL = '/tokens'
-GET_TOKEN_URL = DELETE_TOKEN_URL = '/tokens/{token_id}'
-DEVOPS_PROPS_URL = '/props'
-DEVOPS_URL = '/idm/devops'
-DELETE_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}'
-DOMAIN_URL = '/RAX-AUTH/domains'
+ADD_TENANT_URL = LIST_TENANTS = '/tenants'
+ADMINS_OF_A_USER_URL = '/users/{user_id}/RAX-AUTH/admins'
+CERTIFICATE_ADD_URL = ("/RAX-AUTH/federation/identity-providers/{idp_id}/"
+                       "certificates")
+CERTIFICATE_DELETE_URL = ("/RAX-AUTH/federation/identity-providers/{idp_id}/"
+                          "certificates/{cert_id}")
 CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
-GET_USER_API_CRED_URL = UPDATE_USER_API_CRED_URL = DELETE_USER_API_CRED_URL = (
-    "/users/{user_id}/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials")
-LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
-ENDPOINT_TEMPLATE_URL = LIST_ENDPOINT_TEMPLATES_URL = (
-    '/OS-KSCATALOG/endpointTemplates')
-UPDATE_ENDPOINT_TEMPLATE_URL = GET_ENDPOINT_TEMPLATE_URL = (
-    DELETE_ENDPOINT_TEMPLATE_URL) = (
-    '/OS-KSCATALOG/endpointTemplates/{template_id}')
-SERVICE_URL = '/OS-KSADM/services'
-DELETE_SERVICE_URL = GET_SERVICE_URL = '/OS-KSADM/services/{service_id}'
-TENANTS_URL = '/tenants'
-ADD_ENDPOINT_TO_TENANT_URL = '/tenants/{tenant_id}/OS-KSCATALOG/endpoints'
-TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES_URL = (
-    ENDPOINT_TEMPLATE_URL + '/RAX-AUTH/rules')
-GET_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL = (
-    ENDPOINT_TEMPLATE_URL + '/RAX-AUTH/rules/{rule_id}')
-DELETE_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL = (
-    GET_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL)
+DELETE_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}'
 DELETE_ENDPOINT_FROM_TENANT_URL = (
     '/tenants/{tenant_id}/OS-KSCATALOG/endpoints/{endpoint_template_id}')
+DELETE_OTP_DEVICE_URL = (
+    '/users/{user_id}/RAX-AUTH/multi-factor/otp-devices/{device_id}')
+DELETE_ROLE_FR_USER_URL = ADD_ROLE_TO_USER_URL
+DELETE_SERVICE_URL = GET_SERVICE_URL = '/OS-KSADM/services/{service_id}'
+DELETE_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL = (
+    '/OS-KSCATALOG/endpointTemplates/RAX-AUTH/rules/{rule_id}')
+DEVOPS_PROPS_URL = '/props'
+DEVOPS_URL = '/idm/devops'
+DOMAIN_URL = '/RAX-AUTH/domains'
+ENDPOINT_TEMPLATE_URL = LIST_ENDPOINT_TEMPLATES_URL = (
+    '/OS-KSCATALOG/endpointTemplates')
+FED_LOGOUT_URL = '/RAX-AUTH/federation/saml/logout'
+GET_ROLE_URL = DELETE_ROLE_URL = '/OS-KSADM/roles/{role_id}'
+GET_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/tenants'
+GET_TOKEN_URL = DELETE_TOKEN_URL = '/tokens/{token_id}'
+GET_USER_API_CRED_URL = UPDATE_USER_API_CRED_URL = DELETE_USER_API_CRED_URL = (
+    "/users/{user_id}/OS-KSADM/credentials/RAX-KSKEY:apiKeyCredentials")
+GET_USERS_FOR_ROLE_URL = '/OS-KSADM/roles/{role_id}/RAX-AUTH/users'
+GET_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL = (
+    DELETE_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL)
+GROUPS_URL = '/RAX-GRPADM/groups'
+IDP_URL = '/RAX-AUTH/federation/identity-providers'
+IDP_RUD_URL = (IDP_URL + "/{idp_id}")
+LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
+LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 LIST_ENDPOINTS_FOR_TOKEN_URL = '/tokens/{token_id}/endpoints'
-ADD_TENANT_URL = LIST_TENANTS = '/tenants'
+LIST_GROUPS_URL = '/users/{user_id}/RAX-KSGRP'
 LIST_ROLES_FOR_USER_ON_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles')
 LIST_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/tenants'
+LIST_USER_ROLES_URL = '/users/{user_id}/roles'
 LIST_USERS_FOR_TENANT_URL = '/tenants/{tenant_id}/users'
 LIST_USERS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/users'
-UPDATE_TENANT_URL = DELETE_TENANT_URL = GET_TENANT_URL = (
-    '/tenants/{tenant_id}')
-
-VALIDATE_TOKENS_URL = '/tokens/{0}'
-LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
 NEW_FED_AUTH_URL = '/RAX-AUTH/federation/saml/auth'
-ADMINS_OF_A_USER_URL = '/users/{user_id}/RAX-AUTH/admins'
-FED_LOGOUT_URL = '/RAX-AUTH/federation/saml/logout'
-ADD_ROLE_TO_USER_URL = '/users/{user_id}/roles/OS-KSADM/{role_id}'
-
-DELETE_ROLE_FR_USER_URL = ADD_ROLE_TO_USER_URL
-ROLE_URL = '/OS-KSADM/roles'
-GET_ROLE_URL = DELETE_ROLE_URL = '/OS-KSADM/roles/{role_id}'
-LIST_USER_ROLES_URL = '/users/{user_id}/roles'
-GET_USERS_FOR_ROLE_URL = '/OS-KSADM/roles/{role_id}/RAX-AUTH/users'
 RESET_USER_API_KEY_URL = ('/users/{user_id}/OS-KSADM/credentials/'
                           'RAX-KSKEY:apiKeyCredentials/RAX-AUTH/reset')
-ADD_OTP_DEVICE_URL = '/users/{user_id}/RAX-AUTH/multi-factor/otp-devices'
-DELETE_OTP_DEVICE_URL = (
-    '/users/{user_id}/RAX-AUTH/multi-factor/otp-devices/{device_id}')
+ROLE_URL = '/OS-KSADM/roles'
+ROLES_URL = '/OS-KSADM/roles'
+SERVICE_URL = '/OS-KSADM/services'
+TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES_URL = (
+    ENDPOINT_TEMPLATE_URL + '/RAX-AUTH/rules')
+TENANTS_URL = '/tenants'
+TOKEN_URL = '/tokens'
+UNBOUNDID_CONFIG_URL = '/idm/devops/props'
 UPDATE_MFA_URL = '/users/{user_id}/RAX-AUTH/multi-factor'
+UPGRADE_USER_TO_CLOUD_URL = '/users/RAX-AUTH/upgradeUserToCloud'
+UPDATE_USER_URL = DELETE_USER_URL = GET_USER_URL = '/users/{user_id}'
+UPDATE_ENDPOINT_TEMPLATE_URL = GET_ENDPOINT_TEMPLATE_URL = (
+    DELETE_ENDPOINT_TEMPLATE_URL) = (
+    '/OS-KSCATALOG/endpointTemplates/{template_id}')
+UPDATE_TENANT_URL = DELETE_TENANT_URL = GET_TENANT_URL = (
+    '/tenants/{tenant_id}')
+USER_URL = '/users'
+VALIDATE_TOKENS_URL = '/tokens/{0}'
 VERIFY_OTP_DEVICE_URL = (
     '/users/{user_id}/RAX-AUTH/multi-factor/otp-devices/{device_id}/verify')
+
+'''File or Directory paths'''
 PATH_TO_REPOSE_LOG = '/var/log/repose/current.log'
-UNBOUNDID_CONFIG_URL = '/idm/devops/props'
 
 '''Some Constanst for values'''
 API_KEY_PATTERN = '[a-f][0-9]{32}'
 CONTACT_ID_MIN = 10000000
 CONTACT_ID_MAX = 99999999
 CONTENT_TYPE_VALUE = ACCEPT_ENCODING_VALUE = 'application/{0}'
+DOMAIN = "DOMAIN"
 DOMAIN_API_TEST = 'api-test'
 DOMAIN_PATTERN = '[a-z]{8}'
-NUMERIC_DOMAIN_ID_PATTERN = '[1-9]{1}[0-9]{6}'
+DESC_PATTERN = '[a-zA-Z ,.]{:255}'
 DOMAIN_TEST = 'meow'
 EMAIL_RANDOM = 'randome@rackspace.com'
+GLOBAL = "GLOBAL"
 ID_PATTERN = '[\d]{8}'
 IDENTITY_PRODUCT_ROLE_NAME_PATTERN = 'identity:testrole[\-][\d\w]{8}'
 LOWER_CASE_LETTERS = '[a-z]{8}'
 MD5_PATTERN = '[a-f][0-9]{40}'
+MAPPING_RULE_DESCRIPTION_PATTERN = (
+    'mapping[\-]rule[\-]description[\-][\w\d]{8}')
+MAX_IDP_NAME_PATTERN = "[a-z]{255}"
+IDP_NAME_PATTERN = "[a-z][A-Z]{1:255}"
 MIXED_CASE_LETTERS = '[A-Z][a-z]{8}'
 MOSSO_TENANT_ID_PATTERN = '[\d]{6}'
 NAST_TENANT_ID_PATTERN = 'NAST[\d]{6}'
 NUMBERS_PATTERN = '[1-9]{1}[0-9]{8}'
+NUMERIC_DOMAIN_ID_PATTERN = '[1-9]{1}[0-9]{6}'
 OTP_NAME_PATTERN = 'otp[\-][\d]{8}'
 PASSWORD_PATTERN = 'Password1[\d\w]{10}'
+RACKER = "RACKER"
 RCN = 'RCN'
 ROLE_NAME_PATTERN = 'cid_test_role[\-][\d]{8}'
 SECRETQ_PATTERN = 'SecretQ[\w]{15}'
@@ -106,12 +120,10 @@ STANDARD = 'STANDARD'
 USER_ADMIN_PATTERN = 'uadm_[\d\w]{12}'
 TENANT_ID_PATTERN = '[\d]{8}'
 TENANT_NAME_PATTERN = 'api[\-]test[\-]tenant[\-][\d\w]{8}'
-NUMERIC_DOMAIN_ID_PATTERN = '[1-9]{1}[0-9]{6}'
-UPPER_CASE_LETTERS = '[A-Z]{8}'
-USER_NAME_PATTERN = 'api[\-]test[\-][\d\w]{12}'
-MAPPING_RULE_DESCRIPTION_PATTERN = (
-    'mapping[\-]rule[\-]description[\-][\w\d]{8}')
 TENANT_TYPE_PATTERN = 'ttype[a-z0-9]{10}'
+UPPER_CASE_LETTERS = '[A-Z]{8}'
+URL_PATTERN = 'http://www.rackspace.com/'
+USER_NAME_PATTERN = 'api[\-]test[\-][\d\w]{12}'
 USER_MANAGER_NAME_PATTERN = 'user[\-]manager[\d\w]{12}'
 
 '''Headers'''
@@ -150,9 +162,12 @@ RAX_AUTH_AUTHENTICATED_BY = 'RAX-AUTH:authenticatedBy'
 BAD_REQUEST = 'badRequest'
 BOTH = 'BOTH'
 CREDENTIALS = 'credentials'
+APPROVED_DOMAIN_GROUP = 'approvedDomainGroup'
+APPROVED_DOMAIN_Ids = 'approvedDomainIds'
 ATTACHMENT = 'attachment'
 ATTACHMENTS = 'attachments'
 AUDIT_DATA = 'auditData'
+AUTHENTICATION_URL = 'authenticationUrl'
 CODE = 'code'
 CONFIG_PATH = 'configPath'
 CONTACTID = 'contactId'
@@ -174,12 +189,14 @@ EXPIRES = 'expires'
 EVENT_TIME = 'eventTime'
 EVENT_TYPE = 'eventType'
 FACTOR_TYPE = 'factorType'
+FEDERATION_TYPE = 'federationType'
 GLOBAL = 'global'
 GROUP = 'group'
 GROUPS = 'groups'
 ID = 'id'
 INITIATOR = 'initiator'
 ITEMS = 'items'
+ISSUER = 'issuer'
 KEY_URI = 'keyUri'
 METHOD_LABEL = 'methodLabel'
 INTERNAL_URL = 'internalURL'
@@ -188,14 +205,16 @@ NAME = 'name'
 NAST_PREFIX = 'MossoCloudFS_'
 OBSERVER = 'observer'
 OUTCOME = 'outcome'
-QR_CODE = 'qrcode'
-QUERY_STRING = 'queryString'
 PASSCODE = 'passcode'
 PASSWORD = 'password'
+PEM_ENCODED = 'pemEncoded'
 PROPAGATE = 'propagate'
 PROPERTIES = 'properties'
 PROP_VALUE = 'value'
+PUBLIC_CERTIFICATES = 'publicCertificates'
 PUBLIC_URL = 'publicURL'
+QR_CODE = 'qrcode'
+QUERY_STRING = 'queryString'
 REGION = 'region'
 REQUEST_URL = 'requestURL'
 REQUIRED = 'required'
@@ -259,11 +278,13 @@ PASSWORD_CREDENTIALS = 'passwordCredentials'
 NS_FEDERATED_IDP = 'RAX-AUTH:federatedIdp'
 NS_GROUP = 'RAX-KSGRP:group'
 NS_GROUPS = 'RAX-KSGRP:groups'
+NS_IDENTITY_PROVIDER = 'RAX-AUTH:identityProvider'
+NS_IDENTITY_PROVIDERS = 'RAX-AUTH:identityProviders'
+RAX_GRPADMN_NAMESPACE = 'RAX-GRPADM'
 RAX_KSKEY_NAMESPACE = 'RAX-KSKEY'
 RAX_KSGRP_NAMESPACE = 'RAX-KSGRP'
-RAX_GRPADMN_NAMESPACE = 'RAX-GRPADM'
 NS_PASSWORD = OS_KSADM_NAMESPACE + ':password'
-RAX_KSQA_NAMESPACE = 'RAX-KSQA'
+NS_PUBLIC_CERTIFICATE = 'RAX-AUTH:publicCertificate'
 NS_SECRETQA = 'RAX-KSQA:secretQA'
 NS_API_KEY_CREDENTIALS = 'RAX-KSKEY:apiKeyCredentials'
 RAX_AUTH = 'RAX-AUTH'
@@ -285,6 +306,7 @@ RAX_AUTH_ADMINISTRATOR_ROLE = 'RAX-AUTH:administratorRole'
 RAX_AUTH_PROPAGATE = 'RAX-AUTH:propagate'
 RAX_AUTH_ASSIGNMENT = 'RAX-AUTH:assignment'
 RAX_AUTH_ROLE_TYPE = 'RAX-AUTH:roleType'
+RAX_KSQA_NAMESPACE = 'RAX-KSQA'
 NS_SERVICE = OS_KSADM_NAMESPACE + ':service'
 NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = (
     RAX_AUTH + ':tenantTypeEndpointRule')
@@ -349,6 +371,7 @@ USER_MANAGE_ROLE_NAME = 'identity:user-manage'
 USER_ADMIN_ROLE_ID = '2'
 USER_DEFAULT_ROLE_ID = '3'
 USER_MANAGER_ROLE_ID = '7'
+PROVIDER_MANAGEMENT_ROLE_NAME = 'identity:identity-provider-manager'
 
 '''FEATURE FLAGS'''
 FEATURE_FLAG_FOR_ENDPOINTS_BASED_ON_RULES = (

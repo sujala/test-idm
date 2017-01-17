@@ -229,3 +229,30 @@ def get_add_tenant_request_object(tenant_name=None, tenant_types=None,
         }
     return requests.Tenant(tenant_name=tenant_name, tenant_types=tenant_types,
                            enabled=enabled, domain_id=domain_id, **input_data)
+
+
+def get_add_idp_request_object(name=None, issuer=None, description=None,
+                               federation_type=None, authentication_url=None,
+                               public_certificates=None,
+                               approved_domain_group=None,
+                               approved_domain_ids=None):
+    if not name:
+        name = TestBase.generate_random_string(const.IDP_NAME_PATTERN)
+    # Use api key pattern, since it's like a guid
+    if not issuer:
+        issuer = TestBase.generate_random_string(const.API_KEY_PATTERN)
+    if not description:
+        description = TestBase.generate_random_string(const.DESC_PATTERN)
+    if not federation_type:
+        if approved_domain_ids or approved_domain_group:
+            federation_type = const.DOMAIN
+        else:
+            federation_type = const.RACKER
+    if not authentication_url:
+        authentication_url = TestBase.generate_random_string(const.URL_PATTERN)
+    return requests.IDP(idp_name=name, issuer=issuer, description=description,
+                        federation_type=federation_type,
+                        authentication_url=authentication_url,
+                        public_certificates=public_certificates,
+                        approved_domain_group=approved_domain_group,
+                        approved_domain_ids=approved_domain_ids)
