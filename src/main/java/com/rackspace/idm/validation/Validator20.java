@@ -413,7 +413,7 @@ public class Validator20 {
             // If the provider's id found by name does not match the existing provider's id, then provider with provided name already exist.
             com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.getIdentityProviderByName(identityProvider.getName());
             if (provider != null && !provider.getProviderId().equals(existingProvider.getProviderId())) {
-                throw new BadRequestException(String.format(DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, existingProvider.getName()), ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS);
+                throw new BadRequestException(String.format(DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, provider.getName()), ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS);
             }
         }
         if (identityProvider.getAuthenticationUrl() != null && !identityProvider.getAuthenticationUrl().equalsIgnoreCase(existingProvider.getAuthenticationUrl())) {

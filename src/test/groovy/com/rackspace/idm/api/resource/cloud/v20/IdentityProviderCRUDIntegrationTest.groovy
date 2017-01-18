@@ -1137,7 +1137,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
 
         then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS)
+        def errorMsg = String.format(Validator20.DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, existingIdpName)
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, String.format("Error code: '%s'; %s", ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS, errorMsg))
 
         when: "Cannot unset name for IDP"
         invalid.name = ""
