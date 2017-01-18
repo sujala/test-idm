@@ -873,7 +873,7 @@ class PublicCertificate(base.AutoMarshallingModel):
 
     def _obj_to_json(self):
         associate_cert_request = {
-            const.PUBLIC_CERTIFICATE: {
+            const.PUBLIC_CERTIFICATES: {
                 const.PEM_ENCODED: self.public_certificate}
         }
 
@@ -929,11 +929,10 @@ class IDP(base.AutoMarshallingModel):
             create_idp_request[IDP][const.APPROVED_DOMAIN_GROUP] = (
                 self.approved_domain_group)
         if self.approved_domain_ids:
-            create_idp_request[IDP][const.APPROVED_DOMAIN_IDS] = []
+            create_idp_request[IDP][const.APPROVED_DOMAIN_Ids] = []
             # shorten name so we can be under 80 columns
             idpr = create_idp_request[IDP]
-
             for dom_id in self.approved_domain_ids:
-                idpr[const.APPROVED_DOMAIN_IDS].append(dom_id)
+                idpr[const.APPROVED_DOMAIN_Ids].append(dom_id)
 
         return json.dumps(create_idp_request)

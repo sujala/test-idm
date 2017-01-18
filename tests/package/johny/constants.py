@@ -91,7 +91,6 @@ DOMAIN_PATTERN = '[a-z]{8}'
 DESC_PATTERN = '[a-zA-Z ,.]{:255}'
 DOMAIN_TEST = 'meow'
 EMAIL_RANDOM = 'randome@rackspace.com'
-GLOBAL = "GLOBAL"
 ID_PATTERN = '[\d]{8}'
 IDENTITY_PRODUCT_ROLE_NAME_PATTERN = 'identity:testrole[\-][\d\w]{8}'
 LOWER_CASE_LETTERS = '[a-z]{8}'
