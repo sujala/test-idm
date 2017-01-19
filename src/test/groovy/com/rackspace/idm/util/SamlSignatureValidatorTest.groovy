@@ -1,6 +1,7 @@
 package com.rackspace.idm.util
 
 import com.rackspace.idm.exception.SignatureValidationException
+import org.opensaml.core.config.InitializationService
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.saml.SamlCredentialUtils
@@ -34,8 +35,7 @@ class SamlSignatureValidatorTest extends Specification {
 
     def setupSpec() {
         //initializes open saml. allows us use unmarshaller
-        org.opensaml.DefaultBootstrap.bootstrap();
-
+        InitializationService.initialize()
         samlSignatureValidator = new SamlSignatureValidator()
         samlUnmarshaller = new SamlUnmarshaller()
     }

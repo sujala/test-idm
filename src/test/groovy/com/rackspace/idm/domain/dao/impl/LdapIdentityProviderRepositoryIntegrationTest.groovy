@@ -9,7 +9,7 @@ import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl
 import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.junit.Rule
-import org.opensaml.xml.security.credential.Credential
+import org.opensaml.security.credential.Credential
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared

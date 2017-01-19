@@ -4,8 +4,8 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.opensaml.saml2.core.LogoutRequest;
-import org.opensaml.xml.signature.Signature;
+import org.opensaml.saml.saml2.core.LogoutRequest;
+import org.opensaml.xmlsec.signature.Signature;
 
 public class LogoutRequestDecorator {
     private LogoutRequest logoutRequest;

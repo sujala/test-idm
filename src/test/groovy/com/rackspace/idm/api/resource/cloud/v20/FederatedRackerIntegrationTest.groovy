@@ -10,12 +10,11 @@ import com.rackspace.idm.domain.dao.impl.LdapFederatedRackerRepository
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.Racker
-import com.rackspace.idm.domain.security.ConfigurableTokenFormatSelector
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import org.apache.log4j.Logger
-import org.opensaml.saml2.core.Response
-import org.opensaml.xml.signature.Signature
+import org.opensaml.saml.saml2.core.Response
+import org.opensaml.xmlsec.signature.Signature
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired

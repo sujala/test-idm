@@ -3411,7 +3411,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Unroll
     def "saml api call returns 400 when given an empty payload"() {
         given:
-        org.opensaml.saml2.core.Response res = null;
+        org.opensaml.saml.saml2.core.Response res = null;
 
         when:
         def response = cloud20.samlAuthenticate(res)

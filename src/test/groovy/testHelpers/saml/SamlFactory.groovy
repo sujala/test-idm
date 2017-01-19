@@ -2,14 +2,13 @@ package testHelpers.saml
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.decorator.SAMLAuthContext
-import org.apache.commons.codec.binary.Base64
+import net.shibboleth.utilities.java.support.xml.SerializeSupport
 import org.apache.commons.codec.binary.StringUtils
 import org.joda.time.DateTime
-import org.opensaml.saml2.core.LogoutRequest
-import org.opensaml.saml2.core.Response
-import org.opensaml.saml2.core.impl.LogoutRequestMarshaller
-import org.opensaml.saml2.core.impl.ResponseMarshaller
-import org.opensaml.xml.util.XMLHelper
+import org.opensaml.saml.saml2.core.LogoutRequest
+import org.opensaml.saml.saml2.core.Response
+import org.opensaml.saml.saml2.core.impl.LogoutRequestMarshaller
+import org.opensaml.saml.saml2.core.impl.ResponseMarshaller
 import org.w3c.dom.Element
 
 import static com.rackspace.idm.Constants.*
@@ -62,7 +61,7 @@ class SamlFactory {
         Element element = marshaller.marshall(samlResponse);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        XMLHelper.writeNode(element, baos);
+        SerializeSupport.writeNode(element, baos);
         return new String(baos.toByteArray());
     }
 
@@ -94,7 +93,7 @@ class SamlFactory {
         Element element = marshaller.marshall(logoutRequest);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        XMLHelper.writeNode(element, baos);
+        SerializeSupport.writeNode(element, baos);
         return new String(baos.toByteArray());
     }
 }

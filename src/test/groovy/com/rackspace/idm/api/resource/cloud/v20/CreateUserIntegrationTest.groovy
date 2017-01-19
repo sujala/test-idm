@@ -16,7 +16,7 @@ import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
-import org.apache.commons.httpclient.HttpStatus
+import org.apache.http.HttpStatus
 import org.apache.commons.lang.RandomStringUtils
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse

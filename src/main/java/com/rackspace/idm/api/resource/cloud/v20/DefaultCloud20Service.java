@@ -44,7 +44,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Transformer;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
@@ -52,10 +51,10 @@ import org.joda.time.DateTime;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.opensaml.saml2.core.LogoutResponse;
-import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.core.impl.LogoutResponseMarshaller;
-import org.opensaml.xml.io.MarshallingException;
+import org.opensaml.saml.saml2.core.LogoutResponse;
+import org.opensaml.saml.saml2.core.StatusCode;
+import org.opensaml.saml.saml2.core.impl.LogoutResponseMarshaller;
+import org.opensaml.core.xml.io.MarshallingException;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -1191,7 +1190,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponseBytes) {
         try {
-            org.opensaml.saml2.core.Response samlResponse = samlUnmarshaller.unmarshallResponse(samlResponseBytes);
+            org.opensaml.saml.saml2.core.Response samlResponse = samlUnmarshaller.unmarshallResponse(samlResponseBytes);
             SamlAuthResponse samlAuthResponse = federatedIdentityService.processSamlResponse(samlResponse);
             AuthenticateResponse response = authConverterCloudV20.toAuthenticationResponse(samlAuthResponse);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(response).getValue());
@@ -1207,12 +1206,12 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder logoutFederatedUser(HttpHeaders httpHeaders, byte[] samlLogoutRequestBytes) {
         SamlLogoutResponse logoutResponse = null;
         try {
-            org.opensaml.saml2.core.LogoutRequest logoutRequest = samlUnmarshaller.unmarshallLogoutRequest(samlLogoutRequestBytes);
+            org.opensaml.saml.saml2.core.LogoutRequest logoutRequest = samlUnmarshaller.unmarshallLogoutRequest(samlLogoutRequestBytes);
             logoutResponse = federatedIdentityService.processLogoutRequest(logoutRequest);
         } catch (BadRequestException ex) {
-            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(null, StatusCode.REQUESTER_URI, ex.getMessage(), ex);
+            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(null, StatusCode.REQUESTER, ex.getMessage(), ex);
         } catch (Exception ex) {
-            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(null, StatusCode.RESPONDER_URI, "Encountered an exception processing federation logout request", ex);
+            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(null, StatusCode.RESPONDER, "Encountered an exception processing federation logout request", ex);
         }
 
         try {

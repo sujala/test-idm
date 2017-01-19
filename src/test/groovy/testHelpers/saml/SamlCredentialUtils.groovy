@@ -1,12 +1,11 @@
 package testHelpers.saml;
 
 import org.apache.commons.io.IOUtils
-import org.bouncycastle.openssl.PEMWriter
 import org.bouncycastle.util.encoders.Base64Encoder
 import org.bouncycastle.x509.X509V3CertificateGenerator
 import org.joda.time.DateTime;
-import org.opensaml.xml.security.x509.BasicX509Credential
-import org.opensaml.xml.security.x509.X509Credential;
+import org.opensaml.security.x509.BasicX509Credential
+import org.opensaml.security.x509.X509Credential;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.ClassPathResource
@@ -57,10 +56,8 @@ public class SamlCredentialUtils {
 		PrivateKey privateKey = kf.generatePrivate(kspec);
 		
 		// create credential and initialize
-		BasicX509Credential credential = new BasicX509Credential();
-		credential.setEntityCertificate(publicKey);
-		credential.setPrivateKey(privateKey);
-		
+		BasicX509Credential credential = new BasicX509Credential(publicKey, privateKey);
+
 		return credential;
 	}
 
@@ -97,10 +94,9 @@ public class SamlCredentialUtils {
     }
 
     static X509Credential generateX509Credential(X509Certificate cert, KeyPair keyPair) throws Exception {
-        BasicX509Credential credential = new BasicX509Credential();
-        credential.setEntityCertificate(cert);
-        credential.setPublicKey(keyPair.getPublic())
-        credential.setPrivateKey(keyPair.getPrivate());
+        BasicX509Credential credential = new BasicX509Credential(cert, keyPair.getPrivate());
+//        credential.setPublicKey(keyPair.getPublic())
+//        credential.setPrivateKey(keyPair.getPrivate());
 
         return credential;
     }

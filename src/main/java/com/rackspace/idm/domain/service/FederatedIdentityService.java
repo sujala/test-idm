@@ -3,9 +3,8 @@ package com.rackspace.idm.domain.service;
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.domain.entity.SamlAuthResponse;
 import com.rackspace.idm.domain.entity.SamlLogoutResponse;
-import org.opensaml.saml2.core.LogoutRequest;
-import org.opensaml.saml2.core.LogoutResponse;
-import org.opensaml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.LogoutRequest;
+import org.opensaml.saml.saml2.core.Response;
 
 import javax.naming.ServiceUnavailableException;
 import java.util.List;

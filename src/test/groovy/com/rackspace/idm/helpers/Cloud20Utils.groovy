@@ -26,7 +26,7 @@ import org.apache.http.HttpStatus
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.apache.http.client.utils.URLEncodedUtils
 import org.apache.log4j.Logger
-import org.opensaml.saml2.core.LogoutResponse
+import org.opensaml.saml.saml2.core.LogoutResponse
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate

@@ -1,7 +1,7 @@
 package com.rackspace.idm.domain.decorator
 
 import com.rackspace.idm.util.SamlUnmarshaller
-import org.opensaml.DefaultBootstrap
+import org.opensaml.core.config.InitializationService
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -15,7 +15,7 @@ class SamlResponseDecoratorTest extends Specification {
 
 
     def setupSpec(){
-        DefaultBootstrap.bootstrap()
+        InitializationService.initialize()
 
         samlStr = "<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" ID=\"bc1c335f-8078-4769-81a1-bb519194279c\" IssueInstant=\"2013-10-01T15:02:42.110Z\" Version=\"2.0\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
                 "   <saml2:Issuer xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\">" + IDP_URI + "</saml2:Issuer>\n" +
