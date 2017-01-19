@@ -196,6 +196,9 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud11.authUser = adminUser
         cloud11.authPassword = adminPassword
         cloud11.setUserEnabled(identityAdmin.username, v1Factory.createUserWithOnlyEnabled(true))
+
+        //delay so new token will not be revoked due to User TRR generated when identity admin disabled
+        System.sleep(1001-new DateTime().getMillisOfSecond())
         identityAdminToken = cloud20.authenticate(identityAdmin.username, "Password1").getEntity(AuthenticateResponse).value.token.id
 
         then:
