@@ -863,3 +863,77 @@ class MFAUpdate(base.AutoMarshallingModel):
                 self.unlock
             )
         return json.dumps(update_mfa_request)
+
+
+class PublicCertificate(base.AutoMarshallingModel):
+    """Marshalling for Add Public Certificate to IDP Request"""
+
+    def __init__(self, public_certificate=None):
+        self.public_certificate = public_certificate
+
+    def _obj_to_json(self):
+        associate_cert_request = {
+            const.PUBLIC_CERTIFICATE: {
+                const.PEM_ENCODED: self.public_certificate}
+        }
+
+        return json.dumps(associate_cert_request)
+
+
+class IDP(base.AutoMarshallingModel):
+    """Marshalling for Create IDP Request."""
+
+    def __init__(self, idp_id=None, idp_name=None, issuer=None,
+                 description=None, federation_type=None,
+                 authentication_url=None, public_certificates=None,
+                 approved_domain_group=None, approved_domain_ids=None):
+        self.idp_id = idp_id
+        self.idp_name = idp_name
+        self.issuer = issuer
+        self.description = description
+        self.federation_type = federation_type
+        self.authentication_url = authentication_url
+        self.public_certificates = public_certificates
+        self.approved_domain_group = approved_domain_group
+        self.approved_domain_ids = approved_domain_ids
+
+    def _obj_to_json(self):
+        # So we don't have a bunch of 80 col issues.
+        IDP = const.NS_IDENTITY_PROVIDER
+        create_idp_request = {
+            IDP: {}
+        }
+        if self.idp_name:
+            create_idp_request[IDP][const.NAME] = self.idp_name
+        if self.idp_id:
+            create_idp_request[IDP][const.ID] = self.idp_id
+        if self.issuer:
+            create_idp_request[IDP][const.ISSUER] = self.issuer
+        if self.description:
+            create_idp_request[IDP][const.DESCRIPTION] = self.description
+        if self.federation_type:
+            create_idp_request[IDP][const.FEDERATION_TYPE] = (
+                self.federation_type)
+        if self.authentication_url:
+            create_idp_request[IDP][const.AUTHENTICATION_URL] = (
+                self.authentication_url)
+        if self.public_certificates:
+            create_idp_request[IDP][const.PUBLIC_CERTIFICATES] = []
+            # shorten to meet 80 col limit
+            idpr = create_idp_request[IDP]
+
+            for cert in self.public_certificates:
+                idpr.append = {
+                    const.PEM_ENCODED: self.public_certificates}
+        if self.approved_domain_group:
+            create_idp_request[IDP][const.APPROVED_DOMAIN_GROUP] = (
+                self.approved_domain_group)
+        if self.approved_domain_ids:
+            create_idp_request[IDP][const.APPROVED_DOMAIN_IDS] = []
+            # shorten name so we can be under 80 columns
+            idpr = create_idp_request[IDP]
+
+            for dom_id in self.approved_domain_ids:
+                idpr[const.APPROVED_DOMAIN_IDS].append(dom_id)
+
+        return json.dumps(create_idp_request)
