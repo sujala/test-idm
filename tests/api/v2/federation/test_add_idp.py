@@ -62,6 +62,7 @@ class TestAddIDP(base.TestBaseV2):
         '''
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
+
         request_object = factory.get_add_idp_request_object()
         resp = self.idp_ia_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
@@ -102,6 +103,7 @@ class TestAddIDP(base.TestBaseV2):
         '''
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
+
         request_object = factory.get_add_idp_request_object()
         resp = self.idp_ia_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
@@ -176,6 +178,7 @@ class TestAddIDP(base.TestBaseV2):
         '''
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
+
         request_object = factory.get_add_idp_request_object()
         resp = self.idp_ia_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
@@ -192,6 +195,7 @@ class TestAddIDP(base.TestBaseV2):
         '''
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
+
         request_object = factory.get_add_idp_request_object()
         resp = self.idp_ia_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
