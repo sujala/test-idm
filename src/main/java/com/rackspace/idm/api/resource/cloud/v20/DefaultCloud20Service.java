@@ -94,8 +94,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String RBAC = "rbac";
     public static final String SETUP_MFA_SCOPE_FORBIDDEN = "SETUP-MFA SCOPE not supported";
     public static final String MUST_SETUP_MFA = "User must setup multi-factor";
-    public static final String POLICY_INVALID_JSON_ERROR_MESSAGE = "Policy contains invalid json.";
-    public static final String POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE = "Max size exceed. Policy file must be less then %s Kilobytes.";
 
     public static final String FEATURE_USER_TOKEN_SELF_VALIDATION = "feature.user.token.selfValidation";
     public static final boolean FEATURE_USER_TOKEN_SELF_VALIDATION_DEFAULT_VALUE = false;
@@ -108,6 +106,8 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String FEDERATION_IDP_TYPE_ERROR_MESSAGE = "%s is currently the only supported IDP type allowed for filtering.";
     public static final String FEDERATION_IDP_FILTER_CONFLICT_ERROR_MESSAGE = "The provided IDP filters cannot be used together.";
     public static final String FEDERATION_IDP_FILTER_TENANT_NO_DOMAIN_ERROR_MESSAGE = "The provided tenant is not associated with a domain";
+    public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE = "Unable to load and parse the default IDP policy.";
+    public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE = "The default IDP policy is not properly configured.";
 
     public static final String DUPLICATE_SERVICE_NAME_ERROR_MESSAGE = "More than one service exists with the given name. Please specify a different service name for the endpoint template.";
     public static final String DUPLICATE_SERVICE_ERROR_MESSAGE = "Unable to fulfill request. More than one service exists with the given name.";
@@ -123,6 +123,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ROLE_ID_NOT_FOUND_ERROR_MESSAGE = "Role with ID %s not found.";
 
     public static final String USER_NOT_FOUND_ERROR_MESSAGE = "User with ID %s not found.";
+
 
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
@@ -1246,6 +1247,19 @@ public class DefaultCloud20Service implements Cloud20Service {
             validator20.validateIdentityProviderForCreation(provider);
 
             com.rackspace.idm.domain.entity.IdentityProvider newProvider = identityProviderConverterCloudV20.fromIdentityProvider(provider);
+
+            //TODO: load the default policy from the directory. This will be done in https://jira.rax.io/browse/CID-612
+            byte [] policyByteArray;
+            try {
+                //TODO: write a test case for this as part of https://jira.rax.io/browse/CID-612
+                validator20.validateIdpPolicy(GlobalConstants.IDP_DEFAULT_POLICY);
+                policyByteArray = GlobalConstants.IDP_DEFAULT_POLICY.getBytes(StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                logger.error(FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE, e);
+                throw new UnrecoverableIdmException(FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE);
+            }
+            newProvider.setPolicy(policyByteArray);
+
             federatedIdentityService.addIdentityProvider(newProvider);
             atomHopperClient.asyncPostIdpEvent(newProvider, EventType.CREATE);
             ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(newProvider.getProviderId()).build());
@@ -1484,22 +1498,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             //verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
 
-            // Ensure policy does not exceed max size allowed
-            byte [] policyByteArray = policy.getBytes(StandardCharsets.UTF_8);
-            double policyKilobyteSize = (double) policyByteArray.length / 1024;
-            if(policyKilobyteSize > identityConfig.getReloadableConfig().getIdpPolicyMaxSize()){
-                throw new BadRequestException(String.format(POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE, identityConfig.getReloadableConfig().getIdpPolicyMaxSize()));
-            }
-
-            // Ensure policy contains valid json
-            try {
-                JSONParser jsonParser = new JSONParser();
-                jsonParser.parse(new StringReader(policy));
-            } catch (ParseException ex) {
-                throw new BadRequestException(POLICY_INVALID_JSON_ERROR_MESSAGE);
-            }
+            validator20.validateIdpPolicy(policy);
 
             com.rackspace.idm.domain.entity.IdentityProvider identityProvider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
+
+            byte [] policyByteArray = policy.getBytes(StandardCharsets.UTF_8);
             identityProvider.setPolicy(policyByteArray);
 
             federatedIdentityService.updateIdentityProvider(identityProvider);
@@ -1524,10 +1527,18 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             com.rackspace.idm.domain.entity.IdentityProvider identityProvider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
 
-            // Return empty json if identity provider does not have a policy
+            // Return the default IDP policy if identity provider does not have a policy
             String body;
             if (identityProvider.getPolicy() == null) {
-                body = String.valueOf(new JSONObject());
+                //TODO: load this from the directory as part of https://jira.rax.io/browse/CID-612
+                //TODO: write a test case for this as part of https://jira.rax.io/browse/CID-612
+                body = GlobalConstants.IDP_DEFAULT_POLICY;
+                try {
+                    validator20.validateIdpPolicy(GlobalConstants.IDP_DEFAULT_POLICY);
+                } catch (Exception e) {
+                    logger.error(FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE, e);
+                    throw new UnrecoverableIdmException(FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE);
+                }
             } else {
                 body = new String(identityProvider.getPolicy());
             }

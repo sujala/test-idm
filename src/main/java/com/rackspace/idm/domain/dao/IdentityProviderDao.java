@@ -91,6 +91,13 @@ public interface IdentityProviderDao {
     void updateIdentityProvider(IdentityProvider identityProvider);
 
     /**
+     * Save updates to an existing identity provider as-is
+     *
+     * @param identityProvider
+     */
+    void updateIdentityProviderAsIs(IdentityProvider identityProvider);
+
+    /**
      * Delete the specified Identity Provider
      *
      * @param identityProviderId
