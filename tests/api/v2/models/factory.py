@@ -245,9 +245,9 @@ def get_add_idp_request_object(name=None, issuer=None, description=None,
         description = TestBase.generate_random_string(const.DESC_PATTERN)
     if not federation_type:
         if approved_domain_ids or approved_domain_group:
-            federation_type = const.DOMAIN
+            federation_type = const.DOMAIN.upper()
         else:
-            federation_type = const.RACKER
+            federation_type = const.RACKER.upper()
     if not authentication_url:
         authentication_url = TestBase.generate_random_string(const.URL_PATTERN)
     return requests.IDP(idp_name=name, issuer=issuer, description=description,
