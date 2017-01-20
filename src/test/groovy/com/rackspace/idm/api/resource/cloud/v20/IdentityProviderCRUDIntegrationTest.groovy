@@ -696,7 +696,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         IdentityProvider idp4 = utils.createIdentityProvider(idpManagerToken, idp4ToCreate)
 
         when: "get all idp"
-        def allIdp = cloud20.listIdentityProviders(idpManagerToken, null, null, null, null, acceptContentType)
+        def allIdp = cloud20.listIdentityProviders(idpManagerToken, null, null, null, null, null, acceptContentType)
 
         then:
         allIdp.status == SC_OK
@@ -713,7 +713,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         providers.identityProvider.find{it.name == idp4Name} != null
 
         when: "get all idps for specific domain"
-        def domainSpecificIdpResponse = cloud20.listIdentityProviders(idpManagerToken, null, domainId, null, null, acceptContentType)
+        def domainSpecificIdpResponse = cloud20.listIdentityProviders(idpManagerToken, null, null, domainId, null, null, acceptContentType)
 
         then: "get all idps for that domain and all global domain idps"
         domainSpecificIdpResponse.status == SC_OK
@@ -726,7 +726,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         domainSpecificIdps.identityProvider.find{it.id == idp4.id} == null
 
         when: "get all idps that have an EXPLICIT domain mapping"
-        def onlyExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, null, null, IdentityProviderTypeFilterEnum.EXPLICIT.name(), null, acceptContentType)
+        def onlyExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, null, null, null, IdentityProviderTypeFilterEnum.EXPLICIT.name(), null, acceptContentType)
 
         then: "all idps with an EXPLICIT domain mapping are returned"
         onlyExplicitResponse.status == SC_OK
@@ -738,7 +738,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         onlyExplicitIdps.identityProvider.find{it.id == idp4.id} == null
 
         when: "get all idps that have an EXPLICIT domain mapping and for a specific domain"
-        def domainAndExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, null, domainId, IdentityProviderTypeFilterEnum.EXPLICIT.name(), null, acceptContentType)
+        def domainAndExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, null, null, domainId, IdentityProviderTypeFilterEnum.EXPLICIT.name(), null, acceptContentType)
 
         then: "all idps with an EXPLICIT domain mapping are returned"
         domainAndExplicitResponse.status == SC_OK
@@ -750,7 +750,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         domainAndExplicitIdps.identityProvider.find{it.id == idp4.id} == null
 
         when: "get all idps that have a DOMAIN mapping and for a specific TENANT"
-        def tenantResponse = cloud20.listIdentityProviders(idpManagerToken, null, null, null, tenant.id, acceptContentType)
+        def tenantResponse = cloud20.listIdentityProviders(idpManagerToken, null, null, null, null, tenant.id, acceptContentType)
 
         then: "all idps with a domain mapping for the tenant are returned"
         tenantResponse.status == SC_OK
@@ -762,7 +762,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         tenantIdps.identityProvider.find{it.id == idp4.id} == null
 
         when: "get all idps that have an EXPLICIT DOMAIN mapping and for a specific TENANT"
-        def tenantAndExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, null, null, IdentityProviderTypeFilterEnum.EXPLICIT.name(), tenant.id, acceptContentType)
+        def tenantAndExplicitResponse = cloud20.listIdentityProviders(idpManagerToken, null, null, null, IdentityProviderTypeFilterEnum.EXPLICIT.name(), tenant.id, acceptContentType)
 
         then: "all idps with an EXPLICIT domain mapping for the tenant are returned"
         tenantAndExplicitResponse.status == SC_OK
@@ -799,7 +799,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
 
         when:
-        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, "invalidTypeFilter")
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, null, "invalidTypeFilter")
 
         then:
         response.status == 400
@@ -811,7 +811,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
 
         when:
-        def response = cloud20.listIdentityProviders(idpManagerToken, null, "someDomain", null, "someTenant")
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, "someDomain", null, "someTenant")
 
         then:
         response.status == 400
@@ -824,7 +824,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
 
         when:
-        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, null, "someTenant", accept)
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, null, null, "someTenant", accept)
 
         then:
         response.status == 200
@@ -849,7 +849,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def idpManagerToken = utils.getToken(idpManager.username)
 
         when:
-        def response = cloud20.listIdentityProviders(idpManagerToken, null, "domainDoesNotExist", null, null, accept)
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, "domainDoesNotExist", null, null, accept)
 
         then:
         response.status == 200
@@ -874,7 +874,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def tenant = utils.createTenant()
 
         when:
-        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, null, tenant.id)
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, null, null, tenant.id)
 
         then:
         response.status == 400
@@ -897,13 +897,13 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         when:
         def response
         if (includeDomain && includeTenant) {
-            response = cloud20.listIdentityProviders(idpManagerToken, name, domain.id, idpType, tenant.id, accept)
+            response = cloud20.listIdentityProviders(idpManagerToken, name, null, domain.id, idpType, tenant.id, accept)
         } else if (includeDomain) {
-            response = cloud20.listIdentityProviders(idpManagerToken, name, domain.id, idpType, null, accept)
+            response = cloud20.listIdentityProviders(idpManagerToken, name, null, domain.id, idpType, null, accept)
         } else if (includeTenant) {
-            response = cloud20.listIdentityProviders(idpManagerToken, name, null, idpType, tenant.id, accept)
+            response = cloud20.listIdentityProviders(idpManagerToken, name, null, null, idpType, tenant.id, accept)
         } else {
-            response = cloud20.listIdentityProviders(idpManagerToken, name, null, idpType, null, accept)
+            response = cloud20.listIdentityProviders(idpManagerToken, name, null, null, idpType, null, accept)
         }
         IdentityProviders providers = response.getEntity(IdentityProviders.class)
 
@@ -933,6 +933,144 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "Valid list IDPs with query parameters - name = #name, issuer = #issuer, domainId = #domainId, idpType = #idpType, tenantName = #tenantName, accept = #accept"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        // Auto generate IDP attributes if null
+        def domain
+        if (domainId == null) {
+            domain = utils.createDomainEntity()
+        } else {
+            domain = utils.createDomainEntity(domainId)
+        }
+
+        def tenant
+        if (tenantName == null) {
+            tenant = utils.createTenant()
+        } else {
+            tenant = utils.createTenant(tenantName)
+        }
+        utils.addTenantToDomain(domain.id, tenant.id)
+
+        IdentityProvider idpToCreate
+        if (name == null && issuer == null) {
+            idpToCreate = v2Factory.createIdentityProvider(getRandomUUID("name"), "description", getRandomUUID("issuer"), IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id])
+        } else if (name == null && issuer != null) {
+            idpToCreate = v2Factory.createIdentityProvider(getRandomUUID("name"), "description", issuer, IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id])
+        } else if (name != null && issuer == null) {
+            idpToCreate = v2Factory.createIdentityProvider(name, "description", getRandomUUID("issuer"), IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id])
+        } else {
+            idpToCreate = v2Factory.createIdentityProvider(name, "description", issuer, IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id])
+        }
+        def creationResultIdp = utils.createIdentityProvider(idpManagerToken, idpToCreate)
+
+        when: "get Idp from query parameters"
+        def response = cloud20.listIdentityProviders(idpManagerToken, name, issuer, domainId, idpType, tenantName, accept)
+        IdentityProviders providers = response.getEntity(IdentityProviders.class)
+
+        then: "Assert only one IDP is returned"
+        response.status == SC_OK
+        providers.identityProvider.size() == 1
+
+        cleanup:
+        utils.deleteDomain(domain.id)
+        utils.deleteTenant(tenant.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        utils.deleteUserQuietly(idpManager)
+
+        where:
+        name                  | issuer                  | domainId                | idpType                                        | tenantName              | accept
+        getRandomUUID("name") | null                    | null                    | null                                           | null                    | MediaType.APPLICATION_XML_TYPE
+        getRandomUUID("name") | null                    | null                    | null                                           | null                    | MediaType.APPLICATION_JSON_TYPE
+
+        getRandomUUID("name") | getRandomUUID("issuer") | null                    | null                                           | null                    | MediaType.APPLICATION_XML_TYPE
+        getRandomUUID("name") | getRandomUUID("issuer") | null                    | null                                           | null                    | MediaType.APPLICATION_JSON_TYPE
+
+        getRandomUUID("name") | getRandomUUID("issuer") | getRandomUUID("domain") | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_XML_TYPE
+        getRandomUUID("name") | getRandomUUID("issuer") | getRandomUUID("domain") | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_JSON_TYPE
+
+        getRandomUUID("name") | getRandomUUID("issuer") | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | getRandomUUID("tenant") | MediaType.APPLICATION_XML_TYPE
+        getRandomUUID("name") | getRandomUUID("issuer") | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | getRandomUUID("tenant") | MediaType.APPLICATION_JSON_TYPE
+
+        null                  | getRandomUUID("issuer") | null                    | null                                           | null                    | MediaType.APPLICATION_XML_TYPE
+        null                  | getRandomUUID("issuer") | null                    | null                                           | null                    | MediaType.APPLICATION_JSON_TYPE
+
+        null                  | getRandomUUID("issuer") | getRandomUUID("domain") | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_XML_TYPE
+        null                  | getRandomUUID("issuer") | getRandomUUID("domain") | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_JSON_TYPE
+
+        null                  | getRandomUUID("issuer") | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | getRandomUUID("tenant") | MediaType.APPLICATION_XML_TYPE
+        null                  | getRandomUUID("issuer") | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | getRandomUUID("tenant") | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Invalid list IDPs with query parameters - name = #name, issuer = #issuer, domainId = #domainId, idpType = #idpType, tenantName = #tenantName, accept = #accept"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        // Auto generate IDP attributes if null
+        def domain
+        if (domainId == null || domainId == "invalid") {
+            domain = utils.createDomainEntity()
+        } else {
+            domain = utils.createDomainEntity(domainId)
+        }
+
+        def tenant
+        if (tenantName == null || tenantName == "invalid") {
+            tenant = utils.createTenant()
+        } else {
+            tenant = utils.createTenant(tenantName)
+        }
+        utils.addTenantToDomain(domain.id, tenant.id)
+
+        IdentityProvider idpToCreate
+        if (name == "invalid" && issuer == "invalid") {
+            idpToCreate = v2Factory.createIdentityProvider(getRandomUUID("name"), "description", getRandomUUID("issuer"), IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id])
+        } else if (name == "invalid" && issuer != "invalid") {
+            idpToCreate = v2Factory.createIdentityProvider(getRandomUUID("name"), "description", issuer, IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id])
+        } else if (name != "invalid" && issuer == "invalid") {
+            idpToCreate = v2Factory.createIdentityProvider(name, "description", getRandomUUID("issuer"), IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id])
+        } else {
+            idpToCreate = v2Factory.createIdentityProvider(name, "description", issuer, IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id])
+        }
+        def creationResultIdp = utils.createIdentityProvider(idpManagerToken, idpToCreate)
+
+        when: "get Idp from query parameters"
+        def response = cloud20.listIdentityProviders(idpManagerToken, name, issuer, domainId, idpType, tenantName, accept)
+        IdentityProviders providers = response.getEntity(IdentityProviders.class)
+
+        then: "Assert no IDP is returned"
+        response.status == SC_OK
+        providers.identityProvider.size() == 0
+
+        cleanup:
+        utils.deleteDomain(domain.id)
+        utils.deleteTenant(tenant.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        utils.deleteUserQuietly(idpManager)
+
+        where:
+        name                  | issuer                  | domainId                | idpType                                        | tenantName              | accept
+        getRandomUUID("name") | getRandomUUID("issuer") | "invalid"               | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_XML_TYPE
+        getRandomUUID("name") | getRandomUUID("issuer") | "invalid"               | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_JSON_TYPE
+
+        getRandomUUID("name") | getRandomUUID("issuer") | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | "invalid"               | MediaType.APPLICATION_XML_TYPE
+        getRandomUUID("name") | getRandomUUID("issuer") | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | "invalid"               | MediaType.APPLICATION_JSON_TYPE
+
+        "invalid"             | getRandomUUID("issuer") | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_XML_TYPE
+        "invalid"             | getRandomUUID("issuer") | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_JSON_TYPE
+
+        getRandomUUID("name") | "invalid"               | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_XML_TYPE
+        getRandomUUID("name") | "invalid"               | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_JSON_TYPE
+
+        "invalid"             | "invalid"               | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_XML_TYPE
+        "invalid"             | "invalid"               | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | null                    | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
     def "list IDPs with parameters invalid cases - invalidName = #invalidName, invalidDomain = #invalidDomain, invalidTenant = #invalidTenant , accept = #accept"() {
         given:
         def idpManager = utils.createIdentityProviderManager()
@@ -950,11 +1088,11 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         when:
         def response
         if (invalidDomain) {
-            response = cloud20.listIdentityProviders(idpManagerToken, idpName, "invalid", null, null, accept)
+            response = cloud20.listIdentityProviders(idpManagerToken, idpName, null, "invalid", null, null, accept)
         } else if (invalidTenant) {
-            response = cloud20.listIdentityProviders(idpManagerToken, idpName, null, null, "invalid", accept)
+            response = cloud20.listIdentityProviders(idpManagerToken, idpName, null, null, null, "invalid", accept)
         } else if (invalidName) {
-            response = cloud20.listIdentityProviders(idpManagerToken, "invalid", null, null, null, accept)
+            response = cloud20.listIdentityProviders(idpManagerToken, "invalid", null, null, null, null, accept)
         }
         IdentityProviders providers = response.getEntity(IdentityProviders.class)
 
@@ -990,7 +1128,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         tenantDao.updateTenantAsIs(tenantEntity)
 
         when:
-        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, null, tenant.id)
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, null, null, null, tenant.id)
 
         then:
         response.status == 400
