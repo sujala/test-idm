@@ -95,9 +95,6 @@ public class SamlCredentialUtils {
 
     static X509Credential generateX509Credential(X509Certificate cert, KeyPair keyPair) throws Exception {
         BasicX509Credential credential = new BasicX509Credential(cert, keyPair.getPrivate());
-//        credential.setPublicKey(keyPair.getPublic())
-//        credential.setPrivateKey(keyPair.getPrivate());
-
         return credential;
     }
 
