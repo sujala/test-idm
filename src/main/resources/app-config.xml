@@ -27,8 +27,8 @@
     <aop:aspectj-autoproxy />
 
     <bean id="bootstrapOpenSaml" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
-        <property name="targetClass"><value>org.opensaml.DefaultBootstrap</value></property>
-        <property name="targetMethod"><value>bootstrap</value></property>
+        <property name="targetClass"><value>org.opensaml.core.config.InitializationService</value></property>
+        <property name="targetMethod"><value>initialize</value></property>
     </bean>
 
     <!-- Scans within the base package of the application for @Components to configure as beans-->

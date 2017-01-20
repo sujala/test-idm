@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.sql.entity.SqlDomain;
 import com.rackspace.idm.domain.sql.entity.SqlDomainRax;
 import com.rackspace.idm.domain.sql.entity.SqlProject;
 import com.rackspace.idm.domain.sql.mapper.SqlRaxMapper;
-import org.apache.xalan.xsltc.DOM;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;

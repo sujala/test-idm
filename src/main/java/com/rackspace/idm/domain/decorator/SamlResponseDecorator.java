@@ -1,16 +1,15 @@
 package com.rackspace.idm.domain.decorator;
 
 import com.rackspace.idm.ErrorCodes;
-import com.rackspace.idm.SAMLConstants;
 import com.rackspace.idm.exception.BadRequestException;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
-import org.opensaml.saml2.core.*;
-import org.opensaml.xml.XMLObject;
-import org.opensaml.xml.schema.XSAny;
-import org.opensaml.xml.schema.XSInteger;
-import org.opensaml.xml.schema.XSString;
-import org.opensaml.xml.signature.Signature;
+import org.opensaml.saml.saml2.core.*;
+import org.opensaml.core.xml.XMLObject;
+import org.opensaml.core.xml.schema.XSAny;
+import org.opensaml.core.xml.schema.XSInteger;
+import org.opensaml.core.xml.schema.XSString;
+import org.opensaml.xmlsec.signature.Signature;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -31,10 +31,10 @@ import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.codehaus.jackson.map.ObjectMapper
 import org.joda.time.DateTime
-import org.opensaml.saml2.core.LogoutResponse
-import org.opensaml.saml2.core.Response
-import org.opensaml.saml2.core.StatusCode
-import org.opensaml.xml.signature.Signature
+import org.opensaml.saml.saml2.core.LogoutResponse
+import org.opensaml.saml.saml2.core.Response
+import org.opensaml.saml.saml2.core.StatusCode
+import org.opensaml.xmlsec.signature.Signature
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.IdentityFault
@@ -1083,7 +1083,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         then: "the response is a success"
         logoutResponse.status == HttpStatus.SC_OK
         LogoutResponse obj = samlUnmarshaller.unmarshallLogoutRespone(StringUtils.getBytesUtf8(logoutResponse.getEntity(String.class)))
-        obj.getStatus().getStatusCode().value == StatusCode.SUCCESS_URI
+        obj.getStatus().getStatusCode().value == StatusCode.SUCCESS
 
         and: "the user does not exist in backend"
         cloud20.getUserById(saToken, authResponse.user.id).status == HttpStatus.SC_NOT_FOUND
@@ -1098,7 +1098,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         then: "the response is a failure marked as requestor failure"
         logoutResponse.status == HttpStatus.SC_BAD_REQUEST
         LogoutResponse logoutResponseObj = samlUnmarshaller.unmarshallLogoutRespone(StringUtils.getBytesUtf8(logoutResponse.getEntity(String.class)))
-        logoutResponseObj.getStatus().getStatusCode().value == StatusCode.REQUESTER_URI
+        logoutResponseObj.getStatus().getStatusCode().value == StatusCode.REQUESTER
 
         cleanup:
         deleteFederatedUserQuietly(username1)

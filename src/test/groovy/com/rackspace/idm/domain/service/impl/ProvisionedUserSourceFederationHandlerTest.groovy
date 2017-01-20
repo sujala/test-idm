@@ -34,7 +34,8 @@ import com.rackspace.idm.validation.PrecedenceValidator
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import org.opensaml.saml2.core.Response
+import org.opensaml.core.config.InitializationService
+import org.opensaml.saml.saml2.core.Response
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
@@ -95,7 +96,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
 
     def setupSpec() {
         //initializes open saml. allows us use unmarshaller
-        org.opensaml.DefaultBootstrap.bootstrap();
+        InitializationService.initialize();
 
         samlUnmarshaller = new SamlUnmarshaller()
         provisionedUserSourceFederationHandler = new ProvisionedUserSourceFederationHandler();
