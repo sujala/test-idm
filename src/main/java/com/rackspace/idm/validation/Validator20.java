@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
@@ -21,6 +22,8 @@ import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.impl.EmailValidator;
 import org.joda.time.DateTime;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.openstack.docs.identity.api.v2.Role;
@@ -31,6 +34,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.*;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -103,6 +109,8 @@ public class Validator20 {
     public static final String LENGTH_EXCEEDED_ERROR_MSG = "%s length cannot exceed %s characters";
 
     public static final String ERROR_APPROVED_DOMAIN_GROUP_NAME_SHOULD_BE_GLOBAL = "When BROKER IDP is specified, the approvedDomainGroup must be set, and specified as GLOBAL";
+    public static final String FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE = "Policy contains invalid json.";
+    public static final String FEDERATION_IDP_POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE = "Max size exceed. Policy file must be less then %s Kilobytes.";
 
     @Autowired
     private TenantService tenantService;
@@ -455,6 +463,23 @@ public class Validator20 {
             if (currCertId.equals(certId)) {
                 throw  new DuplicateException("Cannot add duplicate public certificates to identity provider");
             }
+        }
+    }
+
+    public void validateIdpPolicy(String policy) {
+        // Ensure policy does not exceed max size allowed
+        byte [] policyByteArray = policy.getBytes(StandardCharsets.UTF_8);
+        double policyKilobyteSize = (double) policyByteArray.length / 1024;
+        if(policyKilobyteSize > identityConfig.getReloadableConfig().getIdpPolicyMaxSize()){
+            throw new BadRequestException(String.format(FEDERATION_IDP_POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE, identityConfig.getReloadableConfig().getIdpPolicyMaxSize()));
+        }
+
+        // Ensure policy contains valid json
+        try {
+            JSONParser jsonParser = new JSONParser();
+            jsonParser.parse(new StringReader(policy));
+        } catch (ParseException | IOException ex) {
+            throw new BadRequestException(FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE);
         }
     }
 

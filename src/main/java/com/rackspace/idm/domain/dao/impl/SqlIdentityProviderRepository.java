@@ -112,6 +112,11 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
     }
 
     @Override
+    public void updateIdentityProviderAsIs(IdentityProvider identityProvider) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public void deleteIdentityProviderById(String identityProviderId) {
         final SqlIdentityProvider sqlProvider = repository.findOne(identityProviderId);
         repository.delete(identityProviderId);
