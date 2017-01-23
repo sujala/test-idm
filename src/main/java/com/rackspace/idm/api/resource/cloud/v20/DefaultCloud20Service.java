@@ -1307,7 +1307,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String name, String approvedDomainId, String approvedTenantId, String idpType) {
+    public ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String name, String issuer, String approvedDomainId, String approvedTenantId, String idpType) {
         try {
             //verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
@@ -1363,6 +1363,25 @@ public class DefaultCloud20Service implements Cloud20Service {
                     identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForAnyDomain(name);
                 } else {
                     identityProvider = federatedIdentityService.getIdentityProviderByName(name);
+                }
+
+                if (identityProvider != null) {
+                    if (StringUtils.isNotBlank(issuer) && !identityProvider.getUri().equalsIgnoreCase(issuer)) {
+                        providerEntities = new ArrayList<>();
+                    } else {
+                        providerEntities = Collections.singletonList(identityProvider);
+                    }
+                }
+            } else if (StringUtils.isNotBlank(issuer)) {
+                com.rackspace.idm.domain.entity.IdentityProvider identityProvider = null;
+                if (StringUtils.isNotBlank(approvedDomainId) && IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
+                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForDomainByIssuer(issuer, approvedDomainId);
+                } else if (StringUtils.isNotBlank(approvedDomainId)) {
+                    identityProvider = federatedIdentityService.getIdentityProviderApprovedForDomainByIssuer(issuer, approvedDomainId);
+                } else if (IdentityProviderTypeFilterEnum.EXPLICIT.equals(idpFilter)) {
+                    identityProvider = federatedIdentityService.getIdentityProviderExplicitlyApprovedForAnyDomainByIssuer(issuer);
+                } else {
+                    identityProvider = federatedIdentityService.getIdentityProviderByIssuer(issuer);
                 }
 
                 if (identityProvider != null) {

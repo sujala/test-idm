@@ -69,7 +69,7 @@ public interface FederatedIdentityService {
     IdentityProvider getIdentityProviderExplicitlyApprovedForDomain(String name, String domainId);
 
     /**
-     * Return the identity provider by name that has any EXPLICIT domain restriction.
+     * Return the identity provider by issuer that has any EXPLICIT domain restriction.
      *
      * @param name
      * @return
@@ -91,6 +91,32 @@ public interface FederatedIdentityService {
      * @return
      */
     IdentityProvider getIdentityProviderByIssuer(String issuer);
+
+    /**
+     * Return the identity provider by issuer that can create tokens for the given name and domainId
+     *
+     * @param issuer
+     * @param domainId
+     * @return
+     */
+    IdentityProvider getIdentityProviderApprovedForDomainByIssuer(String issuer, String domainId);
+
+    /**
+     * Return the identity provider by issuer that has an EXPLICIT domain restriction for the given name and domainId.
+     *
+     * @param issuer
+     * @param domainId
+     * @return
+     */
+    IdentityProvider getIdentityProviderExplicitlyApprovedForDomainByIssuer(String issuer, String domainId);
+
+    /**
+     * Return the identity provider by issuer that has any EXPLICIT domain restriction.
+     *
+     * @param issuer
+     * @return
+     */
+    IdentityProvider getIdentityProviderExplicitlyApprovedForAnyDomainByIssuer(String issuer);
 
     /**
      * Return the identity providers that can create tokens for the given domainId

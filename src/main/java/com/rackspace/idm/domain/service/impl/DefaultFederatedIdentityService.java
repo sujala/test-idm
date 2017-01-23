@@ -198,6 +198,11 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     }
 
     @Override
+    public IdentityProvider getIdentityProviderExplicitlyApprovedForAnyDomainByIssuer(String issuer) {
+        return identityProviderDao.getIdentityProvidersExplicitlyApprovedForAnyDomainByIssuer(issuer);
+    }
+
+    @Override
     public IdentityProvider checkAndGetIdentityProvider(String id) {
         IdentityProvider provider = getIdentityProvider(id);
 
@@ -212,6 +217,16 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     @Override
     public IdentityProvider getIdentityProviderByIssuer(String issuer) {
         return identityProviderDao.getIdentityProviderByUri(issuer);
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderApprovedForDomainByIssuer(String issuer, String domainId) {
+        return identityProviderDao.getIdentityProviderApprovedForDomainByIssuer(issuer, domainId);
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderExplicitlyApprovedForDomainByIssuer(String issuer, String domainId) {
+        return identityProviderDao.getIdentityProviderExplicitlyApprovedForDomainByIssuer(issuer, domainId);
     }
 
     @Override
