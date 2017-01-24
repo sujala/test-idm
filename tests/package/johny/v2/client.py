@@ -1371,3 +1371,24 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         resp = self.request(method='DELETE', url=url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
+
+    def add_idp_mapping(self, idp_id, request_data, requestslib_kwargs=None):
+        """Return response object from the add certificate api call
+        """
+        url = self.url + const.IDP_MAPPING_CR_URL.format(idp_id=idp_id)
+        if not requestslib_kwargs:
+            requestslib_kwargs = {}
+        requestslib_kwargs["json"] = request_data
+        # Note that there is always a default mapping, so no POST
+        resp = self.request(method='PUT', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def get_idp_mapping(self, idp_id, requestslib_kwargs=None):
+        """Return response object from the get_idp api call
+        """
+        url = self.url + const.IDP_MAPPING_CR_URL.format(idp_id=idp_id)
+
+        resp = self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp

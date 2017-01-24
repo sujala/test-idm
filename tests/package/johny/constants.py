@@ -43,6 +43,8 @@ GET_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL = (
 GROUPS_URL = '/RAX-GRPADM/groups'
 IDP_URL = '/RAX-AUTH/federation/identity-providers'
 IDP_RUD_URL = (IDP_URL + "/{idp_id}")
+IDP_MAPPING_CR_URL = ("/RAX-AUTH/federation/identity-providers/{idp_id}/"
+                      "mapping")
 LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
 LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 LIST_ENDPOINTS_FOR_TOKEN_URL = '/tokens/{token_id}/endpoints'
@@ -93,6 +95,8 @@ DOMAIN_TEST = 'meow'
 EMAIL_RANDOM = 'randome@rackspace.com'
 ID_PATTERN = '[\d]{8}'
 IDENTITY_PRODUCT_ROLE_NAME_PATTERN = 'identity:testrole[\-][\d\w]{8}'
+IDP_MAPPING_PATTERN = "[a-zA-Z]{{{mapping_size}}}"
+ITEM_NOT_FOUND = "itemNotFound"
 LOWER_CASE_LETTERS = '[a-z]{8}'
 MD5_PATTERN = '[a-f][0-9]{40}'
 MAPPING_RULE_DESCRIPTION_PATTERN = (
@@ -104,6 +108,7 @@ MOSSO_TENANT_ID_PATTERN = '[\d]{6}'
 NAST_TENANT_ID_PATTERN = 'NAST[\d]{6}'
 NUMBERS_PATTERN = '[1-9]{1}[0-9]{8}'
 NUMERIC_DOMAIN_ID_PATTERN = '[1-9]{1}[0-9]{6}'
+MAX_SIZE_IN_KILOBYTES = 2
 OTP_NAME_PATTERN = 'otp[\-][\d]{8}'
 PASSWORD_PATTERN = 'Password1[\d\w]{10}'
 RACKER = "RACKER"
@@ -358,6 +363,7 @@ EXPECTED_UNBOUNDID_TIMEOUT_CONFIGS = [
     'ldap.server.pool.health.check.interval',
     'ldap.server.pool.check.connection.age.on.release',
     'ldap.server.pool.allow.concurrent.socketfactory.use']
+IDP_MAPPING_POLICY_MAX_SIZE = "identity.provider.policy.max.kilobyte.size"
 
 '''ROLES'''
 COMPUTE_ROLE_NAME = "compute:default"
@@ -371,6 +377,7 @@ USER_ADMIN_ROLE_ID = '2'
 USER_DEFAULT_ROLE_ID = '3'
 USER_MANAGER_ROLE_ID = '7'
 PROVIDER_MANAGEMENT_ROLE_NAME = 'identity:identity-provider-manager'
+PROVIDER_RO_ROLE_NAME = 'identity:identity-provider-read-only'
 
 '''FEATURE FLAGS'''
 FEATURE_FLAG_FOR_ENDPOINTS_BASED_ON_RULES = (
