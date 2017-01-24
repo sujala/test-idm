@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -23,97 +22,6 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     IdentityConfig identityConfig
-
-    enum ConfigSection {
-        configRoot("configPath"), staticConfig("idm.properties"), reloadableConfig("idm.reloadable.properties")
-
-        def representation
-
-        ConfigSection(representation) {
-            this.representation = representation
-        }
-
-        @Override
-        def String toString() {
-            return representation
-        }
-    }
-
-    enum PropKey {
-        description, defaultValue, value, versionAdded
-    }
-
-    def "test get idm props"() {
-        given:
-        def response = devops.getIdmProps(utils.getServiceAdminToken())
-
-        when:
-        def stringResp = response.getEntity(String)
-        def data = new ObjectMapper().readValue(stringResp, Map)
-
-        then:
-        response.status == 200
-        data.containsKey(ConfigSection.configRoot.toString()) && data.containsKey(ConfigSection.staticConfig.toString()) && data.containsKey(ConfigSection.reloadableConfig.toString())
-        def staticConfig = data.get(ConfigSection.staticConfig.toString())
-        def reloadableConfig = data.get(ConfigSection.reloadableConfig.toString())
-        assertFormat(staticConfig)
-        assertFormat(reloadableConfig)
-        assertTypeAndValueOfPropValue(staticConfig.find{it.name == "ga.username"}.get(PropKey.value.toString()), "auth")
-        assertTypeAndValueOfPropValue(staticConfig.find{it.name == "reloadable.docs.cache.timeout"}.get(PropKey.value.toString()), 10)
-        assertTypeAndValueOfPropValue(staticConfig.find{it.name == IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP}.get(PropKey.value.toString()), true)
-    }
-
-    def "test get idm props can be called by user w/ role"() {
-        def ida = utils.createIdentityAdmin()
-        def idaToken = utils.getToken(ida.username)
-
-        when: "call w/ identity admin w/o role"
-        def response = devops.getIdmProps(idaToken)
-
-        then:
-        response.status == HttpStatus.SC_FORBIDDEN
-
-        when: "call w/ identity admin w role"
-        utils.addRoleToUser(ida, "b49a3fb2b8d148919b90abf395f9a1a2")
-        def responseWRole = devops.getIdmProps(idaToken)
-
-        then:
-        responseWRole.status == HttpStatus.SC_OK
-
-        cleanup:
-        utils.deleteUserQuietly(ida)
-    }
-
-    def "test case-insensitive search for Identity properties"() {
-        when: "static config is case-insensitive"
-        def response = devops.getIdmProps(utils.getServiceAdminToken(), IdentityConfig.EMAIL_HOST.toUpperCase())
-        def stringResp = response.getEntity(String)
-        def data = new ObjectMapper().readValue(stringResp, Map)
-        def staticConfig = data.get(ConfigSection.staticConfig.toString())
-        def reloadableConfig = data.get(ConfigSection.reloadableConfig.toString())
-
-        then:
-        staticConfig.size() == 1
-        reloadableConfig.size() == 0
-        assertFormat(staticConfig)
-        assertFormat(reloadableConfig)
-        assertTypeAndValueOfPropValue(staticConfig.find{it.name == IdentityConfig.EMAIL_HOST}.get(PropKey.value.toString()), identityConfig.getStaticConfig().getEmailHost())
-
-        when: "reloadable config is case-insensitive"
-        response = devops.getIdmProps(utils.getServiceAdminToken(), IdentityConfig.AE_NODE_NAME_FOR_SIGNOFF_PROP.toUpperCase())
-        stringResp = response.getEntity(String)
-        data = new ObjectMapper().readValue(stringResp, Map)
-        staticConfig = data.get(ConfigSection.staticConfig.toString())
-        reloadableConfig = data.get(ConfigSection.reloadableConfig.toString())
-
-        then:
-        staticConfig.size() == 0
-        reloadableConfig.size() == 1
-        assertFormat(staticConfig)
-        assertFormat(reloadableConfig)
-        assertTypeAndValueOfPropValue(reloadableConfig.find{it.name == IdentityConfig.AE_NODE_NAME_FOR_SIGNOFF_PROP}.get(PropKey.value.toString()), identityConfig.getReloadableConfig().getAENodeNameForSignoff())
-    }
-
 
     def "test federation deletion call"() {
         given:
@@ -258,19 +166,4 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
-
-    def assertFormat(configSection) {
-        configSection.each { propSection ->
-            assert propSection.containsKey(PropKey.description.toString()) &&
-                    propSection.containsKey(PropKey.defaultValue.toString()) &&
-                    propSection.containsKey(PropKey.value.toString()) &&
-                    propSection.containsKey(PropKey.versionAdded.toString())
-        }
-        return true
-    }
-
-    def void assertTypeAndValueOfPropValue(value, expectedValue) {
-        assert value.getClass() == expectedValue.getClass()
-        assert value == expectedValue
-    }
 }

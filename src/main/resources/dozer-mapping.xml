@@ -42,5 +42,14 @@
         </custom-converters>
     </configuration>
 
+    <mapping>
+        <class-a>com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty</class-a>
+        <class-b>com.rackspace.idm.domain.entity.IdentityProperty</class-b>
+        <field>
+            <a>value</a>
+            <b set-method="setValueAsString" get-method="getValueAsString">value</b>
+        </field>
+    </mapping>
+
 </mappings>
 

@@ -660,6 +660,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
         return authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(rolesToSearch);
     }
 
+    @Override
+    public boolean authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum identityType, String... roleNames) {
+        List<String> rolesToSearch = new ArrayList<>(Arrays.asList(roleNames));
+        rolesToSearch.addAll(getIdentityRolesForLevel(identityType));
+        return authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(rolesToSearch);
+    }
+
     /**
      * Identity "user type" roles have a hierarchy. Service Admins < Identity Admins < User Admins < User Managers < Default Users
      *
@@ -701,6 +708,13 @@ public class DefaultAuthorizationService implements AuthorizationService {
         if (StringUtils.isNotBlank(roleName)) {
             rolesToSearch.add(roleName);
         }
+        rolesToSearch.addAll(getIdentityRolesForLevel(identityType));
+        verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(rolesToSearch);
+    }
+
+    @Override
+    public void verifyEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum identityType, String... roleNames) {
+        List<String> rolesToSearch = new ArrayList<>(Arrays.asList(roleNames));
         rolesToSearch.addAll(getIdentityRolesForLevel(identityType));
         verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(rolesToSearch);
     }

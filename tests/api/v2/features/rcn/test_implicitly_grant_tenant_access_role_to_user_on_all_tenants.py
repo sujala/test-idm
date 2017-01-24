@@ -79,9 +79,11 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         feature_flag_resp = (
             self.devops_client.get_devops_properties(flag_name))
         feature_flag_value = feature_flag_resp.json()[
-            const.IDM_RELOADABLE_PROPERTIES][0][const.VALUE]
-        feature_flag_default_value = feature_flag_resp.json()[
-            const.IDM_RELOADABLE_PROPERTIES][0][const.DEFAULT_VALUE]
+            const.PROPERTIES][0][const.VALUE]
+        feature_flag_default_value = (feature_flag_resp.json()[
+            const.PROPERTIES][0][const.DEFAULT_VALUE] if
+            const.DEFAULT_VALUE in feature_flag_resp.json()[
+            const.PROPERTIES][0] else None)
         return feature_flag_value, feature_flag_default_value
 
     @classmethod

@@ -154,6 +154,13 @@
             </xsd:documentation>
         </annotation>
     </element>
+    <element name="identityProperty" type="RAX-AUTH:IdentityProperty" >
+        <annotation>
+            <xsd:documentation>
+                <p>An Identity property.</p>
+            </xsd:documentation>
+        </annotation>
+    </element>
 
     <!-- Complex Types -->
     <complexType name="Types">
@@ -992,6 +999,7 @@
         </attribute>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
+
     <complexType name="TenantTypeEndpointRule">
         <complexContent>
             <extension base="RAX-AUTH:EndpointAssignmentRule">
@@ -1010,16 +1018,31 @@
             </extension>
         </complexContent>
     </complexType>
+
     <complexType name="EndpointAssignmentRules">
         <sequence>
             <element ref="RAX-AUTH:tenantTypeEndpointRules" minOccurs="0" maxOccurs="1"/>
         </sequence>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
+
     <complexType name="TenantTypeEndpointRules">
         <sequence>
             <element ref="RAX-AUTH:tenantTypeEndpointRule"  minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
+
+    <complexType name="IdentityProperty">
+        <attribute name="id" type="xsd:string" use="optional" />
+        <attribute name="name" type="xsd:string" use="optional" />
+        <attribute name="value" type="xsd:string" use="optional" />
+        <attribute name="valueType" type="xsd:string" use="optional" />
+        <attribute name="description" type="xsd:string" use="optional" />
+        <attribute name="idmVersion" type="xsd:string" use="optional" />
+        <attribute name="reloadable" type="xsd:boolean" use="optional" />
+        <attribute name="searchable" type="xsd:boolean" use="optional" />
+        <anyAttribute namespace="##other" processContents="lax" />
+    </complexType>
+
 </schema>

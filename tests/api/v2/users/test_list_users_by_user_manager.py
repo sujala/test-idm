@@ -107,9 +107,9 @@ class TestListUsersByUserManager(base.TestBaseV2):
             self.devops_client.get_devops_properties(
                 flag_name))
         feature_flag_value = feature_flag_resp.json()[
-            const.IDM_RELOADABLE_PROPERTIES][0][const.VALUE]
+            const.PROPERTIES][0][const.VALUE]
         feature_flag_default_value = feature_flag_resp.json()[
-            const.IDM_RELOADABLE_PROPERTIES][0][const.DEFAULT_VALUE]
+            const.PROPERTIES][0][const.DEFAULT_VALUE]
         return feature_flag_value, feature_flag_default_value
 
     def test_list_users_by_user_manager(self):

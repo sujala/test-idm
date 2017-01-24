@@ -169,8 +169,9 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         Get current config of unboundid
         """
-        parsedurl = urlparse(self.url)
-        url = "{0}://{1}{2}".format(parsedurl.scheme, parsedurl.netloc,
+        parsed_url = urlparse(self.url)
+        url = "{0}://{1}{2}".format(parsed_url.scheme,
+                                    parsed_url.netloc,
                                     const.UNBOUNDID_CONFIG_URL)
         return self.request('GET', url)
 

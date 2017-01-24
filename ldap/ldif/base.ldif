@@ -48,6 +48,18 @@ ou: keydistribution
 ou: keystore
 description: Defines container for encryption keys and meta
 
+dn: ou=cloud,o=configuration,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: cloud
+description: Defines container for cloud configuration objects
+
+dn: ou=properties,ou=cloud,o=configuration,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: properties
+description: Defines container for Identity properties
+
 dn: o=externalProviders,dc=rackspace,dc=com
 objectClass: organization
 objectClass: top
@@ -1170,6 +1182,15 @@ rsId: b49a3fb2b8d148919b90abf395f9a1a2
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 cn: identity:query-props
 description: Can query current state of properties
+rsWeight: 50
+
+dn: rsId=fb551ebee1a811e6a9f3a3d7b19d04b2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: fb551ebee1a811e6a9f3a3d7b19d04b2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:property-admin
+description: Can manage Identity properties stored in the directory
 rsWeight: 50
 
 dn: rsId=67f155a58ae841d28a745a99200a583a,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
@@ -4780,6 +4801,13 @@ dn: roleRsId=b49a3fb2b8d148919b90abf395f9a1a2,cn=ROLES,rsId=173189,ou=users,o=ra
 objectClass: top
 objectClass: tenantRole
 roleRsId: b49a3fb2b8d148919b90abf395f9a1a2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=fb551ebee1a811e6a9f3a3d7b19d04b2,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: top
+objectClass: tenantRole
+roleRsId: fb551ebee1a811e6a9f3a3d7b19d04b2
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
 dn: cn=TOKENS,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com

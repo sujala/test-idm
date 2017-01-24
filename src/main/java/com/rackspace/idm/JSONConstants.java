@@ -324,4 +324,6 @@ public final class JSONConstants {
     public static final String TOKEN_REVOCATION_RECORD_DELETION_RESPONSE = "tokenRevocationRecordDeletionResponse";
     public static final String TOKEN_REVOCATION_RECORD_DELETION_REQUEST = "tokenRevocationRecordDeletionRequest";
 
+    public static final String IDENTITY_PROPERTY = "identityProperty";
+
 }

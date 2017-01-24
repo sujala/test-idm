@@ -78,6 +78,7 @@ public abstract class LdapRepository {
     public static final String ATTR_KEY_CREATED = "rsKeyCreated";
     public static final String ATTR_LOADED_DATE = "rsLoadedDate";
     public static final String ATTR_KEY_METADATA_ID = "rsKeyMetadataId";
+    public static final String OBJECTCLASS_IDENTITY_PROPERTY = "rsIdentityProperty";
 
     public static final String ATTR_ID = "rsId";
 
@@ -189,6 +190,13 @@ public abstract class LdapRepository {
     public static final String ATTR_REGEX = "pattern";
     public static final String ATTR_ERRMSG = "errMsg";
 
+    // Identity Property attributes
+    public static final String ATTR_PROPERTY_VALUE = "rsPropertyValue";
+    public static final String ATTR_PROPERTY_VALUE_TYPE = "rsPropertyValueType";
+    public static final String ATTR_PROPERTY_VERSION = "rsIdmVersion";
+    public static final String ATTR_PROPERTY_SEARCHABLE = "rsSearchable";
+    public static final String ATTR_PROPERTY_RELOADABLE = "rsReloadable";
+
     //multifactor attributes
     public static final String ATTR_TELEPHONE_NUMBER = "telephoneNumber";
     public static final String ATTR_EXTERNAL_MULTIFACTOR_PHONE_ID = "rsExternalMultiFactorPhoneId";
@@ -232,6 +240,7 @@ public abstract class LdapRepository {
     protected static final String PROPERTY_BASE_DN = "ou=properties,ou=configuration,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String MULTIFACTOR_MOBILE_PHONE_BASE_DN = "ou=mobilePhones,ou=multiFactorDevices,o=rackspace,dc=rackspace,dc=com";
     protected static final String TOKEN_REVOCATION_BASE_DN = "ou=TRRs,o=tokens,dc=rackspace,dc=com";
+    protected static final String IDENTITY_PROPERTIES_BASE_DN = "ou=properties,ou=cloud,o=configuration,dc=rackspace,dc=com";
 
     // Definitions for Contatiner Names
     protected static final String CONTAINER_ROLES = "ROLES";

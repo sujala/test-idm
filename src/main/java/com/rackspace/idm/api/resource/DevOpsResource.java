@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest;
 import com.rackspace.idm.api.resource.cloud.devops.DevOpsService;
@@ -20,6 +21,7 @@ import java.util.List;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class DevOpsResource {
+
     @Autowired
     private DevOpsService devOpsService;
 
@@ -82,8 +84,31 @@ public class DevOpsResource {
      */
     @GET
     @Path("/props")
-    public Response getIdmProps(@HeaderParam(X_AUTH_TOKEN) String authToken, @QueryParam("versions") List<String> versions, @QueryParam("name") String name) {
+    public Response getIdmProps(@HeaderParam(X_AUTH_TOKEN) String authToken,
+                                @QueryParam("versions") List<String> versions,
+                                @QueryParam("name") String name) {
         return devOpsService.getIdmPropsByQuery(authToken, versions, name).build();
+    }
+
+    @POST
+    @Path("/props")
+    public Response createIdmProp(@HeaderParam(X_AUTH_TOKEN) String authToken, IdentityProperty identityProperty) {
+        return devOpsService.createIdmProperty(authToken, identityProperty).build();
+    }
+
+    @PUT
+    @Path("/props/{propertyId}")
+    public Response updateIdmProp(@HeaderParam(X_AUTH_TOKEN) String authToken,
+                                  @PathParam("propertyId") String propertyId,
+                                  IdentityProperty identityProperty) {
+        return devOpsService.updateIdmProperty(authToken, propertyId, identityProperty).build();
+    }
+
+    @DELETE
+    @Path("/props/{propertyId}")
+    public Response deleteIdmProp(@HeaderParam(X_AUTH_TOKEN) String authToken,
+                                  @PathParam("propertyId") String propertyId) {
+        return devOpsService.deleteIdmProperty(authToken, propertyId).build();
     }
 
     @POST
@@ -115,4 +140,5 @@ public class DevOpsResource {
         }
         throw new NotFoundException("Service Not Found");
     }
+
 }

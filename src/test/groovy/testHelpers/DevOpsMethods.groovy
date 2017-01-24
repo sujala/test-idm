@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
@@ -38,6 +39,21 @@ class DevOpsMethods {
             wr = wr.queryParam("name", name)
         }
         wr.accept(APPLICATION_JSON).type(APPLICATION_JSON).header("X-Auth-Token", token).get(ClientResponse)
+    }
+
+    def createIdentityProperty(token, IdentityProperty identityProperty, type = MediaType.APPLICATION_XML, accept = MediaType.APPLICATION_XML) {
+        initOnUse()
+        resource.path("/devops/props").accept(accept).type(type).header("X-Auth-Token", token).entity(identityProperty).post(ClientResponse)
+    }
+
+    def updateIdentityProperty(token, String identityPropertyId, IdentityProperty identityProperty, type = MediaType.APPLICATION_XML, accept = MediaType.APPLICATION_XML) {
+        initOnUse()
+        resource.path("/devops/props").path(identityPropertyId).accept(accept).type(type).header("X-Auth-Token", token).entity(identityProperty).put(ClientResponse)
+    }
+
+    def deleteIdentityProperty(token, String identityPropertyId) {
+        initOnUse()
+        resource.path("/devops/props").path(identityPropertyId).header("X-Auth-Token", token).accept(MediaType.APPLICATION_XML).delete(ClientResponse)
     }
 
     def getFederationDeletion(token, request = "{\"federatedUsersDeletionRequest\":{\"max\": 1000}}", accept = APPLICATION_JSON, type = APPLICATION_JSON) {

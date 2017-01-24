@@ -33,7 +33,7 @@ class TestListUnboundIdConfigTimeoutSettings(base.TestBaseV2):
                           json_schema=unboundid_json.config_list)
 
         idm_prop_names = [idm_property[const.NAME] for idm_property
-                          in resp.json()[const.IDM_PROPERTIES]]
+                          in resp.json()[const.PROPERTIES]]
         for config_name in const.EXPECTED_UNBOUNDID_TIMEOUT_CONFIGS:
             self.assertTrue(config_name in idm_prop_names,
                             msg="Cannot find {0} in idm.properties".format(
