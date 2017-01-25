@@ -110,7 +110,7 @@ public class Validator20 {
 
     public static final String ERROR_APPROVED_DOMAIN_GROUP_NAME_SHOULD_BE_GLOBAL = "When BROKER IDP is specified, the approvedDomainGroup must be set, and specified as GLOBAL";
     public static final String FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE = "Policy contains invalid json.";
-    public static final String FEDERATION_IDP_POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE = "Max size exceed. Policy file must be less then %s Kilobytes.";
+    public static final String FEDERATION_IDP_POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE = "Max size exceed. Policy file must be less than %s Kilobytes.";
 
     @Autowired
     private TenantService tenantService;
