@@ -1,11 +1,11 @@
 package testHelpers.saml
 
 import com.rackspace.idm.Constants
+import net.shibboleth.utilities.java.support.xml.SerializeSupport
 import org.joda.time.DateTime
-import org.opensaml.saml2.core.Response
-import org.opensaml.saml2.core.impl.ResponseMarshaller
-import org.opensaml.xml.security.credential.Credential
-import org.opensaml.xml.util.XMLHelper
+import org.opensaml.saml.saml2.core.Response
+import org.opensaml.saml.saml2.core.impl.ResponseMarshaller
+import org.opensaml.security.credential.Credential
 import org.w3c.dom.Element
 
 class CredentialSamlAssertionFactory {
@@ -34,7 +34,7 @@ class CredentialSamlAssertionFactory {
         Element element = marshaller.marshall(responseInitial);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        XMLHelper.writeNode(element, baos);
+        SerializeSupport.writeNode(element, baos);
         return new String(baos.toByteArray());
     }
 

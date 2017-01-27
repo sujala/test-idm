@@ -3,14 +3,14 @@ package com.rackspace.idm.util;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.codec.binary.StringUtils;
-import org.opensaml.Configuration;
-import org.opensaml.saml2.core.LogoutRequest;
-import org.opensaml.saml2.core.LogoutResponse;
-import org.opensaml.saml2.core.Response;
-import org.opensaml.xml.XMLObject;
-import org.opensaml.xml.io.Unmarshaller;
-import org.opensaml.xml.io.UnmarshallerFactory;
-import org.opensaml.xml.io.UnmarshallingException;
+import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
+import org.opensaml.saml.saml2.core.LogoutRequest;
+import org.opensaml.saml.saml2.core.LogoutResponse;
+import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.core.xml.XMLObject;
+import org.opensaml.core.xml.io.Unmarshaller;
+import org.opensaml.core.xml.io.UnmarshallerFactory;
+import org.opensaml.core.xml.io.UnmarshallingException;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -49,7 +49,7 @@ public class SamlUnmarshaller {
             throw new BadRequestException("Invalid content for saml token request.");
         }
 
-        return (org.opensaml.saml2.core.Response) responseXmlObj;
+        return (org.opensaml.saml.saml2.core.Response) responseXmlObj;
     }
 
     private XMLObject unmarshallSamlObject(ByteArrayInputStream is) throws ParserConfigurationException, SAXException, IOException, UnmarshallingException {
@@ -62,7 +62,7 @@ public class SamlUnmarshaller {
         final Document document = docBuilder.parse(is);
         final Element element = document.getDocumentElement();
 
-        final UnmarshallerFactory unmarshallerFactory = Configuration.getUnmarshallerFactory();
+        final UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
         final Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
         responseXmlObj = unmarshaller.unmarshall(element);
         return responseXmlObj;
@@ -84,7 +84,7 @@ public class SamlUnmarshaller {
             throw new BadRequestException("Invalid content for logout request.");
         }
 
-        return (org.opensaml.saml2.core.LogoutRequest) responseXmlObj;
+        return (org.opensaml.saml.saml2.core.LogoutRequest) responseXmlObj;
     }
 
     public LogoutResponse unmarshallLogoutRespone(byte[] logoutResponseBytes) {

@@ -1,16 +1,15 @@
 package com.rackspace.idm.util;
 
 import com.rackspace.idm.domain.entity.SamlLogoutResponse;
-import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.lang.StringUtils;
-import org.opensaml.saml2.core.LogoutResponse;
-import org.opensaml.saml2.core.Status;
-import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.core.StatusMessage;
-import org.opensaml.saml2.core.impl.LogoutResponseBuilder;
-import org.opensaml.saml2.core.impl.StatusBuilder;
-import org.opensaml.saml2.core.impl.StatusCodeBuilder;
-import org.opensaml.saml2.core.impl.StatusMessageBuilder;
+import org.opensaml.saml.saml2.core.LogoutResponse;
+import org.opensaml.saml.saml2.core.Status;
+import org.opensaml.saml.saml2.core.StatusCode;
+import org.opensaml.saml.saml2.core.StatusMessage;
+import org.opensaml.saml.saml2.core.impl.LogoutResponseBuilder;
+import org.opensaml.saml.saml2.core.impl.StatusBuilder;
+import org.opensaml.saml.saml2.core.impl.StatusCodeBuilder;
+import org.opensaml.saml.saml2.core.impl.StatusMessageBuilder;
 import org.springframework.util.Assert;
 
 public final class SamlLogoutResponseUtil {
@@ -33,7 +32,7 @@ public final class SamlLogoutResponseUtil {
 
         //set the status code
         StatusCode code = new StatusCodeBuilder().buildObject();
-        code.setValue(StatusCode.SUCCESS_URI);
+        code.setValue(StatusCode.SUCCESS);
         status.setStatusCode(code);
 
         return new SamlLogoutResponse(logoutResponse);

@@ -45,6 +45,32 @@ public interface IdentityProviderDao {
     IdentityProvider getIdentityProvidersExplicitlyApprovedForAnyDomain(String name);
 
     /**
+     * Return the identity provider by issuer that can received tokens for the given domainId
+     *
+     * @param issuer
+     * @param domainId
+     * @return
+     */
+    IdentityProvider getIdentityProviderApprovedForDomainByIssuer(String issuer, String domainId);
+
+    /**
+     * Return the identity provider by issuer that have an EXPLICIT domain restriction for the given domainId.
+     *
+     * @param issuer
+     * @param domainId
+     * @return
+     */
+    IdentityProvider getIdentityProviderExplicitlyApprovedForDomainByIssuer(String issuer, String domainId);
+
+    /**
+     * Return the identity provider by issuer that have any EXPLICIT domain restriction
+     *
+     * @param issuer
+     * @return
+     */
+    IdentityProvider getIdentityProvidersExplicitlyApprovedForAnyDomainByIssuer(String issuer);
+
+    /**
      * Return the identity provider that can received tokens for the given domainId
      *
      * @param domainId
@@ -89,6 +115,13 @@ public interface IdentityProviderDao {
      * @return
      */
     void updateIdentityProvider(IdentityProvider identityProvider);
+
+    /**
+     * Save updates to an existing identity provider as-is
+     *
+     * @param identityProvider
+     */
+    void updateIdentityProviderAsIs(IdentityProvider identityProvider);
 
     /**
      * Delete the specified Identity Provider

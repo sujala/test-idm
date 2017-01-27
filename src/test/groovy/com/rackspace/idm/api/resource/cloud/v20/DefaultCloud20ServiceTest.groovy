@@ -26,6 +26,7 @@ import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
 import org.mockito.AdditionalMatchers
+import org.opensaml.core.config.InitializationService
 import testHelpers.IdmAssert
 
 import javax.ws.rs.core.HttpHeaders
@@ -65,6 +66,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     @Shared def identityAdmin, userAdmin, userManage, defaultUser
 
     def setupSpec() {
+        InitializationService.initialize()
+
         sharedRandom = ("$sharedRandomness").replace('-',"")
 
         //service being tested
@@ -3521,7 +3524,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "Validate a saml response" () {
         given:
-        def samlResponse = Mock(org.opensaml.saml2.core.Response)
+        def samlResponse = Mock(org.opensaml.saml.saml2.core.Response)
         def mockAuthData = Mock(AuthData)
         def responseBuilder = Mock(javax.ws.rs.core.Response.ResponseBuilder)
         def samlUnmarshaller = Mock(SamlUnmarshaller)

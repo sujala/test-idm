@@ -16,8 +16,7 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
-import org.opensaml.saml2.core.StatusCode;
-import org.opensaml.saml2.core.LogoutResponse;
+import org.opensaml.saml.saml2.core.StatusCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,7 +83,7 @@ public class RackerSourceFederationHandler implements FederationHandler {
     @Override
     public SamlLogoutResponse processLogoutRequestForProvider(LogoutRequestDecorator logoutRequestDecorator, IdentityProvider provider) {
         BadRequestException ex = new BadRequestException("Logging out federated rackers is not supported", ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
-        return SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequestDecorator.getLogoutRequest().getID(), StatusCode.REQUESTER_URI, ex.getMessage(), ex);
+        return SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequestDecorator.getLogoutRequest().getID(), StatusCode.REQUESTER, ex.getMessage(), ex);
     }
 
     private void persistRackerForRequest(FederatedRackerRequest request) {

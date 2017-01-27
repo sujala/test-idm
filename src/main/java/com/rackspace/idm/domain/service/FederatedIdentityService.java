@@ -3,9 +3,8 @@ package com.rackspace.idm.domain.service;
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.domain.entity.SamlAuthResponse;
 import com.rackspace.idm.domain.entity.SamlLogoutResponse;
-import org.opensaml.saml2.core.LogoutRequest;
-import org.opensaml.saml2.core.LogoutResponse;
-import org.opensaml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.LogoutRequest;
+import org.opensaml.saml.saml2.core.Response;
 
 import javax.naming.ServiceUnavailableException;
 import java.util.List;
@@ -70,7 +69,7 @@ public interface FederatedIdentityService {
     IdentityProvider getIdentityProviderExplicitlyApprovedForDomain(String name, String domainId);
 
     /**
-     * Return the identity provider by name that has any EXPLICIT domain restriction.
+     * Return the identity provider by issuer that has any EXPLICIT domain restriction.
      *
      * @param name
      * @return
@@ -92,6 +91,32 @@ public interface FederatedIdentityService {
      * @return
      */
     IdentityProvider getIdentityProviderByIssuer(String issuer);
+
+    /**
+     * Return the identity provider by issuer that can create tokens for the given name and domainId
+     *
+     * @param issuer
+     * @param domainId
+     * @return
+     */
+    IdentityProvider getIdentityProviderApprovedForDomainByIssuer(String issuer, String domainId);
+
+    /**
+     * Return the identity provider by issuer that has an EXPLICIT domain restriction for the given name and domainId.
+     *
+     * @param issuer
+     * @param domainId
+     * @return
+     */
+    IdentityProvider getIdentityProviderExplicitlyApprovedForDomainByIssuer(String issuer, String domainId);
+
+    /**
+     * Return the identity provider by issuer that has any EXPLICIT domain restriction.
+     *
+     * @param issuer
+     * @return
+     */
+    IdentityProvider getIdentityProviderExplicitlyApprovedForAnyDomainByIssuer(String issuer);
 
     /**
      * Return the identity providers that can create tokens for the given domainId

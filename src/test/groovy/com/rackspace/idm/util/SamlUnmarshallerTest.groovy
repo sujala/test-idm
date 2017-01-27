@@ -2,7 +2,8 @@ package com.rackspace.idm.util
 
 import com.rackspace.idm.exception.BadRequestException
 import org.joda.time.DateTime
-import org.opensaml.saml2.core.*
+import org.opensaml.core.config.InitializationService
+import org.opensaml.saml.saml2.core.*
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -10,7 +11,7 @@ class SamlUnmarshallerTest extends Specification {
     @Shared SamlUnmarshaller samlUnmarshaller;
 
     def setupSpec() {
-        org.opensaml.DefaultBootstrap.bootstrap(); //initializes open saml
+        InitializationService.initialize(); //initializes open saml
         samlUnmarshaller = new SamlUnmarshaller();
     }
 

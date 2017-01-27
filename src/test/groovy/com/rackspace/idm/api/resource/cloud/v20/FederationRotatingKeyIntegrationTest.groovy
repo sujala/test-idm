@@ -14,7 +14,7 @@ import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.rackspace.idm.domain.sql.dao.IdentityProviderRepository
 import com.rackspace.idm.domain.sql.mapper.impl.IdentityProviderMapper
 import org.apache.log4j.Logger
-import org.opensaml.xml.security.credential.Credential
+import org.opensaml.security.credential.Credential
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import testHelpers.EntityFactory
