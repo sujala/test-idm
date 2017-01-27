@@ -8,3 +8,7 @@ opencafe==0.3.0
 requests==2.10.0
 StringGenerator==0.1.9
 flake8==3.0.3
+crypto==1.4.1
+cryptography==1.7.2
+pycrypto==2.6.1
+pyOpenSSL==16.2.0
