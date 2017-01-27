@@ -88,7 +88,7 @@ CONTENT_TYPE_VALUE = ACCEPT_ENCODING_VALUE = 'application/{0}'
 DOMAIN = "DOMAIN"
 DOMAIN_API_TEST = 'api-test'
 DOMAIN_PATTERN = '[a-z]{8}'
-DESC_PATTERN = '[a-zA-Z ,.]{:255}'
+DESC_PATTERN = '[a-zA-Z ,.]{:200}'
 DOMAIN_TEST = 'meow'
 EMAIL_RANDOM = 'randome@rackspace.com'
 ID_PATTERN = '[\d]{8}'
@@ -98,7 +98,7 @@ MD5_PATTERN = '[a-f][0-9]{40}'
 MAPPING_RULE_DESCRIPTION_PATTERN = (
     'mapping[\-]rule[\-]description[\-][\w\d]{8}')
 MAX_IDP_NAME_PATTERN = "[a-z]{255}"
-IDP_NAME_PATTERN = "[a-z][A-Z]{1:255}"
+IDP_NAME_PATTERN = "[a-z][A-Z]{1:200}"
 MIXED_CASE_LETTERS = '[A-Z][a-z]{8}'
 MOSSO_TENANT_ID_PATTERN = '[\d]{6}'
 NAST_TENANT_ID_PATTERN = 'NAST[\d]{6}'
