@@ -3,9 +3,12 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.service.FederatedIdentityService
+import com.rackspace.idm.validation.Validator20
 import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,6 +23,9 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     FederatedIdentityService federatedIdentityService
+
+    @Autowired
+    IdentityProviderDao identityProviderDao
 
     def "Update and get IDP's policy"() {
         given:
@@ -77,7 +83,7 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         def response = cloud20.updateIdentityProviderPolicy(idpManagerToken, creationResultIdp.id, policy)
 
         then: "Return 400 BadRequest"
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, String.format(DefaultCloud20Service.POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE, maxSize))
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, String.format(Validator20.FEDERATION_IDP_POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE, maxSize))
 
         and: "no event was posted"
         cloudFeedsMock.verify(
@@ -132,7 +138,7 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateIdentityProviderPolicy(idpManagerToken, creationResultIdp.id, '{"policy":}')
 
         then: "Return 400"
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, DefaultCloud20Service.POLICY_INVALID_JSON_ERROR_MESSAGE)
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, Validator20.FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE)
 
         and: "no event was posted"
         cloudFeedsMock.verify(
@@ -144,7 +150,7 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateIdentityProviderPolicy(idpManagerToken, creationResultIdp.id, null)
 
         then: "Return 400"
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, DefaultCloud20Service.POLICY_INVALID_JSON_ERROR_MESSAGE)
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, Validator20.FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE)
 
         and: "no event was posted"
         cloudFeedsMock.verify(
@@ -156,7 +162,7 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateIdentityProviderPolicy(idpManagerToken, creationResultIdp.id, "")
 
         then: "Return 400"
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, DefaultCloud20Service.POLICY_INVALID_JSON_ERROR_MESSAGE)
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, Validator20.FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE)
 
         and: "no event was posted"
         cloudFeedsMock.verify(
@@ -260,12 +266,15 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
-    def "Assert Get IDP's policy returns empty json object"() {
+    def "IDP with a null policy in the directory returns the default policy"() {
         given:
         def idpManager = utils.createIdentityProviderManager()
         def idpManagerToken = utils.getToken(idpManager.username)
         def identityProvider = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         def creationResultIdp = utils.createIdentityProvider(idpManagerToken, identityProvider)
+        def idpEntity = identityProviderDao.getIdentityProviderById(creationResultIdp.id)
+        idpEntity.setPolicy(null)
+        identityProviderDao.updateIdentityProviderAsIs(idpEntity)
 
         when: "Get IDP's policy"
         def response = cloud20.getIdentityProviderPolicy(idpManagerToken, creationResultIdp.id)
@@ -273,7 +282,7 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         then: "Return 200"
         response.status == SC_OK
         def body = response.getEntity(String)
-        body == "{}"
+        body == GlobalConstants.IDP_DEFAULT_POLICY
 
         cleanup:
         utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
@@ -301,4 +310,25 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(idpManager)
         utils.deleteUser(identityAdmin)
     }
+
+    def "create IDP sets the default policy on the IDP"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def identityProvider = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def creationResultIdp = utils.createIdentityProvider(idpManagerToken, identityProvider)
+
+        when: "Get IDP's policy"
+        def response = cloud20.getIdentityProviderPolicy(idpManagerToken, creationResultIdp.id)
+
+        then: "Return 200"
+        response.status == SC_OK
+        def body = response.getEntity(String)
+        body == GlobalConstants.IDP_DEFAULT_POLICY
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        utils.deleteUser(idpManager)
+    }
+
 }

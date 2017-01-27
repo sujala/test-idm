@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.service.impl;
 import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
-import org.opensaml.saml2.core.LogoutResponse;
 
 /**
  * Handles a specified type of user source for an identity provider. For example, a handler for an identity provider

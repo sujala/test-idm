@@ -4,7 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.EndpointTemplateAssignmen
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
-import org.apache.commons.httpclient.HttpStatus
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.ServiceList
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplateList

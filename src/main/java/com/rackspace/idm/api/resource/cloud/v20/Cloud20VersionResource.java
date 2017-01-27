@@ -287,6 +287,7 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("name") String name,
+            @QueryParam("issuer") String issuer,
             @QueryParam("approvedDomainId") String approvedDomainId,
             @QueryParam("idpType") String idpType,
             @QueryParam("approvedTenantId") String approvedTenantId) {
@@ -294,7 +295,7 @@ public class Cloud20VersionResource {
             throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
         }
 
-        return cloud20Service.getIdentityProviders(httpHeaders, authToken, name, approvedDomainId, approvedTenantId, idpType).build();
+        return cloud20Service.getIdentityProviders(httpHeaders, authToken, name, issuer, approvedDomainId, approvedTenantId, idpType).build();
     }
 
     @DELETE

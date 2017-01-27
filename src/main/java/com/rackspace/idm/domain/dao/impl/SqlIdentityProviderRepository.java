@@ -57,6 +57,21 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
     }
 
     @Override
+    public IdentityProvider getIdentityProviderApprovedForDomainByIssuer(String issuer, String domainId) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderExplicitlyApprovedForDomainByIssuer(String issuer, String domainId) {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public IdentityProvider getIdentityProvidersExplicitlyApprovedForAnyDomainByIssuer(String issuer) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public List<IdentityProvider> findIdentityProvidersApprovedForDomain(String domainId) {
         //TODO - force failure when > max result
         return mapper.fromSQL(repository.findByApprovedDomainIdsContainsOrApprovedDomainGroupEquals(domainId, ApprovedDomainGroupEnum.GLOBAL.getStoredVal()));
@@ -94,6 +109,11 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
 
         final IdentityProvider newProvider = mapper.fromSQL(sqlProvider, identityProvider);
         applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newProvider.getUniqueId(), mapper.toLDIF(newProvider)));
+    }
+
+    @Override
+    public void updateIdentityProviderAsIs(IdentityProvider identityProvider) {
+        throw new NotImplementedException();
     }
 
     @Override

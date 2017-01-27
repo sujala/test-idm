@@ -1,22 +1,22 @@
 package testHelpers.saml
 
 import com.rackspace.idm.SAMLConstants
-import org.joda.time.DateTime;
-import org.opensaml.DefaultBootstrap;
-import org.opensaml.common.SAMLVersion;
-import org.opensaml.saml2.core.*;
-import org.opensaml.saml2.core.impl.*
-import org.opensaml.xml.XMLObject
-import org.opensaml.xml.schema.XSAny;
-import org.opensaml.xml.schema.XSString
-import org.opensaml.xml.schema.impl.XSAnyBuilder;
-import org.opensaml.xml.schema.impl.XSStringBuilder
-import org.opensaml.xml.security.credential.Credential;
-import org.opensaml.xml.signature.Signature;
-import org.opensaml.xml.signature.SignatureConstants;
-import org.opensaml.xml.signature.Signer;
-import org.opensaml.xml.signature.impl.SignatureBuilder;
-import org.opensaml.xml.util.XMLHelper;
+import net.shibboleth.utilities.java.support.xml.SerializeSupport
+import org.joda.time.DateTime
+import org.opensaml.core.config.InitializationService;
+import org.opensaml.saml.common.SAMLVersion;
+import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.impl.*
+import org.opensaml.core.xml.XMLObject
+import org.opensaml.core.xml.schema.XSAny;
+import org.opensaml.core.xml.schema.XSString
+import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
+import org.opensaml.core.xml.schema.impl.XSStringBuilder
+import org.opensaml.security.credential.Credential;
+import org.opensaml.xmlsec.signature.Signature;
+import org.opensaml.xmlsec.signature.support.SignatureConstants;
+import org.opensaml.xmlsec.signature.support.Signer;
+import org.opensaml.xmlsec.signature.impl.SignatureBuilder;
 import org.w3c.dom.Element
 
 import java.util.*;
@@ -41,10 +41,10 @@ public class SamlProducer {
 									   String authnContextClassRef = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS, DateTime issueInstant = new DateTime()) {
 		
 		try {
-			DefaultBootstrap.bootstrap();
+			InitializationService.initialize();
 			
 			Signature signature = createSignature();
-			Status status = createStatus(true);
+			Status status = createStatus();
 			Issuer responseIssuer = null;
 			Issuer assertionIssuer = null;
 			Subject subject = null;
@@ -78,7 +78,7 @@ public class SamlProducer {
 			}
 			
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			XMLHelper.writeNode(element, baos);
+			SerializeSupport.writeNode(element, baos);
 		
 			return response;
 			
@@ -90,7 +90,7 @@ public class SamlProducer {
 
 	public LogoutRequest createSAMLLogoutRequest(final String subjectId, String issuer, DateTime issueInstant = new DateTime()) {
 		try {
-			DefaultBootstrap.bootstrap();
+			InitializationService.initialize();
 
 			Signature signature = createSignature();
 			Issuer logoutRequestIssuer = null;
@@ -122,7 +122,7 @@ public class SamlProducer {
 			}
 
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			XMLHelper.writeNode(element, baos);
+			SerializeSupport.writeNode(element, baos);
 
 			return logoutRequest;
 
@@ -261,10 +261,10 @@ public class SamlProducer {
 		return attributeStatement;
 	}
 	
-	private Status createStatus(final boolean success) {
+	private Status createStatus() {
 		StatusCodeBuilder statusCodeBuilder = new StatusCodeBuilder();
 		StatusCode statusCode = statusCodeBuilder.buildObject();
-		statusCode.setValue(StatusCode.SUCCESS_URI);
+		statusCode.setValue(StatusCode.SUCCESS);
 		
 		StatusBuilder statusBuilder = new StatusBuilder();
 		Status status = statusBuilder.buildObject();

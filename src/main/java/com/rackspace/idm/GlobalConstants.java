@@ -91,4 +91,6 @@ public final class GlobalConstants {
     public static final String X_TENANT_ID = "X-Tenant-Id";
     public static final String X_USER_NAME = "X-User-Name";
 
+    //TODO: delete this as part of https://jira.rax.io/browse/CID-612
+    public static final String IDP_DEFAULT_POLICY = "{\"policy\":{\"name\":\"blah\"}}";
 }

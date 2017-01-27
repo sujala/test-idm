@@ -10,7 +10,7 @@ import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.joda.time.DateTime
-import org.opensaml.xml.security.x509.X509Credential
+import org.opensaml.security.x509.X509Credential
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import spock.lang.Specification
 import testHelpers.saml.SamlCredentialUtils

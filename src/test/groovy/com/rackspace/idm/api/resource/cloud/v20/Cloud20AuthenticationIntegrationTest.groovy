@@ -5,10 +5,9 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.User
-import org.apache.commons.httpclient.HttpStatus
+import org.apache.http.HttpStatus
 import org.apache.commons.lang.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.UnauthorizedFault
 import org.springframework.beans.factory.annotation.Autowired

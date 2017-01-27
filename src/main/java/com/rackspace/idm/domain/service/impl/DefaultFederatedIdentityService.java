@@ -16,9 +16,9 @@ import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.opensaml.saml2.core.*;
-import org.opensaml.xml.signature.Signature;
 import org.openstack.docs.identity.api.v2.ServiceUnavailableFault;
+import org.opensaml.saml.saml2.core.*;
+import org.opensaml.xmlsec.signature.Signature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,12 +128,12 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
                 logoutResponse = rackerSourceFederationHandler.processLogoutRequestForProvider(decoratedLogoutRequest, provider);
             } else {
                 UnsupportedOperationException ex = new UnsupportedOperationException(String.format("Provider federation type '%s' not supported", providerSource));
-                logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequest.getID(), StatusCode.RESPONDER_URI, ex.getMessage(), ex);
+                logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequest.getID(), StatusCode.RESPONDER, ex.getMessage(), ex);
             }
         } catch (BadRequestException e) {
-            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequest.getID(), StatusCode.REQUESTER_URI, e.getMessage(), e);
+            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequest.getID(), StatusCode.REQUESTER, e.getMessage(), e);
         } catch (Exception e) {
-            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequest.getID(), StatusCode.RESPONDER_URI, "Error encountered processing LogoutRequest", e);
+            logoutResponse = SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequest.getID(), StatusCode.RESPONDER, "Error encountered processing LogoutRequest", e);
         }
 
         return logoutResponse;
@@ -198,6 +198,11 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     }
 
     @Override
+    public IdentityProvider getIdentityProviderExplicitlyApprovedForAnyDomainByIssuer(String issuer) {
+        return identityProviderDao.getIdentityProvidersExplicitlyApprovedForAnyDomainByIssuer(issuer);
+    }
+
+    @Override
     public IdentityProvider checkAndGetIdentityProvider(String id) {
         IdentityProvider provider = getIdentityProvider(id);
 
@@ -212,6 +217,16 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     @Override
     public IdentityProvider getIdentityProviderByIssuer(String issuer) {
         return identityProviderDao.getIdentityProviderByUri(issuer);
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderApprovedForDomainByIssuer(String issuer, String domainId) {
+        return identityProviderDao.getIdentityProviderApprovedForDomainByIssuer(issuer, domainId);
+    }
+
+    @Override
+    public IdentityProvider getIdentityProviderExplicitlyApprovedForDomainByIssuer(String issuer, String domainId) {
+        return identityProviderDao.getIdentityProviderExplicitlyApprovedForDomainByIssuer(issuer, domainId);
     }
 
     @Override

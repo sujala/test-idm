@@ -5,7 +5,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
-import org.apache.commons.httpclient.HttpStatus
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.Tenant

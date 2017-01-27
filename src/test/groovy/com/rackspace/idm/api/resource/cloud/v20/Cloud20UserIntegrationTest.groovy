@@ -1,7 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.dao.UserDao
-import org.apache.commons.httpclient.HttpStatus
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.Tenant

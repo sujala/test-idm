@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.entity;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.opensaml.saml2.core.LogoutResponse;
+import org.opensaml.saml.saml2.core.LogoutResponse;
 
 @Getter
 @Setter
