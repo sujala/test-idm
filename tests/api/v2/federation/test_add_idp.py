@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+import ddt
+
 from tests.api.v2 import base
 from tests.api.v2.models import factory
 
@@ -7,6 +9,7 @@ from tests.package.johny.v2 import client
 from tests.package.johny.v2.models import requests
 
 
+@ddt.ddt
 class TestAddIDP(base.TestBaseV2):
 
     """Add IDP Tests
@@ -56,6 +59,17 @@ class TestAddIDP(base.TestBaseV2):
     def setUp(self):
         super(TestAddIDP, self).setUp()
         self.provider_ids = []
+        self.user_ids = []
+        self.domain_ids = []
+
+    def create_idp_helper(self, dom_ids=None):
+        request_object = factory.get_add_idp_request_object(
+            approved_domain_ids=dom_ids)
+        resp = self.idp_ia_client.create_idp(request_object)
+        self.assertEquals(resp.status_code, 201)
+        self.provider_ids.append(resp.json()[
+            const.NS_IDENTITY_PROVIDER][const.ID])
+        return request_object
 
     def test_add_idp_with_name(self):
         '''Add with a name
@@ -78,7 +92,6 @@ class TestAddIDP(base.TestBaseV2):
             self.skipTest('Skipping Service Admin Tests per config value')
         request_object = factory.get_add_idp_request_object()
         request_object.idp_name = None
-        print request_object
         resp = self.idp_ia_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 400)
         self.assertEquals(resp.json()[const.BAD_REQUEST][const.MESSAGE],
@@ -211,10 +224,95 @@ class TestAddIDP(base.TestBaseV2):
                 found = True
         self.assertEquals(found, True)
 
+    @ddt.data("test12345", "*")
+    def test_list_idp_query_param_name_missed_hit(self, name):
+        '''Verify list providers can filter by name parameter
+        '''
+        if not self.test_config.run_service_admin_tests:
+            self.skipTest('Skipping Service Admin Tests per config value')
+        idp_list = self.idp_ia_client.list_idp(
+            option={"name": None}).json()[
+                const.NS_IDENTITY_PROVIDERS]
+
+        self.assertTrue(len(idp_list) > 1)
+
+        idp_list = self.idp_ia_client.list_idp(
+            option={"name": name}).json()[
+                const.NS_IDENTITY_PROVIDERS]
+
+        self.assertTrue(len(idp_list) == 0)
+
+    @ddt.data("", None)
+    def test_list_idp_query_param_name_ignore_null_empty(self, name):
+        '''Verify list providers can filter by name parameter
+        '''
+        if not self.test_config.run_service_admin_tests:
+            self.skipTest('Skipping Service Admin Tests per config value')
+        idp_list = self.idp_ia_client.list_idp(
+            option={"name": name}).json()[
+                const.NS_IDENTITY_PROVIDERS]
+
+        idp_list2 = self.idp_ia_client.list_idp().json()[
+            const.NS_IDENTITY_PROVIDERS]
+
+        self.assertEqual(len(idp_list), len(idp_list2))
+
+    def test_list_idp_query_param_name(self):
+        '''Verify list providers can filter by name parameter
+        '''
+        if not self.test_config.run_service_admin_tests:
+            self.skipTest('Skipping Service Admin Tests per config value')
+        idps = [self.create_idp_helper(), self.create_idp_helper()]
+        found = True
+        for idp in idps:
+            idp_list = self.idp_ia_client.list_idp(
+                option={"name": [idp.idp_name.upper(), "blah"]}).json()[
+                    const.NS_IDENTITY_PROVIDERS]
+
+            if len(idp_list) > 1 or idp_list[0][const.NAME] != idp.idp_name:
+                found = False
+        self.assertEquals(found, True)
+
+    def test_list_idp_query_param_name_with_others(self):
+        '''Verify list providers can filter by name parameter
+        '''
+        if not self.test_config.run_service_admin_tests:
+            self.skipTest('Skipping Service Admin Tests per config value')
+        user_name = self.generate_random_string(
+            pattern=const.SUB_USER_PATTERN)
+        # create admin user
+        dom_id = self.generate_random_string(const.NUMERIC_DOMAIN_ID_PATTERN)
+        request_object = requests.UserAdd(
+            user_name=user_name,
+            domain_id=dom_id)
+        self.domain_ids.append(dom_id)
+
+        resp = self.idp_ia_client.add_user(request_object)
+        self.user_ids.append(resp.json()[const.USER][const.ID])
+        dom_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
+        idps = [self.create_idp_helper(dom_ids=[dom_id]),
+                self.create_idp_helper(dom_ids=[dom_id])]
+        found = True
+        for idp in idps:
+            idp_list = self.idp_ia_client.list_idp(
+                option={"name": idp.idp_name,
+                        "approved_DomainId": dom_id}).json()[
+                            const.NS_IDENTITY_PROVIDERS]
+
+            if len(idp_list) > 1 or idp_list[0][const.NAME] != idp.idp_name:
+                found = False
+        self.assertEquals(found, True)
+
     def tearDown(self):
         # Delete all providers created in the tests
+
         for id_ in self.provider_ids:
             self.idp_ia_client.delete_idp(idp_id=id_)
+        # Delete all users created in the tests
+        for id in self.user_ids:
+            self.idp_ia_client.delete_user(user_id=id)
+        for dom in self.domain_ids:
+            self.idp_ia_client.delete_domain(domain_id=dom)
         super(TestAddIDP, self).tearDown()
 
     @classmethod

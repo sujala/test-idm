@@ -1333,12 +1333,12 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
-    def list_idp(self, requestslib_kwargs=None):
+    def list_idp(self, option=None, requestslib_kwargs=None):
         """Return response object from the list idp api call
         """
         url = self.url + const.IDP_URL
 
-        resp = self.request(method='GET', url=url,
+        resp = self.request(method='GET', url=url, params=option,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
