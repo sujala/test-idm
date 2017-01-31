@@ -7,13 +7,15 @@ import org.apache.commons.lang.Validate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.nio.charset.StandardCharsets;
+
 @Component
 public class IdentityPropertyStringValueTypeValidator implements IdentityPropertyValueTypeValidator {
 
-    public static final int STRING_VALUE_MAX_LENGTH = 10000;
+    public static final int STRING_VALUE_MAX_LENGTH_KB = 512;
 
-    public static final String VALUE_LENGTH_EXCEEDED_MSG = String.format("String value type must be less than %d.", STRING_VALUE_MAX_LENGTH);
-    public static final String VALUE_REQUIRED_MSG = "Identity property value required";
+    public static final String VALUE_LENGTH_EXCEEDED_MSG = String.format("String value must be no more than %d kilobytes in UTF-8.", STRING_VALUE_MAX_LENGTH_KB);
+    public static final String VALUE_REQUIRED_MSG = "Identity property value required.";
 
     @Override
     public boolean supports(IdentityPropertyValueType valueType) {
@@ -29,7 +31,7 @@ public class IdentityPropertyStringValueTypeValidator implements IdentityPropert
             throw new BadRequestException(VALUE_REQUIRED_MSG);
         }
 
-        if (identityProperty.getValue().length() > STRING_VALUE_MAX_LENGTH) {
+        if ((double) identityProperty.getValue().getBytes(StandardCharsets.UTF_8).length / 1024 > STRING_VALUE_MAX_LENGTH_KB) {
             throw new BadRequestException(VALUE_LENGTH_EXCEEDED_MSG);
         }
     }

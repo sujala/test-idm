@@ -4,6 +4,8 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.TokenRevocationRecord
 import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.RandomStringUtils
+import org.apache.commons.lang3.RandomUtils
 import org.apache.http.HttpHeaders
 import org.mockserver.model.Header
 import org.mockserver.model.HttpRequest
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Component
 
 import javax.annotation.PostConstruct
 import javax.ws.rs.core.MediaType
+import java.nio.charset.StandardCharsets
 
 @Component
 class CloudTestUtils {
@@ -43,6 +46,24 @@ class CloudTestUtils {
 
     def getRandomIntegerString() {
         String.valueOf(getRandomInteger())
+    }
+
+    def randomAlphaStringWithLengthInBytes(int bytes) {
+        // English chars are 1 byte in UTF 8
+        return RandomStringUtils.randomAlphabetic(bytes)
+    }
+
+    def randomAlphaStringWithLenghtInKilobytes(int kilobytes) {
+        return randomAlphaStringWithLengthInBytes(kilobytes * 1024)
+    }
+
+    def getStringLenghtInBytes(String s) {
+        assert s != null
+        return s.getBytes(StandardCharsets.UTF_8).length
+    }
+
+    def getStringLengthInKilobytes(String s) {
+        return getStringLenghtInBytes(s) / 1024
     }
 
     def String getFeedsXPathForUser(user, eventType) {

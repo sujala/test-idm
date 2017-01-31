@@ -45,7 +45,9 @@ public interface IdentityPropertyService {
 
     /**
      * Searches and returns all IdentityProperty entries found that match the identity property versions
-     * and/or property name. The search by name and IDM version are case-insensitive.
+     * and property name. The search by name and IDM version are case-insensitive. Both name and idmVersions
+     * params are optional. If both are provided the property must match both name AND idmVersions. The idmVersions
+     * are OR'd in the query if multiple versions are provided.
      *
      * NOTE: this does not return IdentityProperty objects if they are set to reloadable = false
      *
