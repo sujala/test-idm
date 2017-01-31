@@ -130,6 +130,9 @@ public class Validator20 {
     @Autowired
     private RoleService roleService;
 
+    @Autowired
+    private JsonValidator jsonValidator;
+
     public void validateUsername(String username) {
         if (StringUtils.isBlank(username)) {
             String errorMsg = "Expecting username";
@@ -468,17 +471,12 @@ public class Validator20 {
 
     public void validateIdpPolicy(String policy) {
         // Ensure policy does not exceed max size allowed
-        byte [] policyByteArray = policy.getBytes(StandardCharsets.UTF_8);
-        double policyKilobyteSize = (double) policyByteArray.length / 1024;
-        if(policyKilobyteSize > identityConfig.getReloadableConfig().getIdpPolicyMaxSize()){
+        if (!jsonValidator.jsonStringDoesNotExceedSize(policy, identityConfig.getReloadableConfig().getIdpPolicyMaxSize())) {
             throw new BadRequestException(String.format(FEDERATION_IDP_POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE, identityConfig.getReloadableConfig().getIdpPolicyMaxSize()));
         }
 
         // Ensure policy contains valid json
-        try {
-            JSONParser jsonParser = new JSONParser();
-            jsonParser.parse(new StringReader(policy));
-        } catch (ParseException | IOException ex) {
+        if (!jsonValidator.isValidJson(policy)) {
             throw new BadRequestException(FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE);
         }
     }

@@ -95,11 +95,16 @@ public interface DevOpsService {
     Response.ResponseBuilder removeMfaFromUser(String authToken, String userId);
 
     /**
-     * Lists identity properties with the given Identity versions and/or the given name.
+     * Searches and returns all IdentityProperty entries found that match the identity property versions
+     * and property name. The search by name and IDM version are case-insensitive. Both name and idmVersions
+     * params are optional. If both are provided the property must match both name AND idmVersions. The idmVersions
+     * are OR'd in the query if multiple versions are provided.
+     *
+     * NOTE: this does not return IdentityProperty objects if they are set to reloadable = false
      *
      * @param authToken
-     * @param versions
      * @param name
+     * @param versions
      * @return
      */
     Response.ResponseBuilder getIdmPropsByQuery(String authToken, final List<String> versions, String name);

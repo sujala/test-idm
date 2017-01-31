@@ -14,9 +14,11 @@ import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
@@ -104,7 +106,7 @@ class IdentityPropertyIntegrationTest extends RootIntegrationTest {
         utils.deleteIdentityProperty(property.id)
     }
 
-    def "test identity property CURD API calls callable with identity:property-admin"() {
+    def "test identity property CRUD API calls callable with identity:property-admin"() {
         given:
         def idmAdmin = utils.createIdentityAdmin()
         def idmAdminToken = utils.getToken(idmAdmin.username)
@@ -347,24 +349,19 @@ class IdentityPropertyIntegrationTest extends RootIntegrationTest {
         propertyData.valueType = IdentityPropertyValueType.STRING.getTypeName()
 
         when: "try to create the property with string too long"
-        propertyData.value = RandomStringUtils.randomAlphanumeric(IdentityPropertyStringValueTypeValidator.STRING_VALUE_MAX_LENGTH + 1)
+        propertyData.value = testUtils.randomAlphaStringWithLengthInBytes(IdentityPropertyStringValueTypeValidator.STRING_VALUE_MAX_LENGTH_KB * 1024 + 1)
         def response = devops.createIdentityProperty(utils.getIdentityAdminToken(), propertyData)
 
         then: "error"
-        response.status == HttpStatus.SC_BAD_REQUEST
-        def errorResponse = response.getEntity(IdentityFault).value
-        errorResponse.message == IdentityPropertyStringValueTypeValidator.VALUE_LENGTH_EXCEEDED_MSG
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, IdentityPropertyStringValueTypeValidator.VALUE_LENGTH_EXCEEDED_MSG)
 
-        when: "create the property and then try to update with string too long"
-        propertyData.value = 'My valid property'
-        def createResponse = devops.createIdentityProperty(utils.getIdentityAdminToken(), propertyData)
-        def property = createResponse.getEntity(IdentityProperty)
-        propertyData.value = RandomStringUtils.randomAlphanumeric(IdentityPropertyStringValueTypeValidator.STRING_VALUE_MAX_LENGTH + 1)
-        response = devops.updateIdentityProperty(utils.getIdentityAdminToken(), property.id, propertyData)
+        when: "try to create the property with string equal to the max length"
+        propertyData.value = testUtils.randomAlphaStringWithLengthInBytes(IdentityPropertyStringValueTypeValidator.STRING_VALUE_MAX_LENGTH_KB * 1024)
+        response = devops.createIdentityProperty(utils.getIdentityAdminToken(), propertyData)
 
         then:
-        response.status == HttpStatus.SC_BAD_REQUEST
-        response.getEntity(IdentityFault).value.message == IdentityPropertyStringValueTypeValidator.VALUE_LENGTH_EXCEEDED_MSG
+        response.status == HttpStatus.SC_CREATED
+        def property = response.getEntity(IdentityProperty)
 
         cleanup:
         utils.deleteIdentityProperty(property.id)
@@ -395,15 +392,26 @@ class IdentityPropertyIntegrationTest extends RootIntegrationTest {
         response.status == HttpStatus.SC_BAD_REQUEST
         response.getEntity(IdentityFault).value.message == IdentityPropertyJsonValueTypeValidator.VALUE_INVALID_JSON_MSG
 
-        // TODO: Uncomment once I figure out how to make the below request. It currently is not able to parse it as a valid request
-//        when: "json too long"
-//        def jsonValue = RandomStringUtils.randomAlphabetic(IdentityPropertyJsonValueTypeValidator.JSON_VALUE_MAX_LENGTH)
-//        propertyData.value = "{\"fizz\" : {\"value\": \"$jsonValue\"} }"
-//        response = devops.updateIdentityProperty(utils.getIdentityAdminToken(), property.id, propertyData)
+        when: "json value equal to the max length"
+        propertyData.value = "{\"fizz\" : {\"value\": \"\"} }"
+        def numOfBytes = IdentityPropertyJsonValueTypeValidator.JSON_VALUE_MAX_LENGTH_KB * 1024 - testUtils.getStringLenghtInBytes(propertyData.value)
+        def jsonValue = testUtils.randomAlphaStringWithLengthInBytes(numOfBytes)
+        propertyData.value = "{\"fizz\" : {\"value\": \"$jsonValue\"} }"
+        response = devops.updateIdentityProperty(utils.getIdentityAdminToken(), property.id, propertyData)
 
-//        then:
-//        response.status == HttpStatus.SC_BAD_REQUEST
-//        response.getEntity(IdentityFault).value.message == IdentityPropertyJsonValueTypeValidator.JSON_VALUE_MAX_LENGTH
+        then:
+        response.status == HttpStatus.SC_OK
+
+        when: "json value one byte over the max length"
+        propertyData.value = "{\"fizz\" : {\"value\": \"\"} }"
+        numOfBytes = IdentityPropertyJsonValueTypeValidator.JSON_VALUE_MAX_LENGTH_KB * 1024 - testUtils.getStringLenghtInBytes(propertyData.value)
+        numOfBytes++
+        jsonValue = testUtils.randomAlphaStringWithLengthInBytes(numOfBytes)
+        propertyData.value = "{\"fizz\" : {\"value\": \"$jsonValue\"} }"
+        response = devops.updateIdentityProperty(utils.getIdentityAdminToken(), property.id, propertyData)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, IdentityPropertyJsonValueTypeValidator.VALUE_LENGTH_EXCEEDED_MSG)
 
         cleanup:
         utils.deleteIdentityProperty(property.id)

@@ -319,7 +319,7 @@ public class DefaultDevOpsService implements DevOpsService {
 
             com.rackspace.idm.domain.entity.IdentityProperty existingProperty = identityPropertyService.getIdentityPropertyByName(identityProperty.getName());
             if (existingProperty != null) {
-                throw new ClientConflictException(IDENTITY_PROPERTY_NAME_CONFLICT_MSG);
+                throw new DuplicateException(IDENTITY_PROPERTY_NAME_CONFLICT_MSG);
             }
 
             com.rackspace.idm.domain.entity.IdentityProperty idmProp = identityPropertyConverter.toIdentityProperty(identityProperty);
