@@ -70,6 +70,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Element;
 
+import javax.naming.ServiceUnavailableException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -108,6 +109,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String FEDERATION_IDP_FILTER_TENANT_NO_DOMAIN_ERROR_MESSAGE = "The provided tenant is not associated with a domain";
     public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE = "Unable to load and parse the default IDP policy.";
     public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE = "The default IDP policy is not properly configured.";
+    public static final String FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE = "IDP creation is currently unavailable due to missing default for IDP policy.";
 
     public static final String DUPLICATE_SERVICE_NAME_ERROR_MESSAGE = "More than one service exists with the given name. Please specify a different service name for the endpoint template.";
     public static final String DUPLICATE_SERVICE_ERROR_MESSAGE = "Unable to fulfill request. More than one service exists with the given name.";
@@ -1261,17 +1263,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             com.rackspace.idm.domain.entity.IdentityProvider newProvider = identityProviderConverterCloudV20.fromIdentityProvider(provider);
 
-            //TODO: load the default policy from the directory. This will be done in https://jira.rax.io/browse/CID-612
-            byte [] policyByteArray;
-            try {
-                //TODO: write a test case for this as part of https://jira.rax.io/browse/CID-612
-                validator20.validateIdpPolicy(GlobalConstants.IDP_DEFAULT_POLICY);
-                policyByteArray = GlobalConstants.IDP_DEFAULT_POLICY.getBytes(StandardCharsets.UTF_8);
-            } catch (Exception e) {
-                logger.error(FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE, e);
-                throw new UnrecoverableIdmException(FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE);
+            String defaultPolicy = identityConfig.getRepositoryConfig().getIdentityProviderDefaultPolicy();
+            if (defaultPolicy == null) {
+                throw new ServiceUnavailableException(FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE);
             }
-            newProvider.setPolicy(policyByteArray);
+            newProvider.setPolicy(defaultPolicy.getBytes(StandardCharsets.UTF_8));
 
             federatedIdentityService.addIdentityProvider(newProvider);
             atomHopperClient.asyncPostIdpEvent(newProvider, EventType.CREATE);
@@ -1564,9 +1560,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (identityProvider.getPolicy() == null) {
                 //TODO: load this from the directory as part of https://jira.rax.io/browse/CID-612
                 //TODO: write a test case for this as part of https://jira.rax.io/browse/CID-612
-                body = GlobalConstants.IDP_DEFAULT_POLICY;
+                body = identityConfig.getRepositoryConfig().getIdentityProviderDefaultPolicy();
                 try {
-                    validator20.validateIdpPolicy(GlobalConstants.IDP_DEFAULT_POLICY);
+                    validator20.validateIdpPolicy(body);
                 } catch (Exception e) {
                     logger.error(FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE, e);
                     throw new UnrecoverableIdmException(FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE);

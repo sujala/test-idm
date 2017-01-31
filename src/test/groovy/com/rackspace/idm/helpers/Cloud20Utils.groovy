@@ -16,6 +16,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.devops.JsonWriterForIdmProperty
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
@@ -1114,7 +1115,6 @@ class Cloud20Utils {
         return response.getEntity(rule.class)
     }
 
-
     def createIdentityProperty(name = testUtils.getRandomUUID("propName"), value = testUtils.getRandomUUID("propValue"), valueType = IdentityPropertyValueType.STRING.getTypeName(), reloadable = true, searchable = true) {
         def idmProperty = factory.createIdentityProperty(name, value, valueType)
         def response = devOpsMethods.createIdentityProperty(getIdentityAdminToken(), idmProperty)
@@ -1122,9 +1122,15 @@ class Cloud20Utils {
         response.getEntity(IdentityProperty)
     }
 
-
     def deleteIdentityProperty(propId, token = getIdentityAdminToken()) {
         def response = devOpsMethods.deleteIdentityProperty(token, propId)
-        assert response.status == SC_NO_CONTENT
+    }
+
+    def getIdentityPropertyByName(String propName, token = getIdentityAdminToken()) {
+        def getPropsResponse = devOpsMethods.getIdmProps(getIdentityAdminToken(), propName)
+        def propsData = new JsonSlurper().parseText(getPropsResponse.getEntity(String))
+        def prop = propsData[JsonWriterForIdmProperty.JSON_PROP_PROPERTIES].find{it.name == propName}
+        assert prop != null
+        return prop
     }
 }

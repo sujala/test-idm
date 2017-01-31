@@ -1,12 +1,15 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.core.event.EventType
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
-import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.resource.cloud.devops.JsonWriterForIdmProperty
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.domain.service.FederatedIdentityService
 import com.rackspace.idm.validation.Validator20
 import org.mockserver.verify.VerificationTimes
@@ -26,6 +29,9 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     IdentityProviderDao identityProviderDao
+
+    @Autowired
+    Validator20 validator20
 
     def "Update and get IDP's policy"() {
         given:
@@ -282,7 +288,7 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         then: "Return 200"
         response.status == SC_OK
         def body = response.getEntity(String)
-        body == GlobalConstants.IDP_DEFAULT_POLICY
+        body == utils.getIdentityPropertyByName(IdentityConfig.FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP).value
 
         cleanup:
         utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
@@ -324,11 +330,103 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         then: "Return 200"
         response.status == SC_OK
         def body = response.getEntity(String)
-        body == GlobalConstants.IDP_DEFAULT_POLICY
+        body == utils.getIdentityPropertyByName(IdentityConfig.FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP).value
 
         cleanup:
         utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
         utils.deleteUser(idpManager)
+    }
+
+    def "test validation of Identity Provider default policy property"() {
+        given:
+        // Delete the default policy. This is messy but other tests expect for the policy property to already exist
+        def defaultPolicyPropData = utils.getIdentityPropertyByName(IdentityConfig.FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP)
+        utils.deleteIdentityProperty(defaultPolicyPropData.id)
+        def defaultPolicyProp = new IdentityProperty().with {
+            it.name = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_NAME]
+            it.description = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_DESCRIPTION]
+            it.value = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VALUE]
+            it.valueType = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VALUE_TYPE]
+            it.idmVersion = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VERSION_ADDED]
+            it.reloadable = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_RELOADABLE]
+            it.searchable = true
+            it
+        }
+        def propData = v2Factory.createIdentityProperty(IdentityConfig.FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP)
+        propData.valueType = IdentityPropertyValueType.JSON.typeName
+        def jsonTemplate = "{\"prop\" : {\"value\": \"\"} }"
+
+        when: "try to create the property with a value larger than the max allowed identity provider policy size"
+        def jsonAttrValue = testUtils.randomAlphaStringWithLengthInBytes(identityConfig.getReloadableConfig().getIdpPolicyMaxSize() * 1024 + 1 - testUtils.getStringLenghtInBytes(jsonTemplate))
+        propData.value = "{\"prop\" : {\"value\": \"$jsonAttrValue\"} }"
+        def response = devops.createIdentityProperty(utils.getIdentityAdminToken(), propData)
+
+        then: "error"
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, validator20.idpPolicyMaxSizeExceededErrorMessage)
+
+        when: "try to create the identity property with a value equal to the max allowed identity provider policy size"
+        jsonAttrValue = testUtils.randomAlphaStringWithLengthInBytes(identityConfig.getReloadableConfig().getIdpPolicyMaxSize() * 1024 - testUtils.getStringLenghtInBytes(jsonTemplate))
+        propData.value = "{\"prop\" : {\"value\": \"$jsonAttrValue\"} }"
+        response = devops.createIdentityProperty(utils.getIdentityAdminToken(), propData)
+
+        then: "success"
+        response.status == SC_CREATED
+        def property = response.getEntity(IdentityProperty)
+
+        when: "try to update the property with a value larger than the max allowed identity provider policy size"
+        jsonAttrValue = testUtils.randomAlphaStringWithLengthInBytes(identityConfig.getReloadableConfig().getIdpPolicyMaxSize() * 1024 + 1 - testUtils.getStringLenghtInBytes(jsonTemplate))
+        propData.value = "{\"prop\" : {\"value\": \"$jsonAttrValue\"} }"
+        response = devops.updateIdentityProperty(utils.getIdentityAdminToken(), property.id, propData)
+
+        then: "error"
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, validator20.idpPolicyMaxSizeExceededErrorMessage)
+
+        when: "try to update the property with a value equal to the max allowed identity provider policy size"
+        jsonAttrValue = testUtils.randomAlphaStringWithLengthInBytes(identityConfig.getReloadableConfig().getIdpPolicyMaxSize() * 1024 - testUtils.getStringLenghtInBytes(jsonTemplate))
+        propData.value = "{\"prop\" : {\"value\": \"$jsonAttrValue\"} }"
+        response = devops.updateIdentityProperty(utils.getIdentityAdminToken(), property.id, propData)
+
+        then: "success"
+        response.status == SC_OK
+
+        cleanup:
+        utils.deleteIdentityProperty(property.id)
+        devops.createIdentityProperty(utils.getIdentityAdminToken(), defaultPolicyProp)
+    }
+
+    def "test IDP creation is unavailable when IDP default policy property is missing"() {
+        given:
+        // Delete the default policy. This is messy but other tests expect for the policy property to already exist
+        def defaultPolicyPropData = utils.getIdentityPropertyByName(IdentityConfig.FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP)
+        utils.deleteIdentityProperty(defaultPolicyPropData.id)
+        def idpData = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def defaultPolicyProp = new IdentityProperty().with {
+            it.name = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_NAME]
+            it.description = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_DESCRIPTION]
+            it.value = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VALUE]
+            it.valueType = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VALUE_TYPE]
+            it.idmVersion = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VERSION_ADDED]
+            it.reloadable = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_RELOADABLE]
+            it.searchable = true
+            it
+        }
+
+        when: "try to create an IDP without the default policy property existing"
+        def response = cloud20.createIdentityProvider(utils.getServiceAdminToken(), idpData)
+
+        then: "error - unavailable"
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_SERVICE_UNAVAILABLE, DefaultCloud20Service.FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE)
+
+        when: "create the default policy property and try to create the IDP again"
+        devops.createIdentityProperty(utils.getIdentityAdminToken(), defaultPolicyProp)
+        response = cloud20.createIdentityProvider(utils.getServiceAdminToken(), idpData)
+
+        then: "success"
+        response.status == SC_CREATED
+        def idp = response.getEntity(IdentityProvider)
+
+        cleanup:
+        utils.deleteIdentityProvider(idp)
     }
 
 }
