@@ -50,4 +50,4 @@ class IdentityDevopsClient(client.AutoMarshallingHTTPClient):
         resp = self.get_devops_properties(
             prop_name=flag_name)
         assert(resp.status_code == 200)
-        return resp.json()[const.IDM_RELOADABLE_PROPERTIES][0][const.VALUE]
+        return resp.json()[const.PROPERTIES][0][const.VALUE]

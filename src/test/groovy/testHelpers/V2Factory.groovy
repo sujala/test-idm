@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
@@ -25,6 +26,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.Constants
 import com.rackspace.idm.RaxAuthConstants
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.apache.commons.collections4.CollectionUtils
@@ -736,6 +738,19 @@ class V2Factory {
             }
 
             it.setEndpointTemplates(endpointTemplateList)
+            it
+        }
+    }
+
+    def createIdentityProperty(name = null, value = null, valueType = IdentityPropertyValueType.STRING.typeName, description = "a new property", reloadable = true, searchable = true, idmVersion = "3.10.0") {
+        new IdentityProperty().with {
+            it.name = name
+            it.description = description
+            it.value = value
+            it.valueType = valueType
+            it.idmVersion = idmVersion
+            it.reloadable = reloadable
+            it.searchable = searchable
             it
         }
     }

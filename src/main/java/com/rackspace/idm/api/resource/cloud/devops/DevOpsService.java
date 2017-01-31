@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.devops;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest;
 
@@ -8,14 +9,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 4/26/13
- * Time: 1:49 PM
- * To change this template use File | Settings | File Templates.
- */
 public interface DevOpsService {
+
     void encryptUsers(String authToken);
 
     /**
@@ -99,5 +94,42 @@ public interface DevOpsService {
      */
     Response.ResponseBuilder removeMfaFromUser(String authToken, String userId);
 
+    /**
+     * Lists identity properties with the given Identity versions and/or the given name.
+     *
+     * @param authToken
+     * @param versions
+     * @param name
+     * @return
+     */
     Response.ResponseBuilder getIdmPropsByQuery(String authToken, final List<String> versions, String name);
+
+    /**
+     * Creates the Identity property with the data provided in the identityProperty request property
+     *
+     * @param authToken
+     * @param identityProperty
+     * @return
+     */
+    Response.ResponseBuilder createIdmProperty(String authToken, IdentityProperty identityProperty);
+
+    /**
+     * Updates the Identity property with the data provided in the identityProperty request object
+     *
+     * @param authToken
+     * @param idmPropertyId
+     * @param identityProperty
+     * @return
+     */
+    Response.ResponseBuilder updateIdmProperty(String authToken, String idmPropertyId, IdentityProperty identityProperty);
+
+    /**
+     * Deletes the Identity property specified by the given identity property ID
+     *
+     * @param authToken
+     * @param idmPropertyId
+     * @return
+     */
+    Response.ResponseBuilder deleteIdmProperty(String authToken, String idmPropertyId);
+
 }

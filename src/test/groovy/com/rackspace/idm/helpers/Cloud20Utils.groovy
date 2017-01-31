@@ -2,6 +2,7 @@ package com.rackspace.idm.helpers
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
@@ -16,6 +17,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
+import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.util.OTPHelper
 import com.rackspace.idm.util.SamlUnmarshaller
 import com.sun.jersey.api.client.ClientResponse
@@ -41,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import spock.lang.Shared
 import testHelpers.Cloud20Methods
+import testHelpers.DevOpsMethods
 import testHelpers.V1Factory
 import testHelpers.V2Factory
 import testHelpers.saml.SamlFactory
@@ -74,6 +77,9 @@ class Cloud20Utils {
 
     @Autowired
     SamlUnmarshaller samlUnmarshaller
+
+    @Autowired
+    DevOpsMethods devOpsMethods
 
     @Shared
     def serviceAdminToken
@@ -471,6 +477,20 @@ class Cloud20Utils {
     def revokeToken(token) {
         def response = methods.revokeUserToken(getServiceAdminToken(), token)
         assert (response.status == SC_NO_CONTENT)
+    }
+
+    def getRole(roleId, token=getServiceAdminToken()) {
+        def response = methods.getRole(token, roleId)
+        assert (response.status == SC_OK)
+        response.getEntity(Role).value
+    }
+
+    def getRoleByName(roleName, token=getServiceAdminToken()) {
+        def response = methods.listRoles(token, null, null, null, roleName)
+        assert (response.status == SC_OK)
+        def roles = response.getEntity(RoleList).value
+        assert roles.role.size() == 1
+        roles.role[0]
     }
 
     def listRoles(token, serviceId, marker, limit) {
@@ -1083,5 +1103,19 @@ class Cloud20Utils {
         def response = methods.addEndpointAssignmentRule(token, rule)
         assert response.status == SC_CREATED
         return response.getEntity(rule.class)
+    }
+
+
+    def createIdentityProperty(name = testUtils.getRandomUUID("propName"), value = testUtils.getRandomUUID("propValue"), valueType = IdentityPropertyValueType.STRING.getTypeName(), reloadable = true, searchable = true) {
+        def idmProperty = factory.createIdentityProperty(name, value, valueType)
+        def response = devOpsMethods.createIdentityProperty(getIdentityAdminToken(), idmProperty)
+        assert response.status == SC_CREATED
+        response.getEntity(IdentityProperty)
+    }
+
+
+    def deleteIdentityProperty(propId, token = getIdentityAdminToken()) {
+        def response = devOpsMethods.deleteIdentityProperty(token, propId)
+        assert response.status == SC_NO_CONTENT
     }
 }

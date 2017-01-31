@@ -1044,6 +1044,43 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.132) = {
     description = "Policy of identity provider"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.134) = {
+    name = rsPropertyValue
+    ldap-names = rsPropertyValue
+    syntax = octetString
+    description = "Value of the Identity property"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.135) = {
+    name = rsPropertyValueType
+    ldap-names = rsPropertyValueType
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "Value type of the Identity property"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.137) = {
+    name = rsIdmVersion
+    ldap-names = rsIdmVersion
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The Identity version a property was released in"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.138) = {
+    name = rsReloadable
+    ldap-names = rsReloadable
+    syntax = boolean
+    description = "If an Identity property is reloadable"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.139) = {
+    name = rsSearchable
+    ldap-names = rsSearchable
+    syntax = boolean
+    description = "If an Identity property is searchable through the API"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -1697,3 +1734,21 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.41) = {
                 rsType,
                 description
 };
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.42) = {
+        name = rsIdentityProperty
+        ldap-names = rsIdentityProperty
+        subclass-of top
+        kind = structural
+        must-contain
+                rsId
+        may-contain
+                cn,
+                rsPropertyValue,
+                rsPropertyValueType,
+                description,
+                rsIdmVersion,
+                rsReloadable,
+                rsSearchable
+};
+

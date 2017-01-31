@@ -414,7 +414,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
                     disable_service_name_type_prop_resp.json())
                 disable_service_name_type_prop_value = (
                     disable_service_name_type_prop_dict[
-                        const.IDM_RELOADABLE_PROPERTIES][0][
+                        const.PROPERTIES][0][
                         const.VALUE])
 
             # This is the test for CID-353

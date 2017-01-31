@@ -52,7 +52,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         resp = self.devops_client.get_devops_properties(
             prop_name=const.FEATURE_FLAG_FOR_ENDPOINTS_BASED_ON_RULES)
         self.assertEqual(resp.status_code, 200)
-        return resp.json()[const.IDM_RELOADABLE_PROPERTIES][0][const.VALUE]
+        return resp.json()[const.PROPERTIES][0][const.VALUE]
 
     def create_endpoint_template(self, endpoint_attributes):
         """

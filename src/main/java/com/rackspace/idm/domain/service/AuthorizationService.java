@@ -126,6 +126,15 @@ public interface AuthorizationService {
     boolean authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum identityType, String roleName);
 
     /**
+     * Whether the effective caller has the specified identity type (or higher) and/or identity role with one of the
+     * specified names. This can only be used to check identity RBAC roles.
+     *
+     * @param identityType
+     * @param roleName
+     */
+    boolean authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum identityType, String... roleName);
+
+    /**
      * Whether the effective caller has at least one role with the specified role name. This can only be used to check
      * identity RBAC roles.
      *
@@ -152,6 +161,18 @@ public interface AuthorizationService {
      * @throws com.rackspace.idm.exception.ForbiddenException
      */
     void verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum identityType, String roleName);
+
+    /**
+     * Verifies that the effective caller has the specified identity type (or higher) and/or a role with one of the
+     * specified names. If so, the method returns. Otherwise, throws a ForbiddenException.
+     *
+     * This can only be used to check identity RBAC roles.
+     *
+     * @param identityType
+     * @param roleNames
+     * @throws com.rackspace.idm.exception.ForbiddenException
+     */
+    void verifyEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum identityType, String... roleNames);
 
     /**
      * Verifies that the effective caller has the specified identity type (or higher). If so, the method returns;

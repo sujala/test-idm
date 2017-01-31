@@ -2,31 +2,32 @@ package com.rackspace.idm.api.resource.cloud.devops;
 
 import com.google.i18n.phonenumbers.Phonenumber;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone;
 import com.rackspace.identity.multifactor.util.IdmPhoneNumberUtil;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyConverter;
+import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter;
 import com.rackspace.idm.api.filter.LdapLoggingFilter;
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.config.*;
-import com.rackspace.idm.domain.entity.ScopeAccess;
-import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator;
 import com.rackspace.idm.domain.service.*;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ExceptionHandler;
-import com.rackspace.idm.exception.NotAuthorizedException;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
+import com.rackspace.idm.validation.IdentityPropertyValidator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -36,13 +37,19 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @Component
 public class DefaultDevOpsService implements DevOpsService {
-    private static final Logger LOG = Logger.getLogger(DefaultDevOpsService.class);
+
+    public static final String IDENTITY_PROPERTY_SOURCE = "directory";
+    public static final String IDENTITY_PROPERTY_NOT_FOUND_MSG = "Identity Property with provided ID not found";
+    public static final String IDENTITY_PROPERTY_NAME_CONFLICT_MSG = "An Identity property with the given name already exists";
+
+    private static final Logger logger = LoggerFactory.getLogger(DefaultDevOpsService.class);
 
     @Autowired
     private AuthorizationService authorizationService;
@@ -74,6 +81,24 @@ public class DefaultDevOpsService implements DevOpsService {
     @Autowired
     private TokenRevocationService tokenRevocationService;
 
+    @Autowired
+    private IdentityPropertyService identityPropertyService;
+
+    @Autowired
+    private IdentityPropertyConverter identityPropertyConverter;
+
+    @Autowired
+    private IdentityPropertyValidator identityPropertyValidator;
+
+    @Autowired
+    private JsonWriterForIdmProperty jsonWriterForIdmProperty;
+
+    @Autowired
+    private JAXBObjectFactories objFactories;
+
+    @Autowired
+    private IdentityPropertyValueConverter propertyValueConverter;
+
     final com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory v1ObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
     @Override
@@ -100,7 +125,7 @@ public class DefaultDevOpsService implements DevOpsService {
 
             return response;
         } catch (IOException e) {
-            LOG.error("Encountered exception creating ldap log. Logging disabled", e);
+            logger.error("Encountered exception creating ldap log. Logging disabled", e);
             throw new RuntimeException("Error retrieving log", e);
         }
     }
@@ -136,50 +161,53 @@ public class DefaultDevOpsService implements DevOpsService {
     @Override
     public Response.ResponseBuilder getIdmPropsByQuery(String authToken, final List<String> versions, final String name) {
         requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_QUERY_PROPS.getRoleName());
-        Predicate<IdmProperty> reloadablePredicate = new Predicate<IdmProperty>() {
-                    @Override
-                    public boolean evaluate(IdmProperty object) {
-                        if (object.getType() != IdmPropertyType.RELOADABLE) return false;
-                        if (StringUtils.isNotBlank(name) && !StringUtils.containsIgnoreCase(object.getName(), name)) return false;
-                        if (CollectionUtils.isNotEmpty(versions) && !versions.contains(object.getVersionAdded())) return false;
+        authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRoles(IdentityUserTypeEnum.SERVICE_ADMIN, IdentityRole.IDENTITY_QUERY_PROPS.getRoleName(), IdentityRole.IDENTITY_PROPERTY_ADMIN.getRoleName());
 
-                        return true;
-                    }
-                };
-
-        Predicate<IdmProperty> staticPredicate =  new Predicate<IdmProperty>() {
-                    @Override
-                    public boolean evaluate(IdmProperty object) {
-                        if (object.getType() != IdmPropertyType.STATIC) return false;
-                        if (StringUtils.isNotBlank(name) && !StringUtils.containsIgnoreCase(object.getName(), name)) return false;
-                        if (CollectionUtils.isNotEmpty(versions) && !versions.contains(object.getVersionAdded())) return false;
-
-                        return true;
-                    }
-                };
-
-        return filterIdmProps(staticPredicate, reloadablePredicate);
+        return filterIdmProps(versions, name);
     }
 
-    private Response.ResponseBuilder filterIdmProps(Predicate<IdmProperty> staticPredicate, Predicate<IdmProperty> reloadablePredicate) {
+    private Response.ResponseBuilder filterIdmProps(final List<String> versions, final String name) {
+        Predicate<IdmProperty> reloadablePredicate = new Predicate<IdmProperty>() {
+            @Override
+            public boolean evaluate(IdmProperty object) {
+                if (object.getType() != IdmPropertyType.RELOADABLE) return false;
+                if (StringUtils.isNotBlank(name) && !StringUtils.containsIgnoreCase(object.getName(), name)) return false;
+                if (CollectionUtils.isNotEmpty(versions) && !versions.contains(object.getVersionAdded())) return false;
+
+                return true;
+            }
+        };
+
+        Predicate<IdmProperty> staticPredicate =  new Predicate<IdmProperty>() {
+            @Override
+            public boolean evaluate(IdmProperty object) {
+                if (object.getType() != IdmPropertyType.STATIC) return false;
+                if (StringUtils.isNotBlank(name) && !StringUtils.containsIgnoreCase(object.getName(), name)) return false;
+                if (CollectionUtils.isNotEmpty(versions) && !versions.contains(object.getVersionAdded())) return false;
+
+                return true;
+            }
+        };
+
         List<IdmProperty> idmPropertyList = identityConfig.getPropertyInfoList();
 
-        List<IdmProperty> queriedReloadableIdmPropertyList = new ArrayList<IdmProperty>();
+        List<IdmProperty> queriedReloadableIdmPropertyList = new ArrayList<>();
         CollectionUtils.select(idmPropertyList, reloadablePredicate, queriedReloadableIdmPropertyList);
-        Collections.sort(queriedReloadableIdmPropertyList);
 
-        List<IdmProperty> queriedStaticIdmPropertyList = new ArrayList<IdmProperty>();
+        List<IdmProperty> queriedStaticIdmPropertyList = new ArrayList<>();
         CollectionUtils.select(idmPropertyList, staticPredicate, queriedStaticIdmPropertyList);
-        Collections.sort(queriedStaticIdmPropertyList);
 
-        JSONObject props = new JSONObject();
-        props.put("configPath", identityConfig.getConfigRoot());
-        props.put(PropertyFileConfiguration.CONFIG_FILE_NAME, toJSONObject(queriedStaticIdmPropertyList));
-        props.put(PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME, toJSONObject(queriedReloadableIdmPropertyList));
-        String idmProps = props.toJSONString();
-        Response.ResponseBuilder response = Response.ok().entity(idmProps);
-        return response;
+        Iterable<com.rackspace.idm.domain.entity.IdentityProperty> directoryIdentityProps =
+                identityPropertyService.getIdentityPropertyByNameAndVersions(name, versions);
+        List<IdmProperty> directoryIdmProperties = convertIdentityPropertyToIdmProperty(directoryIdentityProps);
+
+        List<IdmProperty> allPropertiesList = new ArrayList<>();
+        allPropertiesList.addAll(queriedReloadableIdmPropertyList);
+        allPropertiesList.addAll(queriedStaticIdmPropertyList);
+        allPropertiesList.addAll(directoryIdmProperties);
+        Collections.sort(allPropertiesList);
+
+        return Response.ok().entity(jsonWriterForIdmProperty.toJsonString(allPropertiesList));
     }
 
     @Override
@@ -248,7 +276,7 @@ public class DefaultDevOpsService implements DevOpsService {
             multiFactorService.setupSmsForUser(userId, phoneNumber);
             return Response.status(Response.Status.NO_CONTENT);
         } catch (Exception ex) {
-            LOG.error(String.format("Error setting up SMS MFA for user '%s'", userId), ex);
+            logger.error(String.format("Error setting up SMS MFA for user '%s'", userId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }
@@ -276,58 +304,111 @@ public class DefaultDevOpsService implements DevOpsService {
             multiFactorService.removeMultifactorFromUserWithoutNotifications(user);
             return Response.status(Response.Status.NO_CONTENT);
         } catch (Exception ex) {
-            LOG.error(String.format("Error removing MFA from user '%s'", userId), ex);
+            logger.error(String.format("Error removing MFA from user '%s'", userId), ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }
 
-    /**
-     * Return JSON representation of properties and their values, as annotated by {@link com.rackspace.idm.domain.config.IdmProp}.
-     *
-     * Uses reflection to discover getters that have been annotated with {@link com.rackspace.idm.domain.config.IdmProp}
-     * @return JSONObject properties
-     */
-    private JSONArray toJSONObject(List<IdmProperty> idmProperties) {
-        final String name = "name";
-        final String description = "description";
-        final String versionAdded= "versionAdded";
-        final String propValue = "value";
-        final String defaultValue = "defaultValue";
+    @Override
+    public Response.ResponseBuilder createIdmProperty(String authToken, IdentityProperty identityProperty) {
+        try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROPERTY_ADMIN.getRoleName());
 
-        JSONArray propArr = new JSONArray();
-        for (IdmProperty idmProperty : idmProperties) {
-            JSONObject prop = new JSONObject();
-            try {
-                prop.put(name, idmProperty.getName());
-                prop.put(description, idmProperty.getDescription());
-                prop.put(versionAdded, idmProperty.getVersionAdded());
+            identityPropertyValidator.validateIdentityPropertyForCreate(identityProperty);
 
-                Object convertedDefaultValue = valueToAddToJSON(idmProperty.getDefaultValue());
-                prop.put(defaultValue, convertedDefaultValue);
-
-                Object convertedValue = valueToAddToJSON(idmProperty.getValue());
-                prop.put(propValue, convertedValue);
-                propArr.add(prop);
-            } catch (Exception e) {
-                LOG.error(String.format("error retrieving property '%s'", idmProperty.getName()), e);
+            com.rackspace.idm.domain.entity.IdentityProperty existingProperty = identityPropertyService.getIdentityPropertyByName(identityProperty.getName());
+            if (existingProperty != null) {
+                throw new ClientConflictException(IDENTITY_PROPERTY_NAME_CONFLICT_MSG);
             }
+
+            com.rackspace.idm.domain.entity.IdentityProperty idmProp = identityPropertyConverter.toIdentityProperty(identityProperty);
+            identityPropertyService.addIdentityProperty(idmProp);
+
+            // Do not return the value to the user if the property is not searchable
+            if (!idmProp.isSearchable()) {
+                idmProp.setValue(null);
+            }
+
+            return Response.status(Response.Status.CREATED).entity(objFactories.getRackspaceIdentityExtRaxgaV1Factory()
+                    .createIdentityProperty(identityPropertyConverter.fromIdentityProperty(idmProp)).getValue());
+        } catch (Exception ex) {
+            logger.error("Error creating Identity property", ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
-        return propArr;
     }
 
-    private Object valueToAddToJSON(Object value) {
-        if (value == null || value instanceof String || value instanceof Number || value instanceof Boolean) {
-            return value;
-        } else if (value instanceof String[] ) {
-            JSONArray valueArray = new JSONArray();
-            for (String val : (String[])value) {
-                valueArray.add(val);
+    @Override
+    public Response.ResponseBuilder updateIdmProperty(String authToken, String idmPropertyId, IdentityProperty identityProperty) {
+        try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROPERTY_ADMIN.getRoleName());
+
+            com.rackspace.idm.domain.entity.IdentityProperty propEntity = identityPropertyService.getIdentityPropertyById(idmPropertyId);
+
+            if (propEntity == null) {
+                throw new NotFoundException(IDENTITY_PROPERTY_NOT_FOUND_MSG);
             }
-            return valueArray;
-        } else if (value instanceof Enum) {
-            return ((Enum)value).name();
-        } else {
-            return value.toString();
+
+            // Set the value type of the stored property so that we can property validate it
+            identityProperty.setValueType(propEntity.getValueType());
+            identityPropertyValidator.validateIdentityPropertyForUpdate(identityProperty);
+
+            // Manually set the properties that a user is allowed to update
+            if (StringUtils.isNotBlank(identityProperty.getValue())) {
+                byte [] propValue = identityProperty.getValue().getBytes(StandardCharsets.UTF_8);
+                propEntity.setValue(propValue);
+            }
+
+            if (StringUtils.isNotBlank(identityProperty.getDescription())) {
+                propEntity.setDescription(identityProperty.getDescription());
+            }
+
+            if (StringUtils.isNotBlank(identityProperty.getIdmVersion())) {
+                propEntity.setIdmVersion(identityProperty.getIdmVersion());
+            }
+
+            if (identityProperty.isSearchable() != null) {
+                propEntity.setSearchable(identityProperty.isSearchable());
+            }
+
+            identityPropertyService.updateIdentityProperty(propEntity);
+
+            // Do not return the value to the user if the property is not searchable
+            if (!propEntity.isSearchable()) {
+                propEntity.setValue(null);
+            }
+
+            return Response.status(Response.Status.OK).entity(objFactories.getRackspaceIdentityExtRaxgaV1Factory()
+                    .createIdentityProperty(identityPropertyConverter.fromIdentityProperty(propEntity)).getValue());
+        } catch (Exception ex) {
+            logger.error("Error updating Identity property", ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder deleteIdmProperty(String authToken, String idmPropertyId) {
+        try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROPERTY_ADMIN.getRoleName());
+
+            if (StringUtils.isEmpty(idmPropertyId)) {
+                throw new BadRequestException();
+            }
+
+            com.rackspace.idm.domain.entity.IdentityProperty idmProp = identityPropertyService.getIdentityPropertyById(idmPropertyId);
+
+            if (idmProp == null) {
+                throw new NotFoundException(IDENTITY_PROPERTY_NOT_FOUND_MSG);
+            }
+
+            identityPropertyService.deleteIdentityProperty(idmProp);
+
+            return Response.status(Response.Status.NO_CONTENT);
+        } catch (Exception ex) {
+            logger.error("Error deleting Identity property", ex);
+            return exceptionHandler.exceptionResponse(ex);
         }
     }
 
@@ -360,4 +441,34 @@ public class DefaultDevOpsService implements DevOpsService {
         }
         return authScopeAccess;
     }
+
+    private List<IdmProperty> convertIdentityPropertyToIdmProperty(Iterable<com.rackspace.idm.domain.entity.IdentityProperty> directoryIdentityProps) {
+        List<IdmProperty> idmProps = new ArrayList<>();
+
+        if (directoryIdentityProps != null) {
+            for (com.rackspace.idm.domain.entity.IdentityProperty identityProperty : directoryIdentityProps) {
+                IdmProperty idmProperty = new IdmProperty();
+                idmProperty.setId(identityProperty.getId());
+                idmProperty.setType(IdmPropertyType.DIRECTORY);
+                idmProperty.setName(identityProperty.getName());
+                idmProperty.setDescription(identityProperty.getDescription());
+                try {
+                    // try to parse the value into a primitive type
+                    idmProperty.setValue(propertyValueConverter.convertPropertyValue(identityProperty));
+                } catch (Exception e) {
+                    // but fall back to a String if not parseable
+                    idmProperty.setValue(identityProperty.getValue());
+                }
+                idmProperty.setValueType(identityProperty.getValueType());
+                idmProperty.setVersionAdded(identityProperty.getIdmVersion());
+                idmProperty.setSource(IDENTITY_PROPERTY_SOURCE);
+                idmProperty.setReloadable(identityProperty.isReloadable());
+
+                idmProps.add(idmProperty);
+            }
+        }
+
+        return idmProps;
+    }
+
 }

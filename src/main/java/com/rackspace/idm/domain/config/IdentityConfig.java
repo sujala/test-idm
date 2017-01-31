@@ -10,6 +10,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -932,7 +933,20 @@ public class IdentityConfig {
     }
 
     private List<IdmProperty> getPropertyInfoList(Object obj, IdmPropertyType propertyType) {
-        List<IdmProperty> props = new ArrayList<IdmProperty>();
+        Validate.isTrue(propertyType == IdmPropertyType.STATIC || propertyType == IdmPropertyType.RELOADABLE);
+
+        List<IdmProperty> props = new ArrayList<>();
+
+        String propFileLocation;
+        boolean reloadable;
+        if (propertyType == IdmPropertyType.STATIC) {
+            propFileLocation = PropertyFileConfiguration.CONFIG_FILE_NAME;
+            reloadable = false;
+        } else {
+            propFileLocation = PropertyFileConfiguration.RELOADABLE_CONFIG_FILE_NAME;
+            reloadable = true;
+        }
+
         for (Method m : obj.getClass().getDeclaredMethods()) {
             if (m.isAnnotationPresent(IdmProp.class)) {
                 final IdmProp a = m.getAnnotation(IdmProp.class);
@@ -943,7 +957,16 @@ public class IdentityConfig {
                     Object defaultValue = propertyDefaults.get(a.key());
                     Object value = m.invoke(obj);
                     String name = a.key();
-                    props.add(new IdmProperty(propertyType, name, description, value, defaultValue, versionAdded));
+                    IdmProperty idmProperty = new IdmProperty();
+                    idmProperty.setType(propertyType);
+                    idmProperty.setName(name);
+                    idmProperty.setDescription(description);
+                    idmProperty.setValue(value);
+                    idmProperty.setDefaultValue(defaultValue);
+                    idmProperty.setVersionAdded(versionAdded);
+                    idmProperty.setSource(propFileLocation);
+                    idmProperty.setReloadable(reloadable);
+                    props.add(idmProperty);
                 } catch (Exception e) {
                     logger.error(msg, e);
                 }

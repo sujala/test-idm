@@ -7,14 +7,17 @@ import org.apache.commons.lang.StringUtils;
 
 @Getter
 @Setter
-@AllArgsConstructor
 public class IdmProperty implements Comparable<IdmProperty> {
+    private String id;
     private IdmPropertyType type;
     private String name;
     private String description;
     private Object value;
+    private String valueType;
     private Object defaultValue;
     private String versionAdded;
+    private String source;
+    private boolean reloadable;
 
     @Override
     public int compareTo(IdmProperty o) {
