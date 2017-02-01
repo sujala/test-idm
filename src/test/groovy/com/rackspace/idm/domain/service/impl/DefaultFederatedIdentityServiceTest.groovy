@@ -16,6 +16,7 @@ import testHelpers.saml.SamlFactory
 
 class DefaultFederatedIdentityServiceTest extends Specification {
     DefaultFederatedIdentityService service
+    FederatedAuthHandlerV1 federatedAuthHandlerV1 = new FederatedAuthHandlerV1()
 
     IdentityProviderDao identityProviderDao = Mock()
 
@@ -44,6 +45,7 @@ class DefaultFederatedIdentityServiceTest extends Specification {
 
     def "setup"() {
         service = new DefaultFederatedIdentityService()
+        federatedAuthHandlerV1 = new FederatedAuthHandlerV1()
 
         service.samlSignatureValidator = samlSignatureValidator
         service.provisionedUserSourceFederationHandler = provisionedUserSourceFederationHandler
@@ -53,6 +55,13 @@ class DefaultFederatedIdentityServiceTest extends Specification {
         def reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
         service.identityConfig.getReloadableConfig() >> reloadableConfig
         reloadableConfig.getFederatedResponseMaxAge() >> 100000
+
+        service.federatedAuthHandlerV1 = federatedAuthHandlerV1
+        federatedAuthHandlerV1.samlSignatureValidator = samlSignatureValidator
+        federatedAuthHandlerV1.provisionedUserSourceFederationHandler = provisionedUserSourceFederationHandler
+        federatedAuthHandlerV1.rackerSourceFederationHandler = rackerSourceFederationHandler
+        federatedAuthHandlerV1.identityProviderDao = identityProviderDao
+        federatedAuthHandlerV1.identityConfig = service.identityConfig
     }
 
     def "Error thrown when saml missing issuer"() {

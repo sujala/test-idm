@@ -190,15 +190,15 @@ public class Cloud20VersionResource {
     }
 
     /**
+     * Allows callers to provide the raw XML rather than the b64 encoded version of the SAML Response. Consumers
+     * are encouraged to use {@link #federationSamlAuthenticationFormEncoded} version and provide the base64
+     * encoded payload to avoid potential encoding issues with raw XML.
      *
      * @param httpHeaders
      * @param samlResponse
      * @return
      *
-     * @deprecated Consumers should use {@link #federationSamlAuthenticationFormEncoded} version and provide the base64
-     * encoded payload rather than pass in raw XML to avoid potential encoding issues.
      */
-    @Deprecated
     @POST
     @Path("RAX-AUTH/federation/saml/auth")
     @Consumes({MediaType.APPLICATION_XML})

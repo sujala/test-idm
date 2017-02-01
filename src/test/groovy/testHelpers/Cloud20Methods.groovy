@@ -2,20 +2,27 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
+import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import com.rackspace.idm.helpers.CloudTestUtils
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
 import org.apache.commons.lang.StringUtils
+import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.stereotype.Component
 import spock.lang.Shared
+import testHelpers.saml.SamlCredentialUtils
 
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
@@ -27,6 +34,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
+import static org.apache.http.HttpStatus.SC_CREATED
 
 /**
  * Created with IntelliJ IDEA.
@@ -347,9 +355,13 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SAML_TOKENS).accept(accept).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
 
-    def federatedAuthenticate(request, accept = APPLICATION_XML) {
+    def federatedAuthenticate(request, String version = null, accept = APPLICATION_XML) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SAML).path(AUTH).accept(accept).type(APPLICATION_XML).entity(request).post(ClientResponse)
+        WebResource.Builder builder = resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SAML).path(AUTH).accept(accept).type(APPLICATION_XML).entity(request)
+        if (StringUtils.isNotEmpty(version)) {
+            builder = builder.header(GlobalConstants.HEADER_IDENTITY_API_VERSION, version)
+        }
+        builder.post(ClientResponse)
     }
 
     def federatedLogout(request, accept = APPLICATION_XML) {
@@ -965,5 +977,18 @@ class Cloud20Methods {
         initOnUse()
         resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(RAX_AUTH).path(SERVICE_PATH_RULES).type(requestType).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
+
+
+    def createIdentityProviderWithCred(String token, IdentityProviderFederationTypeEnum type, Credential cred) {
+        def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cred.entityCertificate)
+        def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)
+        def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
+        def idp = v2Factory.createIdentityProvider(UUID.randomUUID().toString(), "blah", UUID.randomUUID().toString(), type, ApprovedDomainGroupEnum.GLOBAL, null).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        createIdentityProvider(token, idp)
+    }
+
 
 }

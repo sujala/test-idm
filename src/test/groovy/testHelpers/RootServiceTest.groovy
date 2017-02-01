@@ -38,6 +38,7 @@ import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.multifactor.service.MultiFactorService
 import com.rackspace.idm.util.CryptHelper
+import com.rackspace.idm.util.SamlUnmarshaller
 import com.rackspace.idm.validation.Validator
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.v11.Cloud11Service
@@ -156,6 +157,7 @@ class RootServiceTest extends Specification {
     @Shared ObjectConverter objectConverter
     @Shared MobilePhoneConverterCloudV20 mobilePhoneConverterCloudV20
     @Shared OTPDeviceConverterCloudV20 otpDeviceConverterCloudV20
+    @Shared SamlUnmarshaller samlUnmarshaller
 
     //services
     @Shared ApplicationService applicationService
@@ -314,6 +316,11 @@ class RootServiceTest extends Specification {
     def mockAuthResponseService(service) {
         authenticateResponseService = Mock()
         service.authenticateResponseService = authenticateResponseService
+    }
+
+    def mockSamlUnmarshaller(service) {
+        samlUnmarshaller = Mock()
+        service.samlUnmarshaller = samlUnmarshaller
     }
 
     def mockUserConverter(service) {

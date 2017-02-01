@@ -20,6 +20,7 @@ import java.util.List;
 
  class assumes that only one saml assertion exists in the saml response.
  */
+@Deprecated
 public class SamlResponseDecorator {
     private Response samlResponse;
 

@@ -2,21 +2,21 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.idm.ErrorCodes;
-import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.FederatedIdentityService;
+import com.rackspace.idm.domain.service.federation.v2.FederatedAuthHandlerV2;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.SignatureValidationException;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
+import lombok.Setter;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.openstack.docs.identity.api.v2.ServiceUnavailableFault;
 import org.opensaml.saml.saml2.core.*;
 import org.opensaml.xmlsec.signature.Signature;
 import org.slf4j.Logger;
@@ -43,6 +43,11 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     @Autowired
     private SamlSignatureValidator samlSignatureValidator;
 
+    @Autowired FederatedAuthHandlerV1 federatedAuthHandlerV1;
+
+    @Autowired
+    FederatedAuthHandlerV2 federatedAuthHandlerV2;
+
     @Autowired
     private ProvisionedUserSourceFederationHandler provisionedUserSourceFederationHandler;
 
@@ -56,45 +61,18 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
 
     @Override
     public SamlAuthResponse processSamlResponse(Response response) throws ServiceUnavailableException {
-
-
-        //validate
-        SamlResponseDecorator decoratedSamlResponse = new SamlResponseDecorator(response);
-
-        IdentityProvider provider = getIdentityProviderForResponse(decoratedSamlResponse);
-        IdentityProviderFederationTypeEnum federationType = provider.getFederationTypeAsEnum();
-
-        if (IdentityProviderFederationTypeEnum.BROKER == federationType) {
-            throw new ServiceUnavailableException(ERROR_SERVICE_UNAVAILABLE);
-        }
-
-        //before anything, validate the issuer and signature
-        validateSignatureForProvider(decoratedSamlResponse.checkAndGetSignature(), provider);
-
-        //sig valid. Now validate format of the request. Don't need to use results, just perform the validation
-        decoratedSamlResponse.checkAndGetUsername();
-        decoratedSamlResponse.checkAndGetSubjectConfirmationNotOnOrAfterDate();
-        decoratedSamlResponse.checkAndGetAuthnInstant();
-        decoratedSamlResponse.checkAndGetAuthContextClassRef();
-
-        //validate the issueInstant is not older than the configure max age for a saml response
-        DateTime issueInstant = decoratedSamlResponse.checkAndGetIssueInstant();
-        validateIssueInstant(issueInstant);
-
-        //Basic format is good. Now hand off request to handler for the user source
-        SamlAuthResponse authResponse = null;
-
-        if (IdentityProviderFederationTypeEnum.DOMAIN == federationType) {
-            authResponse = provisionedUserSourceFederationHandler.processRequestForProvider(decoratedSamlResponse, provider);
-        } else if (IdentityProviderFederationTypeEnum.RACKER == federationType) {
-            authResponse = rackerSourceFederationHandler.processRequestForProvider(decoratedSamlResponse, provider);
-        } else {
-            throw new UnsupportedOperationException(String.format("Provider user source '%s' not supported", federationType));
-        }
-
-        Audit.logSuccessfulFederatedAuth(authResponse.getUser());
-        return authResponse;
+        return federatedAuthHandlerV1.authenticate(response);
    }
+
+    @Override
+    public SamlAuthResponse processV2SamlResponse(Response response) throws ServiceUnavailableException {
+        try {
+            return federatedAuthHandlerV2.authenticate(response);
+        } catch (UnsupportedOperationException e) {
+            //TODO This catch is just a temporary block until CID-585/CID-618 are implemented
+            throw new ServiceUnavailableException(e.getMessage());
+        }
+    }
 
     /**
      * System must also log removal in user deletion log and send a feed event indication

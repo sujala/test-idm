@@ -24,9 +24,11 @@ import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHandler
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
+import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.util.SamlUnmarshaller
 import org.apache.commons.codec.binary.StringUtils
 import org.apache.commons.lang.BooleanUtils
+import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.codehaus.jackson.map.ObjectMapper
@@ -37,7 +39,9 @@ import org.opensaml.saml.saml2.core.StatusCode
 import org.opensaml.xmlsec.signature.Signature
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.IdentityFault
+import org.openstack.docs.identity.api.v2.ServiceUnavailableFault
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -48,6 +52,8 @@ import testHelpers.junit.IgnoreByRepositoryProfile
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
 import testHelpers.saml.SamlProducer
+import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
+import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.servlet.http.HttpServletResponse
 
@@ -77,9 +83,6 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     @Autowired
     ConfigurableTokenFormatSelector configurableTokenFormatSelector
 
-    /**
-     * An identity provider created for this class. No code should modify this provider.
-     */
     @Autowired
     IdentityConfig identityConfig
 
@@ -87,6 +90,10 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     SamlUnmarshaller samlUnmarshaller
 
     @Shared String specificationServiceAdminToken;
+
+    /**
+     * An identity provider created for this class. No code should modify this provider.
+     */
     @Shared IdentityProvider sharedIdentityProvider
     @Shared SamlProducer samlProducerForSharedIdp
 
@@ -693,7 +700,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "SAML authenticate produces - #accept"() {
+    def "SAML authenticate w/ explicit v1.0 request produces - #accept"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
@@ -706,7 +713,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def userAdminEntity = userService.getUserById(userAdmin.id)
 
         when:
-        def samlResponse = cloud20.federatedAuthenticate(samlAssertion, accept)
+        def samlResponse = cloud20.federatedAuthenticate(samlAssertion, GlobalConstants.FEDERATION_API_V1_0, accept)
 
         then: "Response contains appropriate content"
         samlResponse.status == HttpServletResponse.SC_OK
@@ -1615,6 +1622,50 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
+    }
+
+    /**
+     * Construct a valid v2 domain fed request and verify goes through v2 flow. CID-585 implements the
+     * code to process a valid request and return the real response. When this is done this test will need to
+     * be modified to test for the actual response.
+     */
+    def "v2 Fed: Valid request process via v2"() {
+        given:
+        def brokerIdpCredential = SamlCredentialUtils.generateX509Credential();
+        def brokerIdp = utils.createIdentityProviderWithCred(IdentityProviderFederationTypeEnum.BROKER, brokerIdpCredential)
+
+        def domainIdpCredential = SamlCredentialUtils.generateX509Credential();
+        def domainIdp = utils.createIdentityProviderWithCred(IdentityProviderFederationTypeEnum.DOMAIN, domainIdpCredential)
+
+        FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(brokerIdpCredential, domainIdpCredential)
+        FederatedDomainAuthGenerationRequest req = new FederatedDomainAuthGenerationRequest().with {
+            it.domainId = RandomStringUtils.randomAlphabetic(10)
+            it.validitySeconds = 100
+            it.brokerIssuer = brokerIdp.issuer
+            it.originIssuer = domainIdp.issuer
+            it.email = Constants.DEFAULT_FED_EMAIL
+            it.requestIssueInstant = new DateTime()
+            it.samlAuthContext = SAMLAuthContext.PASSWORD
+            it.username = UUID.randomUUID()
+            it.roleNames = ["admin", "observer"] as Set
+            it
+        }
+        def samlResponse = generator.convertResponseToString(generator.createSignedSAMLResponse(req))
+
+        when:
+        def response = cloud20.federatedAuthenticate(samlResponse, GlobalConstants.FEDERATION_API_V2_0)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponseWithMessagePattern(response, ServiceUnavailableFault, HttpStatus.SC_SERVICE_UNAVAILABLE, IdmAssert.PATTERN_ALL)
+
+        cleanup:
+        try {
+            cloud20.deleteIdentityProvider(specificationServiceAdminToken, brokerIdp.id)
+            cloud20.deleteIdentityProvider(specificationServiceAdminToken, domainIdp.id)
+        } catch (Exception ex) {
+            //eat
+        }
+
     }
 
     def deleteFederatedUserQuietly(username) {
