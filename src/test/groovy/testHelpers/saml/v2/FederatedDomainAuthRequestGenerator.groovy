@@ -25,37 +25,37 @@ import org.opensaml.xmlsec.signature.support.Signer
 import org.w3c.dom.Element
 import testHelpers.saml.SamlCredentialUtils
 
-public class FederatedDomainAuthRequestGenerator {
+class FederatedDomainAuthRequestGenerator {
     private static final Logger logger = Logger.getLogger(FederatedDomainAuthRequestGenerator.class)
 
-    private Credential brokerCredential;
-    private Credential originCredential;
+    private Credential brokerCredential
+    private Credential originCredential
 
     private SamlCredentialUtils samlCredentialUtils = new SamlCredentialUtils()
 
     AssertionMarshaller assertionMarshaller = new AssertionMarshaller()
     ResponseMarshaller responseMarshaller = new ResponseMarshaller()
-    ResponseUnmarshaller responseUnmarshaller = new ResponseUnmarshaller();
+    ResponseUnmarshaller responseUnmarshaller = new ResponseUnmarshaller()
 
     FederatedDomainAuthRequestGenerator(String brokerPublicKeyLocation, String brokerPrivateKeyLocation, String originPublicKeyLocation, String originPrivateKeyLocation) {
         this.brokerCredential = samlCredentialUtils.getSigningCredential(brokerPublicKeyLocation, brokerPrivateKeyLocation)
         this.originCredential = samlCredentialUtils.getSigningCredential(originPublicKeyLocation, originPrivateKeyLocation)
-        InitializationService.initialize();
+        InitializationService.initialize()
     }
 
     FederatedDomainAuthRequestGenerator(Credential brokerCredential, Credential originCredential) {
         this.brokerCredential = brokerCredential
         this.originCredential = originCredential
-        InitializationService.initialize();
+        InitializationService.initialize()
     }
 
     def convertResponseToString(Response samlResponse) {
-        ResponseMarshaller marshaller = new ResponseMarshaller();
-        Element element = marshaller.marshall(samlResponse);
+        ResponseMarshaller marshaller = new ResponseMarshaller()
+        Element element = marshaller.marshall(samlResponse)
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        SerializeSupport.writeNode(element, baos);
-        return new String(baos.toByteArray());
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()
+        SerializeSupport.writeNode(element, baos)
+        return new String(baos.toByteArray())
     }
 
     public Response createSignedSAMLResponse(FederatedDomainAuthGenerationRequest genRequest) {
@@ -72,31 +72,31 @@ public class FederatedDomainAuthRequestGenerator {
 
             signAssertion(originAssertion, originCredential)
 
-            Issuer responseIssuer = null;
+            Issuer responseIssuer = null
             if (genRequest.brokerIssuer != null) {
-                responseIssuer = createIssuer(genRequest.brokerIssuer);
+                responseIssuer = createIssuer(genRequest.brokerIssuer)
             }
-            Status status = createStatus();
-            Response response = createResponse(genRequest.requestIssueInstant, responseIssuer, status, [brokerAssertion, originAssertion]);
+            Status status = createStatus()
+            Response response = createResponse(genRequest.requestIssueInstant, responseIssuer, status, [brokerAssertion, originAssertion])
 
-            return response;
+            return response
         } catch (Throwable t) {
-            t.printStackTrace();
-            return null;
+            logger.error(t)
+            return null
         }
     }
 
     public Response signSAMLResponse(Response response, Credential signingCredential) {
-        Signature signature = createSignature(signingCredential);
-        response.setSignature(signature);
+        Signature signature = createSignature(signingCredential)
+        response.setSignature(signature)
 
         /*
         The signing operation operates on the underlying cached DOM representation of the object. Therefore, the SAML
         object to be signed must be marshalled before the actual signature computation is performed.
         */
-        responseMarshaller.marshall(response);
+        responseMarshaller.marshall(response)
         if (signature != null) {
-            Signer.signObject(signature);
+            Signer.signObject(signature)
         }
 
         SignatureValidator.validate(signature, signingCredential)
@@ -112,7 +112,7 @@ public class FederatedDomainAuthRequestGenerator {
           find a specific reference. However, simply unmarshalling the DOM of the response after signing the response
           will allow both signatures to be validated.
          */
-        responseUnmarshaller.unmarshall(response.getDOM());
+        responseUnmarshaller.unmarshall(response.getDOM())
 
         return response
     }
@@ -126,44 +126,44 @@ public class FederatedDomainAuthRequestGenerator {
             attributes.put("domain", [genRequest.domainId])
         }
         if (org.apache.commons.collections.CollectionUtils.isNotEmpty(genRequest.roleNames)) {
-            attributes.put("roles", genRequest.roleNames);
+            attributes.put("roles", genRequest.roleNames)
         }
         attributes.putAll(genRequest.otherAttributes)
         return attributes
     }
 
     public Assertion createUnsignedAssertion(String issuer, DateTime authTime, String username, String authnContextClassRef, int ttlSeconds, Map<String, List<String>> attributes) {
-        Issuer sIssuer = null;
-        Subject subject = null;
-        AttributeStatement attributeStatement = null;
+        Issuer sIssuer = null
+        Subject subject = null
+        AttributeStatement attributeStatement = null
 
         if (issuer != null) {
-            sIssuer = createIssuer(issuer);
+            sIssuer = createIssuer(issuer)
         }
         if (username != null) {
-            subject = createSubject(username, ttlSeconds);
+            subject = createSubject(username, ttlSeconds)
         }
         if (MapUtils.isNotEmpty(attributes)) {
-            attributeStatement = createAttributeStatement(attributes);
+            attributeStatement = createAttributeStatement(attributes)
         }
-        AuthnStatement authnStatement = createAuthnStatement(authTime, authnContextClassRef);
+        AuthnStatement authnStatement = createAuthnStatement(authTime, authnContextClassRef)
 
-        Assertion assertion = createAssertion(new DateTime(), subject, sIssuer, authnStatement, attributeStatement);
+        Assertion assertion = createAssertion(new DateTime(), subject, sIssuer, authnStatement, attributeStatement)
         return assertion
     }
 
     public Assertion signAssertion(Assertion assertion, Credential signingCredential) {
-        Signature signature = createSignature(signingCredential);
-        assertion.setSignature(signature);
+        Signature signature = createSignature(signingCredential)
+        assertion.setSignature(signature)
 
         /*
         The signing operation operates on the underlying cached DOM representation of the object. Therefore, the SAML
         object to be signed must be marshalled before the actual signature computation is performed.
          */
-        assertionMarshaller.marshall(assertion);
+        assertionMarshaller.marshall(assertion)
 
         if (signature != null) {
-            Signer.signObject(signature);
+            Signer.signObject(signature)
         }
 
         SignatureValidator.validate(signature, signingCredential)
@@ -173,150 +173,150 @@ public class FederatedDomainAuthRequestGenerator {
 
     private Response createResponse(
             final DateTime issueDate, Issuer issuer, Status status, List<Assertion> assertions) {
-        ResponseBuilder responseBuilder = new ResponseBuilder();
-        Response response = responseBuilder.buildObject();
-        response.setID(UUID.randomUUID().toString());
-        response.setIssueInstant(issueDate);
-        response.setVersion(SAMLVersion.VERSION_20);
-        response.setIssuer(issuer);
-        response.setStatus(status);
-        response.getAssertions().addAll(assertions);
-        return response;
+        ResponseBuilder responseBuilder = new ResponseBuilder()
+        Response response = responseBuilder.buildObject()
+        response.setID(UUID.randomUUID().toString())
+        response.setIssueInstant(issueDate)
+        response.setVersion(SAMLVersion.VERSION_20)
+        response.setIssuer(issuer)
+        response.setStatus(status)
+        response.getAssertions().addAll(assertions)
+        return response
     }
 
     private Assertion createAssertion(
             final DateTime issueDate, Subject subject, Issuer issuer, AuthnStatement authnStatement,
             AttributeStatement attributeStatement) {
-        AssertionBuilder assertionBuilder = new AssertionBuilder();
-        Assertion assertion = assertionBuilder.buildObject();
-        assertion.setID(UUID.randomUUID().toString());
-        assertion.setIssueInstant(issueDate);
-        assertion.setSubject(subject);
-        assertion.setIssuer(issuer);
+        AssertionBuilder assertionBuilder = new AssertionBuilder()
+        Assertion assertion = assertionBuilder.buildObject()
+        assertion.setID(UUID.randomUUID().toString())
+        assertion.setIssueInstant(issueDate)
+        assertion.setSubject(subject)
+        assertion.setIssuer(issuer)
 
         if (authnStatement != null)
-            assertion.getAuthnStatements().add(authnStatement);
+            assertion.getAuthnStatements().add(authnStatement)
 
         if (attributeStatement != null)
-            assertion.getAttributeStatements().add(attributeStatement);
+            assertion.getAttributeStatements().add(attributeStatement)
 
-        return assertion;
+        return assertion
     }
 
     private Issuer createIssuer(final String issuerName) {
         // create Issuer object
-        IssuerBuilder issuerBuilder = new IssuerBuilder();
-        Issuer issuer = issuerBuilder.buildObject();
-        issuer.setValue(issuerName);
-        return issuer;
+        IssuerBuilder issuerBuilder = new IssuerBuilder()
+        Issuer issuer = issuerBuilder.buildObject()
+        issuer.setValue(issuerName)
+        return issuer
     }
 
     private Subject createSubject(final String subjectId, final Integer samlAssertionSeconds) {
-        DateTime currentDate = new DateTime();
+        DateTime currentDate = new DateTime()
         if (samlAssertionSeconds != null)
-            currentDate = currentDate.plusSeconds(samlAssertionSeconds);
+            currentDate = currentDate.plusSeconds(samlAssertionSeconds)
 
         // create name element
-        NameIDBuilder nameIdBuilder = new NameIDBuilder();
-        NameID nameId = nameIdBuilder.buildObject();
-        nameId.setValue(subjectId);
-        nameId.setFormat("urn:oasis:names:tc:SAML:2.0:nameid-format:persistent");
+        NameIDBuilder nameIdBuilder = new NameIDBuilder()
+        NameID nameId = nameIdBuilder.buildObject()
+        nameId.setValue(subjectId)
+        nameId.setFormat(org.opensaml.saml.saml2.core.NameIDType.PERSISTENT)
 
-        SubjectConfirmationDataBuilder dataBuilder = new SubjectConfirmationDataBuilder();
-        SubjectConfirmationData subjectConfirmationData = dataBuilder.buildObject();
-        subjectConfirmationData.setNotOnOrAfter(currentDate);
+        SubjectConfirmationDataBuilder dataBuilder = new SubjectConfirmationDataBuilder()
+        SubjectConfirmationData subjectConfirmationData = dataBuilder.buildObject()
+        subjectConfirmationData.setNotOnOrAfter(currentDate)
 
-        SubjectConfirmationBuilder subjectConfirmationBuilder = new SubjectConfirmationBuilder();
-        SubjectConfirmation subjectConfirmation = subjectConfirmationBuilder.buildObject();
-        subjectConfirmation.setMethod("urn:oasis:names:tc:SAML:2.0:cm:bearer");
-        subjectConfirmation.setSubjectConfirmationData(subjectConfirmationData);
+        SubjectConfirmationBuilder subjectConfirmationBuilder = new SubjectConfirmationBuilder()
+        SubjectConfirmation subjectConfirmation = subjectConfirmationBuilder.buildObject()
+        subjectConfirmation.setMethod(org.opensaml.saml.saml2.core.SubjectConfirmation.METHOD_BEARER)
+        subjectConfirmation.setSubjectConfirmationData(subjectConfirmationData)
 
         // create subject element
-        SubjectBuilder subjectBuilder = new SubjectBuilder();
-        Subject subject = subjectBuilder.buildObject();
-        subject.setNameID(nameId);
-        subject.getSubjectConfirmations().add(subjectConfirmation);
+        SubjectBuilder subjectBuilder = new SubjectBuilder()
+        Subject subject = subjectBuilder.buildObject()
+        subject.setNameID(nameId)
+        subject.getSubjectConfirmations().add(subjectConfirmation)
 
-        return subject;
+        return subject
     }
 
     private AuthnStatement createAuthnStatement(final DateTime issueDate, String authnContextClassRef) {
         // create authcontextclassref object
-        AuthnContextClassRefBuilder classRefBuilder = new AuthnContextClassRefBuilder();
-        AuthnContextClassRef classRef = classRefBuilder.buildObject();
-        classRef.setAuthnContextClassRef(authnContextClassRef);
+        AuthnContextClassRefBuilder classRefBuilder = new AuthnContextClassRefBuilder()
+        AuthnContextClassRef classRef = classRefBuilder.buildObject()
+        classRef.setAuthnContextClassRef(authnContextClassRef)
 
         // create authcontext object
-        AuthnContextBuilder authContextBuilder = new AuthnContextBuilder();
-        AuthnContext authnContext = authContextBuilder.buildObject();
-        authnContext.setAuthnContextClassRef(classRef);
+        AuthnContextBuilder authContextBuilder = new AuthnContextBuilder()
+        AuthnContext authnContext = authContextBuilder.buildObject()
+        authnContext.setAuthnContextClassRef(classRef)
 
         // create authenticationstatement object
-        AuthnStatementBuilder authStatementBuilder = new AuthnStatementBuilder();
-        AuthnStatement authnStatement = authStatementBuilder.buildObject();
-        authnStatement.setAuthnInstant(issueDate);
-        authnStatement.setAuthnContext(authnContext);
+        AuthnStatementBuilder authStatementBuilder = new AuthnStatementBuilder()
+        AuthnStatement authnStatement = authStatementBuilder.buildObject()
+        authnStatement.setAuthnInstant(issueDate)
+        authnStatement.setAuthnContext(authnContext)
 
-        return authnStatement;
+        return authnStatement
     }
 
     private AttributeStatement createAttributeStatement(Map<String, List<Object>> attributes) {
         // create authenticationstatement object
-        AttributeStatementBuilder attributeStatementBuilder = new AttributeStatementBuilder();
-        AttributeStatement attributeStatement = attributeStatementBuilder.buildObject();
+        AttributeStatementBuilder attributeStatementBuilder = new AttributeStatementBuilder()
+        AttributeStatement attributeStatement = attributeStatementBuilder.buildObject()
 
-        AttributeBuilder attributeBuilder = new AttributeBuilder();
+        AttributeBuilder attributeBuilder = new AttributeBuilder()
         if (attributes != null) {
             for (Map.Entry<String, List<Object>> entry : attributes.entrySet()) {
-                Attribute attribute = attributeBuilder.buildObject();
-                attribute.setName(entry.getKey());
+                Attribute attribute = attributeBuilder.buildObject()
+                attribute.setName(entry.getKey())
 
                 for (Object value : entry.getValue()) {
-                    XMLObject xmlObject = null;
+                    XMLObject xmlObject = null
                     if (value instanceof String) {
-                        XSStringBuilder stringBuilder = new XSStringBuilder();
-                        XSString attributeValue = stringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME);
-                        attributeValue.setValue(value);
+                        XSStringBuilder stringBuilder = new XSStringBuilder()
+                        XSString attributeValue = stringBuilder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME, XSString.TYPE_NAME)
+                        attributeValue.setValue(value)
                         xmlObject = attributeValue
                     } else {
-                        XSAnyBuilder builder = new XSAnyBuilder();
-                        XSAny attributeValue = builder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME);
-                        attributeValue.setTextContent(value.toString());
+                        XSAnyBuilder builder = new XSAnyBuilder()
+                        XSAny attributeValue = builder.buildObject(AttributeValue.DEFAULT_ELEMENT_NAME)
+                        attributeValue.setTextContent(value.toString())
                         xmlObject = attributeValue
                     }
-                    attribute.getAttributeValues().add(xmlObject);
+                    attribute.getAttributeValues().add(xmlObject)
                 }
 
-                attributeStatement.getAttributes().add(attribute);
+                attributeStatement.getAttributes().add(attribute)
             }
         }
 
-        return attributeStatement;
+        return attributeStatement
     }
 
     private Status createStatus() {
-        StatusCodeBuilder statusCodeBuilder = new StatusCodeBuilder();
-        StatusCode statusCode = statusCodeBuilder.buildObject();
-        statusCode.setValue(StatusCode.SUCCESS);
+        StatusCodeBuilder statusCodeBuilder = new StatusCodeBuilder()
+        StatusCode statusCode = statusCodeBuilder.buildObject()
+        statusCode.setValue(StatusCode.SUCCESS)
 
-        StatusBuilder statusBuilder = new StatusBuilder();
-        Status status = statusBuilder.buildObject();
-        status.setStatusCode(statusCode);
+        StatusBuilder statusBuilder = new StatusBuilder()
+        Status status = statusBuilder.buildObject()
+        status.setStatusCode(statusCode)
 
-        return status;
+        return status
     }
 
     private Signature createSignature(Credential signingCredential) throws Throwable {
         if (signingCredential != null) {
-            SignatureBuilder builder = new SignatureBuilder();
-            Signature signature = builder.buildObject();
-            signature.setSigningCredential(signingCredential);
-            signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1);
-            signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
+            SignatureBuilder builder = new SignatureBuilder()
+            Signature signature = builder.buildObject()
+            signature.setSigningCredential(signingCredential)
+            signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA1)
+            signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS)
 
-            return signature;
+            return signature
         }
 
-        return null;
+        return null
     }
 }

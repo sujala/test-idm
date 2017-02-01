@@ -25,7 +25,7 @@ import java.util.List;
  */
 @Component
 public class FederationUtils {
-    private static final Logger log = LoggerFactory.getLogger(FederatedAuthHandlerV2.class);
+    private static final Logger log = LoggerFactory.getLogger(FederationUtils.class);
 
     @Autowired
     private IdentityConfig identityConfig;
