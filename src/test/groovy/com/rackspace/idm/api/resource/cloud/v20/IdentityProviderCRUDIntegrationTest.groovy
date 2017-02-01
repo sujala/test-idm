@@ -318,6 +318,38 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         false      | _
     }
 
+    def "Assert issuer is case sensitive on IDP creation"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def issuer = getRandomUUID('issuer')
+
+        when: "create a IDP"
+        def domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID('name'), "description", issuer, IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp)
+
+        then: "201 Created"
+        response.status == SC_CREATED
+        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
+
+        when: "create a IDP w/ issuer matching existing IDP but all uppercase"
+        domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID('name'), "description", issuer.toUpperCase(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp)
+
+        then: "201 Created"
+        response.status == SC_CREATED
+        IdentityProvider creationResultIdp2 = response.getEntity(IdentityProvider)
+
+        cleanup:
+        if (creationResultIdp) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        }
+        if (creationResultIdp2) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp2.id)
+        }
+        utils.deleteUserQuietly(idpManager)
+    }
+
     @Unroll
     def "Error check create IDP with various empty strings - request: #requestContentType"() {
         given:
@@ -1132,6 +1164,53 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == 400
+    }
+
+    def "list IDPs with 'issuer' query param"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def idpName = getRandomUUID('name')
+        def idpIssuer = getRandomUUID('issuer')
+        IdentityProvider identityProvider = v2Factory.createIdentityProvider(idpName, "blah", idpIssuer, IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def createResponse = cloud20.createIdentityProvider(idpManagerToken, identityProvider)
+        def creationResultIdp = createResponse.getEntity(IdentityProvider)
+
+        when: "only issuer"
+        def response = cloud20.listIdentityProviders(idpManagerToken, null, idpIssuer, null, null, null)
+        def listIdps = response.getEntity(IdentityProviders)
+
+        then:
+        response.status == SC_OK
+        listIdps.identityProvider.size() == 1
+
+        when: "issuer and name query param"
+        response = cloud20.listIdentityProviders(idpManagerToken, idpName, idpIssuer, null, null, null)
+        listIdps = response.getEntity(IdentityProviders)
+
+        then:
+        response.status == SC_OK
+        listIdps.identityProvider.size() == 1
+
+        when: "invalid issuer"
+        response = cloud20.listIdentityProviders(idpManagerToken, null, idpIssuer.toUpperCase(), null, null, null)
+        listIdps = response.getEntity(IdentityProviders)
+
+        then:
+        response.status == SC_OK
+        listIdps.identityProvider.size() == 0
+
+        when: "invalid issuer and valid name query param"
+        response = cloud20.listIdentityProviders(idpManagerToken, idpName, idpIssuer.toUpperCase(), null, null, null)
+        listIdps = response.getEntity(IdentityProviders)
+
+        then:
+        response.status == SC_OK
+        listIdps.identityProvider.size() == 0
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        utils.deleteUserQuietly(idpManager)
     }
 
     def "Create Identity Provider returns errors appropriately"() {
