@@ -37,8 +37,13 @@ class IdentityConfig(data_interfaces.ConfigSectionInterface):
 
     @property
     def identity_admin_password(self):
-        """API Key for the Identity Admin User."""
+        """Password for the Identity Admin User."""
         return self.get('identity_admin_password')
+
+    @property
+    def identity_admin_apikey(self):
+        """API Key for the Identity Admin User."""
+        return self.get('identity_admin_apikey')
 
 
 class TestConfig(data_interfaces.ConfigSectionInterface):

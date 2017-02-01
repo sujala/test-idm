@@ -64,7 +64,7 @@ class AuthenticateWithPassword(base.AutoMarshallingModel):
         if self.tenant_name:
             etree.SubElement(auth, tenantName=self.tenant_name)
         etree.SubElement(
-            auth, const.PASSWORD_CREDENTIALS, xmlns=const.XMLNS,
+            auth, const.PASSWORD_CREDENTIALS, xmlns=const.XMLNS_V20,
             username=self.user_name, password=self.password)
         return etree.tostring(auth)
 
@@ -185,7 +185,7 @@ class UserAdd(base.AutoMarshallingModel):
         #     'http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0')
         # ET.register_namespace('OS-KSADM', const.XMLNS_OS_KSADM)
         add_user_request = etree.Element(
-            const.USER, xmlns=const.XMLNS,
+            const.USER, xmlns=const.XMLNS_V20,
             username=self.user_name)
         if self.email:
             add_user_request.set(const.EMAIL, self.email)
@@ -424,7 +424,7 @@ class RoleAdd(base.AutoMarshallingModel):
         etree.register_namespace(
             const.RAX_AUTH, const.XMLNS_RAX_AUTH)
         add_role_request = etree.Element(
-            const.ROLE, xmlns=const.XMLNS, id=self.role_id,
+            const.ROLE, xmlns=const.XMLNS_V20, id=self.role_id,
             name=self.role_name, type=self.role_type,
             tenantTypes=self.tenant_types,
             description=self.role_description,
@@ -528,7 +528,7 @@ class EndpointTemplateAdd(base.AutoMarshallingModel):
         etree.register_namespace(const.OS_KSADM_NAMESPACE,
                                  const.XMLNS_OS_KSADM)
         add_endpoint_template_request = etree.Element(
-            const.ENDPOINT_TEMPLATE, xmlns=const.XMLNS, id=str(self.id),
+            const.ENDPOINT_TEMPLATE, xmlns=const.XMLNS_V20, id=str(self.id),
             name=self.name, publicURL=self.public_url, type=self.template_type,
             internalURL=self.internal_url, adminURL=self.admin_url,
             versionId=self.version_id, versionInfo=self.version_info,
@@ -633,7 +633,7 @@ class EndpointTemplateUpdate(base.AutoMarshallingModel):
         etree.register_namespace(const.OS_KSADM_NAMESPACE,
                                  const.XMLNS_OS_KSADM)
         update_endpoint_template_request = etree.Element(
-            const.ENDPOINT_TEMPLATE, xmlns=const.XMLNS, id=str(self.id),
+            const.ENDPOINT_TEMPLATE, xmlns=const.XMLNS_V20, id=str(self.id),
             name=self.name, publicURL=self.public_url, type=self.template_type,
             internalURL=self.internal_url, adminURL=self.admin_url,
             versionId=self.version_id, versionInfo=self.version_info,
@@ -668,7 +668,7 @@ class ServiceAdd(base.AutoMarshallingModel):
         etree.register_namespace(const.OS_KSADM_NAMESPACE,
                                  const.XMLNS_OS_KSADM)
         add_service_request = etree.Element(
-            const.SERVICE, xmlns=const.XMLNS, id=str(self.service_id),
+            const.SERVICE, xmlns=const.XMLNS_V20, id=str(self.service_id),
             name=self.service_name, type=self.service_type)
         if self.service_description:
             add_service_request.set(
@@ -734,7 +734,7 @@ class Tenant(base.AutoMarshallingModel):
 
     def _obj_to_xml(self):
         add_tenant_request = etree.Element(
-            const.TENANT, xmlns=const.XMLNS)
+            const.TENANT, xmlns=const.XMLNS_V20)
         if self.tenant_name:
             add_tenant_request.set(const.NAME, self.tenant_name)
         if self.tenant_id:
