@@ -18,6 +18,8 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.devops.JsonWriterForIdmProperty
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
+import com.rackspace.idm.domain.config.IdmProperty
+import com.rackspace.idm.domain.config.IdmPropertyList
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.util.OTPHelper
@@ -1126,11 +1128,8 @@ class Cloud20Utils {
         def response = devOpsMethods.deleteIdentityProperty(token, propId)
     }
 
-    def getIdentityPropertyByName(String propName, token = getIdentityAdminToken()) {
+    IdmProperty getIdentityPropertyByName(String propName, token = getIdentityAdminToken()) {
         def getPropsResponse = devOpsMethods.getIdmProps(getIdentityAdminToken(), propName)
-        def propsData = new JsonSlurper().parseText(getPropsResponse.getEntity(String))
-        def prop = propsData[JsonWriterForIdmProperty.JSON_PROP_PROPERTIES].find{it.name == propName}
-        assert prop != null
-        return prop
+        getPropsResponse.getEntity(IdmPropertyList).properties.first()
     }
 }

@@ -5619,7 +5619,7 @@ rsId: a5c8d8b34f1e498995c5c3be192ed4fc
 cn: federation.identity.provider.default.policy
 rsIdmVersion: 3.10.0
 rsPropertyValueType: JSON
-rsReloadable: FALSE
+rsReloadable: TRUE
 rsSearchable: TRUE
 description: The default policy used when creating an IDP
 rsPropertyValue: {"property":{"value":"default policy"}}

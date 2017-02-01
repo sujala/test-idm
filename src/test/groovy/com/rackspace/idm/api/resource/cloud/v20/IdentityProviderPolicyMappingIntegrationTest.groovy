@@ -5,7 +5,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
-import com.rackspace.idm.api.resource.cloud.devops.JsonWriterForIdmProperty
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
@@ -343,12 +342,12 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         def defaultPolicyPropData = utils.getIdentityPropertyByName(IdentityConfig.FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP)
         utils.deleteIdentityProperty(defaultPolicyPropData.id)
         def defaultPolicyProp = new IdentityProperty().with {
-            it.name = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_NAME]
-            it.description = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_DESCRIPTION]
-            it.value = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VALUE]
-            it.valueType = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VALUE_TYPE]
-            it.idmVersion = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VERSION_ADDED]
-            it.reloadable = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_RELOADABLE]
+            it.name = defaultPolicyPropData.name
+            it.description = defaultPolicyPropData.description
+            it.value = defaultPolicyPropData.value
+            it.valueType = defaultPolicyPropData.valueType
+            it.idmVersion = defaultPolicyPropData.versionAdded
+            it.reloadable = defaultPolicyPropData.reloadable
             it.searchable = true
             it
         }
@@ -401,12 +400,12 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         utils.deleteIdentityProperty(defaultPolicyPropData.id)
         def idpData = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
         def defaultPolicyProp = new IdentityProperty().with {
-            it.name = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_NAME]
-            it.description = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_DESCRIPTION]
-            it.value = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VALUE]
-            it.valueType = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VALUE_TYPE]
-            it.idmVersion = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_VERSION_ADDED]
-            it.reloadable = defaultPolicyPropData[JsonWriterForIdmProperty.JSON_PROP_RELOADABLE]
+            it.name = defaultPolicyPropData.name
+            it.description = defaultPolicyPropData.description
+            it.value = defaultPolicyPropData.value
+            it.valueType = defaultPolicyPropData.valueType
+            it.idmVersion = defaultPolicyPropData.versionAdded
+            it.reloadable = defaultPolicyPropData.reloadable
             it.searchable = true
             it
         }
