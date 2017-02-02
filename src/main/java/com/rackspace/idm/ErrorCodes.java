@@ -36,13 +36,30 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_FEDERATION_MISSING_SUBJECT_NOTONORAFTER = "FED-007";
     public static final String ERROR_CODE_FEDERATION_INVALID_SUBJECT_NOTONORAFTER = "FED-008";
     public static final String ERROR_CODE_FEDERATION_MISSING_AUTH_INSTANT = "FED-009";
-
     public static final String ERROR_CODE_FEDERATION_MISSING_AUTH_CONTEXT_CLASSREF = "FED-010";
     public static final String ERROR_CODE_FEDERATION_INVALID_AUTH_CONTEXT_CLASSREF = "FED-011";
-
     public static final String ERROR_CODE_FEDERATION_MISSING_ISSUE_INSTANT = "FED-012";
-
     public static final String ERROR_CODE_FEDERATION_USER_NOT_FOUND = "FED-013";
+
+    /* *********************************************************************
+    * v2 fed errors
+    ********************************************************************* */
+    public static final String ERROR_CODE_FEDERATION2_MISSING_RESPONSE_ISSUER = "FED2-000";
+    public static final String ERROR_CODE_FEDERATION2_MISSING_BROKER_ISSUER = "FED2-001";
+    public static final String ERROR_CODE_FEDERATION2_MISSING_ORIGIN_ISSUER = "FED2-002";
+    public static final String ERROR_CODE_FEDERATION2_INVALID_BROKER_ISSUER = "FED2-003";
+    public static final String ERROR_CODE_FEDERATION2_INVALID_ORIGIN_ISSUER = "FED2-004";
+
+    public static final String ERROR_CODE_FEDERATION2_MISSING_BROKER_ASSERTION = "FED2-005";
+    public static final String ERROR_CODE_FEDERATION2_MISSING_ORIGIN_ASSERTION = "FED2-006";
+    public static final String ERROR_CODE_FEDERATION2_INVALID_BROKER_ASSERTION = "FED2-007";
+    public static final String ERROR_CODE_FEDERATION2_INVALID_ORIGIN_ASSERTION = "FED2-008";
+
+    public static final String ERROR_CODE_FEDERATION2_MISSING_RESPONSE_SIGNATURE = "FED2-009";
+    public static final String ERROR_CODE_FEDERATION2_MISSING_ORIGIN_ASSERTION_SIGNATURE = "FED2-010";
+    public static final String ERROR_CODE_FEDERATION_INVALID_BROKER_SIGNATURE = "FED2-011";
+    public static final String ERROR_CODE_FEDERATION2_INVALID_ORIGIN_SIGNATURE = "FED2-012";
+    // *********************************************************************
 
     //fed racker specific errors
     public static final String ERROR_CODE_FEDERATION_RACKER_NON_EXISTANT_RACKER = "FED_R-001";

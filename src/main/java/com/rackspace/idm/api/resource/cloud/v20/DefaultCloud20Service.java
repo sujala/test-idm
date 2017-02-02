@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.google.common.collect.ImmutableList;
 import com.rackspace.docs.core.event.EventType;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
@@ -122,7 +123,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ROLE_ID_NOT_FOUND_ERROR_MESSAGE = "Role with ID %s not found.";
 
     public static final String USER_NOT_FOUND_ERROR_MESSAGE = "User with ID %s not found.";
-
 
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
@@ -1190,9 +1190,23 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponseBytes) {
+        //determine API version
+        List<String> identityVersionHeaderVals = httpHeaders.getRequestHeader(GlobalConstants.HEADER_IDENTITY_API_VERSION);
+        if (CollectionUtils.isEmpty(identityVersionHeaderVals)) {
+            identityVersionHeaderVals = ImmutableList.of(GlobalConstants.FEDERATION_API_V1_0);
+        }
+
+        String apiVersion = identityVersionHeaderVals.get(0);
+        SamlAuthResponse samlAuthResponse = null;
         try {
             org.opensaml.saml.saml2.core.Response samlResponse = samlUnmarshaller.unmarshallResponse(samlResponseBytes);
-            SamlAuthResponse samlAuthResponse = federatedIdentityService.processSamlResponse(samlResponse);
+            if (GlobalConstants.FEDERATION_API_V1_0.equalsIgnoreCase(apiVersion)) {
+                samlAuthResponse = federatedIdentityService.processSamlResponse(samlResponse);
+            } else if (GlobalConstants.FEDERATION_API_V2_0.equalsIgnoreCase(apiVersion)) {
+                samlAuthResponse = federatedIdentityService.processV2SamlResponse(samlResponse);
+            } else {
+                exceptionHandler.badRequestExceptionResponse(String.format("Unsupported %s version", GlobalConstants.HEADER_IDENTITY_API_VERSION));
+            }
             AuthenticateResponse response = authConverterCloudV20.toAuthenticationResponse(samlAuthResponse);
             return Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(response).getValue());
         } catch (BadRequestException ex) {

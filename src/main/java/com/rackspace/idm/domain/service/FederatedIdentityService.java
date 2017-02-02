@@ -10,7 +10,25 @@ import javax.naming.ServiceUnavailableException;
 import java.util.List;
 
 public interface FederatedIdentityService {
+
+    /**
+     * Authenticate federated user via 1.0 of API.
+     *
+     * @param samlResponse
+     * @return
+     * @throws ServiceUnavailableException
+     * @deprecated Use @{link processV2SamlResponse}
+     */
+    @Deprecated
     SamlAuthResponse processSamlResponse(Response samlResponse) throws ServiceUnavailableException;
+
+    /**
+     * Process v2 API version
+     *
+     * @param samlResponse
+     * @return
+     */
+    SamlAuthResponse processV2SamlResponse(Response samlResponse)  throws ServiceUnavailableException;
 
     /**
      * Logs out/terminates the associated federated user, which removes any persistent state for that user and revokes any tokens

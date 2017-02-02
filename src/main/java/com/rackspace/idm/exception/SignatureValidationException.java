@@ -13,4 +13,12 @@ public class SignatureValidationException extends IdmException {
     public SignatureValidationException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    public SignatureValidationException(String message, String errorCode, Throwable cause) {
+        super(message, errorCode, cause);
+    }
+
+    public SignatureValidationException(String message, String errorCode) {
+        super(message, errorCode);
+    }
 }

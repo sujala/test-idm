@@ -18,6 +18,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
+import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.util.OTPHelper
 import com.rackspace.idm.util.SamlUnmarshaller
 import com.sun.jersey.api.client.ClientResponse
@@ -30,6 +31,7 @@ import org.apache.http.client.utils.URLEncodedUtils
 import org.apache.log4j.Logger
 import org.opensaml.saml.saml2.core.LogoutResponse
 import org.joda.time.DateTime
+import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
@@ -46,6 +48,7 @@ import testHelpers.Cloud20Methods
 import testHelpers.DevOpsMethods
 import testHelpers.V1Factory
 import testHelpers.V2Factory
+import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
 
 import javax.annotation.PostConstruct
@@ -304,6 +307,12 @@ class Cloud20Utils {
 
     def createIdentityProvider(token, IdentityProvider idp) {
         def response = methods.createIdentityProvider(token, idp)
+        assert (response.status == SC_CREATED)
+        return response.getEntity(IdentityProvider)
+    }
+
+    def createIdentityProviderWithCred(token = getServiceAdminToken(), IdentityProviderFederationTypeEnum type, Credential cred) {
+        def response = methods.createIdentityProviderWithCred(token, type, cred)
         assert (response.status == SC_CREATED)
         return response.getEntity(IdentityProvider)
     }

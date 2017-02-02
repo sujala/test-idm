@@ -2,36 +2,21 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
-
-import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.GroupConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
-
+import com.rackspace.idm.api.converter.cloudv20.*
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
-import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
-import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.exception.*
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
-import com.rackspace.idm.util.SamlUnmarshaller
 import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
-import org.apache.commons.lang.StringUtils
-import org.joda.time.DateTime
-import org.mockito.AdditionalMatchers
-import org.opensaml.core.config.InitializationService
-import testHelpers.IdmAssert
-
-import javax.ws.rs.core.HttpHeaders
 import org.apache.http.HttpStatus
 import org.dozer.DozerBeanMapper
+import org.joda.time.DateTime
+import org.opensaml.core.config.InitializationService
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -42,6 +27,7 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
+import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import javax.xml.bind.JAXBElement
@@ -3522,28 +3508,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         apiKey << [null, ""]
     }
 
-    def "Validate a saml response" () {
-        given:
-        def samlResponse = Mock(org.opensaml.saml.saml2.core.Response)
-        def mockAuthData = Mock(AuthData)
-        def responseBuilder = Mock(javax.ws.rs.core.Response.ResponseBuilder)
-        def samlUnmarshaller = Mock(SamlUnmarshaller)
-        AuthenticateResponse mockAuthenticateResponse = Mock()
-        AuthConverterCloudV20 authConverter = Mock()
-        service.authConverterCloudV20 = authConverter;
-        service.samlUnmarshaller = samlUnmarshaller
-
-        and:
-        defaultFederatedIdentityService.processSamlResponse() >> mockAuthData
-        authConverter.toAuthenticationResponse(_) >> mockAuthenticateResponse
-        samlUnmarshaller.unmarshallResponse(_) >> samlResponse
-
-        when: "saml response is validated"
-        def result = service.authenticateFederated(headers, new byte[0])
-
-        then:
-        result.build().status == 200
-    }
 
     def "[B-82794] Verify if the API error is properly obfuscated"() {
         given:
@@ -3577,6 +3541,34 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         result.build().status == 404
+    }
+
+    def "Fed Auth : Verify routing based on API version"() {
+        mockAuthConverterCloudV20(service)
+        def headers = Mock(HttpHeaders)
+
+        when: "Do not set API header"
+        service.authenticateFederated(headers, new byte[0])
+
+        then: "Sent to v1.0"
+        1 * defaultFederatedIdentityService.processSamlResponse(_)
+        0 * defaultFederatedIdentityService.processV2SamlResponse(_)
+
+        when: "Set 1.0 API header"
+        headers.getRequestHeader(GlobalConstants.HEADER_IDENTITY_API_VERSION) >> [GlobalConstants.FEDERATION_API_V1_0]
+        service.authenticateFederated(headers, new byte[0])
+
+        then: "Sent to v1.0"
+        1 * defaultFederatedIdentityService.processSamlResponse(_)
+        0 * defaultFederatedIdentityService.processV2SamlResponse(_)
+
+        when: "Set 2.0 API header"
+        headers.getRequestHeader(GlobalConstants.HEADER_IDENTITY_API_VERSION) >> [GlobalConstants.FEDERATION_API_V2_0]
+        service.authenticateFederated(headers, new byte[0])
+
+        then: "Sent to v2.0"
+        0 * defaultFederatedIdentityService.processSamlResponse(_)
+        1 * defaultFederatedIdentityService.processV2SamlResponse(_)
     }
 
     def mockServices() {
@@ -3615,6 +3607,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockAuthWithApiKeyCredentials(service)
         mockAuthWithPasswordCredentials(service)
         mockUserConverter(service)
+        mockSamlUnmarshaller(service)
+
     }
 
     def createFilter(FilterParam.FilterParamName name, String value) {

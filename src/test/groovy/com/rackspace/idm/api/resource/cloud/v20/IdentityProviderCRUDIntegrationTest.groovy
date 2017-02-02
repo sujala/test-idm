@@ -23,6 +23,7 @@ import org.apache.http.HttpStatus
 import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
 import org.openstack.docs.identity.api.v2.ServiceUnavailableFault
 import org.springframework.beans.factory.annotation.Autowired
@@ -1695,7 +1696,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "When a federation auth request is made w/ a SAML Response issued by a BROKER IDP, a 503 must be returned."() {
+    def "When a v1 federation auth request is made w/ a SAML Response issued by a BROKER IDP, a 403 must be returned."() {
         given:
         def idpManager = utils.createIdentityProviderManager()
         def idpManagerToken = utils.getToken(idpManager.username)
@@ -1727,7 +1728,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response = cloud20.federatedAuthenticate(assertion)
 
         then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, ServiceUnavailableFault, SC_SERVICE_UNAVAILABLE, DefaultFederatedIdentityService.ERROR_SERVICE_UNAVAILABLE)
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, "Error code: 'FED-000'; v1 Authentication is not supported for this IDP")
 
         when: "delete the provider"
         def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
