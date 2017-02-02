@@ -1394,7 +1394,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
 
                 if (identityProvider != null) {
-                    if (StringUtils.isNotBlank(issuer) && !identityProvider.getUri().equalsIgnoreCase(issuer)) {
+                    // issuer is case sensitive
+                    if (StringUtils.isNotBlank(issuer) && !identityProvider.getUri().equals(issuer)) {
                         providerEntities = new ArrayList<>();
                     } else {
                         providerEntities = Collections.singletonList(identityProvider);
