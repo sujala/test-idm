@@ -4,7 +4,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty;
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.entity.IdentityPropertyValueTypeValidator;
+import com.rackspace.idm.validation.property.TargetedIdentityPropertyValidator;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,9 @@ public class IdentityPropertyValidator {
     @Autowired
     Collection<IdentityPropertyValueTypeValidator> valueTypeValidators;
 
+    @Autowired
+    Collection<TargetedIdentityPropertyValidator> targetedIdentityPropertyValidators;
+
     /**
      * Validates the IdentityProperty for creation. This verifies that the required properties are set
      * and that all provided properties have valid values
@@ -51,6 +56,7 @@ public class IdentityPropertyValidator {
         validateIdmVersion(identityProperty);
         validateValueType(identityProperty);
         validateValue(identityProperty);
+        validateIdentityPropertyWithTargetedValidators(identityProperty);
     }
 
     /**
@@ -63,6 +69,7 @@ public class IdentityPropertyValidator {
         validateDescription(identityProperty);
         validateIdmVersion(identityProperty);
         validateValue(identityProperty);
+        validateIdentityPropertyWithTargetedValidators(identityProperty);
     }
 
     /**
@@ -149,6 +156,14 @@ public class IdentityPropertyValidator {
 
         if (StringUtils.isNotBlank(identityProperty.getValue())) {
             validator.validateIdentityProperty(identityProperty);
+        }
+    }
+
+    private void validateIdentityPropertyWithTargetedValidators(IdentityProperty identityProperty) {
+        for (TargetedIdentityPropertyValidator targetedValidator : targetedIdentityPropertyValidators) {
+            if (targetedValidator.supports(identityProperty)) {
+                targetedValidator.validate(identityProperty);
+            }
         }
     }
 

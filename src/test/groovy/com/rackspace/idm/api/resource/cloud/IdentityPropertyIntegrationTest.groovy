@@ -11,7 +11,6 @@ import com.rackspace.idm.validation.entity.IdentityPropertyIntValueTypeValidator
 import com.rackspace.idm.validation.entity.IdentityPropertyJsonValueTypeValidator
 import com.rackspace.idm.validation.entity.IdentityPropertyStringValueTypeValidator
 import groovy.json.JsonSlurper
-import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault

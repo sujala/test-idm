@@ -5611,3 +5611,15 @@ dn: ou=baseUrlRules,ou=rules,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: organizationalUnit
 objectClass: top
 description: Defines container for baseUrl assignment rules
+
+dn: rsId=a5c8d8b34f1e498995c5c3be192ed4fc,ou=properties,ou=cloud,o=configur
+ ation,dc=rackspace,dc=com
+objectClass: rsIdentityProperty
+rsId: a5c8d8b34f1e498995c5c3be192ed4fc
+cn: federation.identity.provider.default.policy
+rsIdmVersion: 3.10.0
+rsPropertyValueType: JSON
+rsReloadable: TRUE
+rsSearchable: TRUE
+description: The default policy used when creating an IDP
+rsPropertyValue: {"property":{"value":"default policy"}}

@@ -1,10 +1,13 @@
 package com.rackspace.idm.domain.config;
 
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter;
 import com.rackspace.idm.api.security.IdentityRole;
+import com.rackspace.idm.domain.entity.IdentityProperty;
 import com.rackspace.idm.domain.migration.ChangeType;
 import com.rackspace.idm.domain.security.TokenFormat;
+import com.rackspace.idm.domain.service.IdentityPropertyService;
 import com.rackspace.idm.exception.MissingRequiredConfigIdmException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
@@ -15,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -460,6 +464,11 @@ public class IdentityConfig {
     private static final String LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP = "ldap.server.pool.allow.concurrent.socketfactory.use";
     private static final boolean LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT = false;
 
+    /**
+     * Identity Repository Properties
+     */
+    public static final String FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP = "federation.identity.provider.default.policy";
+
     @Qualifier("staticConfiguration")
     @Autowired
     private Configuration staticConfiguration;
@@ -471,10 +480,18 @@ public class IdentityConfig {
     @Autowired
     private RepositoryProfileResolver profileResolver;
 
+    @Lazy
+    @Autowired
+    private IdentityPropertyService identityPropertyService;
+
+    @Autowired
+    private IdentityPropertyValueConverter propertyValueConverter;
+
     private static final Logger logger = LoggerFactory.getLogger(IdentityConfig.class);
     private final Map<String,Object> propertyDefaults;
     private StaticConfig staticConfig = new StaticConfig();
     private ReloadableConfig reloadableConfig = new ReloadableConfig();
+    private RepositoryConfig repositoryConfig = new RepositoryConfig();
 
     public IdentityConfig() {
         propertyDefaults = setDefaults();
@@ -723,6 +740,10 @@ public class IdentityConfig {
 
     public ReloadableConfig getReloadableConfig() {
         return reloadableConfig;
+    }
+
+    public RepositoryConfig getRepositoryConfig() {
+        return repositoryConfig;
     }
 
     /**
@@ -1888,6 +1909,15 @@ public class IdentityConfig {
         public int getIdpPolicyMaxSize() {
             return getIntSafely(reloadableConfiguration, IDP_POLICY_MAX_KILOBYTE_SIZE_PROP);
         }
+    }
+
+    public class RepositoryConfig {
+
+        public String getIdentityProviderDefaultPolicy() {
+            IdentityProperty prop = identityPropertyService.getIdentityPropertyByName(FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP);
+            return (String) propertyValueConverter.convertPropertyValue(prop);
+        }
+
     }
 
     @Deprecated

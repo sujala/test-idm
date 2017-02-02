@@ -472,13 +472,17 @@ public class Validator20 {
     public void validateIdpPolicy(String policy) {
         // Ensure policy does not exceed max size allowed
         if (!jsonValidator.jsonStringDoesNotExceedSize(policy, identityConfig.getReloadableConfig().getIdpPolicyMaxSize())) {
-            throw new BadRequestException(String.format(FEDERATION_IDP_POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE, identityConfig.getReloadableConfig().getIdpPolicyMaxSize()));
+            throw new BadRequestException(getIdpPolicyMaxSizeExceededErrorMessage());
         }
 
         // Ensure policy contains valid json
         if (!jsonValidator.isValidJson(policy)) {
             throw new BadRequestException(FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE);
         }
+    }
+
+    public String getIdpPolicyMaxSizeExceededErrorMessage() {
+        return  String.format(FEDERATION_IDP_POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE, identityConfig.getReloadableConfig().getIdpPolicyMaxSize());
     }
 
     public void validateRoleForCreation(Role role) {
