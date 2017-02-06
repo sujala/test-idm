@@ -12,8 +12,10 @@ import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.v2.AuthenticateResponse;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
@@ -144,34 +146,12 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
 
         Response.ResponseBuilder responseBuilder = Response.ok(objFactories.getOpenStackIdentityV2Factory().createAccess(auth).getValue());
 
-        /*
-         * Use the following logic to set the X-Tenant-Id header on the auth response. For more details see
-          * story https://jira.rax.io/browse/CID-559.
-          *
-          * 1.1. If user specifies tenantId / tenantName in request set value to request tenantId.
-          * 1.2. If not specified and user has a single tenant id then use that value.
-          * 1.3. If not specified and user has multiple tenant ids then use the mosso tenant id.
-          * 1.4. If not specified and user has multiple tenant ids and none are mosso pick arbitrarily tenant.
-          * 1.5. If user does not have any tenants then header is not added.
-         */
         if (tenantInRequest != null) {
             responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantInRequest.getTenantId());
-        } else if (scInfo.getUserTenants().size() == 1) {
-            responseBuilder.header(GlobalConstants.X_TENANT_ID, scInfo.getUserTenants().get(0).getTenantId());
-        } else if (scInfo.getUserTenants().size() > 1) {
-            String mossoTenantId = tenantService.getMossoIdFromTenantRoles(scInfo.getUserTenantRoles());
-            if (mossoTenantId != null) {
-                responseBuilder.header(GlobalConstants.X_TENANT_ID, mossoTenantId);
-            } else {
-                // Sort the tenants so that the same tenant is returned across repeated calls
-                List<Tenant> sortedTenants = new ArrayList<>(scInfo.getUserTenants());
-                Collections.sort(sortedTenants, new Comparator<Tenant>() {
-                    @Override
-                    public int compare(Tenant t1, Tenant t2) {
-                        return String.CASE_INSENSITIVE_ORDER.compare(t1.getTenantId(), t2.getTenantId());
-                    }
-                });
-                responseBuilder.header(GlobalConstants.X_TENANT_ID, scInfo.getUserTenants().get(0).getTenantId());
+        } else {
+            Tenant tenantForHeader = getTenantForAuthResponse(scInfo);
+            if (tenantForHeader != null) {
+                responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantForHeader.getTenantId());
             }
         }
 
@@ -255,6 +235,41 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         authenticateResponse.getAny().add(impersonatorJAXBElement);
 
         return authenticateResponse;
+    }
+
+    @Override
+    public Tenant getTenantForAuthResponse(ServiceCatalogInfo scInfo) {
+        Validate.isTrue(scInfo != null && scInfo.getUserTenants() != null);
+
+        if (scInfo.getUserTenants().size() == 1) {
+            // 1. If user has a single tenant id then use that value
+            return scInfo.getUserTenants().get(0);
+        } else if (scInfo.getUserTenants().size() > 1) {
+            final String mossoTenantId = tenantService.getMossoIdFromTenantRoles(scInfo.getUserTenantRoles());
+            if (mossoTenantId != null) {
+                // 2. If user has multiple tenant ids then use the mosso tenant id
+                return CollectionUtils.find(scInfo.getUserTenants(), new Predicate<Tenant>() {
+                    @Override
+                    public boolean evaluate(Tenant tenant) {
+                        return tenant != null && StringUtils.isNotBlank(tenant.getTenantId()) && tenant.getTenantId().equalsIgnoreCase(mossoTenantId);
+                    }
+                });
+            } else {
+                // 3. If user has multiple tenant ids and none are mosso pick a unique tenant
+                // Sort the tenants so that the same tenant is returned across repeated calls
+                List<Tenant> sortedTenants = new ArrayList<>(scInfo.getUserTenants());
+                Collections.sort(sortedTenants, new Comparator<Tenant>() {
+                    @Override
+                    public int compare(Tenant t1, Tenant t2) {
+                        return String.CASE_INSENSITIVE_ORDER.compare(t1.getTenantId(), t2.getTenantId());
+                    }
+                });
+                return scInfo.getUserTenants().get(0);
+            }
+        }
+
+        // 4. If user does not have any tenants then return null
+        return null;
     }
 
     /**

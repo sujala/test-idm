@@ -7,10 +7,7 @@ import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
-import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
-import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
-import com.rackspace.idm.api.resource.cloud.v20.AuthWithPasswordCredentials;
-import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service;
+import com.rackspace.idm.api.resource.cloud.v20.*;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
@@ -68,6 +65,7 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Autowired
     private AuthConverterCloudV11 authConverterCloudV11;
+
     @Autowired
     private Configuration config;
 
@@ -77,16 +75,24 @@ public class DefaultCloud11Service implements Cloud11Service {
 
     @Autowired
     private EndpointConverterCloudV11 endpointConverterCloudV11;
+
     @Autowired
     private EndpointService endpointService;
+
     @Autowired
     private ScopeAccessService scopeAccessService;
+
     @Autowired
     private UserConverterCloudV11 userConverterCloudV11;
+
     @Autowired
     private UserService userService;
+
     @Autowired
     private IdentityUserService identityUserService;
+
+    @Autowired
+    private AuthenticateResponseService authenticateResponseService;
 
     private org.openstack.docs.common.api.v1.ObjectFactory objectFactory = new org.openstack.docs.common.api.v1.ObjectFactory();
     private org.openstack.docs.identity.api.v2.ObjectFactory v2ObjectFactory = new org.openstack.docs.identity.api.v2.ObjectFactory();
@@ -1080,8 +1086,8 @@ public class DefaultCloud11Service implements Cloud11Service {
          */
         credentialValidator.validateCredential(cred.getValue(), userService);
         V11AuthResponseTuple v11AuthResponseTuple;
+        String tenantId = null;
         if (cred.getValue() instanceof MossoCredentials || cred.getValue() instanceof  NastCredentials) {
-            String tenantId = null;
             String apiKey;
             if(cred.getValue() instanceof MossoCredentials) {
                 MossoCredentials mossoCreds = (MossoCredentials) cred.getValue();
@@ -1104,9 +1110,24 @@ public class DefaultCloud11Service implements Cloud11Service {
         }
 
         List<OpenstackEndpoint> endpoints = v11AuthResponseTuple.serviceCatalogInfo.getUserEndpoints();
+
         //TODO Hiding admin urls to keep old functionality - Need to revisit
         hideAdminUrls(endpoints);
-        return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(v11AuthResponseTuple.userScopeAccess, endpoints)).getValue());
+
+        Response.ResponseBuilder responseBuilder = Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(v11AuthResponseTuple.userScopeAccess, endpoints)));
+
+        if (identityConfig.getReloadableConfig().shouldIncludeTenantInV11AuthResponse()) {
+            if (tenantId != null) {
+                responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantId);
+            } else {
+                Tenant tenantForHeader = authenticateResponseService.getTenantForAuthResponse(v11AuthResponseTuple.serviceCatalogInfo);
+                if (tenantForHeader != null) {
+                    responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantForHeader.getTenantId());
+                }
+            }
+        }
+
+        return responseBuilder;
     }
 
     private V11AuthResponseTuple innerAPIAuth(String username, String key) {
@@ -1199,10 +1220,20 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             List<OpenstackEndpoint> endpoints = v11AuthResponseTuple.serviceCatalogInfo.getUserEndpoints();
+
             //TODO Hiding admin urls to keep old functionality - Need to revisit
             hideAdminUrls(endpoints);
 
-            return Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(v11AuthResponseTuple.userScopeAccess, endpoints)).getValue());
+            Response.ResponseBuilder responseBuilder = Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(v11AuthResponseTuple.userScopeAccess, endpoints)));
+
+            if (identityConfig.getReloadableConfig().shouldIncludeTenantInV11AuthResponse()) {
+                Tenant tenantForHeader = authenticateResponseService.getTenantForAuthResponse(v11AuthResponseTuple.serviceCatalogInfo);
+                if (tenantForHeader != null) {
+                    responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantForHeader.getTenantId());
+                }
+            }
+
+            return responseBuilder;
         } catch (Exception ex) {
             return cloudExceptionResponse.exceptionResponse(ex);
         }

@@ -4,7 +4,9 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
-import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.api.resource.cloud.v20.AuthenticateResponseService;
+import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
 import com.rackspace.idm.domain.entity.UserScopeAccess;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -66,6 +68,12 @@ public class Cloud10VersionResource {
     private final EndpointConverterCloudV11 endpointConverterCloudV11;
     private final AuthWithApiKeyCredentials authWithApiKeyCredentials;
     private final AuthorizationService authorizationService;
+
+    @Autowired
+    AuthenticateResponseService authenticateResponseService;
+
+    @Autowired
+    IdentityConfig identityConfig;
 
     @Autowired
     public Cloud10VersionResource(ScopeAccessService scopeAccessService,
@@ -148,6 +156,14 @@ public class Cloud10VersionResource {
 
             long secondsLeft = (usa.getAccessTokenExp().getTime() - new Date().getTime()) / DateUtils.MILLIS_PER_SECOND;
             builder.header(CACHE_CONTROL, "s-maxage=" + secondsLeft);
+
+            if (identityConfig.getReloadableConfig().shouldIncludeTenantInV10AuthResponse()) {
+                Tenant tenant = authenticateResponseService.getTenantForAuthResponse(scInfo);
+                if (tenant != null) {
+                    builder.header(GlobalConstants.X_TENANT_ID, tenant.getTenantId());
+                }
+            }
+
             return builder.build();
         } catch(ForbiddenException fex) {
             return builder.status(HttpServletResponse.SC_FORBIDDEN).entity(fex.getMessage()).build();

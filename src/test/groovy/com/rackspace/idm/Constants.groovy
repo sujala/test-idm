@@ -65,7 +65,7 @@ class Constants {
     static def MOSSO_V1_DEF = ["15","120"]
     static def NAST_V1_DEF = ["103","111"]
 
-    static def NAST_TENANT_PREFIX="MossoCloudFS_"
+    static def NAST_TENANT_PREFIX = "MossoCloudFS_"
 
     static def IDENTITY_USER_ADMIN_ROLE = "identity:user-admin"
     static def DEFAULT_OBJECT_STORE_ROLE = "object-store:default"
