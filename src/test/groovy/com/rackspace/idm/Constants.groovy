@@ -103,4 +103,15 @@ class Constants {
     public static final int TEST_MOCK_FEEDS_PORT = 8887
     public static final String TEST_MOCK_FEEDS_PATH = "/namespace/feed"
     public static final String TEST_MOCK_FEEDS_URL = "http://localhost:" + TEST_MOCK_FEEDS_PORT + TEST_MOCK_FEEDS_PATH
+
+    /**
+     * A canned rbac (user manager assignable) role that is included in default ldif
+     */
+    public static final String ROLE_RBAC1_NAME = "rbacRole1"
+
+    /**
+     * A canned rbac (user manager assignable) role that is included in default ldif
+     */
+    public static final String ROLE_RBAC2_NAME = "rbacRole2"
+
 }

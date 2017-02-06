@@ -29,8 +29,19 @@ public interface FederatedUserDao extends FederatedBaseUserDao<FederatedUser> {
      * @param domainId
      * @param identityProviderId
      * @return
+     *
+     * @deprecated - use Unexpired version
      */
     int getFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId);
+
+    /**
+     * Count unexpired federated users that belong to the specified domain and identity provider
+     *
+     * @param domainId
+     * @param identityProviderId
+     * @return
+     */
+    int getUnexpiredFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId);
 
     /**
      * Get the groups for that user.

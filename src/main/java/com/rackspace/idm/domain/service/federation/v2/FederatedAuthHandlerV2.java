@@ -50,16 +50,21 @@ public class FederatedAuthHandlerV2 {
 
     SAMLSignatureProfileValidator profileValidator = new SAMLSignatureProfileValidator();
 
-    public SamlAuthResponse authenticate(Response rawSamlResponse)  throws ServiceUnavailableException{
+    /**
+     * Authenticates an Federated Authentication request per Identity v2 specifications
+     *
+     * @param rawSamlResponse
+     * @return
+     */
+    public SamlAuthResponse authenticate(Response rawSamlResponse) {
         // Perform high level validation common to all fed auth requests
         FederatedAuthRequest federatedAuthRequest = new FederatedAuthRequest(rawSamlResponse);
 
-        // Validate the request hasn't expired
+        // Validate the request hasn't expired (based on issue instant of SAML Response)
         federationUtils.validateForExpiredRequest(federatedAuthRequest);
 
         // Validate the Broker IDP corresponds to an existing IDP
         IdentityProvider brokerIdp = identityProviderDao.getIdentityProviderByUri(federatedAuthRequest.getBrokerIssuer());
-        federatedAuthRequest.setBrokerIdp(brokerIdp);
         if (brokerIdp == null) {
             throw new BadRequestException("Invalid issuer", ERROR_CODE_FEDERATION2_INVALID_BROKER_ISSUER);
         }
@@ -74,7 +79,7 @@ public class FederatedAuthHandlerV2 {
             throw new BadRequestException("Signature could not be validated", ERROR_CODE_FEDERATION_INVALID_BROKER_SIGNATURE, t);
         }
 
-        // Signature is valid. Now verify the signer is a broker
+        // Signature is valid. Verify the signer is a broker
         IdentityProviderFederationTypeEnum brokerFederationType = brokerIdp.getFederationTypeAsEnum();
         if (IdentityProviderFederationTypeEnum.BROKER != brokerFederationType) {
             throw new ForbiddenException("v2 can not process non-brokered IDP requests", ERROR_CODE_FEDERATION2_INVALID_BROKER_ISSUER);
@@ -82,12 +87,11 @@ public class FederatedAuthHandlerV2 {
 
         // Validate the Origin IDP corresponds to an existing IDP
         IdentityProvider originIdp = identityProviderDao.getIdentityProviderByUri(federatedAuthRequest.getOriginIssuer());
-        federatedAuthRequest.setOriginIdp(originIdp);
         if (originIdp == null) {
             throw new BadRequestException("Invalid issuer", ERROR_CODE_FEDERATION2_INVALID_ORIGIN_ISSUER);
         }
 
-        // Validate the Signature of each origin assertion prior to any more in-depth analysis
+        // Validate the Signature on each origin assertion prior to any more in-depth analysis
         for (Assertion originAssertion : federatedAuthRequest.getOriginAssertions()) {
             log.debug(String.format("Attempting to validate a federated origin signature for idp '%s'", originIdp.getProviderId()));
             try {
@@ -99,15 +103,15 @@ public class FederatedAuthHandlerV2 {
             }
         }
 
-        // Signature is valid. Now verify the origin IDP is a valid type
+        // All Origin Signatures are valid. Now verify the origin IDP is a valid type
         SamlAuthResponse samlAuthResponse = null;
         IdentityProviderFederationTypeEnum originFederationType = originIdp.getFederationTypeAsEnum();
         if (IdentityProviderFederationTypeEnum.DOMAIN == originFederationType) {
             FederatedDomainAuthRequest federatedDomainAuthRequest = new FederatedDomainAuthRequest(federatedAuthRequest);
-            samlAuthResponse = federatedDomainRequestHandler.processAuthRequest(federatedDomainAuthRequest);
+            samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(federatedDomainAuthRequest, originIdp);
         } else if (IdentityProviderFederationTypeEnum.RACKER == originFederationType) {
             FederatedRackerAuthRequest federatedRackerAuthRequest = new FederatedRackerAuthRequest(federatedAuthRequest);
-            samlAuthResponse = federatedRackerRequestHandler.processAuthRequest(federatedRackerAuthRequest);
+            samlAuthResponse = federatedRackerRequestHandler.processAuthRequestForProvider(federatedRackerAuthRequest, originIdp);
         } else {
             throw new ForbiddenException("The Origin IDP is not valid", ERROR_CODE_FEDERATION2_INVALID_ORIGIN_ISSUER);
         }

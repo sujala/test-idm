@@ -86,8 +86,8 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         federatedAuthHandlerV2.federatedDomainRequestHandler = Mock(FederatedDomainRequestHandler)
         federatedAuthHandlerV2.federatedRackerRequestHandler = Mock(FederatedRackerRequestHandler)
 
-        federatedAuthHandlerV2.federatedDomainRequestHandler.processAuthRequest(_) >> new SamlAuthResponse(fUser, null, null, null)
-        federatedAuthHandlerV2.federatedDomainRequestHandler.processAuthRequest(_) >> new SamlAuthResponse(fRacker, null, null, null)
+        federatedAuthHandlerV2.federatedDomainRequestHandler.processAuthRequestForProvider(_, _) >> new SamlAuthResponse(fUser, null, null, null)
+        federatedAuthHandlerV2.federatedDomainRequestHandler.processAuthRequestForProvider(_, _) >> new SamlAuthResponse(fRacker, null, null, null)
     }
 
     /**
@@ -98,7 +98,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         given:
         FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
         FederatedDomainAuthGenerationRequest req = createValidFedRequest()
-        def samlResponse = generator.createSignedSAMLResponse(req);
+        def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
         def samlAuthResponse = federatedAuthHandlerV2.authenticate(samlResponse)
@@ -109,8 +109,8 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
 
     def "Error when missing response issuer"() {
         given:
-        ResponseBuilder responseBuilder = new ResponseBuilder();
-        Response samlResponse = responseBuilder.buildObject();
+        ResponseBuilder responseBuilder = new ResponseBuilder()
+        Response samlResponse = responseBuilder.buildObject()
 
         when:
         federatedAuthHandlerV2.authenticate(samlResponse)
@@ -125,7 +125,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
 
         FederatedDomainAuthGenerationRequest req = createValidFedRequest()
-        def samlResponse = generator.createSignedSAMLResponse(req);
+        def samlResponse = generator.createSignedSAMLResponse(req)
 
         //remove signature from Response
         samlResponse.setSignature(null)
@@ -143,7 +143,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
 
         FederatedDomainAuthGenerationRequest req = createValidFedRequest()
-        def samlResponse = generator.createSignedSAMLResponse(req);
+        def samlResponse = generator.createSignedSAMLResponse(req)
 
         //there are 2 assertions so remove them both
         samlResponse.getAssertions().remove(samlResponse.getAssertions().get(0))
@@ -162,7 +162,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
 
         FederatedDomainAuthGenerationRequest req = createValidFedRequest()
-        def samlResponse = generator.createSignedSAMLResponse(req);
+        def samlResponse = generator.createSignedSAMLResponse(req)
 
         //remove issuer from broker assertion
         samlResponse.getAssertions().get(0).setIssuer(null)
@@ -204,7 +204,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         given:
         FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
         FederatedDomainAuthGenerationRequest req = createValidFedRequest()
-        def samlResponse = generator.createSignedSAMLResponse(req);
+        def samlResponse = generator.createSignedSAMLResponse(req)
 
         /*
         remove origin assertion. The concrete class returned by getAssertions does not support removing by index so need
@@ -229,7 +229,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
             it.originIssuer = sharedBrokerIdp.issuer
             it
         }
-        def samlResponse = generator.createSignedSAMLResponse(req);
+        def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
         federatedAuthHandlerV2.authenticate(samlResponse)
@@ -243,7 +243,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         given:
         FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
         FederatedDomainAuthGenerationRequest req = createValidFedRequest()
-        def samlResponse = generator.createSignedSAMLResponse(req);
+        def samlResponse = generator.createSignedSAMLResponse(req)
 
         /*
          Hack the returned response to change the assertion issuer since the generator sets both response and broker assertion
@@ -266,7 +266,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
             it.originIssuer = it.brokerIssuer
             it
         }
-        def samlResponse = generator.createSignedSAMLResponse(req);
+        def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
         federatedAuthHandlerV2.authenticate(samlResponse)
@@ -278,7 +278,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
 
     def "Error when origin IDP is a broker other than the response broker"() {
         given:
-        def brokerIdpCredential = SamlCredentialUtils.generateX509Credential();
+        def brokerIdpCredential = SamlCredentialUtils.generateX509Credential()
         def brokerIdp = createIdpViaRest(IdentityProviderFederationTypeEnum.BROKER, brokerIdpCredential)
 
         FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, brokerIdpCredential)
@@ -286,7 +286,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
             it.originIssuer = brokerIdp.issuer
             it
         }
-        def samlResponse = generator.createSignedSAMLResponse(req);
+        def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
         federatedAuthHandlerV2.authenticate(samlResponse)
@@ -297,6 +297,24 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
 
         cleanup:
         cloud20.deleteIdentityProvider(serviceAdminToken, sharedBrokerIdp.id)
+    }
+
+    def "Error when request token in past"() {
+        given:
+        FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
+
+        FederatedDomainAuthGenerationRequest req = createValidFedRequest().with {
+            it.validitySeconds = -10000
+            it
+        }
+        def samlResponse = generator.createSignedSAMLResponse(req)
+
+        when:
+        federatedAuthHandlerV2.authenticate(samlResponse)
+
+        then:
+        def ex = thrown(BadRequestException)
+        ex.errorCode == ErrorCodes.ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP
     }
 
     def createIdp(IdentityProviderFederationTypeEnum type, Credential cred) {

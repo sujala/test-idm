@@ -114,10 +114,14 @@ class Cloud20Utils {
         entity.token.id
     }
 
-    def authenticate(User user, password=DEFAULT_PASSWORD) {
-        def response = methods.authenticatePassword(user.username, password)
+    def authenticate(String username, password=DEFAULT_PASSWORD) {
+        def response = methods.authenticatePassword(username, password)
         assert (response.status == SC_OK)
         return response.getEntity(AuthenticateResponse).value
+    }
+
+    def authenticate(User user, password=DEFAULT_PASSWORD) {
+        return authenticate(user.username, password)
     }
 
     def authenticateApiKey(User user, String apikey) {
@@ -184,6 +188,16 @@ class Cloud20Utils {
         def entity = response.getEntity(User).value
         assert (entity != null)
         return entity
+    }
+
+    /**
+     * Creates a standard cloud account w/ mosso and nast tenants.
+     *
+     * @param domainId
+     * @return
+     */
+    def createCloudAccount(identityAdminToken, int domainId = testUtils.getRandomInteger()) {
+        createUserWithTenants(identityAdminToken, testUtils.getRandomUUID("userAdmin"), String.valueOf(domainId))
     }
 
     def createUserWithTenants(token, username=testUtils.getRandomUUID(), domainId=null) {

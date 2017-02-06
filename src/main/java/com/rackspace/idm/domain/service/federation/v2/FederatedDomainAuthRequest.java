@@ -1,17 +1,21 @@
 package com.rackspace.idm.domain.service.federation.v2;
 
 import com.rackspace.idm.SAMLConstants;
+import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.exception.BadRequestException;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.opensaml.saml.saml2.core.Assertion;
+import org.opensaml.saml.saml2.core.Response;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.rackspace.idm.ErrorCodes.ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE;
 
 /**
  * A simple bean for extracting the necessary information from a raw saml request - refines a federatedAuthRequest to be
@@ -48,15 +52,19 @@ public class FederatedDomainAuthRequest {
         validateStructure();
     }
 
+    public FederatedDomainAuthRequest(Response samlResponse) {
+        this(new FederatedAuthRequest(samlResponse));
+    }
+
     private void validateStructure() {
         if (StringUtils.isBlank(username)) {
-            throw new BadRequestException("Invalid username. One, and only one, domain must be provided.");
+            throw new BadRequestException("Invalid username. One, and only one, domain must be provided.", ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
         }
         if (StringUtils.isBlank(domainId)) {
-            throw new BadRequestException("Invalid domain. One, and only one, domain must be provided.");
+            throw new BadRequestException("Invalid domain. One, and only one, domain must be provided.", ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
         }
         if (StringUtils.isBlank(email)) {
-            throw new BadRequestException("Invalid email. One, and only one, email address must be provided.");
+            throw new BadRequestException("Invalid email. One, and only one, email address must be provided.", ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE);
         }
     }
 

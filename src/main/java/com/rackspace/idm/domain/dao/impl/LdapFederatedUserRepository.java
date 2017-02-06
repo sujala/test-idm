@@ -7,7 +7,9 @@ import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.util.Debug;
 import com.unboundid.util.StaticUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +17,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
 
 /**
  * Repository operations for external providers that go against provisioned users.
@@ -52,6 +57,23 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
     @Override
     public int getFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId) {
         return countObjects(searchFilterGetUsersByDomainId(domainId), getBaseDnWithIdpId(identityProviderId));
+    }
+
+    @Override
+    public int getUnexpiredFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId) {
+        try {
+            return countObjects(searchFilterGetUnexpiredUsersByDomainId(domainId), getBaseDnWithIdpId(identityProviderId));
+        } catch (IndexOutOfBoundsException e) {
+            /*
+             Eating this exception. For some odd reason if this search is done on a newly started up directory that does
+              not have an existing fed person with the rsFederatedUserExpiredTimestamp on it, UnboundId does not receive
+              from the directory (or incorretly processes the results) such that no searchentry is returned - resulting
+              in an IndexOutOfBoundsException.
+
+              In this case, we can just return 0 as there would be NO unexpired users and ignore the exception.
+              */
+        }
+        return 0;
     }
 
     @Override
@@ -102,6 +124,17 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
     private Filter searchFilterGetUsersByDomainId(String domainId) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, getLdapEntityClass()).build();
+    }
+
+    private Filter searchFilterGetUnexpiredUsersByDomainId(String domainId) {
+        /*
+         Add 1 ms to search date since a user expiration date == current time would be considered expired and there is
+         not simply a "Greater" filter
+         */
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
+                .addGreaterOrEqualAttribute(ATTR_FEDERATED_USER_EXPIRED_TIMESTAMP, StaticUtils.encodeGeneralizedTime(new DateTime().plusMillis(1).toDate()))
                 .addEqualAttribute(ATTR_OBJECT_CLASS, getLdapEntityClass()).build();
     }
 

@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.federation.v2;
 
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.exception.BadRequestException;
 import lombok.Getter;
@@ -30,12 +31,6 @@ public class FederatedAuthRequest {
     private List<Assertion> originAssertions;
     private DateTime requestIssueInstant;
     private DateTime requestedTokenExpiration;
-
-    @Setter
-    private IdentityProvider brokerIdp;
-
-    @Setter
-    private IdentityProvider originIdp;
 
     public FederatedAuthRequest(Response rawSamlResponse) {
         wrappedSamlResponse = new SamlResponseWrapper(rawSamlResponse);
@@ -87,6 +82,12 @@ public class FederatedAuthRequest {
             throw new BadRequestException("The broker assertion must match the response issuer", ERROR_CODE_FEDERATION2_INVALID_BROKER_ASSERTION);
         }
 
+        if (requestedTokenExpiration == null) {
+            throw new BadRequestException("Token expiration date is not specified", ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP);
+        } else if (requestedTokenExpiration.isBeforeNow())  {
+            throw new BadRequestException("Token expiration date must be in future", ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP);
+        }
+
         // Origin Assertion Validation
         if (CollectionUtils.isEmpty(originAssertions)) {
             throw new BadRequestException("An origin assertion is required", ERROR_CODE_FEDERATION2_MISSING_ORIGIN_ASSERTION);
@@ -97,6 +98,7 @@ public class FederatedAuthRequest {
         if (originIssuer.equalsIgnoreCase(brokerIssuer)) {
             throw new BadRequestException("The origin assertion specifies an invalid issuer", ERROR_CODE_FEDERATION2_INVALID_ORIGIN_ASSERTION);
         }
+
         // Iterate through all origin assertions
         for (Assertion originAssertion : originAssertions) {
             // All origin issuers must be same

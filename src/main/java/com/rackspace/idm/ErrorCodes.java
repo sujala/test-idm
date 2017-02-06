@@ -59,6 +59,13 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_FEDERATION2_MISSING_ORIGIN_ASSERTION_SIGNATURE = "FED2-010";
     public static final String ERROR_CODE_FEDERATION_INVALID_BROKER_SIGNATURE = "FED2-011";
     public static final String ERROR_CODE_FEDERATION2_INVALID_ORIGIN_SIGNATURE = "FED2-012";
+
+    public static final String ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP = "FED2-013";
+    public static final String ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE = "FED2-014";
+    public static final String ERROR_CODE_FEDERATION2_INVALID_ATTRIBUTE = "FED2-015";
+    public static final String ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE = "FED2-016";
+    public static final String ERROR_CODE_FEDERATION2_FORBIDDEN_REACHED_MAX_USERS_LIMIT = "FED2-017";
+
     // *********************************************************************
 
     //fed racker specific errors

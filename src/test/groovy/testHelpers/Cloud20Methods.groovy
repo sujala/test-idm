@@ -15,12 +15,17 @@ import com.rackspace.idm.helpers.CloudTestUtils
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
+import org.apache.commons.lang.RandomStringUtils
 import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang.math.RandomUtils
 import org.opensaml.security.credential.Credential
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.stereotype.Component
+import org.springframework.util.Assert
 import spock.lang.Shared
 import testHelpers.saml.SamlCredentialUtils
 
@@ -150,6 +155,26 @@ class Cloud20Methods {
     def createUser(String token, user, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).accept(accept).type(request).header(X_AUTH_TOKEN, token).entity(user).post(ClientResponse)
+    }
+
+    /**
+     * Takes in an int domainId because cloud accounts MUST have an int domain on user creation to create the nast/mosso
+     * tenants
+     *
+     * @param token
+     * @param username
+     * @param domainId
+     * @return user admin created for new cloud account
+     */
+    def createCloudAccount(String token, String username=RandomStringUtils.randomAlphabetic(30), int domainId = Integer.parseInt(RandomStringUtils.randomNumeric(9))) {
+        def user = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, String.valueOf(domainId), DEFAULT_PASSWORD)
+        user.secretQA = v1Factory.createRaxKsQaSecretQA()
+        def response = createUser(token, user)
+
+        assert (response.status == SC_CREATED)
+        def entity = response.getEntity(User).value
+        assert (entity != null)
+        return entity
     }
 
     def upgradeUserToCloud(String token, user, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE) {
@@ -329,6 +354,12 @@ class Cloud20Methods {
         authenticate(v2Factory.createPasswordAuthenticationRequest(username, password))
     }
 
+    def authenticateForToken(username, String password=DEFAULT_PASSWORD) {
+        def authResponse = authenticatePassword(username, password).getEntity(AuthenticateResponse)
+        assert authResponse.value instanceof AuthenticateResponse
+        return authResponse.value.token.id
+    }
+
     def authenticatePasswordWithScope(String username, String password, String scope) {
         initOnUse()
         authenticate(v2Factory.createPasswordAuthenticationRequestWithScope(username, password, scope))
@@ -355,6 +386,9 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SAML_TOKENS).accept(accept).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
 
+
+
+
     def federatedAuthenticate(request, String version = null, accept = APPLICATION_XML) {
         initOnUse()
         WebResource.Builder builder = resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SAML).path(AUTH).accept(accept).type(APPLICATION_XML).entity(request)
@@ -362,6 +396,10 @@ class Cloud20Methods {
             builder = builder.header(GlobalConstants.HEADER_IDENTITY_API_VERSION, version)
         }
         builder.post(ClientResponse)
+    }
+
+    def federatedAuthenticateV2(request, accept = APPLICATION_XML) {
+        federatedAuthenticate(request, GlobalConstants.FEDERATION_API_V2_0, accept)
     }
 
     def federatedLogout(request, accept = APPLICATION_XML) {
@@ -990,5 +1028,16 @@ class Cloud20Methods {
         createIdentityProvider(token, idp)
     }
 
+    /**
+     * Creates a new IDP, verifying the IDP was created successfully, and return the IDP rather than the raw response
+     * @param type
+     * @param cred
+     * @return
+     */
+    def generateIdentityProviderWithCred(String token, IdentityProviderFederationTypeEnum type, Credential cred) {
+        def response = createIdentityProviderWithCred(token, type, cred)
+        assert (response.status == SC_CREATED)
+        return response.getEntity(IdentityProvider)
+    }
 
 }
