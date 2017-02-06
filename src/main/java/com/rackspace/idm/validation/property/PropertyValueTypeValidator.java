@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PropertyValueTypeValidator implements TargetedIdentityPropertyValidator {
 
-    public static final String PROPERTY_VALUE_TYPE_MISMATCH_ERROR_MSG = "Identity property '%s' must value a value type of %s.";
+    public static final String PROPERTY_VALUE_TYPE_MISMATCH_ERROR_MSG = "Identity property with name '%s' must have a value type of %s.";
 
     @Autowired
     IdentityConfig identityConfig;

@@ -503,12 +503,12 @@ public class IdentityConfig {
 
     public IdentityConfig() {
         propertyDefaults = setDefaults();
-        propertyValueTypes = getIdentityProperValueTypes();
+        propertyValueTypes = getIdentityPropertyValueTypes();
     }
 
     public IdentityConfig(Configuration staticConfiguration, Configuration reloadableConfiguration) {
         propertyDefaults = setDefaults();
-        propertyValueTypes = getIdentityProperValueTypes();
+        propertyValueTypes = getIdentityPropertyValueTypes();
         this.staticConfiguration = staticConfiguration;
         this.reloadableConfiguration = reloadableConfiguration;
     }
@@ -661,7 +661,7 @@ public class IdentityConfig {
         return defaults;
     }
 
-    private static Map<String, IdentityPropertyValueType> getIdentityProperValueTypes() {
+    private static Map<String, IdentityPropertyValueType> getIdentityPropertyValueTypes() {
         Map<String, IdentityPropertyValueType> valueTypes = new HashMap<>();
 
         // put repository property defaults here
