@@ -66,6 +66,9 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE = "FED2-016";
     public static final String ERROR_CODE_FEDERATION2_FORBIDDEN_REACHED_MAX_USERS_LIMIT = "FED2-017";
 
+    public static final String ERROR_CODE_FEDERATION2_MISSING_AUTH_CONTEXT = "FED-018";
+    public static final String ERROR_CODE_FEDERATION2_INVALID_AUTH_CONTEXT = "FED-019";
+
     // *********************************************************************
 
     //fed racker specific errors

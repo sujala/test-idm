@@ -1,14 +1,12 @@
 package com.rackspace.idm.domain.service.federation.v2;
 
-import com.rackspace.idm.ErrorCodes;
-import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.exception.BadRequestException;
 import lombok.Getter;
-import lombok.Setter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.opensaml.saml.saml2.core.Assertion;
+import org.opensaml.saml.saml2.core.AuthnContextClassRef;
 import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.xmlsec.signature.Signature;
 
@@ -81,6 +79,9 @@ public class FederatedAuthRequest {
         if (!brokerIssuer.equalsIgnoreCase(brokerAssertion.getIssuer().getValue())) {
             throw new BadRequestException("The broker assertion must match the response issuer", ERROR_CODE_FEDERATION2_INVALID_BROKER_ASSERTION);
         }
+        if (StringUtils.isBlank(getIdpAuthContext())) {
+            throw new BadRequestException("Request is missing required authentication context", ERROR_CODE_FEDERATION2_MISSING_AUTH_CONTEXT);
+        }
 
         if (requestedTokenExpiration == null) {
             throw new BadRequestException("Token expiration date is not specified", ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP);
@@ -111,5 +112,16 @@ public class FederatedAuthRequest {
         }
     }
 
+    public String getIdpAuthContext() {
+        AuthnContextClassRef ref = wrappedSamlResponse.getBrokerAuthContextClassRef();
+        return ref != null ? ref.getAuthnContextClassRef() : null;
+    }
 
+    public String getSingleValueAttribute(Assertion assertion, String attributeName) {
+        List<String> vals = wrappedSamlResponse.getAttributeWithinAssertion(assertion, attributeName);
+        if (vals == null || vals.size() != 1) {
+            return null;
+        }
+        return vals.get(0);
+    }
 }
