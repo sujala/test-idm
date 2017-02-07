@@ -125,20 +125,6 @@ public class DefaultUserService implements UserService {
     private ProvisionedUserFederationHandler federationHandler;
 
     @Override
-    public void addRacker(Racker racker) {
-        if (!identityConfig.getReloadableConfig().shouldPersistRacker()) {
-            throw new UnsupportedOperationException("Racker persistence is not supported");
-        }
-        logger.info("Adding Racker {}", racker);
-        Racker exists = this.rackerDao.getRackerByRackerId(racker.getRackerId());
-        if (exists != null) {
-            throw new DuplicateException("Racker Already Exists");
-        }
-        this.rackerDao.addRacker(racker);
-        logger.info("Added Racker {}", racker);
-    }
-
-    @Override
     public void addUserv11(User user) {
         logger.info("Adding User: {}", user);
 

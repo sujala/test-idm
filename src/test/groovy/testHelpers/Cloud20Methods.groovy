@@ -386,9 +386,6 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SAML_TOKENS).accept(accept).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
 
-
-
-
     def federatedAuthenticate(request, String version = null, accept = APPLICATION_XML) {
         initOnUse()
         WebResource.Builder builder = resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SAML).path(AUTH).accept(accept).type(APPLICATION_XML).entity(request)
@@ -1016,12 +1013,17 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSCATALOG).path(ENDPOINT_TEMPLATES).path(RAX_AUTH).path(SERVICE_PATH_RULES).type(requestType).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-
     def createIdentityProviderWithCred(String token, IdentityProviderFederationTypeEnum type, Credential cred) {
         def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cred.entityCertificate)
         def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)
         def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
-        def idp = v2Factory.createIdentityProvider(UUID.randomUUID().toString(), "blah", UUID.randomUUID().toString(), type, ApprovedDomainGroupEnum.GLOBAL, null).with {
+
+        def approvedDomainGroup = ApprovedDomainGroupEnum.GLOBAL
+        if (type == IdentityProviderFederationTypeEnum.RACKER) {
+            approvedDomainGroup = null
+        }
+
+        def idp = v2Factory.createIdentityProvider(UUID.randomUUID().toString(), "blah", UUID.randomUUID().toString(), type, approvedDomainGroup, null).with {
             it.publicCertificates = publicCertificates
             it
         }
@@ -1039,5 +1041,4 @@ class Cloud20Methods {
         assert (response.status == SC_CREATED)
         return response.getEntity(IdentityProvider)
     }
-
 }

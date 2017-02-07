@@ -118,9 +118,6 @@ public class IdentityConfig {
     public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX = "federated.provider.tokenFormat";
     public static final TokenFormat IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE = TokenFormat.AE;
     public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG = IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX + ".%s";
-    private static final String IDENTITY_RACKER_TOKEN_FORMAT =  "feature.racker.defaultTokenFormat";
-    private static final TokenFormat IDENTITY_RACKER_TOKEN_SQL_OVERRIDE =  TokenFormat.AE;
-    private static final String IDENTITY_RACKER_AE_TOKEN_ROLE = "racker.ae.tokens.role";
     private static final String KEYCZAR_DN_CONFIG = "feature.KeyCzarCrypterLocator.ldap.dn";
     public static final String FEATURE_AE_TOKENS_ENCRYPT = "feature.ae.tokens.encrypt";
     public static final boolean FEATURE_AE_TOKENS_ENCRYPT_SQL_OVERRIDE = true;
@@ -195,10 +192,6 @@ public class IdentityConfig {
 
     public static final String RACKER_IMPERSONATE_ROLE_NAME_PROP = "racker.impersonate.role";
     public static final String RACKER_IMPERSONATE_ROLE_NAME_DEFAULT = "cloud-identity-impersonate";
-
-    public static final String FEATURE_PERSIST_RACKERS_PROP = "feature.persist.rackers.enabled";
-    public static final boolean FEATURE_PERSIST_RACKERS_SQL_OVERRIDE = false;
-    public static final boolean FEATURE_PERSIST_RACKERS_DEFAULT = true;
 
     public static final String FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP = "feature.enforce.delete.domain.rule.must.be.disabled";
     public static final boolean FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_DEFAULT = false;
@@ -512,8 +505,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, true);
         defaults.put(PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME, PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE);
         defaults.put(IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, "UUID");
-        defaults.put(IDENTITY_RACKER_TOKEN_FORMAT, "UUID");
-        defaults.put(IDENTITY_RACKER_AE_TOKEN_ROLE, "cloud-identity-tokens-ae");
         defaults.put(KEYCZAR_DN_CONFIG, "ou=keystore,o=configuration,dc=rackspace,dc=com");
         defaults.put(FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, false);
         defaults.put(EXPOSE_V11_ADD_BASE_URL_PROP, true);
@@ -542,7 +533,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
         defaults.put(SQL_SHOW_SQL_PROP, SQL_SHOW_DEFAULT);
-        defaults.put(FEATURE_PERSIST_RACKERS_PROP, FEATURE_PERSIST_RACKERS_DEFAULT);
         defaults.put(FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP, FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_DEFAULT);
         defaults.put(FEATURE_MIGRATION_SAVE_DELTA_ASYNC_PROP, FEATURE_MIGRATION_SAVE_DELTA_ASYNC_DEFAULT);
         defaults.put(MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP, MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_DEFAULT);
@@ -693,7 +683,6 @@ public class IdentityConfig {
         verifyAndLogReloadableProperty(GROUP_DOMAINID_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(TENANT_DOMAINID_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(AE_NODE_NAME_FOR_SIGNOFF_PROP, REQUIRED);
-        verifyAndLogReloadableProperty(FEATURE_PERSIST_RACKERS_PROP, OPTIONAL);
         verifyAndLogReloadableProperty(IDENTITY_ROLE_TENANT_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(ENDPOINT_REGIONID_DEFAULT, REQUIRED);
         verifyAndLogReloadableProperty(EMAIL_FROM_EMAIL_ADDRESS, OPTIONAL);
@@ -1095,23 +1084,6 @@ public class IdentityConfig {
             return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_PROVISIONED_TOKEN_FORMAT));
         }
 
-        @IdmProp(key = IDENTITY_RACKER_TOKEN_FORMAT, description = "Defines the default token format for eDir Racker tokens. If racker persistence is disable, is AE", versionAdded = "2.12.0")
-        public TokenFormat getIdentityRackerTokenFormat() {
-            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                return IDENTITY_RACKER_TOKEN_SQL_OVERRIDE;
-            }
-            if (!reloadableConfig.shouldPersistRacker()) {
-                //if we're not persisting rackers, the only viable format is AE
-                return TokenFormat.AE;
-            }
-            return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_RACKER_TOKEN_FORMAT));
-        }
-
-        @IdmProp(key = IDENTITY_RACKER_AE_TOKEN_ROLE)
-        public String getIdentityRackerAETokenRole() {
-            return getStringSafely(staticConfiguration, IDENTITY_RACKER_AE_TOKEN_ROLE);
-        }
-
         @IdmProp(key = FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME)
         public boolean getFeatureAeTokenCleanupUuidOnRevokes() {
             if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
@@ -1471,14 +1443,6 @@ public class IdentityConfig {
                 return IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE;
             }
             return convertToTokenFormat(getStringSafely(reloadableConfiguration, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP));
-        }
-
-        @IdmProp(key = FEATURE_PERSIST_RACKERS_PROP, description = "Whether shell Racker users are persisted within Identity", versionAdded = "3.0.0")
-        public boolean shouldPersistRacker() {
-            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                return FEATURE_PERSIST_RACKERS_SQL_OVERRIDE;
-            }
-            return getBooleanSafely(reloadableConfiguration, FEATURE_PERSIST_RACKERS_PROP);
         }
 
         @IdmProp(key = GROUP_DOMAINID_DEFAULT, description = "Default domain_id when creating a group in sql", versionAdded = "3.0.0")
@@ -1973,16 +1937,6 @@ public class IdentityConfig {
     @Deprecated
     public TokenFormat getIdentityProvisionedTokenFormat() {
         return getStaticConfig().getIdentityProvisionedTokenFormat();
-    }
-
-    @Deprecated
-    public TokenFormat getIdentityRackerTokenFormat() {
-        return getStaticConfig().getIdentityRackerTokenFormat();
-    }
-
-    @Deprecated
-    public String getIdentityRackerAETokenRole() {
-        return getStaticConfig().getIdentityRackerAETokenRole();
     }
 
     @Deprecated

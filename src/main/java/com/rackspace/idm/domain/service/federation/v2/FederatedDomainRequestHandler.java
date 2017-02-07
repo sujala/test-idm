@@ -93,7 +93,7 @@ public class FederatedDomainRequestHandler {
 
         FederatedUser federatedUser = processUserForRequest(authRequest, requestedRoles, domainUserAdmin, originIdentityProvider);
 
-        UserScopeAccess token = createToken(federatedUser, authRequest.getRequestedTokenExpiration());
+        UserScopeAccess token = createToken(federatedUser, authRequest);
 
         ServiceCatalogInfo serviceCatalogInfo = scopeAccessService.getServiceCatalogInfo(federatedUser);
         List<TenantRole> tenantRoles = serviceCatalogInfo.getUserTenantRoles();
@@ -406,16 +406,16 @@ public class FederatedDomainRequestHandler {
         }
     }
 
-    private UserScopeAccess createToken(FederatedUser user, DateTime requestedExpirationDate) {
+    private UserScopeAccess createToken(FederatedUser user, FederatedDomainAuthRequest authRequest) {
         UserScopeAccess token = new UserScopeAccess();
         token.setUserRsId(user.getId());
         token.setAccessTokenString(scopeAccessService.generateToken()); // Will get replaced w/ AE token during save
-        token.setAccessTokenExp(requestedExpirationDate.toDate());
+        token.setAccessTokenExp(authRequest.getRequestedTokenExpiration().toDate());
         token.setClientId(identityConfig.getStaticConfig().getCloudAuthClientId());
 
-        // Currently ALL Domain IDP Auth get mapped to FEDERATION, PASSWORD authentication
+        // ALL Domain IDP Auth get mapped to FEDERATION + add in whatever IDP specified
         token.getAuthenticatedBy().add(AuthenticatedByMethodEnum.FEDERATION.getValue());
-        token.getAuthenticatedBy().add(AuthenticatedByMethodEnum.PASSWORD.getValue());
+        token.getAuthenticatedBy().add(authRequest.getAuthenticatedByForRequest().getValue());
 
         scopeAccessService.addUserScopeAccess(user, token);
 

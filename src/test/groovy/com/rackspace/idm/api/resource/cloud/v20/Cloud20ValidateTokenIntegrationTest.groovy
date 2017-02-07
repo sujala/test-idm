@@ -192,7 +192,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     def "Validate Impersonated user's token using a racker where racker uses AE Tokens" () {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_RACKER_TOKEN_FORMAT, TokenFormatEnum.AE.value())
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT, true)
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AE_TOKENS_DECRYPT, true)
 

@@ -55,11 +55,7 @@ public class ConfigurableTokenFormatSelector implements TokenFormatSelector {
             if (racker.isFederatedRacker()) {
                 return identityConfig.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(racker.getFederatedIdpUri());
             } else {
-                if (ldapAuthRepository.getRackerRoles(racker.getRackerId()).contains(identityConfig.getIdentityRackerAETokenRole())) {
-                    return TokenFormat.AE;
-                } else {
-                    return identityConfig.getIdentityRackerTokenFormat();
-                }
+                return TokenFormat.AE;
             }
         }
 

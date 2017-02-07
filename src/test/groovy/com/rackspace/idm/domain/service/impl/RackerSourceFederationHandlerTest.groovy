@@ -134,17 +134,16 @@ class RackerSourceFederationHandlerTest extends Specification {
         request.identityProvider == identityProvider
     }
 
-    def "processRequestForProvider - correctly determines whether or not to persist a new fed racker user based on persist flag"() {
+    def "processRequestForProvider - process a new fed racker user"() {
         given:
         def newRackerUsername = "new" + RACKER_USERNAME
         Racker newRacker = entityFactory.createRacker(newRackerUsername + "@" + IDP_URI)
 
-        when: "new racker is not persisted if persistence disabled"
+        when:
         def newUserSamlResponse = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, newRackerUsername, 1)
         SamlAuthResponse newRackerResponse = federationHandler.processRequestForProvider(new SamlResponseDecorator(newUserSamlResponse), identityProvider)
 
         then: "racker not added, token added, no clean tokens, retrieve racker roles"
-        1 * reloadableConfig.shouldPersistRacker() >> false
         1 * userService.getRackerByRackerId(Racker.asFederatedRackerId(newRackerUsername, IDP_URI)) >> newRacker
         1 * scopeAccessService.addUserScopeAccess(newRacker, _); //just test is called
         1 * tenantService.getEphemeralRackerTenantRoles(newRackerUsername) >> Collections.EMPTY_LIST
@@ -156,74 +155,11 @@ class RackerSourceFederationHandlerTest extends Specification {
         newRackerResponse.token != null
         newRackerResponse.userRoles != null
         newRackerResponse.endpoints != null
-
-        when: "racker does not exist and persist enabled"
-        reloadableConfig.shouldPersistRacker() >> true
-        newUserSamlResponse = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, newRackerUsername, 1)
-        newRackerResponse = federationHandler.processRequestForProvider(new SamlResponseDecorator(newUserSamlResponse), identityProvider)
-
-        then: "racker added, token added, no cleaning tokens, retrieve racker roles"
-        1 * reloadableConfig.shouldPersistRacker() >> true
-        1 * userService.getRackerByRackerId(Racker.asFederatedRackerId(newRackerUsername, IDP_URI)) >> newRacker
-        1 * federatedRackerDao.getUserById(newRacker.rackerId) >> null
-        1 * federatedRackerDao.addUser(identityProvider, _)
-        0 * scopeAccessService.deleteExpiredTokensQuietly(_)
-        1 * scopeAccessService.addUserScopeAccess(_, _); //just test is called
-        1 * tenantService.getEphemeralRackerTenantRoles(newRackerUsername) >> Collections.EMPTY_LIST
-        1 * tenantService.addTenantRoleToUser(_, _)
-        newRackerResponse.user != null
-        newRackerResponse.token != null
-        newRackerResponse.userRoles != null
-        newRackerResponse.endpoints != null
-    }
-
-    def "processRequestForProvider - does not try to persist existing racker regardless of whether persistence is enabled"() {
-        given:
-        def existingRackerUsername = RACKER_USERNAME
-        Racker existingRacker = entityFactory.createRacker(RACKER_USERNAME + "@" + IDP_URI)
-
-        when: "racker already exists and persist disabled"
-        def existingUserSamlResponse = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 1)
-        SamlAuthResponse existingRackerResponse = federationHandler.processRequestForProvider(new SamlResponseDecorator(existingUserSamlResponse), identityProvider)
-
-        then: "racker not added, token added, tokens not cleaned, retrieve racker roles"
-        1 * reloadableConfig.shouldPersistRacker() >> false
-        1 * userService.getRackerByRackerId(Racker.asFederatedRackerId(existingRackerUsername, IDP_URI)) >> existingRacker
-        0 * federatedRackerDao.getUserById(_) >> existingRacker
-        0 * federatedRackerDao.addUser(_, _)
-        0 * tenantService.addTenantRoleToUser(_, _)
-        0 * scopeAccessService.deleteExpiredTokensQuietly(_)
-        1 * scopeAccessService.addUserScopeAccess(existingRacker, _); //just test is called
-        1 * tenantService.getEphemeralRackerTenantRoles(existingRackerUsername) >> Collections.EMPTY_LIST
-        existingRackerResponse.user != null
-        existingRackerResponse.token != null
-        existingRackerResponse.userRoles != null
-        existingRackerResponse.endpoints != null
-
-        when: "racker already exists and persist enabled"
-        existingUserSamlResponse = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 1)
-        existingRackerResponse = federationHandler.processRequestForProvider(new SamlResponseDecorator(existingUserSamlResponse), identityProvider)
-
-        then: "racker not added, token added, tokens cleaned, retrieve racker roles"
-        1 * reloadableConfig.shouldPersistRacker() >> true
-        1 * userService.getRackerByRackerId(Racker.asFederatedRackerId(existingRackerUsername, IDP_URI)) >> existingRacker
-        1 * federatedRackerDao.getUserById(existingRacker.rackerId) >> existingRacker
-        0 * federatedRackerDao.addUser(_, _)
-        0 * tenantService.addTenantRoleToUser(_, _)
-        1 * scopeAccessService.deleteExpiredTokensQuietly(existingRacker)
-        1 * scopeAccessService.addUserScopeAccess(existingRacker, _); //just test is called
-        1 * tenantService.getEphemeralRackerTenantRoles(existingRackerUsername) >> Collections.EMPTY_LIST
-        existingRackerResponse.user != null
-        existingRackerResponse.token != null
-        existingRackerResponse.userRoles != null
-        existingRackerResponse.endpoints != null
     }
 
     @Unroll
-    def "processRequestForProvider - retrieves and creates racker roles correctly. Racker persisted: #persistRacker"() {
+    def "processRequestForProvider - retrieves and creates racker roles correctly"() {
         given:
-        reloadableConfig.shouldPersistRacker() >> persistRacker
-
         def existingRackerUsername = RACKER_USERNAME
         Racker existingRacker = entityFactory.createRacker(RACKER_USERNAME + "@" + IDP_URI)
         federatedRackerDao.getUserById(existingRacker.rackerId) >> existingRacker
@@ -246,18 +182,11 @@ class RackerSourceFederationHandlerTest extends Specification {
         then: "token added and retrieve racker roles"
         1 * tenantService.getEphemeralRackerTenantRoles(existingRackerUsername) >> [edirRole1, edirRole2]
         r2.userRoles.size() == 2
-
-        where:
-        persistRacker | _
-        true | _
-        false | _
     }
 
     @Unroll
-    def "processRequestForProvider - creates new token. Racker persisted: #persistRacker"() {
+    def "processRequestForProvider - creates new token."() {
         given:
-        reloadableConfig.shouldPersistRacker() >> persistRacker
-
         def existingRackerUsername = RACKER_USERNAME
         Racker existingRacker = entityFactory.createRacker(RACKER_USERNAME + "@" + IDP_URI)
         def s1Password = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, existingRackerUsername, 100, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS)
@@ -299,11 +228,6 @@ class RackerSourceFederationHandlerTest extends Specification {
         ((RackerScopeAccess)r2.token).issuedToUserId == existingRacker.rackerId
         ((RackerScopeAccess)r2.token).federatedIdpUri == IDP_URI
         ((RackerScopeAccess)r2.token).federatedRackerToken
-
-        where:
-        persistRacker | _
-        true | _
-        false | _
     }
 
     def "processRequestForProvider - creates new token"() {

@@ -23,8 +23,6 @@ public interface UserService {
 
     void addUserAdminV20(User user, boolean isCreateUserOneCall);
 
-    void addRacker(Racker racker);
-
     UserAuthenticationResult authenticate(String userId, String password);
 
     UserAuthenticationResult authenticateWithApiKey(String username, String apiKey);

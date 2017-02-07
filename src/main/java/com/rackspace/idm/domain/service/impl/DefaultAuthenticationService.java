@@ -127,21 +127,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
             throw new NotAuthorizedException("Unable to authenticate user with credentials provided.");
         }
 
-        /*
-        create the racker. The id is the same as the username when authentication is performed against EDir
-         */
         Racker racker = userService.getRackerByRackerId(username);
-
-        if (identityConfig.getReloadableConfig().shouldPersistRacker()) {
-            //using the racker dao temporarily while requiring mixed mode deployment support with 2.x
-            Racker persistedRacker = rackerDao.getRackerByRackerId(username);
-            if (persistedRacker == null) {
-                userService.addRacker(racker);
-                TenantRole rackerTenantRole = tenantService.getEphemeralRackerTenantRole();
-                tenantService.addTenantRoleToUser(racker, rackerTenantRole);
-            }
-        }
-
         return new UserAuthenticationResult(racker, authenticated);
     }
 

@@ -201,7 +201,6 @@ class IdentityConfigIntegrationTest  extends Specification {
         expect:
         config.getReloadableConfig().getFeatureAETokensDecrypt() == IdentityConfig.FEATURE_AE_TOKENS_DECRYPT_SQL_OVERRIDE
         config.getReloadableConfig().getFeatureAETokensEncrypt() == IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT_SQL_OVERRIDE
-        config.getStaticConfig().getIdentityRackerTokenFormat() == IdentityConfig.IDENTITY_RACKER_TOKEN_SQL_OVERRIDE
         config.getStaticConfig().getIdentityProvisionedTokenFormat() == IdentityConfig.IDENTITY_PROVISIONED_TOKEN_SQL_OVERRIDE
         config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp() == IdentityConfig.IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE
     }

@@ -47,11 +47,8 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
     AuthenticatedByMethodGroup fedAndPasswordGroup = AuthenticatedByMethodGroup.getGroup(AuthenticatedByMethodEnum.FEDERATION, AuthenticatedByMethodEnum.PASSWORD)
     AuthenticatedByMethodGroup fedAndRsaKeyGroup = AuthenticatedByMethodGroup.getGroup(AuthenticatedByMethodEnum.FEDERATION, AuthenticatedByMethodEnum.RSAKEY)
 
-    @Unroll
-    def "racker populated appropriately from saml and edir w/ no EDIR groups. Persist Racker: #persistRacker"() {
+    def "racker populated appropriately from saml and edir w/ no EDIR groups."() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERSIST_RACKERS_PROP, persistRacker)
-
         def username = Constants.RACKER_NOGROUP
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
 
@@ -66,14 +63,6 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
         verifyResponseFromSamlRequest(authResponse, username, fedAndPasswordGroup)
 
-        and: "if persisted, the persisted object is valid"
-        if (persistRacker && ldapFederatedRackerRepository != null) {
-            Racker fedUser = ldapFederatedRackerRepository.getUserByUsernameForIdentityProviderUri(authResponse.user.id, authResponse.user.federatedIdp)
-            fedUser.federatedUserName == authResponse.user.id
-            fedUser.federatedUserName == authResponse.user.name
-            fedUser.federatedIdpUri == RACKER_IDP_URI
-        }
-
         when:
         samlResponse = cloud20.samlAuthenticate(samlAssertionToken)
 
@@ -81,22 +70,10 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         samlResponse.status == HttpServletResponse.SC_OK
         def authResponse2 = samlResponse.getEntity(AuthenticateResponse).value
         verifyResponseFromSamlRequest(authResponse2, username, fedAndRsaKeyGroup)
-
-        cleanup:
-        if (persistRacker && ldapFederatedRackerRepository != null) {
-            deleteFederatedRackerQuietly(String.format("%s@%s", username, RACKER_IDP_URI))
-        }
-
-        where:
-        persistRacker | _
-        true | _
-        false | _
     }
 
-    @Unroll
     def "racker populated appropriately from saml and edir w/ impersonate role. Persist Racker: #persistRacker"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERSIST_RACKERS_PROP, persistRacker)
         def username = Constants.RACKER_IMPERSONATE
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
 
@@ -111,14 +88,6 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
         verifyResponseFromSamlRequest(authResponse, username, fedAndPasswordGroup, [identityConfig.getStaticConfig().getRackerImpersonateRoleName()])
 
-        and: "if persisted, the persisted object is valid"
-        if (persistRacker && ldapFederatedRackerRepository != null) {
-            Racker fedUser = ldapFederatedRackerRepository.getUserByUsernameForIdentityProviderUri(authResponse.user.id, authResponse.user.federatedIdp)
-            fedUser.federatedUserName == authResponse.user.id
-            fedUser.federatedUserName == authResponse.user.name
-            fedUser.federatedIdpUri == RACKER_IDP_URI
-        }
-
         when:
         samlResponse = cloud20.samlAuthenticate(samlAssertionToken)
 
@@ -126,22 +95,10 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         samlResponse.status == HttpServletResponse.SC_OK
         def authResponse2 = samlResponse.getEntity(AuthenticateResponse).value
         verifyResponseFromSamlRequest(authResponse2, username, fedAndRsaKeyGroup, [identityConfig.getStaticConfig().getRackerImpersonateRoleName()])
-
-        cleanup:
-        if (persistRacker) {
-            deleteFederatedRackerQuietly(String.format("%s@%s", username, RACKER_IDP_URI))
-        }
-
-        where:
-        persistRacker | _
-        true | _
-        false | _
     }
 
-    @Unroll
-    def "Validating token received matches initial federated auth response. Persist Racker: #persistRacker"() {
+    def "Validating token received matches initial federated auth response."() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERSIST_RACKERS_PROP, persistRacker)
         def username = Constants.RACKER_IMPERSONATE
 
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, 100, SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS);
@@ -172,20 +129,10 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
 
         //every role in original token response is returned in validation response
         authResponse.user.roles.role.each {expectedRole -> assert validationAuthResponse.user.roles.role.find {it.name == expectedRole.name} != null}
-
-        cleanup:
-        deleteFederatedRackerQuietly(String.format("%s@%s", username, RACKER_IDP_URI))
-
-        where:
-        persistRacker | _
-        true | _
-        false | _
     }
 
-    @Unroll
-    def "Federated racker auth matches regular racker auth. Persist Racker: #persistRacker"() {
+    def "Federated racker auth matches regular racker auth."() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERSIST_RACKERS_PROP, persistRacker)
         def username = Constants.RACKER_IMPERSONATE
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, 100);
 
@@ -214,20 +161,10 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
 
         //every role in original token response is returned in validation response
         rackerAuthResponse.user.roles.role.each {expectedRole -> assert samlAuthResponse.user.roles.role.find {it.name == expectedRole.name} != null}
-
-        cleanup:
-        deleteFederatedRackerQuietly(String.format("%s@%s", username, RACKER_IDP_URI))
-
-        where:
-        persistRacker | _
-        true | _
-        false | _
     }
 
-    @Unroll
-    def "Federated racker w/ impersonation role can impersonate a user-admin and have token imp token validated. Persist Racker: #persistRacker"() {
+    def "Federated racker w/ impersonation role can impersonate a user-admin and have token imp token validated."() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERSIST_RACKERS_PROP, persistRacker)
         def username = Constants.RACKER_IMPERSONATE
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedRacker(RACKER_IDP_URI, username, 100);
 
@@ -250,14 +187,6 @@ class FederatedRackerIntegrationTest extends RootIntegrationTest {
         and: "can be validated"
         AuthenticateResponse response = utils.validateToken(impResponse.token.id)
         assert response.token.authenticatedBy.credential.contains(AuthenticatedByMethodEnum.FEDERATION.getValue())
-
-        cleanup:
-        deleteFederatedRackerQuietly(String.format("%s@%s", username, RACKER_IDP_URI))
-
-        where:
-        persistRacker | _
-        true | _
-        false | _
     }
 
     def "Invalid SAML signature results in 400"() {
