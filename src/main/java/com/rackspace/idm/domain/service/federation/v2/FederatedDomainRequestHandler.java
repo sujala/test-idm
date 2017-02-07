@@ -118,9 +118,8 @@ public class FederatedDomainRequestHandler {
             // Convert max lifetime in seconds to hours for error message
             BigDecimal maxSec = BigDecimal.valueOf(maxTokenLifetime);
             BigDecimal maxD = maxSec.divide(NUMBER_SEC_IN_HOUR, 1, BigDecimal.ROUND_DOWN);
-
             throw new BadRequestException(String.format("Invalid requested token expiration. " +
-                    "Tokens cannot be requested with an expiration of more than " + maxD + "seconds.", maxD.toPlainString()), ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP);
+                    "Tokens cannot be requested with an expiration of more than '%s' hours.", maxD.toPlainString()), ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP);
         }
     }
 
@@ -204,9 +203,8 @@ public class FederatedDomainRequestHandler {
 
         /*
           If the existing user is expired (no expiration time or expiration is in the past), delete the user and create
-          a new one. Given the automated purge process there
-           is a chance that the purge federated user application could delete this user before it was updated causing
-           an error.
+          a new one. Given the automated purge process there is a chance that the purge federated user application could
+          delete this user before it was updated causing an error.
          */
         if (existingUser != null && (existingUser.getExpiredTimestamp() == null || new DateTime().isAfter(new DateTime(existingUser.getExpiredTimestamp())))) {
             try {

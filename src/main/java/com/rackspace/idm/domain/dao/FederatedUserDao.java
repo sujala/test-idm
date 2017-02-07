@@ -30,7 +30,7 @@ public interface FederatedUserDao extends FederatedBaseUserDao<FederatedUser> {
      * @param identityProviderId
      * @return
      *
-     * @deprecated - use Unexpired version
+     * @deprecated - use unexpired version
      */
     int getFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId);
 

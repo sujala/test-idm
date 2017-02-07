@@ -66,12 +66,12 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
         } catch (IndexOutOfBoundsException e) {
             /*
              Eating this exception. For some odd reason if this search is done on a newly started up directory that does
-              not have an existing fed person with the rsFederatedUserExpiredTimestamp on it, UnboundId does not receive
-              from the directory (or incorretly processes the results) such that no searchentry is returned - resulting
-              in an IndexOutOfBoundsException.
+             not have an existing fed person with the rsFederatedUserExpiredTimestamp on it, UnboundId does not receive
+             from the directory (or incorretly processes the results) such that no searchentry is returned - resulting
+             in an IndexOutOfBoundsException.
 
-              In this case, we can just return 0 as there would be NO unexpired users and ignore the exception.
-              */
+             In this case, we can just return 0 as there would be NO unexpired users and ignore the exception.
+             */
         }
         return 0;
     }
