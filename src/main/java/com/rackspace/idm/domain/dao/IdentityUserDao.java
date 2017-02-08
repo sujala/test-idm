@@ -52,8 +52,19 @@ public interface IdentityUserDao {
      * @param domainId
      * @param idpId
      * @return
+     *
+     * @deprecated Use unexpired version
      */
     int getFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String idpId);
+
+    /**
+     * Count unexpired federated users that belong to the specified domain and identity provider
+     *
+     * @param domainId
+     * @param identityProviderId
+     * @return
+     */
+    int getUnexpiredFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId);
 
     /**
      * Search for end users with the specified domain id.

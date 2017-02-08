@@ -145,6 +145,11 @@ public class SqlFederatedUserRepository implements FederatedUserDao {
         }
     }
 
+    @Override
+    public int getUnexpiredFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId) {
+        throw new UnsupportedOperationException("Not Implemented");
+    }
+
     private String getNextId() {
         return UUID.randomUUID().toString().replaceAll("-", "");
     }

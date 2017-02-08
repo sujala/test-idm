@@ -9,4 +9,8 @@ public class DuplicateUsernameException extends IdmException {
     public DuplicateUsernameException(String message) {
         super(message);
     }
+
+    public DuplicateUsernameException(String message, String errorCode) {
+        super(message, errorCode);
+    }
 }

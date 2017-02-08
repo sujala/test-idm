@@ -85,8 +85,19 @@ public interface IdentityUserService {
      * @param domainId
      * @param idpName
      * @return
+     *
+     * @deprecated - Use unexpired version
      */
     int getFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String idpName);
+
+    /**
+     * Count unexpired federated users that belong to the specified domain and identity provider
+     *
+     * @param domainId
+     * @param identityProviderId
+     * @return
+     */
+    int getUnexpiredFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String identityProviderId);
 
     /**
      * Returns all federated and provisioned users associated with the specified domain.

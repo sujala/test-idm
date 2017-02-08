@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
@@ -75,6 +76,18 @@ public class ClientRole implements Auditable, UniqueId {
             return false;
         }
         return propagate;
+    }
+
+    public RoleAssignmentEnum getAssignmentTypeAsEnum() {
+        RoleAssignmentEnum result = RoleAssignmentEnum.BOTH;
+        if (!StringUtils.isBlank(assignmentType)) {
+            try {
+                result = RoleAssignmentEnum.fromValue(assignmentType);
+            } catch (IllegalArgumentException e) {
+                // Eat and return BOTH
+            }
+        }
+        return result;
     }
 
     /** +

@@ -64,6 +64,11 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
+    public int getUnexpiredFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String idpId) {
+        return fedUserDao.getUnexpiredFederatedUsersByDomainIdAndIdentityProviderIdCount(domainId, idpId);
+    }
+
+    @Override
     public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
         return searchForUsersByDomainId(domainId, ENDUSER_CLASS_FILTERS, EndUser.class);
     }

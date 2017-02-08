@@ -94,5 +94,7 @@ public final class GlobalConstants {
     public static final String HEADER_IDENTITY_API_VERSION = "Identity-API-Version";
     public static final String FEDERATION_API_V1_0 = "1.0";
     public static final String FEDERATION_API_V2_0 = "2.0";
-    
+
+    public static final String COMPUTE_DEFAULT_ROLE = "compute:default";
+    public static final String FILES_DEFAULT_ROLE = "object-store:default";
 }

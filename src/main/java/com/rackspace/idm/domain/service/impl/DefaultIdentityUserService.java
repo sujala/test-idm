@@ -97,6 +97,11 @@ public class DefaultIdentityUserService implements IdentityUserService {
     }
 
     @Override
+    public int getUnexpiredFederatedUsersByDomainIdAndIdentityProviderNameCount(String domainId, String idpName) {
+        return identityUserRepository.getUnexpiredFederatedUsersByDomainIdAndIdentityProviderIdCount(domainId, idpName);
+    }
+
+    @Override
     public Iterable<EndUser> getEndUsersByDomainId(String domainId) {
         return identityUserRepository.getEndUsersByDomainId(domainId);
     }
