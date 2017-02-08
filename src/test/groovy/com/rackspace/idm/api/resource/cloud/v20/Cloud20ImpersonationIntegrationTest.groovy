@@ -1402,6 +1402,23 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.reset()
     }
 
+    def "Forbid impersonation of users with 'identity:internal' role" () {
+        given:
+        def localDefaultUser = utils.createUser(userAdminToken)
+        utils.addRoleToUser(localDefaultUser, Constants.IDENTITY_INTERNAL_ROLE_ID)
+
+        when:
+        def response = utils.authenticateRacker(RACKER_IMPERSONATE, RACKER_IMPERSONATE_PASSWORD)
+        def rackerToken = response.token.id
+        response = cloud20.impersonate(rackerToken, localDefaultUser)
+
+        then:
+        response.status == 400
+
+        cleanup:
+        utils.deleteUsers(localDefaultUser)
+    }
+
     /**
      * Impersonate the specified user. THe impersonation token should be requested with the given expiration time in seconds
      * @param user

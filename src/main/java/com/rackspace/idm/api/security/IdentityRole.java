@@ -26,6 +26,7 @@ public enum IdentityRole {
     , IDENTITY_PURGE_TOKEN_REVOCATION_RECORDS("identity:purge-trr")
     , IDENTITY_ENDPOINT_RULE_ADMIN("identity:endpoint-rule-admin")
     , IDENTITY_PROPERTY_ADMIN("identity:property-admin")
+    , IDENTITY_INTERNAL("identity:internal")
     ;
 
     @Getter

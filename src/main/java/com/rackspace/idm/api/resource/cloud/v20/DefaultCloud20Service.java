@@ -2826,6 +2826,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+
     @Override
     public ResponseBuilder listDefaultRegionServices(String authToken) {
         authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
@@ -3451,14 +3452,21 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     public boolean isValidImpersonatee(EndUser user) {
+        boolean isValidImpersonatee = false;
         List<TenantRole> tenantRolesForUser = tenantService.getGlobalRolesForUser(user);
         for (TenantRole role : tenantRolesForUser) {
             String name = role.getName();
-            if (name.equals("identity:default") || name.equals("identity:user-admin")) {
-                return true;
+            if (name.equals(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()) || name.equals(IdentityUserTypeEnum.USER_ADMIN.getRoleName())) {
+                isValidImpersonatee = true;
             }
         }
-        return false;
+        for (TenantRole role : tenantRolesForUser) {
+            String name = role.getName();
+            if (name.equals(IdentityRole.IDENTITY_INTERNAL.getRoleName())) {
+                isValidImpersonatee = false;
+            }
+        }
+        return isValidImpersonatee;
     }
 
     @Override
