@@ -225,6 +225,20 @@ class TestBase(fixtures.BaseTestFixture):
         return result_list
 
     @classmethod
+    def remove_namespace(cls, doc, namespace):
+        """Remove namespace in the passed document in place."""
+        ns = u'{%s}' % namespace
+        nsl = len(ns)
+        for elem in doc.getiterator():
+            for key in elem.attrib:
+                if key.startswith(ns):
+                    new_key = key[nsl:]
+                    elem.attrib[new_key] = elem.attrib[key]
+                    del elem.attrib[key]
+            if elem.tag.startswith(ns):
+                elem.tag = elem.tag[nsl:]
+
+    @classmethod
     def tearDownClass(cls):
         """Deletes the added resources."""
         super(TestBase, cls).tearDownClass()
