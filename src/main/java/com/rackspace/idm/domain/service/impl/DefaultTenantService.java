@@ -263,7 +263,10 @@ public class DefaultTenantService implements TenantService {
                  of truth, we need to still use the domain list.
                  */
                 Domain domain = domainService.getDomain(user.getDomainId());
-                String[] tenantIds = domain.getTenantIds();
+                String[] tenantIds = null;
+                if (domain != null) {
+                    tenantIds = domain.getTenantIds();
+                }
 
                 // Generate the tenant role to add
                 implicitRole = createTenantRoleForAutoAssignment(user, tenantIds);

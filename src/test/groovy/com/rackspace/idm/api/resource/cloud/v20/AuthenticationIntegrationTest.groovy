@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.ApplicationDao
+import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
@@ -47,6 +48,9 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
     @Autowired(required = false)
     FederatedUserRepository sqlFederatedUserRepository
+
+    @Autowired
+    DomainDao domainDao
 
     def "authenticate with federated user's token does not modify a federated user's tokens"() {
         given:
@@ -341,6 +345,50 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users1)
         utils.deleteUsers(users2)
+    }
+
+    def "users with a nonexistent domain are able to authenticate"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, true)
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        domainDao.deleteDomain(domainId)
+        utils.resetApiKey(userAdmin)
+        def apiKey = utils.getUserApiKey(userAdmin).apiKey
+
+        when: "auth v2.0"
+        def response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
+
+        then:
+        response.status == 200
+
+        when: "auth v2.0 w/ tenant"
+        response = cloud20.authenticateTokenAndTenant(utils.getToken(userAdmin.username), domainId)
+
+        then:
+        response.status == 200
+
+        when: "auth v1.1 api key"
+        response = cloud11.authenticate(v1Factory.createUserKeyCredentials(userAdmin.username, apiKey))
+
+        then:
+        response.status == 200
+
+        when: "auth v1.1 password (auth-admin)"
+        response = cloud11.adminAuthenticate(v1Factory.createPasswordCredentials(userAdmin.username, Constants.DEFAULT_PASSWORD))
+
+        then:
+        response.status == 200
+
+        when: "auth 1.0"
+        response = cloud10.authenticate(userAdmin.username, apiKey)
+
+        then:
+        response.status == 204
+
+        cleanup:
+        utils.deleteUsers(users)
     }
 
     def verifyTenantContainedInServiceCatalog(def response, def tenantId, def endpointTemplateIds) {
