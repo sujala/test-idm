@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederatio
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -210,7 +211,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
         def samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
 
-        //expire this user
+        // Expire this user
         FederatedUser originalUser = (FederatedUser) samlAuthResponse.user
         originalUser.expiredTimestamp = new DateTime().minusDays(1).toDate()
         federatedUserDao.updateUser(originalUser)
@@ -657,7 +658,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
             it.originIssuer = sharedOriginIdp.issuer
             it.email = DEFAULT_FED_EMAIL
             it.requestIssueInstant = new DateTime()
-            it.samlAuthContext = SAMLAuthContext.PASSWORD
+            it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
             it.username = UUID.randomUUID()
             it.roleNames = [] as Set
             it

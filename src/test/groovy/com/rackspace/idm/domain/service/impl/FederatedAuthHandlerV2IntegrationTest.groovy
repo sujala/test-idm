@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.decorator.SAMLAuthContext
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
@@ -342,7 +343,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
             it.originIssuer = sharedOriginIdp.issuer
             it.email = Constants.DEFAULT_FED_EMAIL
             it.requestIssueInstant = new DateTime()
-            it.samlAuthContext = SAMLAuthContext.PASSWORD
+            it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
             it.username = UUID.randomUUID()
             it.roleNames = ["admin", "observer"] as Set
             it

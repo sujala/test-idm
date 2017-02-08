@@ -28,8 +28,11 @@ import java.util.List;
 
 /**
  * Handles SAML authentication requests against Racker based identity providers.
+ *
+ * @deprecated Use the v2 federated workflow
  */
 @Component
+@Deprecated
 public class RackerSourceFederationHandler implements FederationHandler {
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
 
@@ -66,10 +69,6 @@ public class RackerSourceFederationHandler implements FederationHandler {
          */
         List<TenantRole> tenantRoles = generateRolesForRacker(request.getUser().getUsername());
 
-        if (identityConfig.getReloadableConfig().shouldPersistRacker()) {
-            persistRackerForRequest(request);
-        }
-
         //get the auth by values
         List<AuthenticatedByMethodEnum> authByList = new ArrayList<AuthenticatedByMethodEnum>(2);
         authByList.add(AuthenticatedByMethodEnum.FEDERATION);
@@ -84,18 +83,6 @@ public class RackerSourceFederationHandler implements FederationHandler {
     public SamlLogoutResponse processLogoutRequestForProvider(LogoutRequestDecorator logoutRequestDecorator, IdentityProvider provider) {
         BadRequestException ex = new BadRequestException("Logging out federated rackers is not supported", ErrorCodes.ERROR_CODE_GENERIC_BAD_REQUEST);
         return SamlLogoutResponseUtil.createErrorLogoutResponse(logoutRequestDecorator.getLogoutRequest().getID(), StatusCode.REQUESTER, ex.getMessage(), ex);
-    }
-
-    private void persistRackerForRequest(FederatedRackerRequest request) {
-        Racker userToCreate = request.getUser();
-        Racker resultUser = federatedRackerDao.getUserById(userToCreate.getId());
-        if (resultUser == null) {
-            federatedRackerDao.addUser(request.getIdentityProvider(), userToCreate);
-            tenantService.addTenantRoleToUser(userToCreate, tenantService.getEphemeralRackerTenantRole());
-        } else {
-            //Clean up tokens underneath existing racker
-            scopeAccessService.deleteExpiredTokensQuietly(resultUser);
-        }
     }
 
     private FederatedRackerRequest parseSaml(SamlResponseDecorator samlResponseDecorator, IdentityProvider provider) {

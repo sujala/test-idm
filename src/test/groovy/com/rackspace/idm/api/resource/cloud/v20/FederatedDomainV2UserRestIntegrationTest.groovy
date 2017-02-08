@@ -2,9 +2,9 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
-import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
@@ -26,7 +26,6 @@ import org.joda.time.DateTime
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
-import org.openstack.docs.identity.api.v2.IdentityFault
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import testHelpers.IdmAssert
@@ -251,7 +250,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
                 }
             }
         } catch (Exception e) {
-            //eat but log
+            // Eat but log
             LOG.warn(String.format("Error cleaning up federatedUser with username '%s'", username), e)
         }
     }
@@ -268,7 +267,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
             it.originIssuer = sharedOriginIdp.issuer
             it.email = DEFAULT_FED_EMAIL
             it.requestIssueInstant = new DateTime()
-            it.samlAuthContext = SAMLAuthContext.PASSWORD
+            it.authContextRefClass =  SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
             it.username = UUID.randomUUID().toString()
             it.roleNames = [] as Set
             it
