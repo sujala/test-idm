@@ -13,13 +13,6 @@ import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 6/27/13
- * Time: 12:55 PM
- * To change this template use File | Settings | File Templates.
- */
 @Component
 class Cloud11Methods {
     @Shared WebResource resource
@@ -33,12 +26,12 @@ class Cloud11Methods {
         resource = ensureGrizzlyStarted("classpath:app-config.xml");
     }
 
-    def adminAuthenticate(credentials) {
+    def adminAuthenticate(credentials, MediaType requestContentMediaType = APPLICATION_XML_TYPE, MediaType acceptMediaType = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path11).path(AUTH_ADMIN).header("Authorization", getBasicAuth()).accept(APPLICATION_XML).type(APPLICATION_XML).entity(credentials).post(ClientResponse)
+        resource.path(path11).path(AUTH_ADMIN).header("Authorization", getBasicAuth()).accept(acceptMediaType).type(requestContentMediaType).entity(credentials).post(ClientResponse)
     }
 
-    def authenticate(credentials, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE ) {
+    def authenticate(credentials, MediaType requestContentMediaType = APPLICATION_XML_TYPE, MediaType acceptMediaType = APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path11).path(AUTH).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(credentials).post(ClientResponse)
     }

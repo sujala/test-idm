@@ -1,24 +1,21 @@
 package com.rackspace.idm.api.resource.cloud.v10
 
+import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.config.IdentityConfig
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 6/24/13
- * Time: 1:59 PM
- * To change this template use File | Settings | File Templates.
- */
 
 class Cloud10IntegrationTest extends RootIntegrationTest {
 
-    @Autowired Configuration config
+    @Autowired
+    Configuration config
 
     @Shared def sharedRandomness = UUID.randomUUID()
     @Shared String sharedRandom
@@ -26,7 +23,7 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
     @Shared String adminToken
     @Shared User user
 
-    def setupSpec(){
+    def setupSpec() {
         adminToken = cloud10.authenticate("auth", "thisismykey").headers.get("X-Auth-Token")[0]
 
         sharedRandom = ("$sharedRandomness").replace('-',"")
@@ -42,7 +39,7 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
         entropy = config.getDouble("token.entropy")
     }
 
-    def cleanupSpec(){
+    def cleanupSpec() {
         cloud20.destroyUser(adminToken, user.id)
     }
 
@@ -84,6 +81,34 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
         expirationThree <= range.get("max")
     }
 
+    @Unroll
+    def "auth v1.0 includes X-Tenant-Id header, featureEnabled = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V10_PROP, featureEnabled)
+        def domainId = utils.createDomain()
+        def users, userAdmin
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        utils.resetApiKey(userAdmin)
+        def apiKey = utils.getUserApiKey(userAdmin).apiKey
+
+        when: "auth v1.0"
+        def response = cloud10.authenticate(userAdmin.username, apiKey)
+
+        then:
+        response.headers.containsKey(GlobalConstants.X_TENANT_ID) == featureEnabled
+        if (featureEnabled) {
+            assert response.headers.get(GlobalConstants.X_TENANT_ID)[0] == domainId
+        }
+
+        cleanup:
+        utils.deleteUsers(users)
+
+        where:
+        featureEnabled  | _
+        true            | _
+        false           | _
+    }
+
     def authAndExpire(String username, String key) {
         def token = cloud10.authenticate(username, key).headers.get("X-Auth-Token")[0]
         def validateResponseOne = cloud20.validateToken(adminToken, token)
@@ -92,4 +117,5 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
         def expiration = validateResponseOne.getEntity(AuthenticateResponse).value.token.expires
         return expiration.toGregorianCalendar().getTime()
     }
+
 }

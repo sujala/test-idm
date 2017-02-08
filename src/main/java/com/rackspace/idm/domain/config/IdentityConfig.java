@@ -5,6 +5,7 @@ import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.entity.IdentityProperty;
+import com.rackspace.idm.domain.entity.IdentityPropertyValueType;
 import com.rackspace.idm.domain.migration.ChangeType;
 import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.service.IdentityPropertyService;
@@ -336,6 +337,12 @@ public class IdentityConfig {
     public static final String FEATURE_POST_IDP_FEED_EVENTS_PROP = "feature.post.idp.feed.events";
     public static final boolean FEATURE_POST_IDP_FEED_EVENTS_DEFAULT = true;
 
+    public static final String FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V10_PROP = "feature.tenant.id.in.auth.response.v10";
+    public static final boolean FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V10_DEFAULT = true;
+
+    public static final String FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_PROP = "feature.tenant.id.in.auth.response.v11";
+    public static final boolean FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -488,17 +495,20 @@ public class IdentityConfig {
     private IdentityPropertyValueConverter propertyValueConverter;
 
     private static final Logger logger = LoggerFactory.getLogger(IdentityConfig.class);
-    private final Map<String,Object> propertyDefaults;
+    private final Map<String, Object> propertyDefaults;
+    private final Map<String, IdentityPropertyValueType> propertyValueTypes;
     private StaticConfig staticConfig = new StaticConfig();
     private ReloadableConfig reloadableConfig = new ReloadableConfig();
     private RepositoryConfig repositoryConfig = new RepositoryConfig();
 
     public IdentityConfig() {
         propertyDefaults = setDefaults();
+        propertyValueTypes = getIdentityPropertyValueTypes();
     }
 
     public IdentityConfig(Configuration staticConfiguration, Configuration reloadableConfiguration) {
         propertyDefaults = setDefaults();
+        propertyValueTypes = getIdentityPropertyValueTypes();
         this.staticConfiguration = staticConfiguration;
         this.reloadableConfiguration = reloadableConfiguration;
     }
@@ -640,6 +650,8 @@ public class IdentityConfig {
         defaults.put(FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_DEFAULT);
         defaults.put(FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_PROP, FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES_DEFAULT);
         defaults.put(FEATURE_POST_IDP_FEED_EVENTS_PROP, FEATURE_POST_IDP_FEED_EVENTS_DEFAULT);
+        defaults.put(FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V10_PROP, FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V10_DEFAULT);
+        defaults.put(FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_PROP, FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_DEFAULT);
 
         defaults.put(FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_DEFAULT);
         defaults.put(AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT);
@@ -649,8 +661,24 @@ public class IdentityConfig {
         return defaults;
     }
 
+    private static Map<String, IdentityPropertyValueType> getIdentityPropertyValueTypes() {
+        Map<String, IdentityPropertyValueType> valueTypes = new HashMap<>();
+
+        // put repository property defaults here
+
+        return valueTypes;
+    }
+
     public Object getPropertyDefault(String key) {
         return propertyDefaults.get(key);
+    }
+
+    public IdentityPropertyValueType getPropertyValueType(String propertyName) {
+        if (StringUtils.isNotBlank(propertyName) && propertyValueTypes.containsKey(propertyName)) {
+            return propertyValueTypes.get(propertyName);
+        }
+
+        return null;
     }
 
     @PostConstruct
@@ -833,6 +861,21 @@ public class IdentityConfig {
             }
         } catch (ConversionException e) {
             logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop));
+            return (Boolean) defaultValue;
+        }
+    }
+
+    private Boolean getRepositoryBooleanSafely(String propertyName) {
+        Object defaultValue = propertyDefaults.get(propertyName);
+        try {
+            IdentityProperty identityProperty = identityPropertyService.getIdentityPropertyByName(propertyName);
+            if (identityProperty != null) {
+                return (Boolean) propertyValueConverter.convertPropertyValue(identityProperty);
+            } else {
+                return (Boolean) defaultValue;
+            }
+        } catch (ConversionException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, propertyName));
             return (Boolean) defaultValue;
         }
     }
@@ -1909,6 +1952,17 @@ public class IdentityConfig {
         public int getIdpPolicyMaxSize() {
             return getIntSafely(reloadableConfiguration, IDP_POLICY_MAX_KILOBYTE_SIZE_PROP);
         }
+
+        @IdmProp(key = FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V10_PROP, versionAdded = "3.10.0", description = "Determines if the X-Tenant-Id header should be populated in v1.0 authenticate calls.")
+        public boolean shouldIncludeTenantInV10AuthResponse() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V10_PROP);
+        }
+
+        @IdmProp(key = FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_PROP, versionAdded = "3.10.0", description = "Determines if the X-Tenant-Id header should be populated in v1.1 authenticate calls.")
+        public boolean shouldIncludeTenantInV11AuthResponse() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_PROP);
+        }
+
     }
 
     public class RepositoryConfig {

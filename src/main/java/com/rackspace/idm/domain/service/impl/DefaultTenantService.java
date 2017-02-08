@@ -1077,6 +1077,7 @@ public class DefaultTenantService implements TenantService {
         }
     }
 
+    @Override
     public String getMossoIdFromTenantRoles(List<TenantRole> roles) {
 
         Assert.notNull(roles);

@@ -22,10 +22,12 @@ import java.util.LinkedHashMap;
 @Provider
 @Produces(MediaType.APPLICATION_JSON)
 public class JSONWriterForUserCredential extends JSONWriterForEntity<UserCredentials> {
+
     @Override
     public void writeTo(UserCredentials userCredentials, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType, MultivaluedMap<String, Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
         HashMap<String, String> prefixValues = new LinkedHashMap<String, String>();
         write(userCredentials, entityStream, prefixValues);
     }
+
 }
 
