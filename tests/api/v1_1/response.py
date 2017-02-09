@@ -172,7 +172,7 @@ class Endpoint(base.AutoMarshallingModel):
     ROOT_TAG = const.ENDPOINT
 
     def __init__(self, region=None, v1Default=None, publicURL=None,
-                 internalURL=None):
+                 internalURL=None, **kwargs):
         super(Endpoint, self).__init__()
         self.region = region
         self.v1Default = v1Default
