@@ -1036,6 +1036,15 @@ description: Role for repose users that allows them to use the standard repo
  se required calls within identity
 rsWeight: 50
 
+dn: rsId=17,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5
+ c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+rsId: 17
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:internal
+description: Identity internal role.
+rsWeight: 50
+
 dn: rsId=2,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
  4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole
