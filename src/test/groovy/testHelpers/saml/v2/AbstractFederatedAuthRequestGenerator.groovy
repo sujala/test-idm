@@ -63,8 +63,6 @@ abstract class AbstractFederatedAuthRequestGenerator<T> {
         return new String(baos.toByteArray())
     }
 
-    abstract Response createSigned
-
     def Response createSignedSAMLResponse(T genRequest) {
         Response resp = createUnsignedSAMLResponse(genRequest)
         signSAMLResponse(resp, brokerCredential)
