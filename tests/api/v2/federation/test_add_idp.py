@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+from allpairspy import AllPairs
 import ddt
 
 from tests.api.utils import saml_helper
@@ -291,7 +292,9 @@ class TestAddIDP(base.TestBaseV2):
         self.provider_ids.append(resp.json()[
             const.NS_IDENTITY_PROVIDER][const.ID])
 
-        idps = self.idp_ia_client.list_idp().json()[
+        idp_resp = self.idp_ia_client.list_idp()
+        self.assertEquals(resp.status_code, 201)
+        idps = idp_resp.json()[
             const.NS_IDENTITY_PROVIDERS]
         found = False
         for idp in idps:
@@ -300,10 +303,15 @@ class TestAddIDP(base.TestBaseV2):
                 found = True
         self.assertEquals(found, True)
 
-    @ddt.data("test12345", "*")
-    def test_list_idp_query_param_name_missed_hit(self, name):
+    @ddt.data(*AllPairs([["issuer", "name"],
+                         ["test12345", "*"]]))
+    def test_list_idp_query_param_name_missed_hit(self, data):
         '''Verify list providers can filter by name parameter
         '''
+        name = data[0]
+        value = data[1]
+
+        self.create_idp_helper()
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
         idp_list = self.idp_ia_client.list_idp(
@@ -312,46 +320,85 @@ class TestAddIDP(base.TestBaseV2):
 
         self.assertTrue(len(idp_list) > 1)
 
-        idp_list = self.idp_ia_client.list_idp(
-            option={"name": name}).json()[
-                const.NS_IDENTITY_PROVIDERS]
+        idp_resp = self.idp_ia_client.list_idp(option={name: value})
+        self.assertEquals(idp_resp.status_code, 200)
+        idp_list = idp_resp.json()[
+            const.NS_IDENTITY_PROVIDERS]
 
         self.assertTrue(len(idp_list) == 0)
 
-    @ddt.data("", None)
-    def test_list_idp_query_param_name_ignore_null_empty(self, name):
-        '''Verify list providers can filter by name parameter
+    def test_list_idp_query_param_issuer_case(self):
+        '''Verify list providers issuer filter is case sensitive
         '''
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
-        idp_list = self.idp_ia_client.list_idp(
-            option={"name": name}).json()[
-                const.NS_IDENTITY_PROVIDERS]
 
-        idp_list2 = self.idp_ia_client.list_idp().json()[
+        idps = [self.create_idp_helper(), self.create_idp_helper()]
+        idp_resp = self.idp_ia_client.list_idp(
+            option={"issuer": idps[0].issuer.upper()})
+        idp_list = idp_resp.json()[
+            const.NS_IDENTITY_PROVIDERS]
+
+        self.assertEquals(idp_resp.status_code, 200)
+        self.assertTrue(len(idp_list) == 0)
+
+    @ddt.data(*AllPairs([["issuer", "name"],
+                         [None, ""]]))
+    def test_list_idp_query_param_ignore_null_empty(self, data):
+        '''Verify list providers can filter by name parameter
+        '''
+        name = data[0]
+        value = data[1]
+
+        self.create_idp_helper()
+        if not self.test_config.run_service_admin_tests:
+            self.skipTest('Skipping Service Admin Tests per config value')
+        idp_resp = self.idp_ia_client.list_idp(
+            option={name: value})
+
+        self.assertEquals(idp_resp.status_code, 200)
+        idp_list = idp_resp.json()[
+            const.NS_IDENTITY_PROVIDERS]
+
+        idp_resp2 = self.idp_ia_client.list_idp()
+        self.assertEquals(idp_resp.status_code, 200)
+        idp_list2 = idp_resp2.json()[
             const.NS_IDENTITY_PROVIDERS]
 
         self.assertEqual(len(idp_list), len(idp_list2))
 
-    def test_list_idp_query_param_name(self):
+    @ddt.data("name", "issuer")
+    def test_list_idp_query_param_name(self, name):
         '''Verify list providers can filter by name parameter
+           Also tests that additional values are ignored.
         '''
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
         idps = [self.create_idp_helper(), self.create_idp_helper()]
         found = True
         for idp in idps:
-            idp_list = self.idp_ia_client.list_idp(
-                option={"name": [idp.idp_name.upper(), "blah"]}).json()[
-                    const.NS_IDENTITY_PROVIDERS]
-
-            if len(idp_list) > 1 or idp_list[0][const.NAME] != idp.idp_name:
+            if name == "name":
+                value = [idp.idp_name.upper(), "blah"]
+            else:
+                # Note that issuer search is not case insensitive like name.
+                value = [idp.issuer, "blah"]
+            idp_resp = self.idp_ia_client.list_idp(
+                option={name: value})
+            self.assertEquals(idp_resp.status_code, 200)
+            idp_list = idp_resp.json()[
+                const.NS_IDENTITY_PROVIDERS]
+            if len(idp_list) < 1 or idp_list[0][const.NAME] != idp.idp_name:
                 found = False
         self.assertEquals(found, True)
 
-    def test_list_idp_query_param_name_with_others(self):
+    # use_property means to get that property from the generated idp object.
+    @ddt.data(*AllPairs([["issuer", "name"],
+                         [None, "", "use_property"]]))
+    def test_list_idp_mixed_query_param(self, data):
         '''Verify list providers can filter by name parameter
         '''
+        name = data[0]
+        value = data[1]
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
         user_name = self.generate_random_string(
@@ -370,13 +417,25 @@ class TestAddIDP(base.TestBaseV2):
                 self.create_idp_helper(dom_ids=[dom_id])]
         found = True
         for idp in idps:
-            idp_list = self.idp_ia_client.list_idp(
-                option={"name": idp.idp_name,
-                        "approved_DomainId": dom_id}).json()[
-                            const.NS_IDENTITY_PROVIDERS]
+            if value == "use_property":
+                if name == "name":
+                    value = [idp.idp_name.upper(), "blah"]
+                else:
+                    value = [idp.issuer]
+            option = {name: value,
+                      "approved_DomainId": dom_id}
+            idp_resp = self.idp_ia_client.list_idp(option=option)
+            self.assertEquals(idp_resp.status_code, 200)
+            idp_list = idp_resp.json()[
+                const.NS_IDENTITY_PROVIDERS]
 
-            if len(idp_list) > 1 or idp_list[0][const.NAME] != idp.idp_name:
+            if (value == "use_property" and
+                (len(idp_list) > 1 or
+                 idp_list[0][const.NAME] != idp.idp_name)):
                 found = False
+            elif len(idp_list) < 1:
+                found = False
+
         self.assertEquals(found, True)
 
     def tearDown(self):
