@@ -91,6 +91,7 @@ PATH_TO_REPOSE_LOG = '/var/log/repose/current.log'
 '''Some Constanst for values'''
 API_KEY_PATTERN = (
     '[a-f0-9]{8}[\-][a-f0-9]{4}[\-][a-f0-9]{4}[\-][a-f0-9]{4}[\-][a-f0-9]{12}')
+BROKER = "BROKER"
 CONTACT_ID_MIN = 10000000
 CONTACT_ID_MAX = 99999999
 CONTENT_TYPE_VALUE = ACCEPT_ENCODING_VALUE = 'application/{0}'
@@ -214,11 +215,13 @@ EVENT_TIME = 'eventTime'
 EVENT_TYPE = 'eventType'
 FACTOR_TYPE = 'factorType'
 FEDERATION_TYPE = 'federationType'
+FORBIDDEN = 'forbidden'
 GLOBAL = 'global'
 GROUP = 'group'
 GROUPS = 'groups'
 HREF = 'href'
 ID = 'id'
+IDENTITY_FAULT = 'identityFault'
 INITIATOR = 'initiator'
 ITEMS = 'items'
 ISSUER = 'issuer'

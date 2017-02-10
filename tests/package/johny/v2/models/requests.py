@@ -920,11 +920,11 @@ class IDP(base.AutoMarshallingModel):
         if self.public_certificates:
             create_idp_request[IDP][const.PUBLIC_CERTIFICATES] = []
             # shorten to meet 80 col limit
-            idpr = create_idp_request[IDP]
+            idpr = create_idp_request[IDP][const.PUBLIC_CERTIFICATES]
 
             for cert in self.public_certificates:
-                idpr.append = {
-                    const.PEM_ENCODED: self.public_certificates}
+                idpr.append({
+                    const.PEM_ENCODED: cert})
         if self.approved_domain_group:
             create_idp_request[IDP][const.APPROVED_DOMAIN_GROUP] = (
                 self.approved_domain_group)

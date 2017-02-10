@@ -164,7 +164,8 @@ def create_saml_assertion(
             '-base64URLEncode', 'true'
         ])
 
-    cert = subprocess.check_output(command_list).strip()
+    cert = subprocess.check_output(command_list,
+                                   stderr=subprocess.STDOUT).strip()
 
     return cert
 
