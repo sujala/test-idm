@@ -76,6 +76,12 @@ class Constants {
     static def DEFAULT_IDP_URI = "http://test.rackspace.com"
     static def DEFAULT_IDP_PRIVATE_KEY = "saml.pkcs8"
     static def DEFAULT_IDP_PUBLIC_KEY = "saml.crt"
+
+    static String DEFAULT_BROKER_IDP_ID = "8f2502e8e41c49869b0de0b2b205c0df"
+    static String DEFAULT_BROKER_IDP_URI = "http://broker.rackspace.com"
+    static String DEFAULT_BROKER_IDP_PRIVATE_KEY = "fed-broker.pkcs8"
+    static String DEFAULT_BROKER_IDP_PUBLIC_KEY = "fed-broker.crt"
+
     static def IDP_2_ID = "identityqe"
     static def IDP_2_URI = "http://identityqe.rackspace.com"
     static def IDP_2_PUBLIC_KEY = "saml-qe-idp.crt"
