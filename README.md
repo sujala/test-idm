@@ -7,12 +7,10 @@ More info: [Cloud Identity One Rack Home](https://one.rackspace.com/display/auth
 
 Team
 -------------
-* Ken Savich
 * Werner Mendizabal
 * Jorge Munoz
 * Timothy Cline
 * Robert Jacoby
-* Matt Kovacs
 
 Documentation
 --------------
@@ -28,6 +26,8 @@ Documentation
 [Getting Started](https://one.rackspace.com/display/auth/Getting+Started)
 
 [Development Quick-Start](https://one.rackspace.com/display/auth/Development+Quick-Start)
+
+[Updating Identity's Documentation](https://one.rackspace.com/display/auth/Updating+Identity%27s+Documentation)
 
 Dev Environment Setup
 ------------
