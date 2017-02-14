@@ -51,6 +51,7 @@ IDP_URL = '/RAX-AUTH/federation/identity-providers'
 IDP_RUD_URL = (IDP_URL + "/{idp_id}")
 IDP_MAPPING_CR_URL = ("/RAX-AUTH/federation/identity-providers/{idp_id}/"
                       "mapping")
+IMPERSONATION_URL = '/RAX-AUTH/impersonation-tokens'
 LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
 LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 LIST_ENDPOINTS_FOR_TOKEN_URL = '/tokens/{token_id}/endpoints'
@@ -119,6 +120,8 @@ MAX_SIZE_IN_KILOBYTES = 2
 OTP_NAME_PATTERN = 'otp[\-][\d]{8}'
 PASSWORD_PATTERN = 'Password1[\d\w]{10}'
 RACKER = "RACKER"
+# 'RACKSPACE_DOMAIN' is to be used in racker-auth call
+RACKSPACE_DOMAIN = 'Rackspace'
 RCN = 'RCN'
 ROLE_NAME_PATTERN = 'cid_test_role[\-][\d]{8}'
 SECRETQ_PATTERN = 'SecretQ[\w]{15}'
@@ -211,6 +214,7 @@ ENDPOINT = 'endpoint'
 ENDPOINTS = 'endpoints'
 ENDPOINT_TEMPLATE = 'endpointTemplate'
 EXPIRES = 'expires'
+EXPIRE_IN_SECONDS = 'expire-in-seconds'
 EVENT_TIME = 'eventTime'
 EVENT_TYPE = 'eventType'
 FACTOR_TYPE = 'factorType'
@@ -350,6 +354,7 @@ TENANT_TYPE = 'tenantType'
 TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = 'tenantTypeEndpointRule'
 TENANT_TYPE_TO_ENDPOINT_MAPPING_RULES = 'tenantTypeEndpointRules'
 NS_SERVICES = OS_KSADM_NAMESPACE + ':services'
+NS_IMPERSONATION = 'RAX-AUTH:impersonation'
 
 '''Query parameters'''
 PARAM_ROLE_NAME = 'roleName'
@@ -411,6 +416,7 @@ USER_DEFAULT_ROLE_ID = '3'
 USER_MANAGER_ROLE_ID = '7'
 PROVIDER_MANAGEMENT_ROLE_NAME = 'identity:identity-provider-manager'
 PROVIDER_RO_ROLE_NAME = 'identity:identity-provider-read-only'
+IDENTITY_INTERNAL_ROLE_NAME = 'identity:internal'
 
 '''FEATURE FLAGS'''
 FEATURE_FLAG_FOR_ENDPOINTS_BASED_ON_RULES = (

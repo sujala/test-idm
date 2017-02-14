@@ -279,7 +279,7 @@ class TestUpdateTenant(base.TestBaseV2):
             url=self.url,
             serialize_format=self.test_config.serialize_format,
             deserialize_format=self.test_config.deserialize_format)
-        auth_obj = requests.AuthenticateWithPassword(user_name=user.name,
+        auth_obj = requests.AuthenticateWithPassword(user_name=user.user_name,
                                                      password=user.password)
         resp = user_client.get_auth_token(request_object=auth_obj)
         auth_resp = responses.Access(resp.json())
@@ -304,7 +304,7 @@ class TestUpdateTenant(base.TestBaseV2):
                 before_tenant.name)
 
         # Auth as user with password
-        auth_obj = requests.AuthenticateWithPassword(user_name=user.name,
+        auth_obj = requests.AuthenticateWithPassword(user_name=user.user_name,
                                                      password=user.password)
         resp = user_client.get_auth_token(request_object=auth_obj)
         auth_user_with_password = responses.Access(resp.json())
@@ -389,7 +389,7 @@ class TestUpdateTenant(base.TestBaseV2):
             serialize_format=self.test_config.serialize_format,
             deserialize_format=self.test_config.deserialize_format)
         auth_obj = requests.AuthenticateWithPassword(
-            user_name=one_call_user.name, password=one_call_user.password)
+            user_name=one_call_user.user_name, password=one_call_user.password)
         resp = user_client.get_auth_token(request_object=auth_obj)
         auth_one_call_user_with_password = responses.Access(resp.json())
 
