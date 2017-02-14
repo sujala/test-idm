@@ -4,7 +4,6 @@ import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.event.identity.trr.user.CloudIdentityType
 import com.rackspace.docs.event.identity.trr.user.ValuesEnum
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.IdentityConfig.ReloadableConfig
 import com.rackspace.idm.domain.dao.impl.MemoryTokenRevocationRecordPersistenceStrategy
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
@@ -15,20 +14,18 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultIdentityUserService
 import com.rackspace.idm.domain.service.impl.DefaultTenantService
-import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.util.CryptHelper
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpEntity
-import org.apache.http.HttpResponse
 import org.apache.http.StatusLine
 import org.apache.http.client.methods.CloseableHttpResponse
+import org.apache.http.conn.HttpClientConnectionManager
 import org.apache.http.impl.client.CloseableHttpClient
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import org.w3._2005.atom.UsageEntry
 import spock.lang.Shared
 import spock.lang.Specification
-import org.apache.http.client.HttpClient
 import spock.lang.Unroll
 
 import javax.ws.rs.core.MediaType
@@ -61,7 +58,7 @@ class AtomHopperClientGroovyTest extends Specification {
     }
 
     def setup() {
-        setupMock()
+        setupMock(client)
     }
 
     def cleanup() {
@@ -249,7 +246,7 @@ class AtomHopperClientGroovyTest extends Specification {
     @Unroll
     def "Entity consumed regardless of feature flag controls reusing jaxbcontext. When #setting" () {
         given:
-        setupMock()
+        setupMock(client)
         CloseableHttpResponse response = Mock()
         StatusLine sl = Mock()
         response.statusLine >> sl
@@ -335,6 +332,78 @@ class AtomHopperClientGroovyTest extends Specification {
         CollectionUtils.isEqualCollection(trrEntry4.tokenAuthenticatedBy.get(1).values, Arrays.asList(ValuesEnum.APIKEY))
     }
 
+    def "When feeds deamon is enabled, idle connection monitor thread is created"() {
+        given:
+        staticConfig.useFeedsConfigurableHttpClient() >> true
+        staticConfig.getFeedsDeamonEnabled() >> true
+        staticConfig.getFeedsMaxConnectionsPerRoute() >> 100
+        staticConfig.getFeedsMaxTotalConnections() >> 200
+
+        when:
+        client.init()
+        sleep(1000)
+
+        then:
+        client.idleConnectionMonitorThread != null
+        client.idleConnectionMonitorThread.isAlive() == true
+        client.idleConnectionMonitorThread.isDaemon() == true
+        (1.._) * reloadableConfig.getFeedsDaemonEvictionFrequency() >> 100
+        (1.._) * reloadableConfig.getFeedsDaemonEvictionCloseIdleConnectionsAfter() >> 100
+    }
+
+    def "When feeds deamon is not enabled, idle connection monitor thread is not created"() {
+        given:
+        def client = new AtomHopperClient()
+        setupMock(client)
+        staticConfig.useFeedsConfigurableHttpClient() >> true
+        staticConfig.getFeedsDeamonEnabled() >> false
+        staticConfig.getFeedsMaxConnectionsPerRoute() >> 100
+        staticConfig.getFeedsMaxTotalConnections() >> 200
+
+        when:
+        client.init()
+        sleep(1000)
+
+        then:
+        client.idleConnectionMonitorThread == null
+        0 * reloadableConfig.getFeedsDaemonEvictionFrequency() >> 100
+        0 * reloadableConfig.getFeedsDaemonEvictionCloseIdleConnectionsAfter() >> 100
+    }
+
+    def "idleConnectionMonitorThread closes connections"() {
+        given:
+        def connMgr = Mock(HttpClientConnectionManager)
+        def idleConnectionMonitorThread = new AtomHopperClient.IdleConnectionMonitorThread(connMgr, identityConfig);
+        reloadableConfig.getFeedsDaemonEvictionFrequency() >> 100
+        reloadableConfig.getFeedsDaemonEvictionCloseIdleConnectionsAfter() >> 100
+
+        when:
+        idleConnectionMonitorThread.setDaemon(true)
+        idleConnectionMonitorThread.start()
+        sleep(1000)
+
+        then:
+        (1.._) * connMgr.closeExpiredConnections()
+        (1.._) * connMgr.closeIdleConnections(_, _)
+    }
+
+    def "idleConnectionMonitorThread does not close idle connections when idle threshold property set to 0"() {
+        given:
+        def connMgr = Mock(HttpClientConnectionManager)
+        def idleConnectionMonitorThread = new AtomHopperClient.IdleConnectionMonitorThread(connMgr, identityConfig);
+        reloadableConfig.getFeedsDaemonEvictionFrequency() >> 10000
+        reloadableConfig.getFeedsDaemonEvictionCloseIdleConnectionsAfter() >> 0
+
+        when:
+        idleConnectionMonitorThread.setDaemon(true)
+        idleConnectionMonitorThread.start()
+        sleep(1000)
+
+        then:
+        0 * connMgr.closeExpiredConnections()
+        0 * connMgr.closeIdleConnections(_, _)
+    }
+
     def createTenantRole(String name, String roleRsId, String description) {
         new TenantRole().with {
             it.name = name
@@ -353,7 +422,7 @@ class AtomHopperClientGroovyTest extends Specification {
         }
     }
 
-    def setupMock() {
+    def setupMock(client) {
         identityUserService = Mock()
         client.identityUserService = identityUserService
         defaultTenantService = Mock()
