@@ -349,7 +349,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         where:
         roleName | errorScenario
         IdentityUserTypeEnum.USER_MANAGER.roleName | "Non RBAC type role"
-        UUID.randomUUID().toString() | "Non-existant role"
+        UUID.randomUUID().toString() | "Non-existent role"
     }
 
     def "Error: Fed request trying to assign a tenant-only assignable role"() {
