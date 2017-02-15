@@ -109,7 +109,7 @@ MD5_PATTERN = '[a-f][0-9]{40}'
 MAPPING_RULE_DESCRIPTION_PATTERN = (
     'mapping[\-]rule[\-]description[\-][\w\d]{8}')
 MAX_IDP_NAME_PATTERN = "[a-z]{255}"
-IDP_NAME_PATTERN = "[a-zA-Z]{1:255}"
+IDP_NAME_PATTERN = "[a-zA-Z]{1:200}"
 MIXED_CASE_LETTERS = '[A-Z][a-z]{8}'
 MOSSO_TENANT_ID_PATTERN = '[\d]{7}'
 NAST_TENANT_ID_PATTERN = 'NAST[\d]{6}'

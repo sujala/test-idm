@@ -1,0 +1,68 @@
+# -*- coding: utf-8 -*
+import ddt
+
+from tests.api.utils import saml_helper
+from tests.api.utils.create_cert import create_self_signed_cert
+from tests.api.v2.federation import federation
+
+from tests.package.johny import constants as const
+
+
+@ddt.ddt
+class TestSAMLAuth(federation.TestBaseFederation):
+
+    """Add IDP Tests
+    Currently only tests which involve setting the name."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Class level set up for the tests
+
+        Create users needed for the tests and generate clients for those users.
+        """
+        super(TestSAMLAuth, cls).setUpClass()
+
+    def setUp(self):
+        super(TestSAMLAuth, self).setUp()
+        # create a cert
+        (self.pem_encoded_cert, self.cert_path, _, self.key_path,
+         self.f_print) = create_self_signed_cert()
+
+        self.idp = self.add_and_check_broker_idp(certs=[self.pem_encoded_cert])
+
+    def test_cant_auth_with_broker_idp(self):
+        """ Note: will fail once broker auth is enabled. """
+        test_data = {"fed_input": {
+                     "base64_url_encode": True,
+                     "new_url": True,
+                     "content_type": "x-www-form-urlencoded"}}
+        subject = self.generate_random_string(
+            pattern='fed[\-]user[\-][\d\w]{12}')
+        fed_input_data = test_data['fed_input']
+        base64_url_encode = fed_input_data['base64_url_encode']
+        new_url = fed_input_data['new_url']
+        content_type = fed_input_data['content_type']
+
+        dom_id = self.generate_random_string(const.NUMERIC_DOMAIN_ID_PATTERN)
+        test_email = "random@rackspace.com"
+        issuer = self.idp.issuer
+        assertion = saml_helper.create_saml_assertion(
+            domain=dom_id, subject=subject, issuer=issuer,
+            email=test_email, base64_url_encode=base64_url_encode,
+            private_key_path=self.key_path,
+            public_key_path=self.cert_path)
+        resp = self.identity_admin_client.auth_with_saml(
+            saml=assertion, content_type=content_type,
+            base64_url_encode=base64_url_encode, new_url=new_url)
+        self.assertEquals(
+            resp.json()[const.FORBIDDEN][const.MESSAGE],
+            "Error code: 'FED-000'; v1 Authentication "
+            "is not supported for this IDP")
+        self.assertEquals(403, resp.status_code)
+
+    def tearDown(self):
+        super(TestSAMLAuth, self).tearDown()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(TestSAMLAuth, cls).tearDownClass()
