@@ -74,22 +74,22 @@ class Constants {
 
     static def DEFAULT_COMPUTE_APPLICATION_NAME = 'cloudServers'
 
+    static def DEFAULT_FED_EMAIL = "federated@rackspace.com"
+    static def DEFAULT_SAML_EXP_SECS = 1 * 60 * 60 //1 hour
+
+    /* ************************************************************************************
+    V1 IDPs. These IDPs are configured, by default, in the repose configuration to be Fed v1 API consumers. This only
+    matters to Repose
+    ************************************************************************************ */
     static def DEFAULT_IDP_ID = "test"
     static def DEFAULT_IDP_URI = "http://test.rackspace.com"
     static def DEFAULT_IDP_PRIVATE_KEY = "saml.pkcs8"
     static def DEFAULT_IDP_PUBLIC_KEY = "saml.crt"
 
-    static String DEFAULT_BROKER_IDP_ID = "8f2502e8e41c49869b0de0b2b205c0df"
-    static String DEFAULT_BROKER_IDP_URI = "http://broker.rackspace.com"
-    static String DEFAULT_BROKER_IDP_PRIVATE_KEY = "fed-broker.pkcs8"
-    static String DEFAULT_BROKER_IDP_PUBLIC_KEY = "fed-broker.crt"
-
     static def IDP_2_ID = "identityqe"
     static def IDP_2_URI = "http://identityqe.rackspace.com"
     static def IDP_2_PUBLIC_KEY = "saml-qe-idp.crt"
     static def IDP_2_PRIVATE_KEY = "saml-qe-idp.pkcs8"
-    static def DEFAULT_FED_EMAIL = "federated@rackspace.com"
-    static def DEFAULT_SAML_EXP_SECS = 1 * 60 * 60 //1 hour
 
     static def RACKER_IDP_ID = "rackertest"
     static def RACKER_IDP_URI = "http://racker.rackspace.com"
@@ -97,6 +97,28 @@ class Constants {
     static def RACKER_IDP_PUBLIC_KEY = "saml.crt"
     static def RACKER_IDP_PUBLIC_KEY_2 = "saml-qe-idp.crt"
     static def RACKER_IDP_PRIVATE_KEY_2 = "saml-qe-idp.pkcs8"
+    /* *********************************************************************************** */
+
+    /* ************************************************************************************
+    V2 IDPs. These IDPs are configured, by default, in the repose configuration to be Fed v2 API consumers. This only
+    matters to Repose. For simplicity, the domain/racker IDPs are configured w/ the same keys
+    ************************************************************************************ */
+    static String IDP_V2_DOMAIN_ID = "38471f9c27064940ba8154f4b2217269"
+    static String IDP_V2_DOMAIN_URI = "http://v2domain1.rackspace.com"
+    static String IDP_V2_DOMAIN_PRIVATE_KEY = "saml.pkcs8"
+    static String IDP_V2_DOMAIN_PUBLIC_KEY = "saml.crt"
+
+    static String IDP_V2_RACKER_ID = "8b78bf44f88342278a3c75951bf22262"
+    static String IDP_V2_RACKER_URI = "http://v2racker1.rackspace.com"
+    static String IDP_V2_RACKER_PRIVATE_KEY = "saml.pkcs8"
+    static String IDP_V2_RACKER_PUBLIC_KEY = "saml.crt"
+
+    static String DEFAULT_BROKER_IDP_ID = "8f2502e8e41c49869b0de0b2b205c0df"
+    static String DEFAULT_BROKER_IDP_URI = "http://broker.rackspace.com"
+    static String DEFAULT_BROKER_IDP_PRIVATE_KEY = "fed-broker.pkcs8"
+    static String DEFAULT_BROKER_IDP_PUBLIC_KEY = "fed-broker.crt"
+    /* *********************************************************************************** */
+
 
     public static String MFA_DEFAULT_PIN = "1234"
     public static String MFA_DEFAULT_USER_PROVIDER_ID = "USER123"

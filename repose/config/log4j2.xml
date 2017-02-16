@@ -23,6 +23,7 @@
             <AppenderRef ref="STDOUT"/>
             <AppenderRef ref="RollingFile"/>
         </Root>
+        <Logger name="org.openrepose" level="info" />
         <Logger name="com.sun.jersey" level="off"/>
         <Logger name="net.sf.ehcache" level="error"/>
         <Logger name="org.apache" level="warn"/>

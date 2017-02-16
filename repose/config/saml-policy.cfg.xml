@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<saml-policy xmlns="http://docs.openrepose.org/repose/samlpolicy/v1.0">
+    <policy-bypass-issuers>
+        <issuer>http://test.rackspace.com</issuer>
+        <issuer>http://racker.rackspace.com</issuer>
+    </policy-bypass-issuers>
+    <policy-acquisition>
+        <keystone-credentials uri="http://172.17.0:8083"
+                              username="authQE2"
+                              password="Auth1234"/>
+        <!--<policy-endpoint uri="http://172.17.0.1:8083" />-->
+        <policy-endpoint uri="http://172.17.0:8083" />
+        <cache ttl="300" />
+    </policy-acquisition>
+    <signature-credentials keystore-filename="federation-keystore.jks"
+                           keystore-password="changeme"
+                           key-name="defaultbroker"
+                           key-password="defaultbroker"/>
+</saml-policy>
