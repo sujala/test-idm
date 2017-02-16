@@ -17,15 +17,16 @@ def get_add_user_request_object(
     return requests.UserAdd(user_name=username, **input_data)
 
 
-def get_add_user_one_call_request_object():
-        user_name = TestBase.generate_random_string(pattern='Username[\w]{12}')
+def get_add_user_one_call_request_object(domainid=None, username=None):
+        user_name = username or TestBase.generate_random_string(
+            pattern='Username[\w]{12}')
         secret_q = 'Who Me?'
         secret_a = 'Yes You!'
         secret_qa = {
             const.SECRET_QUESTION: secret_q,
             const.SECRET_ANSWER: secret_a
         }
-        domain_id = TestBase.generate_random_string(
+        domain_id = domainid or TestBase.generate_random_string(
             pattern=const.MOSSO_TENANT_ID_PATTERN)
 
         return requests.UserAdd(
