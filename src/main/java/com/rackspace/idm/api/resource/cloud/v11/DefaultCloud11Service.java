@@ -1114,7 +1114,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         //TODO Hiding admin urls to keep old functionality - Need to revisit
         hideAdminUrls(endpoints);
 
-        Response.ResponseBuilder responseBuilder = Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(v11AuthResponseTuple.userScopeAccess, endpoints)));
+        Response.ResponseBuilder responseBuilder = Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(v11AuthResponseTuple.userScopeAccess, endpoints)).getValue());
 
         if (identityConfig.getReloadableConfig().shouldIncludeTenantInV11AuthResponse()) {
             if (tenantId != null) {
@@ -1224,7 +1224,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             //TODO Hiding admin urls to keep old functionality - Need to revisit
             hideAdminUrls(endpoints);
 
-            Response.ResponseBuilder responseBuilder = Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(v11AuthResponseTuple.userScopeAccess, endpoints)));
+            Response.ResponseBuilder responseBuilder = Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(v11AuthResponseTuple.userScopeAccess, endpoints)).getValue());
 
             if (identityConfig.getReloadableConfig().shouldIncludeTenantInV11AuthResponse()) {
                 Tenant tenantForHeader = authenticateResponseService.getTenantForAuthResponse(v11AuthResponseTuple.serviceCatalogInfo);

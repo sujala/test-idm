@@ -6,6 +6,7 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspacecloud.docs.auth.api.v1.AuthData
+import groovy.json.JsonSlurper
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -136,6 +137,82 @@ class Cloud11TokenIntegrationTest extends RootIntegrationTest {
         false           | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
         false           | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
         false           | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
+    @Unroll
+    def "v1.1 auth call response is correctly structured: accept = #accept, request = #request"() {
+        given:
+        def domainId = utils.createDomain()
+        def mossoId = domainId
+        def nastId = Constants.NAST_TENANT_PREFIX + domainId
+        def users, userAdmin
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        utils.resetApiKey(userAdmin)
+        def apiKey = utils.getUserApiKey(userAdmin).apiKey
+
+        when: "v1.1 auth w/ API key"
+        def apiKeyCreds = v1Factory.createUserKeyCredentials(userAdmin.username, apiKey)
+        def response = cloud11.authenticate(apiKeyCreds, request, accept)
+
+        then:
+        assertStructureOfv11AuthResponse(response, accept)
+
+        when: "v1.1 auth w/ password"
+        def pwCreds = v1Factory.createPasswordCredentials(userAdmin.username, Constants.DEFAULT_PASSWORD)
+        response = cloud11.adminAuthenticate(pwCreds, request, accept)
+
+        then:
+        assertStructureOfv11AuthResponse(response, accept)
+
+        when: "v1.1 mosso auth"
+        def mossoCred = v1Factory.createMossoCredentials(Integer.parseInt(mossoId), apiKey)
+        response = cloud11.adminAuthenticate(mossoCred, request, accept)
+
+        then:
+        assertStructureOfv11AuthResponse(response, accept)
+
+        when: "v1.1 nast auth"
+        def nastCred = v1Factory.createNastCredentials(nastId, apiKey)
+        response = cloud11.adminAuthenticate(nastCred, request, accept)
+
+        then:
+        assertStructureOfv11AuthResponse(response, accept)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | request
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
+    void assertStructureOfv11AuthResponse(response, accept) {
+        response.status == 200
+        if (accept == MediaType.APPLICATION_XML_TYPE) {
+            def parsedAuthResponse = response.getEntity(AuthData)
+            assert parsedAuthResponse.serviceCatalog.service.size() > 0
+            def computeEndpoints = parsedAuthResponse.serviceCatalog.service.find { it -> it.name == Constants.DEFAULT_COMPUTE_APPLICATION_NAME}
+            assert computeEndpoints != null
+            assert computeEndpoints.endpoint.size() > 0
+            assert computeEndpoints.endpoint.get(0).publicURL != null
+            assert computeEndpoints.endpoint.get(0).region != null
+            assert parsedAuthResponse.token.id != null
+            assert parsedAuthResponse.token.expires != null
+        } else {
+            def parsedAuthResponse = new JsonSlurper().parseText(response.getEntity(String))
+            assert parsedAuthResponse.auth != null
+            assert parsedAuthResponse.auth.serviceCatalog != null
+            assert parsedAuthResponse.auth.serviceCatalog[Constants.DEFAULT_COMPUTE_APPLICATION_NAME] != null
+            assert parsedAuthResponse.auth.serviceCatalog[Constants.DEFAULT_COMPUTE_APPLICATION_NAME].publicURL != null
+            assert parsedAuthResponse.auth.serviceCatalog[Constants.DEFAULT_COMPUTE_APPLICATION_NAME].region != null
+            assert parsedAuthResponse.auth.token != null
+            assert parsedAuthResponse.auth.token.id != null
+            assert parsedAuthResponse.auth.token.expires != null
+        }
     }
 
 }

@@ -72,6 +72,8 @@ class Constants {
     static def DEFAULT_OBJECT_STORE_ROLE = "object-store:default"
     static def DEFAULT_COMPUTE_ROLE = "compute:default"
 
+    static def DEFAULT_COMPUTE_APPLICATION_NAME = 'cloudServers'
+
     static def DEFAULT_IDP_ID = "test"
     static def DEFAULT_IDP_URI = "http://test.rackspace.com"
     static def DEFAULT_IDP_PRIVATE_KEY = "saml.pkcs8"
