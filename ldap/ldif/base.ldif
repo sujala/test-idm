@@ -322,6 +322,12 @@ userCertificate:: MIICsDCCAhmgAwIBAgIJAPDLIlBzkeCvMA0GCSqGSIb3DQEBBQUAMEUxCz
  ykNHm0arKEG5di/HXntMbG9AGa1UKEnOFWpHHfNtX8dxzCO1CvpDUqwnVNKc+An7HrRB0Ccs8Gi
  uRQuI2ROhiZ2t3/jYGfAKXGnC4WZCvyz1SHpcKpI=
 
+dn: ou=users,ou=test,o=externalProviders,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+description: Container for users
+
 dn: ou=8f2502e8e41c49869b0de0b2b205c0df,o=externalProviders,dc=rackspace,dc=com
 objectClass: rsExternalProvider
 objectClass: organizationalUnit
@@ -346,7 +352,74 @@ userCertificate:: MIICsDCCAhmgAwIBAgIJAKPUdHUFFAHYMA0GCSqGSIb3DQEBBQUAMEUxCzA
  WffN0Sb+plZFarwjhDINh1GL6c/mD829XDjY4LpAu14i4htoPjwEdnlMGTsRpEukwnioIg8NG99m
  0fNDnkojq26SsJ496drMPsGwtx6k=
 
-dn: ou=users,ou=test,o=externalProviders,dc=rackspace,dc=com
+dn: ou=users,ou=8f2502e8e41c49869b0de0b2b205c0df,o=externalProviders,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+description: Container for users
+
+dn: ou=38471f9c27064940ba8154f4b2217269,o=externalProviders,dc=rackspace,dc=com
+objectClass: rsExternalProvider
+objectClass: organizationalUnit
+objectClass: top
+cn: v2domain1
+labeledUri: http://v2domain1.rackspace.com
+description: Identity provider for testing
+rsApprovedDomainGroup: GLOBAL
+rsTargetUserSource: DOMAIN
+userCertificate:: MIICsDCCAhmgAwIBAgIJAPDLIlBzkeCvMA0GCSqGSIb3DQEBBQUAMEUxCz
+ AJBgNVBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYDVQQKExhJbnRlcm5ldCBXaWRna
+ XRzIFB0eSBMdGQwHhcNMTQwNTAyMjEzMTM4WhcNMjQwNTAxMjEzMTM4WjBFMQswCQYDVQQGEwJB
+ VTETMBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHR
+ kMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC0BIBp+pFhdwQo5j/809y9+mlM6GCms9u3rX
+ H/s/3S+0bgB81Sve6TOflE1CstfNxfffpX8LC49bsjpuu8yY4jdl3fdSNBsvyiWV7wSVlp3drlc
+ v0dd4jXr1VTUgb4PTU7Kq7F49wry3uJfb9mOMTNTt4DMFQF4YczDhtD7GMCTQIDAQABo4GnMIGk
+ MB0GA1UdDgQWBBTeQRH9sNNuuBFg7ESvAyVaTrf5QTB1BgNVHSMEbjBsgBTeQRH9sNNuuBFg7ES
+ vAyVaTrf5QaFJpEcwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgTClNvbWUtU3RhdGUxITAfBgNVBA
+ oTGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZIIJAPDLIlBzkeCvMAwGA1UdEwQFMAMBAf8wDQYJK
+ oZIhvcNAQEFBQADgYEArsYQwqW5qb+LY3tVnj8kZug41lCogW9OsjdZLo6v2iLqDUQaw28NF7tJ
+ ykNHm0arKEG5di/HXntMbG9AGa1UKEnOFWpHHfNtX8dxzCO1CvpDUqwnVNKc+An7HrRB0Ccs8Gi
+ uRQuI2ROhiZ2t3/jYGfAKXGnC4WZCvyz1SHpcKpI=
+rsIdpPolicy:: CiB7CiAgIm1hcHBpbmciOiB7CiAgICAicnVsZXMiOiBbCiAgICAgICB7CiAgIC
+ AgICAgImxvY2FsIjogewogICAgICAgICAgInVzZXIiOiB7CiAgICAgICAgICAgICJkb21haW4iO
+ iJ7RH0iLAogICAgICAgICAgICAibmFtZSI6IntEfSIsCiAgICAgICAgICAgICJlbWFpbCI6IntE
+ fSIsCiAgICAgICAgICAgICJyb2xlcyI6IntEfSIsCiAgICAgICAgICAgICJleHBpcmUiOiJ7RH0
+ iCiAgICAgICAgICAgfQogICAgICAgICB9CiAgICAgICB9CiAgICAgXSwKICAgICJ2ZXJzaW9uIj
+ oiUkFYLTEiCiAgIH0KIH0=
+
+dn: ou=users,ou=38471f9c27064940ba8154f4b2217269,o=externalProviders,dc=rackspace,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: users
+description: Container for users
+
+dn: ou=8b78bf44f88342278a3c75951bf22262,o=externalProviders,dc=rackspace,dc=com
+objectClass: rsExternalProvider
+objectClass: organizationalUnit
+objectClass: top
+cn: v2racker1
+labeledUri: http://v2racker1.rackspace.com
+description: Identity provider for testing
+rsTargetUserSource: RACKER
+userCertificate:: MIICsDCCAhmgAwIBAgIJAPDLIlBzkeCvMA0GCSqGSIb3DQEBBQUAMEUxCz
+ AJBgNVBAYTAkFVMRMwEQYDVQQIEwpTb21lLVN0YXRlMSEwHwYDVQQKExhJbnRlcm5ldCBXaWRna
+ XRzIFB0eSBMdGQwHhcNMTQwNTAyMjEzMTM4WhcNMjQwNTAxMjEzMTM4WjBFMQswCQYDVQQGEwJB
+ VTETMBEGA1UECBMKU29tZS1TdGF0ZTEhMB8GA1UEChMYSW50ZXJuZXQgV2lkZ2l0cyBQdHkgTHR
+ kMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC0BIBp+pFhdwQo5j/809y9+mlM6GCms9u3rX
+ H/s/3S+0bgB81Sve6TOflE1CstfNxfffpX8LC49bsjpuu8yY4jdl3fdSNBsvyiWV7wSVlp3drlc
+ v0dd4jXr1VTUgb4PTU7Kq7F49wry3uJfb9mOMTNTt4DMFQF4YczDhtD7GMCTQIDAQABo4GnMIGk
+ MB0GA1UdDgQWBBTeQRH9sNNuuBFg7ESvAyVaTrf5QTB1BgNVHSMEbjBsgBTeQRH9sNNuuBFg7ES
+ vAyVaTrf5QaFJpEcwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgTClNvbWUtU3RhdGUxITAfBgNVBA
+ oTGEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZIIJAPDLIlBzkeCvMAwGA1UdEwQFMAMBAf8wDQYJK
+ oZIhvcNAQEFBQADgYEArsYQwqW5qb+LY3tVnj8kZug41lCogW9OsjdZLo6v2iLqDUQaw28NF7tJ
+ ykNHm0arKEG5di/HXntMbG9AGa1UKEnOFWpHHfNtX8dxzCO1CvpDUqwnVNKc+An7HrRB0Ccs8Gi
+ uRQuI2ROhiZ2t3/jYGfAKXGnC4WZCvyz1SHpcKpI=
+rsIdpPolicy:: CiB7CiAgIm1hcHBpbmciOiB7CiAgICAicnVsZXMiOiBbCiAgICAgICB7CiAgIC
+ AgICAgImxvY2FsIjogewogICAgICAgICAgInVzZXIiOiB7CiAgICAgICAgICAgICJuYW1lIjoie
+ 0R9IiwKICAgICAgICAgICAgImV4cGlyZSI6IntEfSIKICAgICAgICAgICB9CiAgICAgICAgIH0K
+ ICAgICAgIH0KICAgICBdLAogICAgInZlcnNpb24iOiJSQVgtMSIKICAgfQogfQ==
+
+dn: ou=users,ou=8b78bf44f88342278a3c75951bf22262,o=externalProviders,dc=rackspace,dc=com
 objectClass: organizationalUnit
 objectClass: top
 ou: users
@@ -4887,6 +4960,12 @@ dn: roleRsId=4,cn=ROLES,rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=co
 objectClass: tenantRole
 objectClass: top
 roleRsId: 4
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=33e5af5cbc1b45f897a09cf24fffcd74,cn=ROLES,rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: tenantRole
+objectClass: top
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
 dn: cn=TOKENS,rsId=173195,ou=users,o=rackspace,dc=rackspace,dc=com
