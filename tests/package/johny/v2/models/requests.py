@@ -114,6 +114,35 @@ class AuthenticateWithMFA(base.AutoMarshallingModel):
     # TODO: add xml obj
 
 
+class AuthenticateAsRackerWithPassword(base.AutoMarshallingModel):
+    """Marshalling for Authentications requests with Password, for Rackers.
+        Auth with with username/password
+    """
+
+    def __init__(self, racker_name, racker_password):
+        self.racker_name = racker_name
+        self.racker_password = racker_password
+
+    def _obj_to_json(self):
+        get_token_request = {const.AUTH: {const.PASSWORD_CREDENTIALS: {
+            const.USERNAME: self.racker_name,
+            const.PASSWORD: self.racker_password},
+            const.RAX_AUTH_DOMAIN: {
+                const.NAME: const.RACKSPACE_DOMAIN}
+        }}
+        return json.dumps(get_token_request)
+
+    def _obj_to_xml(self):
+        auth = etree.Element(const.AUTH)
+        etree.SubElement(
+            auth, const.PASSWORD_CREDENTIALS, xmlns=const.XMLNS_V20,
+            username=self.racker_name, password=self.racker_password)
+        etree.SubElement(
+            auth, const.RAX_AUTH_DOMAIN, xmlns=const.XMLNS_V20,
+            name=const.RACKSPACE_DOMAIN)
+        return etree.tostring(auth)
+
+
 class UserAdd(base.AutoMarshallingModel):
     """Marshalling for Add Identity Admin User Request."""
 
@@ -936,3 +965,24 @@ class IDP(base.AutoMarshallingModel):
                 idpr[const.APPROVED_DOMAIN_Ids].append(dom_id)
 
         return json.dumps(create_idp_request)
+
+
+class ImpersonateUser(base.AutoMarshallingModel):
+    """
+    Marshalling for impersonation request
+    """
+    def __init__(self, user_name, expire_in_seconds=None):
+        self.user_name = user_name
+        self.expire_in_seconds = expire_in_seconds
+
+    def _obj_to_json(self):
+
+        IMPERSONATION = const.NS_IMPERSONATION
+        impersonation_request = {
+            IMPERSONATION: {const.USER: {const.USERNAME: self.user_name}}
+        }
+        if self.expire_in_seconds:
+            impersonation_request[IMPERSONATION][
+                const.EXPIRE_IN_SECONDS] = self.expire_in_seconds
+
+        return json.dumps(impersonation_request)

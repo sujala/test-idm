@@ -97,7 +97,7 @@ class TestBaseV2(base.TestBase):
 
         if token:
             # generate client from existing user token
-            id_client.default_headers['X-Auth-Token'] = token
+            id_client.default_headers[const.X_AUTH_TOKEN] = token
         else:
             # create user as client
             if not parent_client:
@@ -147,6 +147,31 @@ class TestBaseV2(base.TestBase):
             id_client.default_headers[const.X_AUTH_TOKEN] = auth_token
 
         return id_client
+
+    @classmethod
+    def generate_racker_client(cls,  request_object=None, token=None):
+
+        racker_client = client.IdentityAPIClient(
+            url=cls.url,
+            serialize_format=cls.test_config.serialize_format,
+            deserialize_format=cls.test_config.deserialize_format)
+
+        if token:
+            # generate client from existing user token
+            racker_client.default_headers[const.X_AUTH_TOKEN] = token
+        else:
+            if not request_object:
+                request_object = requests.AuthenticateAsRackerWithPassword(
+                    racker_name=cls.identity_config.racker_username,
+                    racker_password=cls.identity_config.racker_password)
+
+            resp = racker_client.get_auth_token(request_object=request_object)
+            auth_token = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+            user_id = resp.json()[const.ACCESS][const.USER][const.ID]
+            racker_client.default_headers[const.X_USER_ID] = user_id
+            racker_client.default_headers[const.X_AUTH_TOKEN] = auth_token
+
+        return racker_client
 
     def generate_client_with_x_auth_token(cls, x_auth_token=None):
         """

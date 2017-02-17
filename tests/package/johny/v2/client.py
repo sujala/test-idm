@@ -1393,3 +1393,15 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         resp = self.request(method='GET', url=url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
+
+    def impersonate_user(self, request_data, requestslib_kwargs=None):
+        """
+        Return response object from impersonation call
+        """
+        url = self.url + const.IMPERSONATION_URL
+
+        resp = self.request(
+            method='POST', url=url, request_entity=request_data,
+            requestslib_kwargs=requestslib_kwargs)
+
+        return resp

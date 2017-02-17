@@ -34,7 +34,6 @@ class User(object):
 
         user = resp_json[const.USER]
         self.id = user.get(const.ID, None)
-        self.name = user.get(const.USERNAME, None)
         self.domain_id = user.get(const.RAX_AUTH_DOMAIN_ID, None)
         self.enabled = user.get(const.ENABLED, None)
         self.user_name = user.get(const.USERNAME, None)

@@ -45,6 +45,16 @@ class IdentityConfig(data_interfaces.ConfigSectionInterface):
         """API Key for the Identity Admin User."""
         return self.get('identity_admin_apikey')
 
+    @property
+    def racker_username(self):
+        """Racker Username."""
+        return self.get('racker_username')
+
+    @property
+    def racker_password(self):
+        """Password for the Racker User."""
+        return self.get('racker_password')
+
 
 class TestConfig(data_interfaces.ConfigSectionInterface):
     """Defines the config values specific to test execution."""
