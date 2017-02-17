@@ -10,7 +10,7 @@
                               username="authQE2"
                               password="Auth1234"/>
         <!--<policy-endpoint uri="http://172.17.0.1:8083" />-->
-        <policy-endpoint uri="http://172.17.0:8083" />
+        <policy-endpoint uri="http://172.17.0.1:8083" />
         <cache ttl="300" />
     </policy-acquisition>
     <signature-credentials keystore-filename="federation-keystore.jks"
