@@ -11,6 +11,7 @@ from tests.package.johny import constants as const
 
 @ddt.ddt
 class TestAuthAndValidationV11(base.TestBaseV1):
+
     """
         AuthAndValidateTokens for v1.1
     """
@@ -59,7 +60,8 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         self.assertEqual(auth_resp.status_code, 200)
         header_validation.validate_header_not_present('response-source')(
             auth_resp)
-
+        header_validation.validate_header_tenant_id(
+            value=str(self.user_info['mosso_id']))(auth_resp)
         token_id = auth_resp.entity.token.id
         # validate token
         self.validate_resp_token(token=token_id)
@@ -74,6 +76,8 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         self.assertEqual(auth_resp.status_code, 200)
         header_validation.validate_header_not_present('response-source')(
             auth_resp)
+        header_validation.validate_header_tenant_id(
+            value=str(self.user_info['mosso_id']))(auth_resp)
 
         token_id = auth_resp.entity.token.id
         # validate token
@@ -89,6 +93,8 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         self.assertEqual(auth_resp.status_code, 200)
         header_validation.validate_header_not_present('response-source')(
             auth_resp)
+        header_validation.validate_header_tenant_id(
+            value=str(self.user_info['nast_id']))(auth_resp)
 
         token_id = auth_resp.entity.token.id
         # validate token
@@ -104,6 +110,10 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         self.assertEqual(auth_resp.status_code, 200)
         header_validation.validate_header_not_present('response-source')(
             auth_resp)
+        # Not validating tenant_id value, because this is a pre-existing user
+        # and we don't know the tenant_id
+        header_validation.basic_header_validations(
+            response=auth_resp, header=const.X_TENANT_ID)
 
         token_id = auth_resp.entity.token.id
         # validate token

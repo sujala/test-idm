@@ -156,7 +156,10 @@ def validate_header_tenant_id(value):
 
     def validation(response):
         basic_header_validations(response=response, header=header)
-        assert response.headers[header] == value
+        msg = 'Expected Tenant ID: {0}, Tenant ID in Response: {1}'
+        assert(response.headers[header] == value), msg.format(
+            value, response.headers[header])
+
     return validation
 
 validate_location_header_not_present = validate_header_not_present('Location')

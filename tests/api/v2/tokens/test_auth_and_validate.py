@@ -46,9 +46,9 @@ class AuthAndValidateTokens(base.TestBaseV2):
         input_data = {'email': const.EMAIL_RANDOM,
                       'secret_qa': {
                           const.SECRET_QUESTION: self.generate_random_string(
-                            pattern=const.LOWER_CASE_LETTERS),
+                              pattern=const.LOWER_CASE_LETTERS),
                           const.SECRET_ANSWER: self.generate_random_string(
-                            pattern=const.UPPER_CASE_LETTERS)},
+                              pattern=const.UPPER_CASE_LETTERS)},
                       'domain_id': domain_id}
         req_obj = requests.UserAdd(user_name=username, **input_data)
         resp = self.identity_admin_client.add_user(request_object=req_obj)
@@ -116,9 +116,9 @@ class AuthAndValidateTokens(base.TestBaseV2):
 
         # do auth with Tenant+User+Password
         request_object = requests.AuthenticateWithPassword(
-                             user_name=username,
-                             password=password,
-                             tenant_id=tenant_name)
+            user_name=username,
+            password=password,
+            tenant_id=tenant_name)
         resp = self.identity_admin_client.get_auth_token(
             request_object=request_object)
         self.assertEqual(resp.status_code, 200)
@@ -147,9 +147,9 @@ class AuthAndValidateTokens(base.TestBaseV2):
 
         # do auth with Tenant+User+Apikey
         request_object = requests.AuthenticateWithApiKey(
-                             user_name=username,
-                             api_key=api_key,
-                             tenant_name=tenant_name)
+            user_name=username,
+            api_key=api_key,
+            tenant_name=tenant_name)
         resp = self.identity_admin_client.get_auth_token(
             request_object=request_object)
         self.assertEqual(resp.status_code, 200)
