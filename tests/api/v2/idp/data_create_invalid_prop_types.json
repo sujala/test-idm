@@ -1,0 +1,38 @@
+{
+        "inavlid_string": {
+                "prop_value_type": "STRING",
+                "prop_value": null,
+                "prop_description": "myDesc",
+                "prop_version": "3.10.0"
+        },
+        "invalid_int": {
+                "prop_value_type": "INT",
+                "prop_value": "yyyymmddhhmmss",
+                "prop_description": "myDesc",
+                "prop_version": "3.10.0"
+        },
+        "invalid_boolean": {
+                "prop_value_type": "BOOLEAN",
+                "prop_value": "maybe",
+                "prop_description": "myDesc",
+                "prop_version": "3.10.0"
+        },
+        "invalid_json": {
+                "prop_value_type": "JSON",
+                "prop_value": "{{{{{\"Country\": \"Japan\"}",
+                "prop_description": "myDesc",
+                "prop_version": "3.10.0"
+        },
+        "description_too_long": {
+                "prop_value_type": "STRING",
+                "prop_value": "myString",
+                "prop_description": "[A-Z]{256}",
+                "prop_version": "3.10.0"
+        },
+        "version_too_long": {
+                "prop_value_type": "STRING",
+                "prop_value": "myString",
+                "prop_description": "myDesc",
+                "prop_version": "3.10.0.0.0.0.0.1"
+        }
+}

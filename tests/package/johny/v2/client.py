@@ -170,9 +170,10 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         Get current config of unboundid
         """
         parsed_url = urlparse(self.url)
-        url = "{0}://{1}{2}".format(parsed_url.scheme,
-                                    parsed_url.netloc,
-                                    const.UNBOUNDID_CONFIG_URL)
+        url = "{0}://{1}{2}{3}".format(parsed_url.scheme,
+                                       parsed_url.netloc,
+                                       const.DEVOPS_URL,
+                                       const.DEVOPS_PROPS_URL)
         return self.request('GET', url)
 
     def create_otp_device(self, user_id, request_object,

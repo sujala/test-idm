@@ -1,0 +1,18 @@
+{
+        "string": {
+                "prop_value_type": "STRING",
+                "prop_value": "ImApropString"
+        },
+        "int": {
+                "prop_value_type": "INT",
+                "prop_value": 1337
+        },
+        "boolean": {
+                "prop_value_type": "BOOLEAN",
+                "prop_value": true
+        },
+        "json": {
+                "prop_value_type": "JSON",
+                "prop_value": "{\"Country\": \"Japan\"}"
+        }
+}
