@@ -24,7 +24,7 @@ def get_params_and_command(public_key_path, private_key_path,
     else:
         src_path = tests_path.group(1)
     jar_path = os.path.join(src_path, 'tests', 'resources',
-                            'saml-generator-2.0-all.jar')
+                            'saml-generator-2.0-1487313543369-all.jar')
     key_path = os.path.join(src_path, 'src',
                             'test', 'resources')
     public_key_path = public_key_path or os.path.join(
