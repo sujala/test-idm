@@ -8,16 +8,17 @@
         <node id="repose_node1" hostname="localhost" http-port="8080"/>
     </nodes>
     <filters>
-      <filter name="rackspace-auth-user" />
+      <filter name="rackspace-auth-user"/>
       <filter name="header-translation" />
       <filter name="ip-user" />
       <filter name="uri-user" />
       <filter name="slf4j-http-logging" />
-      <filter name="rate-limiting" />
+      <filter name="rate-limiting" uri-regex="^((?!/v2.0/RAX-AUTH/federation/saml/auth).)*$" />
       <filter name="cors"/>
       <filter name="content-type-stripper" />
       <filter name="translation" />
       <filter name="herp" />
+<!--      <filter name="saml-policy" uri-regex="^.*/v2.0/RAX-AUTH/federation/saml/auth$"/> -->
     </filters>
 
     <services>
