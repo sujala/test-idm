@@ -7,7 +7,9 @@ import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
-import com.rackspace.idm.api.resource.cloud.v20.AuthWithPasswordCredentials;
+import com.rackspace.idm.api.resource.cloud.v20.AuthWithPasswordCredentials
+import com.rackspace.idm.api.security.AuthenticationContext
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
@@ -31,7 +33,8 @@ import org.mockito.Matchers;
 import org.mortbay.jetty.HttpHeaders;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.PrepareForTest
+import spock.lang.Specification;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
@@ -50,7 +53,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 
-public class DefaultCloud11ServiceTestOld {
+public class DefaultCloud11ServiceTestOld extends Specification {
 
     AuthorizationService authorizationService;
     DefaultCloud11Service defaultCloud11Service;
@@ -85,8 +88,7 @@ public class DefaultCloud11ServiceTestOld {
     AuthWithPasswordCredentials authWithPasswordCredentials;
     private IdentityConfig identityConfig;
 
-    @Before
-    public void setUp() throws Exception {
+    def setup() {
         authWithApiKeyCredentials = mock(AuthWithApiKeyCredentials.class);
         authWithPasswordCredentials = mock(AuthWithPasswordCredentials.class);
         tokenRevocationService = mock(TokenRevocationService.class);
@@ -163,26 +165,23 @@ public class DefaultCloud11ServiceTestOld {
         defaultCloud11Service.setAuthWithApiKeyCredentials(authWithApiKeyCredentials);
         defaultCloud11Service.setAuthWithPasswordCredentials(authWithPasswordCredentials);
         defaultCloud11Service.setIdentityConfig(identityConfig);
+        defaultCloud11Service.requestContextHolder = Mock(RequestContextHolder)
+        defaultCloud11Service.requestContextHolder.getAuthenticationContext() >> Mock(AuthenticationContext)
     }
 
-    @Test
-    public void getVersion_callsCloudContractDescriptionBuilder() throws Exception {
-        doReturn("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<version>1.0</version>").when(cloudContratDescriptionBuilder).buildVersion11Page();
-        try {
-            defaultCloud11Service.getVersion(null);
-        } catch (Exception e){ }
-        verify(cloudContratDescriptionBuilder).buildVersion11Page();
-    }
-
-    @Test
-    public void authenticateResponse_withNastCredential_redirects() throws Exception {
+    def authenticateResponse_withNastCredential_redirects() {
+        given:
         NastCredentials nastCredentials = new NastCredentials();
+
+        when:
         Response response = defaultCloud11Service.authenticateResponse(uriInfo ,new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials)).build();
+
+        then:
         assertThat("response status", response.getStatus(), equalTo(302));
     }
 
-    @Test
-    public void adminAuthenticateResponse_callsCredentialValidator_validateCredential() throws Exception {
+    def adminAuthenticateResponse_callsCredentialValidator_validateCredential() {
+        given:
         NastCredentials nastCredentials = new NastCredentials();
         com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
         user.setUsername("name");
@@ -191,41 +190,55 @@ public class DefaultCloud11ServiceTestOld {
         when(authWithApiKeyCredentials.authenticate(anyString(), anyString())).thenReturn(new UserAuthenticationResult(user, true));
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(user, new UserScopeAccess()));
         when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
+
+        when:
         defaultCloud11Service.adminAuthenticateResponse(null, new JAXBElement<Credentials>(new QName(""), Credentials.class, nastCredentials));
 
+        then:
         verify(credentialValidator).validateCredential(nastCredentials, userService);
     }
 
-    @Test
-    public void authenticateResponse_withMossoCredentials_redirects() throws Exception {
+    def authenticateResponse_withMossoCredentials_redirects() {
+        given:
         JAXBElement<MossoCredentials> credentials = new JAXBElement<MossoCredentials>(QName.valueOf("foo"), MossoCredentials.class, new MossoCredentials());
+
+        when:
         Response response = defaultCloud11Service.authenticateResponse(uriInfo ,credentials).build();
+
+        then:
         assertThat("response status", response.getStatus(), equalTo(302));
     }
 
-    @Test
-    public void authenticateResponse_withPasswordCredentials_redirects() throws Exception {
+    def authenticateResponse_withPasswordCredentials_redirects() {
+        given:
         PasswordCredentials passwordCredentials = new PasswordCredentials();
         passwordCredentials.setUsername("username");
         passwordCredentials.setPassword("pass");
         JAXBElement<PasswordCredentials> credentials =
                 new JAXBElement<PasswordCredentials>(QName.valueOf("foo"), PasswordCredentials.class, passwordCredentials);
+
+        when:
         Response response = defaultCloud11Service.authenticateResponse(uriInfo ,credentials).build();
+
+        then:
         assertThat("response status", response.getStatus(), equalTo(302));
     }
 
-    @Test
-    public void authenticateResponse_withUnknownCredentials_returns404Status() throws Exception {
-        Credentials passwordCredentials = new Credentials() {
-        };
+    def authenticateResponse_withUnknownCredentials_returns404Status() {
+        given:
+        Credentials passwordCredentials = Mock(Credentials)
         JAXBElement<Credentials> credentials =
                 new JAXBElement<Credentials>(QName.valueOf("foo"), Credentials.class, passwordCredentials);
+
+        when:
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.authenticateResponse(uriInfo ,credentials);
+
+        then:
         assertThat("Response status", responseBuilder.build().getStatus(), equalTo(404));
     }
 
-    @Test
-    public void adminAuthenticateResponse_withPasswordCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByUsernameAndPassword() throws Exception {
+    def adminAuthenticateResponse_withPasswordCredentials_callsScopeAccessService_getUserScopeAccessForClientIdByUsernameAndPassword() {
+        given:
         JAXBElement credentials = mock(JAXBElement.class);
         PasswordCredentials passwordCredentials = new PasswordCredentials();
         passwordCredentials.setUsername("username");
@@ -238,12 +251,15 @@ public class DefaultCloud11ServiceTestOld {
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(userDO, new UserScopeAccess()));
         when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
 
+        when:
         Response.ResponseBuilder response = defaultCloud11Service.adminAuthenticateResponse(null, credentials);
+
+        then:
         assertEquals(response.build().getStatus(), 200);
     }
 
-    @Test
-    public void adminAuthenticateResponse_withNastCredentials_callsUserService_getUserByNastId() throws Exception {
+    def adminAuthenticateResponse_withNastCredentials_callsUserService_getUserByNastId() {
+        given:
         JAXBElement credentials = mock(JAXBElement.class);
         com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
         user.setUsername("name");
@@ -255,12 +271,15 @@ public class DefaultCloud11ServiceTestOld {
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(userDO, new UserScopeAccess()));
         when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
 
+        when:
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
-        verify(userService).getUserByTenantId(null);
+
+        then:
+        verify(userService).getUserByTenantId(null) == null
     }
 
-    @Test
-    public void adminAuthenticateResponse_withMossoCredentials_callsUserService_getUserByMossoId() throws Exception {
+    def adminAuthenticateResponse_withMossoCredentials_callsUserService_getUserByMossoId() {
+        given:
         JAXBElement credentials = mock(JAXBElement.class);
         com.rackspace.idm.domain.entity.User user = new com.rackspace.idm.domain.entity.User();
         user.setUsername("name");
@@ -275,12 +294,15 @@ public class DefaultCloud11ServiceTestOld {
         when(scopeAccessService.createScopeAccessForUserAuthenticationResult(any(UserAuthenticationResult.class))).thenReturn(new AuthResponseTuple(userDO, new UserScopeAccess()));
         when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
 
+        when:
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
-        verify(userService).getUserByTenantId("12345");
+
+        then:
+        verify(userService).getUserByTenantId("12345") == null
     }
 
-    @Test
-    public void adminAuthenticateResponse_withMossoCredentials_callsAuthConverterCloudV11_toCloudv11AuthDataJaxb() throws Exception {
+    def adminAuthenticateResponse_withMossoCredentials_callsAuthConverterCloudV11_toCloudv11AuthDataJaxb() {
+        given:
         JAXBElement credentials = mock(JAXBElement.class);
         MossoCredentials mossoCredentials = mock(MossoCredentials.class);
         when(credentials.getValue()).thenReturn(mossoCredentials);
@@ -295,12 +317,16 @@ public class DefaultCloud11ServiceTestOld {
         when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
 
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
+
+        when:
         defaultCloud11Service.adminAuthenticateResponse(null, credentials);
-        verify(authConverterCloudv11).toCloudv11AuthDataJaxb(any(UserScopeAccess.class), anyList());
+
+        then:
+        verify(authConverterCloudv11).toCloudv11AuthDataJaxb(any(UserScopeAccess.class), anyList()) == null
     }
 
-    @Test
-    public void adminAuthenticateResponse_withMossoCredentials_returns200Status() throws Exception {
+    def adminAuthenticateResponse_withMossoCredentials_returns200Status() {
+        given:
         JAXBElement credentials = mock(JAXBElement.class);
         MossoCredentials mossoCredentials = mock(MossoCredentials.class);
         when(credentials.getValue()).thenReturn(mossoCredentials);
@@ -315,185 +341,258 @@ public class DefaultCloud11ServiceTestOld {
         when(scopeAccessService.getServiceCatalogInfo(any(BaseUser.class))).thenReturn(new ServiceCatalogInfo());
 
         when(scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(userDO.getUsername(), "apiKey", null)).thenReturn(new UserScopeAccess());
+
+        when:
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.adminAuthenticateResponse(null, credentials);
+
+        then:
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
     }
 
-    @Test
-    public void revokeToken_scopeAccessServiceReturnsNull_returnsNotFoundResponse() throws Exception, IOException {
+    def revokeToken_scopeAccessServiceReturnsNull_returnsNotFoundResponse() {
+        given:
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(null);
         DefaultCloud11Service spy1 = PowerMockito.spy(defaultCloud11Service);
         PowerMockito.doReturn(new UserScopeAccess()).when(spy1, "authenticateAndAuthorizeCloudAdminUser", request);
+
+        when:
         Response.ResponseBuilder returnedResponse = spy1.revokeToken(request, "test", null);
+
+        then:
         assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
     }
 
-    @PrepareForTest(DefaultCloud11Service.class)
-    @Test
-    public void revokeToken_scopeAccessServiceReturnsNonUserAccess_returnsNotFoundResponse() throws Exception, IOException {
+    def revokeToken_scopeAccessServiceReturnsNonUserAccess_returnsNotFoundResponse() {
+        given:
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(new RackerScopeAccess());
         DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
         PowerMockito.doReturn(new UserScopeAccess()).when(tempSpy, "authenticateAndAuthorizeCloudAdminUser", request);
+
+        when:
         Response.ResponseBuilder returnedResponse = tempSpy.revokeToken(request, "test", null);
+
+        then:
         assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
     }
 
-    @PrepareForTest(DefaultCloud11Service.class)
-    @Test
-    public void revokeToken_scopeAccessServiceReturnsExpiredToken_returnsNotFoundResponse() throws Exception, IOException {
+    def revokeToken_scopeAccessServiceReturnsExpiredToken_returnsNotFoundResponse() {
+        given:
         DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
         PowerMockito.doReturn(new UserScopeAccess()).when(tempSpy, "authenticateAndAuthorizeCloudAdminUser", request);
         UserScopeAccess userScopeAccessMock = mock(UserScopeAccess.class);
         when(userScopeAccessMock.isAccessTokenExpired(Matchers.<DateTime>anyObject())).thenReturn(true);
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(userScopeAccessMock);
+
+        when:
         Response.ResponseBuilder returnedResponse = tempSpy.revokeToken(request, "test", null);
+
+        then:
         assertThat("notFoundResponseReturned", returnedResponse.build().getStatus(), equalTo(404));
     }
 
-    @PrepareForTest(DefaultCloud11Service.class)
-    @Test
-    public void revokeToken_userScopeAccess_revokeToken() throws Exception {
+    def revokeToken_userScopeAccess_revokeToken() {
+        given:
         DefaultCloud11Service tempSpy = PowerMockito.spy(defaultCloud11Service);
         PowerMockito.doReturn(new UserScopeAccess()).when(tempSpy, "authenticateAndAuthorizeCloudAdminUser", request);
         UserScopeAccess userScopeAccessMock = mock(UserScopeAccess.class);
         when(scopeAccessService.getScopeAccessByAccessToken(anyString())).thenReturn(userScopeAccessMock);
+
+        when:
         tempSpy.revokeToken(request, "test", null);
+
+        then:
         verify(tokenRevocationService).revokeToken(anyString());
     }
 
-    @Test (expected = NotAuthorizedException.class)
-    public void authenticateCloudAdminUserForGetRequests_callsAuthHeaderHelper_parseBasicParams_throwsCloudAdminAuthorizationException() throws Exception {
-        doThrow(new CloudAdminAuthorizationException()).when(authHeaderHelper).parseBasicParams(anyString());
-        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
+    def authenticateCloudAdminUserForGetRequests_callsAuthHeaderHelper_parseBasicParams_throwsCloudAdminAuthorizationException() {
+        when:
+        doThrow(new CloudAdminAuthorizationException()).when(authHeaderHelper).parseBasicParams(anyString())
+        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request)
+
+        then:
+        thrown NotAuthorizedException
     }
 
-    @Test(expected = NotAuthorizedException.class)
-    public void authenticateCloudAdminUserForGetRequests_withNoBasicParams_throwsNotAuthorized() throws Exception {
+    def authenticateCloudAdminUserForGetRequests_withNoBasicParams_throwsNotAuthorized() {
+        given:
         request = mock(HttpServletRequest.class);
-        when(authHeaderHelper.parseBasicParams(any(String.class))).thenReturn(null);
-        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
+
+        when:
+        when(authHeaderHelper.parseBasicParams(any(String.class))).thenReturn(null)
+        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request)
+
+        then:
+        thrown NotAuthorizedException
     }
 
-    @Test(expected = NotAuthorizedException.class)
-    public void authenticateCloudAdminUserForGetRequests_withInvalidAuthHeaders() throws Exception {
-        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + Base64.encode("auth"));
-        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
+    def authenticateCloudAdminUserForGetRequests_withInvalidAuthHeaders() {
+        when:
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + Base64.encode("auth"))
+        defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request)
+
+        then:
+        thrown NotAuthorizedException
     }
 
-    @Test
-    public void authenticateCloudAdminUserForGetRequests_withServiceAndServiceAdmin_withoutExceptions() throws Exception {
+    def authenticateCloudAdminUserForGetRequests_withServiceAndServiceAdmin_withoutExceptions() {
+        when:
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+
+        then:
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
     }
 
-    @Test
-    public void authenticateCloudAdminUserForGetRequests_withService() throws Exception {
+    def authenticateCloudAdminUserForGetRequests_withService() {
+        given:
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+
+        when:
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
+
+        then:
         assertTrue("no Exception thrown", true);
     }
 
-    @Test
-    public void authenticateCloudAdminUserForGetRequests_withServiceAdmin() throws Exception {
+    def NauthenticateCloudAdminUserForGetRequests_withServiceAdmin() {
+        given:
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+
+        when:
         defaultCloud11Service.authenticateCloudAdminUserForGetRequests(request);
+
+        then:
         assertTrue("no Exception thrown", true);
     }
 
-    @Test
-    public void createUser_withBaseURLRefs_callsEndpointService_addBaseUrlToUser() throws Exception {
-        User user = new User();
-        user.setId("someId");
-        user.setMossoId(123456);
-        user.setBaseURLRefs(new BaseURLRefList());
-        user.getBaseURLRefs().getBaseURLRef().add(new BaseURLRef());
-        userDO.setId("someId");
-        userDO.setMossoId(123456);
-    }
-
-    @Test
-    public void extensions_returns200() throws IOException{
+    def extensions_returns200() {
+        when:
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.extensions(httpHeaders);
+
+        then:
         assertThat("response code", responseBuilder.build().getStatus(), org.hamcrest.Matchers.equalTo(200));
     }
 
-    @Test
-    public void extensions_withNonNullExtension_returns200() throws IOException{
+    def extensions_withNonNullExtension_returns200() {
+        given:
         defaultCloud11Service.extensions(httpHeaders);
+
+        when:
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.extensions(httpHeaders);
+
+        then:
         assertThat("response code", responseBuilder.build().getStatus(), org.hamcrest.Matchers.equalTo(200));
     }
 
-    @Test
-    public void getExtension_blankExtensionAlias_throwsBadRequestException() throws IOException{
+    def getExtension_blankExtensionAlias_throwsBadRequestException() {
+        given:
         when(validator.isBlank(anyString())).thenReturn(true);
+
+        when:
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "");
+
+        then:
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(400));
     }
 
-    @Test
-    public void getExtension_withCurrentExtensions_throwsNotFoundException() throws IOException{  //There are no extensions at this time.
+    def getExtension_withCurrentExtensions_throwsNotFoundException() {  //There are no extensions at this time.
+        given:
         defaultCloud11Service.extensions(httpHeaders);
+
+        when:
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
+
+        then:
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
 
     }
 
-    @Test
-    public void getExtension_withExtensionMap_throwsNotFoundException() throws IOException{
+    def getExtension_withExtensionMap_throwsNotFoundException() {
+        given:
         defaultCloud11Service.getExtension(httpHeaders, "123");
+
+        when:
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "123");
+
+        then:
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
     }
 
-    @Test
-    public void getExtension_invalidExtension_throwsNotFoundException() throws IOException{
+    def getExtension_invalidExtension_throwsNotFoundException() {
+        when:
         Response.ResponseBuilder responseBuilder = defaultCloud11Service.getExtension(httpHeaders, "INVALID");
+
+        then:
         assertThat("response status", responseBuilder.build().getStatus(), equalTo(404));
     }
 
-    @Test(expected = CloudAdminAuthorizationException.class)
-    public void authenticateCloudAdminUser_withInvalidAuthHeaders() throws Exception {
+    def authenticateCloudAdminUser_withInvalidAuthHeaders() {
+        given:
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn("Basic " + Base64.encode("auth"));
+
+        when:
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
+
+        then:
+        thrown CloudAdminAuthorizationException
     }
 
-    @Test(expected = CloudAdminAuthorizationException.class)
-    public void authenticateCloudAdminUser_nullStringMap() throws Exception {
+    def authenticateCloudAdminUser_nullStringMap() {
+        given:
         when(authHeaderHelper.parseBasicParams(any(String.class))).thenReturn(null);
+
+        when:
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
+
+        then:
+        thrown CloudAdminAuthorizationException
     }
 
-    @Test
-    public void authenticateCloudAdminUser_withServiceAndServiceAdmin_withoutExceptions() throws Exception {
+    def authenticateCloudAdminUser_withServiceAndServiceAdmin_withoutExceptions() {
+        when:
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
-        defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
+
+        then:
+        defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request) == null
     }
 
-    @Test(expected = CloudAdminAuthorizationException.class)
-    public void authenticateCloudAdminUser_withServiceAndServiceAdminFalse() throws Exception {
+    def authenticateCloudAdminUser_withServiceAndServiceAdminFalse() {
+        given:
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+
+        when:
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
+
+        then:
+        thrown CloudAdminAuthorizationException
     }
 
-    @Test
-    public void authenticateCloudAdminUser_withService() throws Exception {
+    def authenticateCloudAdminUser_withService() {
+        given:
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(true);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(false);
+
+        when:
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
+
+        then:
         assertTrue("no Exception thrown", true);
     }
 
-    @Test
-    public void authenticateCloudAdminUser_withServiceAdmin() throws Exception {
+    def authenticateCloudAdminUser_withServiceAdmin() {
+        given:
         when(authorizationService.authorizeCloudIdentityAdmin(any(ScopeAccess.class))).thenReturn(false);
         when(authorizationService.authorizeCloudServiceAdmin(any(ScopeAccess.class))).thenReturn(true);
+
+        when:
         defaultCloud11Service.authenticateAndAuthorizeCloudAdminUser(request);
+
+        then:
         assertTrue("no Exception thrown", true);
     }
+
 }

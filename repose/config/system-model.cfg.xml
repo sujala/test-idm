@@ -18,6 +18,7 @@
       <filter name="cors"/>
       <filter name="content-type-stripper" />
       <filter name="translation" />
+      <filter name="scripting" />
       <filter name="herp" />
       <!-- Only enable for fed calls via standard endpoint. Note this will cause all XML requests to be rejected.
        See https://repose.atlassian.net/browse/REP-5101

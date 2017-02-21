@@ -7,7 +7,7 @@
         <![CDATA[
             <cadf:event xmlns:cadf="http://schemas.dmtf.org/cloud/audit/1.0/event"
                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                    xsi:schemaLocation='http://schemas.dmtf.org/cloud/audit/1.0/event user-access-cadf.xsd'
+                    xsi:schemaLocation="http://schemas.dmtf.org/cloud/audit/1.0/event user-access-cadf.xsd"
                     xmlns:ua="http://feeds.api.rackspacecloud.com/cadf/user-access-event"
                     id="{{guid}}"
                     eventType="activity"
@@ -47,6 +47,6 @@
     </template>
     <filterOut>
         <!-- Exclude non authenticate calls -->
-        <match field="requestURL" regex="(.*v1\.1\/(?!auth).*|.*v1\.1\/(?!auth-admin).*|.*v2\.0\/(?!tokens).*|.*v2\.0\/tokens\/.+)"/>
+        <match field="requestURL" regex="(.*\/v1\.1\/(?!(auth)|(auth-admin)).*)|(.*\/v2\.0\/(?!tokens).*)|(.*\/v2\.0\/tokens\/.+)"/>
     </filterOut>
 </highly-efficient-record-processor>

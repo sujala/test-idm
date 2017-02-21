@@ -139,6 +139,48 @@ class Cloud11TokenIntegrationTest extends RootIntegrationTest {
         false           | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
     }
 
+    def "auth v1.1 returns X-User-Name header"() {
+        given:
+        def domainId = utils.createDomain()
+        def mossoId = domainId
+        def nastId = Constants.NAST_TENANT_PREFIX + domainId
+        def users, userAdmin
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        utils.resetApiKey(userAdmin)
+        def apiKey = utils.getUserApiKey(userAdmin).apiKey
+
+        when: "v1.1 auth w/ API key"
+        def apiKeyCreds = v1Factory.createUserKeyCredentials(userAdmin.username, apiKey)
+        def response = cloud11.authenticate(apiKeyCreds)
+
+        then:
+        response.headers.get(GlobalConstants.X_USER_NAME)[0] == userAdmin.username
+
+        when: "v1.1 auth w/ password"
+        def pwCreds = v1Factory.createPasswordCredentials(userAdmin.username, Constants.DEFAULT_PASSWORD)
+        response = cloud11.adminAuthenticate(pwCreds)
+
+        then:
+        response.headers.get(GlobalConstants.X_USER_NAME)[0] == userAdmin.username
+
+        when: "v1.1 mosso auth"
+        def mossoCred = v1Factory.createMossoCredentials(Integer.parseInt(mossoId), apiKey)
+        response = cloud11.adminAuthenticate(mossoCred)
+
+        then:
+        response.headers.get(GlobalConstants.X_USER_NAME)[0] == userAdmin.username
+
+        when: "v1.1 nast auth"
+        def nastCred = v1Factory.createNastCredentials(nastId, apiKey)
+        response = cloud11.adminAuthenticate(nastCred)
+
+        then:
+        response.headers.get(GlobalConstants.X_USER_NAME)[0] == userAdmin.username
+
+        cleanup:
+        utils.deleteUsers(users)
+    }
+
     @Unroll
     def "v1.1 auth call response is correctly structured: accept = #accept, request = #request"() {
         given:
@@ -157,12 +199,26 @@ class Cloud11TokenIntegrationTest extends RootIntegrationTest {
         then:
         assertStructureOfv11AuthResponse(response, accept)
 
+        when: "v1.1 auth w/ API key w/ invalid creds"
+        apiKeyCreds = v1Factory.createUserKeyCredentials(userAdmin.username, "invalid")
+        response = cloud11.authenticate(apiKeyCreds, request, accept)
+
+        then:
+        response.headers.get(GlobalConstants.X_USER_NAME)[0] == userAdmin.username
+
         when: "v1.1 auth w/ password"
         def pwCreds = v1Factory.createPasswordCredentials(userAdmin.username, Constants.DEFAULT_PASSWORD)
         response = cloud11.adminAuthenticate(pwCreds, request, accept)
 
         then:
         assertStructureOfv11AuthResponse(response, accept)
+
+        when: "v1.1 auth w/ password w/ invalid creds"
+        pwCreds = v1Factory.createPasswordCredentials(userAdmin.username, "invalid")
+        response = cloud11.adminAuthenticate(pwCreds, request, accept)
+
+        then:
+        response.headers.get(GlobalConstants.X_USER_NAME)[0] == userAdmin.username
 
         when: "v1.1 mosso auth"
         def mossoCred = v1Factory.createMossoCredentials(Integer.parseInt(mossoId), apiKey)
@@ -171,12 +227,26 @@ class Cloud11TokenIntegrationTest extends RootIntegrationTest {
         then:
         assertStructureOfv11AuthResponse(response, accept)
 
+        when: "v1.1 mosso auth w/ invalid creds"
+        mossoCred = v1Factory.createMossoCredentials(Integer.parseInt(mossoId), "invalid")
+        response = cloud11.adminAuthenticate(mossoCred, request, accept)
+
+        then:
+        response.headers.containsKey(GlobalConstants.X_USER_NAME)
+
         when: "v1.1 nast auth"
         def nastCred = v1Factory.createNastCredentials(nastId, apiKey)
         response = cloud11.adminAuthenticate(nastCred, request, accept)
 
         then:
         assertStructureOfv11AuthResponse(response, accept)
+
+        when: "v1.1 nast auth w/ invalid creds"
+        nastCred = v1Factory.createNastCredentials(nastId, "inavlid")
+        response = cloud11.adminAuthenticate(nastCred, request, accept)
+
+        then:
+        response.headers.containsKey(GlobalConstants.X_USER_NAME)
 
         cleanup:
         utils.deleteUsers(users)

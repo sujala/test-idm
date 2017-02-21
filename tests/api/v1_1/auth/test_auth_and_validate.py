@@ -64,6 +64,16 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         # validate token
         self.validate_resp_token(token=token_id)
 
+    def test_auth_with_invalid_key(self):
+        username = self.user_info['id']
+        key = "invalid"
+
+        auth_resp = self.identity_admin_client.auth_user_key(
+            user_name=username, key=key)
+        self.assertEqual(auth_resp.status_code, 401)
+        header_validation.validate_header_not_present(
+                [const.X_USER_NAME, const.X_TENANT_ID])(auth_resp)
+
     @attr(type='smoke')
     def test_auth_with_key_and_mosso_and_validate_token(self):
         key = self.user_info['key']
@@ -78,6 +88,16 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         token_id = auth_resp.entity.token.id
         # validate token
         self.validate_resp_token(token=token_id)
+
+    def test_auth_with_invalid_key_and_mosso(self):
+        key = 'invalid'
+        mosso_id = self.user_info['mosso_id']
+
+        auth_resp = self.identity_admin_client.auth_mosso_key(
+            mosso_id=mosso_id, key=key)
+        self.assertEqual(auth_resp.status_code, 401)
+        header_validation.validate_header_not_present(
+            [const.X_USER_NAME, const.X_TENANT_ID])(auth_resp)
 
     @attr(type='smoke')
     def test_auth_with_key_and_nast_and_validate_token(self):
@@ -94,6 +114,16 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         # validate token
         self.validate_resp_token(token=token_id)
 
+    def test_auth_with_invalid_key_and_nast(self):
+        key = 'invalid'
+        nast_id = self.user_info['nast_id']
+
+        auth_resp = self.identity_admin_client.auth_nast_key(
+            nast_id=nast_id, key=key)
+        self.assertEqual(auth_resp.status_code, 401)
+        header_validation.validate_header_not_present(
+            [const.X_USER_NAME, const.X_TENANT_ID])(auth_resp)
+
     @attr(type='smoke')
     def test_auth_with_username_password(self):
         admin_password = self.identity_config.identity_admin_password
@@ -108,6 +138,16 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         token_id = auth_resp.entity.token.id
         # validate token
         self.validate_resp_token(token=token_id)
+
+    def test_auth_with_username_and_invalid_password(self):
+        admin_password = 'invalid'
+        admin_username = self.identity_config.identity_admin_user_name
+
+        auth_resp = self.identity_admin_client.auth_user_password(
+            user_name=admin_username, password=admin_password)
+        self.assertEqual(auth_resp.status_code, 401)
+        header_validation.validate_header_not_present(
+            [const.X_USER_NAME, const.X_TENANT_ID])(auth_resp)
 
     def tearDown(self):
         for id_ in self.user_ids:
