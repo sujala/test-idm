@@ -13,7 +13,7 @@
       <filter name="ip-user" />
       <filter name="uri-user" />
       <filter name="slf4j-http-logging" />
-<!--      <filter name="rate-limiting" uri-regex="^((?!/v2.0/RAX-AUTH/federation/saml/auth).)*$" /> -->
+      <filter name="rate-limiting" />
       <filter name="cors"/>
       <filter name="content-type-stripper" />
       <filter name="translation" />
