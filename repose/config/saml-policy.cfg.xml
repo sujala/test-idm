@@ -4,13 +4,14 @@
     <policy-bypass-issuers>
         <issuer>http://test.rackspace.com</issuer>
         <issuer>http://racker.rackspace.com</issuer>
+        <issuer>http://identityqe.rackspace.com</issuer>
     </policy-bypass-issuers>
     <policy-acquisition>
         <keystone-credentials uri="http://172.17.0.1:8083/idm/cloud"
                               username="authQE2"
                               password="Auth1234"/>
         <policy-endpoint uri="http://172.17.0.1:8083/idm/cloud" />
-        <cache ttl="5" />
+        <cache ttl="0" />
     </policy-acquisition>
     <signature-credentials keystore-filename="federation-keystore.jks"
                            keystore-password="changeme"

@@ -12,12 +12,5 @@
             "new_url": true,
             "content_type": "x-www-form-urlencoded"
         }
-    },
-    "new_fed_auth_plain_saml": {
-        "fed_input": {
-            "base64_url_encode": false,
-            "new_url": true,
-            "content_type": "xml"
-        }
     }
 }

@@ -33,9 +33,9 @@ class TestSAMLAuth(federation.TestBaseFederation):
     def test_cant_auth_with_broker_idp(self):
         """ Note: will fail once broker auth is enabled. """
         test_data = {"fed_input": {
-                     "base64_url_encode": True,
-                     "new_url": True,
-                     "content_type": "x-www-form-urlencoded"}}
+                     "base64_url_encode": False,
+                     "new_url": False,
+                     "content_type": "xml"}}
         subject = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
         fed_input_data = test_data['fed_input']

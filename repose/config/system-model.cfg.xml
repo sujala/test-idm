@@ -8,7 +8,8 @@
         <node id="repose_node1" hostname="localhost" http-port="8080"/>
     </nodes>
     <filters>
-      <filter name="rackspace-auth-user"/>
+      <!-- Need to create whitelist regex for this. For now just exclude fed calls -->
+      <filter name="rackspace-auth-user" uri-regex="^((?!/v2.0/RAX-AUTH/federation/saml/auth).)*$" />
       <filter name="header-translation" />
       <filter name="ip-user" />
       <filter name="uri-user" />
@@ -18,7 +19,10 @@
       <filter name="content-type-stripper" />
       <filter name="translation" />
       <filter name="herp" />
-<!--      <filter name="saml-policy" uri-regex="^.*/v2.0/RAX-AUTH/federation/saml/auth$"/> -->
+      <!-- Only enable for fed calls via standard endpoint. Note this will cause all XML requests to be rejected.
+       See https://repose.atlassian.net/browse/REP-5101
+       -->
+      <filter name="saml-policy" uri-regex="^.*/v2.0/RAX-AUTH/federation/saml/auth$"/>
     </filters>
 
     <services>
