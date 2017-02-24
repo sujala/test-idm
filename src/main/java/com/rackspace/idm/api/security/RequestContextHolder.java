@@ -49,4 +49,10 @@ public interface RequestContextHolder {
      * @return
      */
     RequestContext getRequestContext();
+
+    /**
+     * Return the authentication context. Must not return null.
+     */
+    AuthenticationContext getAuthenticationContext();
+
 }

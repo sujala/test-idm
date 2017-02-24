@@ -19,6 +19,13 @@ public class DefaultRequestContextHolder implements RequestContextHolder {
     @Autowired
     private RequestContext requestContext;
 
+    /**
+     * The authentication context that is tied to the current thread.
+     */
+    @Getter
+    @Autowired
+    private AuthenticationContext authenticationContext;
+
     @Autowired
     private IdentityUserService identityUserService;
 

@@ -20,6 +20,8 @@ import com.rackspace.idm.api.resource.cloud.email.EmailClient
 import com.rackspace.idm.api.resource.cloud.v20.AuthenticateResponseService
 import com.rackspace.idm.api.resource.cloud.v20.DefaultAuthenticateResponseService
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
+import com.rackspace.idm.api.security.AuthenticationContext
+import com.rackspace.idm.api.security.AuthorizationContext
 import com.rackspace.idm.api.security.DefaultRequestContextHolder
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.SecurityContext
@@ -232,6 +234,7 @@ class RootServiceTest extends Specification {
     @Shared TokenFormatSelector tokenFormatSelector
 
     @Shared RequestContext requestContext
+    @Shared AuthenticationContext authenticationContext
     @Shared SecurityContext securityContext
 
     @Shared def jaxbMock
@@ -628,6 +631,8 @@ class RootServiceTest extends Specification {
         securityContext = Mock(SecurityContext)
         requestContextHolder.getRequestContext() >> requestContext
         requestContext.getSecurityContext() >> securityContext
+        authenticationContext = Mock(AuthenticationContext)
+        requestContextHolder.getAuthenticationContext() >> authenticationContext
     }
 
     def mockTokenRevocationService(service) {
