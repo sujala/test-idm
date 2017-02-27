@@ -22,6 +22,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -68,6 +69,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class AtomHopperClient {
@@ -90,6 +92,7 @@ public class AtomHopperClient {
     private IdentityConfig identityConfig;
 
     private CloseableHttpClient httpClient;
+    private IdleConnectionMonitorThread idleConnectionMonitorThread;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -124,6 +127,11 @@ public class AtomHopperClient {
      */
     @PreDestroy
     public void destroy() {
+        if (idleConnectionMonitorThread != null) {
+            //shutdown the daemon just to help clean threads up. Since daemon, shouldn't technically be necessary.
+            idleConnectionMonitorThread.shutdown();
+        }
+
         //the connection manager has a finalize as well, but this allows spring to shut down on application context
         // closing without relying on iffy finalizers
         if (httpClient != null) {
@@ -201,7 +209,13 @@ public class AtomHopperClient {
          */
         poolingHttpClientConnectionManager.setMaxTotal(identityConfig.getStaticConfig().getFeedsMaxTotalConnections());
         poolingHttpClientConnectionManager.setDefaultMaxPerRoute(identityConfig.getStaticConfig().getFeedsMaxConnectionsPerRoute());
-        poolingHttpClientConnectionManager.setValidateAfterInactivity(identityConfig.getStaticConfig().getFeedsOnUseEvictionValidateAfterInactivity());
+
+        if (identityConfig.getStaticConfig().getFeedsDeamonEnabled()) {
+            idleConnectionMonitorThread = new IdleConnectionMonitorThread(poolingHttpClientConnectionManager, identityConfig);
+        } else {
+            poolingHttpClientConnectionManager.setValidateAfterInactivity(identityConfig.getStaticConfig().getFeedsOnUseEvictionValidateAfterInactivity());
+        }
+
         poolingHttpClientConnectionManager.setDefaultSocketConfig(socketConfig);
 
         //set default connection params used for post socket creation based on settings during app launch. The settings
@@ -220,6 +234,11 @@ public class AtomHopperClient {
                 ;
 
         CloseableHttpClient client = b.build();
+
+        if (idleConnectionMonitorThread != null) {
+            idleConnectionMonitorThread.setDaemon(true);
+            idleConnectionMonitorThread.start();
+        }
 
         return client;
     }
@@ -608,4 +627,54 @@ public class AtomHopperClient {
         this.defaultTenantService = defaultTenantService;
     }
 
+    /**
+     * Used to evict expired connections from the httpclient connection manager.
+     *
+     * @see <a href="https://hc.apache.org/httpcomponents-client-4.5.x/tutorial/html/connmgmt.html">HttpComponents Doc</a>
+     */
+    public static class IdleConnectionMonitorThread extends Thread {
+
+        private final HttpClientConnectionManager connMgr;
+        private IdentityConfig identityConfig;
+        private volatile boolean shutdown;
+
+        public IdleConnectionMonitorThread(HttpClientConnectionManager connMgr, IdentityConfig identityConfig) {
+            super();
+            this.connMgr = connMgr;
+            this.identityConfig = identityConfig;
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (!shutdown) {
+                    synchronized (this) {
+                        int delay = identityConfig.getReloadableConfig().getFeedsDaemonEvictionFrequency();
+                        if (delay > 0) {
+                            wait(delay);
+                        }
+
+                        // Close expired connections
+                        connMgr.closeExpiredConnections();
+
+                        // Optionally, close connections
+                        // that have been idle longer than x ms
+                        int idleLimit = identityConfig.getReloadableConfig().getFeedsDaemonEvictionCloseIdleConnectionsAfter();
+                        if (idleLimit > 0) {
+                            connMgr.closeIdleConnections(idleLimit, TimeUnit.MILLISECONDS);
+                        }
+                    }
+                }
+            } catch (InterruptedException ex) {
+                // terminate
+            }
+        }
+
+        public void shutdown() {
+            shutdown = true;
+            synchronized (this) {
+                notifyAll();
+            }
+        }
+    }
 }

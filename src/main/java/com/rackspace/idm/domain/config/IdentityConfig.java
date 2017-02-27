@@ -464,6 +464,16 @@ public class IdentityConfig {
     private static final String LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP = "ldap.server.pool.allow.concurrent.socketfactory.use";
     private static final boolean LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT = false;
 
+    public static final String FEEDS_DEAMON_EVICTION_ENABLED_PROP = "feeds.daemon.eviction.enabled";
+    public static final boolean FEEDS_DEAMON_ENABLED_DEFAULT = false;
+
+    public static final String FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP = "feeds.daemon.eviction.frequency.ms";
+    public static final int FEEDS_DAEMON_EVICTION_FREQUENCY_MS_DEFAULT = 5000;
+
+    public static final String FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP = "feeds.daemon.eviction.close.idle.after.ms";
+    public static final int FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_DEFAULT = 30000;
+
+
     /**
      * Identity Repository Properties
      */
@@ -647,6 +657,10 @@ public class IdentityConfig {
         defaults.put(AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT);
 
         defaults.put(IDP_POLICY_MAX_KILOBYTE_SIZE_PROP, IDP_POLICY_MAX_KILOBYTE_SIZE_DEFAULT);
+
+        defaults.put(FEEDS_DEAMON_EVICTION_ENABLED_PROP, FEEDS_DEAMON_ENABLED_DEFAULT);
+        defaults.put(FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP, FEEDS_DAEMON_EVICTION_FREQUENCY_MS_DEFAULT);
+        defaults.put(FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP, FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_DEFAULT);
 
         return defaults;
     }
@@ -1382,6 +1396,11 @@ public class IdentityConfig {
         public boolean getLDAPServerPoolAllowConcurrentSocketFactoryUse() {
             return getBooleanSafely(staticConfiguration, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP);
         }
+
+        @IdmProp(key = FEEDS_DEAMON_EVICTION_ENABLED_PROP, versionAdded = "3.11.0", description = "Specifies whether to enable feeds deamon to evict expired connections from connection pool.")
+        public boolean getFeedsDeamonEnabled() {
+            return getBooleanSafely(staticConfiguration, FEEDS_DEAMON_EVICTION_ENABLED_PROP);
+        }
     }
 
     /**
@@ -1927,6 +1946,15 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_PROP);
         }
 
+        @IdmProp(key = FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP, versionAdded = "3.11.0" , description = "When the feeds pool is using DAEMON eviction strategy, how often expired connections are removed from the pool.")
+        public int getFeedsDaemonEvictionFrequency() {
+            return getIntSafely(reloadableConfiguration, FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP);
+        }
+
+        @IdmProp(key = FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP, versionAdded = "3.11.0" , description = "When the feeds pool is using DAEMON eviction strategy, connections will be removed from the pool if they have been idle for this this many ms. A value <= 0 indicates idle connections will not be removed")
+        public int getFeedsDaemonEvictionCloseIdleConnectionsAfter() {
+            return getIntSafely(reloadableConfiguration, FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP);
+        }
     }
 
     public class RepositoryConfig {
