@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.exception.*;
@@ -64,6 +65,9 @@ public class Cloud20VersionResource {
     @Autowired
     private ExceptionHandler exceptionHandler;
 
+    @Autowired
+    private RequestContextHolder requestContextHolder;
+
     private static final String JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH = "org.openstack.docs.common.api.v1:org.w3._2005.atom";
     private static final String SERVICE_NOT_FOUND_ERROR_MESSAGE = "Service Not Found";
     private static final JAXBContext JAXBCONTEXT_VERSION_CHOICE;
@@ -93,6 +97,7 @@ public class Cloud20VersionResource {
     @POST
     @Path("tokens")
     public Response authenticate(@Context HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
+        requestContextHolder.getAuthenticationContext().populateAuthRequestData(authenticationRequest);
         return cloud20Service.authenticate(httpHeaders, authenticationRequest).build();
     }
 

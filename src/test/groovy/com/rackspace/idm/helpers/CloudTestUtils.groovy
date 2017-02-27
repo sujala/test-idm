@@ -1,15 +1,20 @@
 package com.rackspace.idm.helpers
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.TokenRevocationRecord
+import com.rackspace.idm.util.OTPHelper
+import com.unboundid.util.Base32
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.RandomUtils
 import org.apache.http.HttpHeaders
+import org.apache.http.client.utils.URLEncodedUtils
 import org.mockserver.model.Header
 import org.mockserver.model.HttpRequest
 import org.mockserver.model.XPathBody
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
 import javax.annotation.PostConstruct
@@ -18,6 +23,9 @@ import java.nio.charset.StandardCharsets
 
 @Component
 class CloudTestUtils {
+
+    @Autowired
+    private OTPHelper otpHelper
 
     private Random random
 
@@ -46,6 +54,16 @@ class CloudTestUtils {
 
     def getRandomIntegerString() {
         String.valueOf(getRandomInteger())
+    }
+
+    def getOTPCode(String keyUri) {
+        def secret = Base32.decode(URLEncodedUtils.parse(new URI(keyUri), "UTF-8").find { it.name == 'secret' }.value)
+        return otpHelper.TOTP(secret)
+    }
+
+    def extractSessionIdFromWwwAuthenticateHeader(String sessionIdHeader) {
+        def matcher = ( sessionIdHeader =~ DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE_VALUE_SESSIONID_REGEX )
+        matcher[0][1]
     }
 
     def randomAlphaStringWithLengthInBytes(int bytes) {

@@ -3,7 +3,11 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -24,6 +28,8 @@ import spock.lang.Unroll
 import testHelpers.IdmAssert
 
 import javax.ws.rs.core.MediaType
+
+import static org.mockito.Mockito.*;
 
 /**
  * Tests verifying multifactor authentication. In lieu of using real Duo provider, which sends SMS messages, it subsitutes
@@ -53,7 +59,7 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
     @Autowired
     private IdentityConfig identityConfig
 
-    org.openstack.docs.identity.api.v2.User userAdmin
+    def userAdmin, users
     String userAdminToken
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone
     OTPDevice responseOTP
@@ -68,15 +74,13 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
      * @return
      */
     def setup() {
-        userAdmin = createUserAdmin()
+        def domainId = utils.createDomain()
+        (userAdmin,users) = utils.createUserAdminWithTenants(domainId)
         userAdminToken = authenticate(userAdmin.username)
     }
 
     def cleanup() {
-        if (userAdmin != null) {
-            if (multiFactorService.removeMultiFactorForUser(userAdmin.id))  //remove duo profile
-            deleteUserQuietly(userAdmin)
-        }
+        utils.deleteUsers(users)
         reloadableConfiguration.reset()
         staticIdmConfiguration.reset()
     }
@@ -138,7 +142,7 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
      * @return
      */
     @Unroll
-    def "When enable multifactor appropriate v2.0 pwd auth behavior: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
+    def "test v2.0 auth with MFA: requestContentType: #requestContentMediaType ; acceptMediaType=#acceptMediaType"() {
         setup:
         setUpAndEnableMultiFactor(factorType)
         User finalUserAdmin = userRepository.getUserById(userAdmin.getId())
@@ -149,6 +153,7 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         then: "Should get 401 w/ www-authenticate header"
         auth20ResponseCorrectPwd.status == com.rackspace.identity.multifactor.util.HttpStatus.SC_UNAUTHORIZED
         auth20ResponseCorrectPwd.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE) != null
+        auth20ResponseCorrectPwd.getHeaders().getFirst(GlobalConstants.X_USER_NAME) == finalUserAdmin.username
 
         when: "try to auth via 2.0 with incorrect pwd"
         def auth20ResponseWrongPwd = cloud20.authenticate(finalUserAdmin.getUsername(), Constants.DEFAULT_PASSWORD + "wrong", requestContentMediaType, acceptMediaType)
@@ -156,6 +161,40 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         then: "Should get 401 without www-authenticate header"
         auth20ResponseWrongPwd.status == com.rackspace.identity.multifactor.util.HttpStatus.SC_UNAUTHORIZED
         auth20ResponseWrongPwd.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE) == null
+        auth20ResponseWrongPwd.getHeaders().getFirst(GlobalConstants.X_USER_NAME) == finalUserAdmin.username
+
+        when: "auth - second step w/ valid passcode"
+        def authSecondStepResponse
+        def sessionIdHeader = auth20ResponseCorrectPwd.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        def sessionId = testUtils.extractSessionIdFromWwwAuthenticateHeader(sessionIdHeader)
+        if (factorType == FactorTypeEnum.OTP) {
+            authSecondStepResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(sessionId, testUtils.getOTPCode(responseOTP.getKeyUri()), requestContentMediaType, acceptMediaType)
+        } else {
+            def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
+            when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
+            authSecondStepResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(sessionId, "1234", requestContentMediaType, acceptMediaType)
+        }
+
+        then:
+        authSecondStepResponse.status == 200
+        authSecondStepResponse.getHeaders().getFirst(GlobalConstants.X_USER_NAME) == finalUserAdmin.username
+        authSecondStepResponse.getHeaders().getFirst(GlobalConstants.X_TENANT_ID) == finalUserAdmin.domainId
+
+        when: "auth - second step w/ invalid passcode"
+        sessionIdHeader = auth20ResponseCorrectPwd.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        sessionId = testUtils.extractSessionIdFromWwwAuthenticateHeader(sessionIdHeader)
+        if (factorType == FactorTypeEnum.OTP) {
+            authSecondStepResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(sessionId, "invalid", requestContentMediaType, acceptMediaType)
+        } else {
+            def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.DENY, MfaAuthenticationDecisionReason.DENY, null, null)
+            when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
+            authSecondStepResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(sessionId, "invalid", requestContentMediaType, acceptMediaType)
+        }
+
+        then:
+        authSecondStepResponse.status == 401
+        authSecondStepResponse.getHeaders().getFirst(GlobalConstants.X_USER_NAME) == finalUserAdmin.username
+        authSecondStepResponse.getHeaders().getFirst(GlobalConstants.X_TENANT_ID) == null
 
         where:
         requestContentMediaType         | acceptMediaType                 | factorType
@@ -234,7 +273,7 @@ class MultiFactorAuthenticationIntegrationTest extends RootConcurrentIntegration
         response.status == HttpStatus.SC_NOT_FOUND
     }
 
-    def void setUpAndEnableMultiFactor(def factorType = FactorTypeEnum.SMS) {
+    def setUpAndEnableMultiFactor(def factorType = FactorTypeEnum.SMS) {
         setUpMultiFactorWithoutEnable(factorType)
         utils.updateMultiFactor(userAdminToken, userAdmin.id, v2Factory.createMultiFactorSettings(true))
     }

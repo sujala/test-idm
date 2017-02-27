@@ -20,16 +20,15 @@ import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.V1SessionId;
 import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.MobilePhone;
 import com.rackspace.idm.domain.entity.MultiFactorDevice;
-import com.rackspace.idm.domain.security.AETokenService;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService;
 import com.rackspace.idm.exception.*;
-import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.DateHelper;
 import com.rackspace.idm.validation.PrecedenceValidator;
@@ -446,6 +445,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
         //verify user is valid
         User user = userService.getUserById(userId);
+        if (user != null) {
+            requestContextHolder.getAuthenticationContext().setUsername(user.getUsername());
+        }
         userService.validateUserIsEnabled(user);
 
         //TODO: FIXME: pass the user not the ID

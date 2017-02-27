@@ -187,7 +187,8 @@
 		</init-param>
         <init-param>
             <param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
-            <param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter</param-value>
+            <param-value>com.sun.jersey.api.container.filter.GZIPContentEncodingFilter;
+                com.rackspace.idm.api.filter.AuthenticationHeadersFilter</param-value>
         </init-param>
 	</servlet>
 	<servlet>
