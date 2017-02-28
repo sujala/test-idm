@@ -1,12 +1,11 @@
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'maven'
-apply plugin: 'jetty'
 apply plugin: 'war'
+apply plugin: 'org.akhikhl.gretty'
 apply plugin: 'idea'
 apply plugin: 'nexus'
 apply plugin: 'jacoco'
-apply plugin: 'sonar-runner'
 
 buildscript {
     repositories {
@@ -15,6 +14,7 @@ buildscript {
 
     dependencies {
         classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.3'
+        classpath 'org.akhikhl.gretty:gretty:1.4.1'
     }
 }
 
@@ -47,6 +47,7 @@ repositories {
     maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/releases" }
     maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/snapshots" }
     maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/thirdparty/" }
+    maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/central-maven"}
     maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/central" }
 }
 
@@ -374,21 +375,12 @@ test {
     //testLogging.showStandardStreams = true
 }
 
-jettyRun {
+gretty {
+    host = "0.0.0.0"
     httpPort = 8083
-
-    // set heap size for the test JVM(s)
-    //minHeapSize = "256m"
-    //maxHeapSize = "1024m"
-
-    // set JVM arguments for the test JVM(s)
-    //jvmArgs '-XX:MaxPermSize=1024m'
+    servletContainer = "tomcat7"
+    systemProperty 'idm.properties.location', System.getProperty('idm.properties.location', 'build/config/VAGRANT')
 }
-
-jettyRunWar {
-    httpPort = 8083
-}
-
 
 artifacts {
     archives zipConfig
@@ -501,11 +493,14 @@ war.dependsOn zipEdirLdif
 war.dependsOn zipEdirConfig
 war.dependsOn zipRepose
 war.dependsOn copyBuildInfo
-jettyRun.dependsOn copyBaseConfig
-jettyRun.dependsOn copyBuildInfo
 clean.dependsOn deleteBuildInfo
 
 compileJava.dependsOn jaxb
+
+project.afterEvaluate {
+    tasks.appRun.dependsOn copyBaseConfig
+    tasks.appRun.dependsOn copyBuildInfo
+}
 
 task copyToLib(type: Copy) {
     into "$buildDir/output/lib"
@@ -537,17 +532,6 @@ jacocoTestReport {
         xml.enabled false
         csv.enabled false
         html.destination "$buildDir/jacocoHtml"
-    }
-}
-
-sonarRunner {
-    sonarProperties {
-        property "sonar.host.url", "http://identity-ci.corp.rackspace.com:9000"
-        property "sonar.jdbc.url", "jdbc:mysql://identity-ci.corp.rackspace.com/sonarqube"
-        property "sonar.jdbc.driverClassName", "com.mysql.jdbc.Driver"
-        property "sonar.jdbc.username", "sonarqube"
-        property "sonar.jdbc.password", "sonarqube"
-        property "sonar.exclusions", "**/generated-src/jaxb/**,**/domain/entity/*.java"
     }
 }
 
