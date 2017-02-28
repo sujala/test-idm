@@ -8,6 +8,7 @@ import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.*;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.JAXBContextResolver;
@@ -149,6 +150,9 @@ public class DefaultCloud11Service implements Cloud11Service {
     @Setter
     @Autowired
     private TokenRevocationService tokenRevocationService;
+
+    @Autowired
+    private RequestContextHolder requestContextHolder;
 
     private static final Class JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH = VersionChoice.class;
     private static final JAXBContext JAXBCONTEXT_VERSION_CHOICE;
@@ -1100,6 +1104,8 @@ public class DefaultCloud11Service implements Cloud11Service {
             }
 
             User user = this.userService.getUserByTenantId(tenantId);
+            // Need to set the username in the auth context b/c it is not exposed in the request
+            requestContextHolder.getAuthenticationContext().setUsername(user.getUsername());
             v11AuthResponseTuple = innerAPIAuth(user.getUsername(), apiKey);
         } else {
             PasswordCredentials passCreds = (PasswordCredentials) cred.getValue();
@@ -1168,6 +1174,7 @@ public class DefaultCloud11Service implements Cloud11Service {
         JAXBElement<? extends Credentials> cred = null;
 
         cred = credentialUnmarshaller.unmarshallCredentialsFromJSON(body);
+        requestContextHolder.getAuthenticationContext().populateAuthRequestData(cred.getValue());
 
         if (isAdmin) {
             return adminAuthenticateResponse(uriInfo, cred);
@@ -1183,6 +1190,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             JAXBContext context = JAXBContextResolver.get();
             Unmarshaller unmarshaller = context.createUnmarshaller();
             cred = (JAXBElement<? extends Credentials>) unmarshaller.unmarshal(new StringReader(body));
+            requestContextHolder.getAuthenticationContext().populateAuthRequestData(cred.getValue());
         } catch (JAXBException e) {
             throw new BadRequestException("Invalid XML", e);
         }
@@ -1203,7 +1211,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         try {
             Credentials value = cred.getValue();
             String username = null;
-            User user = null;
             credentialValidator.validateCredential(value, userService);
             V11AuthResponseTuple v11AuthResponseTuple = null;
 

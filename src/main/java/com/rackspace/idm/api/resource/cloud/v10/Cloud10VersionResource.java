@@ -5,6 +5,7 @@ import com.rackspace.idm.api.converter.cloudv11.EndpointConverterCloudV11;
 import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple;
 import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials;
 import com.rackspace.idm.api.resource.cloud.v20.AuthenticateResponseService;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
@@ -76,6 +77,9 @@ public class Cloud10VersionResource {
     IdentityConfig identityConfig;
 
     @Autowired
+    private RequestContextHolder requestContextHolder;
+
+    @Autowired
     public Cloud10VersionResource(ScopeAccessService scopeAccessService,
         EndpointConverterCloudV11 endpointConverterCloudV11,
         AuthWithApiKeyCredentials authWithApiKeyCredentials,
@@ -118,6 +122,9 @@ public class Cloud10VersionResource {
         try {
             //switching to use authWithApiKeyCredentials service in order to eliminate having to retrieve the user multiple times
 //            UserScopeAccess usa = scopeAccessService.getUserScopeAccessForClientIdByUsernameAndApiCredentials(username, key, getCloudAuthClientId());
+
+            requestContextHolder.getAuthenticationContext().setUsername(username);
+
             UserAuthenticationResult result = authWithApiKeyCredentials.authenticate(username, key);
             ServiceCatalogInfo scInfo = scopeAccessService.getServiceCatalogInfo(result.getUser());
 

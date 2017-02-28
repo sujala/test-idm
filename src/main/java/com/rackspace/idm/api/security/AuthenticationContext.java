@@ -1,8 +1,9 @@
 package com.rackspace.idm.api.security;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
-import com.rackspace.idm.domain.config.providers.PackageClassDiscoverer;
-import com.rackspace.idm.domain.entity.Tenant;
+import com.rackspacecloud.docs.auth.api.v1.Credentials;
+import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
+import com.rackspacecloud.docs.auth.api.v1.UserCredentials;
 import lombok.Getter;
 import lombok.Setter;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
@@ -29,7 +30,8 @@ public class AuthenticationContext {
     private String username;
 
     /**
-     * Given an AuthenticationRequest populate the username and tenant for the request
+     * Given an AuthenticationRequest populate the username for the request
+     *
      * @param authenticationRequest
      */
     public void populateAuthRequestData(AuthenticationRequest authenticationRequest) {
@@ -40,14 +42,31 @@ public class AuthenticationContext {
         }
     }
 
-    private void populateUsername(AuthenticationRequest authenticationRequest) {
+    /**
+     * Given an AuthenticationRequest populate the username for the request
+     *
+     * @param credentials
+     */
+    public void populateAuthRequestData(Credentials credentials) {
+        if (credentials == null) return;
 
+        try {
+            if (credentials instanceof PasswordCredentials) {
+                this.username = ((PasswordCredentials) credentials).getUsername();
+            } else if (credentials instanceof UserCredentials) {
+                this.username = ((UserCredentials) credentials).getUsername();
+            }
+        } catch(Exception e) {
+            logger.warn("Unable to populate authentication context.", e);
+        }
+    }
+
+    private void populateUsername(AuthenticationRequest authenticationRequest) {
         if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
             this.username = ((PasswordCredentialsBase) authenticationRequest.getCredential().getValue()).getUsername();
         } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
             this.username = ((ApiKeyCredentials) authenticationRequest.getCredential().getValue()).getUsername();
         }
-
     }
 
 }

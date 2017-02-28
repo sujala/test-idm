@@ -1,0 +1,11 @@
+<scripting xmlns="http://docs.openrepose.org/repose/scripting/v1.0" language="groovy">
+    filterChain.doFilter(request, response)
+
+    // Always remove the username header
+    response.removeHeader('X-User-Name')
+
+    // Only remove the tenant header on failed auth calls
+    if(response.getStatus() &lt; 200 || response.getStatus() &gt;= 300) {
+        response.removeHeader('X-Tenant-Id')
+    }
+</scripting>

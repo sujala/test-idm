@@ -109,6 +109,30 @@ class Cloud10IntegrationTest extends RootIntegrationTest {
         false           | _
     }
 
+    def "auth v1.0 includes X-User-Name header"() {
+        given:
+        def domainId = utils.createDomain()
+        def users, userAdmin
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        utils.resetApiKey(userAdmin)
+        def apiKey = utils.getUserApiKey(userAdmin).apiKey
+
+        when: "auth v1.0"
+        def response = cloud10.authenticate(userAdmin.username, apiKey)
+
+        then:
+        response.headers.get(GlobalConstants.X_USER_NAME)[0] == userAdmin.username
+
+        when: "auth v1.0 w/ invalid creds"
+        response = cloud10.authenticate(userAdmin.username, "notMyApiKey")
+
+        then:
+        response.headers.get(GlobalConstants.X_USER_NAME)[0] == userAdmin.username
+
+        cleanup:
+        utils.deleteUsers(users)
+    }
+
     def authAndExpire(String username, String key) {
         def token = cloud10.authenticate(username, key).headers.get("X-Auth-Token")[0]
         def validateResponseOne = cloud20.validateToken(adminToken, token)

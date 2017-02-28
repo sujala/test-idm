@@ -37,7 +37,7 @@ class TestAuthentication(base.TestBaseV10):
             x_auth_key=self.api_key)
 
         self.assertIn(auth_resp.status_code, normal_response_codes,
-                      msg='Get base URLs expected {0} received {1}'.format(
+                      msg='Auth v1.0 expected {0} received {1}'.format(
                           normal_response_codes,
                           auth_resp.status_code))
         self.verify_expect_headers(resp=auth_resp)
@@ -50,7 +50,21 @@ class TestAuthentication(base.TestBaseV10):
             x_storage_pass=self.api_key)
 
         self.assertIn(auth_resp.status_code, normal_response_codes,
-                      msg='Get base URLs expected {0} received {1}'.format(
+                      msg='Auth v1.0 expected {0} received {1}'.format(
                           normal_response_codes,
                           auth_resp.status_code))
         self.verify_expect_headers(resp=auth_resp)
+
+    def test_authentication_username_and_key_invalid_creds(self):
+        normal_response_codes = [401]
+        unexpected_headers = [const.X_USER_NAME, const.X_TENANT_ID]
+        auth_resp = self.identity_client.authenticate_storage(
+            x_storage_user=self.username,
+            x_storage_pass="invalid")
+
+        self.assertIn(auth_resp.status_code, normal_response_codes,
+                      msg='Auth v1.0 expected {0} received {1}'.format(
+                          normal_response_codes,
+                          auth_resp.status_code))
+        header_validation.validate_header_not_present(
+            unexpected_headers=unexpected_headers)(auth_resp)
