@@ -62,6 +62,8 @@ public class AuthenticationContext {
     }
 
     private void populateUsername(AuthenticationRequest authenticationRequest) {
+        if (authenticationRequest == null || authenticationRequest.getCredential() == null) return;
+
         if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
             this.username = ((PasswordCredentialsBase) authenticationRequest.getCredential().getValue()).getUsername();
         } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {

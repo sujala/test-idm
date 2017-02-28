@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.User
@@ -54,10 +55,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/ service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(mossoAuthResponse)
 
         and: "NAST successful w/ service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(nastAuthResponse)
 
         when: "Disable only NAST tenant and auth"
@@ -67,10 +72,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/ service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(mossoAuthResponse)
 
         and: "NAST fails"
         nastAuthResponse.status == HttpStatus.SC_UNAUTHORIZED
+        !nastAuthResponse.headers.containsKey(GlobalConstants.X_TENANT_ID)
+        nastAuthResponse.getHeaders().getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
 
         when: "Disable MOSSO and NAST tenant and auth"
         utils.updateTenant(mossoTenant.id, false)
@@ -79,10 +88,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/o service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertDoesNotHaveServiceCatalog(mossoAuthResponse)
 
         and: "NAST successful w/o service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertDoesNotHaveServiceCatalog(nastAuthResponse)
 
         when: "Disable only MOSSO tenant and auth"
@@ -92,9 +105,13 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso fails"
         mossoAuthResponse.status == HttpStatus.SC_UNAUTHORIZED
+        !mossoAuthResponse.headers.containsKey(GlobalConstants.X_TENANT_ID)
+        mossoAuthResponse.getHeaders().getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
 
         and: "NAST successful w/ service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(nastAuthResponse)
 
         cleanup:
@@ -125,10 +142,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/ service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(mossoAuthResponse)
 
         and: "NAST successful w/ service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(nastAuthResponse)
 
         when: "Disable only NAST tenant and auth"
@@ -138,10 +159,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/ service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(mossoAuthResponse)
 
         and: "NAST fails"
         nastAuthResponse.status == HttpStatus.SC_UNAUTHORIZED
+        !nastAuthResponse.headers.containsKey(GlobalConstants.X_TENANT_ID)
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
 
         when: "Disable MOSSO and NAST tenant and auth"
         utils.updateTenant(mossoTenant.id, false)
@@ -150,10 +175,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/o service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertDoesNotHaveServiceCatalog(mossoAuthResponse)
 
         and: "NAST successful w/o service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertDoesNotHaveServiceCatalog(nastAuthResponse)
 
         when: "Disable only MOSSO tenant and auth"
@@ -163,9 +192,13 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso fails"
         mossoAuthResponse.status == HttpStatus.SC_UNAUTHORIZED
+        !mossoAuthResponse.headers.containsKey(GlobalConstants.X_TENANT_ID)
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
 
         and: "NAST successful w/ service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(nastAuthResponse)
 
         cleanup:
@@ -173,7 +206,7 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
-    def "Auth with api + tenant returns service catalog appropriately based on state of tenants" () {
+    def "Auth with api key + tenant returns service catalog appropriately based on state of tenants" () {
         given:
         User userEntity = userDao.getUserById(userAdmin.id)
 
@@ -198,10 +231,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/ service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(mossoAuthResponse)
 
         and: "NAST successful w/ service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(nastAuthResponse)
 
         when: "Disable only NAST tenant and auth"
@@ -211,10 +248,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/ service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(mossoAuthResponse)
 
         and: "NAST fails"
         nastAuthResponse.status == HttpStatus.SC_UNAUTHORIZED
+        !nastAuthResponse.headers.containsKey(GlobalConstants.X_TENANT_ID)
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
 
         when: "Disable MOSSO and NAST tenant and auth"
         utils.updateTenant(mossoTenant.id, false)
@@ -223,10 +264,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/o service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertDoesNotHaveServiceCatalog(mossoAuthResponse)
 
         and: "NAST successful w/o service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertDoesNotHaveServiceCatalog(nastAuthResponse)
 
         when: "Disable only MOSSO tenant and auth"
@@ -236,9 +281,13 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso fails"
         mossoAuthResponse.status == HttpStatus.SC_UNAUTHORIZED
+        !mossoAuthResponse.headers.containsKey(GlobalConstants.X_TENANT_ID)
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
 
         and: "NAST successful w/ service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(nastAuthResponse)
 
         cleanup:
@@ -275,10 +324,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/ service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(mossoAuthResponse)
 
         and: "NAST successful w/ service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(nastAuthResponse)
 
         when: "Disable only NAST tenant and auth"
@@ -288,10 +341,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/ service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(mossoAuthResponse)
 
         and: "NAST fails"
         nastAuthResponse.status == HttpStatus.SC_UNAUTHORIZED
+        !nastAuthResponse.headers.containsKey(GlobalConstants.X_TENANT_ID)
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
 
         when: "Disable MOSSO and NAST tenant and auth"
         utils.updateTenant(mossoTenant.id, false)
@@ -300,10 +357,14 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso successful w/o service catalog"
         mossoAuthResponse.status == HttpStatus.SC_OK
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == mossoTenant.id
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertDoesNotHaveServiceCatalog(mossoAuthResponse)
 
         and: "NAST successful w/o service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertDoesNotHaveServiceCatalog(nastAuthResponse)
 
         when: "Disable only MOSSO tenant and auth"
@@ -313,9 +374,13 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "Mosso fails"
         mossoAuthResponse.status == HttpStatus.SC_UNAUTHORIZED
+        !mossoAuthResponse.headers.containsKey(GlobalConstants.X_TENANT_ID)
+        mossoAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
 
         and: "NAST successful w/ service catalog"
         nastAuthResponse.status == HttpStatus.SC_OK
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_TENANT_ID) == nastTenant.id
+        nastAuthResponse.headers.getFirst(GlobalConstants.X_USER_NAME) == userAdmin.username
         assertHasServiceCatalog(nastAuthResponse)
 
         cleanup:

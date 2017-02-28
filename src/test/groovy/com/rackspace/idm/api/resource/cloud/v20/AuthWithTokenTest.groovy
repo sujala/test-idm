@@ -21,6 +21,7 @@ class AuthWithTokenTest extends RootServiceTest {
         mockScopeAccessService(service)
         mockTenantService(service)
         mockIdentityUserService(service)
+        mockRequestContextHolder(service)
     }
 
     def "authenticate throws a bad request when token is blank"() {

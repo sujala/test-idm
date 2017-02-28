@@ -1,52 +1,14 @@
 # -*- coding: utf-8 -*
 """
-This test run against local docker container, only verify User Access Events
-    emit in repose log
-    verify event log follow the format:
-<?xml version="1.0"?>
-<cadf:event xmlns:cadf="http://schemas.dmtf.org/cloud/audit/1.0/event"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:ua="http://feeds.api.rackspacecloud.com/cadf/user-access-event"
-    xsi:schemaLocation="http://schemas.dmtf.org/cloud/audit/1.0/\
-        event user-access-cadf.xsd"
-    id="c766c42d-d557-475e-9311-bfe946f8ffd6"
-    eventType="activity"
-    typeURI="http://schemas.dmtf.org/cloud/audit/1.0/event"
-    eventTime="2016-10-12T17:31:43.167+00:00"
-    action="update/post" outcome="success">
-  <cadf:initiator id="testacctapi-test-xi010u0yc7WD"
-        typeURI="network/node" name="testacctapi-test-xi010u0yc7WD">
-    <cadf:host address="172.17.0.1" agent="python-requests/2.11.0"/>
-  </cadf:initiator>
-  <cadf:target id="localhost" typeURI="service" name="repose">
-    <cadf:host address="localhost"/>
-  </cadf:target>
-  <cadf:attachments>
-    <cadf:attachment name="auditData" contentType="ua:auditData">
-      <cadf:content>
-        <ua:auditData version="1">
-          <ua:region>USA</ua:region>
-          <ua:dataCenter>DFW</ua:dataCenter>
-          <ua:methodLabel/>
-          <ua:requestURL>http://localhost:8082/idm/cloud/v2.0/tokens
-          </ua:requestURL>
-          <ua:queryString/>
-          <ua:tenantId/>
-          <ua:responseMessage>OK</ua:responseMessage>
-          <ua:userName>testacctapi-test-xi010u0yc7WD</ua:userName>
-          <ua:roles/>
-        </ua:auditData>
-      </cadf:content>
-    </cadf:attachment>
-  </cadf:attachments>
-  <cadf:observer id="repose-identity-repose_node1" name="repose"
-    typeURI="service/security"/>
-  <cadf:reason reasonCode="200"
-    reasonType="http://www.iana.org/assignments/http-status-codes/\
-        http-status-codes.xml"/>
-</cadf:event>
+This test in intended to test user access events.
+For an example of an Identity UAE see
+https://github.com/rackerlabs/standard-usage-schemas/blob/master/message_samples/corexsd/xml/identity-user-access-event.xml
 
-@TODO: how to verify event log in staging.
+NOTE: This test has a dependency on being run with the ability
+to connect to a local docker container. This is not ideal
+and will be redesigned in a future iteration of UAE testing.
+For now, it is highly discouraged to connect to docker
+containers for UAE testing.
 """
 
 import time
@@ -58,6 +20,7 @@ from tests.api.v2.models import factory
 
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
+from tests.api.utils import header_validation
 
 
 class TestUserAccessEvents(base.TestBaseV2):
@@ -82,7 +45,7 @@ class TestUserAccessEvents(base.TestBaseV2):
         self.device_ids = []
 
     def create_user(self):
-        user_object = factory.get_add_user_request_object()
+        user_object = factory.get_add_user_one_call_request_object()
         resp = self.identity_admin_client.add_user(request_object=user_object)
         self.assertEqual(resp.status_code, 201)
         user_id = resp.json()[const.USER][const.ID]
@@ -259,9 +222,10 @@ class TestUserAccessEvents(base.TestBaseV2):
         - verify log
         :return:
         """
-        req_url = self.url + const.TOKEN_URL
+        # create the user
         user_id, resp = self.create_user()
         user_name = resp.json()[const.USER][const.USERNAME]
+        domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
         password = resp.json()[const.USER][const.NS_PASSWORD]
         # add otp device
         device_id, resp = self.add_otp_devide(user_id=user_id)
@@ -279,44 +243,28 @@ class TestUserAccessEvents(base.TestBaseV2):
         resp = self.identity_admin_client.update_mfa(user_id=user_id,
                                                      request_object=update_obj)
         self.assertEqual(resp.status_code, 204)
-        # authenticate with pwd
+        # authenticate with pwd & mfa enabled (1st mfa auth step)
         auth_obj = requests.AuthenticateWithPassword(user_name=user_name,
                                                      password=password)
         auth_resp = self.identity_admin_client.get_auth_token(
             request_object=auth_obj
         )
-        # get events from log
-        search_str = self.search_uae_log
-        result = log.search_string(container_name=self.repose_container,
-                                   search_pattern=search_str,
-                                   path_to_logfile=const.PATH_TO_REPOSE_LOG)
-        time.sleep(1)
-        self.assertNotEqual(len(result), 0)
-        # verify event
-        for line in result.splitlines():
-            event = line[line.index(search_str) + len(search_str):len(line)]
-            self.verify_event(event, username=user_name,
-                              request_url=req_url)
-
-        log.clean_log(container_name=self.repose_container,
-                      path_to_logfile=const.PATH_TO_REPOSE_LOG)
         auth_header = auth_resp.headers[const.WWW_AUTHENTICATE]
+        self.assertHeaders(auth_resp,
+                           header_validation.
+                           validate_username_header_not_present)
         session_id = auth_header.split('sessionId=\'')[1].split('\'')[0]
+        # TODO: verify UAE
+        # authenticate with passcode & session ID (2nd mfa auth step)
         mfa_resp = self.identity_admin_client.auth_with_mfa_cred(
             session_id=session_id, pass_code=code
         )
         self.assertEqual(mfa_resp.status_code, 200)
-        # get events from log
-        search_str = self.search_uae_log
-        result = log.search_string(container_name=self.repose_container,
-                                   search_pattern=search_str,
-                                   path_to_logfile=const.PATH_TO_REPOSE_LOG)
-        time.sleep(1)
-        self.assertNotEqual(len(result), 0)
-        # verify event
-        for line in result.splitlines():
-            event = line[line.index(search_str) + len(search_str):len(line)]
-            self.verify_event(event, request_url=req_url)
+        self.assertEqual(mfa_resp.headers[const.X_TENANT_ID], domain_id)
+        self.assertHeaders(mfa_resp,
+                           header_validation.
+                           validate_username_header_not_present)
+        # TODO: verify UAE
 
     def tearDown(self):
         # Delete all users created in the tests

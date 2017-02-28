@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.ScopeAccessService;
@@ -29,6 +30,9 @@ public class AuthWithToken {
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private RequestContextHolder requestContextHolder;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -84,6 +88,7 @@ public class AuthWithToken {
         }
         UserScopeAccess usa = (UserScopeAccess) sa;
         EndUser user = getUserByIdForAuthentication(usa.getUserRsId());
+        requestContextHolder.getAuthenticationContext().setUsername(user.getUsername());
 
         if(!(user instanceof FederatedUser)) {
             scopeAccessService.updateExpiredUserScopeAccess((User) user, sa.getClientId(), null);
@@ -93,7 +98,7 @@ public class AuthWithToken {
     }
 
     EndUser getUserByIdForAuthentication(String id) {
-        EndUser user = null;
+        EndUser user;
 
         try {
             user = identityUserService.checkAndGetUserById(id);
@@ -102,6 +107,7 @@ public class AuthWithToken {
             logger.warn(errorMessage);
             throw new NotAuthenticatedException(errorMessage, e);
         }
+
         return user;
     }
 }

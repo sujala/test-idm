@@ -7,6 +7,8 @@ TODO : More methods are to be added for v1.0 & v1.1 calls, when we add
 tests for v1.0 & v1.1 calls
 """
 
+from tests.package.johny import constants as const
+
 
 def validate_header_vary(value):
     """
@@ -162,6 +164,8 @@ def validate_header_tenant_id(value):
 
     return validation
 
+validate_username_header_not_present = \
+    validate_header_not_present(const.X_USER_NAME)
 validate_location_header_not_present = validate_header_not_present('Location')
 validate_content_length_header_not_present = validate_header_not_present(
     'Content-Length')
