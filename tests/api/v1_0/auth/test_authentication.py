@@ -21,7 +21,8 @@ class TestAuthentication(base.TestBaseV10):
         because test user doesn't have cloudFiles in service catalog
         """
         expected_headers = [const.X_AUTH_TOKEN,
-                            const.X_SERVER_MANAGEMENT_URL]
+                            const.X_SERVER_MANAGEMENT_URL,
+                            const.X_TENANT_ID]
         header_validation.validate_expected_headers(
             expected_headers=expected_headers)(resp)
 
