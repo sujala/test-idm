@@ -9,7 +9,6 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
-import com.rackspace.idm.domain.decorator.SAMLAuthContext
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.security.ConfigurableTokenFormatSelector
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
@@ -266,7 +265,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
             it.brokerIssuer = sharedBrokerIdp.issuer
             it.originIssuer = sharedOriginIdp.issuer
             it.email = DEFAULT_FED_EMAIL
-            it.requestIssueInstant = new DateTime()
+            it.responseIssueInstant = new DateTime()
             it.authContextRefClass =  SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
             it.username = UUID.randomUUID().toString()
             it.roleNames = [] as Set

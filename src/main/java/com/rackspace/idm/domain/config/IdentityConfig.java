@@ -336,6 +336,9 @@ public class IdentityConfig {
     public static final String FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_PROP = "feature.tenant.id.in.auth.response.v11";
     public static final boolean FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_DEFAULT = true;
 
+    public static final String FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP = "feature.v2.federation.validate.origin.issue.instant";
+    public static final boolean FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -657,6 +660,7 @@ public class IdentityConfig {
         defaults.put(AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT);
 
         defaults.put(IDP_POLICY_MAX_KILOBYTE_SIZE_PROP, IDP_POLICY_MAX_KILOBYTE_SIZE_DEFAULT);
+        defaults.put(FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP, FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_DEFAULT);
 
         defaults.put(FEEDS_DEAMON_EVICTION_ENABLED_PROP, FEEDS_DEAMON_ENABLED_DEFAULT);
         defaults.put(FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP, FEEDS_DAEMON_EVICTION_FREQUENCY_MS_DEFAULT);
@@ -1955,6 +1959,12 @@ public class IdentityConfig {
         public int getFeedsDaemonEvictionCloseIdleConnectionsAfter() {
             return getIntSafely(reloadableConfiguration, FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP);
         }
+
+        @IdmProp(key = FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP, versionAdded = "3.11.0" , description = "When true, v2 federation calls will validate the issueInstant of the origin saml assertions.")
+        public boolean shouldV2FederationValidateOriginIssueInstant() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP);
+        }
+
     }
 
     public class RepositoryConfig {

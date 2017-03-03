@@ -220,7 +220,7 @@ class FederatedRackerV2UserRestIntegrationTest extends RootIntegrationTest {
             it.validitySeconds = 100
             it.brokerIssuer = sharedBrokerIdp.issuer
             it.originIssuer = sharedOriginIdp.issuer
-            it.requestIssueInstant = new DateTime()
+            it.responseIssueInstant = new DateTime()
             it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
             it.username = username
             it

@@ -1,12 +1,16 @@
 package com.rackspace.idm.domain.service.federation.v2;
 
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.SignatureValidationException;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.Closure;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Transformer;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
+import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.security.x509.BasicX509Credential;
 import org.opensaml.xmlsec.signature.Signature;
 import org.opensaml.xmlsec.signature.support.SignatureException;
@@ -18,6 +22,8 @@ import org.springframework.stereotype.Component;
 
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -37,17 +43,22 @@ public class FederationUtils {
      */
     public void validateForExpiredRequest(FederatedAuthRequest federatedAuthRequest) {
         // Validate the specified datetime is not older than the configure max age for a saml response
-        DateTime issueInstant = federatedAuthRequest.getRequestIssueInstant();
-        DateTime now = new DateTime();
-        int maxResponseAge = identityConfig.getReloadableConfig().getFederatedResponseMaxAge();
-        int maxResponseSkew = identityConfig.getReloadableConfig().getFederatedResponseMaxSkew();
-        int timeDelta = Seconds.secondsBetween(issueInstant, now).getSeconds();
-        if (issueInstant.isAfter(now.plusSeconds(maxResponseSkew))) {
-            throw new BadRequestException("Saml response issueInstant cannot be in the future.");
+        Collection<DateTime> issueInstants = new ArrayList<>();
+        issueInstants.add(federatedAuthRequest.getResponseIssueInstant());
+        if (identityConfig.getReloadableConfig().shouldV2FederationValidateOriginIssueInstant()) {
+            issueInstants.addAll(CollectionUtils.collect(federatedAuthRequest.getOriginAssertions(), new Transformer<Assertion, DateTime>() {
+                @Override
+                public DateTime transform(Assertion assertion) {
+                    return assertion.getIssueInstant();
+                }
+            }));
         }
-        if (timeDelta > maxResponseAge + maxResponseSkew) {
-            throw new BadRequestException("Saml responses cannot be older than " + maxResponseAge + " seconds.");
-        }
+        CollectionUtils.forAllDo(issueInstants, new Closure<DateTime>() {
+            @Override
+            public void execute(DateTime issueInstant) {
+                validateIssueInstant(issueInstant);
+            }
+        });
     }
 
     public void validateSignatureForIdentityProvider(Signature signature, IdentityProvider identityProvider) {
@@ -95,4 +106,22 @@ public class FederationUtils {
             throw new SignatureValidationException("Signature is invalid", t);
         }
     }
+
+    private void validateIssueInstant(DateTime issueInstant) {
+        if (issueInstant == null) {
+            throw new BadRequestException("Saml issueInstant is required");
+        }
+
+        DateTime now = new DateTime();
+        int maxResponseAge = identityConfig.getReloadableConfig().getFederatedResponseMaxAge();
+        int maxResponseSkew = identityConfig.getReloadableConfig().getFederatedResponseMaxSkew();
+        int timeDelta = Seconds.secondsBetween(issueInstant, now).getSeconds();
+        if (issueInstant.isAfter(now.plusSeconds(maxResponseSkew))) {
+            throw new BadRequestException("Saml issueInstant cannot be in the future.");
+        }
+        if (timeDelta > maxResponseAge + maxResponseSkew) {
+            throw new BadRequestException("Saml issueInstant cannot be older than " + maxResponseAge + " seconds.");
+        }
+    }
+
 }
