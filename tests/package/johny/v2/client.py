@@ -1276,6 +1276,14 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             resp.json = types.MethodType(json, resp, type(resp))
         return resp
 
+    def get_domain(self, domain_id, requestslib_kwargs=None):
+        """Get a domain
+        """
+        url = self.url + const.GET_DOMAIN_URL.format(domain_id=domain_id)
+        resp = self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
     def delete_domain(self, domain_id, requestslib_kwargs=None):
         """Delete a domain
         :return 204 no response body

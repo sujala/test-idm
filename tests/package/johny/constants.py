@@ -24,6 +24,7 @@ CERTIFICATE_DELETE_URL = ("/RAX-AUTH/federation/identity-providers/{idp_id}/"
                           "certificates/{cert_id}")
 CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"
 DELETE_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}'
+GET_DOMAIN_URL = DELETE_DOMAIN_URL
 DELETE_ENDPOINT_FROM_TENANT_URL = (
     '/tenants/{tenant_id}/OS-KSCATALOG/endpoints/{endpoint_template_id}')
 DELETE_OTP_DEVICE_URL = (
