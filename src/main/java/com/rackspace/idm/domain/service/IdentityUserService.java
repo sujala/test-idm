@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.*;
 
+import java.util.List;
+
 public interface IdentityUserService {
 
     /**
@@ -78,6 +80,15 @@ public interface IdentityUserService {
      * @return
      */
     Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName);
+
+    /**
+     * Retrieve all federated users that do not belong to the approved domains in the identity provider
+     *
+     * @param approvedDomainIds
+     * @param idpId
+     * @return
+     */
+    Iterable<FederatedUser> getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(List<String> approvedDomainIds, String idpId);
 
     /**
      * Returns the number of federated users that are contained within the given identity provider and have the given domain ID.

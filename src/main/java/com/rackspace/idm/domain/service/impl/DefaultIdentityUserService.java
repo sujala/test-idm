@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class DefaultIdentityUserService implements IdentityUserService {
 
@@ -89,6 +91,11 @@ public class DefaultIdentityUserService implements IdentityUserService {
     @Override
     public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName) {
         return identityUserRepository.getFederatedUsersByDomainIdAndIdentityProviderId(domainId, idpName);
+    }
+
+    @Override
+    public Iterable<FederatedUser> getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(List<String> approvedDomainIds, String idpId) {
+        return identityUserRepository.getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(approvedDomainIds, idpId);
     }
 
     @Override

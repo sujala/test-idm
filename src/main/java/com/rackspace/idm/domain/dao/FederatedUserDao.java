@@ -3,6 +3,8 @@ package com.rackspace.idm.domain.dao;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Group;
 
+import java.util.List;
+
 /**
  * Operations for provisioned user based identity providers
  */
@@ -14,6 +16,14 @@ public interface FederatedUserDao extends FederatedBaseUserDao<FederatedUser> {
      * @return
      */
     Iterable<FederatedUser> getUsersByDomainId(String domainId);
+
+    /**
+     * Retrieve all federated users that do not belong to the approved domains in the identity provider
+     * @param approvedDomainIds
+     * @param identityProviderId
+     * @return
+     */
+    Iterable<FederatedUser> getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(List<String> approvedDomainIds, String identityProviderId);
 
     /**
      * Retrieve all federated users that belong to the specified domain and identity provider

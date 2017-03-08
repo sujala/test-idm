@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @SQLComponent
@@ -52,6 +53,11 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
     @Override
     public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String idpId) {
         return fedUserDao.getFederatedUsersByDomainIdAndIdentityProviderId(domainId, idpId);
+    }
+
+    @Override
+    public Iterable<FederatedUser> getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(List<String> approvedDomainIds, String idpId) {
+        return fedUserDao.getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(approvedDomainIds, idpId);
     }
 
     @Override
