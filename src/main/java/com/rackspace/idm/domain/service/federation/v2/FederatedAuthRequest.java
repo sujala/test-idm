@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.federation.v2;
 
+import com.rackspace.idm.domain.config.IdentityConfigHolder;
 import com.rackspace.idm.exception.BadRequestException;
 import lombok.Getter;
 import org.apache.commons.collections.CollectionUtils;
@@ -27,7 +28,7 @@ public class FederatedAuthRequest {
     private Assertion brokerAssertion;
     private Signature brokerSignature;
     private List<Assertion> originAssertions;
-    private DateTime requestIssueInstant;
+    private DateTime responseIssueInstant;
     private DateTime requestedTokenExpiration;
 
     public FederatedAuthRequest(Response rawSamlResponse) {
@@ -36,7 +37,7 @@ public class FederatedAuthRequest {
         brokerIssuer = wrappedSamlResponse.getBrokerIssuer();
         brokerSignature = wrappedSamlResponse.getBrokerSignature();
         brokerAssertion = wrappedSamlResponse.getBrokerAssertion();
-        requestIssueInstant = wrappedSamlResponse.getResponseIssueInstant();
+        responseIssueInstant = wrappedSamlResponse.getResponseIssueInstant();
         requestedTokenExpiration = wrappedSamlResponse.getRequestedTokenExpiration();
 
         originAssertions = wrappedSamlResponse.getOriginAssertions();
@@ -65,7 +66,7 @@ public class FederatedAuthRequest {
         if (wrappedSamlResponse.getBrokerSignature() == null) {
             throw new BadRequestException("The SAML Response must be signed", ERROR_CODE_FEDERATION2_MISSING_RESPONSE_SIGNATURE);
         }
-        if (requestIssueInstant == null) {
+        if (responseIssueInstant == null) {
             throw new BadRequestException("An IssueInstant must be specified on the SAML Response", ERROR_CODE_FEDERATION_MISSING_ISSUE_INSTANT);
         }
 
@@ -108,6 +109,11 @@ public class FederatedAuthRequest {
             }
             if (originAssertion.getSignature() == null) {
                 throw new BadRequestException("All origin assertions must be signed", ERROR_CODE_FEDERATION2_MISSING_ORIGIN_ASSERTION_SIGNATURE);
+            }
+            if (IdentityConfigHolder.IDENTITY_CONFIG.getReloadableConfig().shouldV2FederationValidateOriginIssueInstant()) {
+                if (originAssertion.getIssueInstant() == null) {
+                    throw new BadRequestException("An IssueInstant must be specified on all origin assertions", ERROR_CODE_FEDERATION_MISSING_ISSUE_INSTANT);
+                }
             }
         }
     }

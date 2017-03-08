@@ -5,9 +5,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederatio
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.SAMLConstants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.IdentityProviderDao
-import com.rackspace.idm.domain.decorator.SAMLAuthContext
-import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.FederatedBaseUser
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.Racker
@@ -28,6 +27,7 @@ import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.annotation.DirtiesContext
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
@@ -297,7 +297,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         ex.errorCode == ErrorCodes.ERROR_CODE_FEDERATION2_INVALID_ORIGIN_ISSUER
 
         cleanup:
-        cloud20.deleteIdentityProvider(serviceAdminToken, sharedBrokerIdp.id)
+        cloud20.deleteIdentityProvider(serviceAdminToken, brokerIdp.id)
     }
 
     def "Error when request token in past"() {
@@ -316,6 +316,155 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         then:
         def ex = thrown(BadRequestException)
         ex.errorCode == ErrorCodes.ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP
+    }
+
+    def "Error when saml response issue instant is missing"() {
+        given:
+        FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
+
+        FederatedDomainAuthGenerationRequest req = createValidFedRequest().with {
+            it.responseIssueInstant = null
+            it
+        }
+        def samlResponse = generator.createSignedSAMLResponse(req)
+
+        when:
+        federatedAuthHandlerV2.authenticate(samlResponse)
+
+        then:
+        def ex = thrown(BadRequestException)
+        ex.errorCode == ErrorCodes.ERROR_CODE_FEDERATION_MISSING_ISSUE_INSTANT
+    }
+
+    def "Error when saml response issue instant is in the future"() {
+        given:
+        FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
+
+        FederatedDomainAuthGenerationRequest req = createValidFedRequest().with {
+            it.responseIssueInstant = new DateTime().plusSeconds(identityConfig.getReloadableConfig().getFederatedResponseMaxSkew())
+            // Need to add a few seconds to keep it in the future by the time it is validated
+            it.responseIssueInstant = it.responseIssueInstant.plusSeconds(5)
+            it
+        }
+        def samlResponse = generator.createSignedSAMLResponse(req)
+
+        when:
+        federatedAuthHandlerV2.authenticate(samlResponse)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    def "Error when saml response issue instant is expired"() {
+        given:
+        FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
+
+        FederatedDomainAuthGenerationRequest req = createValidFedRequest().with {
+            it.responseIssueInstant = new DateTime().minusSeconds(identityConfig.getReloadableConfig().getFederatedResponseMaxAge())
+            it.responseIssueInstant = it.responseIssueInstant.minusSeconds(identityConfig.getReloadableConfig().getFederatedResponseMaxSkew())
+            // Need to add a second to push it over the expiration limit
+            it.responseIssueInstant = it.responseIssueInstant.minusSeconds(1)
+            it
+        }
+        def samlResponse = generator.createSignedSAMLResponse(req)
+
+        when:
+        federatedAuthHandlerV2.authenticate(samlResponse)
+
+        then:
+        thrown(BadRequestException)
+    }
+
+    @Unroll
+    def "Error when origin saml assertion issue instant is missing: validateOriginIssueInstant == #validateOriginIssueInstant"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP, validateOriginIssueInstant)
+        FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
+
+        FederatedDomainAuthGenerationRequest req = createValidFedRequest().with {
+            it.originIssueInstant = null
+            it
+        }
+        def samlResponse = generator.createSignedSAMLResponse(req)
+
+        when:
+        def thrownException = null
+        try {
+            federatedAuthHandlerV2.authenticate(samlResponse)
+        } catch (Exception e) {
+            thrownException = e
+        }
+
+        then:
+        validateExceptionThrown(thrownException, BadRequestException, ErrorCodes.ERROR_CODE_FEDERATION_MISSING_ISSUE_INSTANT, validateOriginIssueInstant)
+
+        where:
+        validateOriginIssueInstant | _
+        true  | _
+        false | _
+    }
+
+    @Unroll
+    def "Error when origin saml assertion issue instant is expired: validateOriginIssueInstant == #validateOriginIssueInstant"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP, validateOriginIssueInstant)
+        FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
+
+        FederatedDomainAuthGenerationRequest req = createValidFedRequest().with {
+            it.originIssueInstant = new DateTime().minusSeconds(identityConfig.getReloadableConfig().getFederatedResponseMaxAge())
+            it.originIssueInstant = it.originIssueInstant.minusSeconds(identityConfig.getReloadableConfig().getFederatedResponseMaxSkew())
+            // Need to add a second to push it over the expiration limit
+            it.originIssueInstant = it.originIssueInstant.minusSeconds(1)
+            it
+        }
+        def samlResponse = generator.createSignedSAMLResponse(req)
+
+        when:
+        def thrownException = null
+        try {
+            federatedAuthHandlerV2.authenticate(samlResponse)
+        } catch (Exception e) {
+            thrownException = e
+        }
+
+        then:
+        validateExceptionThrown(thrownException, BadRequestException, null, validateOriginIssueInstant)
+
+        where:
+        validateOriginIssueInstant | _
+        true  | _
+        false | _
+    }
+
+    @Unroll
+    def "Error when origin saml assertion issue instant is in the future: validateOriginIssueInstant == #validateOriginIssueInstant"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP, validateOriginIssueInstant)
+        FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
+
+        FederatedDomainAuthGenerationRequest req = createValidFedRequest().with {
+            it.originIssueInstant = it.originIssueInstant.plusSeconds(identityConfig.getReloadableConfig().getFederatedResponseMaxSkew())
+            // Need to add a few seconds to keep it over in the future by the time it is validated
+            it.originIssueInstant = it.originIssueInstant.plusSeconds(5)
+            it
+        }
+        def samlResponse = generator.createSignedSAMLResponse(req)
+
+        when:
+        def thrownException = null
+        try {
+            federatedAuthHandlerV2.authenticate(samlResponse)
+        } catch (Exception e) {
+            thrownException = e
+        }
+
+        then:
+        validateExceptionThrown(thrownException, BadRequestException, null, validateOriginIssueInstant)
+
+        where:
+        validateOriginIssueInstant | _
+        true  | _
+        false | _
     }
 
     def createIdp(IdentityProviderFederationTypeEnum type, Credential cred) {
@@ -342,11 +491,24 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
             it.brokerIssuer = sharedBrokerIdp.issuer
             it.originIssuer = sharedOriginIdp.issuer
             it.email = Constants.DEFAULT_FED_EMAIL
-            it.requestIssueInstant = new DateTime()
+            it.responseIssueInstant = new DateTime()
             it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
             it.username = UUID.randomUUID()
             it.roleNames = ["admin", "observer"] as Set
             it
         }
     }
+
+    void validateExceptionThrown(thrownException, exceptionClass, errorCode, isThrown) {
+        if (isThrown) {
+            assert thrownException != null
+            assert thrownException.class == exceptionClass
+            if (errorCode) {
+                assert thrownException.errorCode == errorCode
+            }
+        } else {
+            assert thrownException == null
+        }
+    }
+
 }

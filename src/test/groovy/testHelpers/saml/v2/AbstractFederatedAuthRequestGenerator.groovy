@@ -72,8 +72,8 @@ abstract class AbstractFederatedAuthRequestGenerator<T> {
     def Response createUnsignedSAMLResponse(T genRequest) {
         try {
             HashMap<String, List<String>> attributes = createAttributes(genRequest)
-            Assertion brokerAssertion = createUnsignedAssertion(genRequest.brokerIssuer, genRequest.requestIssueInstant, genRequest.username, genRequest.authContextRefClass, genRequest.validitySeconds, attributes)
-            Assertion originAssertion = createUnsignedAssertion(genRequest.originIssuer, genRequest.requestIssueInstant, genRequest.username, genRequest.authContextRefClass, genRequest.validitySeconds, attributes)
+            Assertion brokerAssertion = createUnsignedAssertion(genRequest.brokerIssuer, genRequest.responseIssueInstant, genRequest.username, genRequest.authContextRefClass, genRequest.validitySeconds, attributes)
+            Assertion originAssertion = createUnsignedAssertion(genRequest.originIssuer, genRequest.responseIssueInstant, genRequest.username, genRequest.authContextRefClass, genRequest.validitySeconds, attributes, genRequest.originIssueInstant)
 
             signAssertion(originAssertion, originCredential)
 
@@ -82,7 +82,7 @@ abstract class AbstractFederatedAuthRequestGenerator<T> {
                 responseIssuer = createIssuer(genRequest.brokerIssuer)
             }
             Status status = createStatus()
-            Response response = createResponse(genRequest.requestIssueInstant, responseIssuer, status, [brokerAssertion, originAssertion])
+            Response response = createResponse(genRequest.responseIssueInstant, responseIssuer, status, [brokerAssertion, originAssertion])
 
             return response
         } catch (Throwable t) {
@@ -122,7 +122,7 @@ abstract class AbstractFederatedAuthRequestGenerator<T> {
         return response
     }
 
-    public Assertion createUnsignedAssertion(String issuer, DateTime authTime, String username, String authnContextClassRef, int ttlSeconds, Map<String, List<String>> attributes) {
+    public Assertion createUnsignedAssertion(String issuer, DateTime authTime, String username, String authnContextClassRef, int ttlSeconds, Map<String, List<String>> attributes, DateTime issueInstant = new DateTime()) {
         Issuer sIssuer = null
         Subject subject = null
         AttributeStatement attributeStatement = null
@@ -138,7 +138,7 @@ abstract class AbstractFederatedAuthRequestGenerator<T> {
         }
         AuthnStatement authnStatement = createAuthnStatement(authTime, authnContextClassRef)
 
-        Assertion assertion = createAssertion(new DateTime(), subject, sIssuer, authnStatement, attributeStatement)
+        Assertion assertion = createAssertion(issueInstant, subject, sIssuer, authnStatement, attributeStatement)
         return assertion
     }
 

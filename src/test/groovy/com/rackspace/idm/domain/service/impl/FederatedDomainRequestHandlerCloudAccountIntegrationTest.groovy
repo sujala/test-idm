@@ -11,7 +11,6 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.IdentityProviderDao
-import com.rackspace.idm.domain.decorator.SAMLAuthContext
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.OpenstackEndpoint
@@ -657,7 +656,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
             it.brokerIssuer = sharedBrokerIdp.issuer
             it.originIssuer = sharedOriginIdp.issuer
             it.email = DEFAULT_FED_EMAIL
-            it.requestIssueInstant = new DateTime()
+            it.responseIssueInstant = new DateTime()
             it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
             it.username = UUID.randomUUID()
             it.roleNames = [] as Set
