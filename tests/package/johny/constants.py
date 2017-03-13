@@ -404,6 +404,13 @@ EXPECTED_UNBOUNDID_TIMEOUT_CONFIGS = [
     'ldap.server.pool.check.connection.age.on.release',
     'ldap.server.pool.allow.concurrent.socketfactory.use']
 IDP_MAPPING_POLICY_MAX_SIZE = "identity.provider.policy.max.kilobyte.size"
+FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY = (
+    'federation.identity.provider.default.policy')
+IDENTITY_PROPERTY = "identityProperty"
+VALUE_TYPE = "valueType"
+IDM_VERSION = "idmVersion"
+RELOADABLE = "reloadable"
+SEARCHABLE = "searchable"
 
 '''ROLES'''
 COMPUTE_ROLE_NAME = "compute:default"

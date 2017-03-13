@@ -986,3 +986,26 @@ class ImpersonateUser(base.AutoMarshallingModel):
                 const.EXPIRE_IN_SECONDS] = self.expire_in_seconds
 
         return json.dumps(impersonation_request)
+
+
+class DevopsProp(base.AutoMarshallingModel):
+    def __init__(self, prop_name=None, prop_value=None, prop_description=None,
+                 prop_version=None, prop_reloadable=None, prop_searchable=None,
+                 prop_value_type=None):
+        kwargs = locals()
+        del kwargs['self']
+        for key in kwargs:
+            setattr(self, key, kwargs[key])
+
+    def _obj_to_json(self):
+        return json.dumps({const.IDENTITY_PROPERTY: {
+            const.NAME: self.prop_name,
+            const.VALUE: self.prop_value,
+            const.VALUE_TYPE: self.prop_value_type,
+            const.DESCRIPTION: self.prop_description,
+            const.IDM_VERSION: self.prop_version,
+            const.RELOADABLE: self.prop_reloadable,
+            const.SEARCHABLE: self.prop_searchable}})
+
+    def _obj_to_xml(self):
+        raise Exception("Not implemented yet")
