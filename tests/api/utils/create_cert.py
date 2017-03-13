@@ -6,15 +6,20 @@
 
 import os
 # from Crypto.Hash import SHA
-from Crypto.PublicKey import RSA
+# from Crypto.PublicKey import RSA
 # from Crypto.Signature import PKCS1_v1_5 as pk
-from OpenSSL import crypto
-from datetime import datetime
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+# from OpenSSL import crypto
+import datetime
 from tests.api.base import TestBase
 
 
 def get_current_datetime_as_str(str_to_append=None):
-    temp = str(datetime.utcnow()).replace(' ', 'T')
+    temp = str(datetime.datetime.utcnow()).replace(' ', 'T')
     if str_to_append:
         temp = '{0}{1}'.format(temp, str_to_append)
     return temp
@@ -45,49 +50,45 @@ def create_self_signed_cert(cert_path=None, key_path=None, create_files=True,
         key_path = key_path or '{0}{1}'.format(partial_path, '.pem')
 
     # create a key pair
-    k = crypto.PKey()
-    k.generate_key(crypto.TYPE_RSA, 1024)
+    key = rsa.generate_private_key(
+    public_exponent=65537,
+    key_size=1024,
+    backend=default_backend()
+)
 
-    # create a X.509 self-signed cert
-    cert = crypto.X509()
-    cert.get_subject().C = country
-    cert.get_subject().ST = state
-    cert.get_subject().L = locality
-    cert.get_subject().O = organization
-    cert.get_subject().OU = organization_unit
-    cert.get_subject().CN = common_name or TestBase.generate_random_string()
-    cert.set_serial_number(1000)
+    subject = issuer = x509.Name([
+    x509.NameAttribute(NameOID.COUNTRY_NAME, unicode(country, 'utf-8')),
+    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, unicode(state, 'utf-8')),
+    x509.NameAttribute(NameOID.LOCALITY_NAME, unicode(locality, 'utf-8')),
+    x509.NameAttribute(
+        NameOID.ORGANIZATION_NAME, unicode(organization, 'utf-8')),
+    x509.NameAttribute(
+        NameOID.COMMON_NAME, unicode(organization_unit, 'utf-8')),
+    ])
+    cert = x509.CertificateBuilder().subject_name(
+        subject
+    ).issuer_name(
+        issuer
+    ).public_key(
+        key.public_key()
+    ).not_valid_before(
+       datetime.datetime.utcnow()
+    ).not_valid_after(
+        # Our certificate will be valid for 10 days
+        datetime.datetime.utcnow() + datetime.timedelta(days=10)
+    ).serial_number(
+        x509.random_serial_number()
+    ).add_extension(
+        x509.SubjectAlternativeName(
+            [x509.DNSName(common_name or TestBase.generate_random_string())]),
+        critical=False,
+    ).sign(key, hashes.SHA1(), default_backend())
 
-    if not_before_datetime:
-        if not isinstance(not_before_datetime, datetime):
-            not_before_datetime = convert_datetime_to_asn1_generalized_str(
-                not_before_datetime
-            )
-        cert.setNotBefore(not_before_datetime)
-    if not_after_datetime:
-        if not isinstance(not_after_datetime, datetime):
-            not_after_datetime = convert_datetime_to_asn1_generalized_str(
-                not_after_datetime
-            )
-        cert.setNotAfter(not_after_datetime)
-
-    if not_before_seconds is not None:
-        cert.gmtime_adj_notBefore(not_before_seconds)
-    if not_after_seconds is not None:
-        cert.gmtime_adj_notAfter(not_after_seconds)
-
-    if not_before_datetime is None and not_before_seconds is None:
-        cert.gmtime_adj_notBefore(0)
-
-    if not_after_datetime is None and not_after_seconds is None:
-        cert.gmtime_adj_notAfter(86400)
-
-    cert.set_issuer(cert.get_subject())
-    cert.set_pubkey(k)
-    cert.sign(k, 'sha1')
-
-    cert_contents = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-    key_contents = crypto.dump_privatekey(crypto.FILETYPE_PEM, k)
+    cert_contents = cert.public_bytes(serialization.Encoding.PEM)
+    key_contents = key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption())
 
     if create_files:
         with open(cert_path, 'wt+') as cert_handler:
@@ -97,8 +98,8 @@ def create_self_signed_cert(cert_path=None, key_path=None, create_files=True,
 
     der_key_path = None
     if make_der_pkcs8_private_key:
-        der_pkcs_key = RSA.importKey(key_contents).exportKey(format='DER',
-                                                             pkcs=8)
+        der_pkcs_key = key_contents
+
         der_key_path = '{0}{1}'.format(partial_path, '.pkcs8')
 
         if create_files:
@@ -110,7 +111,7 @@ def create_self_signed_cert(cert_path=None, key_path=None, create_files=True,
         replace('-----END CERTIFICATE-----', '').\
         replace('\n', '')
 
-    fingerprint = cert.digest('sha1').replace(':', '').lower()
+    fingerprint = cert.fingerprint(hashes.SHA1())
 
     return (cert_contents_cleanup, cert_path, key_path,
             der_key_path, fingerprint)
