@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import static com.rackspace.idm.domain.dao.impl.LdapRepository.CONTAINER_ROLES;
@@ -89,6 +90,11 @@ public class SqlFederatedUserRepository implements FederatedUserDao {
     @Override
     public Iterable<FederatedUser> getUsersByDomainId(String domainId) {
         return federatedUserRaxMapper.fromSQL(federatedUserRepository.findByDomainId(domainId));
+    }
+
+    @Override
+    public Iterable<FederatedUser> getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(List<String> approvedDomainIds, String identityProviderId) {
+        throw new NotImplementedException();
     }
 
     @Override

@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.*;
 
+import java.util.List;
+
 public interface IdentityUserDao {
 
     /**
@@ -45,6 +47,15 @@ public interface IdentityUserDao {
      * @return
      */
     Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String idpId);
+
+    /**
+     * Search for federated users not in approvedDomainIds for identity provider
+     *
+     * @param approvedDomainIds
+     * @param idpId
+     * @return
+     */
+    Iterable<FederatedUser> getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(List<String> approvedDomainIds, String idpId);
 
     /**
      * Search for the number of federated users with the specified domain id and identity provider id

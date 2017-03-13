@@ -68,6 +68,8 @@ public class Validator20 {
     public static final Pattern ROLE_NAME_REGEX = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9_\\-]*(?:\\:[a-zA-Z0-9][a-zA-Z0-9_\\-]*)?$");
     public static final String INVALID_IDENTITY_PROVIDER_NAME_ERROR_MSG = "Identity provider name must consist of only alphanumeric, '.', and '-' characters.";
     public static final String DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG = "Identity provider with name %s already exist.";
+    public static final String INVALID_IDENTITY_PROVIDER_APPROVED_DOMAIN_ERROR_MSG = "The provided approved domain '%s' does not exist.";
+    public static final String EMPTY_IDENTITY_PROVIDER_APPROVED_DOMAIN_ERROR_MSG = "ApprovedDomainIds must contain at least one valid domain Id.";
     public static final Pattern IDENTITY_PROVIDER_NAME_REGEX = Pattern.compile("[\\p{Alnum}.\\-']*");
 
     public static final String ERROR_TENANT_REQUIRED_WHEN_TYPE_IS_RCN = "Tenant types are required when role type is 'rcn'.";
@@ -375,12 +377,7 @@ public class Validator20 {
                 if (providedApprovedDomainIds != null && CollectionUtils.isEmpty(providedApprovedDomains)) {
                     throw new BadRequestException(String.format("When providing %s, you must provide a valid domain id", APPROVED_DOMAINS), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS);
                 }
-                for (String providedApprovedDomain : providedApprovedDomains) {
-                    Domain domain = domainService.getDomain(providedApprovedDomain);
-                    if (domain == null) {
-                        throw new BadRequestException(String.format("The provided approved domain '%s' does not exist", providedApprovedDomain), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN);
-                    }
-                }
+                validateIdentityProviderApprovedDomainIds(providedApprovedDomains);
             }
         } else if (identityProvider.getFederationType() == IdentityProviderFederationTypeEnum.BROKER) {
             if (providedApprovedDomainGroup == null || !providedApprovedDomainGroup.equals(BROKER_DOMAIN_GROUP_NAME)) {
@@ -402,6 +399,15 @@ public class Validator20 {
         }
     }
 
+    private void validateIdentityProviderApprovedDomainIds(List<String> approvedDomainIds) {
+        for(String domainId : approvedDomainIds){
+            Domain domain = domainService.getDomain(domainId);
+            if(domain == null) {
+                throw new BadRequestException(String.format(INVALID_IDENTITY_PROVIDER_APPROVED_DOMAIN_ERROR_MSG, domainId), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN);
+            }
+        }
+    }
+
     public void validateIdentityProviderForUpdate(IdentityProvider identityProvider, com.rackspace.idm.domain.entity.IdentityProvider existingProvider) {
         if (identityProvider == null) {
             throw new BadRequestException("Must provide an identity provider");
@@ -413,11 +419,22 @@ public class Validator20 {
         validateAttributeisNull("id", identityProvider.getId());
         validateAttributeisNull("publicCertificates", identityProvider.getPublicCertificates());
         validateAttributeisNull("approvedDomainGroup", identityProvider.getApprovedDomainGroup());
-        validateAttributeisNull("approvedDomainIds", identityProvider.getApprovedDomainIds());
 
         // Allowed attributes for update
         validateAttributeForUpdate("name", identityProvider.getName());
         validateAttributeForUpdate("authenticationUrl", identityProvider.getAuthenticationUrl());
+        if(identityProvider.getApprovedDomainIds() != null) {
+            if(existingProvider.getApprovedDomainGroup() != null) {
+                throw new BadRequestException("Cannot update approvedDomainIds if approvedDomainGroup is set.", ErrorCodes.ERROR_CODE_IDP_EXISTING_APPROVED_DOMAIN_GROUP);
+            }
+
+            List<String> approvedDomainIds = identityProvider.getApprovedDomainIds().getApprovedDomainId();
+            if(approvedDomainIds.isEmpty()){
+                throw new BadRequestException(EMPTY_IDENTITY_PROVIDER_APPROVED_DOMAIN_ERROR_MSG, ErrorCodes.ERROR_CODE_IDP_EMPTY_APPROVED_DOMAIN);
+            }
+
+            validateIdentityProviderApprovedDomainIds(approvedDomainIds);
+        }
 
         if (identityProvider.getName() != null && !identityProvider.getName().equalsIgnoreCase(existingProvider.getName())) {
             validateIdentityProviderName(identityProvider.getName());

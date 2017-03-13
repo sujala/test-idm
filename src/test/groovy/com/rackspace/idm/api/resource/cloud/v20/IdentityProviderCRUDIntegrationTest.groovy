@@ -9,8 +9,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.service.FederatedIdentityService
 import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum
 import com.rackspace.idm.domain.service.TenantService
@@ -51,6 +53,9 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     FederatedIdentityService federatedIdentityService
+
+    @Autowired
+    FederatedUserDao federatedUserRepository
 
     @Unroll
     def "CRUD a DOMAIN IDP with approvedDomainGroup, but no certs - request: #requestContentType"() {
@@ -162,6 +167,134 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
             utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
         }
         utils.deleteUserQuietly(idpManager)
+
+        where:
+        requestContentType | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "CRUD a DOMAIN IDP with approvedDomainIds, but no certs - request: #requestContentType"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def domain = utils.createDomainEntity()
+
+        when: "create a DOMAIN IDP with no certs and approvedDomainGroup"
+        resetCloudFeedsMock()
+        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id].asList())
+        def response = cloud20.createIdentityProvider(idpManagerToken, approvedDomainsIdp, requestContentType, requestContentType)
+        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
+
+        then: "created successfully"
+        response.status == SC_CREATED
+        creationResultIdp.approvedDomainGroup == null
+        creationResultIdp.approvedDomainIds.approvedDomainId == [domain.id].asList()
+        creationResultIdp.description == approvedDomainsIdp.description
+        creationResultIdp.issuer == approvedDomainsIdp.issuer
+        creationResultIdp.authenticationUrl == approvedDomainsIdp.authenticationUrl
+        creationResultIdp.publicCertificates == null
+        creationResultIdp.federationType == IdentityProviderFederationTypeEnum.DOMAIN
+        creationResultIdp.id != null
+        creationResultIdp.name != null
+        response.headers.getFirst("Location") != null
+        response.headers.getFirst("Location").contains(creationResultIdp.id)
+
+        and: "only one event was posted"
+        def idpEntity = federatedIdentityService.getIdentityProviderByIssuer(approvedDomainsIdp.issuer)
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was a CREATE event for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.CREATE),
+                VerificationTimes.exactly(1)
+        )
+
+        when: "get the DOMAIN group IDP"
+        def getIdpResponse = cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType)
+        IdentityProvider getResultIdp = getIdpResponse.getEntity(IdentityProvider)
+
+        then: "contains appropriate info"
+        getIdpResponse.status == SC_OK
+        getResultIdp.approvedDomainGroup == null
+        getResultIdp.approvedDomainIds.approvedDomainId == [domain.id].asList()
+        getResultIdp.description == approvedDomainsIdp.description
+        getResultIdp.issuer == approvedDomainsIdp.issuer
+        getResultIdp.authenticationUrl == approvedDomainsIdp.authenticationUrl
+        getResultIdp.federationType == IdentityProviderFederationTypeEnum.DOMAIN
+        getResultIdp.publicCertificates == null
+        getResultIdp.id != null
+        getResultIdp.name != null
+
+        when: "update the provider"
+        resetCloudFeedsMock()
+        def newAuthUrl = RandomStringUtils.randomAlphanumeric(10)
+        def domain2 = utils.createDomainEntity()
+        IdentityProvider updateApprovedDomainsIdp = new IdentityProvider().with {
+            it.authenticationUrl = newAuthUrl
+            ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
+            approvedDomainIds.approvedDomainId.addAll([domain.id, domain2.id].asList())
+            it.approvedDomainIds = approvedDomainIds
+            it
+        }
+        def updateIdpResponse = cloud20.updateIdentityProvider(idpManagerToken, creationResultIdp.id, updateApprovedDomainsIdp, requestContentType, requestContentType)
+
+        then: "idp updated"
+        updateIdpResponse.status == SC_OK
+        IdentityProvider updateResultIdp = updateIdpResponse.getEntity(IdentityProvider)
+        updateResultIdp.authenticationUrl == newAuthUrl
+        updateResultIdp.approvedDomainIds.approvedDomainId.size() == 2
+        updateResultIdp.approvedDomainIds.approvedDomainId == [domain.id, domain2.id].asList()
+
+        def getAfterUpdateIdpResponse = cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType)
+        IdentityProvider getAfterUpdateIdp = getAfterUpdateIdpResponse.getEntity(IdentityProvider)
+        getAfterUpdateIdp.authenticationUrl == newAuthUrl
+        updateResultIdp.approvedDomainIds.approvedDomainId.size() == 2
+        updateResultIdp.approvedDomainIds.approvedDomainId == [domain.id, domain2.id].asList()
+
+        and: "only one event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was an UPDATE event for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
+        when: "delete the provider"
+        resetCloudFeedsMock()
+        def deleteIdpResponse = cloud20.deleteIdentityProvider(idpManagerToken, creationResultIdp.id)
+
+        then: "idp deleted"
+        deleteIdpResponse.status == SC_NO_CONTENT
+        cloud20.getIdentityProvider(idpManagerToken, creationResultIdp.id, requestContentType, requestContentType).status == SC_NOT_FOUND
+
+        and: "only one event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "the event was a DELETE event for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.DELETE),
+                VerificationTimes.exactly(1)
+        )
+
+        cleanup:
+        if (creationResultIdp) {
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        }
+        utils.deleteUserQuietly(idpManager)
+        utils.deleteDomain(domain.id)
+        utils.deleteDomain(domain2.id)
 
         where:
         requestContentType | _
@@ -1383,15 +1516,173 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         when: "IDP with name having special characters"
         invalid.name = getRandomUUID("@")
-        response = cloud20.createIdentityProvider(idpManagerToken, invalid)
+        response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
 
         then: "400"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE)
 
+        when: "IDP with empty approvedDomainIds"
+        ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
+        invalid.setApprovedDomainIds(approvedDomainIds)
+        invalid.name = null
+        response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_EMPTY_APPROVED_DOMAIN)
+
+        when: "IDP with invalid approvedDomainIds"
+        approvedDomainIds.approvedDomainId.add("invalid")
+        invalid.setApprovedDomainIds(approvedDomainIds)
+        response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN)
+
+        when: "Update IDP with approvedDomainIds when approvedDomainGroup is already set"
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL, null).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        def domainGroupIdpEntity  = utils.createIdentityProvider(idpManagerToken, domainGroupIdp)
+        approvedDomainIds.approvedDomainId.add(domain.id)
+        invalid.setApprovedDomainIds(approvedDomainIds)
+        response = cloud20.updateIdentityProvider(idpManagerToken, domainGroupIdpEntity.id, invalid)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_IDP_EXISTING_APPROVED_DOMAIN_GROUP)
+
         cleanup:
         utils.deleteIdentityProviderQuietly(idpManagerToken, idp.id)
         utils.deleteIdentityProviderQuietly(idpManagerToken, existingIdpEntity.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, domainGroupIdpEntity.id)
         utils.deleteUserQuietly(idpManager)
+    }
+
+    def "Update Identity provider with duplicate approved domain Ids" () {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def domain = utils.createDomainEntity()
+        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id].asList()).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        def approvedDomainsIdpEntity  = utils.createIdentityProvider(idpManagerToken, approvedDomainsIdp)
+
+        when: "Updating Idp with duplicate approved domain Ids"
+        IdentityProvider duplicateApprovedDomainIds = new IdentityProvider().with {
+            ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
+            approvedDomainIds.approvedDomainId.addAll([domain.id, domain.id].asList())
+            it.approvedDomainIds = approvedDomainIds
+            it
+        }
+        def response = cloud20.updateIdentityProvider(idpManagerToken, approvedDomainsIdpEntity.id, duplicateApprovedDomainIds)
+
+        then:
+        response.status == SC_OK
+        IdentityProvider updateResultIdp = response.getEntity(IdentityProvider)
+        updateResultIdp.approvedDomainIds.approvedDomainId.size() == 1
+        updateResultIdp.approvedDomainIds.approvedDomainId == [domain.id].asList()
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, approvedDomainsIdpEntity.id)
+        utils.deleteUserQuietly(idpManager)
+        utils.deleteDomain(domain.id)
+    }
+
+    def "Updating Identity provider approved domain Ids"() {
+        given: "A new identity provider"
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        // Create new admin users for domain
+        def domain = utils.createDomainEntity()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domain.id)
+        def domain2 = utils.createDomainEntity()
+        def userAdmin2, users2
+        (userAdmin2, users2) = utils.createUserAdmin(domain2.id)
+
+        def issuer = getRandomUUID("issuer")
+        def keyPair1 = SamlCredentialUtils.generateKeyPair()
+        def cert1 = SamlCredentialUtils.generateCertificate(keyPair1)
+        def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cert1)
+        def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)
+        def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
+        def samlProducerForSharedIdp = new SamlProducer(SamlCredentialUtils.generateX509Credential(cert1, keyPair1))
+
+        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider(getRandomUUID(), "description", issuer, IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id, domain2.id].asList()).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        def approvedDomainsIdpEntity  = utils.createIdentityProvider(idpManagerToken, approvedDomainsIdp)
+
+        when: "Create new federated users"
+        def username = testUtils.getRandomUUID("fedUser")
+        def username2 = testUtils.getRandomUUID("fedUser2")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def email = "fedIntTest@invalid.rackspace.com"
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(issuer, username, expSecs, domain.id, null, email, samlProducerForSharedIdp);
+        def samlAssertion2 = new SamlFactory().generateSamlAssertionStringForFederatedUser(issuer, username2, expSecs, domain2.id, null, email, samlProducerForSharedIdp);
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        def samlResponse2 = cloud20.samlAuthenticate(samlAssertion2)
+
+        then: "Verify successful authentication"
+        samlResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        samlResponse2.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse2 = samlResponse2.getEntity(AuthenticateResponse).value
+
+        when: "Validating tokens"
+        def validateResponse = cloud20.validateToken(utils.identityAdminToken, authResponse.token.id)
+        def validate2Response = cloud20.validateToken(utils.identityAdminToken, authResponse2.token.id)
+
+        then: "Assert successful validation"
+        validateResponse.status == SC_OK
+        validate2Response.status == SC_OK
+
+        when: "Retrieve users from backend"
+        FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
+        FederatedUser fedUser2 = federatedUserRepository.getUserById(authResponse2.user.id)
+
+
+        then: "Verify users exist"
+        fedUser.id == authResponse.user.id
+        fedUser.username == username
+        fedUser2.id == authResponse2.user.id
+        fedUser2.username == username2
+
+        when: "Updating approved domains on IDP"
+        IdentityProvider updateIdentityProvider = new IdentityProvider().with {
+            ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
+            approvedDomainIds.approvedDomainId.addAll([domain2.id].asList())
+            it.approvedDomainIds = approvedDomainIds
+            it
+        }
+        def updateResponse = cloud20.updateIdentityProvider(idpManagerToken, approvedDomainsIdpEntity.id, updateIdentityProvider)
+
+        then: "Assert update IDP response"
+        updateResponse.status == SC_OK
+
+        when: "Retrieve users and validate tokens"
+        fedUser = federatedUserRepository.getUserById(authResponse.user.id)
+        fedUser2 = federatedUserRepository.getUserById(authResponse2.user.id)
+        validateResponse = cloud20.validateToken(utils.identityAdminToken, authResponse.token.id)
+        validate2Response = cloud20.validateToken(utils.identityAdminToken, authResponse2.token.id)
+
+        then: "Assert users and token status"
+        fedUser == null
+        validateResponse.status == SC_NOT_FOUND
+        fedUser2 != null
+        validate2Response.status == SC_OK
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, approvedDomainsIdpEntity.id)
+        utils.deleteUserQuietly(idpManager)
+        utils.deleteUsers(users)
+        utils.deleteUsers(users2)
+        utils.deleteDomain(domain.id)
+        utils.deleteDomain(domain2.id)
     }
 
     @Unroll

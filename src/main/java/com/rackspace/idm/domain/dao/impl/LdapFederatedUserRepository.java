@@ -50,6 +50,11 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
     }
 
     @Override
+    public Iterable<FederatedUser> getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(List<String> approvedDomainIds, String identityProviderId) {
+        return (Iterable) getObjects(searchFilterGetUsersNotInApprovedDomainIds(approvedDomainIds), getBaseDnWithIdpId(identityProviderId));
+    }
+
+    @Override
     public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String identityProviderName) {
         return (Iterable) getObjects(searchFilterGetUsersByDomainId(domainId), getBaseDnWithIdpId(identityProviderName));
     }
@@ -125,6 +130,14 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, getLdapEntityClass()).build();
+    }
+
+    private Filter searchFilterGetUsersNotInApprovedDomainIds(List<String> approvedDomainIds) {
+        LdapSearchBuilder builder = new LdapSearchBuilder();
+        for (String domainId : approvedDomainIds) {
+            builder.addNotEqualAttribute(ATTR_DOMAIN_ID, domainId);
+        }
+        return builder.build();
     }
 
     private Filter searchFilterGetUnexpiredUsersByDomainId(String domainId) {

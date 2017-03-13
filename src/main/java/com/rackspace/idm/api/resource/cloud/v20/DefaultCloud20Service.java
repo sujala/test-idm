@@ -66,6 +66,7 @@ import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Element;
@@ -288,6 +289,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private DefaultAuthenticateResponseService authenticateResponseService;
+
+    @Autowired
+    @Qualifier("tokenRevocationService")
+    private TokenRevocationService tokenRevocationService;
+
+    @Autowired
+    private ProvisionedUserSourceFederationHandler provisionedUserSourceFederationHandler;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -1283,26 +1291,45 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateIdentityProvider(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String providerId, IdentityProvider provider) {
         try {
-            //verify token exists and valid
+            // Verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
-            //verify user has appropriate role
+            // Verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
 
             com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProvider(providerId);
 
             validator20.validateIdentityProviderForUpdate(provider, existingProvider);
 
-            //copy over the only attributes allowed to be updated
+            // Copy over the only attributes allowed to be updated
             if (provider.getName() != null) {
                 existingProvider.setName(provider.getName());
             }
             if (provider.getAuthenticationUrl() != null) {
                 existingProvider.setAuthenticationUrl(provider.getAuthenticationUrl());
             }
+            List<String> existingProviderApprovedDomainIds = existingProvider.getApprovedDomainIds();
+            if (provider.getApprovedDomainIds() != null) {
+                // Remove duplicates
+                Set<String> approvedDomainIds = new LinkedHashSet<>(provider.getApprovedDomainIds().getApprovedDomainId());
+                existingProvider.setApprovedDomainIds(new ArrayList<>(approvedDomainIds));
+            }
 
             federatedIdentityService.updateIdentityProvider(existingProvider); //update
             atomHopperClient.asyncPostIdpEvent(existingProvider, EventType.UPDATE);
+
+            // Delete all users created under the IDP with a domain that is no longer approved for the IDP
+            if (provider.getApprovedDomainIds() != null && !provider.getApprovedDomainIds().getApprovedDomainId().isEmpty()
+                    && !provider.getApprovedDomainIds().getApprovedDomainId().equals(existingProviderApprovedDomainIds)) {
+                Iterable<FederatedUser> federatedUsersForDeletion = identityUserService.getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(
+                        provider.getApprovedDomainIds().getApprovedDomainId(), providerId);
+                for (FederatedUser federatedUser : federatedUsersForDeletion) {
+                    // Revoke all issued tokens for federated user
+                    tokenRevocationService.revokeAllTokensForEndUser(federatedUser);
+                    // Delete federated user
+                    provisionedUserSourceFederationHandler.deleteFederatedUser(federatedUser);
+                }
+            }
             ResponseBuilder builder = Response.ok(uriInfo.getRequestUriBuilder().path(existingProvider.getProviderId()).build());
             return builder.entity(identityProviderConverterCloudV20.toIdentityProvider(existingProvider));
         } catch (Exception ex) {
