@@ -40,12 +40,14 @@ public class JSONWriterForBypassCodes extends JSONWriterForEntity<BypassCodes> {
             final JSONObject inner = (JSONObject) object.get(JSONConstants.RAX_AUTH_BYPASS_CODES);
             final JSONArray array = (JSONArray) inner.get(CODES);
 
-            // Workaround to fix the "codes" XML attribute JSON representation
-            final String codes = (String) array.get(0);
-            final JSONArray newCodes = new JSONArray();
-            inner.put(CODES, newCodes);
-            for (String code : codes.split(" ")) {
-                newCodes.add(code);
+            if (array != null) {
+                // Workaround to fix the "codes" XML attribute JSON representation
+                final String codes = (String) array.get(0);
+                final JSONArray newCodes = new JSONArray();
+                inner.put(CODES, newCodes);
+                for (String code : codes.split(" ")) {
+                    newCodes.add(code);
+                }
             }
 
             // Save

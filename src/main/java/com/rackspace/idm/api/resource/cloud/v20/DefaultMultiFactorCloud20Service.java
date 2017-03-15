@@ -192,6 +192,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
             //if the target user is not a provisioned user (e.g. - a fed user), throw bad request cause fed users can't have MFA
             EndUser endUser = requestContextHolder.getAndCheckTargetEndUser(userId);
+            if (endUser instanceof FederatedUser) {
+                throw new ForbiddenException("Cannot target federated user");
+            }
             if (!(endUser instanceof User)) {
                 throw new BadRequestException("Federated users do not store multi-factor information within Identity");
             }
@@ -219,6 +222,9 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
 
             //if the target user is not a provisioned user (e.g. - a fed user), throw bad request cause fed users can't have MFA
             EndUser endUser = requestContextHolder.getAndCheckTargetEndUser(userId);
+            if (endUser instanceof FederatedUser) {
+                throw new ForbiddenException("Cannot target federated user");
+            }
             if (!(endUser instanceof User)) {
                 throw new BadRequestException("Federated users do not store multi-factor information within Identity");
             }
@@ -521,11 +527,14 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         try {
             ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             User requester = (User) userService.getUserByScopeAccess(token);
-            User user = requestContextHolder.checkAndGetTargetUser(userId);
+            EndUser user = requestContextHolder.getAndCheckTargetEndUser(userId);
+            if (user instanceof FederatedUser) {
+                throw new ForbiddenException("Cannot target federated user");
+            }
             verifyAccessToOtherUser(token, requester, user);
 
-            List<MobilePhone> phoneList = multiFactorService.getMobilePhonesForUser(user);
-            return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhonesWebIncludingVerifiedFlag(phoneList, user));
+            List<MobilePhone> phoneList = multiFactorService.getMobilePhonesForUser((User)user);
+            return Response.ok().entity(mobilePhoneConverterCloudV20.toMobilePhonesWebIncludingVerifiedFlag(phoneList, (User)user));
 
         } catch (IllegalStateException ex) {
             return exceptionHandler.badRequestExceptionResponse(ex.getMessage());
@@ -538,7 +547,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
     @Override
     public Response.ResponseBuilder generateBypassCodes(UriInfo uriInfo, String authToken, String userId, BypassCodes bypassCodes) {
         try {
-            final User user = (User)requestContextHolder.getTargetEndUser(userId);
+            final User user = (User)requestContextHolder.checkAndGetTargetUser(userId);
             final ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             final User requester = (User) userService.getUserByScopeAccess(token);
 
