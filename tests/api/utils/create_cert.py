@@ -16,6 +16,7 @@ from cryptography.x509.oid import NameOID
 # from OpenSSL import crypto
 import datetime
 from tests.api.base import TestBase
+from tests.package.johny import constants
 
 
 def get_current_datetime_as_str(str_to_append=None):
@@ -36,7 +37,8 @@ def create_self_signed_cert(cert_path=None, key_path=None, create_files=True,
                             not_after_seconds=None, country='US',
                             state='Texas', locality='Austin',
                             organization='Rackspace',
-                            organization_unit='IdentityQE', common_name=None):
+                            organization_unit='IdentityQE',
+                            common_name=None):
 
     # set paths for cert and key
     temp_timestamp = get_current_datetime_as_str()
@@ -80,7 +82,8 @@ def create_self_signed_cert(cert_path=None, key_path=None, create_files=True,
         x509.random_serial_number()
     ).add_extension(
         x509.SubjectAlternativeName(
-            [x509.DNSName(common_name or TestBase.generate_random_string())]),
+            [x509.DNSName(common_name or TestBase.generate_random_string(
+             pattern=constants.UPPER_CASE_LETTERS))]),
         critical=False,
     ).sign(key, hashes.SHA1(), default_backend())
 
