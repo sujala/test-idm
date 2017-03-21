@@ -9,7 +9,7 @@
     </nodes>
     <filters>
       <!-- Need to create whitelist regex for this. For now just exclude fed calls -->
-      <filter name="rackspace-auth-user" uri-regex="^((?!/v2.0/RAX-AUTH/federation/saml/auth).)*$" />
+      <filter name="rackspace-auth-user" uri-regex="(?:^.*/v2\.0/tokens(?:/)?$)|(?:^.*/v1\.1/auth(?:/)?$)|(?:^.*/v1\.1/auth-admin(?:/)?$)" />
       <filter name="header-translation" />
       <filter name="ip-user" />
       <filter name="uri-user" />
