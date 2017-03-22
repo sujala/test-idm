@@ -162,7 +162,23 @@ class TestAddMappingIDP(base.TestBaseV2):
             const.MESSAGE], "Identity Provider with id/name: '{0}' was"
                             " not found.".format(idp_id))
 
-    @ddt.data("xml", "xhtml_xml", "x-www-form-urlencoded")
+    @ddt.data("xml", "xhtml_xml")
+    def test_idp_mapping_content_type_xml(self, content_type):
+        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME])
+        self.idp_ia_clients[
+            "bad_content_type"] = self.create_identity_admin_with_role(
+                const.PROVIDER_MANAGEMENT_ROLE_NAME)
+        self.idp_ia_clients["bad_content_type"].default_headers[
+            const.CONTENT_TYPE] = (const.CONTENT_TYPE_VALUE.format(
+                content_type))
+        resp_put_manager = self.idp_ia_clients[
+            "bad_content_type"].add_idp_mapping(
+                idp_id=provider_id,
+                request_data={})
+        self.assertEquals(resp_put_manager.status_code, 400)
+
+    @ddt.data("text", "x-www-form-urlencoded")
     def test_idp_mapping_content_type(self, content_type):
         provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME])
