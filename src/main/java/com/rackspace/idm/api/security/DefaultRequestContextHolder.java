@@ -1,8 +1,10 @@
 package com.rackspace.idm.api.security;
 
 import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.exception.ForbiddenException;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,6 +114,10 @@ public class DefaultRequestContextHolder implements RequestContextHolder {
 
     @Override
     public User checkAndGetTargetUser(String userId) {
-        return (User) getAndCheckTargetEndUser(userId);
+        EndUser endUser = getAndCheckTargetEndUser(userId);
+        if (endUser instanceof FederatedUser) {
+            throw new ForbiddenException("Cannot target federated user");
+        }
+        return (User) endUser;
     }
 }

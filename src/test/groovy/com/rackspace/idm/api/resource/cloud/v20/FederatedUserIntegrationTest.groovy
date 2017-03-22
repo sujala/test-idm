@@ -2,6 +2,8 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
@@ -60,6 +62,7 @@ import javax.servlet.http.HttpServletResponse
 import static com.rackspace.idm.Constants.*
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
+import static org.apache.http.HttpStatus.*
 
 class FederatedUserIntegrationTest extends RootIntegrationTest {
 
@@ -1623,6 +1626,118 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
     }
+
+    @Unroll
+    def "Return 403 when target user of Identity MFA Service is a federated user: #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("samlUser")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def userAdmin1, users1
+        (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
+
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def samlAuthToken = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.token : samlAuthResponse.token
+        def samlAuthTokenId = samlAuthToken.id
+        def userId = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user.id : samlAuthResponse.user.id
+
+        when: "validate the token"
+        def validateSamlTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), samlAuthTokenId)
+
+        then: "the token is still valid"
+        validateSamlTokenResponse.status == SC_OK
+
+        when: "add OTP device"
+        OTPDevice otpDevice = new OTPDevice()
+        otpDevice.setName("test")
+        def response = cloud20.addOTPDeviceToUser(utils.getServiceAdminToken(), userId, otpDevice, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "delete OTP device"
+        response = cloud20.deleteOTPDeviceFromUser(utils.getServiceAdminToken(), userId, "id", mediaType, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "send verification code"
+        response = cloud20.sendVerificationCode(utils.getServiceAdminToken(), userId, "id", mediaType, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "verify otp device"
+        def verificationCode = cloud20.getV2Factory().createVerificationCode("code")
+        response = cloud20.verifyOTPDevice(utils.getServiceAdminToken(), userId, "id", verificationCode, mediaType, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "list devices"
+        response = cloud20.listDevices(utils.getServiceAdminToken(), userId, mediaType, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "list mfa devices"
+        response = cloud20.getOTPDevicesFromUser(utils.getServiceAdminToken(), userId, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "get mfa device"
+        response = cloud20.getOTPDeviceFromUser(utils.getServiceAdminToken(), userId, "id", mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "update mfa settings"
+        def mfaSettings = cloud20.v2Factory.createMultiFactorSettings(false, false)
+        response = cloud20.updateMultiFactorSettings(utils.getServiceAdminToken(), userId, mfaSettings, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "request bypass codes"
+        def bypassCodes = cloud20.v2Factory.createBypassCode(30, 0)
+        response = cloud20.getBypassCodes(utils.getServiceAdminToken(), userId, bypassCodes, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Add phone to user"
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone phone = new com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone()
+        phone.number = "number"
+        response = cloud20.addPhoneToUser(utils.getServiceAdminToken(), userId, phone, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Get phone from user"
+        response = cloud20.getPhoneFromUser(utils.getServiceAdminToken(), userId, "id", mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Delete phone from user"
+        response = cloud20.deletePhoneFromUser(utils.getServiceAdminToken(), userId, "id", mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUsers(users1)
+
+        where:
+        mediaType             | _
+        APPLICATION_XML_TYPE  | _
+        APPLICATION_JSON_TYPE | _
+    }
+
+
 
     def deleteFederatedUserQuietly(username) {
         try {
