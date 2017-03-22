@@ -11,6 +11,8 @@
       <!-- Only enable for fed calls via standard fed endpoint. -->
       <filter name="compression" uri-regex="^.*/v2.0/RAX-AUTH/federation/saml/auth$"/>
       <!-- Need to create whitelist regex for this. For now just exclude fed calls -->
+      <filter name="content-type-stripper" />
+      <filter name="translation" />
       <filter name="rackspace-auth-user" uri-regex="(?:^.*/v2\.0/tokens(?:/)?$)|(?:^.*/v1\.1/auth(?:/)?$)|(?:^.*/v1\.1/auth-admin(?:/)?$)" />
       <filter name="header-translation" />
       <filter name="ip-user" />
@@ -18,8 +20,6 @@
       <filter name="slf4j-http-logging" />
       <filter name="rate-limiting" />
       <filter name="cors"/>
-      <filter name="content-type-stripper" />
-      <filter name="translation" />
       <filter name="scripting" />
       <filter name="herp" />
       <!-- Only enable for fed calls via standard fed endpoint. -->
