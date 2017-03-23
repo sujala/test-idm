@@ -482,6 +482,11 @@ public class IdentityConfig {
     public static final String FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP = "feeds.daemon.eviction.close.idle.after.ms";
     public static final int FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_DEFAULT = 30000;
 
+    public static final String FEEDS_ALLOW_CONNECTION_KEEP_ALIVE_PROP = "feeds.allow.connection.keep.alive";
+    public static final boolean FEEDS_ALLOW_CONNECTION_KEEP_ALIVE_DEFAULT = false;
+
+    public static final String FEEDS_CONNECTION_KEEP_ALIVE_MS_PROP = "feeds.connection.keep.alive.ms";
+    public static final long FEEDS_CONNECTION_KEEP_ALIVE_MS_DEFAULT = 5000;
 
     /**
      * Identity Repository Properties
@@ -671,6 +676,8 @@ public class IdentityConfig {
         defaults.put(FEEDS_DEAMON_EVICTION_ENABLED_PROP, FEEDS_DEAMON_ENABLED_DEFAULT);
         defaults.put(FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP, FEEDS_DAEMON_EVICTION_FREQUENCY_MS_DEFAULT);
         defaults.put(FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP, FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_DEFAULT);
+        defaults.put(FEEDS_ALLOW_CONNECTION_KEEP_ALIVE_PROP, FEEDS_ALLOW_CONNECTION_KEEP_ALIVE_DEFAULT);
+        defaults.put(FEEDS_CONNECTION_KEEP_ALIVE_MS_PROP, FEEDS_CONNECTION_KEEP_ALIVE_MS_DEFAULT);
 
         defaults.put(FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP, FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_DEFAULT);
 
@@ -1985,6 +1992,15 @@ public class IdentityConfig {
             return getStringSafely(reloadableConfiguration, DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP);
         }
 
+        @IdmProp(key = FEEDS_ALLOW_CONNECTION_KEEP_ALIVE_PROP, versionAdded = "3.11.0", description = "Specifies whether to enable keep alive for feed connections")
+        public boolean getFeedsAllowConnectionKeepAlive() {
+            return getBooleanSafely(staticConfiguration, FEEDS_ALLOW_CONNECTION_KEEP_ALIVE_PROP);
+        }
+
+        @IdmProp(key = FEEDS_CONNECTION_KEEP_ALIVE_MS_PROP, versionAdded = "3.11.0", description = "Specifies the keep alive feed connections duration")
+        public long getFeedsConnectionKeepAliveDuration() {
+            return getLongSafely(staticConfiguration, FEEDS_CONNECTION_KEEP_ALIVE_MS_PROP);
+        }
     }
 
     public class RepositoryConfig {

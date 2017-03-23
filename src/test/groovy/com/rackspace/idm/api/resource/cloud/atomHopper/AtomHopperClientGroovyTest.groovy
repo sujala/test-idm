@@ -18,10 +18,13 @@ import com.rackspace.idm.util.CryptHelper
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.configuration.Configuration
 import org.apache.http.HttpEntity
+import org.apache.http.HttpResponse
 import org.apache.http.StatusLine
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.conn.HttpClientConnectionManager
 import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy
+import org.apache.http.protocol.HttpContext
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import org.w3._2005.atom.UsageEntry
 import spock.lang.Shared
@@ -402,6 +405,56 @@ class AtomHopperClientGroovyTest extends Specification {
         then:
         0 * connMgr.closeExpiredConnections()
         0 * connMgr.closeIdleConnections(_, _)
+    }
+
+    def "keep-alive stategy uses duration config value when no default duration is specified and keepAlive is enabled"() {
+        given:
+        identityConfig = Mock()
+        staticConfig = Mock()
+        identityConfig.getReloadableConfig() >> reloadableConfig
+        reloadableConfig.getFeedsAllowConnectionKeepAlive() >> true
+        reloadableConfig.getFeedsConnectionKeepAliveDuration() >> 1000
+
+        def connectionKeepAliveStrategy = new AtomHopperConnectionKeepAliveStrategy(identityConfig);
+        DefaultConnectionKeepAliveStrategy internalConnectionKeepAliveStrategy = Mock()
+        internalConnectionKeepAliveStrategy.getKeepAliveDuration(_,_) >> -1
+        connectionKeepAliveStrategy.connectionKeepAliveStrategy = internalConnectionKeepAliveStrategy
+        HttpResponse response = Mock()
+        HttpContext context = Mock()
+
+        when:
+        def duration = connectionKeepAliveStrategy.getKeepAliveDuration(response, context)
+
+        then:
+        duration == 1000
+    }
+
+    @Unroll
+    def "keep-alive strategy uses default duration when specified with keepAlive value: #keepAlive"() {
+        given:
+        identityConfig = Mock()
+        staticConfig = Mock()
+        identityConfig.getReloadableConfig() >> reloadableConfig
+        reloadableConfig.getFeedsAllowConnectionKeepAlive() >> keepAlive
+        reloadableConfig.getFeedsConnectionKeepAliveDuration() >> 1000
+
+        def connectionKeepAliveStrategy = new AtomHopperConnectionKeepAliveStrategy(identityConfig);
+        DefaultConnectionKeepAliveStrategy internalConnectionKeepAliveStrategy = Mock()
+        internalConnectionKeepAliveStrategy.getKeepAliveDuration(_,_) >> 500
+        connectionKeepAliveStrategy.connectionKeepAliveStrategy = internalConnectionKeepAliveStrategy
+        HttpResponse response = Mock()
+        HttpContext context = Mock()
+
+        when:
+        def duration = connectionKeepAliveStrategy.getKeepAliveDuration(response, context)
+
+        then:
+        duration == 500
+
+        where:
+        keepAlive | _
+        true      | _
+        false     | _
     }
 
     def createTenantRole(String name, String roleRsId, String description) {

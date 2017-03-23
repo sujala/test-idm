@@ -14,6 +14,7 @@ import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.Validate;
+import org.apache.http.ConnectionReuseStrategy;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -22,6 +23,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
@@ -33,7 +35,9 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
@@ -226,11 +230,14 @@ public class AtomHopperClient {
                 .setConnectionRequestTimeout(identityConfig.getReloadableConfig().getFeedsConnectionRequestTimeout())
                 .build();
 
+        ConnectionKeepAliveStrategy connectionKeepAliveStrategy = new AtomHopperConnectionKeepAliveStrategy(identityConfig);
+
         //create the client and set the custom context
         HttpClientBuilder b = HttpClientBuilder.create()
                 .setSSLContext(sslContext)
                 .setConnectionManager(poolingHttpClientConnectionManager)
                 .setDefaultRequestConfig(requestConfig)
+                .setKeepAliveStrategy(connectionKeepAliveStrategy)
                 ;
 
         CloseableHttpClient client = b.build();
