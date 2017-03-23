@@ -1308,24 +1308,28 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (provider.getAuthenticationUrl() != null) {
                 existingProvider.setAuthenticationUrl(provider.getAuthenticationUrl());
             }
-            List<String> existingProviderApprovedDomainIds = existingProvider.getApprovedDomainIds();
-            if (provider.getApprovedDomainIds() != null) {
-                // Remove duplicates
+            List<String> existingProviderApprovedDomainIds = existingProvider.getApprovedDomainIds() != null ? existingProvider.getApprovedDomainIds() : Collections.EMPTY_LIST ;
+
+            List<String> suppliedProviderApprovedDomainIds = null;
+            if (provider.getApprovedDomainIds() != null && CollectionUtils.isNotEmpty(provider.getApprovedDomainIds().getApprovedDomainId())) {
+                // Remove duplicates within supplied list by adding to a hashset
                 Set<String> approvedDomainIds = new LinkedHashSet<>(provider.getApprovedDomainIds().getApprovedDomainId());
-                existingProvider.setApprovedDomainIds(new ArrayList<>(approvedDomainIds));
+                suppliedProviderApprovedDomainIds = new ArrayList<>(approvedDomainIds);
+                existingProvider.setApprovedDomainIds(suppliedProviderApprovedDomainIds);
             }
 
             federatedIdentityService.updateIdentityProvider(existingProvider); //update
             atomHopperClient.asyncPostIdpEvent(existingProvider, EventType.UPDATE);
 
-            // Delete all users created under the IDP with a domain that is no longer approved for the IDP
-            if (provider.getApprovedDomainIds() != null && !provider.getApprovedDomainIds().getApprovedDomainId().isEmpty()
-                    && !provider.getApprovedDomainIds().getApprovedDomainId().equals(existingProviderApprovedDomainIds)) {
+            /*
+             Only delete fed users for the IDP if the existingProviderApprovedDomainIds contains one or more domainIds
+             that were not included in the new set of domainIds
+            */
+            if (suppliedProviderApprovedDomainIds != null && CollectionUtils.isNotEmpty(suppliedProviderApprovedDomainIds)
+                    && !CollectionUtils.isEqualCollection(existingProviderApprovedDomainIds, suppliedProviderApprovedDomainIds)) {
                 Iterable<FederatedUser> federatedUsersForDeletion = identityUserService.getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(
-                        provider.getApprovedDomainIds().getApprovedDomainId(), providerId);
+                        suppliedProviderApprovedDomainIds, providerId);
                 for (FederatedUser federatedUser : federatedUsersForDeletion) {
-                    // Revoke all issued tokens for federated user
-                    tokenRevocationService.revokeAllTokensForEndUser(federatedUser);
                     // Delete federated user
                     provisionedUserSourceFederationHandler.deleteFederatedUser(federatedUser);
                 }
