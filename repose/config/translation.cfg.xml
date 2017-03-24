@@ -3,20 +3,13 @@
 <translation xmlns="http://docs.openrepose.org/repose/translation/v1.0"
     xsl-engine="SaxonHE" >
     <request-translations>
-  
         <request-translation 
             http-methods="PUT POST" 
             content-type="application/xml" 
-            accept="application/xml"
             translated-content-type="application/xml">
             <style-sheets>
-    
                 <style id="copy" href="repose-translation-style.xsl" />
-    
             </style-sheets>
         </request-translation>
-  
-
     </request-translations>
-
 </translation>
