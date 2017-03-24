@@ -1,14 +1,13 @@
 package com.rackspace.idm.multifactor.service
 
 import com.google.i18n.phonenumbers.Phonenumber
-import com.rackspace.identity.multifactor.providers.MobilePhoneVerification
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.OTPDeviceDao
 import com.rackspace.idm.domain.dao.UserDao
-import com.rackspace.idm.domain.dao.impl.LdapMobilePhoneRepository
-import com.rackspace.idm.domain.dao.impl.LdapUserRepository
 import com.rackspace.idm.domain.entity.MobilePhone
 import com.rackspace.idm.domain.entity.OTPDevice
 import com.rackspace.idm.domain.entity.User
@@ -18,14 +17,15 @@ import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.identity.multifactor.domain.BasicPin
 import com.rackspace.identity.multifactor.domain.Pin
 import com.rackspace.identity.multifactor.providers.UserManagement
-import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.StringUtils
 import org.joda.time.DateTime
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.test.context.ContextConfiguration
+import spock.lang.Unroll
 
+import static org.apache.http.HttpStatus.*
 import static org.mockito.Mockito.*
+import static javax.ws.rs.core.MediaType.*
 
 /**
  * Tests the multi-factor service with the exception of the MobilePhoneVerification dependency. The production class will sends texts through Duo Security, which
@@ -555,6 +555,122 @@ class BasicMultiFactorServiceIntegrationTest extends RootConcurrentIntegrationTe
         try { otpDeviceDao.deleteOTPDevice(otpDevice1) } catch (Exception e) {}
         try { otpDeviceDao.deleteOTPDevice(otpDevice2) } catch (Exception e) {}
         try { userRepository.deleteUser(finalUserAdmin) } catch (Exception e) {}
+    }
+
+    @Unroll
+    def "Return 403 when Racker token is provided in 'X-Auth-Token' header for MFA services: #mediaType"() {
+        given:
+        def userAdmin = createUserAdmin()
+        String userId = userAdmin.id
+        def authResponse = utils.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD)
+        String rackerToken = authResponse.token.id
+
+        when: "Validate the token"
+        def validateRackerTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), rackerToken)
+
+        then:
+        validateRackerTokenResponse.status == SC_OK
+
+        when: "Add OTP device"
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice otpDevice = new com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice()
+        otpDevice.name = "name"
+        def response = cloud20.addOTPDeviceToUser(rackerToken, userId, otpDevice, mediaType, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Delete OTP device"
+        response = cloud20.deleteOTPDeviceFromUser(rackerToken, userId, "id", mediaType, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Send verification code"
+        response = cloud20.sendVerificationCode(rackerToken, userId, "id", mediaType, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Verify otp device"
+        def verificationCode = cloud20.getV2Factory().createVerificationCode("code")
+        response = cloud20.verifyOTPDevice(rackerToken, userId, "id", verificationCode, mediaType, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "List devices"
+        response = cloud20.listDevices(rackerToken, userId, mediaType, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "List mfa devices"
+        response = cloud20.getOTPDevicesFromUser(rackerToken, userId, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Get mfa device"
+        response = cloud20.getOTPDeviceFromUser(rackerToken, userId, "id", mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Update mfa settings"
+        def mfaSettings = cloud20.v2Factory.createMultiFactorSettings(false, false)
+        response = cloud20.updateMultiFactorSettings(rackerToken, userId, mfaSettings, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Request bypass codes"
+        def bypassCodes = cloud20.v2Factory.createBypassCode(30, 0)
+        response = cloud20.getBypassCodes(rackerToken, userId, bypassCodes, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Add phone to user"
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone phone = new com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone()
+        phone.number = "number"
+        response = cloud20.addPhoneToUser(rackerToken, userId, phone, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Get phone from user"
+        response = cloud20.getPhoneFromUser(rackerToken, userId, "id", mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Delete phone from user"
+        response = cloud20.deletePhoneFromUser(rackerToken, userId, "id", mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Update MFA domain settings"
+        MultiFactorDomain multiFactorDomain = new MultiFactorDomain()
+        multiFactorDomain.setDomainMultiFactorEnforcementLevel(DomainMultiFactorEnforcementLevelEnum.OPTIONAL)
+        response = cloud20.updateMultiFactorDomainSettings(rackerToken, "id", multiFactorDomain, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "List MFA devices for user"
+        response = cloud20.listDevices(rackerToken, userId, mediaType, mediaType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+
+        where:
+        mediaType             | _
+        APPLICATION_XML_TYPE  | _
+        APPLICATION_JSON_TYPE | _
     }
 
 }

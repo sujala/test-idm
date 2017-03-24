@@ -363,7 +363,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         BaseUser targetUser = entityFactory.createUser().with { it.id = "target"; return it }
 
         when:
-        Response.ResponseBuilder responseBuilder = service.listOTPDevicesForUser(null, callerToken.accessTokenString, targetUser.id)
+        service.listOTPDevicesForUser(null, callerToken.accessTokenString, targetUser.id)
 
         then:
         1 * securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken //validates caller provided token
@@ -380,7 +380,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         BaseUser targetUser = entityFactory.createUser().with { it.id = "target"; return it }
 
         when:
-        Response.ResponseBuilder responseBuilder = service.listOTPDevicesForUser(null, callerToken.accessTokenString, targetUser.id)
+        service.listOTPDevicesForUser(null, callerToken.accessTokenString, targetUser.id)
 
         then:
         1 * securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken //validates caller provided token
@@ -398,7 +398,7 @@ class DefaultMultiFactorCloud20ServiceTest extends RootServiceTest {
         ScopeAccess callerToken = entityFactory.createUserToken(caller.getId())
 
         when:
-        Response.ResponseBuilder responseBuilder = service.listOTPDevicesForUser(null, callerToken.accessTokenString, caller.id)
+        service.listOTPDevicesForUser(null, callerToken.accessTokenString, caller.id)
 
         then:
         1 * securityContext.getAndVerifyEffectiveCallerToken(_) >> callerToken //validates caller provided token
