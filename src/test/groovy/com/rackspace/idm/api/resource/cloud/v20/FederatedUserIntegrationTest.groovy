@@ -26,11 +26,10 @@ import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHandler
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
-import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.util.SamlUnmarshaller
+import org.apache.commons.codec.binary.Base64
 import org.apache.commons.codec.binary.StringUtils
 import org.apache.commons.lang.BooleanUtils
-import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.codehaus.jackson.map.ObjectMapper
@@ -41,9 +40,7 @@ import org.opensaml.saml.saml2.core.StatusCode
 import org.opensaml.xmlsec.signature.Signature
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
-import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.IdentityFault
-import org.openstack.docs.identity.api.v2.ServiceUnavailableFault
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -54,10 +51,9 @@ import testHelpers.junit.IgnoreByRepositoryProfile
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
 import testHelpers.saml.SamlProducer
-import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
-import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.servlet.http.HttpServletResponse
+import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
@@ -736,6 +732,32 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         accept                | _
         APPLICATION_XML_TYPE  | _
         APPLICATION_JSON_TYPE | _
+    }
+
+    def "Legacy SAML authenticate with 'x-www-form-urlencoded' media type"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("userAdminForSaml")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def email = "fedIntTest@invalid.rackspace.com"
+
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, Arrays.asList(role1000.name), email);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        def userAdminEntity = userService.getUserById(userAdmin.id)
+
+        when:
+        byte[] encodedSamlAssertion = Base64.encodeBase64(samlAssertion.getBytes(), false, true)
+        def samlResponse = cloud20.samlAuthenticate("SAMLResponse=" + new String(encodedSamlAssertion), MediaType.APPLICATION_XML, MediaType.APPLICATION_FORM_URLENCODED)
+
+        then: "Response contains appropriate content"
+        samlResponse.status == HttpServletResponse.SC_OK
+        def authResponse = samlResponse.getEntity(AuthenticateResponse).value
+        verifyResponseFromSamlRequestAndBackendRoles(authResponse, username, userAdminEntity, Arrays.asList(role1000))
+
+        cleanup:
+        deleteFederatedUserQuietly(username)
+        utils.deleteUsers(users)
     }
 
     def "Can specify a role with a space in the name"() {
