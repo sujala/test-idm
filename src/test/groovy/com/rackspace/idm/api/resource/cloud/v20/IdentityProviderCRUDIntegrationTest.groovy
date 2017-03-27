@@ -1590,6 +1590,37 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domain.id)
     }
 
+    def "Attempt to update Identity provider's approved domain Ids with feature flag feature.allow.updating.approved.domain.ids.for.idp = false" () {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP, false)
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def domain = utils.createDomainEntity()
+        IdentityProvider approvedDomainsIdp = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id].asList()).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        def approvedDomainsIdpEntity  = utils.createIdentityProvider(idpManagerToken, approvedDomainsIdp)
+
+        when: "Updating Idp's approvedDomainIds"
+        IdentityProvider duplicateApprovedDomainIds = new IdentityProvider().with {
+            ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
+            approvedDomainIds.approvedDomainId.addAll([domain.id].asList())
+            it.approvedDomainIds = approvedDomainIds
+            it
+        }
+        def response = cloud20.updateIdentityProvider(idpManagerToken, approvedDomainsIdpEntity.id, duplicateApprovedDomainIds)
+
+        then:
+        response.status == SC_BAD_REQUEST
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, approvedDomainsIdpEntity.id)
+        utils.deleteUserQuietly(idpManager)
+        utils.deleteDomain(domain.id)
+        reloadableConfiguration.reset()
+    }
+
     def "Updating Identity provider approved domain Ids"() {
         given: "A new identity provider"
         def idpManager = utils.createIdentityProviderManager()

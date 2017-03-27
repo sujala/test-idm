@@ -424,6 +424,11 @@ public class Validator20 {
         validateAttributeForUpdate("name", identityProvider.getName());
         validateAttributeForUpdate("authenticationUrl", identityProvider.getAuthenticationUrl());
         if(identityProvider.getApprovedDomainIds() != null) {
+
+            if(!identityConfig.getReloadableConfig().getAllowUpdatingApprovedDomainIdsForIdp()) {
+                throwBadRequestForProvidedAttrWithErrorCode("approvedDomainIds");
+            }
+
             if(existingProvider.getApprovedDomainGroup() != null) {
                 throw new BadRequestException("Cannot update approvedDomainIds if approvedDomainGroup is set.", ErrorCodes.ERROR_CODE_IDP_EXISTING_APPROVED_DOMAIN_GROUP);
             }

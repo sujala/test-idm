@@ -339,6 +339,9 @@ public class IdentityConfig {
     public static final String FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP = "feature.v2.federation.validate.origin.issue.instant";
     public static final boolean FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_DEFAULT = true;
 
+    public static final String FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP = "feature.allow.updating.approved.domain.ids.for.idp";
+    public static final boolean FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -665,6 +668,8 @@ public class IdentityConfig {
         defaults.put(FEEDS_DEAMON_EVICTION_ENABLED_PROP, FEEDS_DEAMON_ENABLED_DEFAULT);
         defaults.put(FEEDS_DAEMON_EVICTION_FREQUENCY_MS_PROP, FEEDS_DAEMON_EVICTION_FREQUENCY_MS_DEFAULT);
         defaults.put(FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP, FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_DEFAULT);
+
+        defaults.put(FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP, FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_DEFAULT);
 
         return defaults;
     }
@@ -1963,6 +1968,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP, versionAdded = "3.11.0" , description = "When true, v2 federation calls will validate the issueInstant of the origin saml assertions.")
         public boolean shouldV2FederationValidateOriginIssueInstant() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_V2_FEDERATION_VALIDATE_ORIGIN_ISSUE_INSTANT_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP , versionAdded = "3.11.0" , description = "When true, allow updating approvedDomainIds for Identity provider.")
+        public boolean getAllowUpdatingApprovedDomainIdsForIdp() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP);
         }
 
     }

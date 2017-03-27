@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.*
@@ -8,6 +9,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.AuthorizationService
+import com.rackspace.idm.domain.service.FederatedIdentityService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.*
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
@@ -3569,6 +3571,38 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then: "Sent to v2.0"
         0 * defaultFederatedIdentityService.processSamlResponse(_)
         1 * defaultFederatedIdentityService.processV2SamlResponse(_)
+    }
+
+    def "Update identity provider with approvedDomainIds"() {
+        given:
+        def mockFederatedIdentityService = Mock(FederatedIdentityService)
+        service.federatedIdentityService = mockFederatedIdentityService
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider idp = new com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider().with {
+            ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
+            approvedDomainIds.approvedDomainId = ["id", "id3", "id2"].asList()
+
+            it.approvedDomainIds = approvedDomainIds
+            it
+        }
+        def existingIdp = new IdentityProvider().with {
+            it.name = "name"
+            it.approvedDomainIds = ["id", "id2", "id3"].asList()
+            it
+        }
+        mockFederatedIdentityService.checkAndGetIdentityProvider(_) >> existingIdp
+
+        when: "Update IDP with same list of approvedDomainIds"
+        service.updateIdentityProvider(headers, uriInfo(), authToken, "id", idp)
+
+        then: "Assert no query was made to retrieve all user not in approvedDomainIds list"
+        0 * identityUserService.getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(_, _)
+
+        when: "Update IDP with new list of approvedDomainIds"
+        idp.approvedDomainIds.approvedDomainId.add("id4")
+        service.updateIdentityProvider(headers, uriInfo(), authToken, "id", idp)
+
+        then: "Assert query was made to retrieve all user not in approvedDomainIds list"
+        1 * identityUserService.getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(_, _)
     }
 
     def mockServices() {
