@@ -167,6 +167,14 @@ public class Cloud20VersionResource {
         return federationSamlAuthenticationRawXML(httpHeaders, samlResponse);
     }
 
+    @Deprecated
+    @POST
+    @Path("RAX-AUTH/saml-tokens")
+    @Consumes({MediaType.APPLICATION_FORM_URLENCODED})
+    public Response authenticateSamlResponseFormEncoded(@Context HttpHeaders httpHeaders, @FormParam("SAMLResponse") String samlResponse)  {
+        return federationSamlAuthenticationFormEncoded(httpHeaders, samlResponse);
+    }
+
     /**
      * Takes standard SAMLResponse in form (input field is SAMLResponse) that is base64'd and url encoded.
      *
