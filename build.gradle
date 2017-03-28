@@ -27,8 +27,8 @@ project.version = "$featureVersion" + "-" + "$buildVersion"
 
 project.description = """idm"""
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 def srcJava = 'src/main/java'
 def generatedSrc = 'build/generated-src/jaxb/'
