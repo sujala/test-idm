@@ -1,24 +1,22 @@
 package com.rackspace.idm.domain.service.impl;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.EndpointDao;
-import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.entity.OpenstackEndpoint;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.service.EndpointService;
-import com.rackspace.idm.domain.service.OpenstackType;
+import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BaseUrlConflictException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import java.util.*;
 
@@ -186,6 +184,7 @@ public class DefaultEndpointService implements EndpointService {
         return endpoints;
     }
 
+
     @Override
     public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant, Set<OpenstackType> baseUrlTypes, String region, List<Rule> rules) {
         HashMap<String, CloudBaseUrl> baseUrls = new HashMap<String, CloudBaseUrl>();
@@ -232,17 +231,110 @@ public class DefaultEndpointService implements EndpointService {
     }
 
     @Override
+    public OpenstackEndpoint calculateOpenStackEndpointForTenantMeta(TenantEndpointMeta tenantEndpointMeta) {
+        Assert.notNull(tenantEndpointMeta);
+        Assert.notNull(tenantEndpointMeta.getTenant());
+        Assert.notNull(tenantEndpointMeta.getUser());
+        Assert.notNull(tenantEndpointMeta.getRolesOnTenant());
+        Assert.notNull(tenantEndpointMeta.getRulesForTenant());
+
+        // Step 1: Get the set of baseUrl ids that need to be looked up (explicit and rule assignment)
+        HashSet<String> tenantBaseUrlIds = new HashSet<String>();
+        if (CollectionUtils.isNotEmpty(tenantEndpointMeta.getTenant().getBaseUrlIds())) {
+            // Add baseUrlIds (endpoints) explicitly assigned to the tenant
+            tenantBaseUrlIds.addAll(tenantEndpointMeta.getTenant().getBaseUrlIds());
+        }
+        if (CollectionUtils.isNotEmpty(tenantEndpointMeta.getTenant().getV1Defaults())) {
+            // Add baseUrlIds (endpoints) explicitly assigned to the tenant (v1 defaults)
+            tenantBaseUrlIds.addAll(tenantEndpointMeta.getTenant().getV1Defaults());
+        }
+
+        if (CollectionUtils.isNotEmpty(tenantEndpointMeta.getRulesForTenant())) {
+            // Add baseUrlIds (endpoints) assigned to the tenant via rules
+            for (Rule rule : tenantEndpointMeta.getRulesForTenant()) {
+                tenantBaseUrlIds.addAll(rule.matchingEndpointTemplateIds(tenantEndpointMeta.getUser(),
+                        tenantEndpointMeta.getTenant()));
+            }
+        }
+
+        /*
+          Retrieve all the baseUrls that need to be looked up by Id. Candidate for caching...
+          This call will become problematic over time if the lookups start taking longer (e.g. - more baseUrls need to be
+          looked up by id that currently. In such a case, the query will take longer, which will then reduce the
+          overall throughput of the directory.
+
+          TODO: Improve efficiency of this mass lookup of baseUrls by Id
+         */
+        Iterable<CloudBaseUrl> preProcessedBaseUrls = endpointDao.getBaseUrlsById(new ArrayList<>(tenantBaseUrlIds));
+
+        // Step 2: Process each baseUrl by applying tenantAliases and setting v1Defaults as appropriate
+        List<CloudBaseUrl> processedBaseUrls = new ArrayList<>();
+        for (CloudBaseUrl baseUrl : preProcessedBaseUrls) {
+            baseUrl.processBaseUrlForTenant(tenantEndpointMeta.getTenant());
+            processedBaseUrls.add(baseUrl);
+        }
+
+        // Step 4: Add global endpoints (can never be v1 Defaults)
+        if (tenantEndpointMeta.addGlobalMossoEndpointsOnTenant()) {
+            addUniqueGlobalBaseUrlsOfType(processedBaseUrls, new OpenstackType("MOSSO"),tenantEndpointMeta);
+        }
+        if (tenantEndpointMeta.addGlobalNastEndpointsOnTenant()) {
+            addUniqueGlobalBaseUrlsOfType(processedBaseUrls, new OpenstackType("NAST"),tenantEndpointMeta);
+        }
+
+        OpenstackEndpoint point = new OpenstackEndpoint();
+        point.setTenantId(tenantEndpointMeta.getTenant().getTenantId());
+        point.setTenantName(tenantEndpointMeta.getTenant().getName());
+        point.setBaseUrls(processedBaseUrls);
+
+        return point;
+    }
+
+    @Override
     public OpenstackEndpoint getOpenStackEndpointForTenant(Tenant tenant) {
         return this.getOpenStackEndpointForTenant(tenant, null, null, null);
     }
 
-    private void addGlobalBaseUrls(HashMap<String, CloudBaseUrl> baseUrls, Tenant tenant, OpenstackType baseUrlType, String region) {
-        Iterable<CloudBaseUrl> cloudBaseUrls;
-        if (region.equalsIgnoreCase("LON")) {
-            cloudBaseUrls = endpointDao.getGlobalUKBaseUrlsByBaseUrlType(baseUrlType.getName());
-        } else {
-            cloudBaseUrls = endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType.getName());
+    /**
+     * Search for applicable global endpoints that have the specified baseUrlType. If that baseUrlId is not already included
+     * in the list of processed base urls, process it, and add it to the list.
+     *
+     * Note - modifies the passed in list
+     *
+     * @param processedBaseUrls
+     * @param baseUrlType
+     * @param tenantEndpointMeta
+     * @return
+     */
+    private void addUniqueGlobalBaseUrlsOfType(List<CloudBaseUrl> processedBaseUrls, OpenstackType baseUrlType, TenantEndpointMeta tenantEndpointMeta) {
+        Iterable<CloudBaseUrl> globalBaseUrls = getGlobalBaseUrls(baseUrlType, tenantEndpointMeta.getUser().getRegion());
+
+        for (final CloudBaseUrl globalBaseUrl : globalBaseUrls) {
+            if (!CollectionUtils.exists(processedBaseUrls, new Predicate<CloudBaseUrl>() {
+                    @Override
+                    public boolean evaluate(CloudBaseUrl processedBaseUrl) {
+                        return globalBaseUrl.getBaseUrlId().equals(processedBaseUrl.getBaseUrlId());
+                    }})) {
+                globalBaseUrl.processBaseUrlForTenant(tenantEndpointMeta.getTenant());
+                globalBaseUrl.setV1Default(false); // Not sure why, but legacy explicit sets global urls to false
+                processedBaseUrls.add(globalBaseUrl);
+            }
         }
+    }
+
+    private Iterable<CloudBaseUrl> getGlobalBaseUrls(OpenstackType baseUrlType, String region) {
+        Iterable<CloudBaseUrl> cloudBaseUrlsIt;
+        if (region.equalsIgnoreCase("LON")) {
+            cloudBaseUrlsIt = endpointDao.getGlobalUKBaseUrlsByBaseUrlType(baseUrlType.getName());
+        } else {
+            cloudBaseUrlsIt = endpointDao.getGlobalUSBaseUrlsByBaseUrlType(baseUrlType.getName());
+        }
+
+        return cloudBaseUrlsIt;
+    }
+
+    private void addGlobalBaseUrls(HashMap<String, CloudBaseUrl> baseUrls, Tenant tenant, OpenstackType baseUrlType, String region) {
+        Iterable<CloudBaseUrl> cloudBaseUrls = getGlobalBaseUrls(baseUrlType, region);
         if (cloudBaseUrls != null) {
             for (CloudBaseUrl baseUrl : cloudBaseUrls) {
                 if (!baseUrls.containsKey(baseUrl.getBaseUrlId())) {
@@ -254,6 +346,12 @@ public class DefaultEndpointService implements EndpointService {
         }
     }
 
+    /**
+     * @deprecated use {@link CloudBaseUrl#processBaseUrlForTenant(Tenant)}
+     * @param baseUrl
+     * @param tenant
+     */
+    @Deprecated
     private void processBaseUrl(CloudBaseUrl baseUrl, Tenant tenant) {
         baseUrl.setV1Default(tenant.getV1Defaults().contains(baseUrl.getBaseUrlId()));
         baseUrl.setPublicUrl(appendTenantToBaseUrl(baseUrl.getPublicUrl(), tenant.getName(), baseUrl.getTenantAlias()));
@@ -261,6 +359,10 @@ public class DefaultEndpointService implements EndpointService {
         baseUrl.setInternalUrl(appendTenantToBaseUrl(baseUrl.getInternalUrl(), tenant.getName(), baseUrl.getTenantAlias()));
     }
 
+    /**
+     * @deprecated
+     */
+    @Deprecated
     String appendTenantToBaseUrl(String url, String tenantId, String tenantAlias) {
         if (url == null) {
             return null;

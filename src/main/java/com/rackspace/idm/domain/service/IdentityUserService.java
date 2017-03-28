@@ -212,4 +212,12 @@ public interface IdentityUserService {
      * Gets the count of federated and provisioned users within a given region (by name)
      */
     int getUsersWithinRegionCount(String regionName);
+
+    /**
+     * Retrieve the service catalog info for a user. This is the more performant version of that found in the ScopeAccessService
+     *
+     * @param baseUser
+     * @return
+     */
+    ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser);
 }

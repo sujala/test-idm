@@ -34,6 +34,10 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
         identityAdminToken = utils.getIdentityAdminToken()
     }
 
+    def cleanup() {
+        reloadableConfiguration.reset()
+    }
+
     def "service catalog IS NOT filtered when tenant IS NOT specified in auth request"() {
         given:
         def username = "v20Username" + testUtils.getRandomUUID()
@@ -164,6 +168,11 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Test global endpoints in service catalog, feature.global.endpoints.for.all.roles.enabled = #flag" () {
         given: "New user"
+        /*
+         Disable performant lookup feature as this test verifies legacy global endpoint lookup and depends on generic
+         global endpoints.
+          */
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, false)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED, flag)
         def adminToken = utils.getIdentityAdminToken()
         def serviceAdminToken = utils.getServiceAdminToken()
@@ -244,8 +253,13 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Assert global endpoints in service catalog are not duplicate with two roles in the same service, feature.global.endpoints.for.all.roles.enabled = #flag" () {
+    def "Assert global endpoints in service catalog are not duplicated with two roles in the same service, feature.global.endpoints.for.all.roles.enabled = #flag" () {
         given: "New user"
+        /*
+         Disable performant lookup feature as this test verifies legacy global endpoint lookup and depends on generic
+         global endpoints.
+          */
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, false)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED, flag)
         def adminToken = utils.getIdentityAdminToken()
         def serviceAdminToken = utils.getServiceAdminToken()
@@ -323,6 +337,11 @@ class AuthUserServiceCatalogIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Assert global endpoints in service catalog for multiple services, feature.global.endpoints.for.all.roles.enabled = #flag" () {
         given: "New user"
+        /*
+         Disable performant lookup feature as this test verifies legacy global endpoint lookup and depends on generic
+         global endpoints.
+          */
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, false)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED, flag)
         def adminToken = utils.getIdentityAdminToken()
         def serviceAdminToken = utils.getServiceAdminToken()

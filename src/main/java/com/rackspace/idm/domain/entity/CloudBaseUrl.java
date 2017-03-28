@@ -9,6 +9,7 @@ import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapping;
 
 import javax.validation.constraints.NotNull;
@@ -150,4 +151,34 @@ public class CloudBaseUrl implements Auditable, UniqueId {
             return tenantAlias;
         }
     }
+
+    /**
+     * Alter the baseUrl as it applies to the specified tenant. This includes setting the v1Default as appropriate and
+     * applying any necessary aliasing.
+     *
+     * @param tenant
+     */
+    public void processBaseUrlForTenant(Tenant tenant) {
+        setV1Default(tenant.getV1Defaults().contains(getBaseUrlId()));
+        setPublicUrl(appendTenantToBaseUrl(getPublicUrl(), tenant.getName(), getTenantAlias()));
+        setAdminUrl(appendTenantToBaseUrl(getAdminUrl(), tenant.getName(), getTenantAlias()));
+        setInternalUrl(appendTenantToBaseUrl(getInternalUrl(), tenant.getName(), getTenantAlias()));
+    }
+
+    private String appendTenantToBaseUrl(String url, String tenantId, String tenantAlias) {
+        if (url == null) {
+            return null;
+        }
+
+        String stringToAppend =  tenantAlias != null ? tenantAlias.replace(TENANT_ALIAS_PATTERN, tenantId) : tenantId;
+
+        if (StringUtils.isEmpty(stringToAppend)) {
+            return url;
+        } else if (url.endsWith("/")) {
+            return url + stringToAppend;
+        } else {
+            return url + "/" + stringToAppend;
+        }
+    }
+
 }
