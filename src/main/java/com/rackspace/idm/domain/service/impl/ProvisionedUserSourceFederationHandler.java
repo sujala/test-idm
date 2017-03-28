@@ -101,9 +101,6 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
     @Autowired
     private DateHelper dateHelper;
 
-    private final Logger deleteUserLogger = LoggerFactory.getLogger(GlobalConstants.DELETE_USER_LOG_NAME);
-    private static final String DELETE_USER_FORMAT = "DELETED username={},federatedUri={},domainId={}";
-
     @Override
     public SamlAuthResponse processRequestForProvider(SamlResponseDecorator samlResponseDecorator, IdentityProvider provider) {
         Validate.notNull(samlResponseDecorator, "saml response must not be null");
@@ -155,10 +152,6 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
 
     public void deleteFederatedUser(FederatedUser user) {
         identityUserService.deleteUser(user);
-
-        //log deletion
-        deleteUserLogger.warn(DELETE_USER_FORMAT,
-                new Object[] {user.getUsername(), user.getFederatedIdpUri(), user.getDomainId()});
 
         //send atom hopper feed showing deletion of this user
         atomHopperClient.asyncPost(user, AtomHopperConstants.DELETED);

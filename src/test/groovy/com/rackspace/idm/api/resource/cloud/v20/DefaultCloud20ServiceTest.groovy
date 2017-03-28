@@ -3247,10 +3247,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyUserManagedLevelAccess(_)
-        1 * userService.checkAndGetUserById(_) >> user
+        1 * identityUserService.checkAndGetUserById(_) >> user
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * authorizationService.verifyDomain(_, _)
-        1 * userService.deleteUser(_)
+        1 * identityUserService.deleteUser(_)
     }
 
     def "User with user-manage role cannot delete user with user-manage role" () {
@@ -3263,7 +3263,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * authorizationService.verifyUserManagedLevelAccess(_)
-        1 * userService.checkAndGetUserById(_) >> user
+        1 * identityUserService.checkAndGetUserById(_) >> user
         1 * authorizationService.authorizeUserManageRole(_) >> true
         1 * authorizationService.hasUserManageRole(_) >> true
         result.build().status == 401

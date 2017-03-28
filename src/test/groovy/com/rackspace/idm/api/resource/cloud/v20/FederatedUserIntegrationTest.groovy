@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
@@ -34,6 +33,7 @@ import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.codehaus.jackson.map.ObjectMapper
 import org.joda.time.DateTime
+import org.mockserver.verify.VerificationTimes
 import org.opensaml.saml.saml2.core.LogoutResponse
 import org.opensaml.saml.saml2.core.Response
 import org.opensaml.saml.saml2.core.StatusCode
@@ -1759,7 +1759,159 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         APPLICATION_JSON_TYPE | _
     }
 
+    @Unroll
+    def "Allow deleting federated users by id: #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("samlUser")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def userAdmin1, users1
+        (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
 
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def samlAuthToken = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.token : samlAuthResponse.token
+        def samlAuthTokenId = samlAuthToken.id
+        def userId = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user.id : samlAuthResponse.user.id
+        def user = cloud20.getUserById(utils.getServiceAdminToken(), userId)
+
+        when: "validate the token"
+        def validateSamlTokenResponse = cloud20.validateToken(utils.getServiceAdminToken(), samlAuthTokenId)
+
+        then: "the token is still valid"
+        validateSamlTokenResponse.status == SC_OK
+
+        when:
+        resetCloudFeedsMock()
+        def response = cloud20.deleteUser(utils.getServiceAdminToken(), userId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        and: "verify that event was posted"
+        cloudFeedsMock.verify(
+                testUtils.createFeedsRequest(),
+                VerificationTimes.exactly(1)
+        )
+
+        when: "validate the token"
+        response = cloud20.validateToken(utils.getServiceAdminToken(), samlAuthTokenId)
+
+        then: "the token is no longer valid"
+        response.status == SC_NOT_FOUND
+
+        cleanup:
+        utils.deleteUsers(users1)
+
+        where:
+        mediaType             | _
+        APPLICATION_XML_TYPE  | _
+        APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "The same precedence rules that apply to deleting provisioned subusers apply to deleting federated subusers"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when: "default user cannot delete federatedUser"
+        def federatedUserId = getFederatedUser(domainId, mediaType)
+        def defaultUserToken = utils.getToken(defaultUser.username, DEFAULT_PASSWORD)
+        def response = cloud20.deleteUser(defaultUserToken, federatedUserId)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "user manage can delete federatedUser"
+        def userManageToken = utils.getToken(userManage.username, DEFAULT_PASSWORD)
+        response = cloud20.deleteUser(userManageToken, federatedUserId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "user admin can delete federatedUser"
+        federatedUserId = getFederatedUser(domainId, mediaType)
+        def userAdminToken = utils.getToken(userAdmin.username, DEFAULT_PASSWORD)
+        response = cloud20.deleteUser(userAdminToken, federatedUserId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "identity admin can delete federatedUser"
+        federatedUserId = getFederatedUser(domainId, mediaType)
+        def identityAdminToken = utils.getToken(identityAdmin.username, DEFAULT_PASSWORD)
+        response = cloud20.deleteUser(identityAdminToken, federatedUserId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+
+        where:
+        mediaType             | _
+        APPLICATION_XML_TYPE  | _
+        APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "User-admins/user-manage can only delete fed users within own domain"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        def domainId2 = utils.createDomain()
+        def createUser = v2Factory.createUserForCreate(getRandomUUID("user"), "displayName", "test@rackspace.com", true, "ORD", domainId2, "Password1")
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), createUser, mediaType, mediaType)
+        def user = getEntity(response, org.openstack.docs.identity.api.v2.User)
+        def federatedUserId = getFederatedUser(domainId2, mediaType)
+
+        when: "user manage cannot delete federatedUser in different domain"
+        def userManageToken = utils.getToken(userManage.username, DEFAULT_PASSWORD)
+        response = cloud20.deleteUser(userManageToken, federatedUserId)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "user admin cannot delete federatedUser in different domain"
+        def userAdminToken = utils.getToken(userAdmin.username, DEFAULT_PASSWORD)
+        response = cloud20.deleteUser(userAdminToken, federatedUserId)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "identity admin can delete federatedUser in different domain"
+        def identityAdminToken = utils.getToken(identityAdmin.username, DEFAULT_PASSWORD)
+        response = cloud20.deleteUser(identityAdminToken, federatedUserId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin, user)
+        utils.deleteDomain(domainId)
+
+        where:
+        mediaType             | _
+        APPLICATION_XML_TYPE  | _
+        APPLICATION_JSON_TYPE | _
+    }
+
+    def getFederatedUser(String domainId, mediaType) {
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def username = testUtils.getRandomUUID("samlUser")
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def samlAuthToken = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.token : samlAuthResponse.token
+        def userId = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user.id : samlAuthResponse.user.id
+        return userId
+    }
 
     def deleteFederatedUserQuietly(username) {
         try {

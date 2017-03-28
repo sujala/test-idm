@@ -1,9 +1,8 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
@@ -12,7 +11,9 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
+import com.rackspace.idm.multifactor.service.MultiFactorService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +49,13 @@ public class DefaultIdentityUserService implements IdentityUserService {
     @Autowired
     private IdentityProviderDao identityProviderDao;
 
+    @Autowired
+    private MultiFactorService multiFactorService;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private Logger deleteUserLogger = LoggerFactory.getLogger(GlobalConstants.DELETE_USER_LOG_NAME);
+    private static final String DELETE_USER_FORMAT = "DELETED username={},domainId={},roles={}";
+    private static final String DELETE_FEDERATED_USER_FORMAT = "DELETED username={},federatedUri={},domainId={}";
 
     @Override
     public EndUser getEndUserById(String userId) {
@@ -219,6 +226,20 @@ public class DefaultIdentityUserService implements IdentityUserService {
             //rackers are not persistent, so don't bother trying to delete
             return;
         }
+
+        if (user instanceof FederatedUser) {
+            deleteUserLogger.warn(DELETE_FEDERATED_USER_FORMAT,
+                    new Object[] {user.getUsername(), ((FederatedUser)user).getFederatedIdpUri(), user.getDomainId()});
+        } else if (user instanceof User){
+            if (StringUtils.isNotBlank(((User)user).getExternalMultiFactorUserId())) {
+                multiFactorService.removeMultiFactorForUser(user.getId());
+            }
+
+            List<TenantRole> roles = this.tenantService.getTenantRolesForUser(user);
+            deleteUserLogger.warn(DELETE_USER_FORMAT,
+                    new Object[] {user.getUsername(), user.getDomainId(), roles.toString()});
+        }
+
         identityUserRepository.deleteIdentityUser(user);
     }
 
