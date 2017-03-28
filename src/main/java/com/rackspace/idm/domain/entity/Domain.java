@@ -9,14 +9,6 @@ import org.dozer.Mapping;
 
 import java.util.Arrays;
 
-/**
- * Created by IntelliJ IDEA.
- * User: matt.colton
- * Date: 8/6/12
- * Time: 3:51 PM
- * To change this template use File | Settings | File Templates.
- */
-
 @Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DOMAIN)
 public class Domain implements Auditable, UniqueId {
@@ -43,6 +35,9 @@ public class Domain implements Auditable, UniqueId {
 
     @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_DOMAIN_ENFORCEMENT_LEVEL, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String domainMultiFactorEnforcementLevel;
+
+    @LDAPField(attribute = LdapRepository.ATTR_SESSION_INACTIVITY_TIMEOUT, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String sessionInactivityTimeout;
 
     public void setTenantIds(String[] tenantIDs) {
         if (tenantIDs == null) {

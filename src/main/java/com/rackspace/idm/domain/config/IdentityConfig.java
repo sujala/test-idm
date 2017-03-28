@@ -342,6 +342,9 @@ public class IdentityConfig {
     public static final String FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP = "feature.allow.updating.approved.domain.ids.for.idp";
     public static final boolean FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_DEFAULT = true;
 
+    public static final String DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP = "domain.default.session.inactivity.timeout";
+    public static final String DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT = "PT15M";
+
     /**
      * Required static prop
      */
@@ -670,6 +673,8 @@ public class IdentityConfig {
         defaults.put(FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_PROP, FEEDS_DAEMON_EVICTION_CLOSE_IDLE_AFTER_MS_DEFAULT);
 
         defaults.put(FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP, FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_DEFAULT);
+
+        defaults.put(DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP, DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT);
 
         return defaults;
     }
@@ -1973,6 +1978,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP , versionAdded = "3.11.0" , description = "When true, allow updating approvedDomainIds for Identity provider.")
         public boolean getAllowUpdatingApprovedDomainIdsForIdp() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP);
+        }
+
+        @IdmProp(key = DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP, versionAdded = "3.11.0", description = "Default value for session inactivity timeout assigned to domains.")
+        public String getDomainDefaultSessionInactivityTimeout() {
+            return getStringSafely(reloadableConfiguration, DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP);
         }
 
     }

@@ -146,6 +146,7 @@ public abstract class LdapRepository {
     public static final String ATTR_SCOPE = "rsScope";
     public static final String ATTR_SECURE_ID = "rsSecureId";
     public static final String ATTR_SERVICE = "service";
+    public static final String ATTR_SESSION_INACTIVITY_TIMEOUT = "rsSessionInactivityTimeout";
     public static final String ATTR_SN = "rsSn";
     public static final String ATTR_TENANT_DISPLAY_NAME = "tenantDisplayName";
     public static final String ATTR_TIME_ZONE = "timeZone";
