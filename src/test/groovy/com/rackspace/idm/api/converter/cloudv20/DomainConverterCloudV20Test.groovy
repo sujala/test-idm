@@ -1,29 +1,35 @@
 package com.rackspace.idm.api.converter.cloudv20
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.IdentityConfig.ReloadableConfig
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.Domains
 import org.dozer.DozerBeanMapper
 import spock.lang.Shared
 import spock.lang.Specification
 
-/**
- * Created with IntelliJ IDEA.
- * User: matt.kovacs
- * Date: 8/12/13
- * Time: 2:13 PM
- * To change this template use File | Settings | File Templates.
- */
+import java.time.Duration
+
 class DomainConverterCloudV20Test extends Specification {
 
     @Shared DomainConverterCloudV20 converterCloudV20
+    @Shared IdentityConfig identityConfig
+    @Shared ReloadableConfig reloadableConfig
 
     def setupSpec() {
+        identityConfig = Mock(IdentityConfig)
+        reloadableConfig = Mock(ReloadableConfig)
+
         converterCloudV20 = new DomainConverterCloudV20().with {
             it.objFactories = new JAXBObjectFactories()
             it.mapper = new DozerBeanMapper()
             return it
         }
+        converterCloudV20.identityConfig = identityConfig
+
+        identityConfig.reloadableConfig >> reloadableConfig
+        reloadableConfig.getDomainDefaultSessionInactivityTimeout() >> Duration.parse("PT15M")
     }
 
     def cleanupSpec() {

@@ -21,16 +21,21 @@ import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.junit.IgnoreByRepositoryProfile
 
+import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.HttpHeaders
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.UriInfo
+import javax.xml.datatype.DatatypeFactory
+import java.time.Duration
 
 import static com.rackspace.idm.Constants.*
-
+import static javax.servlet.http.HttpServletResponse.*
 import static org.mockito.Mockito.mock
-import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse;
+import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
+import static testHelpers.IdmAssert.assertRackspaceCommonFaultResponse
+import static testHelpers.IdmAssert.assertV1AuthFaultResponse;
 
 class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
@@ -660,6 +665,195 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteTenant(tenant)
+        utils.deleteDomain(domainId)
+    }
+
+    @Unroll
+    def "Update domain to set sessionInactivityTimeout - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        when: "Updating sessionInactivityTimeout on domain using identity-admin token"
+        def updateDomain = new Domain()
+        DatatypeFactory factory = DatatypeFactory.newInstance();
+        updateDomain.sessionInactivityTimeout = factory.newDuration("PT24H")
+        def updateDomainResponse = cloud20.updateDomain(utils.getIdentityAdminToken(), domainId, updateDomain, accept, content)
+        def domainEntity = updateDomainResponse.getEntity(Domain)
+
+        then:
+        updateDomainResponse.status == SC_OK
+        domainEntity.id == domainId
+        domainEntity.sessionInactivityTimeout.toString() == "PT24H"
+
+        when: "Updating sessionInactivityTimeout on domain using user-admin token"
+        def userAdminToken = utils.getToken(userAdmin.username)
+        updateDomain.sessionInactivityTimeout = factory.newDuration("PT23H")
+        updateDomainResponse = cloud20.updateDomain(userAdminToken, domainId, updateDomain, accept, content)
+        domainEntity = updateDomainResponse.getEntity(Domain)
+
+        then:
+        updateDomainResponse.status == SC_OK
+        domainEntity.id == domainId
+        domainEntity.sessionInactivityTimeout.toString() == "PT23H"
+
+        when: "Updating sessionInactivityTimeout on domain using user-manager token"
+        def userManageToken = utils.getToken(userManage.username)
+        updateDomain.sessionInactivityTimeout = factory.newDuration("PT22H")
+        updateDomainResponse = cloud20.updateDomain(userManageToken, domainId, updateDomain, accept, content)
+        domainEntity = updateDomainResponse.getEntity(Domain)
+
+        then:
+        updateDomainResponse.status == SC_OK
+        domainEntity.id == domainId
+        domainEntity.sessionInactivityTimeout.toString() == "PT22H"
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Invalid cases for updating sessionInactivityTimeout on domain - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        def domainId2 = utils.createDomain()
+        def identityAdmin2, userAdmin2, userManage2, defaultUser2
+        (identityAdmin2, userAdmin2, userManage2, defaultUser2) = utils.createUsers(domainId2)
+        def users2 = [defaultUser2, userManage2, userAdmin2, identityAdmin2]
+
+        def updateDomain = new Domain()
+        DatatypeFactory factory = DatatypeFactory.newInstance();
+        updateDomain.sessionInactivityTimeout = factory.newDuration("PT15M")
+
+        when: "Updating sessionInactivityTimeout on domain using user-admin token from a different domain"
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def updateDomainResponse = cloud20.updateDomain(userAdminToken, domainId2, updateDomain, accept, content)
+
+        then:
+        updateDomainResponse.status == SC_FORBIDDEN
+
+        when: "Updating sessionInactivityTimeout on domain using user-manage token from a different domain"
+        def userManageToken = utils.getToken(userManage.username)
+        updateDomainResponse = cloud20.updateDomain(userManageToken, domainId2, updateDomain, accept, content)
+
+        then:
+        updateDomainResponse.status == SC_FORBIDDEN
+
+        when: "Updating sessionInactivityTimeout exceeding max duration"
+        updateDomain.sessionInactivityTimeout = factory.newDuration("PT25H")
+        updateDomainResponse = cloud20.updateDomain(utils.identityAdminToken, domainId, updateDomain, accept, content)
+
+        then:
+        Duration maxDuration = identityConfig.getReloadableConfig().getSessionInactivityTimeoutMaxDuration()
+        Duration minDuration = identityConfig.getReloadableConfig().getSessionInactivityTimeoutMinDuration()
+        String errMsg = String.format(DefaultCloud20Service.SESSION_INACTIVITY_TIMEOUT_RANGE_ERROR_MESSAGE, minDuration.getSeconds(), maxDuration.getSeconds())
+        assertRackspaceCommonFaultResponse(updateDomainResponse, com.rackspace.api.common.fault.v1.BadRequestFault, SC_BAD_REQUEST, errMsg)
+
+        when: "Updating sessionInactivityTimeout less than min duration"
+        updateDomain.sessionInactivityTimeout = factory.newDuration("PT4M")
+        updateDomainResponse = cloud20.updateDomain(utils.identityAdminToken, domainId, updateDomain, accept, content)
+
+        then:
+        assertRackspaceCommonFaultResponse(updateDomainResponse, com.rackspace.api.common.fault.v1.BadRequestFault, SC_BAD_REQUEST, errMsg)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteUsers(users2)
+        utils.deleteDomain(domainId)
+        utils.deleteDomain(domainId2)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Verify that user-admin or user-manage cannot update attributes on domain - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        when: "Attempt to update enabled and name on a domain using a user-admin token"
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def updateDomain = new Domain().with {
+            it.enabled = false
+            it.name = "otherName"
+            it
+        }
+        def updateDomainResponse = cloud20.updateDomain(userAdminToken, domainId, updateDomain, accept, content)
+        def domainEntity = updateDomainResponse.getEntity(Domain)
+
+        then:
+        updateDomainResponse.status == SC_OK
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        domainEntity.enabled
+        domainEntity.sessionInactivityTimeout.toString() == identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString()
+
+        when: "Attempt to update enabled and name on a domain using a user-manage token"
+        def userManageToken = utils.getToken(userManage.username)
+        updateDomainResponse = cloud20.updateDomain(userManageToken, domainId, updateDomain, accept, content)
+        domainEntity = updateDomainResponse.getEntity(Domain)
+
+        then:
+        updateDomainResponse.status == SC_OK
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        domainEntity.enabled
+        domainEntity.sessionInactivityTimeout.toString() == identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString()
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    def "Verify sessionInactivityTimeout is return on get/list domain"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        when: "Get domain"
+        def getDomainResponse = cloud20.getDomain(utils.getIdentityAdminToken(), domainId)
+        def domainEntity = getDomainResponse.getEntity(Domain)
+
+        then:
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        domainEntity.enabled
+        domainEntity.sessionInactivityTimeout.toString() == identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString()
+
+        when: "List domains"
+        def getDomainsResponse = cloud20.getAccessibleDomains(utils.getIdentityAdminToken())
+        def domainsEntity = getDomainsResponse.getEntity(Domains)
+
+        then:
+        for (def domain : domainsEntity.domain){
+            assert domain.sessionInactivityTimeout.toString() != null
+        }
+
+        cleanup:
+        utils.deleteUsers(users)
         utils.deleteDomain(domainId)
     }
 

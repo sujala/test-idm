@@ -13,6 +13,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -21,6 +24,9 @@ import java.lang.reflect.Type;
 @Provider
 @Consumes(MediaType.APPLICATION_JSON)
 public class JSONReaderRaxAuthForDomain implements MessageBodyReader<Domain> {
+
+    private static final String INVALID_JSON_ERROR_MESSAGE = "Invalid json request body";
+
     @Override
     public boolean isReadable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
         return type == Domain.class;
@@ -45,7 +51,7 @@ public class JSONReaderRaxAuthForDomain implements MessageBodyReader<Domain> {
                 domain = getDomainFromInnerJSONString(jsonDomain);
             }
         } catch (Exception e) {
-            throw new BadRequestException("Invalid json request body", e);
+            throw new BadRequestException(INVALID_JSON_ERROR_MESSAGE, e);
         }
 
         return domain;
@@ -58,6 +64,7 @@ public class JSONReaderRaxAuthForDomain implements MessageBodyReader<Domain> {
             Object enabled = jsonDomain.get(JSONConstants.ENABLED);
             Object description = jsonDomain.get(JSONConstants.DESCRIPTION);
             Object name = jsonDomain.get(JSONConstants.NAME);
+            Object sessionInactivityTimeout = jsonDomain.get(JSONConstants.SESSION_INACTIVITY_TIMEOUT);
 
             if (id != null) {
                 domain.setId(id.toString());
@@ -71,8 +78,17 @@ public class JSONReaderRaxAuthForDomain implements MessageBodyReader<Domain> {
             if (description != null) {
                 domain.setDescription(description.toString());
             }
+            if (sessionInactivityTimeout != null) {
+                Duration duration;
+                try {
+                    duration = DatatypeFactory.newInstance().newDuration(sessionInactivityTimeout.toString());
+                } catch (DatatypeConfigurationException e) {
+                    throw new BadRequestException(INVALID_JSON_ERROR_MESSAGE, e);
+                }
+                domain.setSessionInactivityTimeout(duration);
+            }
         } catch (Exception e) {
-            throw new BadRequestException("Invalid json request body", e);
+            throw new BadRequestException(INVALID_JSON_ERROR_MESSAGE, e);
         }
         return domain;
     }

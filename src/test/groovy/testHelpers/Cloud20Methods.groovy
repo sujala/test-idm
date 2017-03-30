@@ -822,9 +822,9 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(domain).post(ClientResponse)
     }
 
-    def updateDomain(String token, String domainId, domain) {
+    def updateDomain(String token, String domainId, domain, MediaType acceptMediaType = APPLICATION_XML_TYPE, MediaType requestMediaType = APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(domain).put(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).header(X_AUTH_TOKEN, token).accept(acceptMediaType).type(requestMediaType).entity(domain).put(ClientResponse)
     }
 
     def deleteDomain(String token, String domainId) {

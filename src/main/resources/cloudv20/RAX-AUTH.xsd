@@ -358,6 +358,15 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="sessionInactivityTimeout" type="xsd:duration" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Session inactivity timeout property used across all Rackspace UIs
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
     </complexType>
 
     <complexType name="Domains">
