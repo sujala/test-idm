@@ -89,6 +89,7 @@ public final class JSONConstants {
     public static final String STATUS = "status";
     public static final String SECRET = "secret";
     public static final String SERVICECATALOG = "serviceCatalog";
+    public static final String SESSION_INACTIVITY_TIMEOUT = "sessionInactivityTimeout";
     public static final String SERVICES = "services";
     public static final String TENANT = "tenant";
     public static final String TENANTS = "tenants";

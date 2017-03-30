@@ -39,6 +39,11 @@
                 <class-a>java.lang.String</class-a>
                 <class-b>com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum</class-b>
             </converter>
+
+            <converter type="com.rackspace.idm.domain.dozer.converters.DurationStringConverter">
+                <class-a>java.lang.String</class-a>
+                <class-b>javax.xml.datatype.Duration</class-b>
+            </converter>
         </custom-converters>
     </configuration>
 

@@ -581,13 +581,6 @@ public class DefaultCloud20ServiceOldTest {
         defaultCloud20Service.validateDomain(domain,"2");
     }
 
-    @Test (expected = BadRequestException.class)
-    public void validateDomain_emptyDomainName_throws400() throws Exception {
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
-        domain.setId("1");
-        defaultCloud20Service.validateDomain(domain,"1");
-    }
-
     @Test
     public void validateDomain_validDomain() throws Exception {
         com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();

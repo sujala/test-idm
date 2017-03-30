@@ -1,34 +1,49 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Domains;
 import org.dozer.Mapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/**
- * Created by IntelliJ IDEA.
- * User: matt.colton
- * Date: 8/7/12
- * Time: 7:51 AM
- * To change this template use File | Settings | File Templates.
- */
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
+
 @Component
 public class DomainConverterCloudV20 {
     @Autowired
     private Mapper mapper;
 
     @Autowired
+    private IdentityConfig identityConfig;
+
+    @Autowired
     private JAXBObjectFactories objFactories;
 
     public com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain toDomain(Domain domain) {
-        return mapper.map(domain, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain.class);
+        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain jaxbDomain = mapper.map(domain, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain.class);
+
+        Duration duration;
+        if (jaxbDomain.getSessionInactivityTimeout() == null){
+            try {
+                DatatypeFactory factory = DatatypeFactory.newInstance();
+                duration = factory.newDuration(identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString());
+            } catch (DatatypeConfigurationException e) {
+                throw new IllegalStateException("Unable to set default session inactivity timeout for domain.");
+            }
+            jaxbDomain.setSessionInactivityTimeout(duration);
+        }
+
+        return jaxbDomain;
     }
 
     public Domain fromDomain(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domainEntity) {
         Domain domain = mapper.map(domainEntity, Domain.class);
         domain.setEnabled(domainEntity.isEnabled());
+
         return domain;
     }
 

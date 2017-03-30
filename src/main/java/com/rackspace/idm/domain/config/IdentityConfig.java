@@ -25,6 +25,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.time.Duration;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Component
@@ -343,7 +345,13 @@ public class IdentityConfig {
     public static final boolean FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_DEFAULT = true;
 
     public static final String DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP = "domain.default.session.inactivity.timeout";
-    public static final String DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT = "PT15M";
+    public static final Duration DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT = Duration.parse("PT15M");
+
+    public static final String SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP = "session.inactivity.timeout.max.duration";
+    public static final Duration SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_DEFAULT = Duration.parse("PT24H");
+
+    public static final String SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP = "session.inactivity.timeout.min.duration";
+    public static final Duration SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_DEFAULT = Duration.parse("PT5M");
 
     /**
      * Required static prop
@@ -682,6 +690,8 @@ public class IdentityConfig {
         defaults.put(FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP, FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_DEFAULT);
 
         defaults.put(DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP, DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT);
+        defaults.put(SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_DEFAULT);
+        defaults.put(SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_DEFAULT);
 
         return defaults;
     }
@@ -972,6 +982,20 @@ public class IdentityConfig {
     private Set getSetSafely(Configuration config, String prop) {
         List asList = getListSafely(config, prop);
         return new HashSet(asList);
+    }
+
+    private Duration getDurationSafely(Configuration config, String prop) {
+        Duration result = (Duration) propertyDefaults.get(prop);
+        try {
+            String durStr = config.getString(prop);
+
+            if (StringUtils.isNotEmpty(durStr)) {
+                result = Duration.parse(durStr); // Throws IllegalArgumentException if invalid
+            }
+        } catch (DateTimeParseException | ConversionException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, prop), e);
+        }
+        return result;
     }
 
     private TokenFormat convertToTokenFormat(String strFormat) {
@@ -1988,8 +2012,8 @@ public class IdentityConfig {
         }
 
         @IdmProp(key = DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP, versionAdded = "3.11.0", description = "Default value for session inactivity timeout assigned to domains.")
-        public String getDomainDefaultSessionInactivityTimeout() {
-            return getStringSafely(reloadableConfiguration, DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP);
+        public Duration getDomainDefaultSessionInactivityTimeout() {
+            return getDurationSafely(reloadableConfiguration, DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP);
         }
 
         @IdmProp(key = FEEDS_ALLOW_CONNECTION_KEEP_ALIVE_PROP, versionAdded = "3.11.0", description = "Specifies whether to enable keep alive for feed connections")
@@ -2001,6 +2025,17 @@ public class IdentityConfig {
         public long getFeedsConnectionKeepAliveDuration() {
             return getLongSafely(staticConfiguration, FEEDS_CONNECTION_KEEP_ALIVE_MS_PROP);
         }
+
+        @IdmProp(key = SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP, versionAdded = "3.11.0", description = "Session inactivity timeout max duration in ISO 8601 format.")
+        public Duration getSessionInactivityTimeoutMaxDuration() {
+            return getDurationSafely(reloadableConfiguration, SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP);
+        }
+
+        @IdmProp(key = SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP, versionAdded = "3.11.0", description = "Session inactivity timeout min duration in ISO 8601 format.")
+        public Duration getSessionInactivityTimeoutMinDuration() {
+            return getDurationSafely(reloadableConfiguration, SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP);
+        }
+
     }
 
     public class RepositoryConfig {
