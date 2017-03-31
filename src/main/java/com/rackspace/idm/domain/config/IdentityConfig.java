@@ -353,6 +353,9 @@ public class IdentityConfig {
     public static final String SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP = "session.inactivity.timeout.min.duration";
     public static final Duration SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_DEFAULT = Duration.parse("PT5M");
 
+    public static final String FEATURE_PERFORMANT_SERVICE_CATALOG_PROP = "feature.performant.service.catalog";
+    public static final boolean FEATURE_PERFORMANT_SERVICE_CATALOG_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -688,6 +691,7 @@ public class IdentityConfig {
         defaults.put(FEEDS_CONNECTION_KEEP_ALIVE_MS_PROP, FEEDS_CONNECTION_KEEP_ALIVE_MS_DEFAULT);
 
         defaults.put(FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP, FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_DEFAULT);
+        defaults.put(FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, FEATURE_PERFORMANT_SERVICE_CATALOG_DEFAULT);
 
         defaults.put(DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP, DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT);
         defaults.put(SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_DEFAULT);
@@ -2036,6 +2040,10 @@ public class IdentityConfig {
             return getDurationSafely(reloadableConfiguration, SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP);
         }
 
+        @IdmProp(key = FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, versionAdded = "3.11.0" , description = "Whether or not to use the performant version of the service catalog.")
+        public boolean usePerformantServiceCatalog() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_PERFORMANT_SERVICE_CATALOG_PROP);
+        }
     }
 
     public class RepositoryConfig {

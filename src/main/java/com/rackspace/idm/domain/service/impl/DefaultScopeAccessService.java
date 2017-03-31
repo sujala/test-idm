@@ -17,9 +17,14 @@ import com.rackspace.idm.exception.NotAuthenticatedException;
 import com.rackspace.idm.exception.NotAuthorizedException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
+import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
 import com.rackspace.idm.util.AuthHeaderHelper;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -147,6 +152,13 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser) {
+        if (identityConfig.getReloadableConfig().usePerformantServiceCatalog()) {
+            return identityUserService.getServiceCatalogInfo(baseUser);
+        }
+        return getServiceCatalogInfoLegacy(baseUser);
+    }
+
+    private ServiceCatalogInfo getServiceCatalogInfoLegacy(BaseUser baseUser) {
         final Set<OpenstackEndpoint> endpoints = new HashSet<>();
         final List<Tenant> tenants = new ArrayList<>();
 

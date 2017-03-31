@@ -35,7 +35,7 @@ class IdentityDevopsClient(client.AutoMarshallingHTTPClient):
         if prop_name:
             params['name'] = prop_name
         if version:
-            params['version'] = version
+            params['versions'] = version
 
         resp = self.request('GET', url, params=params)
         return resp

@@ -19,6 +19,11 @@ Verify Assign global endpoints for all roles on tenant
    --> this case have to manually flip flag true/false and verify
    (this test need to add specific roles to ldif in order to verify it
    correctly, only run against local and jenkins)
+
+This test class is unneccessary if the performant service catalog feature flag
+is enabled. That flag will disable the generic global endpoint functionality
+which is tested, in part, by this test class. The test_global_endpoints
+tests perform the appropriate testing when this flag is enabled.
 """
 
 
@@ -35,6 +40,9 @@ class TestRCNAccountManagement(base.TestBaseV2):
         cls.feature_flag_value, cls.feature_flag_default_value = (
             cls.get_feature_flag_value_and_default_value(flag_name=(
                 const.FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED)))
+        cls.perf_feature_flag_value, cls.feature_flag_default_value = (
+            cls.get_feature_flag_value_and_default_value(flag_name=(
+                const.FEATURE_PERFORMANT_SERVICE_CATALOG)))
 
     @classmethod
     def get_feature_flag_value_and_default_value(self, flag_name):
@@ -52,6 +60,9 @@ class TestRCNAccountManagement(base.TestBaseV2):
             self.skipTest('Skipping Service Admin Tests per config value')
         if not self.test_config.run_local_and_jenkins_only:
             self.skipTest('Skipping local and jenkins run tests')
+        if self.perf_feature_flag_value:
+            self.skipTest('Skipping testing generic global endpoints as' +
+                          ' feature is disabled')
         # hard code to get specific service for compute
         self.SERVICE_NAME = 'cloudServers'
         self.service_id = self.get_service_id_by_name(

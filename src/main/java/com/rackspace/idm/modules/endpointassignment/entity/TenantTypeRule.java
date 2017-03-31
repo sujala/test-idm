@@ -4,6 +4,8 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.entity.Auditable;
+import com.rackspace.idm.domain.entity.EndUser;
+import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.modules.endpointassignment.Constants;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.LDAPException;
@@ -21,10 +23,7 @@ import org.slf4j.LoggerFactory;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Getter
 @Setter
@@ -126,4 +125,32 @@ public class TenantTypeRule implements Auditable, UniqueId, Rule {
             throw new IllegalArgumentException(String.format("The endpoint template id '%s' could not be converted to a unique id", id));
         }
     }
+
+    /**
+     * Whether or not this particular tenant rule would apply to the specified tenant
+     *
+     * @param tenant
+     * @return
+     */
+    @Override
+    public boolean matches(EndUser user, Tenant tenant) {
+        return tenant.getTypes().contains(getTenantType());
+    }
+
+    /**
+     * Tenant Type rules are an all or nothing based on the tenant contained the rule's tenant type. If matched,
+     * all endpoints in the rule apply.
+     *
+     * @param user
+     * @param tenant
+     * @return
+     */
+    @Override
+    public List<String> matchingEndpointTemplateIds(EndUser user, Tenant tenant) {
+        if (matches(user, tenant)) {
+            return getEndpointTemplateIds();
+        }
+        return Collections.emptyList();
+    }
+
 }

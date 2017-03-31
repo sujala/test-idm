@@ -1,17 +1,25 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.dao.IdentityUserDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.UserService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.modules.endpointassignment.entity.Rule;
+import com.rackspace.idm.modules.endpointassignment.service.RuleService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import javax.annotation.Nullable;
+import java.util.*;
 
 @Component
 public class DefaultIdentityUserService implements IdentityUserService {
@@ -21,6 +29,21 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private TenantService tenantService;
+
+    @Autowired
+    private RuleService ruleService;
+
+    @Autowired
+    private IdentityConfig identityConfig;
+
+    @Autowired
+    private AuthorizationService authorizationService;
+
+    @Autowired
+    private EndpointService endpointService;
 
     @Autowired
     private IdentityProviderDao identityProviderDao;
@@ -203,4 +226,111 @@ public class DefaultIdentityUserService implements IdentityUserService {
     public int getUsersWithinRegionCount(String regionName) {
         return identityUserRepository.getUsersWithinRegionCount(regionName);
     }
+
+    @Override
+    public ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser) {
+        if (baseUser == null || !(baseUser instanceof EndUser)) {
+            /*
+             Ideally this should probably throw an error rather than return an empty catalog for null users, but legacy
+             seems to be empty catalog so maintain that for now. Only "EndUsers" (not Rackers) have service catalogs
+             */
+            return new ServiceCatalogInfo(Collections.EMPTY_LIST, Collections.EMPTY_LIST, Collections.EMPTY_LIST, null);
+        }
+
+        EndUser user = (EndUser) baseUser;
+
+        // Get the tenantRoles for the user
+        final List<TenantRole> tenantRoles = this.tenantService.getTenantRolesForUser(baseUser);
+
+        // Determine the user type
+        IdentityUserTypeEnum userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);
+
+        // Translate the tenantRoles to all the info necessary to determine endpoints
+        List<TenantEndpointMeta> tenantMetas = generateTenantEndpointMetaForUser(user, tenantRoles);
+
+        final Set<OpenstackEndpoint> endpoints = new HashSet<>();
+        for (TenantEndpointMeta tenantMeta : tenantMetas) {
+            final OpenstackEndpoint endpoint = this.endpointService.calculateOpenStackEndpointForTenantMeta(tenantMeta);
+            if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
+                endpoints.add(endpoint);
+            }
+        }
+
+        List<Tenant> tenants = Lists.transform(tenantMetas, new Function<TenantEndpointMeta, Tenant>() {
+            @Nullable
+            @Override
+            public Tenant apply(@Nullable TenantEndpointMeta input) {
+                return input.getTenant();
+            }
+        });
+
+        return new ServiceCatalogInfo(tenantRoles,  tenants, new ArrayList<>(endpoints), userTypeEnum);
+    }
+
+    /**
+     * Retries all the tenants
+     * @param roles
+     * @return
+     */
+    private List<TenantEndpointMeta> generateTenantEndpointMetaForUser(final EndUser user, Collection<TenantRole> roles) {
+        List<TenantEndpointMeta> tenantEndpointMetas = new ArrayList<>();
+
+        // Step 1: Map the tenantIds to roles
+        Map<String, List<TenantRole>> tenantIdsToRolesMap = new HashMap<>();
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(roles)) {
+            for (TenantRole role : roles) {
+                if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(role.getTenantIds())) {
+                    // Add the role to each tenant for which it is assigned
+                    for (String tenantId : role.getTenantIds()) {
+                        List<TenantRole> roleMap = tenantIdsToRolesMap.get(tenantId);
+                        if (roleMap == null) {
+                            roleMap = new ArrayList<TenantRole>();
+                            tenantIdsToRolesMap.put(tenantId, roleMap);
+                        }
+                        roleMap.add(role);
+                    }
+                }
+            }
+        }
+
+        // Step 2: Lookup all rules if enabled
+        List<Rule> rules = Collections.EMPTY_LIST;
+        if (identityConfig.getReloadableConfig().includeEndpointsBasedOnRules()) {
+            rules = Collections.unmodifiableList(ruleService.findAllEndpointAssignmentRules());
+        }
+
+        for (String tenantId : tenantIdsToRolesMap.keySet()) {
+            // Step 3: Look up the tenant
+            final Tenant tenant = tenantService.getTenant(tenantId);
+
+            if (tenant != null) {
+                // Step 4: Get rules that are applicable for this tenant/user
+                List<Rule> tenantRules = new ArrayList<>();
+                if (CollectionUtils.isNotEmpty(rules)) {
+                    CollectionUtils.select(rules, new org.apache.commons.collections4.Predicate<Rule>() {
+                                @Override
+                                public boolean evaluate(Rule rule) {
+                                    return rule != null && rule.matches(user, tenant);
+                                }
+                            }, tenantRules);
+                }
+
+                // Step 5: Create tenant meta
+                TenantEndpointMeta meta = new TenantEndpointMeta(user, tenant, tenantIdsToRolesMap.get(tenant.getTenantId()), tenantRules);
+                tenantEndpointMetas.add(meta);
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Calculated TenantEndpointMeta: " + meta.getLogString());
+                }
+            } else {
+                /*
+                  If tenant doesn't exist, log error, but ignore. User's service catalog just won't contain anything
+                  for this tenant
+                 */
+                logger.error(String.format("User with id '%s' is assigned a role on a tenant with id '%s', but the tenant does not exist", user.getId(), tenantId));
+            }
+        }
+
+        return tenantEndpointMetas;
+    }
+
 }
