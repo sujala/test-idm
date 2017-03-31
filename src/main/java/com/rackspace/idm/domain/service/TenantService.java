@@ -56,6 +56,16 @@ public interface TenantService {
     List<TenantRole> getGlobalRolesForUser(EndUser user, String applicationId);
     List<TenantRole> getEffectiveTenantRolesForUserOnTenant(EndUser user, Tenant tenant);
     List<TenantRole> getTenantRolesForUser(BaseUser user);
+
+    /**
+     * Retrieves tenant roles assigned to the user fully populated based on information in associated client roles. The
+     * client role information is cached.
+     *
+     * @param user
+     * @return
+     */
+    List<TenantRole> getTenantRolesForUserPerformant(BaseUser user);
+
     Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user);
 
     List<Tenant> getTenantsForUserByTenantRoles(BaseUser user);

@@ -28,7 +28,6 @@ import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
 import org.openstack.docs.identity.api.v2.Role;
-import org.openstack.docs.identity.api.v2.TenantForAuthenticateResponse;
 import org.openstack.docs.identity.api.v2.Token;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
@@ -43,7 +42,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.instanceOf;
@@ -157,7 +155,7 @@ public class DefaultCloud20ServiceOldTest {
         //setting mocks
         defaultCloud20Service.setUserService(userService);
         defaultCloud20Service.setUserGroupService(userGroupService);
-        defaultCloud20Service.setObjFactories(jaxbObjectFactories);
+        defaultCloud20Service.setJaxbObjectFactories(jaxbObjectFactories);
         defaultCloud20Service.setScopeAccessService(scopeAccessService);
         defaultCloud20Service.setAuthorizationService(authorizationService);
         defaultCloud20Service.setUserConverterCloudV20(userConverterCloudV20);

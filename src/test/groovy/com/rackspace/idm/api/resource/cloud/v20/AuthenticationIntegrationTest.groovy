@@ -2,22 +2,30 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.config.CacheConfiguration
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.ApplicationDao
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
+import com.rackspace.idm.domain.dao.impl.LdapClientRoleRepositoryIntegrationTest
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.Application
+import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
+import org.apache.commons.lang3.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.cache.guava.GuavaCache
 import org.springframework.http.HttpStatus
+import spock.lang.AutoCleanup
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
@@ -45,6 +53,9 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     ApplicationDao applicationDao
+
+    @Autowired
+    ApplicationRoleDao applicationRoleDao
 
     @Autowired(required = false)
     FederatedUserRepository sqlFederatedUserRepository
@@ -345,6 +356,63 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users1)
         utils.deleteUsers(users2)
+    }
+
+    /**
+     * This tests the use of the client role cache in authentication
+     *
+     * @return
+     */
+    @Unroll
+    def "v1.0/v1.1/v2.0 Authentication uses cached roles based on reloadable property feature.use.cached.client.roles.for.service.catalog: #useCachedRoles"() {
+        given:
+        // If either of these are 0 then cacheing is disabled altogether and this test would be pointless
+        assert identityConfig.getStaticConfig().getClientRoleByIdCacheTtl().toMillis() > 0
+        assert identityConfig.getStaticConfig().getClientRoleByIdCacheSize() > 0
+
+        //without performant catalog, doesn't matter what cache role feature is set to
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
+
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP, useCachedRoles)
+
+        def domainId = utils.createDomain()
+        def user, users1
+        (user, users1) = utils.createUserAdmin(domainId)
+
+        def originalRole = utils.createRole()
+        utils.addRoleToUser(user, originalRole.id)
+
+        when: "Auth"
+        AuthenticateResponse responseV20 = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD)
+
+        then: "User has role"
+        responseV20.user.roles.role.find {it.name == originalRole.name} != null
+
+        when: "Change role and auth again"
+        ClientRole updatedRole = applicationRoleDao.getClientRole(originalRole.id)
+        updatedRole.setName(RandomStringUtils.randomAlphabetic(10))
+        applicationRoleDao.updateClientRole(updatedRole)
+        responseV20 = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD)
+
+        then:
+        if (useCachedRoles) {
+            // The role name should be the old value as the client role was cached during initial auth
+            assert responseV20.user.roles.role.find {it.name == originalRole.name} != null
+            assert responseV20.user.roles.role.find {it.name == updatedRole.name} == null
+        } else {
+            // The role name should be the new value as the client role is always retrieved from backend
+            assert responseV20.user.roles.role.find {it.name == originalRole.name} == null
+            assert responseV20.user.roles.role.find {it.name == updatedRole.name} != null
+        }
+
+        cleanup:
+        utils.deleteUsers(users1)
+        utils.deleteRoleQuietly(originalRole)
+
+        where:
+        useCachedRoles | _
+        true | _
+        false | _
     }
 
     def "users with a nonexistent domain are able to authenticate"() {

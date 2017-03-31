@@ -1,6 +1,7 @@
 package testHelpers
 
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
 import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
@@ -145,6 +146,7 @@ class RootServiceTest extends Specification {
 
     // converters
     @Shared AuthConverterCloudV20 authConverter
+    @Shared AuthConverterCloudV11 authConverterCloudV11
     @Shared EndpointConverterCloudV20 endpointConverter
     @Shared RoleConverterCloudV20 roleConverter
     @Shared ServiceConverterCloudV20 serviceConverter
@@ -271,6 +273,12 @@ class RootServiceTest extends Specification {
         authConverter.toImpersonationResponse(_) >> v1Factory.createImpersonationResponse()
         service.authConverterCloudV20 = authConverter
     }
+
+    def mockAuthConverterCloudV11(service) {
+        authConverterCloudV11 = Mock()
+        service.authConverterCloudV11 = authConverterCloudV11
+    }
+
 
     def mockEndpointConverter(service) {
         endpointConverter = Mock()

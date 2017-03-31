@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UUIDScopeAccessDao
 import com.rackspace.idm.domain.entity.Application
@@ -10,6 +11,7 @@ import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.UserAuthenticationResult
 import com.rackspace.idm.domain.security.TokenFormat
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rsa.cryptoj.c.uu
 import com.unboundid.util.LDAPSDKUsageException
 import org.springframework.beans.factory.annotation.Autowired
@@ -61,6 +63,8 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         mockApplicationService(service)
         mockIdentityUserService(service)
         mockTokenFormatSelector(service)
+        mockIdentityConfig(service)
+        mockAuthorizationService(service)
         service.uuidScopeAccessDao = uuidScopeAccessDao
 
         config.getInt("token.cloudAuthExpirationSeconds", _) >>  defaultCloudAuthExpirationSeconds
@@ -1142,7 +1146,27 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     }
 
-    def getRange(seconds, entropy) {
+    def "Retrieving service catalog info for user uses legacy or performant version based on performant property"() {
+        given:
+        def fakeUser = new User()
+
+        when: "Set to false"
+        reloadableConfig.usePerformantServiceCatalog() >> false
+        service.getServiceCatalogInfo(fakeUser)
+
+        then: "Do not use the performant version"
+        0 * identityUserService.getServiceCatalogInfo(_)
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
+
+        when: "Set to true"
+        reloadableConfig.usePerformantServiceCatalog() >> true
+        service.getServiceCatalogInfo(fakeUser)
+
+        then: "Use the performant version"
+        1 * identityUserService.getServiceCatalogInfo(_)
+    }
+
+        def getRange(seconds, entropy) {
         /*
         to account for processing time, add +- the fudgeSeconds to the calculated range.
 

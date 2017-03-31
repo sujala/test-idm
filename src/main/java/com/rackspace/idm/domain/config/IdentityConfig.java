@@ -356,6 +356,18 @@ public class IdentityConfig {
     public static final String FEATURE_PERFORMANT_SERVICE_CATALOG_PROP = "feature.performant.service.catalog";
     public static final boolean FEATURE_PERFORMANT_SERVICE_CATALOG_DEFAULT = true;
 
+    public static final String CACHE_CLIENT_ROLES_BY_ID_TTL_PROP = "cache.client.role.by.id.ttl";
+    public static final Duration CACHE_CLIENT_ROLES_BY_ID_TTL_DEFAULT = Duration.parse("PT10M");
+
+    public static final String CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP = "cache.client.role.by.id.size";
+    public static final int CACHE_CLIENT_ROLES_BY_ID_SIZE_DEFAULT = 200;
+
+    public static final String FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP = "feature.use.cached.client.roles.for.service.catalog";
+    public static final boolean FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_DEFAULT = true;
+
+    public static final String FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_PROP = "feature.use.cached.client.roles.for.validate";
+    public static final boolean FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -696,6 +708,11 @@ public class IdentityConfig {
         defaults.put(DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP, DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT);
         defaults.put(SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_DEFAULT);
         defaults.put(SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_DEFAULT);
+
+        defaults.put(FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP, FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_DEFAULT);
+        defaults.put(FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_PROP, FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_DEFAULT);
+        defaults.put(CACHE_CLIENT_ROLES_BY_ID_TTL_PROP, CACHE_CLIENT_ROLES_BY_ID_TTL_DEFAULT);
+        defaults.put(CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP, CACHE_CLIENT_ROLES_BY_ID_SIZE_DEFAULT);
 
         return defaults;
     }
@@ -1450,6 +1467,16 @@ public class IdentityConfig {
         public boolean getFeedsDeamonEnabled() {
             return getBooleanSafely(staticConfiguration, FEEDS_DEAMON_EVICTION_ENABLED_PROP);
         }
+
+        @IdmProp(key = CACHE_CLIENT_ROLES_BY_ID_TTL_PROP, versionAdded = "3.11.0" , description = "The ttl of entries in the client role by id cache. A ttl of 0 means no cache.")
+        public Duration getClientRoleByIdCacheTtl() {
+            return getDurationSafely(staticConfiguration, CACHE_CLIENT_ROLES_BY_ID_TTL_PROP);
+        }
+
+        @IdmProp(key = CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP, versionAdded = "3.11.0" , description = "The max size of the client role by id cache.")
+        public int getClientRoleByIdCacheSize() {
+            return getIntSafely(staticConfiguration, CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP);
+        }
     }
 
     /**
@@ -2043,6 +2070,16 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, versionAdded = "3.11.0" , description = "Whether or not to use the performant version of the service catalog.")
         public boolean usePerformantServiceCatalog() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_PERFORMANT_SERVICE_CATALOG_PROP);
+        }
+
+        @IdmProp(key = FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP, versionAdded = "3.11.0" , description = "Whether or not to use cached client roles for the service catalog. Only applicable when feature.performant.service.catalog=true")
+        public boolean useCachedClientRolesInServiceCatalog() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP);
+        }
+
+        @IdmProp(key = FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_PROP, versionAdded = "3.11.0" , description = "Whether or not to use cached client roles in the validate call.")
+        public boolean useCachedClientRolesInValidate() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_PROP);
         }
     }
 

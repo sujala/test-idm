@@ -240,7 +240,12 @@ public class DefaultIdentityUserService implements IdentityUserService {
         EndUser user = (EndUser) baseUser;
 
         // Get the tenantRoles for the user
-        final List<TenantRole> tenantRoles = this.tenantService.getTenantRolesForUser(baseUser);
+        List<TenantRole> tenantRoles;
+        if (identityConfig.getReloadableConfig().useCachedClientRolesInServiceCatalog()) {
+            tenantRoles = tenantService.getTenantRolesForUserPerformant(baseUser);
+        } else {
+            tenantRoles = this.tenantService.getTenantRolesForUser(baseUser);
+        }
 
         // Determine the user type
         IdentityUserTypeEnum userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);

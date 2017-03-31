@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.entity.*;
 
 import java.util.List;
@@ -41,10 +42,18 @@ public interface ApplicationService {
     void updateClientRole(ClientRole role);
     
     Iterable<ClientRole> getClientRolesByClientId(String clientId);
-    
+
     ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName);
     
     ClientRole getClientRoleById(String id);
+
+    /**
+     * Return the cached, immutable, version of the client role.
+     *
+     * @param id
+     * @return
+     */
+    ImmutableClientRole getCachedClientRoleById(String id);
 
     /**
      * Load the specified ClientRoles by name and maxWeight. The role is returned if the specified weight

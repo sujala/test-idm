@@ -25,7 +25,21 @@ public class ServiceCatalogInfo {
     private List<Tenant> userTenants;
     private IdentityUserTypeEnum userTypeEnum;
 
-    public ServiceCatalogInfo() {}
+    /**
+     * Creates an object with empty endpoints, tenant roles, and tenants and null user type.
+     */
+    public ServiceCatalogInfo() {
+        this(null);
+    }
+
+    /**
+     * Creates an object with empty endpoints, tenant roles, and tenants with the specified user type.
+     *
+     * @param userTypeEnum
+     */
+    public ServiceCatalogInfo(IdentityUserTypeEnum userTypeEnum) {
+        this(null, null, null, userTypeEnum);
+    }
 
     public ServiceCatalogInfo( List<TenantRole> userTenantRoles, List<Tenant> userTenants, List<OpenstackEndpoint> userEndpoints, IdentityUserTypeEnum userTypeEnum) {
         this.userTenantRoles = userTenantRoles == null ? Collections.EMPTY_LIST : Collections.unmodifiableList(new ArrayList<TenantRole>(userTenantRoles));
