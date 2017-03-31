@@ -210,6 +210,15 @@ class RootIntegrationTest extends Specification {
         mediaTypeContext.contentType  >> contentType
     }
 
+    def getEntity(response, type) {
+        def entity = response.getEntity(type)
+
+        if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
+            entity = entity.value
+        }
+        return entity
+    }
+
     def contentTypePermutations() {
         return [
                 [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE],

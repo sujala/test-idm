@@ -1735,7 +1735,14 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserManagedLevelAccess(scopeAccessByAccessToken);
-            User user = userService.checkAndGetUserById(userId);
+            EndUser user = identityUserService.checkAndGetUserById(userId);
+
+            if (!(user instanceof User) && !(user instanceof FederatedUser)) {
+                String errMsg = String.format("User %s not found", userId);
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
+
             //is same domain?
             boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
             boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
@@ -1750,7 +1757,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if(callerHasUserManageRole && authorizationService.hasUserManageRole(user)) {
                 throw new NotAuthorizedException("Cannot delete user with same access level");
             }
-            userService.deleteUser(user);
+            identityUserService.deleteUser(user);
 
             atomHopperClient.asyncPost(user, AtomHopperConstants.DELETED);
 
