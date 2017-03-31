@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.idm.api.security.ImmutableClientRole;
+import com.rackspace.idm.domain.config.CacheConfiguration;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.*;
@@ -16,6 +18,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -288,6 +291,19 @@ public class DefaultApplicationService implements ApplicationService {
         ClientRole role = this.applicationRoleDao.getClientRole(roleId);
         logger.debug("Got Client Role {}", roleId);
         return role;
+    }
+
+    @Override
+    @Cacheable(value = CacheConfiguration.CLIENT_ROLE_CACHE, unless="#result == null")
+    public ImmutableClientRole getCachedClientRoleById(String roleId) {
+        logger.trace("ClientRole cache miss. Retrieving client role with id {}", roleId);
+        ClientRole role = this.applicationRoleDao.getClientRole(roleId);
+        if (role != null) {
+            logger.trace("Retrieved Client Role {} for cache", roleId);
+        } else {
+            logger.trace("Client Role {} not found. Will not populate null result in cache", roleId);
+        }
+        return role != null ? new ImmutableClientRole(role) : null;
     }
 
     @Override

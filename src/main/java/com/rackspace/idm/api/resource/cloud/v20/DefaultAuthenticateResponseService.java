@@ -178,7 +178,12 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
 
         UserScopeAccess usa = sa;
         EndUser user = (EndUser) userService.getUserByScopeAccess(usa);
-        List<TenantRole> roles = tenantService.getTenantRolesForUser(user);
+        List<TenantRole> roles;
+        if (identityConfig.getReloadableConfig().useCachedClientRolesInValidate()) {
+            roles = tenantService.getTenantRolesForUserPerformant(user);
+        } else {
+            roles = tenantService.getTenantRolesForUser(user);
+        }
         validator20.validateTenantIdInRoles(tenantId, roles);
         authenticateResponse.setToken(tokenConverterCloudV20.toToken(sa, roles));
         authenticateResponse.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));

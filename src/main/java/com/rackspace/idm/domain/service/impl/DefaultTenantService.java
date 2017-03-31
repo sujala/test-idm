@@ -732,6 +732,31 @@ public class DefaultTenantService implements TenantService {
         return getEffectiveTenantRolesForUserFullyPopulated(user);
     }
 
+    @Override
+    public List<TenantRole> getTenantRolesForUserPerformant(BaseUser user) {
+        // Get the full set of tenant roles for the user
+        List<TenantRole> tenantRoles = getEffectiveTenantRolesForUser(user);
+
+        // Update all the tenant roles from that stored in the client role
+        List<TenantRole> populatedTenantRoles = new ArrayList<>();
+        for (TenantRole tenantRole : tenantRoles) {
+            if (tenantRole != null) {
+                ImmutableClientRole cRole = this.applicationService.getCachedClientRoleById(tenantRole.getRoleRsId());
+                if (cRole != null) {
+                    //TODO: If the cRole doesn't exist, ignore it as if the user doesn't have it (don't return in list)
+                    tenantRole.setName(cRole.getName());
+                    tenantRole.setDescription(cRole.getDescription());
+                    tenantRole.setPropagate(cRole.getPropagate());
+                    populatedTenantRoles.add(tenantRole);
+                } else {
+                    logger.error(String.format("User w/ id '%s' is assigned a tenant role that is associated with " +
+                            "the non-existent client role '%s'", user.getId(), tenantRole.getRoleRsId()));
+                }
+            }
+        }
+        return populatedTenantRoles;
+    }
+
     /**
      * Retrieves a list of tenant roles for a user without the details such as name, propagate, etc populated
      * @param user

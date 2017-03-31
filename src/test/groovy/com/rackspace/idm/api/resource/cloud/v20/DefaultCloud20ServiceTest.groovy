@@ -69,7 +69,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         exceptionHandler.objFactories = objFactories
 
         service.exceptionHandler = exceptionHandler
-        service.objFactories = objFactories
+        service.jaxbObjectFactories = objFactories
 
     }
 

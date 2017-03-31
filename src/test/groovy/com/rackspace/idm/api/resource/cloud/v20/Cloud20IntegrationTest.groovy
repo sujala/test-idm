@@ -14,6 +14,7 @@ import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ScopeAccess
+import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.impl.DefaultApplicationService
@@ -53,7 +54,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
     @Autowired(required = false) LdapConnectionPools connPools
     @Autowired Configuration config
-    @Autowired DefaultApplicationService applicationService
+    @Autowired ApplicationService applicationService
 
     @Autowired
     @Qualifier("tokenRevocationService")

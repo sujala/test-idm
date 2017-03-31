@@ -1,18 +1,33 @@
 package com.rackspace.idm.api.resource.cloud.v11
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
 import com.rackspace.idm.api.resource.cloud.CloudExceptionResponse
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.resource.cloud.v20.AuthResponseTuple
+import com.rackspace.idm.api.security.AuthenticationContext
+import com.rackspace.idm.domain.config.JAXBContextResolver
+import com.rackspace.idm.domain.config.providers.cloudv11.Core11XMLWriter
 import com.rackspace.idm.domain.dao.impl.LdapPatternRepository
 import com.rackspace.idm.domain.entity.*
+import com.rackspace.idm.domain.service.ServiceCatalogInfo
 import com.rackspace.idm.validation.Validator
+import com.rackspacecloud.docs.auth.api.v1.ServiceCatalog
 import com.rackspacecloud.docs.auth.api.v1.User
+import com.rackspacecloud.docs.auth.api.v1.UserCredentials
 import com.rackspacecloud.docs.auth.api.v1.UserWithOnlyEnabled
 import org.apache.http.HttpStatus
+import org.mortbay.jetty.security.Credential
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
 import javax.servlet.http.HttpServletRequest
+import javax.ws.rs.core.HttpHeaders
+import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
+import javax.ws.rs.core.UriInfo
+import javax.xml.bind.JAXBContext
+import javax.xml.bind.JAXBElement
+
 /**
  * Created with IntelliJ IDEA.
  * User: jorge
@@ -26,6 +41,8 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
     @Shared LdapPatternRepository ldapPatternRepository
     @Shared UserConverterCloudV11 userConverterCloudV11
     @Shared HttpServletRequest request
+    JAXBObjectFactories jaxbObjectFactories = new JAXBObjectFactories()
+    CredentialValidator credentialValidator
 
     @Shared Validator realValidator
 
@@ -41,7 +58,9 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
 
     def setup(){
         userConverterCloudV11 = Mock()
+        credentialValidator = Mock(CredentialValidator)
         service.userConverterCloudV11 = userConverterCloudV11
+        service.credentialValidator = credentialValidator
 
         mockAuthHeaderHelper(service)
         mockScopeAccessService(service)
@@ -54,6 +73,9 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         mockAtomHopperClient(service)
         mockValidator(service)
         mockTokenRevocationService(service)
+        mockRequestContextHolder(service)
+        mockAuthWithApiKeyCredentials(service)
+        mockAuthConverterCloudV11(service)
     }
 
     def "addBaseUrl handles missing attribute error"() {
@@ -443,6 +465,63 @@ class DefaultCloud11ServiceGroovyTest extends RootServiceTest {
         then:
         endpointService.getBaseUrlById(_) >> cloudBaseUrl
         notThrown(ConcurrentModificationException)
+    }
+
+    /**
+     * It's difficult to demonstrate that the v1.1 auth service uses cached roles through an integration/api
+     * test because roles are not returned in the response like they are with v2.0 auth or validate.
+     *
+     * The ScopeAccessService getServiceCatalogInfo method is verified through other tests to appropriate use cached
+     * roles or not based on various property configuration settings.
+     *
+     * By showing that this method calls the method that has been verified to correctly use (or not) the cache
+     * we verify this service would use the cached roles itself, as appropriate.
+     */
+    def "v11 auth retrieves service catalog info from DefaultScopeAccessService"() {
+        given:
+
+        // Mock Request - Auth 1.1 does nothing with this
+        request = Mock(HttpServletRequest)
+
+        // Mock URI Info - Auth 1.1 does nothing with this
+        UriInfo uriInfo = Mock()
+
+        // Mock headers and set to XML content since there isn't a JSON writer for Auth 1.1 request bodies
+        headers = Mock(HttpHeaders)
+        headers.getMediaType() >> MediaType.APPLICATION_XML_TYPE
+
+        // Generate the xml request body
+        UserCredentials cred = v1Factory.createUserKeyCredentials("user", "key")
+        JAXBElement<UserCredentials> jaxCred = jaxbObjectFactories.rackspaceCloudV1ObjectFactory.createCredentials(cred)
+        ByteArrayOutputStream entityStream = new ByteArrayOutputStream()
+        createCore11XMLWriter().writeTo(jaxCred, null, null, null, null, null, entityStream)
+        String body = entityStream.toString()
+
+        com.rackspace.idm.domain.entity.User user = entityFactory.createUser()
+        authWithApiKeyCredentials.authenticate(_, _) >> new UserAuthenticationResult(user, true)
+
+        UserScopeAccess sa = entityFactory.createUserToken()
+        AuthResponseTuple authResponseTuple = new AuthResponseTuple(user, sa)
+        scopeAccessService.createScopeAccessForUserAuthenticationResult(_) >> authResponseTuple
+
+        requestContextHolder.getRequestContext() >> new AuthenticationContext()
+        authConverterCloudV11.toCloudv11AuthDataJaxb(_, _) >> new com.rackspacecloud.docs.auth.api.v1.AuthData()
+
+        when:
+        service.authenticate(request, uriInfo, headers,  body)
+
+        then:
+        1 * scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()
+    }
+
+    def createCore11XMLWriter() {
+        Core11XMLWriter core11XMLWriter = new Core11XMLWriter()
+
+        HashMap<String, String> corev11NsPrefixMap = new HashMap<String, String>()
+        corev11NsPrefixMap.put("http://www.w3.org/2005/Atom", "atom")
+        corev11NsPrefixMap.put("http://docs.rackspacecloud.com/auth/api/v1.1", "")
+        core11XMLWriter.setNsPrefixMap(corev11NsPrefixMap)
+        return core11XMLWriter
     }
 
     def createUser(String id, String username, int mossoId, String nastId) {

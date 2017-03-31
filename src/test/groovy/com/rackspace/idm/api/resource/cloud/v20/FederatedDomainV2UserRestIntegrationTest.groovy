@@ -2,12 +2,14 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
+import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.security.ConfigurableTokenFormatSelector
@@ -27,6 +29,7 @@ import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
@@ -65,6 +68,9 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     SamlUnmarshaller samlUnmarshaller
+
+    @Autowired
+    ApplicationRoleDao applicationRoleDao
 
     @Shared String sharedServiceAdminToken
     @Shared String sharedIdentityAdminToken
@@ -145,7 +151,6 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         cleanup:
         try {
             deleteFederatedUserQuietly(fedRequest.username)
-            utils.deleteUsers(userAdmin)
         } catch (Exception ex) {
             // Eat
         }
@@ -172,11 +177,83 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         cleanup:
         try {
             deleteFederatedUserQuietly(fedRequest.username)
-            utils.deleteUsers(userAdmin)
         } catch (Exception ex) {
             // Eat
         }
     }
+
+    /**
+     * This tests the use of the client role cache in authentication
+     *
+     * @return
+     */
+    @Unroll
+    def "Federated Authentication uses cached roles based on reloadable property feature.use.cached.client.roles.for.service.catalog: #useCachedRoles"() {
+        given:
+        // If either of these are 0 then cacheing is disabled altogether and this test would be pointless
+        assert identityConfig.getStaticConfig().getClientRoleByIdCacheTtl().toMillis() > 0
+        assert identityConfig.getStaticConfig().getClientRoleByIdCacheSize() > 0
+
+        //without performant catalog, doesn't matter what cache role feature is set to
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP, useCachedRoles)
+
+        // Create Fed assignable role
+        def originalRole = utils.createRole()
+
+        User userAdminEntity = userService.getUserById(sharedUserAdmin.id)
+        def fedRequest = createFedRequest().with {
+            it.roleNames = [originalRole.name] as Set
+            it
+        }
+
+        def samlResponseInitial = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+
+        when: "Auth"
+        def authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator
+                .convertResponseToString(samlResponseInitial)).getEntity(AuthenticateResponse).value
+
+        then: "User has role"
+        authClientResponse.user.roles.role.find {it.name == originalRole.name} != null
+
+        when: "Change role name and auth again"
+        ClientRole updatedRole = applicationRoleDao.getClientRole(originalRole.id)
+        updatedRole.setName(org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(10))
+        applicationRoleDao.updateClientRole(updatedRole)
+
+        /*
+         Update the request because the validation that the roles in the SAML Response match to existing roles names does
+         not use a cache, but hit directly against LDAP (we don't cache by name).
+          */
+        def fedRequest2 = createFedRequest().with {
+            it.roleNames = [updatedRole.name] as Set
+            it
+        }
+
+        def samlResponseUpdated = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest2)
+        authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator
+                .convertResponseToString(samlResponseUpdated)).getEntity(AuthenticateResponse).value
+
+        then: "Roles returned in auth use the cache as appropriate"
+        if (useCachedRoles) {
+            // The role name should be the old value as the client role was cached during initial auth
+            assert authClientResponse.user.roles.role.find {it.name == originalRole.name} != null
+            assert authClientResponse.user.roles.role.find {it.name == updatedRole.name} == null
+        } else {
+            // The role name should be the new value as the client role is always retrieved from backend
+            assert authClientResponse.user.roles.role.find {it.name == originalRole.name} == null
+            assert authClientResponse.user.roles.role.find {it.name == updatedRole.name} != null
+        }
+
+        cleanup:
+        deleteFederatedUserQuietly(fedRequest.username)
+
+        where:
+        useCachedRoles | _
+        true | _
+        false | _
+    }
+
 
     def "Error: BadRequest against authorized, but non-existent domain"() {
         given:

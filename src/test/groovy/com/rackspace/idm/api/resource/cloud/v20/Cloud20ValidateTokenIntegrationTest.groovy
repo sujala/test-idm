@@ -6,9 +6,11 @@ import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
+import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
@@ -63,6 +65,9 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     @Autowired(required = false)
     FederatedUserRepository sqlFederatedUserRepository
+
+    @Autowired
+    ApplicationRoleDao applicationRoleDao
 
     def "Validate user token" () {
         def expirationTimeInSeconds = 86400
@@ -819,6 +824,66 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         utils.deleteTenantQuietly(fawsTenant)
         utils.deleteDomain(userAdmin.domainId)
     }
+
+    /**
+     * This tests the use of the client role cache in authentication
+     *
+     * @return
+     */
+    @Unroll
+    def "Validation uses cached roles based on reloadable property feature.use.cached.client.roles.for.validation: #useCachedRoles"() {
+        given:
+        // If either of these are 0 then cacheing is disabled altogether and this test would be pointless
+        assert identityConfig.getStaticConfig().getClientRoleByIdCacheTtl().toMillis() > 0
+        assert identityConfig.getStaticConfig().getClientRoleByIdCacheSize() > 0
+
+        //disable performant catalog so authentication won't populate the cache
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_PROP, useCachedRoles)
+
+        def domainId = utils.createDomain()
+        def user, users1
+        (user, users1) = utils.createUserAdmin(domainId)
+
+        def originalRole = utils.createRole()
+        utils.addRoleToUser(user, originalRole.id)
+
+        def token = utils.getToken(user.username)
+
+        when: "validate"
+        AuthenticateResponse responseV20 = utils.validateToken(token)
+
+        then: "User has role"
+        responseV20.user.roles.role.find {it.name == originalRole.name} != null
+
+        when: "Change role and auth again"
+        ClientRole updatedRole = applicationRoleDao.getClientRole(originalRole.id)
+        updatedRole.setName(org.apache.commons.lang3.RandomStringUtils.randomAlphabetic(10))
+        applicationRoleDao.updateClientRole(updatedRole)
+        responseV20 = utils.validateToken(token)
+
+        then:
+        if (useCachedRoles) {
+            // The role name should be the old value as the client role was cached during initial auth
+            assert responseV20.user.roles.role.find {it.name == originalRole.name} != null
+            assert responseV20.user.roles.role.find {it.name == updatedRole.name} == null
+        } else {
+            // The role name should be the new value as the client role is always retrieved from backend
+            assert responseV20.user.roles.role.find {it.name == originalRole.name} == null
+            assert responseV20.user.roles.role.find {it.name == updatedRole.name} != null
+        }
+
+        cleanup:
+        utils.deleteUsers(users1)
+        utils.deleteRoleQuietly(originalRole)
+
+        where:
+        useCachedRoles | _
+        true | _
+        false | _
+    }
+
+
 
     def getContactIdFromValidateResponse(validateResponse) {
         if(validateResponse.getType() == MediaType.APPLICATION_XML_TYPE) {
