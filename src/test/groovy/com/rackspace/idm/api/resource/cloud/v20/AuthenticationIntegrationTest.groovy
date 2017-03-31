@@ -1,38 +1,37 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.identity.multifactor.domain.GenericMfaAuthenticationResponse
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecision
+import com.rackspace.identity.multifactor.domain.MfaAuthenticationDecisionReason
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.domain.config.CacheConfiguration
+import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
-import com.rackspace.idm.domain.dao.ApplicationDao
-import com.rackspace.idm.domain.dao.ApplicationRoleDao
-import com.rackspace.idm.domain.dao.DomainDao
-import com.rackspace.idm.domain.dao.EndpointDao
-import com.rackspace.idm.domain.dao.FederatedUserDao
-import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.impl.LdapClientRoleRepositoryIntegrationTest
+import com.rackspace.idm.domain.dao.*
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
+import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.cache.guava.GuavaCache
 import org.springframework.http.HttpStatus
-import spock.lang.AutoCleanup
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
 
 import javax.servlet.http.HttpServletResponse
+import javax.ws.rs.core.MediaType
+import javax.xml.datatype.DatatypeFactory
 
 import static com.rackspace.idm.Constants.*
+import static org.mockito.Matchers.anyString
+import static org.mockito.Mockito.when;
 
 class AuthenticationIntegrationTest extends RootIntegrationTest {
 
@@ -62,6 +61,9 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     DomainDao domainDao
+
+    @Autowired
+    IdentityConfig identityConfig
 
     def "authenticate with federated user's token does not modify a federated user's tokens"() {
         given:
@@ -459,6 +461,135 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
+    @Unroll
+    def "auth returns default sessionInactivityTimeout if not set on domain: accept = #accept, request = #request"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        when: "auth w/ password"
+        def response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD, request, accept)
+
+        then:
+        response.status == 200
+        assertSessionInactivityTimeout(response, accept, identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString())
+
+        when: "auth w/ API key"
+        def apiKey = utils.getUserApiKey(userAdmin).apiKey
+        response = cloud20.authenticateApiKey(userAdmin.username, apiKey, request, accept)
+
+        then:
+        response.status == 200
+        assertSessionInactivityTimeout(response, accept, identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString())
+
+        when: "auth w/ token"
+        def token = utils.getToken(userAdmin.username)
+        response = cloud20.authenticateTokenAndTenant(token, domainId, request, accept)
+
+        then:
+        response.status == 200
+        assertSessionInactivityTimeout(response, accept, identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString())
+
+        when: "auth w/ mfa"
+        utils.setUpAndEnableUserForMultiFactorSMS(utils.getToken(userAdmin.username), userAdmin)
+        response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD, request, accept)
+        def sessionIdHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        def sessionId = testUtils.extractSessionIdFromWwwAuthenticateHeader(sessionIdHeader)
+        def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
+        when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
+        response = cloud20.authenticateMFAWithSessionIdAndPasscode(sessionId, "1234", request, accept)
+
+        then:
+        response.status == 200
+        assertSessionInactivityTimeout(response, accept, identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString())
+
+        when: "auth w/ impersonation token and tenant"
+        def impersonationToken = utils.getImpersonatedTokenWithToken(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), userAdmin)
+        response = cloud20.authenticateTokenAndTenant(impersonationToken, domainId, request, accept)
+
+        then:
+        response.status == 200
+        assertSessionInactivityTimeout(response, accept, identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString())
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenantById(domainId)
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | request
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
+    @Unroll
+    def "auth returns the sessionInactivityTimeout set on the domain: accept = #accept, request = #request"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = utils.createDomainEntity(domainId)
+        def domainDuration = DatatypeFactory.newInstance().newDuration(
+                identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().plusHours(3).toString());
+        domain.sessionInactivityTimeout = domainDuration
+        utils.updateDomain(domain.id, domain)
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+
+        when: "auth w/ password"
+        def response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD, request, accept)
+
+        then:
+        response.status == 200
+        assertSessionInactivityTimeout(response, accept, domainDuration.toString())
+
+        when: "auth w/ API key"
+        def apiKey = utils.getUserApiKey(userAdmin).apiKey
+        response = cloud20.authenticateApiKey(userAdmin.username, apiKey, request, accept)
+
+        then:
+        response.status == 200
+        assertSessionInactivityTimeout(response, accept, domainDuration.toString())
+
+        when: "auth w/ token"
+        def token = utils.getToken(userAdmin.username)
+        response = cloud20.authenticateTokenAndTenant(token, domainId, request, accept)
+
+        then:
+        response.status == 200
+        assertSessionInactivityTimeout(response, accept, domainDuration.toString())
+
+        when: "auth w/ mfa"
+        utils.setUpAndEnableUserForMultiFactorSMS(utils.getToken(userAdmin.username), userAdmin)
+        response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD, request, accept)
+        def sessionIdHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
+        def sessionId = testUtils.extractSessionIdFromWwwAuthenticateHeader(sessionIdHeader)
+        def mfaServiceResponse = new GenericMfaAuthenticationResponse(MfaAuthenticationDecision.ALLOW, MfaAuthenticationDecisionReason.ALLOW, null, null)
+        when(mockMultiFactorAuthenticationService.mock.verifyPasscodeChallenge(anyString(), anyString(), anyString())).thenReturn(mfaServiceResponse)
+        response = cloud20.authenticateMFAWithSessionIdAndPasscode(sessionId, "1234", request, accept)
+
+        then:
+        response.status == 200
+        assertSessionInactivityTimeout(response, accept, domainDuration.toString())
+
+        when: "auth w/ impersonation token and tenant"
+        def impersonationToken = utils.getImpersonatedTokenWithToken(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), userAdmin)
+        response = cloud20.authenticateTokenAndTenant(impersonationToken, domainId, request, accept)
+
+        then:
+        response.status == 200
+        assertSessionInactivityTimeout(response, accept, domainDuration.toString())
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteTenantById(domainId)
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | request
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+    }
+
     def verifyTenantContainedInServiceCatalog(def response, def tenantId, def endpointTemplateIds) {
 
         def responseContainsAllEndpoints = true
@@ -494,6 +625,19 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         Date past = new Date(now.year - 1, now.month, now.day)
         token.setAccessTokenExp(past)
         scopeAccessDao.updateScopeAccess(token)
+    }
+
+    def void assertSessionInactivityTimeout(response, contentType, expectedSessionInactivityTimeout) {
+        def returnedSessionInactivityTimeout
+        if (contentType == MediaType.APPLICATION_XML_TYPE) {
+            def parsedResponse = response.getEntity(AuthenticateResponse).value
+            returnedSessionInactivityTimeout = parsedResponse.user.sessionInactivityTimeout.toString()
+        } else {
+            def authResponseData = new JsonSlurper().parseText(response.getEntity(String))
+            returnedSessionInactivityTimeout = authResponseData.access.user[JSONConstants.RAX_AUTH_SESSION_INACTIVITY_TIMEOUT]
+        }
+
+        assert returnedSessionInactivityTimeout == expectedSessionInactivityTimeout
     }
 
 }

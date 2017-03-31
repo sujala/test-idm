@@ -286,6 +286,10 @@ public final class JsonWriterHelper {
             userInner.put(JSONConstants.RAX_AUTH_DEFAULT_REGION, "");
         }
 
+        if (user.getSessionInactivityTimeout() != null) {
+            userInner.put(JSONConstants.RAX_AUTH_SESSION_INACTIVITY_TIMEOUT, user.getSessionInactivityTimeout().toString());
+        }
+
         return userInner;
     }
 

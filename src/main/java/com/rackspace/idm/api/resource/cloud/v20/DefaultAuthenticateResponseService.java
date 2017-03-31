@@ -5,6 +5,7 @@ import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
@@ -69,10 +70,28 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
     @Autowired
     private IdentityUserService identityUserService;
 
+    @Autowired
+    private AuthenticationContext authenticationContext;
+
+    @Autowired
+    private DomainService domainService;
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public Response.ResponseBuilder buildAuthResponseForAuthenticate(AuthResponseTuple authResponseTuple, AuthenticationRequest authenticationRequest) {
+
+        // Load the domain as the first step in building the auth response.
+        // Any subsequent use of the domain should be through the cached version in the authenticationContext
+        if (authResponseTuple.getUser() != null && StringUtils.isNotEmpty(authResponseTuple.getUser().getDomainId())) {
+            Domain domain = domainService.getDomain(authResponseTuple.getUser().getDomainId());
+            authenticationContext.setDomain(domain);
+            if (domain == null) {
+                logger.error("User with ID {} references domain with ID {} but the domain does not exist.",
+                        authResponseTuple.getUser().getId(), authResponseTuple.getUser().getDomainId());
+            }
+        }
+
         /**
         * Common case will be a successful auth, so get the service catalog assuming the user has access to specified tenant.
         * The user would have successfully authenticated prior to reaching this point
@@ -129,8 +148,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
                 scInfo = scInfo.filterEndpointsByTenant(tenantInRequest);
             }
 
-            auth = authConverterCloudV20.toAuthenticationResponse(authResponseTuple,
-                    scInfo);
+            auth = authConverterCloudV20.toAuthenticationResponse(authResponseTuple, scInfo);
             auth.setToken(convertedToken);
         } else {
             auth = authConverterCloudV20.toAuthenticationResponse(authResponseTuple, scInfo);

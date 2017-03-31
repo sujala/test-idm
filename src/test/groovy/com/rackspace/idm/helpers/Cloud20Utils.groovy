@@ -450,8 +450,8 @@ class Cloud20Utils {
         response.getEntity(ImpersonationResponse)
     }
 
-    def impersonate(impersonator, user) {
-        methods.impersonate(getToken(impersonator.username, DEFAULT_PASSWORD), user)
+    def impersonate(token, user) {
+        methods.impersonate(token, user)
     }
 
     def impersonate(String token, User user, Integer expireTime) {
@@ -468,7 +468,17 @@ class Cloud20Utils {
     }
 
     def getImpersonatedToken(impersonator, user) {
-        def response = impersonate(impersonator, user)
+        def response = impersonate(getToken(impersonator.username, DEFAULT_PASSWORD), user)
+
+        assert (response.status == SC_OK)
+
+        def entity = response.getEntity(ImpersonationResponse)
+        assert (entity != null)
+        entity.token.id
+    }
+
+    def getImpersonatedTokenWithToken(token, user) {
+        def response = impersonate(token, user)
 
         assert (response.status == SC_OK)
 

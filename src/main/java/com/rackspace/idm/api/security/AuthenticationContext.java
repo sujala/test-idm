@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.security;
 
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspacecloud.docs.auth.api.v1.Credentials;
 import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import com.rackspacecloud.docs.auth.api.v1.UserCredentials;
@@ -28,6 +29,8 @@ public class AuthenticationContext {
     private static Logger logger = LoggerFactory.getLogger(AuthenticationContext.class);
 
     private String username;
+
+    private Domain domain;
 
     /**
      * Given an AuthenticationRequest populate the username for the request
