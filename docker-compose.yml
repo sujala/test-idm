@@ -1,38 +1,38 @@
-postfix:
-    image: docker.ciidentity.com/postfix
-    ports:
-        - 10025:10025
-cloudfeeds:
-    image: docker.ciidentity.com/cloud-feeds
-    ports:
-        - 8888:8080
-    environment:
-        HOST: localhost:8888
-edir:
-    image: docker.ciidentity.com/e-directory
-    ports:
-        - 20636:636
-        - 10389:389
-    volumes:
-        - ./edir/config:/config
-        - ./edir/ldif:/data
-directory:
-    image: docker.ciidentity.com/ca-directory-sp18
-    ports:
-        - 10636:10636
-    volumes:
-        - ./ldap/config:/config
-        - ./ldap/ldif:/data
-mariadb:
-    image: docker.ciidentity.com/mariadb
-    ports:
-        - 3306:3306
-    volumes:
-        - ./sql/schema:/schema
-        - ./sql/data:/data
-repose:
-    image: docker.ciidentity.com/repose
-    ports:
-        - 8080:8080
-    volumes:
-        - ./repose/config:/etc/repose
+version: '3'
+
+services:
+  postfix:
+      image: docker.ciidentity.com/postfix
+      ports:
+          - 10025:10025
+
+  cloudfeeds:
+      image: docker.ciidentity.com/cloud-feeds
+      ports:
+          - 8888:8080
+      environment:
+          HOST: localhost:8888
+
+  edir:
+      image: docker.ciidentity.com/e-directory
+      ports:
+          - 20636:636
+          - 10389:389
+      volumes:
+          - ./edir/config:/config
+          - ./edir/ldif:/data
+
+  directory:
+      image: docker.ciidentity.com/ca-directory
+      ports:
+          - 10636:10636
+      volumes:
+          - ./ldap/config:/config
+          - ./ldap/ldif:/data
+
+  repose:
+      image: docker.ciidentity.com/repose
+      ports:
+          - 8080:8080
+      volumes:
+          - ./repose/config:/etc/repose
