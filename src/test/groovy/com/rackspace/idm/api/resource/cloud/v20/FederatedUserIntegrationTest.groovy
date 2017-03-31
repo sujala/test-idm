@@ -1873,7 +1873,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
         when: "default user cannot delete federatedUser in different domain"
         def defaultUserToken = utils.getToken(defaultUser.username, DEFAULT_PASSWORD)
-        def response = cloud20.deleteUser(defaultUserToken, federatedUserId)
+        response = cloud20.deleteUser(defaultUserToken, federatedUserId)
 
         then:
         response.status == SC_FORBIDDEN
