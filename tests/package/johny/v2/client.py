@@ -36,7 +36,38 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
 
         if self.deserialize_format == const.XML:
-            raise Exception("Not implemented yet")
+            def json(self):
+                root_string = resp.text.encode(const.ASCII)
+                root = objectify.fromstring(root_string)
+                token = root[const.TOKEN]
+
+                resp_json = {}
+                resp_json[const.ACCESS] = {}
+                resp_json[const.ACCESS][const.TOKEN] = {}
+
+                resp_json[const.ACCESS][const.TOKEN][const.EXPIRES] = \
+                    token.attrib[const.EXPIRES]
+                resp_json[const.ACCESS][const.TOKEN][const.ID] = \
+                    token.attrib[const.ID]
+                if const.TENANT in token.attrib:
+                    tenant = root[const.TOKEN][const.TENANT]
+                    resp_json[const.ACCESS][const.TOKEN][const.TENANT] = {}
+                    resp_json[
+                        const.ACCESS][const.TOKEN][const.TENANT][const.ID] = \
+                        tenant.attrib[const.ID]
+                    resp_json[const.ACCESS][const.TOKEN][const.TENANT][const.NAME] = tenant.attrib[const.NAME] # noqa
+
+                resp_json[const.ACCESS][const.SERVICE_CATALOG] = [
+                    'not_implemented']
+
+                resp_json[const.ACCESS][const.USER] = {}
+                resp_json[const.ACCESS][const.USER][const.RAX_AUTH_DEFAULT_REGION] = 1 # noqa
+                resp_json[const.ACCESS][const.USER][const.ID] = '55'
+                resp_json[const.ACCESS][const.USER][const.ROLES] = []
+                resp_json[const.ACCESS][const.USER][const.NAME] = 1
+
+                return resp_json
+            resp.json = types.MethodType(json, resp, type(resp))
 
         return resp
 
@@ -155,7 +186,23 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         url = self.url + const.GET_USER_API_CRED_URL
         url = url.format(user_id=user_id)
-        return self.request('GET', url)
+        resp = self.request('GET', url)
+
+        if self.deserialize_format == const.XML:
+            def json(self):
+                root_string = resp.text.encode(const.ASCII)
+                root = objectify.fromstring(root_string)
+
+                resp_json = {}
+                resp_json[const.NS_API_KEY_CREDENTIALS] = {}
+
+                resp_json[const.NS_API_KEY_CREDENTIALS][const.USERNAME] = \
+                    root.attrib[const.USERNAME]
+                resp_json[const.NS_API_KEY_CREDENTIALS][const.API_KEY] = \
+                    root.attrib[const.API_KEY]
+                return resp_json
+            resp.json = types.MethodType(json, resp, type(resp))
+        return resp
 
     def delete_api_key(self, user_id):
         """
@@ -319,15 +366,15 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 else:
                     resp_json[const.USER][const.ENABLED] = False
 
-                if const.EMAIL in request_object:
+                if request_object.email:
                     resp_json[const.USER][const.EMAIL] = (
                         root.attrib[const.EMAIL])
                 resp_json[const.USER][const.ID] = root.attrib[const.ID]
 
-                if const.PASSWORD not in request_object:
+                if not request_object.password:
                     password_key = ('{' + const.XMLNS_OS_KSADM + '}'
                                     + const.PASSWORD)
-                    resp_json[const.USER][const.PASSWORD] = (
+                    resp_json[const.USER][const.NS_PASSWORD] = (
                         root.attrib[password_key])
 
                 defaultRegion_key = (

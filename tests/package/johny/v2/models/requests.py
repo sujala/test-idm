@@ -231,8 +231,11 @@ class UserAdd(base.AutoMarshallingModel):
         if self.password:
             add_user_request.attrib[etree.QName(
                 const.XMLNS_OS_KSADM, const.PASSWORD)] = self.password
-        if self.enabled:
-            add_user_request.set(const.ENABLED, self.enabled)
+        if self.enabled or self.enabled is None:
+            add_user_request.set(const.ENABLED, 'true')
+        else:
+            add_user_request.set(const.ENABLED, 'false')
+
         if self.mf_enabled:
             add_user_request.attrib[
                 etree.QName(const.XMLNS_RAX_AUTH,
@@ -254,10 +257,7 @@ class UserAdd(base.AutoMarshallingModel):
             add_user_request.attrib[
                 etree.QName(const.XMLNS_RAX_KSGRP,
                             const.GROUPS)] = self.groups
-        if self.secret_qa:
-            add_user_request.attrib[
-                etree.QName(const.XMLNS_RAX_KSQA,
-                            const.SECRET_QA)] = self.secret_qa
+
         return etree.tostring(add_user_request)
 
 

@@ -84,6 +84,7 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         auth_resp = self.identity_admin_client.auth_mosso_key(
             mosso_id=mosso_id, key=key)
         self.assertEqual(auth_resp.status_code, 200)
+
         header_validation.validate_header_not_present('response-source')(
             auth_resp)
         header_validation.validate_header_tenant_id(

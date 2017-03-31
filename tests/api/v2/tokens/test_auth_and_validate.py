@@ -51,6 +51,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
                               pattern=const.UPPER_CASE_LETTERS)},
                       'domain_id': domain_id}
         req_obj = requests.UserAdd(user_name=username, **input_data)
+
         resp = self.identity_admin_client.add_user(request_object=req_obj)
         self.assertEqual(resp.status_code, 201)
         create_user_with_tenant_resp = responses.User(resp.json())
@@ -77,16 +78,18 @@ class AuthAndValidateTokens(base.TestBaseV2):
         token = self.acct_info['token']
         resp = self.identity_admin_client.validate_token(token)
         self.assertEqual(resp.status_code, 200)
-        self.assertSchema(response=resp,
-                          json_schema=tokens_json.validate_token)
+        if self.test_config.deserialize_format == const.JSON:
+            self.assertSchema(response=resp,
+                              json_schema=tokens_json.validate_token)
 
     @attr(type='smoke')
     def test_list_groups_of_useradmin(self):
         user_id = self.acct_info['user_id']
         resp = self.identity_admin_client.list_groups(user_id=user_id)
         self.assertEqual(resp.status_code, 200)
-        self.assertSchema(response=resp,
-                          json_schema=groups_json.list_groups)
+        if self.test_config.deserialize_format == const.JSON:
+            self.assertSchema(response=resp,
+                              json_schema=groups_json.list_groups)
 
     @attr(type='smoke')
     def test_auth_with_api_key(self):
@@ -130,8 +133,9 @@ class AuthAndValidateTokens(base.TestBaseV2):
         # Validate token
         resp = self.identity_admin_client.validate_token(token)
         self.assertEqual(resp.status_code, 200)
-        self.assertSchema(response=resp,
-                          json_schema=tokens_json.validate_token)
+        if self.test_config.deserialize_format == const.JSON:
+            self.assertSchema(response=resp,
+                              json_schema=tokens_json.validate_token)
 
     @attr(type='smoke')
     def test_validate_token_from_auth_tenant_user_api_key(self):
@@ -161,8 +165,9 @@ class AuthAndValidateTokens(base.TestBaseV2):
         # Validate token
         resp = self.identity_admin_client.validate_token(token)
         self.assertEqual(resp.status_code, 200)
-        self.assertSchema(response=resp,
-                          json_schema=tokens_json.validate_token)
+        if self.test_config.deserialize_format == const.JSON:
+            self.assertSchema(response=resp,
+                              json_schema=tokens_json.validate_token)
 
     def tearDown(self):
         for user_id in self.user_ids:
