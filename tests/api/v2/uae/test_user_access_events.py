@@ -52,7 +52,7 @@ class TestUserAccessEvents(base.TestBaseV2):
         self.user_ids.append(user_id)
         return user_id, resp
 
-    def add_otp_devide(self, user_id):
+    def add_otp_device(self, user_id):
         opt_object = requests.OTPDeviceAdd(
             device_name=self.generate_random_string(
                 pattern=const.OTP_NAME_PATTERN))
@@ -228,7 +228,7 @@ class TestUserAccessEvents(base.TestBaseV2):
         domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
         password = resp.json()[const.USER][const.NS_PASSWORD]
         # add otp device
-        device_id, resp = self.add_otp_devide(user_id=user_id)
+        device_id, resp = self.add_otp_device(user_id=user_id)
         secret = func_helper.parse_secret_from_otp_device(otp_response=resp)
         code = func_helper.get_oath_from_secret(secret=secret)
         # verify otp device

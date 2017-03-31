@@ -154,7 +154,7 @@ def validate_expected_headers(expected_headers):
 
 
 def validate_header_tenant_id(value):
-    header = 'x-tenant-id'
+    header = const.X_TENANT_ID
 
     def validation(response):
         basic_header_validations(response=response, header=header)
@@ -171,3 +171,5 @@ validate_content_length_header_not_present = validate_header_not_present(
     'Content-Length')
 validate_transfer_encoding_header_not_present = validate_header_not_present(
     'Transfer-Encoding')
+validate_tenant_id_header_not_present = (
+    validate_header_not_present(const.X_TENANT_ID))

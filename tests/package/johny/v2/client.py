@@ -40,12 +40,14 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
 
         return resp
 
-    def auth_with_mfa_cred(self, session_id, pass_code, headers=None,
+    def auth_with_mfa_cred(self, session_id, pass_code, tenant_id=None,
+                           tenant_name=None, headers=None,
                            requestslib_kwargs=None):
         if not headers:
             headers = {}
         headers[const.X_SESSION_ID] = session_id
-        req_obj = requests.AuthenticateWithMFA(pass_code=pass_code)
+        req_obj = requests.AuthenticateWithMFA(
+            pass_code=pass_code, tenant_id=tenant_id, tenant_name=tenant_name)
         url = self.url + const.TOKEN_URL
         resp = self.request(method='POST', url=url, request_entity=req_obj,
                             headers=headers,

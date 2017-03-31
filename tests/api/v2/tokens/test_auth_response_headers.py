@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
-from tests.api.utils import header_validation
+from tests.api.utils import func_helper, header_validation
 from tests.api.v2 import base
 from tests.api.v2.models import responses
 from tests.api.v2.models import factory
@@ -109,8 +109,38 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         self.assertEqual(auth_resp.status_code, 200)
         header_validation.validate_header_tenant_id(value=tenant_id)(auth_resp)
 
-    @ddt.data('user_password', 'user_apikey')
-    def test_auth_not_specify_tenant(self, auth_type):
+    def call_second_step_of_mfa(self, first_auth_resp, secret, tenant_id=None,
+                                negative=False):
+
+        self.assertEqual(first_auth_resp.status_code, 401)
+        auth_header = first_auth_resp.headers[const.WWW_AUTHENTICATE]
+        session_id = auth_header.split('sessionId=\'')[1].split('\'')[0]
+
+        # This check is added to verify repose removes the header. If this
+        # test is run against identity directly, it will fail.
+        self.assertHeaders(first_auth_resp, (
+            header_validation.validate_username_header_not_present))
+
+        # authenticate with passcode & session ID (2nd mfa auth step)
+        code = func_helper.get_oath_from_secret(secret=secret)
+
+        # Making 2nd step of MFA auth fail
+        if negative:
+            code += 'a'
+
+        mfa_resp = self.identity_admin_client.auth_with_mfa_cred(
+            session_id=session_id, pass_code=code, tenant_id=tenant_id
+        )
+        if negative:
+            self.assertEqual(mfa_resp.status_code, 401)
+        else:
+            self.assertEqual(mfa_resp.status_code, 200)
+        return mfa_resp
+
+    @ddt.data(['user_password', False], ['user_password', True],
+              ['user_apikey', False])
+    @ddt.unpack
+    def test_auth_not_specify_tenant(self, auth_type, use_mfa):
         """
         Create user with one call logic
         - return user object with mosso and nast tenant
@@ -122,51 +152,92 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         user_id = self.one_call_user_info['user_id']
         apikey = self.get_user_apikey(user_id=user_id)
 
-        # auth
+        auth_resp, secret = self.make_auth_call(
+            use_mfa=use_mfa, auth_type=auth_type, user_id=user_id,
+            username=username, password=password, apikey=apikey)
+
+        self.validate_auth_headers(use_mfa=use_mfa, auth_resp=auth_resp,
+                                   secret=secret)
+
+    def make_auth_call(self, use_mfa, user_id, username,
+                       auth_type='user_password', password=None, apikey=None,
+                       with_tenant=None, tenant_id=None):
+
+        secret = None
+        if use_mfa:
+            secret = func_helper.setup_mfa_for_user(
+                user_id=user_id, client=self.identity_admin_client)
+
         if auth_type == 'user_password':
-            auth_obj = requests.AuthenticateWithPassword(user_name=username,
-                                                         password=password)
+            kwargs = dict([('user_name', username),
+                           ('password', password)])
+            if with_tenant:
+                kwargs[with_tenant] = tenant_id
+            auth_obj = requests.AuthenticateWithPassword(**kwargs)
         else:
-            auth_obj = requests.AuthenticateWithApiKey(user_name=username,
-                                                       api_key=apikey)
+            kwargs = dict([('user_name', username),
+                           ('api_key', apikey)])
+            if with_tenant:
+                kwargs[with_tenant] = tenant_id
+            auth_obj = requests.AuthenticateWithApiKey(**kwargs)
+
         auth_resp = self.identity_admin_client.get_auth_token(
             request_object=auth_obj)
-        self.assertEqual(auth_resp.status_code, 200)
-        tenant_id = auth_resp.json()[const.ACCESS][const.TOKEN][
-            const.TENANT][const.ID]
-        self.verify_auth_resp_with_tenant(auth_resp=auth_resp,
-                                          tenant_id=tenant_id)
+        return auth_resp, secret
 
-    @ddt.data(('user_password', 'tenant_id'), ('user_apikey', 'tenant_id'),
-              ('user_password', 'tenant_name'), ('user_apikey', 'tenant_name'))
+    def validate_auth_headers(self, use_mfa, auth_resp, secret=None,
+                              tenant_id=None):
+
+        if use_mfa:
+            self.assertHeaders(
+                auth_resp, (
+                    header_validation.validate_tenant_id_header_not_present))
+            final_auth_resp = self.call_second_step_of_mfa(
+                first_auth_resp=auth_resp, secret=secret, tenant_id=tenant_id)
+        else:
+            final_auth_resp = auth_resp
+
+        if tenant_id is None:
+            tenant_id = final_auth_resp.json()[const.ACCESS][const.TOKEN][
+                const.TENANT][const.ID]
+        self.verify_auth_resp_with_tenant(auth_resp=final_auth_resp,
+                                          tenant_id=tenant_id)
+        # This check is added to verify repose removes the header. If this
+        # test is run against identity directly, it will fail.
+        self.assertHeaders(final_auth_resp, (
+            header_validation.validate_username_header_not_present))
+
+    @ddt.data(('user_password', 'tenant_id', True),
+              ('user_password', 'tenant_id', False),
+              ('user_apikey', 'tenant_id', False),
+              ('user_password', 'tenant_name', True),
+              ('user_password', 'tenant_name', False),
+              ('user_apikey', 'tenant_name', False))
     @ddt.unpack
-    def test_auth_with_mosso_tenant(self, auth_type, with_tenant):
+    def test_auth_with_mosso_tenant(self, auth_type, with_tenant, use_mfa):
+
         username = self.one_call_user_info['username']
         password = self.one_call_user_info['password']
         user_id = self.one_call_user_info['user_id']
         apikey = self.get_user_apikey(user_id=user_id)
         tenant_id = self.one_call_user_info['tenant_id']
-        # auth with tenant
-        if auth_type == 'user_password':
-            kwargs = {'user_name': username,
-                      'password': password,
-                      with_tenant: tenant_id}
-            auth_obj = requests.AuthenticateWithPassword(**kwargs)
-        else:
-            kwargs = {'user_name': username,
-                      'api_key': apikey,
-                      with_tenant: tenant_id}
-            auth_obj = requests.AuthenticateWithApiKey(**kwargs)
 
-        auth_resp = self.identity_admin_client.get_auth_token(
-            request_object=auth_obj)
-        self.verify_auth_resp_with_tenant(auth_resp=auth_resp,
-                                          tenant_id=tenant_id)
+        auth_resp, secret = self.make_auth_call(
+            use_mfa=use_mfa, auth_type=auth_type, user_id=user_id,
+            username=username, password=password, apikey=apikey,
+            with_tenant=with_tenant, tenant_id=tenant_id)
 
-    @ddt.data(('user_password', 'tenant_id'), ('user_apikey', 'tenant_id'),
-              ('user_password', 'tenant_name'), ('user_apikey', 'tenant_name'))
+        self.validate_auth_headers(use_mfa=use_mfa, auth_resp=auth_resp,
+                                   secret=secret, tenant_id=tenant_id)
+
+    @ddt.data(('user_password', 'tenant_id', True),
+              ('user_password', 'tenant_id', False),
+              ('user_apikey', 'tenant_id', False),
+              ('user_password', 'tenant_name', True),
+              ('user_password', 'tenant_name', False),
+              ('user_apikey', 'tenant_name', False))
     @ddt.unpack
-    def test_auth_with_nast_tenant(self, auth_type, with_tenant):
+    def test_auth_with_nast_tenant(self, auth_type, with_tenant, use_mfa):
         username = self.one_call_user_info['username']
         password = self.one_call_user_info['password']
         user_id = self.one_call_user_info['user_id']
@@ -180,26 +251,22 @@ class TestAuthResponseHeaders(base.TestBaseV2):
                 tenant_id = role[1]
         self.assertIsNotNone(tenant_id)
 
-        # auth with tenant
-        if auth_type == 'user_password':
-            kwargs = {'user_name': username,
-                      'password': password,
-                      with_tenant: tenant_id}
-            auth_obj = requests.AuthenticateWithPassword(**kwargs)
-        else:
-            kwargs = {'user_name': username,
-                      'api_key': apikey,
-                      with_tenant: tenant_id}
-            auth_obj = requests.AuthenticateWithApiKey(**kwargs)
-        auth_resp = self.identity_admin_client.get_auth_token(
-            request_object=auth_obj)
-        self.verify_auth_resp_with_tenant(auth_resp=auth_resp,
-                                          tenant_id=tenant_id)
+        auth_resp, secret = self.make_auth_call(
+            use_mfa=use_mfa, auth_type=auth_type, user_id=user_id,
+            username=username, password=password, apikey=apikey,
+            with_tenant=with_tenant, tenant_id=tenant_id)
 
-    @ddt.data(('user_password', 'tenant_id'), ('user_apikey', 'tenant_id'),
-              ('user_password', 'tenant_name'), ('user_apikey', 'tenant_name'))
+        self.validate_auth_headers(use_mfa=use_mfa, auth_resp=auth_resp,
+                                   secret=secret, tenant_id=tenant_id)
+
+    @ddt.data(('user_password', 'tenant_id', True),
+              ('user_password', 'tenant_id', False),
+              ('user_apikey', 'tenant_id', False),
+              ('user_password', 'tenant_name', True),
+              ('user_password', 'tenant_name', False),
+              ('user_apikey', 'tenant_name', False))
     @ddt.unpack
-    def test_auth_with_other_tenant(self, auth_type, with_tenant):
+    def test_auth_with_other_tenant(self, auth_type, with_tenant, use_mfa):
         """
         User with multi tenants
         Auth with other tenant not mosso or nast
@@ -221,46 +288,64 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         )
         self.assertEqual(add_resp.status_code, 200)
 
-        # auth with tenant other than nast and mosso
-        if auth_type == 'user_password':
-            kwargs = {'user_name': username,
-                      'password': password,
-                      with_tenant: tenant_id}
-            auth_obj = requests.AuthenticateWithPassword(**kwargs)
-        else:
-            kwargs = {'user_name': username,
-                      'api_key': apikey,
-                      with_tenant: tenant_id}
-            auth_obj = requests.AuthenticateWithApiKey(**kwargs)
-        auth_resp = self.identity_admin_client.get_auth_token(
-            request_object=auth_obj)
-        self.verify_auth_resp_with_tenant(auth_resp=auth_resp,
-                                          tenant_id=tenant_id)
+        auth_resp, secret = self.make_auth_call(
+            use_mfa=use_mfa, auth_type=auth_type, user_id=user_id,
+            username=username, password=password, apikey=apikey,
+            with_tenant=with_tenant, tenant_id=tenant_id)
 
-    @ddt.data('tenant_id', 'tenant_name')
-    def test_auth_w_tenant_and_token(self, with_tenant):
+        self.validate_auth_headers(use_mfa=use_mfa, auth_resp=auth_resp,
+                                   secret=secret, tenant_id=tenant_id)
+
+    @ddt.data(['tenant_id', False],
+              ['tenant_name', False],
+              ['tenant_id', True],
+              ['tenant_name', True])
+    @ddt.unpack
+    def test_auth_w_tenant_and_token(self, with_tenant, use_mfa):
         username = self.one_call_user_info['username']
         password = self.one_call_user_info['password']
         tenant_id = self.one_call_user_info['tenant_id']
+        user_id = self.one_call_user_info['user_id']
+
+        if use_mfa:
+            secret = func_helper.setup_mfa_for_user(
+                user_id=user_id, client=self.identity_admin_client)
         # auth
         auth_obj = requests.AuthenticateWithPassword(user_name=username,
                                                      password=password)
         auth_resp = self.identity_admin_client.get_auth_token(
             request_object=auth_obj)
+
+        if use_mfa:
+            self.assertHeaders(
+                auth_resp, (
+                    header_validation.validate_tenant_id_header_not_present))
+            auth_resp = self.call_second_step_of_mfa(
+                first_auth_resp=auth_resp, secret=secret, tenant_id=tenant_id)
+
         self.assertEqual(auth_resp.status_code, 200)
+
         # get token
         token_id = auth_resp.json()[const.ACCESS][const.TOKEN][const.ID]
+
         # auth with tenant and token
         kwargs = {'token_id': token_id,
                   with_tenant: tenant_id}
         auth_obj = requests.AuthenticateAsTenantWithToken(**kwargs)
-        auth_resp = self.identity_admin_client.get_auth_token(
+        final_auth_resp = self.identity_admin_client.get_auth_token(
             request_object=auth_obj)
-        self.verify_auth_resp_with_tenant(auth_resp=auth_resp,
+        self.verify_auth_resp_with_tenant(auth_resp=final_auth_resp,
                                           tenant_id=tenant_id)
+        # This check is added to verify repose removes the header. If this
+        # test is run against identity directly, it will fail.
+        self.assertHeaders(final_auth_resp, (
+            header_validation.validate_username_header_not_present))
 
-    @ddt.data('user_password', 'user_apikey')
-    def test_auth_w_user_single_tenant_not_specify_tenant(self, auth_type):
+    @ddt.data(['user_password', True], ['user_password', True],
+              ['user_apikey', False])
+    @ddt.unpack
+    def test_auth_w_user_single_tenant_not_specify_tenant(self, auth_type,
+                                                          use_mfa):
         username = self.user_info['username']
         password = self.user_info['password']
         domain_id = self.user_info['domain_id']
@@ -279,20 +364,18 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         )
         self.assertEqual(add_resp.status_code, 200)
 
-        # auth
-        if auth_type == 'user_password':
-            auth_obj = requests.AuthenticateWithPassword(user_name=username,
-                                                         password=password)
-        else:
-            auth_obj = requests.AuthenticateWithApiKey(user_name=username,
-                                                       api_key=apikey)
-        auth_resp = self.identity_admin_client.get_auth_token(
-            request_object=auth_obj)
-        self.verify_auth_resp_with_tenant(auth_resp=auth_resp,
-                                          tenant_id=tenant_id)
+        auth_resp, secret = self.make_auth_call(
+            use_mfa=use_mfa, auth_type=auth_type, user_id=user_id,
+            username=username, password=password, apikey=apikey)
 
-    @ddt.data('user_password', 'user_apikey')
-    def test_auth_w_user_multi_tenants_not_specify_tenant(self, auth_type):
+        self.validate_auth_headers(use_mfa=use_mfa, auth_resp=auth_resp,
+                                   secret=secret, tenant_id=tenant_id)
+
+    @ddt.data(['user_password', True], ['user_password', False],
+              ['user_apikey', False])
+    @ddt.unpack
+    def test_auth_w_user_multi_tenants_not_specify_tenant(self, auth_type,
+                                                          use_mfa):
         username = self.user_info['username']
         password = self.user_info['password']
         domain_id = self.user_info['domain_id']
@@ -321,52 +404,107 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         )
         self.assertEqual(add_resp.status_code, 200)
 
-        # auth
-        if auth_type == 'user_password':
-            auth_obj = requests.AuthenticateWithPassword(user_name=username,
-                                                         password=password)
-        else:
-            auth_obj = requests.AuthenticateWithApiKey(user_name=username,
-                                                       api_key=apikey)
-        auth_resp = self.identity_admin_client.get_auth_token(
-            request_object=auth_obj)
-        self.assertEqual(auth_resp.status_code, 200)
-        header_validation.basic_header_validations(response=auth_resp,
-                                                   header=const.X_TENANT_ID)
-        self.assertIn(auth_resp.headers[const.X_TENANT_ID],
-                      [tenant_id, tenant_id2])
+        auth_resp, secret = self.make_auth_call(
+            use_mfa=use_mfa, auth_type=auth_type, user_id=user_id,
+            username=username, password=password, apikey=apikey)
 
-    def test_auth_w_user_no_tenant(self):
+        if use_mfa:
+            self.assertHeaders(
+                auth_resp, (
+                    header_validation.validate_tenant_id_header_not_present))
+            final_auth_resp = self.call_second_step_of_mfa(
+                first_auth_resp=auth_resp, secret=secret)
+        else:
+            final_auth_resp = auth_resp
+            self.assertEqual(auth_resp.status_code, 200)
+
+        header_validation.basic_header_validations(response=final_auth_resp,
+                                                   header=const.X_TENANT_ID)
+        self.assertIn(final_auth_resp.headers[const.X_TENANT_ID],
+                      [tenant_id, tenant_id2])
+        # This check is added to verify repose removes the header. If this
+        # test is run against identity directly, it will fail.
+        self.assertHeaders(final_auth_resp, (
+            header_validation.validate_username_header_not_present))
+
+    @ddt.data(True, False)
+    def test_auth_w_user_no_tenant(self, use_mfa):
         username = self.user_info['username']
         password = self.user_info['password']
-        # auth
-        auth_obj = requests.AuthenticateWithPassword(user_name=username,
-                                                     password=password)
-        auth_resp = self.identity_admin_client.get_auth_token(
-            request_object=auth_obj)
-        self.assertEqual(auth_resp.status_code, 200)
-        header_validation.validate_header_not_present(
-            unexpected_headers=const.X_TENANT_ID)(auth_resp)
+        user_id = self.user_info['user_id']
 
-    @ddt.data('tenant_id', 'tenant_name')
-    def test_auth_fail_401(self, with_tenant):
+        auth_resp, secret = self.make_auth_call(
+            use_mfa=use_mfa, user_id=user_id, username=username,
+            password=password)
+
+        if use_mfa:
+            self.assertHeaders(
+                auth_resp, (
+                    header_validation.validate_tenant_id_header_not_present))
+            final_auth_resp = self.call_second_step_of_mfa(
+                first_auth_resp=auth_resp, secret=secret)
+        else:
+            final_auth_resp = auth_resp
+            self.assertEqual(auth_resp.status_code, 200)
+
+        header_validation.validate_header_not_present(
+            unexpected_headers=const.X_TENANT_ID)(final_auth_resp)
+
+        # This check is added to verify repose removes the header. If this
+        # test is run against identity directly, it will fail.
+        self.assertHeaders(final_auth_resp, (
+            header_validation.validate_username_header_not_present))
+
+    @ddt.data(['tenant_id', True], ['tenant_name', True],
+              ['tenant_id', False], ['tenant_name', False])
+    @ddt.unpack
+    def test_auth_fail_401(self, with_tenant, use_mfa):
         """
         Verify X-Tenant-Id not included in headers when failed auth
         """
         username = self.one_call_user_info['username']
+        password = self.one_call_user_info['password']
+        user_id = self.one_call_user_info['user_id']
         invalid_pwd = self.generate_random_string(
             pattern=const.PASSWORD_PATTERN)
         tenant_id = self.one_call_user_info['tenant_id']
+
         # auth with tenant
         kwargs = {'user_name': username,
-                  'password': invalid_pwd,
                   with_tenant: tenant_id}
-        auth_obj = requests.AuthenticateWithPassword(**kwargs)
-        auth_resp = self.identity_admin_client.get_auth_token(
-            request_object=auth_obj)
-        self.assertEqual(auth_resp.status_code, 401)
-        header_validation.validate_header_not_present(
-            unexpected_headers=const.X_TENANT_ID)(auth_resp)
+
+        if use_mfa:
+            # This scenario is when 1st step of auth is successful, but
+            # 2nd step fails.
+            secret = func_helper.setup_mfa_for_user(
+                user_id=user_id, client=self.identity_admin_client)
+
+            kwargs['password'] = password
+            auth_obj = requests.AuthenticateWithPassword(**kwargs)
+            auth_resp = self.identity_admin_client.get_auth_token(
+                request_object=auth_obj)
+
+            self.assertHeaders(
+                auth_resp, (
+                    header_validation.validate_tenant_id_header_not_present))
+            final_auth_resp = self.call_second_step_of_mfa(
+                first_auth_resp=auth_resp, secret=secret,
+                tenant_id=tenant_id, negative=True)
+        else:
+            kwargs['password'] = invalid_pwd
+            auth_obj = requests.AuthenticateWithPassword(**kwargs)
+            final_auth_resp = self.identity_admin_client.get_auth_token(
+                request_object=auth_obj)
+
+        self.assertEqual(final_auth_resp.status_code, 401)
+        self.assertHeaders(
+            final_auth_resp, (
+                header_validation.validate_tenant_id_header_not_present))
+
+        # This check is added to verify repose removes the header. If this
+        # test is run against identity directly, it will fail.
+        self.assertHeaders(final_auth_resp, (
+            header_validation.validate_username_header_not_present))
 
     def tearDown(self):
         # Delete all resources created in the tests
@@ -375,6 +513,10 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         for id_ in self.tenant_ids:
             self.identity_admin_client.delete_tenant(tenant_id=id_)
         for id_ in self.domain_ids:
+            domain_object = requests.Domain(
+                domain_name=id_, enabled=False)
+            self.identity_admin_client.update_domain(
+                domain_id=id_, request_object=domain_object)
             self.identity_admin_client.delete_domain(domain_id=id_)
         for id_ in self.role_ids:
             self.identity_admin_client.delete_role(role_id=id_)
