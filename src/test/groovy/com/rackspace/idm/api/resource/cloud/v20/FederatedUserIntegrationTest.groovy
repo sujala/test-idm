@@ -1871,6 +1871,13 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def user = getEntity(response, org.openstack.docs.identity.api.v2.User)
         def federatedUserId = getFederatedUser(domainId2, mediaType)
 
+        when: "default user cannot delete federatedUser in different domain"
+        def defaultUserToken = utils.getToken(defaultUser.username, DEFAULT_PASSWORD)
+        def response = cloud20.deleteUser(defaultUserToken, federatedUserId)
+
+        then:
+        response.status == SC_FORBIDDEN
+
         when: "user manage cannot delete federatedUser in different domain"
         def userManageToken = utils.getToken(userManage.username, DEFAULT_PASSWORD)
         response = cloud20.deleteUser(userManageToken, federatedUserId)
