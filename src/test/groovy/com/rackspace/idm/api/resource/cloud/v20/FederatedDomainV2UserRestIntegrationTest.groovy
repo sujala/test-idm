@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederatio
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
@@ -13,12 +14,14 @@ import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.security.ConfigurableTokenFormatSelector
+import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.rackspace.idm.util.SamlUnmarshaller
+import groovy.json.JsonSlurper
 import org.apache.commons.lang.BooleanUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
@@ -37,6 +40,8 @@ import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
 import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.servlet.http.HttpServletResponse
+import javax.ws.rs.core.MediaType
+import javax.xml.datatype.DatatypeFactory
 
 import static com.rackspace.idm.Constants.*
 import static org.apache.http.HttpStatus.SC_CREATED
@@ -71,6 +76,9 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     ApplicationRoleDao applicationRoleDao
+
+    @Autowired
+    DomainService domainService
 
     @Shared String sharedServiceAdminToken
     @Shared String sharedIdentityAdminToken
@@ -271,12 +279,53 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(authClientResponse, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE)
     }
 
+    @Unroll
+    def "Session timeout is set correctly for domain federated users: accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def fedRequest = createFedRequest(userAdmin)
+        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        def domain = utils.getDomain(domainId)
+
+        when: "auth w/ the default session timeout"
+        def response = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse), accept)
+
+        then:
+        response.status == HttpServletResponse.SC_OK
+        assertSessionInactivityTimeout(response, accept, IdentityConfig.DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT.toString())
+
+        when: "update to a non-default session timeout"
+        def domainDuration = DatatypeFactory.newInstance().newDuration(
+                identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().plusHours(3).toString());
+        domain.sessionInactivityTimeout = domainDuration
+        utils.updateDomain(domain.id, domain)
+        response = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse), accept)
+
+        then:
+        response.status == HttpServletResponse.SC_OK
+        assertSessionInactivityTimeout(response, accept, domain.sessionInactivityTimeout.toString())
+
+        cleanup:
+        try { deleteFederatedUserQuietly(fedRequest.username) } catch (Exception ex) { /* Eat */ }
+        utils.deleteUsers(users)
+
+        where:
+        accept                          | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
     def void verifyAuthenticateResult(AuthenticateResponse authResponse, FederatedDomainAuthGenerationRequest originalRequest, User userAdminEntity) {
         //check the user object
         assert authResponse.user.id != null
         assert authResponse.user.name == originalRequest.username
         assert authResponse.user.federatedIdp == originalRequest.originIssuer
         assert authResponse.user.defaultRegion == userAdminEntity.region
+
+        def domain = domainService.getDomain(userAdminEntity.domainId)
+        assert authResponse.user.sessionInactivityTimeout.toString() == domain.sessionInactivityTimeout != null ? domain.sessionInactivityTimeout.toString() : IdentityConfig.DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT
 
         //check the token
         assert authResponse.token.id != null
@@ -335,9 +384,9 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
  * Creates a fed request specifying shared broker/origin as the issuers and no requested roles
  * @return
  */
-    def createFedRequest() {
+    def createFedRequest(userAdmin = sharedUserAdmin) {
         new FederatedDomainAuthGenerationRequest().with {
-            it.domainId = sharedUserAdmin.domainId
+            it.domainId = userAdmin.domainId
             it.validitySeconds = 100
             it.brokerIssuer = sharedBrokerIdp.issuer
             it.originIssuer = sharedOriginIdp.issuer
@@ -349,4 +398,18 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
             it
         }
     }
+
+    def void assertSessionInactivityTimeout(response, contentType, expectedSessionInactivityTimeout) {
+        def returnedSessionInactivityTimeout
+        if (contentType == MediaType.APPLICATION_XML_TYPE) {
+            def parsedResponse = response.getEntity(AuthenticateResponse).value
+            returnedSessionInactivityTimeout = parsedResponse.user.sessionInactivityTimeout.toString()
+        } else {
+            def authResponseData = new JsonSlurper().parseText(response.getEntity(String))
+            returnedSessionInactivityTimeout = authResponseData.access.user[JSONConstants.RAX_AUTH_SESSION_INACTIVITY_TIMEOUT]
+        }
+
+        assert returnedSessionInactivityTimeout == expectedSessionInactivityTimeout
+    }
+
 }

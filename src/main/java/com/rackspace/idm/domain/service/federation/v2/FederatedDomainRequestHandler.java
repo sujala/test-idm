@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.federation.v2;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
+import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
@@ -61,6 +62,9 @@ public class FederatedDomainRequestHandler {
     @Autowired
     private ScopeAccessService scopeAccessService;
 
+    @Autowired
+    private AuthenticationContext authenticationContext;
+
     public SamlAuthResponse processAuthRequestForProvider(FederatedDomainAuthRequest authRequest, IdentityProvider originIdentityProvider) {
         // Just a few sanity checks
         Validate.notNull(authRequest, "request must not be null");
@@ -87,6 +91,8 @@ public class FederatedDomainRequestHandler {
          */
         Domain requestedDomain = validateRequestedDomain(authRequest);
         User domainUserAdmin = validateAndRetrieveUserAdminForDomain(authRequest.getDomainId());
+
+        authenticationContext.setDomain(requestedDomain);
 
         // Validate the requested roles exist
         List<TenantRole> requestedRoles = validateAndGenerateRequestedRoles(authRequest);
