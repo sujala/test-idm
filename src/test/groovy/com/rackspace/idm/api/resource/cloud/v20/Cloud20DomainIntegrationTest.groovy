@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.UserDao
@@ -71,6 +72,78 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
+    }
+
+    @Unroll
+    def "list accessible domains returns domain session timeout: accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def users, userAdmin
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def domain = utils.getDomain(domainId)
+
+        when: "list accessible domains w/o a session timeout set on the domain"
+        def response = cloud20.getAccessibleDomains(userAdminToken, accept)
+
+        then: "returns the default session timeout"
+        response.status == 200
+        assertSessionInactivityTimeoutForSingleDomainList(response, accept, identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString())
+
+        when: "list accessible domains w/ a session timeout set on the domain"
+        def domainDuration = DatatypeFactory.newInstance().newDuration(
+                identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().plusHours(3).toString());
+        domain.sessionInactivityTimeout = domainDuration
+        utils.updateDomain(domain.id, domain)
+        response = cloud20.getAccessibleDomains(userAdminToken, accept)
+
+        then: "returns the session timeout set on the domain"
+        assertSessionInactivityTimeoutForSingleDomainList(response, accept, domain.sessionInactivityTimeout.toString())
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "list accessible domains for user returns domain session timeout: accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def users, userAdmin
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def domain = utils.getDomain(domainId)
+
+        when: "list accessible domains w/o a session timeout set on the domain"
+        def response = cloud20.getAccessibleDomainsForUser(userAdminToken, userAdmin.id, accept)
+
+        then: "returns the default session timeout"
+        response.status == 200
+        assertSessionInactivityTimeoutForSingleDomainList(response, accept, identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString())
+
+        when: "list accessible domains w/ a session timeout set on the domain"
+        def domainDuration = DatatypeFactory.newInstance().newDuration(
+                identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().plusHours(3).toString());
+        domain.sessionInactivityTimeout = domainDuration
+        utils.updateDomain(domain.id, domain)
+        response = cloud20.getAccessibleDomainsForUser(userAdminToken, userAdmin.id, accept)
+
+        then: "returns the session timeout set on the domain"
+        assertSessionInactivityTimeoutForSingleDomainList(response, accept, domain.sessionInactivityTimeout.toString())
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
     }
 
     def "Test if 'cloud20Service.addTenant(...)' adds default 'domainId' to the tenant and updates domain to point to tenant"() {
@@ -875,6 +948,19 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     def void assertDomainContainsTenant(domainId, tenantId) {
         def domainTenantResponse = cloud20.getDomainTenants(utils.getServiceAdminToken(), domainId)
         assert domainTenantResponse.getEntity(Tenants).value.tenant.find {it.id == tenantId} != null
+    }
+
+    def void assertSessionInactivityTimeoutForSingleDomainList(response, contentType, expectedSessionInactivityTimeout) {
+        def returnedSessionInactivityTimeout
+        if (contentType == MediaType.APPLICATION_XML_TYPE) {
+            def parsedResponse = response.getEntity(Domains)
+            returnedSessionInactivityTimeout = parsedResponse.domain[0].sessionInactivityTimeout.toString()
+        } else {
+            def parsedResponse = new JsonSlurper().parseText(response.getEntity(String))
+            returnedSessionInactivityTimeout = parsedResponse[JSONConstants.RAX_AUTH_DOMAINS][0].sessionInactivityTimeout
+        }
+
+        assert returnedSessionInactivityTimeout == expectedSessionInactivityTimeout
     }
 
 }
