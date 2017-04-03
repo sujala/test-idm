@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -113,6 +114,8 @@ public class Validator20 {
     public static final String ERROR_APPROVED_DOMAIN_GROUP_NAME_SHOULD_BE_GLOBAL = "When BROKER IDP is specified, the approvedDomainGroup must be set, and specified as GLOBAL";
     public static final String FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE = "Policy contains invalid json.";
     public static final String FEDERATION_IDP_POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE = "Max size exceed. Policy file must be less than %s Kilobytes.";
+
+    public static final String SESSION_INACTIVITY_TIMEOUT_RANGE_ERROR_MESSAGE = "Session inactivity timeout must be between %s and %s seconds.";
 
     @Autowired
     private TenantService tenantService;
@@ -505,6 +508,33 @@ public class Validator20 {
 
     public String getIdpPolicyMaxSizeExceededErrorMessage() {
         return  String.format(FEDERATION_IDP_POLICY_MAX_SIZE_EXCEED_ERROR_MESSAGE, identityConfig.getReloadableConfig().getIdpPolicyMaxSize());
+    }
+
+    public void validateDomainForCreation(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
+        if (StringUtils.isBlank(domain.getName())) {
+            throwBadRequestForMissingAttr("name");
+        }
+        validateDomainSessionInactivityTimeout(domain);
+    }
+
+    public void validateDomainForUpdate(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain, String domainId) {
+        if (!domainId.equalsIgnoreCase(domain.getId())) {
+            throw new BadRequestException("Domain Id does not match.");
+        }
+        validateDomainSessionInactivityTimeout(domain);
+    }
+
+    private void validateDomainSessionInactivityTimeout(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
+        if(domain.getSessionInactivityTimeout() != null) {
+            Duration maxDuration = identityConfig.getReloadableConfig().getSessionInactivityTimeoutMaxDuration();
+            Duration minDuration = identityConfig.getReloadableConfig().getSessionInactivityTimeoutMinDuration();
+
+            Duration duration = Duration.parse(domain.getSessionInactivityTimeout().toString());
+            if (duration.getSeconds() > maxDuration.getSeconds() || duration.getSeconds() < minDuration.getSeconds()) {
+                String errorMsg = String.format(SESSION_INACTIVITY_TIMEOUT_RANGE_ERROR_MESSAGE, minDuration.getSeconds(), maxDuration.getSeconds());
+                throw new BadRequestException(errorMsg);
+            }
+        }
     }
 
     public void validateRoleForCreation(Role role) {

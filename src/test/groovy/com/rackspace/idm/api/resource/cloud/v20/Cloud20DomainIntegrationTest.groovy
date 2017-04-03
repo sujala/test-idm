@@ -10,6 +10,7 @@ import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault
@@ -669,6 +670,96 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "Create domain with sessionInactivityTimeout - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def sessionInactivityTimeout = DatatypeFactory.newInstance().newDuration("PT24H")
+        def domain = v1Factory.createDomain(domainId, domainId).with {
+            it.sessionInactivityTimeout = sessionInactivityTimeout
+            it
+        }
+
+        when:
+        def domainEntity = cloud20.addDomain(utils.identityAdminToken, domain, accept, content).getEntity(Domain)
+
+        then:
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        domainEntity.sessionInactivityTimeout == sessionInactivityTimeout
+
+        cleanup:
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Assert default value for sessionInactivityTimeout on domain creation - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v1Factory.createDomain(domainId, domainId)
+
+        when:
+        def domainEntity = cloud20.addDomain(utils.identityAdminToken, domain, accept, content).getEntity(Domain)
+
+        then:
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        domainEntity.sessionInactivityTimeout.toString() == identityConfig.reloadableConfig.domainDefaultSessionInactivityTimeout.toString()
+
+        cleanup:
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Invalid cases for domain creation - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v2Factory.createDomain(domainId, domainId)
+
+        DatatypeFactory factory = DatatypeFactory.newInstance();
+
+        when: "Domain's sessionInactivityTimeout exceeding max duration"
+        domain.sessionInactivityTimeout = factory.newDuration("PT25H")
+        def createDomainResponse = cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
+        Duration maxDuration = identityConfig.getReloadableConfig().getSessionInactivityTimeoutMaxDuration()
+        Duration minDuration = identityConfig.getReloadableConfig().getSessionInactivityTimeoutMinDuration()
+        String errMsg = String.format(Validator20.SESSION_INACTIVITY_TIMEOUT_RANGE_ERROR_MESSAGE, minDuration.getSeconds(), maxDuration.getSeconds())
+
+        then:
+        assertOpenStackV2FaultResponse(createDomainResponse, BadRequestFault, SC_BAD_REQUEST, errMsg)
+
+        when: "Domain's sessionInactivityTimeout less than min duration"
+        domain.sessionInactivityTimeout = factory.newDuration("PT4M")
+        createDomainResponse = cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
+
+        then:
+        assertOpenStackV2FaultResponse(createDomainResponse, BadRequestFault, SC_BAD_REQUEST, errMsg)
+
+        when: "Domain's name is null"
+        domain.sessionInactivityTimeout = factory.newDuration("PT24H")
+        domain.name = null
+        createDomainResponse = cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
+        errMsg = String.format(Validator20.REQUIRED_ATTR_MESSAGE, "name")
+
+        then:
+        assertOpenStackV2FaultResponse(createDomainResponse, BadRequestFault, SC_BAD_REQUEST, errMsg)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
     def "Update domain to set sessionInactivityTimeout - content-type = #content, accept = #accept"() {
         given:
         def domainId = utils.createDomain()
@@ -721,7 +812,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Invalid cases for updating sessionInactivityTimeout on domain - content-type = #content, accept = #accept"() {
+    def "Invalid cases for updating domain - content-type = #content, accept = #accept"() {
         given:
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
@@ -754,19 +845,27 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         when: "Updating sessionInactivityTimeout exceeding max duration"
         updateDomain.sessionInactivityTimeout = factory.newDuration("PT25H")
         updateDomainResponse = cloud20.updateDomain(utils.identityAdminToken, domainId, updateDomain, accept, content)
-
-        then:
         Duration maxDuration = identityConfig.getReloadableConfig().getSessionInactivityTimeoutMaxDuration()
         Duration minDuration = identityConfig.getReloadableConfig().getSessionInactivityTimeoutMinDuration()
-        String errMsg = String.format(DefaultCloud20Service.SESSION_INACTIVITY_TIMEOUT_RANGE_ERROR_MESSAGE, minDuration.getSeconds(), maxDuration.getSeconds())
-        assertRackspaceCommonFaultResponse(updateDomainResponse, com.rackspace.api.common.fault.v1.BadRequestFault, SC_BAD_REQUEST, errMsg)
+        String errMsg = String.format(Validator20.SESSION_INACTIVITY_TIMEOUT_RANGE_ERROR_MESSAGE, minDuration.getSeconds(), maxDuration.getSeconds())
+
+        then:
+        assertOpenStackV2FaultResponse(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, errMsg)
 
         when: "Updating sessionInactivityTimeout less than min duration"
         updateDomain.sessionInactivityTimeout = factory.newDuration("PT4M")
         updateDomainResponse = cloud20.updateDomain(utils.identityAdminToken, domainId, updateDomain, accept, content)
 
         then:
-        assertRackspaceCommonFaultResponse(updateDomainResponse, com.rackspace.api.common.fault.v1.BadRequestFault, SC_BAD_REQUEST, errMsg)
+        assertOpenStackV2FaultResponse(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, errMsg)
+
+        when: "Updating sessionInactivityTimeout less than min duration"
+        updateDomain.sessionInactivityTimeout = factory.newDuration("PT24H")
+        updateDomain.id = "id"
+        updateDomainResponse = cloud20.updateDomain(utils.identityAdminToken, domainId, updateDomain, accept, content)
+
+        then:
+        assertOpenStackV2FaultResponse(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, "Domain Id does not match.")
 
         cleanup:
         utils.deleteUsers(users)

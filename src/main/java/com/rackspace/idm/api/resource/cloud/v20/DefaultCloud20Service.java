@@ -125,8 +125,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String USER_NOT_FOUND_ERROR_MESSAGE = "User with ID %s not found.";
 
-    public static final String SESSION_INACTIVITY_TIMEOUT_RANGE_ERROR_MESSAGE = "Session inactivity timeout must be between %s and %s seconds.";
-
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -2914,11 +2912,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addDomain(String authToken, UriInfo uriInfo, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
-            if (StringUtils.isBlank(domain.getName())) {
-                String errMsg = "Expecting name";
-                logger.warn(errMsg);
-                throw new BadRequestException(errMsg);
-            }
+            validator20.validateDomainForCreation(domain);
             Domain savedDomain = this.domainConverterCloudV20.fromDomain(domain);
             this.domainService.addDomain(savedDomain);
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
@@ -2960,57 +2954,61 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder updateDomain(String authToken, String domainId, com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
-        ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
-        BaseUser caller = userService.getUserByScopeAccess(scopeAccess);
-        authorizationService.verifyUserManagedLevelAccess(scopeAccess);
+        try {
+            ScopeAccess scopeAccess = getScopeAccessForValidToken(authToken);
+            BaseUser caller = userService.getUserByScopeAccess(scopeAccess);
+            authorizationService.verifyUserManagedLevelAccess(scopeAccess);
 
-        IdentityUserTypeEnum callersUserType = authorizationService.getIdentityTypeRoleAsEnum(caller);
-        if(IdentityUserTypeEnum.IDENTITY_ADMIN == callersUserType) {
-            List<User> superAdmins = domainService.getDomainSuperAdmins(domainId);
-            if(containsServiceAdmin(superAdmins)) {
-                throw new ForbiddenException("Cannot modify a domain containing a service admin");
+            IdentityUserTypeEnum callersUserType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+            if (IdentityUserTypeEnum.IDENTITY_ADMIN == callersUserType) {
+                List<User> superAdmins = domainService.getDomainSuperAdmins(domainId);
+                if (containsServiceAdmin(superAdmins)) {
+                    throw new ForbiddenException("Cannot modify a domain containing a service admin");
+                }
+                if (containsIdentityAdmin(superAdmins) && caller.getDomainId() != null && !caller.getDomainId().equals(domainId)) {
+                    throw new ForbiddenException("Cannot modify a domain containing an identity admin when you are not in the domain");
+                }
+            } else if (IdentityUserTypeEnum.USER_ADMIN == callersUserType || IdentityUserTypeEnum.USER_MANAGER == callersUserType) {
+                if (!caller.getDomainId().equals(domainId)) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+                // If user-admin or user-manage level access, only allow to update the sessionInactivityTimeout and ignore others attributes.
+                com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain updateDomain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
+                if (domain.getSessionInactivityTimeout() != null) {
+                    updateDomain.setSessionInactivityTimeout(domain.getSessionInactivityTimeout());
+                }
+                domain = updateDomain;
             }
-            if(containsIdentityAdmin(superAdmins) && caller.getDomainId() != null && !caller.getDomainId().equals(domainId)) {
-                throw new ForbiddenException("Cannot modify a domain containing an identity admin when you are not in the domain");
+
+            Domain domainDO = domainService.checkAndGetDomain(domainId);
+
+
+            setDomainEmptyValues(domain, domainId);
+            validator20.validateDomainForUpdate(domain, domainId);
+
+            Boolean shouldExpireAllTokens = domainDO.getEnabled() && !domain.isEnabled();
+
+            if (domain.getDescription() != null) {
+                domainDO.setDescription(domain.getDescription());
             }
-        } else if (IdentityUserTypeEnum.USER_ADMIN == callersUserType || IdentityUserTypeEnum.USER_MANAGER == callersUserType) {
-            if (!caller.getDomainId().equals(domainId)) {
-                   throw new ForbiddenException(NOT_AUTHORIZED);
+            if (domain.getName() != null) {
+                domainDO.setName(domain.getName());
             }
-            // If user-admin or user-manage level access, only allow to update the sessionInactivityTimeout and ignore others attributes.
-            com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain updateDomain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
             if (domain.getSessionInactivityTimeout() != null) {
-                updateDomain.setSessionInactivityTimeout(domain.getSessionInactivityTimeout());
+                domainDO.setSessionInactivityTimeout(domain.getSessionInactivityTimeout().toString());
             }
-            domain = updateDomain;
+            domainDO.setEnabled(domain.isEnabled());
+
+            this.domainService.updateDomain(domainDO);
+
+            if (shouldExpireAllTokens) {
+                domainService.expireAllTokenInDomain(domainDO.getDomainId());
+            }
+
+            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain(domainConverterCloudV20.toDomain(domainDO)).getValue());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
         }
-
-        Domain domainDO = domainService.checkAndGetDomain(domainId);
-
-
-        setDomainEmptyValues(domain, domainId);
-        validateDomain(domain, domainId);
-
-        Boolean shouldExpireAllTokens =  domainDO.getEnabled() && !domain.isEnabled();
-
-        if (domain.getDescription() != null) {
-            domainDO.setDescription(domain.getDescription());
-        }
-        if (domain.getName() != null) {
-            domainDO.setName(domain.getName());
-        }
-        if (domain.getSessionInactivityTimeout() != null) {
-            domainDO.setSessionInactivityTimeout(domain.getSessionInactivityTimeout().toString());
-        }
-        domainDO.setEnabled(domain.isEnabled());
-
-        this.domainService.updateDomain(domainDO);
-
-        if(shouldExpireAllTokens){
-            domainService.expireAllTokenInDomain(domainDO.getDomainId());
-        }
-
-        return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain(domainConverterCloudV20.toDomain(domainDO)).getValue());
     }
 
     boolean containsServiceAdmin(List<User> users) {
@@ -3029,23 +3027,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
         }
         return false;
-    }
-
-    void validateDomain(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain, String domainId) {
-        if (!domainId.equalsIgnoreCase(domain.getId())) {
-            throw new BadRequestException("Domain Id does not match.");
-        }
-
-        if(domain.getSessionInactivityTimeout() != null) {
-            Duration maxDuration = identityConfig.getReloadableConfig().getSessionInactivityTimeoutMaxDuration();
-            Duration minDuration = identityConfig.getReloadableConfig().getSessionInactivityTimeoutMinDuration();
-
-            Duration duration = Duration.parse(domain.getSessionInactivityTimeout().toString());
-            if (duration.getSeconds() > maxDuration.getSeconds() || duration.getSeconds() < minDuration.getSeconds()) {
-                String errorMsg = String.format(SESSION_INACTIVITY_TIMEOUT_RANGE_ERROR_MESSAGE, minDuration.getSeconds(), maxDuration.getSeconds());
-                throw new BadRequestException(errorMsg);
-            }
-        }
     }
 
     void setDomainEmptyValues(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain, String domainId) {
