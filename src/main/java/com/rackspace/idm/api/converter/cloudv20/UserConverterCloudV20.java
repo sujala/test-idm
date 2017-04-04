@@ -1,13 +1,9 @@
 package com.rackspace.idm.api.converter.cloudv20;
 
+import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.entity.EndUser;
-import com.rackspace.idm.domain.entity.FederatedUser;
-import com.rackspace.idm.domain.entity.Racker;
-import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.AuthorizationService;
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
-import com.rackspace.idm.domain.service.impl.CreateUserUtil;
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
@@ -25,6 +21,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.Duration;
 import java.util.HashSet;
 import java.util.List;
 
@@ -54,6 +51,9 @@ public class UserConverterCloudV20 {
 
     @Autowired
     private BasicMultiFactorService basicMultiFactorService;
+
+    @Autowired
+    AuthenticationContext authenticationContext;
 
     public void setMapper(Mapper mapper) {
         this.mapper = mapper;
@@ -87,17 +87,29 @@ public class UserConverterCloudV20 {
             jaxbUser.setContactId(((com.rackspace.idm.domain.entity.User) user).getContactId());
         }
         String region = user.getRegion();
-        if(org.apache.commons.lang.StringUtils.isBlank(region) ){
+        if(org.apache.commons.lang.StringUtils.isBlank(region)) {
             region = "";
         }
         jaxbUser.setDefaultRegion(region);
 
-        if(roles != null){
+        if(roles != null) {
             jaxbUser.setRoles(this.roleConverterCloudV20.toRoleListJaxb(roles));
         }
 
         if (user instanceof FederatedUser) {
             toUserForAuthenticateResponseFederated(jaxbUser, (FederatedUser) user);
+        }
+
+        if (authenticationContext.getDomain() != null) {
+            Domain domain = authenticationContext.getDomain();
+            String timeout = domain.getSessionInactivityTimeout() != null ?
+                    domain.getSessionInactivityTimeout() : identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString();
+            try {
+                Duration  userDuration = DatatypeFactory.newInstance().newDuration(timeout);
+                jaxbUser.setSessionInactivityTimeout(userDuration);
+            } catch (DatatypeConfigurationException e) {
+                logger.warn("Unable to parse session timeout duration {}.", domain.getSessionInactivityTimeout());
+            }
         }
 
         return jaxbUser;

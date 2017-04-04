@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
+import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.ExternalBeansConfiguration
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.IdentityConfig.ReloadableConfig
@@ -47,6 +48,7 @@ class UserConverterCloudV20Test extends Specification {
             it.identityConfig.reloadableConfig = reloadableConfig
             return it
         }
+        reloadableConfig.getDomainDefaultSessionInactivityTimeout() >> IdentityConfig.DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT
     }
 
     def setup() {
@@ -56,6 +58,7 @@ class UserConverterCloudV20Test extends Specification {
 
         basicMultiFactorService = Mock(BasicMultiFactorService)
         converterCloudV20.basicMultiFactorService = basicMultiFactorService
+        converterCloudV20.authenticationContext = Mock(AuthenticationContext)
     }
 
     def mockRoleConverterCloudV20() {

@@ -380,6 +380,7 @@ gretty {
     httpPort = 8083
     servletContainer = "tomcat7"
     systemProperty 'idm.properties.location', System.getProperty('idm.properties.location', 'build/config/VAGRANT')
+    debugSuspend = false
 }
 
 artifacts {

@@ -344,9 +344,10 @@ class Cloud20Methods {
         request.header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).get(ClientResponse)
     }
 
-    def authenticateTokenAndTenant(token, tenantId) {
+    def authenticateTokenAndTenant(token, tenantId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        authenticate(v2Factory.createTokenAuthenticationRequest(token, tenantId.toString(), null))
+        def request = v2Factory.createTokenAuthenticationRequest(token, tenantId.toString(), null)
+        resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(request).post(ClientResponse)
     }
 
     def authenticatePassword(String username, String password=DEFAULT_PASSWORD) {
