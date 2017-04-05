@@ -190,6 +190,7 @@ class FederatedRackerV2UserRestIntegrationTest extends RootIntegrationTest {
         assert authResponse.user.id != null
         assert authResponse.user.name == request.username
         assert authResponse.user.federatedIdp == request.originIssuer
+        assert authResponse.user.sessionInactivityTimeout == null
 
         //check the token
         assert authResponse.token.id != null

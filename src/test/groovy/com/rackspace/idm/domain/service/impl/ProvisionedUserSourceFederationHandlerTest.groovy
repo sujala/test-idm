@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest
+import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.DomainDao
@@ -79,6 +80,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
     @Shared def roles
     @Shared def tenants
     @Shared def theIdentityProvider
+    @Shared def mockAuthenticationContext
 
     def mockAuthorizationService = Mock(AuthorizationService)
 
@@ -126,6 +128,8 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         mockTenantService(provisionedUserSourceFederationHandler)
         mockDateHelper(provisionedUserSourceFederationHandler)
         mockDomainDao.getDomain(DOMAIN) >> createDomain()
+        mockAuthenticationContext = Mock(AuthenticationContext)
+        provisionedUserSourceFederationHandler.authenticationContext = mockAuthenticationContext
 
         reloadableConfig.getFederatedDomainTokenLifetimeMax() >> IdentityConfig.FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME_DEFAULT
 

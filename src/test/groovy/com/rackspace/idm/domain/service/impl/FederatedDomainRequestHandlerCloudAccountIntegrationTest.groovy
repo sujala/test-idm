@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.SAMLConstants
+import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -112,6 +113,8 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         sharedUserAdminEntity = identityUserService.getProvisionedUserById(sharedUserAdmin.id)
         sharedOriginIdpEntity = identityProviderDao.getIdentityProviderById(sharedOriginIdp.id)
         sharedBrokerIdpEntity = identityProviderDao.getIdentityProviderById(sharedBrokerIdp.id)
+
+        federatedDomainRequestHandler.authenticationContext = Mock(AuthenticationContext)
     }
 
     /**

@@ -6,6 +6,7 @@ import com.rackspace.idm.SAMLConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.federated.FederatedUserRequest;
+import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.dao.DomainDao;
@@ -101,6 +102,9 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
     @Autowired
     private DateHelper dateHelper;
 
+    @Autowired
+    private AuthenticationContext authenticationContext;
+
     @Override
     public SamlAuthResponse processRequestForProvider(SamlResponseDecorator samlResponseDecorator, IdentityProvider provider) {
         Validate.notNull(samlResponseDecorator, "saml response must not be null");
@@ -116,6 +120,8 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
         FederatedUserRequest request = parseAndValidateSaml(samlResponseDecorator, provider);
 
         FederatedUser user = processUserForRequest(request);
+
+        authenticationContext.setDomain(domainService.getDomain(user.getDomainId()));
 
         List<AuthenticatedByMethodEnum> authByList = new ArrayList<AuthenticatedByMethodEnum>(2);
         authByList.add(AuthenticatedByMethodEnum.FEDERATION);
