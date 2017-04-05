@@ -41,6 +41,7 @@ class TestAuthentication(base.TestBaseV10):
                           normal_response_codes,
                           auth_resp.status_code))
         self.verify_expect_headers(resp=auth_resp)
+        header_validation.validate_username_header_not_present(auth_resp)
 
     @attr(type='smoke')
     def test_base_authentication_username_and_key_storage(self):
@@ -54,6 +55,7 @@ class TestAuthentication(base.TestBaseV10):
                           normal_response_codes,
                           auth_resp.status_code))
         self.verify_expect_headers(resp=auth_resp)
+        header_validation.validate_username_header_not_present(auth_resp)
 
     def test_authentication_username_and_key_invalid_creds(self):
         normal_response_codes = [401]

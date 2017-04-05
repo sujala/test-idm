@@ -56,8 +56,7 @@ class TestBaseV2(base.TestBase):
         cls.unexpected_headers_HTTP_201 = [
             header_validation.validate_transfer_encoding_header_not_present]
         cls.unexpected_headers_HTTP_400 = [
-            header_validation.validate_location_header_not_present,
-            header_validation.validate_content_length_header_not_present]
+            header_validation.validate_location_header_not_present]
         cls.unexpected_headers_HTTP_200 = [
             header_validation.validate_location_header_not_present]
         cls.header_validation_functions_HTTP_200 = (

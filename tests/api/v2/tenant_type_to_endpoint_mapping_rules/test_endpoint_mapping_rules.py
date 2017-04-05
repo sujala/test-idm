@@ -66,8 +66,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.unexpected_headers_HTTP_201 = [
             header_validation.validate_transfer_encoding_header_not_present]
         self.unexpected_headers_HTTP_400 = [
-            header_validation.validate_location_header_not_present,
-            header_validation.validate_content_length_header_not_present]
+            header_validation.validate_location_header_not_present]
         self.header_validation_functions_HTTP_201 = (
             self.default_header_validations +
             self.unexpected_headers_HTTP_201 + [

@@ -9,6 +9,10 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
     def __init__(self, url, serialize_format, deserialize_format):
         super(IdentityAPIClient, self).__init__()
         self.url = url
+        self.default_headers[const.CONTENT_TYPE] = (
+            const.CONTENT_TYPE_VALUE.format(serialize_format))
+        self.default_headers[const.ACCEPT] = (
+            const.ACCEPT_ENCODING_VALUE.format(deserialize_format))
         self.serialize_format = serialize_format
         self.deserialize_format = deserialize_format
 
