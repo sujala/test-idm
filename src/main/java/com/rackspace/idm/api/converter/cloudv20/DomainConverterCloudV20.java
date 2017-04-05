@@ -44,6 +44,10 @@ public class DomainConverterCloudV20 {
         Domain domain = mapper.map(domainEntity, Domain.class);
         domain.setEnabled(domainEntity.isEnabled());
 
+        if (domain.getSessionInactivityTimeout() == null) {
+            domain.setSessionInactivityTimeout(identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString());
+        }
+
         return domain;
     }
 

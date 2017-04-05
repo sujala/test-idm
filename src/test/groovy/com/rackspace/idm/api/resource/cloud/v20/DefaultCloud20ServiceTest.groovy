@@ -1566,17 +1566,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyIdentityAdminLevelAccess(_)
     }
 
-    def "addDomain verifies domain has name"() {
-        given:
-        allowUserAccess()
-        def domain = v1Factory.createDomain("id", null)
-
-        when:
-        def response = service.addDomain(authToken, uriInfo(), domain)
-
-        then:
-        response.build().status == 400
-    }
 
     def "addDomain adds domain with duplicate exception and success"() {
         given:
