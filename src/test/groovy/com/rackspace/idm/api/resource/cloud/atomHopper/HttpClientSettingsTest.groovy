@@ -46,29 +46,7 @@ class HttpClientSettingsTest extends Specification {
         client.destroy()
     }
 
-    def "init can create config legacy http client"() {
-        staticConfig.useFeedsConfigurableHttpClient() >> false
-        staticConfig.getFeedsMaxTotalConnections() >> 14
-        staticConfig.getFeedsMaxConnectionsPerRoute() >> 3
-
-        when: "use legacy client"
-        client.init()
-        CloseableHttpClient httpClient = client.httpClient
-
-        then:
-        httpClient != null
-        httpClient instanceof DefaultHttpClient
-
-        and: "maxes use hardcoded rather than configurable"
-        httpClient.connectionManager != null
-        httpClient.connectionManager instanceof PoolingClientConnectionManager
-        PoolingClientConnectionManager pcm = httpClient.connectionManager
-        pcm.getMaxTotal() == 200
-        pcm.getDefaultMaxPerRoute() == 200
-    }
-
     def "init can create configurable http client"() {
-        staticConfig.useFeedsConfigurableHttpClient() >> true
         staticConfig.getFeedsMaxTotalConnections() >> 12
         staticConfig.getFeedsMaxConnectionsPerRoute() >> 5
         staticConfig.getFeedsOnUseEvictionValidateAfterInactivity() >> 4
