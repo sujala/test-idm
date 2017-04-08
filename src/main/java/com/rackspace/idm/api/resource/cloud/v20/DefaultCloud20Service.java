@@ -2880,9 +2880,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             //validate the user being impersonated can be found and is allowed to be impersonated
             EndUser user;
             if(StringUtils.isNotBlank(impersonationRequest.getUser().getFederatedIdp())){
-                if (!identityConfig.allowFederatedImpersonation()) {
-                    throw new ForbiddenException("Impersonating federated users is not currently enabled.");
-                }
                 user = identityUserService.checkAndGetFederatedUserByUsernameAndIdentityProviderUri(impersonationRequest.getUser().getUsername(), impersonationRequest.getUser().getFederatedIdp());
             } else {
                 //if idp not provided, impersonating a provisioned user so go against provisioned user service

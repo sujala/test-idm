@@ -43,9 +43,6 @@ class IdentityPropertyIntegrationTest extends RootIntegrationTest {
 
         and: "int configs are returned as int"
         data[JsonWriterForIdmProperty.JSON_PROP_PROPERTIES].find{it.name == "reloadable.docs.cache.timeout"}[JsonWriterForIdmProperty.JSON_PROP_VALUE] == 10
-
-        and: "boolean configs are returned as boolean"
-        data[JsonWriterForIdmProperty.JSON_PROP_PROPERTIES].find{it.name == IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP}[JsonWriterForIdmProperty.JSON_PROP_VALUE] == true
     }
 
     @Unroll
