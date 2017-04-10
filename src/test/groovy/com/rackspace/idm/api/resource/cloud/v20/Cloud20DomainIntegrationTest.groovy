@@ -885,8 +885,9 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Invalid cases for updating domain - content-type = #content, accept = #accept"() {
+    def "Invalid cases for updating domain - v2 Exceptions = #flag, content-type = #content, accept = #accept"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP, flag)
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
@@ -923,22 +924,35 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         String errMsg = String.format(Validator20.SESSION_INACTIVITY_TIMEOUT_RANGE_ERROR_MESSAGE, minDuration.getSeconds(), maxDuration.getSeconds())
 
         then:
-        assertOpenStackV2FaultResponse(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, errMsg)
+        if(flag) {
+            assertOpenStackV2FaultResponse(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, errMsg)
+        } else{
+            assertRackspaceCommonFaultResponse(updateDomainResponse, com.rackspace.api.common.fault.v1.BadRequestFault, SC_BAD_REQUEST, errMsg)
+        }
 
         when: "Updating sessionInactivityTimeout less than min duration"
         updateDomain.sessionInactivityTimeout = factory.newDuration("PT4M")
         updateDomainResponse = cloud20.updateDomain(utils.identityAdminToken, domainId, updateDomain, accept, content)
 
         then:
-        assertOpenStackV2FaultResponse(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, errMsg)
+        if(flag) {
+            assertOpenStackV2FaultResponse(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, errMsg)
+        } else{
+            assertRackspaceCommonFaultResponse(updateDomainResponse, com.rackspace.api.common.fault.v1.BadRequestFault, SC_BAD_REQUEST, errMsg)
+        }
 
-        when: "Updating sessionInactivityTimeout less than min duration"
+        when: "Updating with incorrect domain id"
         updateDomain.sessionInactivityTimeout = factory.newDuration("PT24H")
         updateDomain.id = "id"
         updateDomainResponse = cloud20.updateDomain(utils.identityAdminToken, domainId, updateDomain, accept, content)
+        errMsg = "Domain Id does not match."
 
         then:
-        assertOpenStackV2FaultResponse(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, "Domain Id does not match.")
+        if(flag) {
+            assertOpenStackV2FaultResponse(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, errMsg)
+        } else{
+            assertRackspaceCommonFaultResponse(updateDomainResponse, com.rackspace.api.common.fault.v1.BadRequestFault, SC_BAD_REQUEST, errMsg)
+        }
 
         cleanup:
         utils.deleteUsers(users)
@@ -947,9 +961,11 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId2)
 
         where:
-        accept                          | content
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        flag  | accept                          | content
+        true  | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        true  | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        false | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        false | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
     @Unroll

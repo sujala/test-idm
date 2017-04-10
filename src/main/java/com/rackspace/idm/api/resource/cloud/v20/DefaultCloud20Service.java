@@ -3007,7 +3007,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain(domainConverterCloudV20.toDomain(domainDO)).getValue());
         } catch (Exception ex) {
-            return exceptionHandler.exceptionResponse(ex);
+            if (identityConfig.getReloadableConfig().forceStandardV2ExceptionsEndUserServices()) {
+                return exceptionHandler.exceptionResponse(ex);
+            } else {
+                throw ex;
+            }
         }
     }
 
