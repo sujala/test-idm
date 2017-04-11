@@ -98,8 +98,10 @@ class AuthenticateAsTenantWithToken(base.AutoMarshallingModel):
 
 class AuthenticateWithMFA(base.AutoMarshallingModel):
     """Marshalling for Authentication request with MFA cred"""
-    def __init__(self, pass_code):
+    def __init__(self, pass_code, tenant_id=None, tenant_name=None):
         self.pass_code = pass_code
+        self.tenant_id = tenant_id
+        self.tenant_name = tenant_name
 
     def _obj_to_json(self):
         mfa_auth_request = {
@@ -109,6 +111,10 @@ class AuthenticateWithMFA(base.AutoMarshallingModel):
                 }
             }
         }
+        if self.tenant_id:
+            mfa_auth_request[const.AUTH][const.TENANT_ID] = self.tenant_id
+        if self.tenant_name:
+            mfa_auth_request[const.AUTH][const.TENANT_NAME] = self.tenant_name
         return json.dumps(mfa_auth_request)
 
     # TODO: add xml obj
