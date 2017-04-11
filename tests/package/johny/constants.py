@@ -102,6 +102,8 @@ DOMAIN_PATTERN = '[a-z]{8}'
 DESC_PATTERN = '[a-zA-Z ,.]{:200}'
 DOMAIN_TEST = 'meow'
 EMAIL_RANDOM = 'randome@rackspace.com'
+FED_USER_PATTERN = 'fed[\-]user[\d\w]{12}'
+
 ID_PATTERN = '[\d]{8}'
 IDENTITY_PRODUCT_ROLE_NAME_PATTERN = 'identity:testrole[\-][\d\w]{8}'
 IDP_MAPPING_PATTERN = "[a-zA-Z]{{{mapping_size}}}"
