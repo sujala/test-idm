@@ -12,7 +12,7 @@ def check_datetime_format(datetime_str):
 
 
 def get_params_and_command(public_key_path, private_key_path,
-                           for_logout=False):
+                           for_logout=False, fed_api='v1'):
     """
     Common logic for 'create_saml_assertion' and 'create_saml_logout'
     """
@@ -33,10 +33,16 @@ def get_params_and_command(public_key_path, private_key_path,
     private_key_path = private_key_path or os.path.join(
         key_path, 'saml-qe-idp.pkcs8')
 
-    command_list = [
-        java_exec_path, '-jar', jar_path,
-        '-publicKey', public_key_path, '-privateKey', private_key_path
-    ]
+    if fed_api == 'v1':
+        command_list = [
+            java_exec_path, '-jar', jar_path, fed_api,
+            '-publicKey', public_key_path, '-privateKey', private_key_path
+        ]
+    else:
+        command_list = [
+            java_exec_path, '-jar', jar_path, fed_api,
+        ]
+
     if for_logout:
         command_list.extend(['-logout', 'true'])
     return public_key_path, private_key_path, command_list
@@ -55,7 +61,7 @@ def create_saml_assertion(
         exclude_type_on_email_attribute_values=None,
         convert_type_to_any_on_email_attribute_values=None,
         public_key_path=None, private_key_path=None,
-        base64_url_encode=False):
+        base64_url_encode=False, response_flavor=None, output_format=None):
     """
     Changes were made to saml-generator.
     In pom.xml, slf4j-api changed to slf4j-simple
@@ -77,24 +83,10 @@ def create_saml_assertion(
     """
 
     public_key_path, private_key_path, command_list = get_params_and_command(
-        public_key_path=public_key_path, private_key_path=private_key_path)
+        public_key_path=public_key_path, private_key_path=private_key_path,
+        fed_api='v1')
 
     command_list.extend(['-credentialType', credential_type])
-    if domain is not None:
-        command_list.extend(['-domain', str(domain)])
-    if issuer is not None:
-        command_list.extend(['-issuer', issuer])
-    if subject is not None:
-        command_list.extend(['-subject', subject])
-    if email is not None:
-        command_list.extend(['-email', email])
-    if roles is not None:
-        command_list.extend(['-roles', ','.join(roles)])
-    if days_to_expiration is not None:
-        command_list.extend([
-            '-samlAssertionExpirationDays', str(days_to_expiration)])
-    command_list.extend([
-        '-samlAssertionExpirationSeconds', str(seconds_to_expiration)])
 
     if issue_date_assertion_to_set is not None:
         if not check_datetime_format(issue_date_assertion_to_set):
@@ -159,11 +151,82 @@ def create_saml_assertion(
             '-emailAttrTypeAny',
             str(convert_type_to_any_on_email_attribute_values)
         ])
-
+    if subject is not None:
+        command_list.extend(['-subject', subject])
+    command_list.extend([
+        '-samlAssertionExpirationSeconds', str(seconds_to_expiration)])
     if base64_url_encode:
         command_list.extend([
             '-base64URLEncode', 'true'
         ])
+    if output_format is not None:
+        command_list.extend(['-outputFormat', output_format])
+
+    if domain is not None:
+        command_list.extend(['-domain', str(domain)])
+    if issuer is not None:
+        command_list.extend(['-issuer', issuer])
+    if email is not None:
+        command_list.extend(['-email', email])
+    if roles is not None:
+        command_list.extend(['-roles', ','.join(roles)])
+    if days_to_expiration is not None:
+        command_list.extend([
+            '-samlAssertionExpirationDays', str(days_to_expiration)])
+
+    cert = subprocess.check_output(command_list,
+                                   stderr=subprocess.STDOUT).strip()
+
+    return cert
+
+
+def create_saml_assertion_v2(
+        domain=None, issuer=None, email=None, username=None,
+        seconds_to_expiration=86400, roles=None, public_key_path=None,
+        private_key_path=None, response_flavor=None, output_format=None):
+    """
+    New saml generator created for v2 federation auth.
+    issuer: The URI of the issuer for the saml assertion.
+    username: The username of the federated user.
+    domain: The domain ID for the federated user.
+    roles: A list of role names for the federated user.
+    email: The email address of the federated user.
+    response_flavor: Which SAML response to generate. Valid
+        options are 'v2Broker' and 'v1Origin'. Default: v2DomainBroker
+    output_format: The format to output response. xml, base64, form, or
+      formEncode. Default: xml
+    public_key_path: The path to the location of the public key to
+                     decrypt assertions.
+    private_key_path: The path to the location of the private key to
+                      use to sign assertions.
+    """
+
+    public_key_path, private_key_path, command_list = get_params_and_command(
+        public_key_path=public_key_path, private_key_path=private_key_path,
+        fed_api='v2')
+
+    if output_format is not None:
+            command_list.extend(['-outputFormat={}'.format(output_format)])
+
+    if domain is not None:
+        command_list.extend(['-domain={}'.format(str(domain))])
+    if email is not None:
+        command_list.extend(['-email={}'.format(email)])
+    if roles is not None:
+        command_list.extend(['-roles={}'.format(','.join(roles))])
+    if username is not None:
+        command_list.extend(['-username={}'.format(username)])
+    command_list.extend([
+        '-tokenExpirationSeconds={}'.format(str(seconds_to_expiration))])
+
+    if response_flavor:
+        command_list.extend([
+            '-responseFlavor={}'.format(response_flavor)])
+
+    if response_flavor == 'v2DomainOrigin':
+        command_list.extend(['-originPublicKey={}'.format(public_key_path)])
+        command_list.extend(['-originPrivateKey={}'.format(private_key_path)])
+        command_list.extend(['-originIssuer={}'.format(issuer)])
 
     cert = subprocess.check_output(command_list,
                                    stderr=subprocess.STDOUT).strip()
