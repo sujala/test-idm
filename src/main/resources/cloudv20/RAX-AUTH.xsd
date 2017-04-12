@@ -377,6 +377,15 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="rackspaceCustomerNumber" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The rackspace customer number.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
     </complexType>
 
     <complexType name="Domains">

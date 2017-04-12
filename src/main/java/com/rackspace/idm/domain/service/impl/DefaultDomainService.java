@@ -77,6 +77,9 @@ public class DefaultDomainService implements DomainService {
         if(StringUtils.isBlank(domain.getDescription())) {
             domain.setDescription(null);
         }
+        if(StringUtils.isBlank(domain.getRackspaceCustomerNumber())) {
+            domain.setRackspaceCustomerNumber(null);
+        }
         if(domainDao.domainExistsWithName(domain.getName())) {
             throw new DuplicateException(String.format("Domain with name %s already exists.", domain.getName()));
         }

@@ -39,6 +39,9 @@ public class Domain implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_SESSION_INACTIVITY_TIMEOUT, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String sessionInactivityTimeout;
 
+    @LDAPField(attribute = LdapRepository.ATTR_RS_RACKSPACE_CUSTOMER_NUMBER, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private String rackspaceCustomerNumber;
+
     public void setTenantIds(String[] tenantIDs) {
         if (tenantIDs == null) {
             this.tenantIds = null;
