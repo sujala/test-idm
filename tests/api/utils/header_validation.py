@@ -6,7 +6,6 @@ The initial focus is on v2.0 api calls.
 TODO : More methods are to be added for v1.0 & v1.1 calls, when we add
 tests for v1.0 & v1.1 calls
 """
-
 from tests.package.johny import constants as const
 
 
@@ -135,6 +134,9 @@ def basic_header_validations(response, header):
 
 def validate_header_not_present(unexpected_headers):
 
+    if type(unexpected_headers) is str:
+        unexpected_headers = [unexpected_headers]
+
     def validation(response):
         for header in unexpected_headers:
             assert header not in response.headers, (
@@ -165,11 +167,12 @@ def validate_header_tenant_id(value):
     return validation
 
 validate_username_header_not_present = \
-    validate_header_not_present(const.X_USER_NAME)
-validate_location_header_not_present = validate_header_not_present('Location')
+    validate_header_not_present([const.X_USER_NAME])
+validate_location_header_not_present = validate_header_not_present(
+    ['Location'])
 validate_content_length_header_not_present = validate_header_not_present(
-    'Content-Length')
+    ['Content-Length'])
 validate_transfer_encoding_header_not_present = validate_header_not_present(
-    'Transfer-Encoding')
+    ['Transfer-Encoding'])
 validate_tenant_id_header_not_present = (
-    validate_header_not_present(const.X_TENANT_ID))
+    validate_header_not_present([const.X_TENANT_ID]))

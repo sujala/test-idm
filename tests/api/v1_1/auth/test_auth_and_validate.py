@@ -62,6 +62,12 @@ class TestAuthAndValidationV11(base.TestBaseV1):
             auth_resp)
         header_validation.validate_header_tenant_id(
             value=str(self.user_info['mosso_id']))(auth_resp)
+
+        # This check is added to verify repose removes the header. If this
+        # test is run against identity directly, it will fail.
+        self.assertHeaders(auth_resp, (
+            header_validation.validate_username_header_not_present))
+
         token_id = auth_resp.entity.token.id
         # validate token
         self.validate_resp_token(token=token_id)
@@ -90,6 +96,11 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         header_validation.validate_header_tenant_id(
             value=str(self.user_info['mosso_id']))(auth_resp)
 
+        # This check is added to verify repose removes the header. If this
+        # test is run against identity directly, it will fail.
+        self.assertHeaders(auth_resp, (
+            header_validation.validate_username_header_not_present))
+
         token_id = auth_resp.entity.token.id
         # validate token
         self.validate_resp_token(token=token_id)
@@ -117,6 +128,11 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         header_validation.validate_header_tenant_id(
             value=str(self.user_info['nast_id']))(auth_resp)
 
+        # This check is added to verify repose removes the header. If this
+        # test is run against identity directly, it will fail.
+        self.assertHeaders(auth_resp, (
+            header_validation.validate_username_header_not_present))
+
         token_id = auth_resp.entity.token.id
         # validate token
         self.validate_resp_token(token=token_id)
@@ -141,6 +157,12 @@ class TestAuthAndValidationV11(base.TestBaseV1):
         self.assertEqual(auth_resp.status_code, 200)
         header_validation.validate_header_not_present('response-source')(
             auth_resp)
+
+        # This check is added to verify repose removes the header. If this
+        # test is run against identity directly, it will fail.
+        self.assertHeaders(auth_resp, (
+            header_validation.validate_username_header_not_present))
+
         # Not validating tenant_id value, because this is a pre-existing user
         # and we don't know the tenant_id
         header_validation.basic_header_validations(
