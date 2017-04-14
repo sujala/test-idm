@@ -66,7 +66,6 @@ import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.entity.ClientScopeAccess
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccess
 import com.rackspace.idm.domain.entity.Racker
 import com.rackspace.idm.domain.entity.RackerScopeAccess
 import com.rackspace.idm.domain.entity.User
@@ -916,25 +915,6 @@ class RootServiceTest extends Specification {
             it.accessTokenString = tokenString
             it.accessTokenExp = expiration
             it.impersonatingToken = impToken
-            it.uniqueId = dn
-            return it
-        }
-    }
-    def createPasswordResetScopeAccess() {
-        return createPasswordResetScopeAccess("tokenString", "clientId", "userRsId", new DateTime().plusHours(defaultExpirationHours + 1).toDate())
-    }
-
-    def createPasswordResetScopeAccess(String tokenString, String clientId, String userRsId, Date expiration) {
-        clientId = clientId ? clientId : "clientId"
-        tokenString = tokenString ? tokenString : "tokenString"
-        userRsId = userRsId ? userRsId : "userRsId"
-        def dn = "accessToken=$tokenString,cn=TOKENS,userRsId=$userRsId"
-
-        new PasswordResetScopeAccess().with {
-            it.accessTokenString = tokenString
-            it.accessTokenExp = expiration
-            it.userRsId = userRsId
-            it.clientId = clientId
             it.uniqueId = dn
             return it
         }

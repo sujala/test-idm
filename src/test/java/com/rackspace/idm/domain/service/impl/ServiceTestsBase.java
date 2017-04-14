@@ -6,7 +6,6 @@ import org.junit.Test;
 
 import com.rackspace.idm.domain.entity.ClientScopeAccess;
 import com.rackspace.idm.domain.entity.ClientSecret;
-import com.rackspace.idm.domain.entity.PasswordResetScopeAccess;
 import com.rackspace.idm.domain.entity.RackerScopeAccess;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
@@ -90,13 +89,5 @@ public class ServiceTestsBase {
         EasyMock.expect(so.getUniqueId()).andReturn("soUniqueId").anyTimes();
         EasyMock.replay(so);
         return so;
-    }
-
-    protected PasswordResetScopeAccess getFakePasswordResetScopeAccessObject() {
-        PasswordResetScopeAccess prsa = new PasswordResetScopeAccess();
-        prsa.setAccessTokenExp(new DateTime().toDate());
-        prsa.setAccessTokenString("passwordResetToken");
-        prsa.setClientId("PASSWORDRESET");
-        return prsa;
     }
 }

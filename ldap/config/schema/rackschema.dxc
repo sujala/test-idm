@@ -1310,6 +1310,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.11) = {
         accessTokenExp
 };
 
+# This object-class is no longer used within Identity and is deprecated. However, as it was/may have been
+# previously used, it must remain as part of the schema forevermore
 schema set object-class (1.3.6.1.4.1.20988.2.2.12) = {
     name = passwordResetScopeAccess
     ldap-names = passwordResetScopeAccess

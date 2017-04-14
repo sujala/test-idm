@@ -258,8 +258,6 @@ public class LdapScopeAccessRepository extends LdapGenericRepository<ScopeAccess
             return UserScopeAccess.class;
         }else if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_CLIENTSCOPEACCESS)) {
             return ClientScopeAccess.class;
-        } else if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_PASSWORDRESETSCOPEACCESS)) {
-            return PasswordResetScopeAccess.class;
         } else if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_RACKERSCOPEACCESS)) {
             return RackerScopeAccess.class;
         } else if (entry.getAttribute(ATTR_OBJECT_CLASS).hasValue(OBJECTCLASS_IMPERSONATEDSCOPEACCESS)) {

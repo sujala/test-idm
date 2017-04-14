@@ -110,15 +110,6 @@ public class AuthenticationServiceTests {
         return csa;
     }
 
-    private PasswordResetScopeAccess getFakePasswordResetScopeAccess() {
-        final PasswordResetScopeAccess csa = new PasswordResetScopeAccess();
-        csa.setAccessTokenString(tokenVal);
-        csa.setAccessTokenExp(new DateTime().plusDays(1).toDate());
-        csa.setClientId(clientId);
-        csa.setUsername(username);
-        return csa;
-    }
-
     private Racker getFakeRacker() {
         Racker racker = new Racker();
         racker.setUniqueId(uniqueId);
