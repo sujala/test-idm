@@ -1447,7 +1447,7 @@ public class DefaultUserService implements UserService {
     }
 
     private void setApiKeyIfNotProvided(User user) {
-        if (StringUtils.isBlank(user.getApiKey()) && shouldGenerateApiKeyUserForCreate()) {
+        if (StringUtils.isBlank(user.getApiKey())) {
             user.setApiKey(UUID.randomUUID().toString().replaceAll("-", ""));
         }
     }
@@ -1473,16 +1473,16 @@ public class DefaultUserService implements UserService {
 
     private void createDomainUserInCreateOneCall(String domainId, boolean isUserAdminCreateInOneCall) {
         if (StringUtils.isNotBlank(domainId)) {
-            if (identityConfig.getReloadableConfig().restrictCreateUserInDefaultDomain() && domainId.equals(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
+            if (domainId.equals(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
                 throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_IN_DEFAULT_DOMAIN );
             }
             Domain domain = domainService.getDomain(domainId);
             if (domain != null) {
-                if (identityConfig.getReloadableConfig().restrictCreateUserInDisabledDomain() && !domain.getEnabled()) {
+                if (!domain.getEnabled()) {
                     throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_IN_DISABLED_DOMAIN);
                 }
 
-                if (isUserAdminCreateInOneCall && identityConfig.getReloadableConfig().restrictCreateUserInDomainWithUsers() && Iterables.size(domainService.getDomainAdmins(domainId)) != 0) {
+                if (isUserAdminCreateInOneCall  && Iterables.size(domainService.getDomainAdmins(domainId)) != 0) {
                     throw new ForbiddenException(ERROR_MSG_NEW_ACCOUNT_IN_DOMAIN_WITH_USERS);
                 }
             } else {
@@ -1688,10 +1688,6 @@ public class DefaultUserService implements UserService {
 
     int getMaxNumberOfUsersInDomain() {
         return config.getInt("maxNumberOfUsersInDomain");
-    }
-
-    Boolean shouldGenerateApiKeyUserForCreate(){
-        return config.getBoolean("generate.apiKey.userForCreate");
     }
 
     String getCloudRegion() {

@@ -51,16 +51,18 @@ class TestListUsers(base.TestBaseV2):
         for i in xrange(2):
             # create identity admin users to test
             ida_username = "iadm_" + self.generate_random_string()
+            ida_domain_id = self.generate_random_string(pattern='[\d]{7}')
             request_input = requests.UserAdd(user_name=ida_username,
-                                             domain_id=const.DOMAIN_TEST)
+                                             domain_id=ida_domain_id)
             resp = self.service_admin_client.add_user(
                 request_object=request_input)
             self.user_ids.append(resp.json()[const.USER][const.ID])
 
             # create user admin to test
             user_name = self.generate_random_string()
+            domain_id = self.generate_random_string(pattern='[\d]{7}')
             request_input = requests.UserAdd(user_name=user_name,
-                                             domain_id=const.DOMAIN_TEST)
+                                             domain_id=domain_id)
             resp = self.identity_admin_client.add_user(
                 request_object=request_input)
             self.user_ids.append(resp.json()[const.USER][const.ID])
@@ -68,7 +70,7 @@ class TestListUsers(base.TestBaseV2):
             # create sub user to test
             sub_username = "sub_" + self.generate_random_string()
             request_input = requests.UserAdd(user_name=sub_username,
-                                             domain_id=self.DOMAIN_ID_TEST,
+                                             domain_id=domain_id,
                                              email=self.EMAIL_TEST)
             resp = self.user_admin_client.add_user(
                 request_object=request_input)

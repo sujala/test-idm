@@ -225,7 +225,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         cloudRegionService.getDefaultRegion(_) >> createRegionEntity("DFW", "cloud", true)
         propertiesService.getValue(DefaultUserService.ENCRYPTION_VERSION_ID) >> encryptionVersion
         config.getInt("maxNumberOfUsersInDomain") >> 100
-        config.getBoolean("generate.apiKey.userForCreate") >> true
         config.getList("v1defaultMosso") >> MOSSO_V1_DEF
         config.getList("v1defaultNast") >> NAST_V1_DEF
         userDao.getUsersByDomain(domainId) >> [].asList()
@@ -271,7 +270,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         cloudRegionService.getDefaultRegion(_) >> createRegionEntity("DFW", "cloud", true)
         propertiesService.getValue(DefaultUserService.ENCRYPTION_VERSION_ID) >> encryptionVersion
         config.getInt("maxNumberOfUsersInDomain") >> 100
-        config.getBoolean("generate.apiKey.userForCreate") >> true
         userDao.getUsersByDomain(domainId) >> [].asList()
         userDao.nextUserId >> "nextId"
         mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")
@@ -339,23 +337,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         }
     }
 
-    def "Add User does not set default api key if not specified and not configured to auto generate"() {
-        given:
-        minimumMocksForAddUser()
-        def user = createUser("region", true, "id", "email@email.com", 1, "nast")
-        user.apiKey = null
-
-        config.getBoolean("generate.apiKey.userForCreate") >> false
-
-        when:
-        service.addUserv11(user)
-
-        then:
-        userDao.addUser(_) >> { arg1 ->
-            assert(arg1.apiKey[0] == null)
-        }
-    }
-
     def "Add User prohibited if max number of users in domain is exceeded"() {
         given:
         cloudRegionService.getDefaultRegion(_) >> createRegionEntity("region", "cloud", true)
@@ -376,7 +357,6 @@ class DefaultUserServiceTest extends RootServiceTest {
         minimumMocksForAddUser()
         def user = this.createUser(null, true, domainId)
 
-        config.getBoolean("generate.apiKey.userForCreate") >> false
         domainService.getDomain(domainId) >> entityFactory.createDomain()
 
         when:

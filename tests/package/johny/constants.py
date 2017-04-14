@@ -456,11 +456,6 @@ AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME = (
     'auto.assign.role.on.domain.tenants.role.name')
 FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
     "feature.endpoint.template.disable.name.type")
-# Sorry for the abbreviations, but need them to fit < 80 chars
-FEATURE_RESTRICTING_USER_CREATE_IN_EXIST_DOM = (
-    "feature.restrict.create.user.in.domain.with.users")
-FEATURE_RESTRICTING_USER_CREATE_IN_DISABLED_DOM = (
-    "feature.restrict.create.user.in.disabled.domain")
 FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED = (
     'feature.global.endpoints.for.all.roles.enabled')
 FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE = (

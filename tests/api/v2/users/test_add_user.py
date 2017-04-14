@@ -27,16 +27,17 @@ class TestAddUser(base.TestBaseV2):
         """
         super(TestAddUser, cls).setUpClass()
 
+        domain_id = cls.generate_random_string(pattern='[\d]{7}')
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': const.DOMAIN_API_TEST})
+            additional_input_data={'domain_id': domain_id})
 
         sub_user_name = cls.generate_random_string(
             pattern=const.SUB_USER_PATTERN)
         cls.user_client = cls.generate_client(
             parent_client=cls.user_admin_client,
             additional_input_data={
-                'domain_id': const.DOMAIN_API_TEST,
+                'domain_id': domain_id,
                 'user_name': sub_user_name})
 
     def setUp(self):
@@ -58,6 +59,8 @@ class TestAddUser(base.TestBaseV2):
         '''
         user_name = self.generate_random_string()
         input_data = test_data['additional_input']
+        input_data['domain_id'] = self.generate_random_string(
+            pattern='[\d]{7}')
         request_object = requests.UserAdd(user_name=user_name, **input_data)
         resp = self.identity_admin_client.add_user(request_object)
         self.assertEqual(resp.status_code, 201)
@@ -89,6 +92,8 @@ class TestAddUser(base.TestBaseV2):
             user_name = self.generate_random_string()
             add_input = self.add_input
             input_data = dict(add_input, **ea_mfa_input)
+            input_data['domain_id'] = self.generate_random_string(
+                pattern='[\d]{7}')
             request_object = requests.UserAdd(user_name=user_name,
                                               **input_data)
             resp = self.identity_admin_client.add_user(request_object)
@@ -252,12 +257,9 @@ class TestAddUserExistingRolesTenants(base.TestBaseV2):
         self.user_ids = []
 
     def one_user_validator(self, resp, test_data):
-        # error cases
-        dom_dis_feat_flag = const.FEATURE_RESTRICTING_USER_CREATE_IN_EXIST_DOM
 
         if ("domain" in test_data and "enabled" in test_data["domain"] and
-                not test_data["domain"]["enabled"] and
-                self.devops_client.get_feature_flag(dom_dis_feat_flag)):
+                not test_data["domain"]["enabled"]):
             self.assertEqual(resp.status_code, 403)
             return
         if ("domain" in test_data and "default" in test_data["domain"] and
@@ -265,13 +267,10 @@ class TestAddUserExistingRolesTenants(base.TestBaseV2):
             self.assertEqual(resp.status_code, 400)
             return
 
-        feat_flag = const.FEATURE_RESTRICTING_USER_CREATE_IN_EXIST_DOM
-
         if ("domain" in test_data and "default" in test_data["domain"] and
                 not test_data["domain"]["default"] and
                 "users" in test_data["domain"] and
-                test_data["domain"]["users"] and
-                self.devops_client.get_feature_flag(feat_flag)):
+                test_data["domain"]["users"]):
             self.assertEqual(resp.status_code, 403)
             return
         # possible bug
@@ -294,8 +293,7 @@ class TestAddUserExistingRolesTenants(base.TestBaseV2):
             resp, *self.header_validation_functions_HTTP_201)
 
         # authenticate with new user
-        if (not test_data["domain"]["enabled"] and
-                self.devops_client.get_feature_flag(dom_dis_feat_flag)):
+        if (not test_data["domain"]["enabled"]):
             username = resp.json()[const.USER][const.USERNAME]
             pw = resp.json()[const.USER][const.NS_PASSWORD]
             auth_obj = requests.AuthenticateWithPassword(user_name=username,

@@ -18,13 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 1/25/13
- * Time: 4:22 PM
- * To change this template use File | Settings | File Templates.
- */
+
 class Cloud11IntegrationTest extends RootIntegrationTest {
 
     @Autowired Configuration config
@@ -532,9 +526,6 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
 
     def "auth call not should display admin urls in service catalog for admin user - userKeyCredentials" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         String adminUrl = "http://adminUrl"
         String key = "1234567890"
         def mossoId = -1 * getRandomNumber(1000000, 2000000);
@@ -614,12 +605,11 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud20.deleteEndpointTemplate(serviceAdminToken, baseURLId.toString())
     }
 
-    def "Creating user without apikey will generate an apikey - 'generate.apiKey.userForCreate' = true" () {
+    def "Creating user without apikey will generate an apikey" () {
         given:
         String username = "userNoApiKey$sharedRandom"
         def mossoId = getRandomNumber(1000000, 2000000);
         User user = v1Factory.createUser(username, null, mossoId, null, true)
-        def flag = config.getBoolean("generate.apiKey.userForCreate")
 
         when:
         def createdUser = cloud11.createUser(user).getEntity(User)
@@ -629,15 +619,10 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def authResponse = cloud20.authenticateApiKey(createdUser.id, createdUser.key)
 
         then:
-        if(flag){
-            createdUser != null
-            createdUser.key != null
-            listCred.contains(JSONConstants.PASSWORD_CREDENTIALS)
-            listCred.contains(JSONConstants.API_KEY_CREDENTIALS)
-            authResponse.status == 200
-        } else {
-            true
-        }
+        createdUser != null
+        createdUser.key != null
+        listCred.contains(JSONConstants.API_KEY_CREDENTIALS)
+        authResponse.status == 200
 
         cleanup:
         cloud20.destroyUser(serviceAdminToken, createdUser.id)
@@ -645,13 +630,12 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenant(serviceAdminToken, createdUser.nastId)
     }
 
-    def "Creating user with apikey will use provided apikey - 'generate.apiKey.userForCreate' = true" () {
+    def "Creating user with apikey will use provided apikey" () {
         given:
         String username = "userApiKeyUuid$sharedRandom"
         def mossoId = getRandomNumber(1000000, 2000000);
         def apiKey = "1234567890"
         User user = v1Factory.createUser(username, apiKey, mossoId, null, true)
-        def flag = config.getBoolean("generate.apiKey.userForCreate")
 
         when:
         def createdUser = cloud11.createUser(user).getEntity(User)
@@ -661,15 +645,10 @@ class Cloud11IntegrationTest extends RootIntegrationTest {
         def authResponse = cloud20.authenticateApiKey(createdUser.id, createdUser.key)
 
         then:
-        if(flag) {
-            createdUser != null
-            listCred.contains(JSONConstants.PASSWORD_CREDENTIALS)
-            listCred.contains(JSONConstants.API_KEY_CREDENTIALS)
-            createdUser.key == apiKey
-            authResponse.status == 200
-        } else {
-            true
-        }
+        createdUser != null
+        listCred.contains(JSONConstants.API_KEY_CREDENTIALS)
+        createdUser.key == apiKey
+        authResponse.status == 200
 
 
         cleanup: "Clean up data"
