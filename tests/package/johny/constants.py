@@ -89,8 +89,9 @@ VERIFY_OTP_DEVICE_URL = (
 
 '''File or Directory paths'''
 PATH_TO_REPOSE_LOG = '/var/log/repose/current.log'
+PATH_TO_USER_DELETE_LOG = '/var/log/idm/userDelete.log'
 
-'''Some Constanst for values'''
+'''Some Constants for values'''
 API_KEY_PATTERN = (
     '[a-f0-9]{8}[\-][a-f0-9]{4}[\-][a-f0-9]{4}[\-][a-f0-9]{4}[\-][a-f0-9]{12}')
 BROKER = "BROKER"
@@ -429,6 +430,7 @@ USER_MANAGER_ROLE_ID = '7'
 PROVIDER_MANAGEMENT_ROLE_NAME = 'identity:identity-provider-manager'
 PROVIDER_RO_ROLE_NAME = 'identity:identity-provider-read-only'
 IDENTITY_INTERNAL_ROLE_NAME = 'identity:internal'
+IDENTITY_PROPERTY_ADMIN_ROLE_NAME = 'identity:property-admin'
 
 '''FEATURE FLAGS'''
 FEATURE_FLAG_FOR_ENDPOINTS_BASED_ON_RULES = (
