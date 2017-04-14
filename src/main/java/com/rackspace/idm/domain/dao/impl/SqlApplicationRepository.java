@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.entity.Application;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.ServiceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlService;
 import com.rackspace.idm.domain.sql.mapper.impl.ServiceMapper;
@@ -14,8 +12,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-
-import static com.rackspace.idm.domain.dao.impl.LdapRepository.CONTAINER_APPLICATION_ROLES;
 
 @SQLComponent
 public class SqlApplicationRepository implements ApplicationDao {
@@ -40,8 +36,6 @@ public class SqlApplicationRepository implements ApplicationDao {
         // Save necessary LDIF for rollback
         final Application application = mapper.fromSQL(sqlService, client);
         final String dn = application.getUniqueId();
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, application.getUniqueId(), mapper.toLDIF(application)));
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, mapper.toContainerDN(dn, CONTAINER_APPLICATION_ROLES), mapper.toContainerLDIF(dn, CONTAINER_APPLICATION_ROLES)));
     }
 
     @Override
@@ -50,15 +44,12 @@ public class SqlApplicationRepository implements ApplicationDao {
         final SqlService sqlService = serviceRepository.save(mapper.toSQL(client, serviceRepository.findOne(client.getClientId())));
 
         final Application application = mapper.fromSQL(sqlService, client);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, application.getUniqueId(), mapper.toLDIF(application)));
     }
 
     @Override
     @Transactional
     public void deleteApplication(Application client) {
         serviceRepository.delete(client.getClientId());
-
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, client.getUniqueId(), null));
     }
 
     @Override

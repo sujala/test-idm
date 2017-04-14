@@ -6,8 +6,6 @@ import com.rackspace.idm.domain.entity.BaseUserToken;
 import com.rackspace.idm.domain.entity.FederatedUser;
 import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.IdentityProvider;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository;
 import com.rackspace.idm.domain.sql.dao.GroupRepository;
 import com.rackspace.idm.domain.sql.entity.SqlFederatedUserRax;
@@ -61,10 +59,6 @@ public class SqlFederatedUserRepository implements FederatedUserDao {
         // Save necessary LDIF for rollback
         final FederatedUser federatedUser = federatedUserRaxMapper.fromSQL(sqlFederatedUserRax, user);
         final String dn = federatedUser.getUniqueId();
-
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, federatedUser.getUniqueId(), federatedUserRaxMapper.toLDIF(federatedUser)));
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, federatedUserRaxMapper.toContainerDN(dn, CONTAINER_ROLES),
-                federatedUserRaxMapper.toContainerLDIF(dn, CONTAINER_ROLES)));
     }
 
     @Override
@@ -74,7 +68,6 @@ public class SqlFederatedUserRepository implements FederatedUserDao {
                 federatedUserRaxMapper.toSQL(user, federatedUserRepository.findOne(user.getId())));
 
         final FederatedUser federatedUser = federatedUserRaxMapper.fromSQL(sqlFederatedUserRax, user);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, federatedUser.getUniqueId(), federatedUserRaxMapper.toLDIF(federatedUser)));
     }
 
     @Override
@@ -137,7 +130,6 @@ public class SqlFederatedUserRepository implements FederatedUserDao {
     @Override
     public void deleteUser(FederatedUser federatedUser) {
         federatedUserRepository.delete(federatedUser.getId());
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, federatedUser.getUniqueId(), null));
     }
 
     @Override

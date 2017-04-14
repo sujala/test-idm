@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.TokenRevocationRecordRepository;
 import com.rackspace.idm.domain.sql.entity.SqlTokenRevocationRecord;
 import com.rackspace.idm.domain.sql.mapper.impl.TokenRevocationMapper;
@@ -42,7 +40,6 @@ public class SqlTokenRevocationRecordRepository implements TokenRevocationRecord
         sqlTrr = tokenRevocationRecordRepository.save(sqlTrr);
 
         final LdapTokenRevocationRecord trr = tokenRevocationMapper.fromSQL(sqlTrr);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, trr.getUniqueId(), tokenRevocationMapper.toLDIF(trr)));
 
         return sqlTrr;
     }
@@ -62,7 +59,6 @@ public class SqlTokenRevocationRecordRepository implements TokenRevocationRecord
         sqlTrr = tokenRevocationRecordRepository.save(sqlTrr);
 
         final LdapTokenRevocationRecord trr = tokenRevocationMapper.fromSQL(sqlTrr);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, trr.getUniqueId(), tokenRevocationMapper.toLDIF(trr)));
 
         return sqlTrr;
     }

@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.MobilePhoneDao;
 import com.rackspace.idm.domain.entity.MobilePhone;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.MobilePhoneRepository;
 import com.rackspace.idm.domain.sql.entity.SqlMobilePhone;
 import com.rackspace.idm.domain.sql.mapper.impl.MobilePhoneMapper;
@@ -32,7 +30,6 @@ public class SqlMobilePhoneRepository implements MobilePhoneDao {
         final SqlMobilePhone sqlMobilePhone = repository.save(mapper.toSQL(mobilePhone));
 
         final MobilePhone newMobilePhone = mapper.fromSQL(sqlMobilePhone, mobilePhone);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newMobilePhone.getUniqueId(), mapper.toLDIF(newMobilePhone)));
     }
 
     @Override
@@ -41,14 +38,12 @@ public class SqlMobilePhoneRepository implements MobilePhoneDao {
         final SqlMobilePhone sqlMobilePhone = repository.save(mapper.toSQL(mobilePhone, repository.findOne(mobilePhone.getId())));
 
         final MobilePhone newMobilePhone = mapper.fromSQL(sqlMobilePhone, mobilePhone);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newMobilePhone.getUniqueId(), mapper.toLDIF(newMobilePhone)));
     }
 
     @Override
     @Transactional
     public void deleteMobilePhone(MobilePhone mobilePhone) {
         repository.delete(mobilePhone.getId());
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, mobilePhone.getUniqueId(), null));
     }
 
     @Override

@@ -5,8 +5,6 @@ import com.rackspace.idm.domain.dao.OTPDeviceDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.OTPDevice;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.OTPDeviceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlOTPDevice;
 import com.rackspace.idm.domain.sql.mapper.impl.OTPDeviceMapper;
@@ -39,7 +37,6 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
             device = repository.save(device);
 
             final OTPDevice newOTPDevice = mapper.fromSQL(device, otpDevice);
-            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newOTPDevice.getUniqueId(), mapper.toLDIF(newOTPDevice)));
         }
     }
 
@@ -49,7 +46,6 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
         final SqlOTPDevice sqlOTPDevice = repository.save(mapper.toSQL(otpDevice, repository.findOne(otpDevice.getId())));
 
         final OTPDevice newOTPDevice = mapper.fromSQL(sqlOTPDevice, otpDevice);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newOTPDevice.getUniqueId(), mapper.toLDIF(newOTPDevice)));
     }
 
     @Override
@@ -64,7 +60,6 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
             if (otpDevices != null) {
                 for (SqlOTPDevice sqlOTPDevice : otpDevices) {
                     final OTPDevice otpDevice = mapper.fromSQL(sqlOTPDevice);
-                    applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, otpDevice.getUniqueId(), null));
                 }
             }
         }
@@ -74,7 +69,6 @@ public class SqlOTPDeviceRepository implements OTPDeviceDao {
     @Transactional
     public void deleteOTPDevice(OTPDevice otpDevice) {
         repository.delete(otpDevice.getId());
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, otpDevice.getUniqueId(), null));
     }
 
     @Override
