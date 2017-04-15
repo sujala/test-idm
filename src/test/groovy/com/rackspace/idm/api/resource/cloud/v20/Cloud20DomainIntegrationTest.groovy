@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
@@ -815,6 +816,113 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "Update and get domain with rackspaceCustomerNumber - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v1Factory.createDomain(domainId, domainId)
+        def rcn = testUtils.getRandomUUIDOfLength("RCN", 10)
+        domain.rackspaceCustomerNumber = rcn
+        cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
+
+        when: "Update domain"
+        domain.rackspaceCustomerNumber = rackspaceCustomerNumber
+        def domainEntity = cloud20.updateDomain(utils.identityAdminToken, domainId, domain, accept, content).getEntity(Domain)
+
+        then:
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
+            assert  domainEntity.rackspaceCustomerNumber == rcn
+        } else {
+            assert  domainEntity.rackspaceCustomerNumber == rackspaceCustomerNumber
+        }
+
+        when: "Get domain"
+        def getDomainEntity = cloud20.getDomain(utils.identityAdminToken, domainId, accept).getEntity(Domain)
+
+        then:
+        getDomainEntity.id == domainId
+        getDomainEntity.name == domainId
+        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
+            assert  getDomainEntity.rackspaceCustomerNumber == rcn
+        } else {
+            assert  getDomainEntity.rackspaceCustomerNumber == rackspaceCustomerNumber
+        }
+
+        cleanup:
+        utils.deleteDomain(domainId)
+
+        where:
+        rackspaceCustomerNumber | accept                          | content
+        "RNC-123-123-123"       | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        "RNC-123-123-123"       | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        ""                      | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        ""                      | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        null                    | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        null                    | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Update domain with rackspaceCustomerNumber for domain with no rackspaceCustomerNumber - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v1Factory.createDomain(domainId, domainId)
+        cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
+
+        when: "Update domain"
+        domain.rackspaceCustomerNumber = rackspaceCustomerNumber
+        def domainEntity = cloud20.updateDomain(utils.identityAdminToken, domainId, domain, accept, content).getEntity(Domain)
+
+        then:
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
+            assert  domainEntity.rackspaceCustomerNumber == null
+        } else {
+            assert  domainEntity.rackspaceCustomerNumber == rackspaceCustomerNumber
+        }
+
+        cleanup:
+        utils.deleteDomain(domainId)
+
+        where:
+        rackspaceCustomerNumber | accept                          | content
+        "RNC-123-123-123"       | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        "RNC-123-123-123"       | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        ""                      | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        ""                      | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        null                    | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        null                    | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Assert existing rackspaceCustomerNumber is not changed if attribute is not provided - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v1Factory.createDomain(domainId, domainId)
+        def rcn = testUtils.getRandomUUIDOfLength("RCN", 10)
+        domain.rackspaceCustomerNumber = rcn
+        cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
+
+        when: "Update domain with null RCN"
+        domain.rackspaceCustomerNumber = null
+        def domainEntity = cloud20.updateDomain(utils.identityAdminToken, domainId, domain, accept, content).getEntity(Domain)
+
+        then:
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        domainEntity.rackspaceCustomerNumber == rcn
+
+        cleanup:
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
     def "Assert default value for sessionInactivityTimeout on domain creation - content-type = #content, accept = #accept"() {
         given:
         def domainId = utils.createDomain()
@@ -1007,6 +1115,14 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
             assertRackspaceCommonFaultResponse(updateDomainResponse, com.rackspace.api.common.fault.v1.BadRequestFault, SC_BAD_REQUEST, errMsg)
         }
 
+        when: "Updating rackspaceCustomerNumber longer than 32 characters"
+        updateDomain = v2Factory.createDomain(domainId, domainId)
+        updateDomain.rackspaceCustomerNumber = testUtils.getRandomUUIDOfLength("RCN",33)
+        updateDomainResponse = cloud20.addDomain(utils.identityAdminToken, updateDomain, accept, content)
+
+        then:
+        assertOpenStackV2FaultResponseWithErrorCode(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
+
         cleanup:
         utils.deleteUsers(users)
         utils.deleteUsers(users2)
@@ -1028,14 +1144,13 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
         def users = [defaultUser, userManage, userAdmin, identityAdmin]
+        def rcn = "RCN-123-123-123"
+        def description = "description"
+        def domain = v2Factory.createDomain(domainId, domainId, true, description, null, rcn)
+        cloud20.updateDomain(utils.getIdentityAdminToken(), domainId, domain)
 
-        when: "Attempt to update enabled and name on a domain using a user-admin token"
+        when: "Attempt to update attribute on a domain using a user-admin token"
         def userAdminToken = utils.getToken(userAdmin.username)
-        def updateDomain = new Domain().with {
-            it.enabled = false
-            it.name = "otherName"
-            it
-        }
         def updateDomainResponse = cloud20.updateDomain(userAdminToken, domainId, updateDomain, accept, content)
         def domainEntity = updateDomainResponse.getEntity(Domain)
 
@@ -1043,10 +1158,11 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         updateDomainResponse.status == SC_OK
         domainEntity.id == domainId
         domainEntity.name == domainId
-        domainEntity.enabled
+        domainEntity.description == description
+        domainEntity.rackspaceCustomerNumber == rcn
         domainEntity.sessionInactivityTimeout.toString() == identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString()
 
-        when: "Attempt to update enabled and name on a domain using a user-manage token"
+        when: "Attempt to update attribute on a domain using a user-manage token"
         def userManageToken = utils.getToken(userManage.username)
         updateDomainResponse = cloud20.updateDomain(userManageToken, domainId, updateDomain, accept, content)
         domainEntity = updateDomainResponse.getEntity(Domain)
@@ -1055,7 +1171,8 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         updateDomainResponse.status == SC_OK
         domainEntity.id == domainId
         domainEntity.name == domainId
-        domainEntity.enabled
+        domainEntity.description == description
+        domainEntity.rackspaceCustomerNumber == rcn
         domainEntity.sessionInactivityTimeout.toString() == identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString()
 
         cleanup:
@@ -1063,9 +1180,13 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
 
         where:
-        accept                          | content
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        updateDomain                                                     | accept                          | content
+        v2Factory.createDomain(null, "otherName")                        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        v2Factory.createDomain(null, "otherName")                        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        v2Factory.createDomain(null, null, true, "otherDesc")            | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        v2Factory.createDomain(null, null, true, "otherDesc")            | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        v2Factory.createDomain(null, null, true, null, null, "otherRCN") | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        v2Factory.createDomain(null, null, true, null, null, "otherRCN") | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
     def "Verify sessionInactivityTimeout is return on get/list domain"() {
