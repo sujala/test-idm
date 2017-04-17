@@ -89,6 +89,11 @@ public class SqlTenantRepository implements TenantDao {
     }
 
     @Override
+    public int countTenantsByTenantType(String tenantType) {
+        return 0;
+    }
+
+    @Override
     @Transactional
     public void deleteTenant(String tenantId) {
         final SqlProject sqlProject = projectRepository.findOne(tenantId);

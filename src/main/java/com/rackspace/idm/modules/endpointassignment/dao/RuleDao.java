@@ -36,4 +36,6 @@ public interface RuleDao<T extends Rule> {
     void updateEndpointAssignmentRule(T endpointAssignmentRule);
 
     void deleteEndpointAssignmentRule(T endpointAssignmentRule);
+
+    int countRulesByTenantType(String tenantType);
 }

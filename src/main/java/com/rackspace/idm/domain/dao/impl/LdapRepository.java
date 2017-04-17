@@ -41,6 +41,7 @@ public abstract class LdapRepository {
     public static final String OBJECTCLASS_RACKSPACE_CONTAINER = "rsContainer";
     public static final String OBJECTCLASS_ORGANIZATIONAL_UNIT = "organizationalUnit";
     public static final String OBJECTCLASS_TENANT = "tenant";
+    public static final String OBJECTCLASS_TENANT_TYPE = "rsTenantTypeObject";
     public static final String OBJECTCLASS_TENANT_ROLE = "tenantRole";
     public static final String OBJECTCLASS_DOMAIN = "rsDomain";
     public static final String OBJECTCLASS_POLICY = "rsPolicy";
@@ -228,6 +229,7 @@ public abstract class LdapRepository {
     public static final String BASEURL_BASE_DN = "ou=baseUrls,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String GROUP_BASE_DN = "ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String TENANT_BASE_DN = "ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com";
+    protected static final String TENANT_TYPE_BASE_DN = "ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String DOMAIN_BASE_DN = "ou=domains,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String POLICY_BASE_DN = "ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String QUESTION_BASE_DN = "ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com";

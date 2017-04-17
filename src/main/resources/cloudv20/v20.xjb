@@ -457,5 +457,21 @@
         </jaxb:bindings>
     </jaxb:bindings>
 
+    <jaxb:bindings schemaLocation="RAX-AUTH.xsd" node="/xs:schema">
+        <jaxb:bindings node="xs:complexType[@name='TenantType']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="tenantType"/>
+            </annox:annotate>
+        </jaxb:bindings>
+    </jaxb:bindings>
+
+    <jaxb:bindings schemaLocation="RAX-AUTH.xsd" node="/xs:schema">
+        <jaxb:bindings node="xs:complexType[@name='TenantTypes']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="tenantTypes"/>
+            </annox:annotate>
+        </jaxb:bindings>
+    </jaxb:bindings>
+
 </jaxb:bindings>
 

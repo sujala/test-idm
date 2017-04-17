@@ -28,7 +28,6 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 
 /**
@@ -1319,6 +1318,34 @@ public class Cloud20VersionResource {
         } else {
             return cloud20Service.deleteQuestion(authToken, questionId).build();
         }
+    }
+
+    @POST
+    @Path("RAX-AUTH/tenant-types")
+    public Response createTenantType(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, TenantType tenantType) {
+        return cloud20Service.addTenantType(uriInfo, authToken, tenantType).build();
+    }
+
+    @GET
+    @Path("RAX-AUTH/tenant-types")
+    public Response listTenantTypes(@Context UriInfo uriInfo,
+                                   @HeaderParam(X_AUTH_TOKEN) String authToken,
+                                   @QueryParam("marker") Integer marker,
+                                   @QueryParam("limit") Integer limit) {
+        return cloud20Service.listTenantTypes(uriInfo, authToken, validateMarker(marker), validateLimit(limit)).build();
+    }
+
+    @GET
+    @Path("RAX-AUTH/tenant-types/{tenantTypeName}")
+    public Response getTenantTypes(@Context UriInfo uriInfo,
+                                   @HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("tenantTypeName") String tenantTypeName) {
+        return cloud20Service.getTenantType(uriInfo, authToken, tenantTypeName).build();
+    }
+
+    @DELETE
+    @Path("RAX-AUTH/tenant-types/{tenantTypeName}")
+    public Response deleteTenantType(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("tenantTypeName") String tenantTypeName) {
+        return cloud20Service.deleteTenantType(authToken, tenantTypeName).build();
     }
 
     @Path("users/{userId}/RAX-AUTH/multi-factor")

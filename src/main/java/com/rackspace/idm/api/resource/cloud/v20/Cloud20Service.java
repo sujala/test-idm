@@ -15,7 +15,6 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -270,4 +269,12 @@ public interface Cloud20Service {
     ResponseBuilder createSecretQA(String authToken, String userId, com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQA secretQA);
 
     ResponseBuilder getUserAdminsForUser(String authToken, String userId);
+
+    ResponseBuilder addTenantType(UriInfo uriInfo, String authToken, TenantType tenantType);
+
+    ResponseBuilder getTenantType(UriInfo uriInfo, String authToken, String tenantTypeName);
+
+    ResponseBuilder listTenantTypes(UriInfo uriInfo, String authToken, Integer marker, Integer limit);
+
+    ResponseBuilder deleteTenantType(String authToken, String tenantTypeId);
 }

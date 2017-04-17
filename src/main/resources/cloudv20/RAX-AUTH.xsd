@@ -110,6 +110,8 @@
     <element name="forgotPasswordCredentials" type="RAX-AUTH:ForgotPasswordCredentials" />
     <element name="bypassCodes" type="RAX-AUTH:BypassCodes"/>
     <element name="multiFactorDomain" type="RAX-AUTH:MultiFactorDomain"/>
+    <element name="tenantType" type="RAX-AUTH:TenantType" />
+    <element name="tenantTypes" type="RAX-AUTH:TenantTypes" />
     <element name="identityProvider" type="RAX-AUTH:IdentityProvider"/>
     <element name="identityProviders" type="RAX-AUTH:IdentityProviders">
         <annotation>
@@ -176,6 +178,33 @@
     <complexType name="Types">
         <sequence>
             <element name="type" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
+    <complexType name="TenantType">
+        <attribute name="name" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The name of the tenant type.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="description" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The description of the tenant type.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
+    <complexType name="TenantTypes">
+        <sequence>
+            <element name="tenantType" type="RAX-AUTH:TenantType" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
     </complexType>
 

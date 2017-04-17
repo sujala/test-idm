@@ -117,6 +117,11 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
         return getObjects(searchFilterIdentityRole(), getBaseDn());
     }
 
+    @Override
+    public int countClientRolesByTenantType(String tenantType) {
+        return countObjects(searchFilterTenantType(tenantType));
+    }
+
     private ClientRole getRoleById(String roleId) {
         return getObject(searchFilter_byRoleId(roleId), getBaseDn(), SearchScope.SUB);
     }
@@ -218,6 +223,12 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
                 .addOrAttributes(orComponents).build();
+    }
+
+    private Filter searchFilterTenantType(String tenantType) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
+                .addEqualAttribute(ATTR_RS_TENANT_TYPE, tenantType).build();
     }
 
     public String getBaseDn(){

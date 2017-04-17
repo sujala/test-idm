@@ -1624,141 +1624,151 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.35) = {
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.36) = {
-        name = rsMultiFactorMobilePhone
-        ldap-names = rsMultiFactorMobilePhone
-        subclass-of groupofnames
-        kind = structural
-        must-contain
-                rsId,
-                telephoneNumber
-        may-contain
-                rsExternalMultiFactorPhoneId
+    name = rsMultiFactorMobilePhone
+    ldap-names = rsMultiFactorMobilePhone
+    subclass-of groupofnames
+    kind = structural
+    must-contain
+        rsId,
+        telephoneNumber
+    may-contain
+        rsExternalMultiFactorPhoneId
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.37) = {
-        name = rsFederatedPerson
-        ldap-names = rsFederatedPerson
-        subclass-of top
-        kind = structural
-        must-contain
-                rsId,
-                uid,
-                rsRegion,
-                rsDomainId,
-                mail,
-                labeledUri
-        may-contain
-                rsGroupId,
-                rsFederatedUserExpiredTimestamp
+    name = rsFederatedPerson
+    ldap-names = rsFederatedPerson
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId,
+        uid,
+        rsRegion,
+        rsDomainId,
+        mail,
+        labeledUri
+    may-contain
+        rsGroupId,
+        rsFederatedUserExpiredTimestamp
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.38) = {
-        name = rsTokenRevocationRecord
-        ldap-names = rsTokenRevocationRecord
-        subclass-of top
-        kind = structural
-        must-contain
-                rsId
-        may-contain
-                userRsId,
-                accessToken,
-                accessTokenExp,
-                rsType
+    name = rsTokenRevocationRecord
+    ldap-names = rsTokenRevocationRecord
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId
+    may-contain
+        userRsId,
+        accessToken,
+        accessTokenExp,
+        rsType
 };
 
 schema set object-class (1.3.6.1.4.1.20988.3.2.1) = {
-        name = rsKeyMetadata
-        ldap-names = rsKeyMetadata
-        subclass-of top
-        kind = structural
-        must-contain
-                cn,
-                rsKeyData
-        may-contain
-                description,
-                rsKeyCreated
+    name = rsKeyMetadata
+    ldap-names = rsKeyMetadata
+    subclass-of top
+    kind = structural
+    must-contain
+        cn,
+        rsKeyData
+    may-contain
+        description,
+        rsKeyCreated
 };
 
 schema set object-class (1.3.6.1.4.1.20988.3.2.2) = {
-        name = rsKeyDescriptor
-        ldap-names = rsKeyDescriptor
-        subclass-of top
-        kind = structural
-        must-contain
-                rsKeyVersion,
-                rsKeyData
-        may-contain
-                description,
-                rsKeyDemoted
+    name = rsKeyDescriptor
+    ldap-names = rsKeyDescriptor
+    subclass-of top
+    kind = structural
+    must-contain
+        rsKeyVersion,
+        rsKeyData
+    may-contain
+        description,
+        rsKeyDemoted
 };
 
 schema set object-class (1.3.6.1.4.1.20988.3.2.3) = {
-        name = rsApiNodeSignoff
-        ldap-names = rsApiNodeSignoff
-        subclass-of top
-        kind = structural
-        must-contain
-                rsId,
-                cn,
-                rsKeyMetadataId
-        may-contain
-                rsKeyCreated,
-                rsLoadedDate
+    name = rsApiNodeSignoff
+    ldap-names = rsApiNodeSignoff
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId,
+        cn,
+        rsKeyMetadataId
+    may-contain
+        rsKeyCreated,
+        rsLoadedDate
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.39) = {
-        name = rsOTPDevice
-        ldap-names = rsOTPDevice
-        subclass-of top
-        kind = structural
-        must-contain
-                rsId
-        may-contain
-                rsOTPKey,
-                rsOTPName,
-                rsMultiFactorDeviceVerified
+    name = rsOTPDevice
+    ldap-names = rsOTPDevice
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId
+    may-contain
+        rsOTPKey,
+        rsOTPName,
+        rsMultiFactorDeviceVerified
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.40) = {
-        name = rsBypassDevice
-        ldap-names = rsBypassDevice
-        subclass-of top
-        kind = structural
-        must-contain
-                rsId
-        may-contain
-                rsBypassCode,
-                rsMultiFactorDevicePinExpiration,
-                encryptionSalt,
-                rsIterationCount
+    name = rsBypassDevice
+    ldap-names = rsBypassDevice
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId
+    may-contain
+        rsBypassCode,
+        rsMultiFactorDevicePinExpiration,
+        encryptionSalt,
+        rsIterationCount
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.41) = {
-        name = rsTenantTypeEndpointAssignmentRule
-        ldap-names = rsTenantTypeEndpointAssignmentRule
-        subclass-of groupofnames
-        kind = structural
-        must-contain
-                cn
-        may-contain
-                rsType,
-                description
+    name = rsTenantTypeEndpointAssignmentRule
+    ldap-names = rsTenantTypeEndpointAssignmentRule
+    subclass-of groupofnames
+    kind = structural
+    must-contain
+        cn
+    may-contain
+        rsType,
+        description
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.42) = {
-        name = rsIdentityProperty
-        ldap-names = rsIdentityProperty
-        subclass-of top
-        kind = structural
-        must-contain
-                rsId
-        may-contain
-                cn,
-                rsPropertyValue,
-                rsPropertyValueType,
-                description,
-                rsIdmVersion,
-                rsReloadable,
-                rsSearchable
+    name = rsIdentityProperty
+    ldap-names = rsIdentityProperty
+    subclass-of top
+    kind = structural
+    must-contain
+        rsId
+    may-contain
+        cn,
+        rsPropertyValue,
+        rsPropertyValueType,
+        description,
+        rsIdmVersion,
+        rsReloadable,
+        rsSearchable
 };
 
+schema set object-class (1.3.6.1.4.1.20988.2.2.43) = {
+    name = rsTenantTypeObject
+    ldap-names = rsTenantTypeObject
+    subclass-of top
+    kind = structural
+    must-contain
+        cn
+    may-contain
+        description
+};

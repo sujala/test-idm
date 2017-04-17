@@ -94,6 +94,7 @@ public final class JSONConstants {
     public static final String SERVICES = "services";
     public static final String TENANT = "tenant";
     public static final String TENANTS = "tenants";
+    public static final String TENANT_TYPES_URL = "tenant-types";
     public static final String ADMINS = "admins";
     public static final String TENANT_ID = "tenantId";
     public static final String TENANT_NAME = "tenantName";
@@ -101,6 +102,9 @@ public final class JSONConstants {
     public static final String TOKENS = "tokens";
     public static final String TYPE = "type";
     public static final String TENANT_TYPE = "tenantType";
+    public static final String RAX_AUTH_TENANT_TYPE = "RAX-AUTH:tenantType";
+    public static final String TENANT_TYPES = "tenantTypes";
+    public static final String RAX_AUTH_TENANT_TYPES = "RAX-AUTH:tenantTypes";
     public static final String UPDATED = "updated";
     public static final String USER = "user";
     public static final String USERS = "users";

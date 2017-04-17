@@ -19,6 +19,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantTypeEndpointRule
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
@@ -755,4 +756,11 @@ class V2Factory {
         }
     }
 
+    def createTenantType(name, description) {
+        new TenantType().with {
+            it.name = name
+            it.description = description
+            it
+        }
+    }
 }

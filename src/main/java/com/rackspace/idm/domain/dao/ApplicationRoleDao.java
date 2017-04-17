@@ -43,4 +43,6 @@ public interface ApplicationRoleDao {
      * @return
      */
     Iterable<ClientRole> getAllIdentityRoles();
+
+    int countClientRolesByTenantType(String tenantType);
 }

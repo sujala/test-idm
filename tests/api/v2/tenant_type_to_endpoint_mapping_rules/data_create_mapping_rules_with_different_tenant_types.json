@@ -2,7 +2,7 @@
     "with_tenant_type_empty": {
         "tenant_type": "",
         "expected_response": 400,
-        "error_message": "tenantType: length must be between 1 and 15"
+        "error_message": "tenantType: length must be between 1 and 16"
     },
     "with_no_tenant_type": {
         "expected_response": 400,
@@ -41,7 +41,7 @@
     "with_tenant_type_greater_than_15_in_length": {
         "tenant_type": "1234567890abcdefdghi",
         "expected_response": 400,
-        "error_message": "tenantType: length must be between 1 and 15"
+        "error_message": "tenantType: length must be between 1 and 16"
     },
     "with_tenant_type_exactly_15_in_length": {
         "tenant_type": "1234567890abcde",

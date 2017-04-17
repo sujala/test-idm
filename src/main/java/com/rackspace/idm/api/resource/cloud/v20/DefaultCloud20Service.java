@@ -7,6 +7,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Question;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Region;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.SecretQAs;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.ErrorCodes;
@@ -82,7 +83,6 @@ import javax.xml.transform.stream.StreamSource;
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.*;
 
 @Component
@@ -294,6 +294,15 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private ProvisionedUserSourceFederationHandler provisionedUserSourceFederationHandler;
+
+    @Autowired
+    TenantTypeService tenantTypeService;
+
+    @Autowired
+    TenantTypeConverterCloudV20 tenantTypeConverter;
+
+    @Autowired
+    private Paginator<com.rackspace.idm.domain.entity.TenantType> tenantTypePaginator;
 
     private com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory raxAuthObjectFactory = new com.rackspace.docs.identity.api.ext.rax_auth.v1.ObjectFactory();
 
@@ -3473,6 +3482,59 @@ public class DefaultCloud20Service implements Cloud20Service {
         return Response.status(200)
                 .entity(jaxbObjectFactories.getOpenStackIdentityV2Factory()
                         .createUsers(userConverterCloudV20.toUserList(admins)).getValue());
+    }
+
+    @Override
+    public ResponseBuilder addTenantType(UriInfo uriInfo, String authToken, TenantType tenantType) {
+        try {
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
+            if (tenantType.getName() != null) {
+                tenantType.setName(tenantType.getName().toLowerCase());
+            }
+            tenantTypeService.createTenantType(tenantTypeConverter.fromTenantType(tenantType));
+            UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
+            URI build = requestUriBuilder.path(tenantType.getName()).build();
+            return Response.created(build).entity(tenantType);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getTenantType(UriInfo uriInfo, String authToken, String tenantTypeName) {
+        try {
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
+            TenantType tenantType = tenantTypeConverter.toTenantType(tenantTypeService.checkAndGetTenantType(tenantTypeName));
+            return Response.ok().entity(tenantType);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder listTenantTypes(UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
+        try {
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
+            PaginatorContext<com.rackspace.idm.domain.entity.TenantType> tenantTypeContext = tenantTypeService.listTenantTypes(marker, limit);
+            TenantTypes tenantTypes = tenantTypeConverter.toTenantType(tenantTypeContext.getValueList());
+            String linkHeader = tenantTypePaginator.createLinkHeader(uriInfo, tenantTypeContext);
+
+            return Response.ok().header("Link", linkHeader).entity(tenantTypes);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteTenantType(String authToken, String tenantTypeId) {
+        try {
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
+            com.rackspace.idm.domain.entity.TenantType tenantType = tenantTypeService.checkAndGetTenantType(tenantTypeId);
+            tenantTypeService.deleteTenantType(tenantType);
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
     }
 
     private void isUserAllowed(String authToken, String userId) {
