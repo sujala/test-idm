@@ -838,9 +838,16 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).accept(acceptMediaType.toString()).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def getAccessibleDomains(String token, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def getAccessibleDomains(String token, String marker = null, String limit = null, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(DOMAINS).accept(acceptMediaType.toString()).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        def queryParams = new MultivaluedMapImpl()
+        if (marker != null) {
+            queryParams.add("marker", marker)
+        }
+        if (limit != null) {
+            queryParams.add("limit", limit)
+        }
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).queryParams(queryParams).accept(acceptMediaType.toString()).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def getAccessibleDomainsForUser(String token, String userId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
