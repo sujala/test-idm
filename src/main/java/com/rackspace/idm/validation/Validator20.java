@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
@@ -86,6 +87,7 @@ public class Validator20 {
     private EmailValidator emailValidator = new EmailValidator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    public static final int MAX_LENGTH_32 = 32;
     public static final int MAX_LENGTH_64 = 64;
     public static final int MAX_LENGTH_255 = 255;
 
@@ -515,6 +517,7 @@ public class Validator20 {
             throwBadRequestForMissingAttr("name");
         }
         validateDomainSessionInactivityTimeout(domain);
+        validateStringMaxLength("rackspaceCustomerNumber", domain.getRackspaceCustomerNumber(), MAX_LENGTH_32);
     }
 
     public void validateDomainForUpdate(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain, String domainId) {

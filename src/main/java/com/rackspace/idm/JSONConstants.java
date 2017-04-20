@@ -69,6 +69,7 @@ public final class JSONConstants {
     public static final String PASSWORD_CREDENTIALS = "passwordCredentials";
     public static final String PUBLIC_URL = "publicURL";
     public static final String QUESTION = "question";
+    public static final String RACKSPACE_CUSTOMER_NUMBER = "rackspaceCustomerNumber";
     public static final String REGION = "region";
     public static final String REGIONS = "regions";
     public static final String RSA_CREDENTIALS = "rsaCredentials";

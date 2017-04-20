@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -13,6 +14,7 @@ import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
+import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
@@ -23,7 +25,6 @@ import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.junit.IgnoreByRepositoryProfile
 
-import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.HttpHeaders
 import testHelpers.RootIntegrationTest
 
@@ -36,8 +37,8 @@ import static com.rackspace.idm.Constants.*
 import static javax.servlet.http.HttpServletResponse.*
 import static org.mockito.Mockito.mock
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
+import static testHelpers.IdmAssert.assertOpenStackV2FaultResponseWithErrorCode
 import static testHelpers.IdmAssert.assertRackspaceCommonFaultResponse
-import static testHelpers.IdmAssert.assertV1AuthFaultResponse;
 
 class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
@@ -770,6 +771,50 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "Create and get domain with rackspaceCustomerNumber - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v1Factory.createDomain(domainId, domainId)
+
+        when: "Create domain"
+        domain.rackspaceCustomerNumber = rackspaceCustomerNumber
+        def domainEntity = cloud20.addDomain(utils.identityAdminToken, domain, accept, content).getEntity(Domain)
+
+        then:
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
+            assert  domainEntity.rackspaceCustomerNumber == null
+        } else {
+            assert  domainEntity.rackspaceCustomerNumber == rackspaceCustomerNumber
+        }
+
+        when: "Get domain"
+        def getDomainEntity = cloud20.getDomain(utils.identityAdminToken, domainId, accept).getEntity(Domain)
+
+        then:
+        getDomainEntity.id == domainId
+        getDomainEntity.name == domainId
+        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
+            assert  getDomainEntity.rackspaceCustomerNumber == null
+        } else {
+            assert  getDomainEntity.rackspaceCustomerNumber == rackspaceCustomerNumber
+        }
+
+        cleanup:
+        utils.deleteDomain(domainId)
+
+        where:
+        rackspaceCustomerNumber | accept                          | content
+        "RNC-123-123-123"       | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        "RNC-123-123-123"       | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        ""                      | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        ""                      | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        null                    | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        null                    | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
     def "Assert default value for sessionInactivityTimeout on domain creation - content-type = #content, accept = #accept"() {
         given:
         def domainId = utils.createDomain()
@@ -825,6 +870,14 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         then:
         assertOpenStackV2FaultResponse(createDomainResponse, BadRequestFault, SC_BAD_REQUEST, errMsg)
+
+        when: "Domain's rackspaceCustomerNumber is longer than 32 characters"
+        domain = v2Factory.createDomain(domainId, domainId)
+        domain.rackspaceCustomerNumber = testUtils.getRandomUUIDOfLength("RCN",33)
+        createDomainResponse = cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
+
+        then:
+        assertOpenStackV2FaultResponseWithErrorCode(createDomainResponse, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
 
         where:
         accept                          | content
