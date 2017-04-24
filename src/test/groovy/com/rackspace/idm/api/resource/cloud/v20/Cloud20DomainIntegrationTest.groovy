@@ -805,13 +805,55 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
 
         where:
-        rackspaceCustomerNumber | accept                          | content
-        "RNC-123-123-123"       | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        "RNC-123-123-123"       | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        ""                      | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        ""                      | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        null                    | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        null                    | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        rackspaceCustomerNumber            | accept                          | content
+        "RNC-123-123-123"                  | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        "RNC-123-123-123"                  | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        ""                                 | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        ""                                 | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        null                               | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        null                               | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Create two domains with same rackspaceCustomerNumber - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v1Factory.createDomain(domainId, domainId)
+        def domainId2 = utils.createDomain()
+        def domain2 = v1Factory.createDomain(domainId2, domainId2)
+        def rackspaceCustomerNumber = testUtils.getRandomUUIDOfLength("RCN", 10)
+
+        when: "Create domains"
+        domain.rackspaceCustomerNumber = rackspaceCustomerNumber
+        domain2.rackspaceCustomerNumber = rackspaceCustomerNumber
+        def domainEntity = cloud20.addDomain(utils.identityAdminToken, domain).getEntity(Domain)
+        def domain2Entity = cloud20.addDomain(utils.identityAdminToken, domain2).getEntity(Domain)
+
+        then: "Assert both domains have the same rackspaceCustomerNumber"
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        domainEntity.rackspaceCustomerNumber == rackspaceCustomerNumber
+        domain2Entity.id == domainId2
+        domain2Entity.name == domainId2
+        domain2Entity.rackspaceCustomerNumber == rackspaceCustomerNumber
+
+        when: "Get domains"
+        def getDomainEntity = cloud20.getDomain(utils.identityAdminToken, domainId).getEntity(Domain)
+        def getDomain2Entity = cloud20.getDomain(utils.identityAdminToken, domainId2).getEntity(Domain)
+
+        then: "Assert both domains have the same rackspaceCustomerNumber"
+        getDomainEntity.id == domainId
+        getDomainEntity.name == domainId
+        getDomainEntity.rackspaceCustomerNumber == rackspaceCustomerNumber
+        getDomain2Entity.id == domainId2
+        getDomain2Entity.name == domainId2
+        getDomain2Entity.rackspaceCustomerNumber == rackspaceCustomerNumber
+
+        cleanup:
+        utils.deleteDomain(domainId)
+        utils.deleteDomain(domainId2)
     }
 
     @Unroll
