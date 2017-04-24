@@ -652,10 +652,16 @@ class V2Factory {
         }
     }
 
-    def createDomain(id, name) {
+    def createDomain(id = null, name = null, enabled = true, description = null, sessionInactivityTimeout = null, rackspaceCustomerNumber = null, domainMultiFactorEnforcementLevelEnum = null) {
         new Domain().with {
             it.id = id
             it.name = name
+            it.description = description
+            it.enabled = enabled
+            if (sessionInactivityTimeout != null) {
+                it.sessionInactivityTimeout = DatatypeFactory.newInstance().newDuration(sessionInactivityTimeout)
+            }
+            it.rackspaceCustomerNumber = rackspaceCustomerNumber
             it
         }
     }

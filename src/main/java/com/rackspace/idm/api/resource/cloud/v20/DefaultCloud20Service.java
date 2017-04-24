@@ -2981,21 +2981,21 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             Domain domainDO = domainService.checkAndGetDomain(domainId);
-
-
-            setDomainEmptyValues(domain, domainId);
             validator20.validateDomainForUpdate(domain, domainId);
 
             Boolean shouldExpireAllTokens = domainDO.getEnabled() && !domain.isEnabled();
 
-            if (domain.getDescription() != null) {
+            if (StringUtils.isNotBlank(domain.getDescription())) {
                 domainDO.setDescription(domain.getDescription());
             }
-            if (domain.getName() != null) {
+            if (StringUtils.isNotBlank(domain.getName())) {
                 domainDO.setName(domain.getName());
             }
             if (domain.getSessionInactivityTimeout() != null) {
                 domainDO.setSessionInactivityTimeout(domain.getSessionInactivityTimeout().toString());
+            }
+            if (StringUtils.isNotBlank(domain.getRackspaceCustomerNumber())) {
+                domainDO.setRackspaceCustomerNumber(domain.getRackspaceCustomerNumber());
             }
             domainDO.setEnabled(domain.isEnabled());
 
@@ -3031,18 +3031,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
         }
         return false;
-    }
-
-    void setDomainEmptyValues(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain, String domainId) {
-        if (StringUtils.isBlank(domain.getDescription())) {
-            domain.setDescription(null);
-        }
-        if (StringUtils.isBlank(domain.getName())) {
-            domain.setName(null);
-        }
-        if (StringUtils.isBlank(domain.getId()) && !StringUtils.isBlank(domainId)) {
-            domain.setId(domainId);
-        }
     }
 
     @Override

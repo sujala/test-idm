@@ -573,18 +573,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void setDomainEmptyValues_setsCorrectValues() throws Exception {
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
-        domain.setId("");
-        domain.setName("");
-        domain.setDescription("");
-        defaultCloud20Service.setDomainEmptyValues(domain,"1");
-        assertThat("Description", domain.getDescription(),equalTo(null));
-        assertThat("Description", domain.getName(),equalTo(null));
-        assertThat("Description", domain.getId(),equalTo("1"));
-    }
-
-    @Test
     public void setEmptyUserValues() throws Exception {
         User user = new User();
         defaultCloud20Service.setEmptyUserValues(user);

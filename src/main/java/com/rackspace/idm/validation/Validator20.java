@@ -521,10 +521,11 @@ public class Validator20 {
     }
 
     public void validateDomainForUpdate(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain, String domainId) {
-        if (!domainId.equalsIgnoreCase(domain.getId())) {
+        if (StringUtils.isNotBlank(domain.getId()) && !domainId.equalsIgnoreCase(domain.getId())) {
             throw new BadRequestException("Domain Id does not match.");
         }
         validateDomainSessionInactivityTimeout(domain);
+        validateStringMaxLength("rackspaceCustomerNumber", domain.getRackspaceCustomerNumber(), MAX_LENGTH_32);
     }
 
     private void validateDomainSessionInactivityTimeout(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {
