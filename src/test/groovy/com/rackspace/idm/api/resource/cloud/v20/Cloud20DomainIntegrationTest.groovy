@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
@@ -87,7 +86,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def domain = utils.getDomain(domainId)
 
         when: "list accessible domains w/o a session timeout set on the domain"
-        def response = cloud20.getAccessibleDomains(userAdminToken, accept)
+        def response = cloud20.getAccessibleDomains(userAdminToken, null, null, accept)
 
         then: "returns the default session timeout"
         response.status == 200
@@ -98,7 +97,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
                 identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().plusHours(3).toString());
         domain.sessionInactivityTimeout = domainDuration
         utils.updateDomain(domain.id, domain)
-        response = cloud20.getAccessibleDomains(userAdminToken, accept)
+        response = cloud20.getAccessibleDomains(userAdminToken, null, null, accept)
 
         then: "returns the session timeout set on the domain"
         assertSessionInactivityTimeoutForSingleDomainList(response, accept, domain.sessionInactivityTimeout.toString())
@@ -147,6 +146,130 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         accept                          | _
         MediaType.APPLICATION_XML_TYPE  | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "Assert list accessible domains returns rackspaceCustomerNumber if present - rcn = #rackspaceCustomerNumber, content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v1Factory.createDomain(domainId, domainId)
+
+        when: "Create domain"
+        domain.rackspaceCustomerNumber = rackspaceCustomerNumber
+        def response = cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "list accessible domains"
+        def getAccessibleDomainsResponse = cloud20.getAccessibleDomains(utils.identityAdminToken, null, null, accept)
+        def testDomain = getDomainFromAccessibleDomainListById(getAccessibleDomainsResponse, domainId)
+
+        then:
+        testDomain.id == domainId
+        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
+            assert  testDomain.rackspaceCustomerNumber == null
+        } else {
+            assert  testDomain.rackspaceCustomerNumber == rackspaceCustomerNumber
+        }
+
+        cleanup:
+        utils.deleteDomain(domainId)
+
+        where:
+        rackspaceCustomerNumber | accept                          | content
+        "RNC-123-123-123"       | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        "RNC-123-123-123"       | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        ""                      | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        ""                      | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        null                    | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        null                    | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Assert list accessible domains for user returns rackspaceCustomerNumber if present - rcn = #rackspaceCustomerNumber, content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def users = [defaultUser, userManage, userAdmin, identityAdmin]
+
+        when: "Update domain"
+        def domain = v1Factory.createDomain(domainId, domainId)
+        domain.rackspaceCustomerNumber = rackspaceCustomerNumber
+        def response = cloud20.updateDomain(utils.identityAdminToken, domainId, domain, accept, content)
+
+        then:
+        response.status == SC_OK
+
+        when: "list accessible domains for user using admin token"
+        def identityAdminToken = utils.getToken(identityAdmin.username)
+        def getAccessibleDomainsForUserResponse = cloud20.getAccessibleDomainsForUser(identityAdminToken, userAdmin.id, accept)
+        def domains = getAccessibleDomainsForUserResponse.getEntity(Domains)
+        def testDomain = domains.domain.find({it.id == domainId})
+
+        then:
+        testDomain.id == domainId
+        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
+            assert  testDomain.rackspaceCustomerNumber == null
+        } else {
+            assert  testDomain.rackspaceCustomerNumber == rackspaceCustomerNumber
+        }
+
+        when: "list accessible domains for user admin"
+        def userAdminToken = utils.getToken(userAdmin.username)
+        getAccessibleDomainsForUserResponse = cloud20.getAccessibleDomainsForUser(userAdminToken, userAdmin.id, accept)
+        domains = getAccessibleDomainsForUserResponse.getEntity(Domains)
+        testDomain = domains.domain.find({it.id == domainId})
+
+        then:
+        testDomain.id == domainId
+        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
+            assert  testDomain.rackspaceCustomerNumber == null
+        } else {
+            assert  testDomain.rackspaceCustomerNumber == rackspaceCustomerNumber
+        }
+
+        when: "list accessible domains for manage user"
+        def userManageToken = utils.getToken(userManage.username)
+        getAccessibleDomainsForUserResponse = cloud20.getAccessibleDomainsForUser(userManageToken, userManage.id, accept)
+        domains = getAccessibleDomainsForUserResponse.getEntity(Domains)
+        testDomain = domains.domain.find({it.id == domainId})
+
+        then:
+        testDomain.id == domainId
+        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
+            assert  testDomain.rackspaceCustomerNumber == null
+        } else {
+            assert  testDomain.rackspaceCustomerNumber == rackspaceCustomerNumber
+        }
+
+        when: "list accessible domains for default user"
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        getAccessibleDomainsForUserResponse = cloud20.getAccessibleDomainsForUser(defaultUserToken, defaultUser.id, accept)
+        domains = getAccessibleDomainsForUserResponse.getEntity(Domains)
+        testDomain = domains.domain.find({it.id == domainId})
+
+        then:
+        testDomain.id == domainId
+        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
+            assert  testDomain.rackspaceCustomerNumber == null
+        } else {
+            assert  testDomain.rackspaceCustomerNumber == rackspaceCustomerNumber
+        }
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        rackspaceCustomerNumber | accept                          | content
+        "RNC-123-123-123"       | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        "RNC-123-123-123"       | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        ""                      | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        ""                      | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        null                    | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        null                    | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
     def "Test if 'cloud20Service.addTenant(...)' adds default 'domainId' to the tenant and updates domain to point to tenant"() {
@@ -1250,6 +1373,30 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         }
 
         assert returnedSessionInactivityTimeout == expectedSessionInactivityTimeout
+    }
+
+    def getDomainFromAccessibleDomainListById(def response, def domainId) {
+        int page = 0
+        def queryParams = parseLinks(response.headers.get("link"))
+        Map<Integer, Integer> responseStatus = new HashMap<Integer, Integer>()
+        def domain = response.getEntity(Domains).domain.find({it.id == domainId})
+
+        while (queryParams.containsKey("next") && domain == null) {
+            page++
+            response = cloud20.getAccessibleDomains(utils.getIdentityAdminToken(), queryParams["next"][0], queryParams["next"][1])
+            domain = response.getEntity(Domains).domain.find({it.id == domainId})
+            queryParams = parseLinks(response.headers.get("link"))
+            responseStatus.put(page, response.status)
+        }
+
+        return domain
+    }
+
+    def parseLinks(List<String> header) {
+        List<String> links = header[0].split(",")
+        Map<String, String[]> params = new HashMap<String, String[]>()
+        setLinkParams(links, params)
+        return params
     }
 
 }
