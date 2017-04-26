@@ -791,6 +791,24 @@ class Tenant(base.AutoMarshallingModel):
             add_tenant_request.set(const.DISPLAY_NAME, self.display_name)
 
 
+class TenantType(base.AutoMarshallingModel):
+    """Marshalling for Add/ Update Tenant Type Request."""
+    # TODO: Add _obj_to_xml()
+
+    def __init__(self, name, description):
+        self.name = name
+        self.description = description
+
+    def _obj_to_json(self):
+        add_tenant_type_request = {
+            const.RAX_AUTH_TENANT_TYPE: {
+                const.NAME: self.name,
+                const.DESCRIPTION: self.description
+            }
+        }
+        return json.dumps(add_tenant_type_request)
+
+
 class Domain(base.AutoMarshallingModel):
     """Marshalling for Add/ Update Tenant Request."""
     # TODO: Add _obj_to_xml()

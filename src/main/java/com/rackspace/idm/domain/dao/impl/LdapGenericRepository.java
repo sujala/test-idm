@@ -333,7 +333,11 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().debug(loggerMsg);
 
         SearchResult result = this.search(dn, scope, searchFilter, "dxentrycount");
-        String entryCountString = result.getSearchEntries().get(0).getAttribute("dxentrycount").getValues()[0];
+
+        String entryCountString = "0";
+        if (result.getSearchEntries().size() > 0) {
+            entryCountString = result.getSearchEntries().get(0).getAttribute("dxentrycount").getValues()[0];
+        }
         getLogger().debug("Found - {} entries", entryCountString);
 
         try {

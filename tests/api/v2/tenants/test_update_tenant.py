@@ -38,6 +38,11 @@ class TestUpdateTenant(base.TestBaseV2):
                 update_tenant_name_resp_dict[
                     const.PROPERTIES][0][const.VALUE])
 
+    def create_tenant_type(self, name):
+        request_object = requests.TenantType(name, 'description')
+        self.service_admin_client.add_tenant_type(tenant_type=request_object)
+        self.tenant_type_ids.append(name.lower())
+
     def setUp(self):
         super(TestUpdateTenant, self).setUp()
         self.description = 'Orginal description'
@@ -55,6 +60,10 @@ class TestUpdateTenant(base.TestBaseV2):
         self.user_ids = []
         self.role_ids = []
         self.domain_ids = []
+        self.tenant_type_ids = []
+
+        for tenant_type in ['tenanttype1', 'tenanttype2', 'tenanttype3']:
+            self.create_tenant_type(tenant_type)
 
     def create_tenant_with_types(self, tenant_types):
         tenant_name = tenant_id = 'tname{0}'.format(
@@ -411,4 +420,6 @@ class TestUpdateTenant(base.TestBaseV2):
             self.identity_admin_client.delete_role(role_id=role_id)
         for tenant_id in self.tenant_ids:
             self.identity_admin_client.delete_tenant(tenant_id=tenant_id)
+        for name in self.tenant_type_ids:
+            self.identity_admin_client.delete_tenant_type(name=name)
         super(TestUpdateTenant, self).tearDown()

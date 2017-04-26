@@ -1463,3 +1463,23 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             requestslib_kwargs=requestslib_kwargs)
 
         return resp
+
+    def add_tenant_type(self, tenant_type, requestslib_kwargs=None):
+        """Return response object from the add tenant type api call
+
+        POST RAX-AUTH/tenant-types
+        """
+        url = self.url + const.ADD_TENANT_TYPE_URL
+        resp = self.request('POST', url, request_entity=tenant_type,
+                            requestslib_kwargs=requestslib_kwargs)
+
+        return resp
+
+    def delete_tenant_type(self, name):
+        """Return response object from the delete tenant type api call
+
+        DELETE RAX-AUTH/tenant-types/{name}
+        """
+        url = self.url + const.DELETE_TENANT_TYPE_URL.format(name=name)
+        resp = self.request('DELETE', url)
+        return resp

@@ -6,6 +6,7 @@ import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.dao.TenantTypeDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.TenantType;
@@ -75,6 +76,8 @@ public class Validator20 {
 
     public static final String ERROR_TENANT_TYPE_NAME_MUST_BE_SPECIFIED = "TenantType name must be specified";
 
+    public static final String ERROR_TENANT_TYPE_WAS_NOT_FOUND = "TenantType with name: '%s' was not found.";
+
     public static final String ALL_TENANT_TYPE = "*";
 
     private EmailValidator emailValidator = new EmailValidator();
@@ -135,6 +138,9 @@ public class Validator20 {
 
     @Autowired
     private RequestContextHolder requestContextHolder;
+
+    @Autowired
+    TenantTypeDao tenantTypeDao;
 
     public void validateUsername(String username) {
         if (StringUtils.isBlank(username)) {
@@ -708,6 +714,17 @@ public class Validator20 {
 
     public void validateTenantType(Tenant tenant) {
         validateTypes(tenant.getTypes(), false);
+
+        if (tenant.getTypes() != null) {
+            for (String type : tenant.getTypes().getType()) {
+                TenantType tenantType = tenantTypeDao.getTenantType(type);
+                if (tenantType == null) {
+                    String errMsg = String.format(ERROR_TENANT_TYPE_WAS_NOT_FOUND, type);
+                    logger.warn(errMsg);
+                    throw new BadRequestException(errMsg);
+                }
+            }
+        }
     }
 
     private void validateTypes(Types types, boolean allowAllTenantTypes) {

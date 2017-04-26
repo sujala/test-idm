@@ -36,11 +36,20 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         cls.domain_ids = []
         cls.domain_ids.append(cls.domain_id)
 
+    def create_tenant_type(self, name):
+        request_object = requests.TenantType(name, 'description')
+        self.service_admin_client.add_tenant_type(tenant_type=request_object)
+        self.tenant_type_ids.append(name.lower())
+
     def setUp(self):
         super(TestAddIdentityProdRoleToUserOnTenant, self).setUp()
         self.role_ids = []
         self.user_ids = []
         self.tenant_ids = []
+        self.tenant_type_ids = []
+        self.tenant_type = self.generate_random_string(
+            pattern=const.TENANT_TYPE_PATTERN).upper()
+        self.create_tenant_type(self.tenant_type)
 
     def create_user(self, parent_client):
         request_object = factory.get_add_user_request_object()
@@ -52,7 +61,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         return user_id, resp
 
     def create_tenant(self):
-        tenant_types = ['type1']
+        tenant_types = [self.tenant_type]
         tenant_name = self.generate_random_string(
             pattern=const.NUMBERS_PATTERN)
         tenant_req = factory.get_add_tenant_request_object(
@@ -348,6 +357,8 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             self.identity_admin_client.delete_role(role_id=id_)
         for id_ in self.domain_ids:
             self.identity_admin_client.delete_domain(domain_id=id_)
+        for name in self.tenant_type_ids:
+            self.identity_admin_client.delete_tenant_type(name=name)
 
     @classmethod
     def tearDownClass(cls):
