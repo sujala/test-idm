@@ -28,4 +28,6 @@ public interface TenantDao {
      * @return
      */
     int getTenantCount();
+
+    int countTenantsByTenantType(String tenantType);
 }

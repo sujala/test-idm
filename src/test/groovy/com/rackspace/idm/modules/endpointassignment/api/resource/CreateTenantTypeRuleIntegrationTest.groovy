@@ -196,12 +196,12 @@ class CreateTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
             it.tenantType = ""
             it.description = "a description"
             it
-        } | "tenantType: length must be between 1 and 15" | "empty string tenant"
+        } | "tenantType: length must be between 1 and 16" | "empty string tenant"
         new TenantTypeEndpointRule().with {
             it.tenantType = "averylongtenantnamegreaterthan15characters"
             it.description = "a description"
             it
-        } | "tenantType: length must be between 1 and 15" | "empty string tenant"
+        } | "tenantType: length must be between 1 and 16" | "empty string tenant"
         new TenantTypeEndpointRule().with {
             it.tenantType = "\$"
             it.description = "a description"

@@ -557,7 +557,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Tenant type must possess a length > 0 and <= 15: request=#requestContentType, accept=#acceptContentType" () {
+    def "Tenant type must possess a length > 0 and <= 16: request=#requestContentType, accept=#acceptContentType" () {
         given:
         def random = UUID.randomUUID().toString().replace("-", "")
         def tenantId = "tenant$random"
@@ -572,7 +572,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         where:
         requestContentType              | acceptContentType               | type
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | ""
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type567890123456"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type5678901234567"
     }
 
     @Unroll
@@ -722,7 +722,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Update tenant type must possess a length > 0 and <= 15: request=#requestContentType, accept=#acceptContentType" () {
+    def "Update tenant type must possess a length > 0 and <= 16: request=#requestContentType, accept=#acceptContentType" () {
         given:
         def random = UUID.randomUUID().toString().replace("-", "")
         def tenantId = "tenant$random"
@@ -744,7 +744,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         where:
         requestContentType              | acceptContentType               | type
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | ""
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type567890123456"
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type5678901234567"
     }
 
 

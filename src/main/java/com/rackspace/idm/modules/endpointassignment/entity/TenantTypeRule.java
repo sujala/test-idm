@@ -47,7 +47,7 @@ public class TenantTypeRule implements Auditable, UniqueId, Rule {
     private String description;
 
     @NotNull()
-    @Length(min=1, max = 15)
+    @Length(min=1, max = 16)
     @Pattern(regexp="^[a-z0-9]*$", message = "can only contain alphanumeric characters")
     @LDAPField(attribute = LDAP_ATTRIBUTE_TYPE, objectClass = OBJECT_CLASS, requiredForEncode = false)
     private String tenantType;

@@ -132,4 +132,9 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
         return mapper.fromSQL(repository.findByNameStartsWith(GlobalConstants.IDENTITY_ROLE_PREFIX));
     }
 
+    @Override
+    public int countClientRolesByTenantType(String tenantType) {
+        return 0;
+    }
+
 }

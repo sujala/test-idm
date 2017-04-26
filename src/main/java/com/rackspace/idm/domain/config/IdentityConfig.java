@@ -371,6 +371,9 @@ public class IdentityConfig {
     public static final String FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP = "feature.force.standard.v2.exceptions.end.user.services";
     public static final boolean FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_DEFAULT = true;
 
+    public static final String MAX_TENANT_TYPE_SIZE_PROP = "max.tenant.type.size";
+    public static final int MAX_TENANT_TYPE_SIZE_DEFAULT = 999;
+
     /**
      * Required static prop
      */
@@ -718,6 +721,7 @@ public class IdentityConfig {
         defaults.put(CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP, CACHE_CLIENT_ROLES_BY_ID_SIZE_DEFAULT);
 
         defaults.put(FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP, FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_DEFAULT);
+        defaults.put(MAX_TENANT_TYPE_SIZE_PROP, MAX_TENANT_TYPE_SIZE_DEFAULT);
 
         return defaults;
     }
@@ -2090,6 +2094,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP, versionAdded = "3.11.0", description = "Whether to change contract for set of services accessible to user-admin/default users which currently return non-standard v2.0 error objects to now return the standard errors")
         public boolean forceStandardV2ExceptionsEndUserServices() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP);
+        }
+
+        @IdmProp(key = MAX_TENANT_TYPE_SIZE_PROP, versionAdded = "3.12.0", description = "Maximum number of tenantTypes allowed to be created.  Maximum value allowed is 999.")
+        public int getMaxTenantTypes() {
+            return Math.min(getIntSafely(reloadableConfiguration, MAX_TENANT_TYPE_SIZE_PROP), MAX_TENANT_TYPE_SIZE_DEFAULT);
         }
     }
 

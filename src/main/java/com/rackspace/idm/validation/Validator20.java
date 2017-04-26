@@ -9,6 +9,7 @@ import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.TenantType;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
@@ -83,6 +84,12 @@ public class Validator20 {
     public static final String ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC = "Tenant type can only contain alphanumeric characters.";
 
     public static final String ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE = "Tenant type must possess a length > 0 and <= 15";
+
+    public static final String ERROR_TENANT_TYPE_DESCRIPTION_MUST_BE_CORRECT_SIZE = "TenantType description must possess a length > 0 and <= 255";
+
+    public static final String ERROR_TENANT_TYPE_NAME_MUST_BE_SPECIFIED = "TenantType name must be specified";
+
+    public static final String ALL_TENANT_TYPE = "*";
 
     private EmailValidator emailValidator = new EmailValidator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -695,21 +702,38 @@ public class Validator20 {
         }
 
         for (String type : types.getType()) {
-            if (allowAllTenantTypes) {
-                if (type.equals("*")) {
-                    continue;
-                }
-            }
+            validateTenantType(allowAllTenantTypes, type);
+        }
+    }
 
-            if (!StringUtils.isAlphanumeric(type)) {
-                String errMsg = String.format(ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC);
-                throw new BadRequestException(errMsg);
+    private void validateTenantType(boolean allowAllTenantTypes, String type) {
+        if (allowAllTenantTypes) {
+            if (type.equals(ALL_TENANT_TYPE)) {
+                return;
             }
+        }
 
-            if (type.length() == 0 || type.length() > 15) {
-                String errMsg = String.format(ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE);
-                throw new BadRequestException(errMsg);
-            }
+        if (!StringUtils.isAlphanumeric(type)) {
+            String errMsg = String.format(ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC);
+            throw new BadRequestException(errMsg);
+        }
+
+        if (type.length() == 0 || type.length() > 16) {
+            String errMsg = String.format(ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE);
+            throw new BadRequestException(errMsg);
+        }
+    }
+
+    public void validateTenantType(TenantType tenantType) {
+        if(StringUtils.isBlank(tenantType.getName())){
+            throw new BadRequestException(ERROR_TENANT_TYPE_NAME_MUST_BE_SPECIFIED);
+        }
+
+        validateTenantType(true, tenantType.getName());
+
+        if (tenantType.getDescription() == null || tenantType.getDescription().length() == 0 || tenantType.getDescription().length() > 255) {
+            String errMsg = String.format(ERROR_TENANT_TYPE_DESCRIPTION_MUST_BE_CORRECT_SIZE);
+            throw new BadRequestException(errMsg);
         }
     }
 }

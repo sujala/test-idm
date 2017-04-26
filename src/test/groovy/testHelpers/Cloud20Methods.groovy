@@ -7,25 +7,22 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederatio
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
-import com.rackspace.idm.helpers.CloudTestUtils
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.commons.lang.StringUtils
-import org.apache.commons.lang.math.RandomUtils
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.stereotype.Component
-import org.springframework.util.Assert
 import spock.lang.Shared
 import testHelpers.saml.SamlCredentialUtils
 
@@ -36,7 +33,6 @@ import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.SC_CREATED
@@ -781,6 +777,26 @@ class Cloud20Methods {
     def addTenant(String token, Tenant tenant, accept = APPLICATION_XML_TYPE, request = APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(TENANTS).header(X_AUTH_TOKEN, token).accept(accept).type(request).entity(tenant).post(ClientResponse)
+    }
+
+    def addTenantType(String token, TenantType tenantType, accept = APPLICATION_XML_TYPE, request = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(TENANT_TYPES_URL).header(X_AUTH_TOKEN, token).accept(accept).type(request).entity(tenantType).post(ClientResponse)
+    }
+
+    def getTenantType(String token, String tenantTypeName, accept = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(TENANT_TYPES_URL).path(tenantTypeName).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def listTenantTypes(String token, accept = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(TENANT_TYPES_URL).accept(accept).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def deleteTenantType(String token, String name) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(TENANT_TYPES_URL).path(name).accept(APPLICATION_XML).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def updateTenant(String token, String tenantId, Tenant tenant, accept = APPLICATION_XML_TYPE, request = APPLICATION_XML_TYPE) {

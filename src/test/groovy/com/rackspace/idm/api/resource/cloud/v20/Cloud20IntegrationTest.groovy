@@ -17,9 +17,7 @@ import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TokenRevocationService
-import com.rackspace.idm.domain.service.impl.DefaultApplicationService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
-import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.util.JSONReaderForRoles
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.Modification
@@ -48,6 +46,7 @@ import testHelpers.junit.IgnoreByRepositoryProfile
 import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
 
+import static org.apache.http.HttpStatus.*
 
 class Cloud20IntegrationTest extends RootIntegrationTest {
     Logger LOG = Logger.getLogger(Cloud20IntegrationTest.class)
@@ -150,6 +149,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         serviceAdmin = cloud20.getUserByName(serviceAdminToken, "authQE").getEntity(User).value
 
         identityAdmin = cloud20.getUserByName(serviceAdminToken, "auth").getEntity(User).value
+
         identityAdminToken = cloud20.authenticatePassword("auth", "auth123").getEntity(AuthenticateResponse).value.token.id
 
         cloud20.createUser(serviceAdminToken, v2Factory.createUserForCreate("admin$sharedRandom", "display", "email@email.com", true, null, null, "Password1"))
@@ -4243,7 +4243,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Tenant type must possess a length > 0 and <= 15: content-type=#contentType" () {
+    def "Tenant type must possess a length > 0 and <= 16: content-type=#contentType" () {
         given:
         def serviceId = Constants.IDENTITY_SERVICE_ID
         def name = getRandomUUID("role")
@@ -4268,7 +4268,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         where:
         contentType                     | type
         MediaType.APPLICATION_XML_TYPE  | ""
-        MediaType.APPLICATION_JSON_TYPE | "type567890123456"
+        MediaType.APPLICATION_JSON_TYPE | "type5678901234567"
     }
 
     @Unroll
