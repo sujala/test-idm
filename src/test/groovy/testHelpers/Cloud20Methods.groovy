@@ -818,7 +818,7 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).path(validateToken).header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
     }
 
-    def addDomain(String token, Domain domain, MediaType acceptMediaType = APPLICATION_XML_TYPE, MediaType requestMediaType = APPLICATION_XML_TYPE) {
+    def addDomain(String token, domain, MediaType acceptMediaType = APPLICATION_XML_TYPE, MediaType requestMediaType = APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).header(X_AUTH_TOKEN, token).accept(acceptMediaType).type(requestMediaType).entity(domain).post(ClientResponse)
     }
