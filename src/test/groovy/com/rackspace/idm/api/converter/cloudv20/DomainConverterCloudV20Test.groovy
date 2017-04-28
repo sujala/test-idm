@@ -63,21 +63,6 @@ class DomainConverterCloudV20Test extends Specification {
         domain.description == domainEntity.description
     }
 
-    def "convert domain from jersey object to ldap - should set defaults"() {
-        given:
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domainEntity = domainEntity("domainId", "name", false, "description")
-        domainEntity.enabled = null
-
-        when:
-        Domain domain = converterCloudV20.fromDomain(domainEntity)
-
-        then:
-        domain.domainId == domainEntity.id
-        domain.name == domainEntity.name
-        domain.description == domainEntity.description
-        domainEntity.enabled == true
-    }
-
     def "convert domains to jersey object" () {
         given:
         Domain domain = domain("domainId", "name", false, "description")

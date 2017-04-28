@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.validation.Validator20
+import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpStatus
@@ -22,6 +23,7 @@ import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
+import testHelpers.Cloud20Methods
 import testHelpers.IdmAssert
 import testHelpers.junit.IgnoreByRepositoryProfile
 
@@ -34,6 +36,7 @@ import javax.xml.datatype.DatatypeFactory
 import java.time.Duration
 
 import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.JSONConstants.DOMAINS
 import static javax.servlet.http.HttpServletResponse.*
 import static org.mockito.Mockito.mock
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
@@ -868,6 +871,30 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "Assert domain is enabled by default on domain creation when enabled attribute is not specified - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v1Factory.createDomain(domainId, domainId)
+        domain.enabled = null
+
+        when:
+        def domainEntity = cloud20.addDomain(utils.identityAdminToken, domain, accept, content).getEntity(Domain)
+
+        then:
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        domainEntity.enabled
+
+        cleanup:
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
     def "Create domain with sessionInactivityTimeout - content-type = #content, accept = #accept"() {
         given:
         def domainId = utils.createDomain()
@@ -1111,6 +1138,35 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
+    def "Assert update domain does not inadvertently enable disabled domain  - content-type = #content, accept = #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v1Factory.createDomain(domainId, domainId)
+        domain.enabled = false
+        cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
+
+        when: "Update domain"
+        domain.enabled = null
+        def newDescription = "new description"
+        domain.description = newDescription
+        def domainEntity = cloud20.updateDomain(utils.identityAdminToken, domainId, domain, accept, content).getEntity(Domain)
+
+        then:
+        domainEntity.id == domainId
+        domainEntity.name == domainId
+        domainEntity.description == newDescription
+        !domainEntity.enabled
+
+        cleanup:
+        utils.deleteDomain(domainId)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
     def "Invalid cases for domain creation - content-type = #content, accept = #accept"() {
         given:
         def domainId = utils.createDomain()
@@ -1151,6 +1207,17 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         then:
         assertOpenStackV2FaultResponseWithErrorCode(createDomainResponse, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
+
+        when: "Invalid value for enabled attribute"
+        if (content == MediaType.APPLICATION_JSON_TYPE) {
+            domain = '{ "RAX-AUTH:domain": { "id": "123", name: "123", "enabled": "invalid"}'
+        } else {
+            domain = '<ns2:domain id="123" name="123" enabled="invalid" xmlns="http://docs.openstack.org/identity/api/v2.0" xmlns:ns2="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0"></ns2:domain>'
+        }
+        createDomainResponse = cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
+
+        then:
+        createDomainResponse.status == SC_BAD_REQUEST
 
         where:
         accept                          | content
@@ -1283,10 +1350,26 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         when: "Updating rackspaceCustomerNumber longer than 32 characters"
         updateDomain = v2Factory.createDomain(domainId, domainId)
         updateDomain.rackspaceCustomerNumber = testUtils.getRandomUUIDOfLength("RCN",33)
-        updateDomainResponse = cloud20.addDomain(utils.identityAdminToken, updateDomain, accept, content)
+        updateDomainResponse = cloud20.updateDomain(utils.identityAdminToken, domainId, updateDomain, accept, content)
+        errMsg = String.format(Validator20.LENGTH_EXCEEDED_ERROR_MSG, "rackspaceCustomerNumber", Validator20.MAX_LENGTH_32)
 
         then:
-        assertOpenStackV2FaultResponseWithErrorCode(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
+        if (flag) {
+            assertOpenStackV2FaultResponseWithErrorCode(updateDomainResponse, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
+        } else{
+            assertRackspaceCommonFaultResponse(updateDomainResponse, com.rackspace.api.common.fault.v1.BadRequestFault, SC_BAD_REQUEST, String.format("Error code: '%s'; %s", ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED, errMsg))
+        }
+
+        when: "Invalid value for enabled attribute"
+        if (content == MediaType.APPLICATION_JSON_TYPE) {
+            updateDomain = '{ "RAX-AUTH:domain": { "enabled": "invalid"}'
+        } else {
+            updateDomain = '<ns2:domain enabled="invalid" xmlns="http://docs.openstack.org/identity/api/v2.0" xmlns:ns2="http://docs.rackspace.com/identity/api/ext/RAX-AUTH/v1.0"></ns2:domain>'
+        }
+        updateDomainResponse = cloud20.updateDomain(utils.identityAdminToken, domainId, updateDomain, accept, content)
+
+        then:
+        updateDomainResponse.status == SC_BAD_REQUEST
 
         cleanup:
         utils.deleteUsers(users)
@@ -1324,6 +1407,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domainEntity.id == domainId
         domainEntity.name == domainId
         domainEntity.description == description
+        domainEntity.enabled
         domainEntity.rackspaceCustomerNumber == rcn
         domainEntity.sessionInactivityTimeout.toString() == identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString()
 
@@ -1337,6 +1421,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domainEntity.id == domainId
         domainEntity.name == domainId
         domainEntity.description == description
+        domainEntity.enabled
         domainEntity.rackspaceCustomerNumber == rcn
         domainEntity.sessionInactivityTimeout.toString() == identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().toString()
 
@@ -1350,6 +1435,8 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         v2Factory.createDomain(null, "otherName")                        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
         v2Factory.createDomain(null, null, true, "otherDesc")            | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         v2Factory.createDomain(null, null, true, "otherDesc")            | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        v2Factory.createDomain(null, null, false)                        | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        v2Factory.createDomain(null, null, false)                        | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
         v2Factory.createDomain(null, null, true, null, null, "otherRCN") | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         v2Factory.createDomain(null, null, true, null, null, "otherRCN") | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }

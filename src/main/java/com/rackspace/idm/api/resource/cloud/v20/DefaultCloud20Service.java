@@ -2992,7 +2992,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Domain domainDO = domainService.checkAndGetDomain(domainId);
             validator20.validateDomainForUpdate(domain, domainId);
 
-            Boolean shouldExpireAllTokens = domainDO.getEnabled() && !domain.isEnabled();
+            Boolean shouldExpireAllTokens = false;
 
             if (StringUtils.isNotBlank(domain.getDescription())) {
                 domainDO.setDescription(domain.getDescription());
@@ -3006,7 +3006,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (StringUtils.isNotBlank(domain.getRackspaceCustomerNumber())) {
                 domainDO.setRackspaceCustomerNumber(domain.getRackspaceCustomerNumber());
             }
-            domainDO.setEnabled(domain.isEnabled());
+            if (domain.isEnabled() != null) {
+                shouldExpireAllTokens = domainDO.getEnabled() && !domain.isEnabled();
+                domainDO.setEnabled(domain.isEnabled());
+            }
 
             this.domainService.updateDomain(domainDO);
 

@@ -83,6 +83,10 @@ public class DefaultDomainService implements DomainService {
         if(domainDao.domainExistsWithName(domain.getName())) {
             throw new DuplicateException(String.format("Domain with name %s already exists.", domain.getName()));
         }
+        // Default to true if enabled attribute is not specified by the caller
+        if (domain.getEnabled() == null) {
+           domain.setEnabled(true);
+        }
         verifyDomain(domain);
         logger.info("Adding Domain: {}", domain);
         domainDao.addDomain(domain);

@@ -351,17 +351,17 @@
     </complexType>
     <complexType name="Domain">
         <sequence>
-            <element name="description" type="xsd:string">
+            <element name="description" type="xsd:string" minOccurs="0">
                 <annotation>
                     <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                         <p>
-                            An free text description of the domain.
+                            A free text description of the domain.
                         </p>
                     </xsd:documentation>
                 </annotation>
             </element>
         </sequence>
-        <attribute name="id" type="xsd:string" use="required">
+        <attribute name="id" type="xsd:string" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
@@ -370,7 +370,7 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="name" type="xsd:string" use="required">
+        <attribute name="name" type="xsd:string" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
@@ -379,7 +379,7 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="enabled" type="xsd:boolean" use="optional" default="true">
+        <attribute name="enabled" type="xsd:boolean" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
