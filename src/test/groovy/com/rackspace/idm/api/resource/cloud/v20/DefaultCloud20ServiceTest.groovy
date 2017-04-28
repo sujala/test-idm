@@ -952,7 +952,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN) >> { throw new ForbiddenException() }
     }
 
-    def "addRole sets serviceId"() {
+    def "addRole calls validateRoleForCreation"() {
         given:
         mockRoleConverter(service)
         allowUserAccess()
@@ -965,7 +965,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.addRole(headers, uriInfo(), authToken, roleMock)
 
         then:
-        1 * roleMock.setServiceId(_)
+        1 * validator20.validateRoleForCreation(roleMock)
     }
 
     def "addRole gets service"() {
@@ -3021,19 +3021,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         false    | false    | false    | false    | 204
     }
 
-    def "validate role for create - if service id is null set it"(){
-        given:
-        def role = v2Factory.createRole("name", null, null)
-        allowUserAccess()
-
-        when:
-        service.addRole(headers,uriInfo(),authToken, role)
-
-        then:
-        1 * config.getString("cloudAuth.globalRoles.clientId") >> "123"
-        role.serviceId == "123"
-    }
-
     def "Add Group to user"() {
         given:
         User user = entityFactory.createRandomUser()
@@ -3615,6 +3602,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockIdentityConfig(service)
         mockAuthResponseService(service)
         mockRequestContextHolder(service)
+        mockRoleConverter(service)
     }
 
     def mockMisc() {

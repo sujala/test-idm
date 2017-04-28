@@ -447,20 +447,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
             BaseUser caller = requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            //set defaults when optional params not specified
-            if (role != null && StringUtils.isBlank(role.getServiceId())) {
-                role.setServiceId(config.getString("cloudAuth.globalRoles.clientId"));
-            }
-            if (role != null && role.isPropagate() == null) {
-                role.setPropagate(Boolean.FALSE);
-            }
-            if (role != null && StringUtils.isBlank(role.getAdministratorRole())) {
-                IdentityUserTypeEnum callerUserType = authorizationService.getIdentityTypeRoleAsEnum(caller);
-                role.setAdministratorRole(callerUserType.getRoleName());
-            }
-
             validator20.validateRoleForCreation(role);
-            validator20.validateRoleType(role);
 
             Application service = applicationService.checkAndGetApplication(role.getServiceId());
 

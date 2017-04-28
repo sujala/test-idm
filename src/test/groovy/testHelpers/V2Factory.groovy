@@ -31,6 +31,7 @@ import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.apache.commons.collections4.CollectionUtils
+import org.apache.commons.lang.BooleanUtils
 import org.joda.time.DateTime
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
@@ -350,8 +351,12 @@ class V2Factory {
             it.name = "role$random"
             it.description = "desc"
             it.propagate = propagate
+            if (BooleanUtils.isTrue(propagate)) {
+                it.roleType = RoleTypeEnum.PROPAGATE
+            } else {
+                it.roleType = roleType
+            }
             it.assignment = assignment
-            it.roleType = roleType
             it.types = new Types().with {
                 it.type = tenantTypes
                 it

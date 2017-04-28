@@ -891,17 +891,15 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         }
 
         cleanup:
-        cloud20.deleteUser(utils.getServiceAdminToken(), subUser.id)
-        cloud20.deleteUser(utils.getServiceAdminToken(), userManager.id)
-        cloud20.deleteUser(utils.getServiceAdminToken(), userAdmin.id)
-        utils.deleteRole(propRole)
-        utils.deleteRole(nonPropRole)
+        utils.deleteUserQuietly(subUser)
+        utils.deleteUserQuietly(userManager)
+        utils.deleteUserQuietly(userAdmin)
+        utils.deleteRoleQuietly(propRole)
+        utils.deleteRoleQuietly(nonPropRole)
 
         where:
         accept                          | request
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 

@@ -11,6 +11,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
@@ -564,7 +565,7 @@ class Cloud20Utils {
     def createPropagatingRole(service=null) {
         def role = factory.createRole().with {
             it.name = testUtils.getRandomUUID("role")
-            it.propagate = true
+            it.roleType = RoleTypeEnum.PROPAGATE
             it.serviceId = service == null ? null : service.id
             it.administratorRole="identity:admin"
             it

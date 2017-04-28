@@ -81,5 +81,14 @@
       "code": 400,
       "message": "An RCN role must have global assignment."
     }
+  },
+  "with_standard_type_and_tenant_type": {
+    "additional_input": {
+      "role_type": "STANDARD",
+      "tenant_types": ["type1"]
+    },
+    "expected_resp": {
+      "code": 400,
+      "message": "Standard roles can not have tenant types"}
   }
 }

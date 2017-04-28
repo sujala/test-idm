@@ -789,6 +789,17 @@
                     </xsd:documentation>
                 </annotation>
             </enumeration>
+            <enumeration value="PROPAGATE">
+                <annotation>
+                    <xsd:documentation
+                            xml:lang="EN"
+                            xmlns="http://www.w3.org/1999/xhtml">
+                        <p>
+                            The value is used to specify a PROPAGATE role.
+                        </p>
+                    </xsd:documentation>
+                </annotation>
+            </enumeration>
         </restriction>
     </simpleType>
 

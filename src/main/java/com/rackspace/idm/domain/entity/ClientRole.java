@@ -6,16 +6,11 @@ import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.persist.*;
-import lombok.AccessLevel;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import org.dozer.Mapping;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
 
 import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @Data
 @LDAPObject(structuralClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, postEncodeMethod="doPostEncode")
@@ -56,11 +51,37 @@ public class ClientRole implements Auditable, UniqueId {
     private HashSet<String> tenantTypes;
 
     public RoleTypeEnum getRoleType() {
-        if (roleType == null) {
-            return RoleTypeEnum.STANDARD;
-        } else {
-            return RoleTypeEnum.fromValue(roleType);
+        /*
+         Backwards compatibility. "STANDARD" roles used to be able to be propagating roles so some roles may exist in
+         backend such that roleType = STANDARD & propagate = true. Want to override these to report these roles as
+         PROPAGATE roleTypes
+          */
+        if (Boolean.TRUE.equals(propagate)) {
+            return RoleTypeEnum.PROPAGATE;
         }
+
+        RoleTypeEnum result = RoleTypeEnum.STANDARD;
+        if (roleType != null) {
+            try {
+                result = RoleTypeEnum.fromValue(roleType);
+            } catch (Exception e) {
+                // If LDAP contains invalid data, just override to be interpreted as STANDARD role
+                result=RoleTypeEnum.STANDARD;
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * This is solely here to provide access to the non-enum set value to verify backwards compatibility. Do not use for
+     * anything other than tests...
+     * @return
+     * @deprecated
+     */
+    @Deprecated
+    public String getRawRoleType() {
+        return roleType;
     }
 
     public void setRoleType(RoleTypeEnum type) {
@@ -72,10 +93,10 @@ public class ClientRole implements Auditable, UniqueId {
     }
 
     public Boolean getPropagate() {
-        if (propagate == null) {
-            return false;
+        if (Boolean.TRUE.equals(propagate) || RoleTypeEnum.PROPAGATE.name().equalsIgnoreCase(roleType)) {
+            return true;
         }
-        return propagate;
+        return false;
     }
 
     public RoleAssignmentEnum getAssignmentTypeAsEnum() {
@@ -101,21 +122,22 @@ public class ClientRole implements Auditable, UniqueId {
         return tenantTypes;
     }
 
+    /**
+     * This is called by unboundId library after the java object has been converted to an LDAP entry. Used to
+     * modify the entry prior to saving/updating to ldap.
+     * @param entry
+     * @throws LDAPPersistException
+     * @see <a href="https://docs.ldap.com/ldap-sdk/docs/persist/LDAPObject.html">https://docs.ldap.com/ldap-sdk/docs/persist/LDAPObject.html
+     */
     private void doPostEncode(final Entry entry) throws LDAPPersistException {
         String[] tenantTypes = entry.getAttributeValues(LdapRepository.ATTR_RS_TENANT_TYPE);
         if (tenantTypes != null && tenantTypes.length == 0) {
             entry.removeAttribute(LdapRepository.ATTR_TENANT_RS_ID);
         }
-    }
 
-
-    public void copyChanges(ClientRole modifiedClient) {
-
-        if (StringUtils.isBlank(modifiedClient.getDescription())) {
-            setDescription(null);
-        }
-        else {
-            setDescription(modifiedClient.getDescription());
+        // Temporarily saving prop types as standard for backwards compatibility reasons
+        if (getRoleType() == RoleTypeEnum.PROPAGATE) {
+            entry.setAttribute(LdapRepository.ATTR_RS_TYPE, RoleTypeEnum.STANDARD.name());
         }
     }
 
