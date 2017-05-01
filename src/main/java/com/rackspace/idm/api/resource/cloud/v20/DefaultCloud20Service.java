@@ -3466,9 +3466,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder addTenantType(UriInfo uriInfo, String authToken, TenantType tenantType) {
         try {
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
-            if (tenantType.getName() != null) {
-                tenantType.setName(tenantType.getName().toLowerCase());
-            }
             tenantTypeService.createTenantType(tenantTypeConverter.fromTenantType(tenantType));
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
             URI build = requestUriBuilder.path(tenantType.getName()).build();

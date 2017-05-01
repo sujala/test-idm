@@ -1,0 +1,45 @@
+version: "3"
+
+services:
+    cloudfeeds:
+        image: docker.ciidentity.com/cloud-feeds
+        ports:
+            - "8888:8080"
+
+    edir:
+        image: docker.ciidentity.com/e-directory
+        ports:
+            - "20636:636"
+            - "10389:389"
+        volumes:
+            - ../edir/config:/config
+            - ../edir/ldif:/data
+
+    directory:
+        image: docker.ciidentity.com/ca-directory
+        ports:
+            - "10636:10636"
+        volumes:
+            - ../ldap/config:/config
+            - ../ldap/ldif:/data
+
+    identity:
+        image: docker.ciidentity.com/cloud-identity
+        ports:
+            - "8083:8080"
+        links:
+            - cloudfeeds
+            - edir
+            - directory
+        volumes:
+            - ../build/libs:/opt/idm/artifacts
+            - ../src/main/config/VAGRANT:/etc/idm/config
+
+    repose:
+        image: docker.ciidentity.com/repose
+        ports:
+            - "8080:8080"
+        links:
+            - identity
+        volumes:
+            - ../repose/config:/etc/repose

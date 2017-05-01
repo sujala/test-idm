@@ -48,7 +48,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         self.tenant_ids = []
         self.tenant_type_ids = []
         self.tenant_type = self.generate_random_string(
-            pattern=const.TENANT_TYPE_PATTERN).upper()
+            pattern=const.TENANT_TYPE_PATTERN)
         self.create_tenant_type(self.tenant_type)
 
     def create_user(self, parent_client):

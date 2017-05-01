@@ -23,11 +23,11 @@ class TestAddTenant(base.TestBaseV2):
         self.tenant_ids = []
         self.tenant_type_ids = []
         self.tenant_type_1 = self.generate_random_string(
-            pattern=const.TENANT_TYPE_PATTERN).upper()
+            pattern=const.TENANT_TYPE_PATTERN)
         self.tenant_type_2 = self.generate_random_string(
-            pattern=const.TENANT_TYPE_PATTERN).upper()
+            pattern=const.TENANT_TYPE_PATTERN)
         self.tenant_type_3 = self.generate_random_string(
-            pattern=const.TENANT_TYPE_PATTERN).upper()
+            pattern=const.TENANT_TYPE_PATTERN)
         self.create_tenant_type(self.tenant_type_1)
         self.create_tenant_type(self.tenant_type_2)
         self.create_tenant_type(self.tenant_type_3)

@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.Constants
+import com.rackspace.idm.validation.Validator20
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
@@ -87,7 +88,7 @@ class TenantTypeIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "TenantType name required - Max 16 alphanumeric characters (or '*' all by itself)"() {
+    def "TenantType name required and validate - tenant name = #name, contentType = #contentType, expected status = #expectedStatus"() {
         given:
         TenantType tenantType = v2Factory.createTenantType(name, "description")
 
@@ -98,51 +99,72 @@ class TenantTypeIntegrationTest extends RootIntegrationTest {
         response.status == expectedStatus
 
         cleanup:
-        if (expectedStatus == SC_CREATED) {
+        if (name != null) {
             cloud20.deleteTenantType(serviceAdminToken, name)
         }
 
         where:
-        contentType                     | name                | expectedStatus
-        MediaType.APPLICATION_XML_TYPE  | '*'                 | SC_CREATED
-        MediaType.APPLICATION_JSON_TYPE | '*'                 | SC_CREATED
-        MediaType.APPLICATION_XML_TYPE  | 'thisisok'          | SC_CREATED
-        MediaType.APPLICATION_JSON_TYPE | 'thisisok'          | SC_CREATED
-        MediaType.APPLICATION_XML_TYPE  | 'in$valid'          | SC_BAD_REQUEST
-        MediaType.APPLICATION_JSON_TYPE | 'in$valid'          | SC_BAD_REQUEST
-        MediaType.APPLICATION_XML_TYPE  | ''                  | SC_BAD_REQUEST
-        MediaType.APPLICATION_JSON_TYPE | ''                  | SC_BAD_REQUEST
-        MediaType.APPLICATION_XML_TYPE  | null                | SC_BAD_REQUEST
-        MediaType.APPLICATION_JSON_TYPE | null                | SC_BAD_REQUEST
-        MediaType.APPLICATION_XML_TYPE  | 'thisisalongstring' | SC_BAD_REQUEST
-        MediaType.APPLICATION_JSON_TYPE | 'thisisalongstring' | SC_BAD_REQUEST
+        contentType                     | name                                              | expectedStatus
+        MediaType.APPLICATION_XML_TYPE  | '*'                                               | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | '*'                                               | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | 'ttype101'                                        | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | 'ttype101'                                        | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | 'ttype_101'                                       | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | 'ttype_101'                                       | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | 'ttype-101'                                       | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | 'ttype-101'                                       | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | '101ttype'                                        | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | '101ttype'                                        | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | 'ttype'                                           | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | 'ttype'                                           | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | '101'                                             | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | '101'                                             | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | 'thisisok_'                                       | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | 'thisisok_'                                       | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | 'thisisok-'                                       | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | 'thisisok-'                                       | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | '_'                                               | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | '_'                                               | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | '-'                                               | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | '-'                                               | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | 'in$valid'                                        | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'in$valid'                                        | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | ''                                                | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | ''                                                | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | null                                              | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | null                                              | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'a' * Validator20.TENANT_TYPE_NAME_MAX_LENGTH + 1 | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'a' * Validator20.TENANT_TYPE_NAME_MAX_LENGTH + 1 | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'TTYPE'                                           | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'TTYPE'                                           | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'ttype*101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'ttype*101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'ttype@101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'ttype@101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'ttype!101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'ttype!101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'ttype#101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'ttype#101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'ttype^101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'ttype^101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'ttype&101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'ttype&101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'ttype>101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'ttype>101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'ttype<101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'ttype<101'                                       | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'ttypë'                                           | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'ttypë'                                           | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | ' ttype_1'                                        | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | ' ttype_1'                                        | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'ttype 1'                                         | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'ttype 1'                                         | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'ttype_1 '                                        | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | 'ttype_1 '                                        | SC_BAD_REQUEST
     }
 
     @Unroll
-    def "TenantType name - All provided characters are automatically lowercased"() {
-        given:
-        def name = getRandomUUID("NAME")[0..15]
-        TenantType tenantType = v2Factory.createTenantType(name, "description")
-
-        when:
-        def response = cloud20.addTenantType(serviceAdminToken, tenantType, contentType, contentType)
-        TenantType createdTenantType = response.getEntity(TenantType)
-
-        then:
-        createdTenantType.name == tenantType.name.toLowerCase()
-        createdTenantType.description == tenantType.description
-
-        cleanup:
-        cloud20.deleteTenantType(serviceAdminToken, name)
-
-        where:
-        contentType                     | _
-        MediaType.APPLICATION_XML_TYPE  | _
-        MediaType.APPLICATION_JSON_TYPE | _
-    }
-
-    @Unroll
-    def "TenantType decription required - max 255 characters"() {
+    def "TenantType description required - max 255 characters"() {
         given:
         def name = getRandomUUID("name")[0..15]
         TenantType tenantType = v2Factory.createTenantType(name, description)
