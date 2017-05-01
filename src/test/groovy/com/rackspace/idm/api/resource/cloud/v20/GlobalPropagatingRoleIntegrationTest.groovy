@@ -1,15 +1,27 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
+import com.rackspace.idm.domain.dao.ApplicationDao
+import com.rackspace.idm.domain.dao.ApplicationRoleDao
+import com.rackspace.idm.domain.entity.Application
+import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.User
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 /**
  * Tests the functionality of propagating roles when assigned as global roles (non-tenant specific).
+ *
+ * {@see TenantPropagatingRoleIntegrationTest}
+ * {@see AddRoleIntegrationTest}
+ *
  */
 class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
     private static final String SERVICE_ADMIN_USERNAME = "authQE";
@@ -44,6 +56,13 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
      */
     @Shared String FEATURE_RANDOM
 
+    @Autowired
+    ApplicationRoleDao applicationRoleDao
+
+    @Autowired
+    ApplicationDao applicationDao;
+
+
     /**
      * Like most other tests, this test class depends on a pre-existing service admin (authQE)
      *
@@ -73,34 +92,6 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
 
     def cleanupSpec() {
         deleteUserQuietly(specificationIdentityAdmin)
-    }
-
-    def "we can create a role with weight and propagate values"() {
-        String roleName = ROLE_NAME_PREFIX + FEATURE_RANDOM
-
-        when:
-        def role = v2Factory.createRole(propagate).with {
-            it.name = roleName
-            it.otherAttributes = null
-            return it
-        }
-        def response = cloud20.createRole(specificationServiceAdminToken, role)
-        def createdRole = response.getEntity(Role).value
-
-        def propagateValue = null
-        propagateValue = createdRole.propagate
-
-        then:
-        propagateValue == expectedPropagate
-
-        cleanup:
-        deleteRoleQuietly(createdRole)
-
-        where:
-        propagate | expectedPropagate
-        null      | false
-        true      | true
-        false     | false
     }
 
     def "service admins can add a propagating role to a user admin"() {
@@ -158,7 +149,7 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
         addRoleToUser(specificationServiceAdminToken, localIdentityAdmin, propagatingRole)
 
         then:
-        //verify role not assigned.
+        //verify role assigned.
         assertUserHasRole(localIdentityAdmin, propagatingRole)
 
         cleanup:
@@ -189,7 +180,7 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
         addRoleToUser(specificationServiceAdminToken, defaultUser, propagatingRole)
 
         then:
-        //verify role not assigned.
+        //verify role assigned.
         assertUserHasRole(defaultUser, propagatingRole)
 
         cleanup:
@@ -421,6 +412,76 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
         deleteUserQuietly(defaultUser)
         deleteUserQuietly(userAdmin)
     }
+
+    /**
+     * This tests backwards compatibility with use of propagating flag rather than roleType
+     * @return
+     */
+    @Unroll
+    def "Verify propagating roles correctly identified in API based on backend state: roleType: #roleType; propagate: #propagate"() {
+
+        Application identityApp = applicationDao.getApplicationByClientId(identityConfig.getStaticConfig().getCloudAuthClientId())
+
+        //create the propagating role via backend state to test for backwards compatibility
+        def propRole = new ClientRole().with {
+            it.id = getRandomUUID()
+            it.name = getRandomUUID()
+            it.clientId = identityApp.clientId
+            it.propagate = propagate
+            it.roleType = roleType
+            it.assignmentType = RoleAssignmentEnum.BOTH.name()
+            it.description = "test role"
+            it.rsWeight = 500
+            it
+        }
+
+        applicationRoleDao.addClientRole(identityApp, propRole)
+
+        when: "Get role"
+        Role role = utils.getRole(propRole.id)
+
+        then:
+        role.roleType == RoleTypeEnum.PROPAGATE
+        role.propagate
+
+        cleanup:
+        deleteRoleQuietly(propRole.id)
+
+        where:
+        roleType | propagate
+        RoleTypeEnum.STANDARD | true
+        null | true
+    }
+
+    def "Verify non-propagating role correctly identified in API based on backend state"() {
+        Application identityApp = applicationDao.getApplicationByClientId(identityConfig.getStaticConfig().getCloudAuthClientId())
+
+        //create the propagating role via backend state to test for backwards compatibility
+        def propRole = new ClientRole().with {
+            it.id = getRandomUUID()
+            it.clientId = identityApp.clientId
+            it.name = getRandomUUID()
+            it.propagate = false
+            it.roleType = RoleTypeEnum.STANDARD
+            it.assignmentType = RoleAssignmentEnum.BOTH.name()
+            it.description = "test role"
+            it.rsWeight = 500
+            it
+        }
+
+        applicationRoleDao.addClientRole(identityApp, propRole)
+
+        when: "Get role"
+        Role role = utils.getRole(propRole.id)
+
+        then:
+        role.roleType == RoleTypeEnum.STANDARD
+        !role.propagate
+
+        cleanup:
+        deleteRoleQuietly(propRole.id)
+    }
+
 
     //Helper Methods
     def deleteRoleQuietly(role) {

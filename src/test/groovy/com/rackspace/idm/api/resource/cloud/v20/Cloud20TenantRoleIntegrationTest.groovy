@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
@@ -128,7 +129,7 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
     def "delete role on tenant from user-admin deletes tenant on role for sub-users if two tenants assigned to role"() {
         given:
         def roleRequest = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
-            it.propagate = true
+            it.roleType = RoleTypeEnum.PROPAGATE
             return it
         }
         def role = cloud20.createRole(serviceAdminToken, roleRequest).getEntity(Role).value
@@ -165,7 +166,7 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
     def "delete role on tenant from user admin deletes role from tenant on sub-users if one tenant assigned to role"() {
         given:
         def roleRequest = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
-            it.propagate = true
+            it.roleType = RoleTypeEnum.PROPAGATE
             return it
         }
         def role = cloud20.createRole(serviceAdminToken, roleRequest).getEntity(Role).value

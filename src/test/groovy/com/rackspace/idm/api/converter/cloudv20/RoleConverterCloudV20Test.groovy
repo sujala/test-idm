@@ -50,7 +50,7 @@ class RoleConverterCloudV20Test extends RootServiceTest {
     def "can convert clientRole to jaxb role"() {
         given:
         def weight = 100
-        def propagate = true
+        def propagate = false
         def serviceId = "serviceId"
         def assignment = RoleAssignmentEnum.TENANT.value()
         def roleType = RoleTypeEnum.RCN.value()

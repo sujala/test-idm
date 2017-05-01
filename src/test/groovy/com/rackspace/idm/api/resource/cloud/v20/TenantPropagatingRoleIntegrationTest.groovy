@@ -14,8 +14,10 @@ import testHelpers.RootIntegrationTest
 import javax.ws.rs.core.MediaType
 
 /**
- * Tests propagation of roles when the role is assigned as a tenant based role as opposed to a global (non-tenant) role. See GlobalPropagatingRoleIntegrationTest
- * for tests of global role propagation.
+ * Tests propagation of roles when the role is assigned as a tenant based role as opposed to a global (non-tenant) role.
+ *
+ * {@see GlobalPropagatingRoleIntegrationTest}
+ * {@see AddRoleIntegrationTest}
  */
 class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
     private static final String SERVICE_ADMIN_USERNAME = "authQE";
@@ -87,7 +89,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def userAdmin = createUserAdmin()
 
         //create the propagating role
-        def propagatingRole = createPropagateRole()
+        def propagatingRole = createRole()
 
         //create a tenant
         Tenant tenant = createTenant(specificationServiceAdminToken)
@@ -110,7 +112,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def userAdmin = createUserAdmin()
 
         //create the propagating role
-        def propagatingRole = createPropagateRole()
+        def propagatingRole = createRole()
 
         //create a tenant
         Tenant tenant = createTenant(specificationServiceAdminToken)
@@ -137,7 +139,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def defaultUser = createDefaultUser(userAdminToken)
 
         //create the propagating role
-        def propagatingRole = createPropagateRole()
+        def propagatingRole = createRole()
 
         //create a tenant
         Tenant tenant = createTenant(specificationServiceAdminToken)
@@ -163,7 +165,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def defaultUser = createDefaultUser(userAdminToken)
 
         //create the propagating role
-        def propagatingRole = createPropagateRole()
+        def propagatingRole = createRole()
 
         //create a tenant
         Tenant tenant = createTenant(specificationServiceAdminToken)
@@ -191,7 +193,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def defaultUser = createDefaultUser(userAdminToken)
 
         //create the propagating role
-        def propagatingRole = createPropagateRole()
+        def propagatingRole = createRole()
 
         //create a tenant
         Tenant tenant = createTenant(specificationServiceAdminToken)
@@ -229,7 +231,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def defaultUser = createDefaultUser(userAdminToken)
 
         //create the non-propagating role
-        def nonPropagatingRole = createPropagateRole(false)
+        def nonPropagatingRole = createRole(false)
 
         //create a tenant
         Tenant tenant = createTenant(specificationServiceAdminToken)
@@ -257,7 +259,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def defaultUser = createDefaultUser(userAdminToken)
 
         //create the non-propagating role
-        def nonPropagatingRole = createPropagateRole(false)
+        def nonPropagatingRole = createRole(false)
 
         //create a tenant
         Tenant tenant = createTenant(specificationServiceAdminToken)
@@ -286,7 +288,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def userAdminToken = authenticate(userAdmin.username)
 
         //create the propagating role
-        def propagatingRole = createPropagateRole()
+        def propagatingRole = createRole()
 
         //create a tenant
         Tenant tenant = createTenant(specificationServiceAdminToken)
@@ -323,7 +325,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def defaultUser = createDefaultUser(userAdminToken)
 
         //create the propagating role
-        def propagatingRole = createPropagateRole()
+        def propagatingRole = createRole()
 
         //create a tenant
         Tenant tenant = createTenant(specificationServiceAdminToken)
@@ -351,7 +353,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def identityAdminToken = authenticate(identityAdmin.username)
 
         //create the propagating role
-        def propagatingRole = createPropagateRole()
+        def propagatingRole = createRole()
 
         //create a tenant
         Tenant tenant = createTenant(specificationServiceAdminToken)
@@ -383,7 +385,7 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         def userAdminToken = authenticate(userAdmin.username)
 
         //create the non-propagating role
-        def nonPropagatingRole = createPropagateRole(false)
+        def nonPropagatingRole = createRole(false)
 
         //create a tenant
         Tenant tenant = createTenant(specificationServiceAdminToken)
@@ -524,10 +526,9 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
         assert cloud20.deleteApplicationRoleFromUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status == HttpStatus.NO_CONTENT.value()
     }
 
-    def createPropagateRole(boolean propagate = true, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
+    def createRole(boolean propagate = true, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
         def role = v2Factory.createRole(propagate).with {
             it.name = roleName
-            it.propagate = propagate
             it.administratorRole = IdentityUserTypeEnum.IDENTITY_ADMIN.roleName
             it.otherAttributes = null
             return it

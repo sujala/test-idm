@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.UserScopeAccess
@@ -122,8 +123,8 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         //create 2 roles to attach to default user
         def roleName1 = getNormalizedRandomString()
         def roleName2 = getNormalizedRandomString()
-        Role role1 = createPropagateRole(false, IdentityUserTypeEnum.IDENTITY_ADMIN, roleName1)
-        Role role2 = createPropagateRole(false, IdentityUserTypeEnum.USER_MANAGER, roleName2)
+        Role role1 = createRole(false, IdentityUserTypeEnum.IDENTITY_ADMIN, roleName1)
+        Role role2 = createRole(false, IdentityUserTypeEnum.USER_MANAGER, roleName2)
 
         ClientRole cloudIdentityUserManageRole = getUserManageRole()
 
@@ -168,8 +169,8 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         //create 2 roles
         def roleName1 = getNormalizedRandomString()
         def roleName2 = getNormalizedRandomString()
-        Role role1 = createPropagateRole(false, IdentityUserTypeEnum.IDENTITY_ADMIN, roleName1)
-        Role role2 = createPropagateRole(false, IdentityUserTypeEnum.USER_MANAGER, roleName2)
+        Role role1 = createRole(false, IdentityUserTypeEnum.IDENTITY_ADMIN, roleName1)
+        Role role2 = createRole(false, IdentityUserTypeEnum.USER_MANAGER, roleName2)
 
         ClientRole cloudIdentityUserManageRole = getUserManageRole()
 
@@ -362,10 +363,12 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         assert cloud20.deleteApplicationRoleFromUser(callerToken, roleToAdd.getId(), userToAddRoleTo.getId()).status == HttpStatus.NO_CONTENT.value()
     }
 
-    def createPropagateRole(boolean propagate = true, IdentityUserTypeEnum adminRoleType, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
+    def createRole(boolean propagate = true, IdentityUserTypeEnum adminRoleType, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
         def role = v2Factory.createRole(propagate).with {
             it.name = roleName
-            it.propagate = propagate
+            if (propagate) {
+                it.roleType = RoleTypeEnum.PROPAGATE
+            }
             it.administratorRole = adminRoleType.roleName
             it.otherAttributes = null
             return it

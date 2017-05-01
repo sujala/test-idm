@@ -234,7 +234,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         def role = v2Factory.createRole(true).with {
             it.name = "propagatingRole$sharedRandom"
-            it.propagate = true
             it.otherAttributes = null
             return it
         }
@@ -2312,30 +2311,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         deleteGroupResponseAfterAdminDeleted.status == HttpServletResponse.SC_NO_CONTENT
     }
 
-    def "we can create a role when specifying propagate values"() {
-        when:
-        def role = v2Factory.createRole(propagate).with {
-            it.name = "role$sharedRandom"
-            it.propagate = propagate
-            it.otherAttributes = null
-            return it
-        }
-        def response = cloud20.createRole(serviceAdminToken, role)
-        Role createdRole = response.getEntity(Role).value
-        cloud20.deleteRole(serviceAdminToken, createdRole.getId())
-
-        def propagateValue = createdRole.propagate
-
-        then:
-        propagateValue == expectedPropagate
-
-        where:
-        propagate | expectedPropagate
-        true      | true
-        false     | false
-        null      | false
-    }
-
     def "authenticate returns password authentication type in response"() {
         when:
         def response = cloud20.authenticatePassword("admin$sharedRandom", "Password1")
@@ -2715,8 +2690,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def subUsername = "subListUserByTenant$random"
         def tenantId = testUtils.getRandomUUID()
         def tenant = v2Factory.createTenant(tenantId, tenantId)
-        def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
-        role.propagate = true
+        def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b").with {
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it
+        }
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
@@ -2783,8 +2760,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def subUser2name = "sub2ListUserByTenant$random"
         def tenantId = "tenant$random"
         def tenant = v2Factory.createTenant(tenantId, tenantId)
-        def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
-        role.propagate = true
+        def role = v2Factory.createRole("listUsersByTenantRole$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b").with {
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it
+        }
 
         when:
         def addTenant = cloud20.addTenant(identityAdminToken, tenant).getEntity(Tenant).value
@@ -4292,7 +4271,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def standardRole = v2Factory.createRole().with {
             it.serviceId = serviceId
             it.name = standardName
-            it.types = types
             it
         }
 
@@ -4333,8 +4311,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         retrievedStandardRole.types == null
 
         cleanup:
-        cloud20.deleteRole(identityAdminToken, createdRcnRole.id)
-        cloud20.deleteRole(identityAdminToken, createdStandardRole.id)
+        utils.deleteRoleQuietly(createdRcnRole)
+        utils.deleteRoleQuietly(createdStandardRole)
 
         where:
         contentType                     | _

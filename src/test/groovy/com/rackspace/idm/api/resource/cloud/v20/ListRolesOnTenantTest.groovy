@@ -286,7 +286,6 @@ class ListRolesOnTenantTest extends RootIntegrationTest {
         return v2Factory.createRole().with {
             it.id = role.id
             it.name = role.name
-            it.propagate = role.propagate
             it
         }
     }

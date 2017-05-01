@@ -15,7 +15,7 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
     1. Add ability for user to set 2 additional attributes on role creation
     1.1 'type' - an optional single valued string
     1.2 'tenantTypes' - a list of strings corresponding to the tenant types
-    that an RCN role applies. Required if type = 'rcn'
+    that an RCN role applies. Only applicable (and required) if type = 'rcn'
     2. Must support 'standard' and 'rcn' type for this story
     2.1 'standard' is the default if type is null/empty string, and is the
     value used if a role does not have a current setting for type

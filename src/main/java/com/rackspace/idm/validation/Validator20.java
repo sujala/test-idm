@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
@@ -18,7 +19,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.validator.constraints.impl.EmailValidator;
 import org.joda.time.DateTime;
@@ -132,6 +132,9 @@ public class Validator20 {
 
     @Autowired
     private JsonValidator jsonValidator;
+
+    @Autowired
+    private RequestContextHolder requestContextHolder;
 
     public void validateUsername(String username) {
         if (StringUtils.isBlank(username)) {
@@ -539,6 +542,38 @@ public class Validator20 {
             throwBadRequestForMissingAttrWithErrorCode("role");
         }
 
+        /* ****************************
+            Set global defaults when optional params not specified
+           *************************** */
+        if (StringUtils.isBlank(role.getServiceId())) {
+            role.setServiceId(config.getString("cloudAuth.globalRoles.clientId"));
+        }
+        if (StringUtils.isBlank(role.getAdministratorRole())) {
+            IdentityUserTypeEnum callerUserType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            role.setAdministratorRole(callerUserType.getRoleName());
+        }
+        if (role.getRoleType() == null) {
+            role.setRoleType(RoleTypeEnum.STANDARD);
+        }
+
+        // Set roleType defaults
+        role.setPropagate(false);
+        if (role.getRoleType() == RoleTypeEnum.RCN) {
+            // Default role assignment to being global for RCN roles if not specified
+            if (role.getAssignment() == null) {
+                role.setAssignment(RoleAssignmentEnum.GLOBAL);
+            }
+        } else if (role.getRoleType() == RoleTypeEnum.PROPAGATE) {
+            /*
+             Migration code to move away from using propagation attribute to PROPAGATE roleType. Must temporarily set the
+             propagation attribute
+             */
+            role.setPropagate(true);
+        }
+
+        /* ****************************
+        Perform role type agnostic validation
+        *************************** */
         String proposedName = role.getName();
         validateStringNotNullWithMaxLength("name", proposedName, MAX_ROLE_NAME);
 
@@ -553,14 +588,14 @@ public class Validator20 {
 
         String adminRoleName = role.getAdministratorRole();
         IdentityUserTypeEnum administratorUserTypeRole = IdentityUserTypeEnum.fromRoleName(adminRoleName);
-
-        if (administratorUserTypeRole != null) {
-            //role must be user-admin, identity:admin, or service-admin
-            if (!(administratorUserTypeRole == IdentityUserTypeEnum.USER_MANAGER
+        if (administratorUserTypeRole == null) {
+            throw new BadRequestException(String.format("Unrecognized administrator role of '%s'", role.getAdministratorRole()));
+        }
+        else if (!(administratorUserTypeRole == IdentityUserTypeEnum.USER_MANAGER
                     || administratorUserTypeRole == IdentityUserTypeEnum.IDENTITY_ADMIN
                     || administratorUserTypeRole == IdentityUserTypeEnum.SERVICE_ADMIN)) {
-                throw new BadRequestException("Invalid administrator role");
-            }
+            // Role must be user-manager, identity:admin, or service-admin
+            throw new BadRequestException("Invalid administrator role");
         }
 
         ClientRole dirClientRole = roleService.getRoleByName(role.getName());
@@ -569,9 +604,37 @@ public class Validator20 {
             throw new BadRequestException(errMsg);
         }
 
-        //roles can only be propagating if roleAdministrator is identity:admin or identity:service-admin
-        if (BooleanUtils.isTrue(role.isPropagate()) && administratorUserTypeRole == IdentityUserTypeEnum.USER_MANAGER) {
-            throw new BadRequestException("User Managers are not allowed to manage propagating roles");
+        /* ****************************
+        Perform role type specific validation
+        *************************** */
+        if (role.getRoleType() == RoleTypeEnum.RCN) {
+            // RCN roles can only be assigned as global roles
+            if (role.getAssignment() != RoleAssignmentEnum.GLOBAL) {
+                String errMsg = String.format(ERROR_TENANT_RCN_ROLE_MUST_HAVE_GLOBAL_ASSIGNMENT);
+                throw new BadRequestException(errMsg);
+            }
+
+            // RCN roles must have at least one tenant type specified
+            if (role.getTypes() == null || role.getTypes().getType().size() == 0) {
+                String errMsg = String.format(ERROR_TENANT_REQUIRED_WHEN_TYPE_IS_RCN);
+                throw new BadRequestException(errMsg);
+            }
+            validateTypes(role.getTypes(), true);
+        } else if (role.getRoleType() == RoleTypeEnum.PROPAGATE) {
+            // Propagating roles can only be created if roleAdministrator is identity:admin or identity:service-admin
+            if (administratorUserTypeRole != IdentityUserTypeEnum.IDENTITY_ADMIN && administratorUserTypeRole != IdentityUserTypeEnum.SERVICE_ADMIN) {
+                throw new BadRequestException("Only identity and service admins are allowed to manage propagating roles");
+            }
+
+            // Propagating roles can't have tenant types
+            if (role.getTypes() != null && !CollectionUtils.isEmpty(role.getTypes().getType())) {
+                throw new BadRequestException("Propagating roles can not have tenant types");
+            }
+        } else if (role.getRoleType() == RoleTypeEnum.STANDARD) {
+            // Standard roles can't have tenant types
+            if (role.getTypes() != null && !CollectionUtils.isEmpty(role.getTypes().getType())) {
+                throw new BadRequestException("Standard roles can not have tenant types");
+            }
         }
     }
 
@@ -645,27 +708,6 @@ public class Validator20 {
 
     public void validateTenantType(Tenant tenant) {
         validateTypes(tenant.getTypes(), false);
-    }
-
-    public void validateRoleType(Role role) {
-
-        validateTypes(role.getTypes(), true);
-
-        if (role.getRoleType() == RoleTypeEnum.RCN) {
-            if(role.getAssignment() == null) {
-                role.setAssignment(RoleAssignmentEnum.GLOBAL);
-            }
-
-            if (role.getAssignment() != RoleAssignmentEnum.GLOBAL) {
-                String errMsg = String.format(ERROR_TENANT_RCN_ROLE_MUST_HAVE_GLOBAL_ASSIGNMENT);
-                throw new BadRequestException(errMsg);
-            }
-
-            if (role.getTypes() == null || role.getTypes().getType().size() == 0) {
-                String errMsg = String.format(ERROR_TENANT_REQUIRED_WHEN_TYPE_IS_RCN);
-                throw new BadRequestException(errMsg);
-            }
-        }
     }
 
     private void validateTypes(Types types, boolean allowAllTenantTypes) {

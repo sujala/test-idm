@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.ClientRole
@@ -23,6 +25,12 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
+/**
+ * Tests adding various types of roles
+ *
+ * {@see TenantPropagatingRoleIntegrationTest}
+ * {@see GlobalPropagatingRoleIntegrationTest}
+ */
 class AddRoleIntegrationTest extends RootIntegrationTest {
     public static final String IDENTITY_ADMIN_USERNAME_PREFIX = "identityAdmin"
     public static final String USER_ADMIN_USERNAME_PREFIX = "userAdmin"
@@ -364,6 +372,151 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteService(service)
         utils.deleteRole(createdRole)
+    }
+
+    /**
+     * The determination of whether a new role is a propagating role is the roleType. The propagating attribute is
+     * ignored. However, for backwards compatibility the propagating attribute is still returned in responses. It is
+     * set based on the roleType.
+     * @return
+     */
+    @Unroll
+    def "Creating a propagating role ignores provided propagating attribute and uses roleType: roleType: #roleType; propagate: #propagate"() {
+        given:
+        def roleName = testUtils.getRandomUUID("role")
+        Role createRole = v2Factory.createRole().with {
+            it.name = roleName
+            it.serviceId = Constants.IDENTITY_SERVICE_ID
+            it.propagate = propagate
+            it.roleType = roleType
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(utils.getServiceAdminToken(), createRole)
+        Role createdRole = response.getEntity(Role).value
+
+        then:
+        response.status == 201
+        createdRole.propagate
+        createdRole.roleType == roleType
+
+        and: "Backend stores roleType as STANDARD, propagating attribute as true"
+        ClientRole ldapRole = applicationRoleDao.getClientRole(createdRole.id)
+        ldapRole.getRawRoleType() == RoleTypeEnum.STANDARD.name()
+        ldapRole.propagate
+
+        and: "Get role by Id also correctly returns prop attributes"
+        Role getRole = utils.getRole(createdRole.id)
+        getRole.roleType == roleType
+        getRole.propagate
+
+        cleanup:
+        utils.deleteRoleQuietly(createdRole)
+
+        where:
+        propagate | roleType
+        true      | RoleTypeEnum.PROPAGATE
+        false     | RoleTypeEnum.PROPAGATE
+        null      | RoleTypeEnum.PROPAGATE
+    }
+
+    /**
+     * The determination of whether a new role is a propagating role is the roleType. The propagating attribute provided is
+     * ignored. However, for backwards compatibility the propagating attribute is still returned in responses. It is
+     * set based on the roleType.
+     * @return
+     */
+    @Unroll
+    def "Creating a non-propagating role appropriately sets propagating attribute to false: roleType: #roleType; propagate: #propagate"() {
+        given:
+        def roleName = testUtils.getRandomUUID("role")
+        Role createRole = v2Factory.createRole(roleName).with {
+            it.propagate = propagate
+            it.roleType = roleType
+            if (roleType == RoleTypeEnum.RCN) {
+                it.types = new Types().with {
+                    it.type = ["abc"]
+                    it
+                }
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(utils.getServiceAdminToken(), createRole)
+        Role createdRole = response.getEntity(Role).value
+        def expectedRoleType = roleType == null ? RoleTypeEnum.STANDARD : roleType
+
+        then:
+        response.status == 201
+        !createdRole.propagate
+        createdRole.roleType == expectedRoleType
+
+        cleanup:
+        utils.deleteRoleQuietly(createdRole)
+
+        where:
+        propagate | roleType
+        true      | null
+        false     | null
+        true      | RoleTypeEnum.STANDARD
+        false      | RoleTypeEnum.STANDARD
+        null      | RoleTypeEnum.STANDARD
+        true      | RoleTypeEnum.RCN
+        false      | RoleTypeEnum.RCN
+        null      | RoleTypeEnum.RCN
+    }
+
+    @Unroll
+    def "Can create a propagating role when administratorRole set to identity:admin or identity:service-admin: administratorRole: #administratorRole"() {
+        given:
+        def roleName = testUtils.getRandomUUID("role")
+        Role createRole = v2Factory.createRole(roleName).with {
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it.administratorRole = administratorRole
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(utils.getServiceAdminToken(), createRole)
+        Role createdRole = response.getEntity(Role).value
+        def expectedAdminRole = administratorRole != null ? administratorRole : "identity:service-admin"
+
+        then:
+        response.status == 201
+        createdRole.administratorRole == expectedAdminRole
+
+        cleanup:
+        utils.deleteRoleQuietly(createdRole)
+
+        where:
+        administratorRole | _
+        "identity:admin" | _
+        "identity:service-admin" | _
+        null | _
+    }
+
+    @Unroll
+    def "Can not create a propagating role when administratorRole set something other than identity:admin or identity:service-admin: administratorRole: #administratorRole"() {
+        given:
+        def roleName = testUtils.getRandomUUID("role")
+        Role createRole = v2Factory.createRole(roleName).with {
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it.administratorRole = administratorRole
+            it
+        }
+
+        when:
+        def response = cloud20.createRole(utils.getServiceAdminToken(), createRole)
+
+        then:
+        response.status == 400
+
+        where:
+        administratorRole | _
+        "identity:user-manage" | _
+        "timbuktoo" | _
     }
 
     def deleteUserQuietly(user) {

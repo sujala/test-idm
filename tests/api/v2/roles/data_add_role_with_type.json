@@ -62,12 +62,5 @@
       "role_type": "STANDARD"
     },
     "additional_schema_fields":[]
-  },
-  "with_standard_type_and_tenant_types": {
-    "additional_input": {
-      "role_type": "STANDARD",
-      "tenant_types": ["type1", "type2"]
-    },
-    "additional_schema_fields":[]
   }
 }

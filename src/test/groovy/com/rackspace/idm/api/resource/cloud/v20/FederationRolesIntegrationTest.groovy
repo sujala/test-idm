@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
@@ -82,8 +83,8 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
     def "add propagating role to user-admin adds the role to the federated sub-user"() {
         given:
         def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
-            it.propagate = true
-            return it
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it
         }
 
         def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
@@ -119,12 +120,9 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
     def "add non-propagating role to user-admin does not add the role to the federated sub-user"() {
         given:
-        def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
-            it.propagate = false
-            return it
-        }
-        def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
-        def propagatingRole = responsePropagateRole.getEntity(Role).value
+        def role = v2Factory.createRole(testUtils.getRandomUUID("role"))
+        def responseRole = cloud20.createRole(utils.getServiceAdminToken(), role)
+        def nonPRole = responseRole.getEntity(Role).value
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
@@ -137,22 +135,22 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         assert fedUser != null
 
         when: "adding non-propagating role to user-admin with federated sub-users"
-        utils.addRoleToUser(userAdmin, propagatingRole.id)
+        utils.addRoleToUser(userAdmin, nonPRole.id)
 
         then: "federated sub-user does not have non-propagating role"
-        assertFederatedUserDoesNotHaveRole(fedUser, propagatingRole)
+        assertFederatedUserDoesNotHaveRole(fedUser, nonPRole)
 
         cleanup:
-        utils.deleteUsers(users)
-        utils.deleteRole(propagatingRole)
+        utils.deleteUsersQuietly(users)
+        utils.deleteRoleQuietly(nonPRole)
         deleteFederatedUser(username)
     }
 
     def "new federated users get global propagating roles"() {
         given:
         def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
-            it.propagate = true
-            return it
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it
         }
         def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
         def propagatingRole = responsePropagateRole.getEntity(Role).value
@@ -186,8 +184,8 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
     def "new federated users get tenant based propagating roles"() {
         given:
         def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
-            it.propagate = true
-            return it
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it
         }
         def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
         def propagatingRole = responsePropagateRole.getEntity(Role).value
@@ -220,44 +218,41 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
     def "new federated users do not get non-propagating roles"() {
         given:
-        def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
-            it.propagate = false
-            return it
-        }
-        def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
-        def propagatingRole = responsePropagateRole.getEntity(Role).value
+        def role = v2Factory.createRole(testUtils.getRandomUUID("role"))
+        def responseRole = cloud20.createRole(utils.getServiceAdminToken(), role)
+        def gRole = responseRole.getEntity(Role).value
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        utils.addRoleToUser(userAdmin, propagatingRole.id)
+        utils.addRoleToUser(userAdmin, gRole.id)
 
         when: "creating a saml user under a user-admin with a non-propagating role"
         def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
 
         then: "the non-propagating role is not shown in the response"
-        !samlResponse.user.roles.role.id.contains(propagatingRole.id)
+        !samlResponse.user.roles.role.id.contains(gRole.id)
 
         when: "loading the federated user roles from the directory"
         def fedUser = federatedUserRepository.getUserById(samlResponse.user.id)
         assert fedUser != null
 
         then: "the non-propagating role is not on the user in the directory"
-        assertFederatedUserDoesNotHaveRole(fedUser, propagatingRole)
+        assertFederatedUserDoesNotHaveRole(fedUser, gRole)
 
         cleanup:
-        utils.deleteUsers(users)
-        utils.deleteRole(propagatingRole)
+        utils.deleteUsersQuietly(users)
+        utils.deleteRoleQuietly(gRole)
         deleteFederatedUser(username)
     }
 
     def "remove propagating role from user-admin removes the role from the federated sub-user"() {
         given:
         def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
-            it.propagate = true
-            return it
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it
         }
         def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
         def propagatingRole = responsePropagateRole.getEntity(Role).value
@@ -292,8 +287,8 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
     def "remove propagating tenant role assigned to only one tenant on user-admin removes the role from the federated sub-user"() {
         given:
         def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
-            it.propagate = true
-            return it
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it
         }
         def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
         def propagatingRole = responsePropagateRole.getEntity(Role).value
@@ -324,8 +319,8 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
     def "when remove one of two tenants on propagating role assigned to user-admin removes only one tenant from the role on the federated sub-user"() {
         given:
         def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
-            it.propagate = true
-            return it
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it
         }
         def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
         def propagatingRole = responsePropagateRole.getEntity(Role).value
