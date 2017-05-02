@@ -437,8 +437,6 @@ FEATURE_FLAG_FOR_ENDPOINTS_BASED_ON_RULES = (
     'feature.include.endpoints.based.on.rules')
 AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME = (
     'auto.assign.role.on.domain.tenants.role.name')
-FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS = (
-    'feature.auto.assign.role.on.domain.tenants')
 FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
     "feature.endpoint.template.disable.name.type")
 # Sorry for the abbreviations, but need them to fit < 80 chars

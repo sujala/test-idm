@@ -3567,18 +3567,9 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def createEndpointTemplate = utils.createEndpointTemplate(v1Factory.createEndpointTemplate(endpointId, "compute", publicUrl, "cloudServers"))
         def createEndpointRule = utils.addEndpointTemplateAssignmentRule(identityAdminToken, v2Factory.createTenantTypeEndpointRule(tenantType, [endpointId]))
 
-        when: "Authenticate with auto-assignment disabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, false)
+        when: "Authenticate with auto-assignment enabled"
         AuthenticateResponse authenticateResponse = utils.authenticate(createUser)
         def service = authenticateResponse.serviceCatalog.service.find {it.name.equals("cloudServers")}
-
-        then: "Then service catalog does not include service"
-        service == null
-
-        when: "Authenticate with auto-assignment enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, true)
-        authenticateResponse = utils.authenticate(createUser)
-        service = authenticateResponse.serviceCatalog.service.find {it.name.equals("cloudServers")}
 
         then: "Then service catalog includes service"
         service != null
@@ -3626,17 +3617,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         def uaToken = utils.getToken(username) // User-Admin token
 
-        when: "List Endpoints for Token with auto-assignment disabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, false)
-        def endpointList = utils.getEndpointsForToken(uaToken)
-
-        then: "Then response does not include endpoint"
-        endpointList.endpoint != null
-        endpointList.endpoint.find {it.publicURL.startsWith(publicUrl)} == null
-
         when: "List Endpoints for Token with auto-assignment enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, true)
-        endpointList = utils.getEndpointsForToken(uaToken)
+        def endpointList = utils.getEndpointsForToken(uaToken)
 
         then: "Then response includes endpoint"
         endpointList.endpoint != null
@@ -3658,22 +3640,13 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         false | _
     }
 
-    def "List endpoints for Token returns empty list for rackers regardless of implicit role feature" () {
+    def "List endpoints for Token returns empty list for rackers regardless of implicit role" () {
         given:
         AuthenticateResponse resp = utils.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD)
         def token = resp.token.id
 
-        when: "List Endpoints for Token with auto-assignment disabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, false)
+        when: "List Endpoints for Token with auto-assignment"
         def endpointList = utils.getEndpointsForToken(token)
-
-        then: "Then response does not include endpoint"
-        endpointList.endpoint != null
-        endpointList.endpoint.size() == 0
-
-        when: "List Endpoints for Token with auto-assignment enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, true)
-        endpointList = utils.getEndpointsForToken(token)
 
         then: "Then response does not include endpoint"
         endpointList.endpoint != null

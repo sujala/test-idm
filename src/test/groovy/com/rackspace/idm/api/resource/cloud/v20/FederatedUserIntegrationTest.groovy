@@ -198,7 +198,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
-    def "Fed user includes auto-assigned roles on authenticate when enabled"() {
+    def "Fed user includes auto-assigned roles on authenticate"() {
         given:
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
@@ -211,28 +211,8 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
         def userAdminEntity = userService.getUserById(userAdmin.id)
 
-        when: "auth w/ feature disabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
+        when: "auth"
         def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-
-        then: "Response contains appropriate content and no auto-assigned roles"
-        samlResponse.status == HttpServletResponse.SC_OK
-        AuthenticateResponse disabledAuthResponse = samlResponse.getEntity(AuthenticateResponse).value
-        verifyResponseFromSamlRequest(disabledAuthResponse, username, userAdminEntity)
-        def roles0 = disabledAuthResponse.user.roles.role
-        roles0.size() == 3
-        def mossoRole0 = roles0.find {it.id == Constants.MOSSO_ROLE_ID}
-        mossoRole0 != null
-        def nastRole0 = roles0.find {it.id == Constants.NAST_ROLE_ID}
-        nastRole0 != null
-
-        roles0.find {it.id == Constants.DEFAULT_USER_ROLE_ID} != null
-        roles0.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == mossoRole0.tenantId} == null
-        roles0.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == nastRole0.tenantId} == null
-
-        when: "auth with feature enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
-        samlResponse = cloud20.samlAuthenticate(samlAssertion)
 
         then: "Response contains appropriate content and auto-assigned roles"
         samlResponse.status == HttpServletResponse.SC_OK

@@ -39,7 +39,7 @@ from tests.package.johny.v2.models import requests
 
 class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
     """
-    Test implicitly grant indentity:tenant-access role
+    Test implicitly grant identity:tenant-access role
     """
     @classmethod
     def setUpClass(cls):
@@ -47,9 +47,6 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         # skip if not service admin tests
         if not cls.test_config.run_service_admin_tests:
             cls.skipTest('Skipping Service Admin Tests per config value')
-        cls.feature_flag_value, cls.feature_flag_default_value = (
-            cls.get_feature_flag_value_and_default_value(flag_name=(
-                const.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS)))
 
         # get auto assign role name set
         cls.auto_assign_role_name, cls.auto_assign_role_name_default = (
@@ -255,9 +252,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
                     if item[const.NAME] == const.OBJECT_STORE_ROLE_NAME:
                         nast_tenant = item[const.TENANT_ID]
 
-            if (self.feature_flag_value |
-                    self.feature_flag_default_value) and (
-                        self.auto_assign_role_name == (
+            if (self.auto_assign_role_name == (
                             const.TENANT_ACCESS_ROLE_NAME)):
                 # verify auth resp include tenant access role
                 self.assertIn(const.TENANT_ACCESS_ROLE_NAME,
@@ -291,8 +286,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
             token_id=token)
         self.assertEqual(validate_resp.status_code, 200)
         # when feature flag set to true
-        if (self.feature_flag_value | self.feature_flag_default_value) and (
-            self.auto_assign_role_name == (
+        if (self.auto_assign_role_name == (
                         const.TENANT_ACCESS_ROLE_NAME)):
             # verify validate resp include tenant access role
             self.assertIn(const.TENANT_ACCESS_ROLE_NAME,
@@ -319,8 +313,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         )
         self.assertEqual(auth_tenant_n_token_resp.status_code, 200)
 
-        if (self.feature_flag_value | self.feature_flag_default_value) and (
-            self.auto_assign_role_name == (
+        if (self.auto_assign_role_name == (
                         const.TENANT_ACCESS_ROLE_NAME)):
             self.assertIn(const.TENANT_ACCESS_ROLE_NAME,
                           str(auth_tenant_n_token_resp.json()[
@@ -348,10 +341,8 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         if expected_output == 401:
             self.assertEqual(auth_tenant_n_token_resp.status_code, 401)
         else:
-            if ((self.feature_flag_value |
-                self.feature_flag_default_value) and (
-                        self.auto_assign_role_name == (
-                            const.TENANT_ACCESS_ROLE_NAME))):
+            if (self.auto_assign_role_name == (
+                            const.TENANT_ACCESS_ROLE_NAME)):
                 self.assertIn(const.TENANT_ACCESS_ROLE_NAME,
                               str(auth_tenant_n_token_resp.json()[
                                       const.ACCESS][const.USER][const.ROLES]))
@@ -376,8 +367,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         )
         self.assertEqual(auth_username_pwd_tenant_resp.status_code, 200)
 
-        if (self.feature_flag_value | self.feature_flag_default_value) and (
-                    self.auto_assign_role_name == (
+        if (self.auto_assign_role_name == (
                         const.TENANT_ACCESS_ROLE_NAME)):
             self.assertIn(const.TENANT_ACCESS_ROLE_NAME,
                           str(auth_username_pwd_tenant_resp.json()[
@@ -403,8 +393,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
             self.identity_admin_client.get_auth_token(request_object=auth_obj)
         )
 
-        if (self.feature_flag_value | self.feature_flag_default_value) and (
-                    self.auto_assign_role_name == (
+        if (self.auto_assign_role_name == (
                         const.TENANT_ACCESS_ROLE_NAME)):
             self.assertIn(const.TENANT_ACCESS_ROLE_NAME,
                           str(auth_username_pwd_tenant_resp.json()[
@@ -499,8 +488,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
                     found_nast_tenant = True
             self.assertTrue(found_nast_tenant)
         if new_tenant:
-            if new_tenant_enabled and (self.feature_flag_value |
-                                       self.feature_flag_default_value) and (
+            if new_tenant_enabled and (
                     self.auto_assign_role_name == (
                             const.TENANT_ACCESS_ROLE_NAME)):
                 self.assertIn(new_tenant,
@@ -524,8 +512,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         users_tenant_resp = client.list_users_for_tenant(
             tenant_id=tenant_id)
 
-        if (self.feature_flag_value | self.feature_flag_default_value) and (
-                self.auto_assign_role_name == (
+        if (self.auto_assign_role_name == (
                         const.TENANT_ACCESS_ROLE_NAME)) and tenant_enabled:
             self.assertEqual(users_tenant_resp.status_code, 200)
         else:
@@ -547,8 +534,8 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
             tenant_id=tenant_id)
         self.assertEqual(users_tenant_resp.status_code, 200)
         if tenant_on_the_domain and (
-            (self.feature_flag_value | self.feature_flag_default_value) and (
-                self.auto_assign_role_name == const.TENANT_ACCESS_ROLE_NAME)):
+                    self.auto_assign_role_name ==
+                    const.TENANT_ACCESS_ROLE_NAME):
             self.assertIn(user_id, str(
                 users_tenant_resp.json()[const.USERS]))
         else:
@@ -588,8 +575,8 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         self.assertEqual(roles_tenant_resp.status_code, 200)
 
         if tenant_on_the_domain and (
-            (self.feature_flag_value | self.feature_flag_default_value) and (
-                self.auto_assign_role_name == const.TENANT_ACCESS_ROLE_NAME)):
+                    self.auto_assign_role_name ==
+                    const.TENANT_ACCESS_ROLE_NAME):
 
             self.assertIn(self.tenant_access_role_id,
                           str(roles_tenant_resp.json()[const.ROLES]))
@@ -671,8 +658,7 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         catalog = auth_resp.json()[const.ACCESS][const.SERVICE_CATALOG]
 
         # when feature flag set to true
-        if (self.feature_flag_value | self.feature_flag_default_value) and (
-                    self.auto_assign_role_name == (
+        if (self.auto_assign_role_name == (
                         const.TENANT_ACCESS_ROLE_NAME)):
             for service in catalog:
                 if service['name'] == service_name:

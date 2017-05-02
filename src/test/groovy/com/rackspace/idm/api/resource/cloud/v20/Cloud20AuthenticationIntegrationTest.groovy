@@ -388,7 +388,7 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
-    def "Auth with PWD: Returns auto-assigned role and allows auth against tenant w/o role based on feature enabled" () {
+    def "Auth with PWD: Returns auto-assigned role and allows auth against tenant w/o role" () {
         given:
         //get all tenants (nast + mosso)
         Tenants tenants = cloud20.getDomainTenants(serviceAdminToken, domainId).getEntity(Tenants).value
@@ -411,29 +411,7 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
         def nastAuthRequest = v2Factory.createPasswordAuthenticationRequestWithTenantId(userAdmin.username, Constants.DEFAULT_PASSWORD, nastTenant.id)
         def fawsAuthRequest = v2Factory.createPasswordAuthenticationRequestWithTenantId(userAdmin.username, Constants.DEFAULT_PASSWORD, fawsTenant.id)
 
-        when: "Auth w/ pwd w/o auto assigned enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
-        def response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
-
-        then:
-        AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
-        def roles = authResponse.user.roles.role
-        roles.size() == 3
-        roles.find {it.id == Constants.MOSSO_ROLE_ID} != null
-        roles.find {it.id == Constants.NAST_ROLE_ID} != null
-        roles.find {it.id == Constants.USER_ADMIN_ROLE_ID} != null
-        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID} == null
-
-        and: "User can auth with mosso/nast tenant"
-        cloud20.authenticate(mossoAuthRequest).status == HttpStatus.SC_OK
-        cloud20.authenticate(nastAuthRequest).status == HttpStatus.SC_OK
-
-        and: "User can not auth w/ faws tenant"
-        IdmAssert.assertOpenStackV2FaultResponseWithMessagePattern(cloud20.authenticate(fawsAuthRequest)
-                , UnauthorizedFault, HttpStatus.SC_UNAUTHORIZED, Pattern.compile("^Tenant with Name/Id.*"))
-
         when: "Auth w/ pwd w auto assigned enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
         def response2 = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
 
         then: "Tenant access roles returned for all tenants"
@@ -467,7 +445,7 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
      * assigned as an explicit role on the user for same tenant, the role is only returned once for that tenant
      * @return
      */
-    def "Auth with PWD: Auto-assigned role is merged with explicit role when enabled" () {
+    def "Auth with PWD: Auto-assigned role is merged with explicit role" () {
         given:
         //get all tenants (nast + mosso)
         Tenants tenants = cloud20.getDomainTenants(serviceAdminToken, domainId).getEntity(Tenants).value
@@ -499,24 +477,7 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
         utils.addRoleToUserOnTenantId(userAdmin, fawsTenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID)
         utils.addRoleToUserOnTenantId(userAdmin, externalTenantId, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID)
 
-        when: "Auth w/ pwd w/o auto assigned enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
-        def response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
-
-        then: "User has tenant access role on internal and external tenant"
-        AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
-        def roles = authResponse.user.roles.role
-        roles.size() == 5
-        roles.find {it.id == Constants.MOSSO_ROLE_ID} != null
-        roles.find {it.id == Constants.NAST_ROLE_ID} != null
-        roles.find {it.id == Constants.USER_ADMIN_ROLE_ID} != null
-        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == fawsTenantId} != null
-        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == externalTenantId} != null
-        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == mossoTenant.id} == null
-        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID && it.tenantId == nastTenant.id} == null
-
-        when: "Auth w/ pwd w auto assigned enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
+        when: "Auth w/ pwd"
         def response2 = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
 
         then: "Tenant access roles returned for all tenants"

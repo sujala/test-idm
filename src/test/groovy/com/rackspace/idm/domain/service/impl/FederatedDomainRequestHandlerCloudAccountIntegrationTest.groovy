@@ -155,10 +155,11 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
 
         and: "Roles are as expected"
         List<TenantRole> userRoles = samlAuthResponse.userRoles
-        userRoles.size() == 3
+        userRoles.size() == 4
         userRoles.find {it.name == IdentityUserTypeEnum.DEFAULT_USER.getRoleName()} != null
         userRoles.find {it.name == GlobalConstants.COMPUTE_DEFAULT_ROLE} != null
         userRoles.find {it.name == GlobalConstants.FILES_DEFAULT_ROLE} != null
+        userRoles.find {it.name == identityConfig.getReloadableConfig().automaticallyAssignUserRoleOnDomainTenantsRoleName} != null
 
         and: "Catalogs are in sync"
         /*
@@ -198,10 +199,11 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
 
         then:
         List<TenantRole> userRoles = samlAuthResponse.userRoles
-        userRoles.size() == 5
+        userRoles.size() == 6
         userRoles.find {it.name == IdentityUserTypeEnum.DEFAULT_USER.getRoleName()} != null
         userRoles.find {it.name == GlobalConstants.COMPUTE_DEFAULT_ROLE} != null
         userRoles.find {it.name == GlobalConstants.FILES_DEFAULT_ROLE} != null
+        userRoles.find {it.name == identityConfig.getReloadableConfig().automaticallyAssignUserRoleOnDomainTenantsRoleName} != null
         userRoles.find {it.name == ROLE_RBAC1_NAME} != null
         userRoles.find {it.name == ROLE_RBAC2_NAME} != null
     }
