@@ -789,22 +789,9 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         }
         def fawsTenant = utils.createTenant(fawsTenantCreate);
 
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
         def token = utils.getToken(userAdmin.username, Constants.DEFAULT_PASSWORD)
 
-        when: "validate token w/o auto assigned enabled"
-        AuthenticateResponse valResponse = utils.validateToken(saToken, token)
-
-        then: "validate response does not include tenant access"
-        def roles = valResponse.user.roles.role
-        roles.size() == 3
-        roles.find {it.id == Constants.MOSSO_ROLE_ID} != null
-        roles.find {it.id == Constants.NAST_ROLE_ID} != null
-        roles.find {it.id == Constants.USER_ADMIN_ROLE_ID} != null
-        roles.find {it.id == Constants.IDENTITY_TENANT_ACCESS_ROLE_ID} == null
-
         when: "validate token w/ auto assigned enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
         AuthenticateResponse valResponse3 = utils.validateToken(saToken, token)
 
         then: "validate response include tenant access"

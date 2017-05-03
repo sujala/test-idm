@@ -419,7 +419,6 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
     def "users with a nonexistent domain are able to authenticate"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, true)
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)

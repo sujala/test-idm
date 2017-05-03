@@ -930,7 +930,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
      *
      * @return
      */
-    def "List Tenants: Automatically returns all tenants within user's domain only if feature flag enabled" () {
+    def "List Tenants: Automatically returns all tenants within user's domain" () {
         given: "A new user and 2 tenants"
         reloadableConfiguration.setProperty(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, "identity:tenant-access")
         def adminToken = utils.getIdentityAdminToken()
@@ -951,17 +951,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
 
         def userToken = utils.getToken(username)
 
-        when: "List tenants w/ feature disabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
-        def listTenantResponse = cloud20.listTenants(userToken)
-
-        then: "Do not have role auto assigned on tenants"
-        assert listTenantResponse.status == 200
-        def tenantsEntity = getTenantsFromResponse(listTenantResponse)
-        assert tenantsEntity.tenant.size == 0
-
         when: "List tenants w/ feature enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
         def listTenantResponse2 = cloud20.listTenants(userToken)
 
         then: "Have role auto assigned on tenants"
@@ -999,17 +989,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
 
         def userToken = utils.getToken(username)
 
-        when: "List tenants w/ feature disabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
-        def listTenantResponse = cloud20.listTenants(userToken)
-
-        then: "Do not have role auto assigned on tenants"
-        assert listTenantResponse.status == 200
-        def tenantsEntity = getTenantsFromResponse(listTenantResponse)
-        assert tenantsEntity.tenant.size == 0
-
-        when: "List tenants w/ feature enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
+        when: "List tenants"
         def listTenantResponse2 = cloud20.listTenants(userToken)
 
         then: "Do not have role auto assigned on tenants"

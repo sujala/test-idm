@@ -26,13 +26,7 @@ class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
         global_epts_for_all_roles = resp.json()[
             const.PROPERTIES][0][const.VALUE]
-        resp = self.devops_client.get_devops_properties(
-            prop_name=const.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS)
-        self.assertEqual(resp.status_code, 200)
-        auto_assign_roles_on_domain_tenants = resp.json()[
-            const.PROPERTIES][0][const.VALUE]
-        return (auto_assign_roles_on_domain_tenants and
-                global_epts_for_all_roles and
+        return (global_epts_for_all_roles and
                 self.test_config.run_local_and_jenkins_only and
                 self.test_config.run_service_admin_tests)
 

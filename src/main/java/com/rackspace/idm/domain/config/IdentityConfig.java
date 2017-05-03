@@ -311,9 +311,6 @@ public class IdentityConfig {
     public static final String FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP = "feature.include.endpoints.based.on.rules";
     public static final boolean FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_DEFAULT = false;
 
-    public static final String FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP = "feature.auto.assign.role.on.domain.tenants";
-    public static final boolean FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_DEFAULT = false;
-
     public static final String AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP = "auto.assign.role.on.domain.tenants.role.name";
     public static final String AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT = "identity:tenant-access";
 
@@ -696,7 +693,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V10_PROP, FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V10_DEFAULT);
         defaults.put(FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_PROP, FEATURE_TENANT_ID_IN_AUTH_RESPONSE_V11_DEFAULT);
 
-        defaults.put(FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_DEFAULT);
         defaults.put(AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_DEFAULT);
 
         defaults.put(IDP_POLICY_MAX_KILOBYTE_SIZE_PROP, IDP_POLICY_MAX_KILOBYTE_SIZE_DEFAULT);
@@ -1964,29 +1960,23 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP);
         }
 
-        @IdmProp(key = FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, versionAdded = "3.8.0", description = "When true, automatically assigns the user the identity product role specified by '" + AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP + "' on all tenants within the user's domain")
         public boolean isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() {
-            boolean featureEnabled = getBooleanSafely(reloadableConfiguration, FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP);
-
-            if (featureEnabled) {
-                if (StringUtils.isBlank(getAutomaticallyAssignUserRoleOnDomainTenantsRoleName())) {
-                    // If feature is enabled, but the role name is blank, then the feature can't actually be enabled
-                    logger.error(String.format("The feature '%s' is enabled, but the required property '%s' is not set. The" +
-                            "feature will be disabled.", FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP));
-                    featureEnabled = false;
-                } else if (!getAutomaticallyAssignUserRoleOnDomainTenantsRoleName().startsWith(GlobalConstants.IDENTITY_ROLE_PREFIX)) {
-                    // If feature is enabled, the role name must be an identity product role
-                    logger.error(String.format("The feature '%s' is enabled, but the required property '%s' is not set " +
-                            "to a valid identity product role. The" +
-                            "feature will be disabled.", FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP));
-                    featureEnabled = false;
-                }
+            boolean featureEnabled = true;
+            if (StringUtils.isBlank(getAutomaticallyAssignUserRoleOnDomainTenantsRoleName())) {
+                // If feature is enabled, but the role name is blank, then the feature can't actually be enabled
+                logger.error(String.format("Can not implicitly assign role on all tenants in domain. The required property '%s' is not set."
+                        , AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP));
+                featureEnabled = false;
+            } else if (!getAutomaticallyAssignUserRoleOnDomainTenantsRoleName().startsWith(GlobalConstants.IDENTITY_ROLE_PREFIX)) {
+                // If feature is enabled, the role name must be an identity product role
+                logger.error(String.format("Can not implicitly assign role on all tenants in domain. The required property '%s' is not set " +
+                        "to a valid identity product role.",  AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP));
+                featureEnabled = false;
             }
-
             return featureEnabled;
         }
 
-        @IdmProp(key = AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, versionAdded = "3.8.0", description = "When '" + FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP + "' is set to true, the identity product role to automatically assign.")
+        @IdmProp(key = AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, versionAdded = "3.8.0", description = "The identity product role to automatically assign to the user on all tenants within the user's domain.")
         public String getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() {
             return getStringSafely(reloadableConfiguration, AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP);
         }

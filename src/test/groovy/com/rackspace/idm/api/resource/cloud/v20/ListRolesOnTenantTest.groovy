@@ -219,17 +219,8 @@ class ListRolesOnTenantTest extends RootIntegrationTest {
         }
         def addedTenant = utils.createTenant(tenant)
 
-        when: "implicit tenant role assignment disabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "false")
-        RoleList listUserRoleOnTenant = cloud20.listRolesForUserOnTenant(specificationIdentityAdminToken, addedTenant.id, userAdmin.id).getEntity(RoleList).value
-
-        then:
-        listUserRoleOnTenant != null
-        listUserRoleOnTenant.role.size() == 0
-
-        when: "implicit tenant role assignment enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_PROP, "true")
-        listUserRoleOnTenant = cloud20.listRolesForUserOnTenant(specificationIdentityAdminToken, addedTenant.id, userAdmin.id).getEntity(RoleList).value
+        when: "implicit tenant role assignment"
+        def listUserRoleOnTenant = cloud20.listRolesForUserOnTenant(specificationIdentityAdminToken, addedTenant.id, userAdmin.id).getEntity(RoleList).value
 
         then:
         listUserRoleOnTenant != null
@@ -239,7 +230,6 @@ class ListRolesOnTenantTest extends RootIntegrationTest {
         cleanup:
         deleteUserQuietly(userAdmin)
         deleteTenantQuietly(tenant)
-        reloadableConfiguration.reset()
     }
 
     def deleteUserQuietly(user) {
