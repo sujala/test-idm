@@ -194,6 +194,6 @@ class TestTenantTypes(base.TestBaseV2):
         for role_id in self.role_ids:
             self.identity_admin_client.delete_role(role_id=role_id)
         for name in self.tenant_type_ids:
-            self.identity_admin_client.delete_tenant_type(name=name)
+            self.service_admin_client.delete_tenant_type(name=name)
 
         super(TestTenantTypes, self).tearDown()

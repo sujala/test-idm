@@ -3949,8 +3949,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         where:
         contentType                     | tenantTypes
-        MediaType.APPLICATION_XML_TYPE  | ["type1", "type2"]
-        MediaType.APPLICATION_JSON_TYPE | ["type1", "type2"]
+        MediaType.APPLICATION_XML_TYPE  | ["cloud", "files"]
+        MediaType.APPLICATION_JSON_TYPE | ["cloud", "files"]
     }
 
     @Unroll
@@ -4050,8 +4050,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         where:
         contentType                     | tenantTypes
-        MediaType.APPLICATION_XML_TYPE  | ["Type1", "TYPE2"]
-        MediaType.APPLICATION_JSON_TYPE | ["Type1", "TYPE2"]
+        MediaType.APPLICATION_XML_TYPE  | ["Cloud", "FILES"]
+        MediaType.APPLICATION_JSON_TYPE | ["Cloud", "FILES"]
     }
 
     @Unroll
@@ -4060,7 +4060,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def serviceId = Constants.IDENTITY_SERVICE_ID
         def name = getRandomUUID("role")
         Types types = new Types().with {
-            it.type = ["Type1", "type2"]
+            it.type = ["cloud", "files"]
             it
         }
         Role createRole = v2Factory.createRole().with {
@@ -4172,7 +4172,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def rcnName = getRandomUUID("role")
         def standardName = getRandomUUID("role")
         Types types = new Types().with {
-            it.type = ["type"]
+            it.type = ["cloud"]
             it
         }
         def rcnRole = v2Factory.createRole().with {
@@ -4219,10 +4219,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         retrievedStandardRole.roleType == RoleTypeEnum.STANDARD
 
         then: "Tenant Type must only be returned when type is 'rcn'"
-        createdRcnRole.types.type as HashSet == ["type"] as HashSet
+        createdRcnRole.types.type as HashSet == ["cloud"] as HashSet
         createdStandardRole.types == null
 
-        retrievedRcnRole.types.type as HashSet == ["type"] as HashSet
+        retrievedRcnRole.types.type as HashSet == ["cloud"] as HashSet
         retrievedStandardRole.types == null
 
         cleanup:
@@ -4242,7 +4242,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def serviceId = Constants.IDENTITY_SERVICE_ID
         def name = getRandomUUID("role")
         Types types = new Types().with {
-            it.type = ["type"]
+            it.type = ["cloud"]
             it
         }
         def role = v2Factory.createRole().with {

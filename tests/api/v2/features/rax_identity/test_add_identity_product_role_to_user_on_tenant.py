@@ -358,7 +358,7 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         for id_ in self.domain_ids:
             self.identity_admin_client.delete_domain(domain_id=id_)
         for name in self.tenant_type_ids:
-            self.identity_admin_client.delete_tenant_type(name=name)
+            self.service_admin_client.delete_tenant_type(name=name)
 
     @classmethod
     def tearDownClass(cls):

@@ -6,14 +6,14 @@
   "with_rcn_type_default_assignment": {
     "additional_input": {
       "role_type": "RCN",
-      "tenant_types": ["type1"]
+      "tenant_types": ["cloud"]
     },
     "additional_schema_fields": ["RAX-AUTH:assignment"]
   },
   "with_rcn_type_empty_assignment": {
     "additional_input": {
       "role_type": "RCN",
-      "tenant_types": ["type1"],
+      "tenant_types": ["cloud"],
       "assignment": ""
     },
     "additional_schema_fields": ["RAX-AUTH:assignment"]
@@ -21,7 +21,7 @@
   "with_rcn_type_assignment": {
     "additional_input": {
       "role_type": "RCN",
-      "tenant_types": ["type1"],
+      "tenant_types": ["cloud"],
       "assignment": "GLOBAL"
     },
     "additional_schema_fields": ["RAX-AUTH:assignment"]
@@ -29,7 +29,7 @@
   "with_rcn_type_assignment_more_tenant_types": {
     "additional_input": {
       "role_type": "RCN",
-      "tenant_types": ["type1", "type2", "type3"],
+      "tenant_types": ["cloud", "files", "rcn"],
       "assignment": "GLOBAL"
     },
     "additional_schema_fields": ["RAX-AUTH:assignment"]
@@ -45,7 +45,7 @@
   "with_rcn_type_assignment_all_tenant_types": {
     "additional_input": {
       "role_type": "RCN",
-      "tenant_types": ["*", "type1"],
+      "tenant_types": ["*", "cloud"],
       "assignment": "GLOBAL"
     },
     "additional_schema_fields": ["RAX-AUTH:assignment"]
@@ -53,7 +53,7 @@
   "with_rcn_type_duplicate_tenant_type": {
     "additional_input": {
       "role_type": "RCN",
-      "tenant_types": ["type2", "type2"]
+      "tenant_types": ["files", "files"]
     },
     "additional_schema_fields":[]
   },

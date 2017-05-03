@@ -628,6 +628,7 @@ public class Validator20 {
                 throw new BadRequestException(errMsg);
             }
             validateTypes(role.getTypes(), true);
+            validateTenantTypesFound(role.getTypes());
         } else if (role.getRoleType() == RoleTypeEnum.PROPAGATE) {
             // Propagating roles can only be created if roleAdministrator is identity:admin or identity:service-admin
             if (administratorUserTypeRole != IdentityUserTypeEnum.IDENTITY_ADMIN && administratorUserTypeRole != IdentityUserTypeEnum.SERVICE_ADMIN) {
@@ -716,9 +717,12 @@ public class Validator20 {
 
     public void validateTenantType(Tenant tenant) {
         validateTypes(tenant.getTypes(), false);
+        validateTenantTypesFound(tenant.getTypes());
+    }
 
-        if (tenant.getTypes() != null) {
-            for (String type : tenant.getTypes().getType()) {
+    private void validateTenantTypesFound(Types tenantTypes) {
+        if (tenantTypes != null) {
+            for (String type : tenantTypes.getType()) {
                 TenantType tenantType = tenantTypeDao.getTenantType(type);
                 if (tenantType == null) {
                     String errMsg = String.format(ERROR_TENANT_TYPE_WAS_NOT_FOUND, type);

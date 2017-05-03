@@ -297,5 +297,5 @@ class TestGlobalEndpoints(base.TestBaseV2):
         for id_ in self.service_ids:
             self.service_admin_client.delete_service(service_id=id_)
         for name in self.tenant_type_ids:
-            self.identity_admin_client.delete_tenant_type(name=name)
+            self.service_admin_client.delete_tenant_type(name=name)
         super(TestGlobalEndpoints, self).tearDown()
