@@ -24,6 +24,7 @@ import com.rackspace.idm.domain.config.IdmProperty
 import com.rackspace.idm.domain.config.IdmPropertyList
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import com.rackspace.idm.domain.entity.PasswordPolicy
 import com.rackspace.idm.util.OTPHelper
 import com.rackspace.idm.util.SamlUnmarshaller
 import com.sun.jersey.api.client.ClientResponse
@@ -61,6 +62,10 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
+import static com.rackspace.idm.JSONConstants.USERS
+import static com.rackspace.idm.JSONConstants.USERS
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
 
@@ -278,6 +283,42 @@ class Cloud20Utils {
         return entity
     }
 
+    def updateDomainPasswordPolicy(String domainId, PasswordPolicy passwordPolicy, token=getServiceAdminToken()) {
+        updateDomainPasswordPolicy(domainId, passwordPolicy.toJson(), token)
+    }
+
+    def updateDomainPasswordPolicy(String domainId, String passwordPolicy, token=getServiceAdminToken()) {
+        def response = methods.updateDomainPasswordPolicy(token, domainId, passwordPolicy)
+        assert (response.status == SC_OK)
+
+        def policyAsString = response.getEntity(String)
+        if (org.apache.commons.lang.StringUtils.isNotEmpty()) {
+            return PasswordPolicy.fromJson(policyAsString)
+        }
+        return null
+    }
+
+    PasswordPolicy getDomainPasswordPolicy(String domainId, token=getServiceAdminToken()) {
+        def response = methods.getDomainPasswordPolicy(token, domainId)
+        assert (response.status == SC_OK)
+
+        def policyAsString = response.getEntity(String)
+        if (org.apache.commons.lang.StringUtils.isNotEmpty()) {
+            return PasswordPolicy.fromJson(policyAsString)
+        }
+        return null
+    }
+
+    def deleteDomainPasswordPolicy(String domainId, token=getServiceAdminToken()) {
+        def response = methods.deleteDomainPasswordPolicy(token, domainId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def changeUserPassword(String username, String currentPassword, String newPassword) {
+        def response = methods.changeUserPassword(username, currentPassword, newPassword)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
     def deleteTestDomainQuietly(domainId) {
         try {
             if (domainId == null) {
@@ -385,6 +426,15 @@ class Cloud20Utils {
         def userAdmin = createUser(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
 
         return [userAdmin, [identityAdmin, userAdmin].asList()]
+    }
+
+    /**
+     * Creates a generic user admin account without any tenants. Uses standard identity admin account.
+     * @param domainId
+     * @return
+     */
+    def createGenericUserAdmin(domainId=testUtils.getRandomIntegerString()) {
+        return createUser(getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin"), domainId)
     }
 
     def createDefaultUser(domainId) {

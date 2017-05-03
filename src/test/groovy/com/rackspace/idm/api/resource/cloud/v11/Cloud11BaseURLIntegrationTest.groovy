@@ -7,6 +7,7 @@ import com.rackspacecloud.docs.auth.api.v1.BaseURLList
 import com.rackspacecloud.docs.auth.api.v1.UserType
 import groovy.json.JsonSlurper
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.context.web.WebAppConfiguration
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
@@ -16,6 +17,7 @@ import javax.ws.rs.core.MediaType
 
 import static org.mockito.Mockito.*;
 
+@WebAppConfiguration
 class Cloud11BaseURLIntegrationTest extends RootIntegrationTest {
 
     @Autowired Cloud11Service cloud11Service;

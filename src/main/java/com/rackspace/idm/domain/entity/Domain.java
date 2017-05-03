@@ -1,17 +1,25 @@
 package com.rackspace.idm.domain.entity;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.base.Charsets;
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
+import org.apache.commons.lang.ArrayUtils;
 import org.dozer.Mapping;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 @Data
 @LDAPObject(structuralClass = LdapRepository.OBJECTCLASS_DOMAIN)
 public class Domain implements Auditable, UniqueId {
+    private static final Logger logger = LoggerFactory.getLogger(Domain.class);
 
     @LDAPDNField
     private String uniqueId;
@@ -42,6 +50,9 @@ public class Domain implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_RS_RACKSPACE_CUSTOMER_NUMBER, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String rackspaceCustomerNumber;
 
+    @LDAPField(attribute = LdapRepository.ATTR_PASSWORD_POLICY, objectClass = LdapRepository.OBJECTCLASS_DOMAIN, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
+    private byte[] internalPasswordPolicy;
+
     public void setTenantIds(String[] tenantIDs) {
         if (tenantIDs == null) {
             this.tenantIds = null;
@@ -63,5 +74,17 @@ public class Domain implements Auditable, UniqueId {
 
     public String getDomainMultiFactorEnforcementLevelIfNullWillReturnOptional() {
         return domainMultiFactorEnforcementLevel == null ? GlobalConstants.DOMAIN_MULTI_FACTOR_ENFORCEMENT_LEVEL_OPTIONAL : domainMultiFactorEnforcementLevel;
+    }
+
+    public PasswordPolicy getPasswordPolicy() {
+        return PasswordPolicy.fromBytes(internalPasswordPolicy);
+    }
+
+    public void setPasswordPolicy(PasswordPolicy policy) throws JsonProcessingException {
+        if (policy == null) {
+            internalPasswordPolicy = null;
+        } else {
+            internalPasswordPolicy = policy.toJsonBytes();
+        }
     }
 }

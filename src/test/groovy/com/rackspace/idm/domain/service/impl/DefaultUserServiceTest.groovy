@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.*
@@ -129,6 +130,7 @@ class DefaultUserServiceTest extends RootServiceTest {
         mockFederatedUserDao(service)
         mockIdentityUserService(service)
         mockIdentityConfig(service)
+        service.authenticationContext = Mock(AuthenticationContext)
     }
 
     def "Add BaseUrl to user"() {

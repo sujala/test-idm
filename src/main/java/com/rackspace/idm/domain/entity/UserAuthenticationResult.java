@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.entity;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.joda.time.DateTime;
 
 import java.util.Collections;
 import java.util.List;

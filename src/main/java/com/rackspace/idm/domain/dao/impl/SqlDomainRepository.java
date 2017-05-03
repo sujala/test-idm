@@ -110,4 +110,8 @@ public class SqlDomainRepository implements DomainDao {
     public Iterable<Domain> findDomainsWithRcn(String rcn) {
         throw new UnsupportedOperationException();
     }
+
+    public void updateDomainAsIs(Domain domain) {
+        throw new UnsupportedOperationException();
+    }
 }

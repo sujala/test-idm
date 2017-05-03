@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.*;
@@ -279,6 +280,19 @@ public class DefaultDomainService implements DomainService {
                 String errMsg = String.format("ACTION NEEDED: Failed to expired all tokens for user %s. This user's tokens must be manually expired because the domain was disabled", user.getUsername());
                 logger.error(errMsg, ex);
             }
+        }
+    }
+
+    @Override
+    public void deleteDomainPasswordPolicy(String domainId) {
+        Domain domain = checkAndGetDomain(domainId);
+        try {
+            domain.setPasswordPolicy(null);
+            domainDao.updateDomainAsIs(domain);
+        } catch (JsonProcessingException e) {
+            // Should never get thrown, but catch all the same
+            logger.error(String.format("Error nulling out password policy for domain '%s'", domainId), e);
+            throw new IllegalStateException("Error nulling out password policy");
         }
     }
 

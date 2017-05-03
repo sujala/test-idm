@@ -90,6 +90,7 @@ public final class GlobalConstants {
 
     public static final String X_TENANT_ID = "X-Tenant-Id";
     public static final String X_USER_NAME = "X-User-Name";
+    public static final String X_PASSWORD_EXPIRATION = "X-Password-Expiration";
 
     public static final String HEADER_IDENTITY_API_VERSION = "Identity-API-Version";
     public static final String FEDERATION_API_V1_0 = "1.0";

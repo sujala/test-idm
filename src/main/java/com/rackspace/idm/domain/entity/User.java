@@ -61,7 +61,7 @@ public class User implements EndUser {
     @LDAPField(attribute=LdapRepository.ATTR_PASSWORD_UPDATED_TIMESTAMP,
             objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
-    private Date passwordLastUpdated = new Date();
+    private Date passwordLastUpdated;
 
     @LDAPField(attribute=LdapRepository.ATTR_PASSWORD_SELF_UPDATED,
              objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
@@ -209,6 +209,12 @@ public class User implements EndUser {
             inRDN = false,
             filterUsage=FilterUsage.CONDITIONALLY_ALLOWED)
     private Integer multiFactorFailedAttemptCount;
+
+    @LDAPField(attribute=LdapRepository.ATTR_PASSWORD_HISTORY,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private List<String> passwordHistory;
 
     private List<TenantRole> roles;
 

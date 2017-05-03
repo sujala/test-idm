@@ -7,6 +7,7 @@ import com.rackspacecloud.docs.auth.api.v1.PasswordCredentials;
 import com.rackspacecloud.docs.auth.api.v1.UserCredentials;
 import lombok.Getter;
 import lombok.Setter;
+import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.v2.AuthenticationRequest;
 import org.openstack.docs.identity.api.v2.PasswordCredentialsBase;
 import org.slf4j.Logger;
@@ -31,6 +32,11 @@ public class AuthenticationContext {
     private String username;
 
     private Domain domain;
+
+    /**
+     * Only set for password authentications and only when user has a password policy being enforced
+     */
+    private DateTime passwordExpiration;
 
     /**
      * Given an AuthenticationRequest populate the username for the request

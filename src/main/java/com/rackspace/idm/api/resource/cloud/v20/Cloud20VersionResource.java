@@ -469,6 +469,57 @@ public class Cloud20VersionResource {
         return cloud20Service.deleteDomain(authToken, domainId).build();
     }
 
+    @PUT
+    @Path("RAX-AUTH/domains/{domainId}/passwordPolicy")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateDomainPasswordPolicy(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("domainId") String domainId,
+            String policy) {
+        if (!identityConfig.getReloadableConfig().isPasswordPolicyServicesEnabled()) {
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
+        return cloud20Service.updateDomainPasswordPolicy(httpHeaders, authToken, domainId, policy).build();
+    }
+
+    @GET
+    @Path("RAX-AUTH/domains/{domainId}/passwordPolicy")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDomainPasswordPolicy(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("domainId") String domainId)  {
+        if(!identityConfig.getReloadableConfig().isPasswordPolicyServicesEnabled()){
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
+        return cloud20Service.getDomainPasswordPolicy(httpHeaders, authToken, domainId).build();
+    }
+
+    @DELETE
+    @Path("RAX-AUTH/domains/{domainId}/passwordPolicy")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteDomainPasswordPolicy(
+            @Context HttpHeaders httpHeaders,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("domainId") String domainId)  {
+        if(!identityConfig.getReloadableConfig().isPasswordPolicyServicesEnabled()){
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
+        return cloud20Service.deleteDomainPasswordPolicy(httpHeaders, authToken, domainId).build();
+    }
+
+    @POST
+    @Path("/users/RAX-AUTH/change-password")
+    public Response changeUserPassword(
+            @Context HttpHeaders httpHeaders,
+            ChangePasswordCredentials changePasswordCredentials) {
+        if (!identityConfig.getReloadableConfig().isPasswordPolicyServicesEnabled()) {
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
+        return cloud20Service.changeUserPassword(httpHeaders, changePasswordCredentials).build();
+    }
+
     @GET
     @Path("RAX-AUTH/domains/{domainId}/tenants")
     public Response getDomainTenantsByDomainId(

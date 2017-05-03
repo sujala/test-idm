@@ -12,6 +12,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
+import com.rackspace.idm.domain.entity.PasswordPolicy
+import com.rackspace.idm.helpers.CloudTestUtils
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
@@ -34,6 +36,7 @@ import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static com.rackspace.idm.JSONConstants.*
 import static com.rackspace.idm.api.resource.cloud.AbstractAroundClassJerseyTest.ensureGrizzlyStarted
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.SC_CREATED
@@ -83,6 +86,9 @@ class Cloud20Methods {
     static def SERVICE_PATH_PASSWORD_RESET = "pwd-reset"
     static def SERVICE_PATH_RULES = "rules"
     static def SERVICE_PATH_MAPPING = "mapping"
+    static def SERVICE_PATH_DOMAINS = "domains"
+    static def SERVICE_PATH_PASSWORD_POLICY = "passwordPolicy"
+    static def SERVICE_PATH_CHANGE_PASSWORD = "change-password"
 
     static def ENDPOINTS = "endpoints"
     static def ENDPOINT_TEMPLATES = "endpointTemplates"
@@ -177,6 +183,31 @@ class Cloud20Methods {
     def upgradeUserToCloud(String token, user, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).path(RAX_AUTH).path(UPGRADE_USER_TO_CLOUD).accept(accept).type(request).header(X_AUTH_TOKEN, token).entity(user).put(ClientResponse)
+    }
+
+    def updateDomainPasswordPolicy(String token, String domainId, PasswordPolicy policy) {
+        updateDomainPasswordPolicy(token, domainId, policy.toJson())
+    }
+
+    def updateDomainPasswordPolicy(String token, String domainId, String jsonPolicy) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(domainId).path(SERVICE_PATH_PASSWORD_POLICY).type(APPLICATION_JSON_TYPE).header(X_AUTH_TOKEN, token).entity(jsonPolicy).put(ClientResponse)
+    }
+
+    def getDomainPasswordPolicy(String token, String domainId) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(domainId).path(SERVICE_PATH_PASSWORD_POLICY).accept(APPLICATION_JSON_TYPE).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def deleteDomainPasswordPolicy(String token, String domainId) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(domainId).path(SERVICE_PATH_PASSWORD_POLICY).accept(APPLICATION_JSON_TYPE).header(X_AUTH_TOKEN, token).delete(ClientResponse)
+    }
+
+    def changeUserPassword(String username, String currentPassword, String newPassword, MediaType request = APPLICATION_XML_TYPE, MediaType accept = APPLICATION_XML_TYPE) {
+        initOnUse()
+        def cp = v2Factory.createChangePasswordCredential(username, currentPassword, newPassword)
+        resource.path(path20).path(USERS).path(RAX_AUTH).path(SERVICE_PATH_CHANGE_PASSWORD).accept(accept).type(request).entity(cp).post(ClientResponse)
     }
 
     def addApiKeyToUser(String token, String userId, credential) {
