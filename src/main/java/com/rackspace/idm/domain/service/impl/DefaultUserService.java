@@ -920,7 +920,7 @@ public class DefaultUserService implements UserService {
         userDao.updateUserAsIs(user);
         assignUserRoles(user, false);
 
-        //remove any upgrade eligibilty roles from the user now that they hvae been upgraded.
+        //remove any upgrade eligibilty roles from the user now that they have been upgraded.
         final List<String> eligibilityRoleNames = new ArrayList<String>();
         eligibilityRoleNames.add(identityConfig.getReloadableConfig().getUpgradeUserEligibleRole());
         List<TenantRole> userGlobalRoles = this.tenantService.getGlobalRolesForUser(user);

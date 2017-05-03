@@ -16,12 +16,6 @@ import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Hector
- * Date: 9/14/11
- * Time: 5:15 PM
- */
 public interface Cloud20Service {
 
     ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest);
@@ -72,7 +66,7 @@ public interface Cloud20Service {
 
     ResponseBuilder getUserById(HttpHeaders httpHeaders, String authToken, String userId) ;
 
-    ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) ;
+    ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId, boolean applyRcnRoles) ;
 
     ResponseBuilder deleteUserRoles(HttpHeaders httpHeaders, String authToken, String userId, String roleType);
 
@@ -187,8 +181,7 @@ public interface Cloud20Service {
     ResponseBuilder updateSecretQA(HttpHeaders httpHeaders, String authToken,
         String userId, SecretQA secrets);
 
-    ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders,
-        String authToken, String userId, String serviceId) ;
+    ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId, String serviceId,  boolean applyRcnRoles) ;
 
     ResponseBuilder listGroups(HttpHeaders httpHeaders, String authToken, String group, Integer marker, Integer limit) ;
 

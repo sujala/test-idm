@@ -578,11 +578,12 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
-            @QueryParam("serviceId") String serviceId) {
+            @QueryParam("serviceId") String serviceId,
+            @QueryParam("apply_rcn_roles") boolean applyRcnRoles) {
         if (!StringUtils.isBlank(serviceId)) {
-            return cloud20Service.listUserGlobalRolesByServiceId(httpHeaders, authToken, userId, serviceId).build();
+            return cloud20Service.listUserGlobalRolesByServiceId(httpHeaders, authToken, userId, serviceId, applyRcnRoles).build();
         } else {
-            return cloud20Service.listUserGlobalRoles(httpHeaders, authToken, userId).build();
+            return cloud20Service.listUserGlobalRoles(httpHeaders, authToken, userId, applyRcnRoles).build();
         }
     }
 

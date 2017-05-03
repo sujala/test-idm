@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.entity;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.unboundid.ldap.sdk.Entry;
@@ -37,6 +39,8 @@ public class TenantRole implements Auditable, UniqueId {
     private String name;
     private String description;
     private Boolean propagate;
+    private RoleTypeEnum roleType;
+    private Types types;
 
     @Override
     public String toString() {

@@ -2680,7 +2680,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId) {
+    public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId, boolean applyRcnRoles) {
         try {
             ScopeAccess callersScopeAccess = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(callersScopeAccess);
@@ -2740,8 +2740,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                     precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
                 }
             }
-
-            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user);
+            List<TenantRole> roles;
+            if (applyRcnRoles) {
+                roles = tenantService.getGlobalRolesForUserApplyRcnRoles(user);
+            } else {
+                roles = tenantService.getGlobalRolesForUser(user);
+            }
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -2781,14 +2785,19 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken, String userId,
-                                                          String serviceId) {
+    public ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken,
+                                                          String userId, String serviceId, boolean applyRcnRoles) {
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             User user = userService.checkAndGetUserById(userId);
 
-            List<TenantRole> roles = tenantService.getGlobalRolesForUser(user, serviceId);
+            List<TenantRole> roles;
+            if (applyRcnRoles) {
+                roles= tenantService.getGlobalRolesForUserApplyRcnRoles(user, serviceId);
+            } else {
+                roles= tenantService.getGlobalRolesForUser(user, serviceId);
+            }
 
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
 
