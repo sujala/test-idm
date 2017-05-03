@@ -61,7 +61,7 @@ class GetTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest {
     @Unroll
     def "Get Tenant Type Rule: with endpoints returns detail appropriately; detailLevel: #detailLevel, request: #request, accept: #accept"() {
         def rule = new TenantTypeEndpointRule().with {
-            it.tenantType = "tenantType"
+            it.tenantType = Constants.TENANT_TYPE_CLOUD
             it.description = "hi"
             it.endpointTemplates = new EndpointTemplateList()
             it.endpointTemplates.endpointTemplate = [v1Factory.createEndpointTemplate("1003", "whatever"), v1Factory.createEndpointTemplate("1026", "whatever")] as List<EndpointTemplate>
@@ -81,7 +81,7 @@ class GetTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest {
         getRule.id == createdRule.id
 
         and: "base info correct"
-        getRule.tenantType == "tenanttype"
+        getRule.tenantType == Constants.TENANT_TYPE_CLOUD
         getRule.description == "hi"
 
         and: "templates returned correctly"

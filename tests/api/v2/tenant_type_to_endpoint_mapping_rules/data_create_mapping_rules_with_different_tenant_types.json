@@ -8,42 +8,22 @@
         "expected_response": 400,
         "error_message": "tenantType: may not be null"
     },
-    "with_invalid_tenant_type": {
+    "with_tenant_type_does_not_exist": {
         "tenant_type": "mosso-1234",
         "expected_response": 400,
-        "error_message": "tenantType: can only contain alphanumeric characters"
+        "error_message": "TenantType with name: 'mosso-1234' was not found."
     },
-    "with_invalid_tenant_type_having_space": {
-        "tenant_type": "mosso 1234",
-        "expected_response": 400,
-        "error_message": "tenantType: can only contain alphanumeric characters"
-    },
-    "with_tenant_type_with_int": {
-        "tenant_type": "mosso1234",
+    "with_existing_tenant_type": {
+        "tenant_type": "cloud",
         "expected_response": 201
     },
-    "with_tenant_type_with_int_uppercase_string": {
-        "tenant_type": "MOSSO1234",
-        "expected_response": 201
-    },
-    "with_int_only_tenant_type": {
-        "tenant_type": "12345678",
-        "expected_response": 201
-    },
-    "with_tenant_type_with_all_uppercase_string": {
-        "tenant_type": "UPPERCASE",
-        "expected_response": 201
-    },
-    "with_tenant_type_with_mixed_case_string": {
-        "tenant_type": "UPPERlowerCase",
+    "with_new_tenant_type": {
+        "tenant_type": "f3c542ce303f",
+        "create_tenant_type": true,
         "expected_response": 201
     },
     "with_tenant_type_greater_than_15_in_length": {
         "tenant_type": "1234567890abcdefdghi",
         "expected_response": 400,
         "error_message": "tenantType: length must be between 1 and 16"
-    },
-    "with_tenant_type_exactly_15_in_length": {
-        "tenant_type": "1234567890abcde",
-        "expected_response": 201
-    }}
+  }}
