@@ -97,7 +97,7 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         def user = utils.createUser(adminToken, username, domainId)
         def tenantId1 = testUtils.getRandomUUID("tenant")
 
-        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["type1"]).with {
+        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["cloud"]).with {
             it.domainId = domainId
             it
         })
@@ -146,7 +146,7 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         def user = utils.createUser(adminToken, username, domainId)
 
         def tenantId1 = testUtils.getRandomUUID("tenant")
-        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["type1"]).with {
+        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["cloud"]).with {
             it.domainId = domainId
             it
         })
@@ -181,7 +181,7 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
 
         // Create tenant on which to test access
         def tenantId1 = testUtils.getRandomUUID("tenant")
-        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["type1"]).with {
+        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["cloud"]).with {
             it.domainId = domainId
             it
         })

@@ -3465,7 +3465,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def password = "Password1"
         def random = UUID.randomUUID().toString().replace("-", "")
         def username = "username$random"
-        def tenantType = "mosso"
+        def tenantType = "cloud"
         def tenant = v2Factory.createTenant("12345$random", "12345$random", [tenantType])
         def role = v2Factory.createRole("roleName$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
         def endpointId = testUtils.getRandomInteger().toString()
@@ -3536,7 +3536,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def createUser = utils.createUser(identityAdminToken, username, domainId)
 
         // Add a tenant to the domain
-        def tenantType = "mosso"
+        def tenantType = "cloud"
         def tenant = v2Factory.createTenant("12345$random", "12345$random", [tenantType]).with {it.domainId = domainId; it}
         def addTenant = utils.createTenant(tenant)
 
@@ -3584,7 +3584,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def createUser = utils.createUser(identityAdminToken, username, domainId)
 
         // Add a tenant to the domain
-        def tenantType = "mosso"
+        def tenantType = "cloud"
         def tenant = v2Factory.createTenant("12345$random", "12345$random", [tenantType]).with {it.domainId = domainId; it}
         def addTenant = utils.createTenant(tenant)
 
@@ -3640,7 +3640,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def password = "Password1"
         def random = UUID.randomUUID().toString().replace("-", "")
         def username = "username$random"
-        def tenantType = "mosso"
+        def tenantType = "cloud"
         def tenant = v2Factory.createTenant("12345$random", "12345$random", [tenantType])
         def role = v2Factory.createRole("roleName$random", "a45b14e394a57e3fd4e45d59ff3693ead204998b")
         def endpointId = testUtils.getRandomInteger().toString()

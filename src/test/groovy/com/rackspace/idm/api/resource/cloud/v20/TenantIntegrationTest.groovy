@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.DomainService
@@ -496,7 +497,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         given:
         def random = UUID.randomUUID().toString().replace("-", "")
         def tenantId = "tenant$random"
-        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "Type1", "TYPE2"])
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["cloud", "Cloud", "FILES"])
 
         when:
         def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
@@ -509,7 +510,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
 
         then: "duplicates removed and stored as lowercase"
-        types as Set == ["type1", "type2"] as Set
+        types as Set == ["cloud", "files"] as Set
 
         where:
         requestContentType              | acceptContentType
@@ -522,7 +523,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         given:
         def random = UUID.randomUUID().toString().replace("-", "")
         def tenantId = "tenant$random"
-        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "type2", "type3", "type4", "type5", "type6",
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["cloud", "files", "faws", "rcn", "type5", "type6",
             "type7", "type8", "type9", "type10", "type11", "type12", "type13", "type14", "type15", "type16", "type17"])
 
         when:
@@ -580,8 +581,8 @@ class TenantIntegrationTest extends RootIntegrationTest {
         given:
         def random = UUID.randomUUID().toString().replace("-", "")
         def tenantId = "tenant$random"
-        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "Type1", "TYPE2"])
-        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, ["type3", "Type3", "TYPE4"])
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["cloud", "Cloud", "FILES"])
+        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, ["faws", "Faws", "RCN"])
 
         when:
         def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
@@ -594,8 +595,8 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def createdTenant = getTenant(response)
 
         then: "duplicates removed and stored as lowercase"
-        updateTenant.types.type as Set == ["type3", "type4"] as Set
-        createdTenant.types.type as Set == ["type3", "type4"] as Set
+        updateTenant.types.type as Set == ["faws", "rcn"] as Set
+        createdTenant.types.type as Set == ["faws", "rcn"] as Set
 
         cleanup:
         cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
@@ -611,7 +612,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         given:
         def random = UUID.randomUUID().toString().replace("-", "")
         def tenantId = "tenant$random"
-        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "Type1", "TYPE2"])
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["cloud", "Cloud", "FILES"])
         def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, [])
 
         when:
@@ -642,7 +643,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         given:
         def random = UUID.randomUUID().toString().replace("-", "")
         def tenantId = "tenant$random"
-        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1", "Type1", "TYPE2"])
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["cloud", "Cloud", "FILES"])
         def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId)
 
         when:
@@ -656,8 +657,8 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def createdTenant = getTenant(response)
 
         then: "The values are not modified in update tenant"
-        updateTenant.types.type as Set == ["type1", "type2"] as Set
-        createdTenant.types.type as Set == ["type1", "type2"] as Set
+        updateTenant.types.type as Set == ["cloud", "files"] as Set
+        createdTenant.types.type as Set == ["cloud", "files"] as Set
 
         cleanup:
         cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
@@ -674,7 +675,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def random = UUID.randomUUID().toString().replace("-", "")
         def tenantId = "tenant$random"
         def tenant = v2Factory.createTenant(tenantId, tenantId)
-        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, ["type1", "type2", "type3", "type4", "type5", "type6",
+        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, ["cloud", "files", "faws", "rcn", "type5", "type6",
             "type7", "type8", "type9", "type10", "type11", "type12", "type13", "type14", "type15", "type16", "type17"])
 
         when:
@@ -754,7 +755,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         given:
         def adminToken = utils.getIdentityAdminToken()
         def tenantId = testUtils.getRandomUUID("tenant")
-        def tenant = v2Factory.createTenant(tenantId, tenantId, ["type1"])
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["cloud"])
 
         when: "Create new tenant"
         def createTenantResponse = cloud20.addTenant(adminToken, tenant)
@@ -769,7 +770,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         assert getTenantResponse.status == 200
         def tenantEntity = getTenant(getTenantResponse)
         assert tenantEntity.types.type.size == 1
-        assert tenantEntity.types.type[0] == "type1"
+        assert tenantEntity.types.type[0] == "cloud"
 
         when: "Get tenant by name"
         def getTenantByNameResponse = cloud20.getTenantByName(adminToken, tenantId, acceptContentType)
@@ -778,7 +779,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         assert getTenantByNameResponse.status == 200
         def tenantNameEntity = getTenant(getTenantByNameResponse)
         assert tenantNameEntity.types.type.size == 1
-        assert tenantNameEntity.types.type[0] == "type1"
+        assert tenantNameEntity.types.type[0] == "cloud"
 
         cleanup:
         utils.deleteTenant(tenant)
@@ -837,7 +838,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def domainId = testUtils.getRandomUUID("domainId")
         def user = utils.createUser(adminToken, username, domainId)
         def tenantId = testUtils.getRandomUUID("tenant")
-        def tenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, ["type1"]))
+        def tenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, ["cloud"]))
         utils.addRoleToUserOnTenant(user, tenant)
         def userToken = utils.getToken(username)
 
@@ -849,7 +850,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def tenantsEntity = getTenantsFromResponse(listTenantResponse)
         assert tenantsEntity.tenant.size == 1
         assert tenantsEntity.tenant[0].types.type.size == 1
-        assert tenantsEntity.tenant[0].types.type[0] == "type1"
+        assert tenantsEntity.tenant[0].types.type[0] == "cloud"
 
         cleanup:
         utils.deleteUser(user)
@@ -902,7 +903,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def domainId = testUtils.getRandomUUID("domainId")
         utils.createDomainEntity(domainId)
         def tenantId = testUtils.getRandomUUID("tenant")
-        def tenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, ["type1"]))
+        def tenant = utils.createTenant(v2Factory.createTenant(tenantId, tenantId, ["cloud"]))
         utils.addTenantToDomain(domainId, tenantId)
 
         when: "List tenants"
@@ -913,7 +914,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def tenantsEntity = getTenantsFromResponse(domainTenantsResponse)
         assert tenantsEntity.tenant.size == 1
         assert tenantsEntity.tenant[0].types.type.size == 1
-        assert tenantsEntity.tenant[0].types.type[0] == "type1"
+        assert tenantsEntity.tenant[0].types.type[0] == "cloud"
 
         cleanup:
         utils.deleteDomain(domainId)
@@ -940,11 +941,11 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def tenantId1 = testUtils.getRandomUUID("tenant")
         def tenantId2 = testUtils.getRandomUUID("tenant")
 
-        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["type1"]).with {
+        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["cloud"]).with {
             it.domainId = domainId
             it
         })
-        def tenant2 = utils.createTenant(v2Factory.createTenant(tenantId2, tenantId2, ["type2"]).with {
+        def tenant2 = utils.createTenant(v2Factory.createTenant(tenantId2, tenantId2, ["files"]).with {
             it.domainId = domainId
             it
         })
@@ -982,7 +983,7 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def user = utils.createUser(adminToken, username, userDomainId)
         def tenantId1 = testUtils.getRandomUUID("tenant")
 
-        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["type1"]).with {
+        def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["cloud"]).with {
             it.domainId = domainId
             it
         })
@@ -1002,6 +1003,51 @@ class TenantIntegrationTest extends RootIntegrationTest {
         utils.deleteTenant(tenant1)
     }
 
+    @Unroll
+    def "Any tenant types specified in 'Create Tenant' service must match an existing tenant type: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId, ["cloud", "doesnotexist"])
+
+        when: "If any provided tenant type does not match"
+        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+
+        then: "a 400 must be returned"
+        String errMsg = String.format(Validator20.ERROR_TENANT_TYPE_WAS_NOT_FOUND, "doesnotexist");
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, errMsg)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+
+    @Unroll
+    def "Any tenant types specified in 'Update Tenant' service must match an existing tenant type: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def random = UUID.randomUUID().toString().replace("-", "")
+        def tenantId = "tenant$random"
+        def tenant = v2Factory.createTenant(tenantId, tenantId)
+        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, ["cloud", "doesnotexist"])
+
+        when: "If any provided tenant type does not match"
+        cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
+        def response = cloud20.updateTenant(utils.getServiceAdminToken(), tenantId, tenantToUpdate, acceptContentType, requestContentType)
+
+        then: "a 400 must be returned"
+        String errMsg = String.format(Validator20.ERROR_TENANT_TYPE_WAS_NOT_FOUND, "doesnotexist");
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, errMsg)
+
+        cleanup:
+        cloud20.deleteTenant(utils.getServiceAdminToken(), tenantId)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
 
     def getTenant(response) {
         def tenant = response.getEntity(Tenant)

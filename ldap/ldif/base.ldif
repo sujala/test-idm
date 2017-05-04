@@ -4157,6 +4157,31 @@ objectClass: organizationalUnit
 objectClass: top
 ou: tenantTypes
 
+dn: cn=cloud,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsTenantTypeObject
+cn: cloud
+description: mosso tenant type
+
+dn: cn=files,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsTenantTypeObject
+cn: files
+description: nast tenant type
+
+dn: cn=managed_hosting,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsTenantTypeObject
+cn: managed_hosting
+description: managed hosting tenant type
+
+dn: cn=faws,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsTenantTypeObject
+cn: faws
+description: faws tenant type
+
+dn: cn=rcn,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsTenantTypeObject
+cn: rcn
+description: rcn tenant type
+
 dn: rsId=132885,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: tenant
 rsId: 132885

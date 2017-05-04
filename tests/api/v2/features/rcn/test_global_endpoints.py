@@ -43,6 +43,11 @@ class TestGlobalEndpoints(base.TestBaseV2):
             const.PROPERTIES][0][const.DEFAULT_VALUE]
         return feature_flag_value, feature_flag_default_value
 
+    def create_tenant_type(self, name):
+        request_object = requests.TenantType(name, 'description')
+        self.service_admin_client.add_tenant_type(tenant_type=request_object)
+        self.tenant_type_ids.append(name.lower())
+
     def setUp(self):
         super(TestGlobalEndpoints, self).setUp()
         if not self.feature_flag_value:
@@ -63,6 +68,8 @@ class TestGlobalEndpoints(base.TestBaseV2):
         self.role_ids = []
         self.service_ids = []
         self.template_ids = []
+        self.tenant_type_ids = []
+        self.create_tenant_type('type1')
 
     def create_admin_user(self):
         """regular"""
@@ -289,4 +296,6 @@ class TestGlobalEndpoints(base.TestBaseV2):
                 template_id=id_)
         for id_ in self.service_ids:
             self.service_admin_client.delete_service(service_id=id_)
+        for name in self.tenant_type_ids:
+            self.identity_admin_client.delete_tenant_type(name=name)
         super(TestGlobalEndpoints, self).tearDown()

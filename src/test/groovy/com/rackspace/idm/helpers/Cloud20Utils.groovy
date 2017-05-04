@@ -12,6 +12,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
@@ -610,6 +611,13 @@ class Cloud20Utils {
         response.getEntity(Tenant).value
     }
 
+    def createTenantType(name=testUtils.getRandomUUID("type")[0..15], description="description") {
+        def tenantType = factory.createTenantType(name, description)
+        def response = methods.addTenantType(getServiceAdminToken(), tenantType)
+        assert (response.status == SC_CREATED)
+        response.getEntity(TenantType)
+    }
+
     def deleteTenant(def tenant) {
         def response = methods.deleteTenant(getServiceAdminToken(), tenant.id)
         assert (response.status == SC_NO_CONTENT)
@@ -975,6 +983,15 @@ class Cloud20Utils {
     def deleteTenant(String tenantId) {
         def response = methods.deleteTenant(getServiceAdminToken(), tenantId)
         assert (response.status == SC_NO_CONTENT)
+    }
+
+    def deleteTenantType(String name) {
+        def response = methods.deleteTenantType(getServiceAdminToken(), name)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def deleteTenantTypeIgnoreError(String name) {
+        def response = methods.deleteTenantType(getServiceAdminToken(), name)
     }
 
     def getTenant(String tenantId) {

@@ -13,11 +13,17 @@ from tests.package.johny.v2.models import requests
 @ddt.ddt
 class TestTenantTypes(base.TestBaseV2):
     """Test Tenant Types"""
+    def create_tenant_type(self, name):
+        request_object = requests.TenantType(name, 'description')
+        self.service_admin_client.add_tenant_type(tenant_type=request_object)
+        self.tenant_type_ids.append(name.lower())
+
     def setUp(self):
         super(TestTenantTypes, self).setUp()
         self.tenant_ids = []
         self.role_ids = []
         self.user_ids = []
+        self.tenant_type_ids = []
         self.tenant_description = 'A tenant described'
         self.tenant_display_name = 'A name displayed'
         self.tenant_type_1 = self.generate_random_string(
@@ -26,6 +32,13 @@ class TestTenantTypes(base.TestBaseV2):
             pattern=const.TENANT_TYPE_PATTERN).upper()
         self.tenant_type_3 = self.generate_random_string(
             pattern=const.TENANT_TYPE_PATTERN).upper()
+
+        self.create_tenant_type(self.tenant_type_1)
+        self.create_tenant_type(self.tenant_type_2)
+        self.create_tenant_type(self.tenant_type_3)
+        for tenant_type in ['A', 'B', 'C']:
+            self.create_tenant_type(tenant_type)
+
         self.add_tenant_schema = tenants.add_tenant
         self.add_tenant_with_types_schema = copy.deepcopy(tenants.add_tenant)
         (self.add_tenant_with_types_schema['properties'][const.TENANT]
@@ -180,5 +193,7 @@ class TestTenantTypes(base.TestBaseV2):
             self.identity_admin_client.delete_user(user_id=user_id)
         for role_id in self.role_ids:
             self.identity_admin_client.delete_role(role_id=role_id)
+        for name in self.tenant_type_ids:
+            self.identity_admin_client.delete_tenant_type(name=name)
 
         super(TestTenantTypes, self).tearDown()
