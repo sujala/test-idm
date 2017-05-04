@@ -15,7 +15,9 @@ tenant_item = {
         const.DESCRIPTION: {'type': 'string'},
         const.ENABLED: {'type': 'boolean'},
         const.ID: {'type': 'string'},
-        const.RAX_AUTH_DOMAIN_ID: {'type': 'string'}},
+        const.RAX_AUTH_DOMAIN_ID: {'type': 'string'},
+        const.NS_TYPES: {'type': 'array',
+                         'items': {'type': 'string'}}},
     'required': [const.NAME, const.ENABLED, const.ID,
                  const.RAX_AUTH_DOMAIN_ID],
     'additionalProperties': False}

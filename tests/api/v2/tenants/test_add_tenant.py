@@ -36,10 +36,6 @@ class TestAddTenant(base.TestBaseV2):
         tenant_description = 'A tenant described'
         tenant_display_name = 'A name displayed'
         add_tenant_with_types_schema = copy.deepcopy(tenants.add_tenant)
-        (add_tenant_with_types_schema['properties'][const.TENANT]
-            ['properties'].update({const.NS_TYPES: {}}))
-        (add_tenant_with_types_schema['properties'][const.TENANT]
-            ['required'].append(const.NS_TYPES))
         tenant_name = tenant_id = 'tname{0}'.format(
             self.generate_random_string(const.LOWER_CASE_LETTERS))
         request_object = requests.Tenant(
@@ -63,6 +59,27 @@ class TestAddTenant(base.TestBaseV2):
             self.assertIn(tenant_type,
                           resp.json()[const.TENANT][const.NS_TYPES],
                           msg="Not found {0}".format(tenant_type))
+
+    def test_create_tenant_infers_tenant_type(self):
+        tenant_description = 'A tenant described'
+        add_tenant_with_types_schema = copy.deepcopy(tenants.add_tenant)
+        tenant_name = tenant_id = '{0}:{1}'.format(
+            self.tenant_type_1,
+            self.generate_random_string(const.LOWER_CASE_LETTERS))
+        request_object = requests.Tenant(
+            tenant_name=tenant_name,
+            description=tenant_description,
+            tenant_id=tenant_id,
+            enabled=True)
+        resp = self.identity_admin_client.add_tenant(tenant=request_object)
+        self.assertEqual(resp.status_code, 201)
+        self.assertSchema(response=resp,
+                          json_schema=add_tenant_with_types_schema)
+        self.assertEqual(
+            len(resp.json()[const.TENANT][const.NS_TYPES]), 1)
+        self.assertIn(self.tenant_type_1,
+                      resp.json()[const.TENANT][const.NS_TYPES],
+                      msg="Not found {0}".format(self.tenant_type_1))
 
     @ddt.file_data('data_invalid_tenant_types.json')
     def test_create_tenant_with_invalid_tenant_types(self, test_data):
