@@ -58,7 +58,7 @@ class ListTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest {
     @Unroll
     def "List Tenant Type Rule: # rules returned depends on configuration request: #request, accept: #accept"() {
         def rule1 = new TenantTypeEndpointRule().with {
-            it.tenantType = "tenantType"
+            it.tenantType = Constants.TENANT_TYPE_CLOUD
             it.description = "hi"
             it.endpointTemplates = new EndpointTemplateList()
             it.endpointTemplates.endpointTemplate = [v1Factory.createEndpointTemplate("1003", "whatever"), v1Factory.createEndpointTemplate("1026", "whatever")] as List<EndpointTemplate>
@@ -67,7 +67,7 @@ class ListTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest {
         def createdRule1 = utils.addEndpointTemplateAssignmentRule(specificationIdentityAdminToken, rule1)
 
         def rule2 = new TenantTypeEndpointRule().with {
-            it.tenantType = "tenantType"
+            it.tenantType = Constants.TENANT_TYPE_CLOUD
             it.description = "hi"
             it.endpointTemplates = new EndpointTemplateList()
             it.endpointTemplates.endpointTemplate = [v1Factory.createEndpointTemplate("1003", "whatever"), v1Factory.createEndpointTemplate("1026", "whatever")] as List<EndpointTemplate>

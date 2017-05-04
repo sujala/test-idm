@@ -84,6 +84,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.template_ids = []
         self.rule_ids = []
         self.user_ids = []
+        self.created_tenant_types = []
 
     def create_service(self, service_object):
 
@@ -94,6 +95,11 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         service_id = service.id
         self.service_ids.append(service_id)
         return service_id
+
+    def create_tenant_type(self, name):
+        request_object = requests.TenantType(name, 'description')
+        self.service_admin_client.add_tenant_type(tenant_type=request_object)
+        self.created_tenant_types.append(name)
 
     def create_endpoint_template_using_service_name_type(
             self, input_data):
@@ -222,7 +228,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.template_ids.append(template_id)
 
         endpoint_ids = [template_id]
-        tenant_type = self.generate_random_string(const.TENANT_TYPE_PATTERN)
+        tenant_type = 'cloud'
         mapping_rule_object = requests.TenantTypeToEndpointMappingRule(
             tenant_type=tenant_type, endpoint_ids=endpoint_ids,
             description=self.description)
@@ -325,6 +331,9 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
 
         if 'tenant_type' in test_data:
             tenant_type = test_data['tenant_type']
+            if ('create_tenant_type' in test_data and
+                    test_data['create_tenant_type']):
+                self.create_tenant_type(tenant_type)
         else:
             tenant_type = None
         expected_response = test_data['expected_response']
@@ -372,7 +381,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             description = test_data['description']
         expected_response = test_data['expected_response']
 
-        tenant_type = self.generate_random_string(const.TENANT_TYPE_PATTERN)
+        tenant_type = 'cloud'
         mapping_rule_object = requests.TenantTypeToEndpointMappingRule(
             tenant_type=tenant_type, endpoint_ids=endpoint_ids,
             description=description)
@@ -409,7 +418,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         in the request.
         """
 
-        tenant_type = self.generate_random_string(const.TENANT_TYPE_PATTERN)
+        tenant_type = 'cloud'
         mapping_rule_object = requests.TenantTypeToEndpointMappingRule(
             tenant_type=tenant_type, endpoint_ids=endpoint_ids)
         ia_client = self.identity_admin_client
@@ -454,7 +463,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.template_ids.append(template_id_1)
         endpoint_ids = [template_id_1]
 
-        tenant_type = self.generate_random_string(const.TENANT_TYPE_PATTERN)
+        tenant_type = 'cloud'
         mapping_rule_object = requests.TenantTypeToEndpointMappingRule(
             tenant_type=tenant_type, endpoint_ids=endpoint_ids,
             description=self.description)
@@ -506,7 +515,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         user_admin_id = user_admin_client.default_headers[const.X_USER_ID]
         self.user_ids.append(user_admin_id)
         endpoint_ids = [100000]
-        tenant_type = self.generate_random_string(const.TENANT_TYPE_PATTERN)
+        tenant_type = 'cloud'
         mapping_rule_object = requests.TenantTypeToEndpointMappingRule(
             tenant_type=tenant_type, endpoint_ids=endpoint_ids,
             description=self.description)
@@ -545,7 +554,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             resp = self.identity_admin_client.get_endpoint_template(
                 template_id)
         endpoint_ids = [template_id]
-        tenant_type = self.generate_random_string(const.TENANT_TYPE_PATTERN)
+        tenant_type = 'cloud'
         mapping_rule_object = requests.TenantTypeToEndpointMappingRule(
             tenant_type=tenant_type, endpoint_ids=endpoint_ids,
             description=self.description)
@@ -603,7 +612,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         the limit would be sufficient to test it.
         """
         endpoint_ids = range(1, ENDPOINTS_LIMIT + 2)
-        tenant_type = self.generate_random_string(const.TENANT_TYPE_PATTERN)
+        tenant_type = 'cloud'
         mapping_rule_object = requests.TenantTypeToEndpointMappingRule(
             tenant_type=tenant_type, endpoint_ids=endpoint_ids,
             description=self.description)
@@ -658,7 +667,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         self.template_ids.append(template_id)
         endpoint_ids = [template_id]
 
-        tenant_type = self.generate_random_string(const.TENANT_TYPE_PATTERN)
+        tenant_type = 'cloud'
         mapping_rule_object = requests.TenantTypeToEndpointMappingRule(
             tenant_type=tenant_type, endpoint_ids=endpoint_ids,
             description=self.description)
@@ -693,7 +702,7 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
             self.template_ids.append(template_id)
             endpoint_ids.append(template_id)
 
-        tenant_type = self.generate_random_string(const.TENANT_TYPE_PATTERN)
+        tenant_type = 'cloud'
         mapping_rule_object = requests.TenantTypeToEndpointMappingRule(
             tenant_type=tenant_type, endpoint_ids=endpoint_ids,
             description=self.description)
@@ -764,4 +773,6 @@ class TestAddEndpointMappingRule(base.TestBaseV2):
         if self.test_config.run_service_admin_tests:
             for id_ in self.service_ids:
                 self.service_admin_client.delete_service(service_id=id_)
+        for tenant_type in self.created_tenant_types:
+            self.identity_admin_client.delete_tenant_type(name=tenant_type)
         super(TestAddEndpointMappingRule, self).tearDown()

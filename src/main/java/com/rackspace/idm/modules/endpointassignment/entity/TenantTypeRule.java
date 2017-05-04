@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.Auditable;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.modules.endpointassignment.Constants;
+import com.rackspace.idm.validation.Validator20;
 import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
@@ -48,7 +49,6 @@ public class TenantTypeRule implements Auditable, UniqueId, Rule {
 
     @NotNull()
     @Length(min=1, max = 16)
-    @Pattern(regexp="^[a-z0-9]*$", message = "can only contain alphanumeric characters")
     @LDAPField(attribute = LDAP_ATTRIBUTE_TYPE, objectClass = OBJECT_CLASS, requiredForEncode = false)
     private String tenantType;
 

@@ -39,7 +39,7 @@ class CreateTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
         def newAdmin = createIdentityAdmin()
         def token = authenticate(newAdmin.username)
         def rule = new TenantTypeEndpointRule().with {
-            it.tenantType = "tenantType"
+            it.tenantType = Constants.TENANT_TYPE_CLOUD
             it.description = "a description"
             it
         }
@@ -64,7 +64,7 @@ class CreateTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
     @Unroll
     def "Create Tenant Type Rule: description can be null or empty string: description = #description"() {
         def rule = new TenantTypeEndpointRule().with {
-            it.tenantType = "tenantType"
+            it.tenantType = Constants.TENANT_TYPE_CLOUD
             it.description = description
             it
         }
@@ -87,7 +87,7 @@ class CreateTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
     @Unroll
     def "Create Tenant Type Rule: without endpoints; request:#request, accept:#accept"() {
         def rule = new TenantTypeEndpointRule().with {
-            it.tenantType = "tenantType"
+            it.tenantType = Constants.TENANT_TYPE_CLOUD
             it.description = "a description"
             it
         }
@@ -100,7 +100,7 @@ class CreateTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
         def resultRule = response.getEntity(TenantTypeEndpointRule)
 
         and: "tenant type is lowercased"
-        resultRule.tenantType == StringUtils.lowerCase("tenantType")
+        resultRule.tenantType == StringUtils.lowerCase(Constants.TENANT_TYPE_CLOUD)
 
         and: "other props set correctly"
         resultRule.description == "a description"
@@ -130,7 +130,7 @@ class CreateTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
     @Unroll
     def "create Tenant Type Rule: with endpoints ignores duplicates and description optional; request:#request, accept:#accept"() {
         def rule = new TenantTypeEndpointRule().with {
-            it.tenantType = "tenantType"
+            it.tenantType = Constants.TENANT_TYPE_CLOUD
             it.endpointTemplates = new EndpointTemplateList()
             it.endpointTemplates.endpointTemplate = [v1Factory.createEndpointTemplate("1003", "whatever"), v1Factory.createEndpointTemplate("1026", "whatever"), v1Factory.createEndpointTemplate("1026", "another")] as List<EndpointTemplate>
             it
@@ -142,7 +142,7 @@ class CreateTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
         then: "rule created"
         response.status == HttpStatus.SC_CREATED
         def resultRule = response.getEntity(TenantTypeEndpointRule)
-        resultRule.tenantType == "tenanttype"
+        resultRule.tenantType == Constants.TENANT_TYPE_CLOUD
 
         and: "description can be null"
         resultRule.description == null
@@ -202,11 +202,6 @@ class CreateTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
             it.description = "a description"
             it
         } | "tenantType: length must be between 1 and 16" | "empty string tenant"
-        new TenantTypeEndpointRule().with {
-            it.tenantType = "\$"
-            it.description = "a description"
-            it
-        } | "tenantType: can only contain alphanumeric characters" | "non alphanumeric tenant"
         new TenantTypeEndpointRule().with {
             it.tenantType = "tenantType"
             it.description = RandomStringUtils.randomAlphanumeric(256)

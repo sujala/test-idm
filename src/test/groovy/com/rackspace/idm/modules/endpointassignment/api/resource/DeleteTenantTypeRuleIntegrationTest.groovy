@@ -58,7 +58,7 @@ class DeleteTenantTypeRuleIntegrationTest extends RootConcurrentIntegrationTest 
 
     def "Delete Tenant Type Rule"() {
         def rule = new TenantTypeEndpointRule().with {
-            it.tenantType = "tenantType"
+            it.tenantType = Constants.TENANT_TYPE_CLOUD
             it.description = "a description"
             it
         }
