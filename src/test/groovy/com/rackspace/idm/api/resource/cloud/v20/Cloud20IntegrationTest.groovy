@@ -4166,64 +4166,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Tenant type can only contain alphanumeric characters: content-type=#contentType" () {
-        given:
-        def serviceId = Constants.IDENTITY_SERVICE_ID
-        def name = getRandomUUID("role")
-        Types types = new Types().with {
-            it.type = [type]
-            it
-        }
-        Role createRole = v2Factory.createRole().with {
-            it.serviceId = serviceId
-            it.name = name
-            it.roleType = RoleTypeEnum.RCN
-            it.types = types
-            it
-        }
-
-        when:
-        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC)
-
-        where:
-        contentType                     | type
-        MediaType.APPLICATION_XML_TYPE  | "type*"
-        MediaType.APPLICATION_JSON_TYPE | "type()"
-    }
-
-    @Unroll
-    def "Tenant type must possess a length > 0 and <= 16: content-type=#contentType" () {
-        given:
-        def serviceId = Constants.IDENTITY_SERVICE_ID
-        def name = getRandomUUID("role")
-        Types types = new Types().with {
-            it.type = [type]
-            it
-        }
-        Role createRole = v2Factory.createRole().with {
-            it.serviceId = serviceId
-            it.name = name
-            it.roleType = RoleTypeEnum.RCN
-            it.types = types
-            it
-        }
-
-        when:
-        def response = cloud20.createRole(identityAdminToken, createRole, contentType, contentType)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE)
-
-        where:
-        contentType                     | type
-        MediaType.APPLICATION_XML_TYPE  | ""
-        MediaType.APPLICATION_JSON_TYPE | "type5678901234567"
-    }
-
-    @Unroll
     def "Roles returned for list roles (/v2.0/OS-KSADM/roles) should include the attributes as applicable: content-type=#contentType" () {
         given:
         def serviceId = Constants.IDENTITY_SERVICE_ID

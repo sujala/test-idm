@@ -27,16 +27,16 @@ class TestTenantTypes(base.TestBaseV2):
         self.tenant_description = 'A tenant described'
         self.tenant_display_name = 'A name displayed'
         self.tenant_type_1 = self.generate_random_string(
-            pattern=const.TENANT_TYPE_PATTERN).upper()
+            pattern=const.TENANT_TYPE_PATTERN)
         self.tenant_type_2 = self.generate_random_string(
-            pattern=const.TENANT_TYPE_PATTERN).upper()
+            pattern=const.TENANT_TYPE_PATTERN)
         self.tenant_type_3 = self.generate_random_string(
-            pattern=const.TENANT_TYPE_PATTERN).upper()
+            pattern=const.TENANT_TYPE_PATTERN)
 
         self.create_tenant_type(self.tenant_type_1)
         self.create_tenant_type(self.tenant_type_2)
         self.create_tenant_type(self.tenant_type_3)
-        for tenant_type in ['A', 'B', 'C']:
+        for tenant_type in ['a', 'b', 'c']:
             self.create_tenant_type(tenant_type)
 
         self.add_tenant_schema = tenants.add_tenant

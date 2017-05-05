@@ -19,11 +19,11 @@
   "with_rcn_type_invalid_tenant_type": {
     "additional_input": {
       "role_type": "RCN",
-      "tenant_types": ["type-1"]
+      "tenant_types": ["type*1"]
     },
     "expected_resp": {
       "code": 400,
-      "message": "Tenant type can only contain alphanumeric characters."}
+      "message": "Tenant type can only contain lower case alphanumeric characters, underscores, and/or hyphens."}
   },
   "with_rcn_type_empty_str_tenant_type": {
     "additional_input": {
@@ -32,7 +32,7 @@
     },
     "expected_resp": {
       "code": 400,
-      "message": "Tenant type must possess a length > 0 and <= 15"}
+      "message": "Tenant type must possess a length > 0 and <= 16"}
   },
     "with_rcn_type_empty_str_tenant_type_2": {
     "additional_input": {
@@ -41,7 +41,7 @@
     },
     "expected_resp": {
       "code": 400,
-      "message": "Tenant type must possess a length > 0 and <= 15"}
+      "message": "Tenant type must possess a length > 0 and <= 16"}
   },
   "with_rcn_type_invalid_size_tenant_type": {
     "additional_input": {
@@ -50,7 +50,7 @@
     },
     "expected_resp": {
       "code": 400,
-      "message": "Tenant type must possess a length > 0 and <= 15"}
+      "message": "Tenant type must possess a length > 0 and <= 16"}
   },
   "with_invalid_type": {
     "additional_input": {

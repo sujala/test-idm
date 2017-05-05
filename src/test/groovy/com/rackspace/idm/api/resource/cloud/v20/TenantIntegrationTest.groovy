@@ -538,45 +538,6 @@ class TenantIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
-    @Unroll
-    def "Tenant type can only contain alphanumeric characters: request=#requestContentType, accept=#acceptContentType" () {
-        given:
-        def random = UUID.randomUUID().toString().replace("-", "")
-        def tenantId = "tenant$random"
-        def tenant = v2Factory.createTenant(tenantId, tenantId, [type])
-
-        when:
-        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC)
-
-        where:
-        requestContentType              | acceptContentType               | type
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | "type*"
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type()"
-    }
-
-    @Unroll
-    def "Tenant type must possess a length > 0 and <= 16: request=#requestContentType, accept=#acceptContentType" () {
-        given:
-        def random = UUID.randomUUID().toString().replace("-", "")
-        def tenantId = "tenant$random"
-        def tenant = v2Factory.createTenant(tenantId, tenantId, [type])
-
-        when:
-        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE)
-
-        where:
-        requestContentType              | acceptContentType               | type
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | ""
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type5678901234567"
-    }
-
-    @Unroll
     def "Update tenant with type can be retrieved and matches: request=#requestContentType, accept=#acceptContentType" () {
         given:
         def random = UUID.randomUUID().toString().replace("-", "")
@@ -695,60 +656,6 @@ class TenantIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
-
-    @Unroll
-    def "Update tenant type can only contain alphanumeric characters: request=#requestContentType, accept=#acceptContentType" () {
-        given:
-        def random = UUID.randomUUID().toString().replace("-", "")
-        def tenantId = "tenant$random"
-        def tenant = v2Factory.createTenant(tenantId, tenantId)
-        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, [type])
-
-        when:
-        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
-        def addTenant = getTenant(response)
-
-        response = cloud20.updateTenant(utils.getServiceAdminToken(), tenantId, tenantToUpdate, acceptContentType, requestContentType)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC)
-
-        cleanup:
-        cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
-
-        where:
-        requestContentType              | acceptContentType               | type
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | "type*"
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type()"
-    }
-
-    @Unroll
-    def "Update tenant type must possess a length > 0 and <= 16: request=#requestContentType, accept=#acceptContentType" () {
-        given:
-        def random = UUID.randomUUID().toString().replace("-", "")
-        def tenantId = "tenant$random"
-        def tenant = v2Factory.createTenant(tenantId, tenantId)
-        def tenantToUpdate = v2Factory.createTenant(tenantId, tenantId, [type])
-
-        when:
-        def response = cloud20.addTenant(utils.getServiceAdminToken(), tenant, acceptContentType, requestContentType)
-        def addTenant = getTenant(response)
-
-        response = cloud20.updateTenant(utils.getServiceAdminToken(), tenantId, tenantToUpdate, acceptContentType, requestContentType)
-
-        then:
-        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, Validator20.ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE)
-
-        cleanup:
-        cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
-
-        where:
-        requestContentType              | acceptContentType               | type
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE  | ""
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE | "type5678901234567"
-    }
-
-
 
     @Unroll
     def "Get Tenant By ID/NAME returns the tenant types in the response - accept = #acceptContentType" () {

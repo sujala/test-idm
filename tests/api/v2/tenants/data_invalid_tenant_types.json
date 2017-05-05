@@ -1,16 +1,16 @@
 {
     "invalid_chars": {
-        "tenant_types": ["tenanttypeis1", "tenanttypeis///$%*2"],
-        "error_message": "Tenant type can only contain alphanumeric characters."
+        "tenant_types": ["tenanttypeis1", "tenant///$%*2"],
+        "error_message": "Tenant type can only contain lower case alphanumeric characters, underscores, and/or hyphens."
     },
     "empty_string": {
         "tenant_types": ["tenanttypeis1", "tenanttypeis2", ""],
-        "error_message": "Tenant type must possess a length > 0 and <= 15"
+        "error_message": "Tenant type must possess a length > 0 and <= 16"
 
     },
     "too_long": {
         "tenant_types": ["tenanttypeis1", "tenanttypeis0123456789ABCDEF"],
-        "error_message": "Tenant type must possess a length > 0 and <= 15"
+        "error_message": "Tenant type must possess a length > 0 and <= 16"
     },
     "too_many": {
         "tenant_types": ["tenanttypeis0",

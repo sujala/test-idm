@@ -68,10 +68,6 @@ public class Validator20 {
 
     public static final String ERROR_TENANT_TYPE_CANNOT_EXCEED_MAXIMUM = "A maximum of 16 unique tenant types can be assigned.";
 
-    public static final String ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC = "Tenant type can only contain alphanumeric characters.";
-
-    public static final String ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE = "Tenant type must possess a length > 0 and <= 15";
-
     public static final String ERROR_TENANT_TYPE_DESCRIPTION_MUST_BE_CORRECT_SIZE = "TenantType description must possess a length > 0 and <= 255";
 
     public static final String ERROR_TENANT_TYPE_NAME_MUST_BE_SPECIFIED = "TenantType name must be specified";
@@ -79,6 +75,12 @@ public class Validator20 {
     public static final String ERROR_TENANT_TYPE_WAS_NOT_FOUND = "TenantType with name: '%s' was not found.";
 
     public static final String ALL_TENANT_TYPE = "*";
+    public static final String ERROR_TENANT_TYPE_INVALID_CHARS = "Tenant type can only contain lower case alphanumeric characters, underscores, and/or hyphens.";
+    public static final String TENANT_TYPE_NAME_REGEX = "^[a-z|0-9|_|-]+$";
+    public static final Pattern TENANT_TYPE_NAME_PATTERN = Pattern.compile(TENANT_TYPE_NAME_REGEX);
+    public static final int TENANT_TYPE_NAME_MAX_LENGTH = 16;
+
+    public static final String ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE = "Tenant type must possess a length > 0 and <= " + TENANT_TYPE_NAME_MAX_LENGTH;
 
     private EmailValidator emailValidator = new EmailValidator();
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -758,13 +760,13 @@ public class Validator20 {
             }
         }
 
-        if (!StringUtils.isAlphanumeric(type)) {
-            String errMsg = String.format(ERROR_TENANT_TYPE_MUST_BE_ALPHANUMERIC);
+        if (type == null || type.length() == 0 || type.length() > TENANT_TYPE_NAME_MAX_LENGTH) {
+            String errMsg = String.format(ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE);
             throw new BadRequestException(errMsg);
         }
 
-        if (type.length() == 0 || type.length() > 16) {
-            String errMsg = String.format(ERROR_TENANT_TYPE_MUST_BE_CORRECT_SIZE);
+        if (!TENANT_TYPE_NAME_PATTERN.matcher(type).matches()) {
+            String errMsg = String.format(ERROR_TENANT_TYPE_INVALID_CHARS);
             throw new BadRequestException(errMsg);
         }
     }
