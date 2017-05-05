@@ -291,7 +291,7 @@ public class DefaultIdentityUserService implements IdentityUserService {
             if (identityConfig.getReloadableConfig().useCachedClientRolesInServiceCatalog()) {
                 tenantRoles = tenantService.getTenantRolesForUserPerformant(baseUser);
             } else {
-                tenantRoles = this.tenantService.getTenantRolesForUser(baseUser);
+                tenantRoles = tenantService.getTenantRolesForUser(baseUser);
             }
             userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);
         }
@@ -301,7 +301,7 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
         final Set<OpenstackEndpoint> endpoints = new HashSet<>();
         for (TenantEndpointMeta tenantMeta : tenantMetas) {
-            final OpenstackEndpoint endpoint = this.endpointService.calculateOpenStackEndpointForTenantMeta(tenantMeta);
+            final OpenstackEndpoint endpoint = endpointService.calculateOpenStackEndpointForTenantMeta(tenantMeta);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }
