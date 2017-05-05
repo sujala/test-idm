@@ -353,6 +353,9 @@ public class IdentityConfig {
     public static final String FEATURE_PERFORMANT_SERVICE_CATALOG_PROP = "feature.performant.service.catalog";
     public static final boolean FEATURE_PERFORMANT_SERVICE_CATALOG_DEFAULT = true;
 
+    public static final String FEATURE_INFER_DEFAULT_TENANT_TYPE_PROP = "feature.infer.default.tenant.type";
+    public static final boolean FEATURE_INFER_DEFAULT_TENANT_TYPE_DEFAULT = true;
+
     public static final String CACHE_CLIENT_ROLES_BY_ID_TTL_PROP = "cache.client.role.by.id.ttl";
     public static final Duration CACHE_CLIENT_ROLES_BY_ID_TTL_DEFAULT = Duration.parse("PT10M");
 
@@ -380,6 +383,8 @@ public class IdentityConfig {
     public static final String MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME = "multifactor.key.location";
     public static final String MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT = "/etc/idm/config/keys";
 
+    public static final String NAST_TENANT_PREFIX_PROP = "nast.tenant.prefix";
+    public static final String NAST_TENANT_PREFIX_DEFAULT = "MossoCloudFS_";
 
     /**
      * SQL config properties
@@ -715,9 +720,12 @@ public class IdentityConfig {
         defaults.put(FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_PROP, FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_DEFAULT);
         defaults.put(CACHE_CLIENT_ROLES_BY_ID_TTL_PROP, CACHE_CLIENT_ROLES_BY_ID_TTL_DEFAULT);
         defaults.put(CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP, CACHE_CLIENT_ROLES_BY_ID_SIZE_DEFAULT);
+        defaults.put(FEATURE_INFER_DEFAULT_TENANT_TYPE_PROP, FEATURE_INFER_DEFAULT_TENANT_TYPE_DEFAULT);
 
         defaults.put(FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP, FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_DEFAULT);
         defaults.put(MAX_TENANT_TYPE_SIZE_PROP, MAX_TENANT_TYPE_SIZE_DEFAULT);
+
+        defaults.put(NAST_TENANT_PREFIX_PROP, NAST_TENANT_PREFIX_DEFAULT);
 
         return defaults;
     }
@@ -1482,6 +1490,12 @@ public class IdentityConfig {
         public int getClientRoleByIdCacheSize() {
             return getIntSafely(staticConfiguration, CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP);
         }
+
+        @IdmProp(key = NAST_TENANT_PREFIX_PROP, versionAdded = "1.0.14.8"
+                , description = "The prefix to append to nast tenant ids")
+        public String getNastTenantPrefix() {
+            return getStringSafely(staticConfiguration, NAST_TENANT_PREFIX_PROP);
+        }
     }
 
     /**
@@ -2084,6 +2098,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP, versionAdded = "3.11.0", description = "Whether to change contract for set of services accessible to user-admin/default users which currently return non-standard v2.0 error objects to now return the standard errors")
         public boolean forceStandardV2ExceptionsEndUserServices() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP);
+        }
+
+        @IdmProp(key = FEATURE_INFER_DEFAULT_TENANT_TYPE_PROP, versionAdded = "3.12.0", description = "Whether to infer a tenant type for tenants without a tenant type when applying RCN roles")
+        public boolean inferTenantTypeForTenant() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_INFER_DEFAULT_TENANT_TYPE_PROP);
         }
 
         @IdmProp(key = MAX_TENANT_TYPE_SIZE_PROP, versionAdded = "3.12.0", description = "Maximum number of tenantTypes allowed to be created.  Maximum value allowed is 999.")

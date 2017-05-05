@@ -139,7 +139,12 @@ public abstract class LdapRepository {
     public static final String ATTR_PWD_ACCOUNT_LOCKOUT_TIME = "dxPwdFailedTime";
     public static final String ATTR_RACKER_ID = "rackerId";
     public static final String ATTR_RACKSPACE_API_KEY = "rsApiKey";
+
+    /**
+     * @deprecated
+     */
     public static final String ATTR_RACKSPACE_CUSTOMER_NUMBER = "RCN";
+
     public static final String ATTR_RS_RACKSPACE_CUSTOMER_NUMBER = "rsRackspaceCustomerNumber";
     public static final String ATTR_RACKSPACE_PERSON_NUMBER = "RPN";
     public static final String ATTR_REFRESH_TOKEN = "refreshToken";

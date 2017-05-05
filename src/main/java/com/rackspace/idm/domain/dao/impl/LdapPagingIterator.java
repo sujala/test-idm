@@ -34,21 +34,27 @@ public class LdapPagingIterator<T> implements Iterable<T> {
             @Override
             public boolean hasNext() {
                 if (context == null) {
-                    context = repo.getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
-                    offset = 0;
-                    index = 0;
+                    initialize();
                 }
                 return offset + index < context.getTotalRecords();
             }
 
             @Override
             public T next() {
-                if (index >= PAGE_SIZE) {
+                if (context == null) {
+                    initialize();
+                } else if (index >= PAGE_SIZE) {
                     offset += PAGE_SIZE;
                     index = 0;
                     context = repo.getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
                 }
                 return context.getValueList().get(index++);
+            }
+
+            private void initialize() {
+                context = repo.getObjectsPaged(searchFilter, dn, scope, offset, PAGE_SIZE);
+                offset = 0;
+                index = 0;
             }
 
             @Override

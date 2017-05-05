@@ -2,10 +2,12 @@ package com.rackspace.idm.domain.service.impl
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 class DefaultTenantServiceTest extends RootServiceTest {
@@ -557,6 +559,94 @@ class DefaultTenantServiceTest extends RootServiceTest {
         null    | null    | null   | false           | false
         "1"     | "desc"  | "name" | true            | true
 
+    }
+
+    /**
+     * Verify the inferring logic for determining tenant types for tenants works as expected
+     * if a tenant does not have a tenant type associated with it and the feature flag `feature.infer.default.tenant.type` the application must infer the tenant type as follows:
+     * <ol>
+     *     <li>If the tenant's id can be parsed as a java integer (a legacy mosso restriction), set/infer the tenant type 'cloud'</li>
+     *     <li>Else if the tenant id is prefixed with the value of the configuration property 'nast.tenant.prefix', set/infer the tenant type "files"</li>
+     *     <li>Else if the tenant id is prefixed w/ "hybrid:", set/infer the tenant type "managed_hosting"</li>
+     *     <li>Else if the tenant id contains a ":", search for a tenant type that matches the string prior to the first ":". If exists, set/infer that as tenant type (e.g. asdf:332 would set/infer a tenant type "asdf" if it exists)</li>
+     *     <li>Else, do not set/infer a tenant type</li>
+     * </ol>
+     *
+     * @return
+     */
+    @Unroll
+    def "Correctly infer tenant types on tenant when enabled: tenantName: #tenantName; tenantTypes: #tenantTypes; existingTypes: #existingTypes; expected: #expectedInferredTenantType"() {
+        given:
+        reloadableConfig.inferTenantTypeForTenant() >> true
+        staticConfig.getNastTenantPrefix() >> "MossoCloudFS_"
+        Tenant tenant = new Tenant().with {
+            it.name = tenantName
+            it.tenantId = tenantName
+            it.types = tenantTypes
+            it
+        }
+
+        when:
+        service.setInferredTenantTypeOnTenantIfNecessary(tenant, existingTypes)
+
+        then:
+        tenant.types == expectedInferredTenantType
+
+        where:
+        tenantName          | tenantTypes | existingTypes                       | expectedInferredTenantType
+        // Only can set existing tenant types
+        "12345"             | [] as Set    | ["managed_hosting"] as Set         | [] as Set
+        "MossoCloudFS_12345"| [] as Set    | [] as Set                          | [] as Set
+        "hybrid:123"        | [] as Set    | [] as Set                          | [] as Set
+        "asdf:123"          | [] as Set    | ["cloud"] as Set                   | [] as Set
+
+        // Inferred rules used
+        "12345"             | [] as Set    | ["cloud"] as Set                   | ["cloud"] as Set
+        "MossoCloudFS_12345"| [] as Set    | ["cloud","managed_hosting","files"] as Set  | ["files"] as Set
+        "hybrid:123"        | [] as Set    | ["cloud", "managed_hosting"] as Set          | ["managed_hosting"] as Set
+        "asdf:12345"        | [] as Set    | ["cloud","asdf","files"] as Set    | ["asdf"] as Set
+        "asdf:"             | [] as Set    | ["cloud","asdf","files"] as Set    | [] as Set
+        ":asdf"             | [] as Set    | ["cloud","asdf","files"] as Set    | [] as Set
+        "asdf:qwer:asdf"             | [] as Set    | ["cloud","asdf","files"] as Set    | ["asdf"] as Set
+        "asdf"             | [] as Set    | ["cloud","asdf","files"] as Set    | [] as Set
+
+        // Doesn't override existing
+        "12345"             | ["files"] as Set    | ["cloud"] as Set                   | ["files"] as Set
+        "MossoCloudFS_12345"| ["cloud"] as Set    | ["cloud","managed_hosting","files"] as Set  | ["cloud"] as Set
+        "hybrid:123"        | ["files"] as Set    | ["cloud", "files"] as Set          | ["files"] as Set
+        "asdf:12345"        | ["files"] as Set    | ["cloud","asdf","files"] as Set    | ["files"] as Set
+    }
+
+    @Unroll
+    def "Does not infer tenant types on tenant when disabled: tenantName: #tenantName; tenantTypes: #tenantTypes; existingTypes: #existingTypes; expected: #expectedInferredTenantType"() {
+        given:
+        reloadableConfig.inferTenantTypeForTenant() >> false
+        staticConfig.getNastTenantPrefix() >> "MossoCloudFS_"
+        Tenant tenant = new Tenant().with {
+            it.name = tenantName
+            it.tenantId = tenantName
+            it.types = tenantTypes
+            it
+        }
+
+        when:
+        service.setInferredTenantTypeOnTenantIfNecessary(tenant, existingTypes)
+
+        then:
+        tenant.types == expectedInferredTenantType
+
+        where:
+        tenantName          | tenantTypes | existingTypes                   | expectedInferredTenantType
+        "12345"             | [] as Set    | ["cloud"] as Set               | [] as Set
+        "MossoCloudFS_12345"| [] as Set    | ["files"] as Set               | [] as Set
+        "hybrid:123"        | [] as Set    | ["managed_hosting"] as Set     | [] as Set
+        "asdf:12345"        | [] as Set    | ["asdf"] as Set                | [] as Set
+
+        // Doesn't override existing
+        "12345"             | ["files"] as Set    | ["cloud"] as Set                   | ["files"] as Set
+        "MossoCloudFS_12345"| ["cloud"] as Set    | ["cloud","managed_hosting","files"] as Set  | ["cloud"] as Set
+        "hybrid:123"        | ["files"] as Set    | ["cloud", "files"] as Set          | ["files"] as Set
+        "asdf:12345"        | ["files"] as Set    | ["cloud","asdf","files"] as Set    | ["files"] as Set
     }
 
     def mockFederatedUserDao(service) {

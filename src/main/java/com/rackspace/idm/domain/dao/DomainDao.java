@@ -23,4 +23,11 @@ public interface DomainDao {
     void updateDomain(Domain domain);
     void deleteDomain(String domainId);
     Iterable<Domain> getDomainsForTenant(List<Tenant> tenants);
+
+    /**
+     * Return all the domains that have the specified RCN
+     * @param rcn
+     * @return
+     */
+    Iterable<Domain> findDomainsWithRcn(String rcn);
 }

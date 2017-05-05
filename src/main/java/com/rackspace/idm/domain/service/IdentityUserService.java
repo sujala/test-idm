@@ -220,4 +220,16 @@ public interface IdentityUserService {
      * @return
      */
     ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser);
+
+    /**
+     * Similar to {@link #getServiceCatalogInfo(BaseUser)}, except the RCN Role logic is applied to the user's roles.
+     * When applied all non-RCN global roles are granted on all tenants within the user's domain and RCN roles are applied
+     * across domains within the RCN.
+     *
+     * @param baseUser
+     * @return
+     */
+    ServiceCatalogInfo getServiceCatalogInfoApplyRcnRoles(BaseUser baseUser);
 }
+
+

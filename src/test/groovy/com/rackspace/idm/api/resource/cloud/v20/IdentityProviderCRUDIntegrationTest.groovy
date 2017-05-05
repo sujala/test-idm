@@ -1078,11 +1078,15 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         providers.identityProvider.size() == 1
 
         cleanup:
-        utils.deleteDomain(domain.id)
-        utils.deleteTenant(tenant.id)
-        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
-        utils.deleteUserQuietly(idpManager)
-
+        try {
+            utils.deleteDomain(domain.id)
+            utils.deleteTenant(tenant.id)
+            utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+            utils.deleteUserQuietly(idpManager)
+        } catch (Exception ex) {
+            // Eat. We're just cleaning up
+        }
+        
         where:
         name                 | includeDomain | idpType                                        | includeTenant | accept
         getRandomUUID("idp") | false         | null                                           | false         | MediaType.APPLICATION_XML_TYPE

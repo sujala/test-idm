@@ -93,6 +93,11 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
         return getObjectsPaged(searchAllDomains(), offset, limit);
     }
 
+    @Override
+    public Iterable<Domain> findDomainsWithRcn(String rcn) {
+        return getObjects(searchByRcnFilter(rcn));
+    }
+
     Filter searchByIdFilter(String id) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, id)
@@ -102,6 +107,12 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
     Filter searchByNameFilter(String name) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_NAME, name)
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DOMAIN).build();
+    }
+
+    Filter searchByRcnFilter(String rcn) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_RS_RACKSPACE_CUSTOMER_NUMBER, rcn)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_DOMAIN).build();
     }
 

@@ -158,6 +158,15 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return getServiceCatalogInfoLegacy(baseUser);
     }
 
+    @Override
+    public ServiceCatalogInfo getServiceCatalogInfoApplyRcnRoles(BaseUser baseUser) {
+        if (identityConfig.getReloadableConfig().usePerformantServiceCatalog()) {
+            return identityUserService.getServiceCatalogInfoApplyRcnRoles(baseUser);
+        }
+        logger.warn("Attempted to retrieve service catalog applying RCN roles, but performant service catalog is not enabled.");
+        return getServiceCatalogInfoLegacy(baseUser);
+    }
+
     private ServiceCatalogInfo getServiceCatalogInfoLegacy(BaseUser baseUser) {
         final Set<OpenstackEndpoint> endpoints = new HashSet<>();
         final List<Tenant> tenants = new ArrayList<>();

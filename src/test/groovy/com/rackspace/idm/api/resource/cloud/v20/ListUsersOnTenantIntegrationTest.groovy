@@ -186,7 +186,7 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
             it
         })
 
-        when: "List users for tenant w/ feature enabled"
+        when: "List users for tenant"
         def response = cloud20.listUsersWithTenantIdAndRole(adminToken, tenantId1, Constants.IDENTITY_TENANT_ACCESS_ROLE_ID)
 
         then: "All users in same domain are returned"
@@ -196,7 +196,7 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
         usersEntity3.user.find {it.id == user.id} != null
         usersEntity3.user.find {it.id == subUser.id} != null
 
-        when: "Add new subuser, list users for tenant w/ feature enabled returns new user"
+        when: "Add new subuser, list users for tenant returns new user"
         def subUser2 = utils.createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), domainId)
         response = cloud20.listUsersWithTenantId(adminToken, tenantId1)
 

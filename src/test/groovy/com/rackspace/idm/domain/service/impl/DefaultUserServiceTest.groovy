@@ -1066,7 +1066,7 @@ class DefaultUserServiceTest extends RootServiceTest {
     }
 
     def "Nast tenantId uses formula <prefix><domainId> where prefix is a config property"() {
-        config.getString(DefaultUserService.NAST_TENANT_PREFIX_PROP_NAME, _) >> prefix
+        staticConfig.getNastTenantPrefix() >> prefix
         def domain = "abcd"
 
         expect:

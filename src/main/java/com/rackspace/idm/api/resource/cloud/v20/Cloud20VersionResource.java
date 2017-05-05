@@ -95,9 +95,13 @@ public class Cloud20VersionResource {
 
     @POST
     @Path("tokens")
-    public Response authenticate(@Context HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
+    public Response authenticate(@Context HttpHeaders httpHeaders, @QueryParam("apply_rcn_roles") boolean applyRcnRoles, AuthenticationRequest authenticationRequest) {
         requestContextHolder.getAuthenticationContext().populateAuthRequestData(authenticationRequest);
-        return cloud20Service.authenticate(httpHeaders, authenticationRequest).build();
+        if (applyRcnRoles) {
+            return cloud20Service.authenticateApplyRcnRoles(httpHeaders, authenticationRequest).build();
+        } else {
+            return cloud20Service.authenticate(httpHeaders, authenticationRequest).build();
+        }
     }
 
     @POST

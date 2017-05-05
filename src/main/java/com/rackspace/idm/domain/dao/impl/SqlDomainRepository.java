@@ -106,4 +106,8 @@ public class SqlDomainRepository implements DomainDao {
         return mapper.fromSQL(domainRepository.findBySqlProjectTenantIdIn(tenantIds));
     }
 
+    @Override
+    public Iterable<Domain> findDomainsWithRcn(String rcn) {
+        throw new UnsupportedOperationException();
+    }
 }

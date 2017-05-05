@@ -105,8 +105,6 @@ class TenantTypeIntegrationTest extends RootIntegrationTest {
 
         where:
         contentType                     | name                                              | expectedStatus
-        MediaType.APPLICATION_XML_TYPE  | '*'                                               | SC_CREATED
-        MediaType.APPLICATION_JSON_TYPE | '*'                                               | SC_CREATED
         MediaType.APPLICATION_XML_TYPE  | 'ttype101'                                        | SC_CREATED
         MediaType.APPLICATION_JSON_TYPE | 'ttype101'                                        | SC_CREATED
         MediaType.APPLICATION_XML_TYPE  | 'ttype_101'                                       | SC_CREATED

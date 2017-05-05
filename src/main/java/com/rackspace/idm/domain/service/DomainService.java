@@ -34,6 +34,14 @@ public interface DomainService {
     void expireAllTokenInDomain(String domainId);
 
     /**
+     * Return all the domains that have the specified RCN. Will return an empty list if the specified RCN is empty.
+     *
+     * @param rcn
+     * @return
+     */
+    Iterable<Domain> findDomainsWithRcn(String rcn);
+
+    /**
      * Generates a UUID for a new domain
      */
     String getDomainUUID();

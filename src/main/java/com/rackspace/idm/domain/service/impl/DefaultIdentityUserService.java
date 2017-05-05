@@ -250,6 +250,16 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
     @Override
     public ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser) {
+        return getServiceCatalogInfoInternal(baseUser, false);
+    }
+
+    @Override
+    public ServiceCatalogInfo getServiceCatalogInfoApplyRcnRoles(BaseUser baseUser) {
+        return getServiceCatalogInfoInternal(baseUser, true);
+    }
+
+
+    private ServiceCatalogInfo getServiceCatalogInfoInternal(BaseUser baseUser, boolean applyRcnRoles) {
         if (baseUser == null || !(baseUser instanceof EndUser)) {
             /*
              Ideally this should probably throw an error rather than return an empty catalog for null users, but legacy
@@ -262,21 +272,36 @@ public class DefaultIdentityUserService implements IdentityUserService {
 
         // Get the tenantRoles for the user
         List<TenantRole> tenantRoles;
-        if (identityConfig.getReloadableConfig().useCachedClientRolesInServiceCatalog()) {
-            tenantRoles = tenantService.getTenantRolesForUserPerformant(baseUser);
-        } else {
-            tenantRoles = this.tenantService.getTenantRolesForUser(baseUser);
-        }
+        IdentityUserTypeEnum userTypeEnum;
+        if (applyRcnRoles) {
+            tenantRoles = tenantService.getTenantRolesForUserApplyRcnRoles(baseUser);
 
-        // Determine the user type
-        IdentityUserTypeEnum userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);
+            // Determine the user type
+            userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);
+            if (userTypeEnum == null) {
+                /*
+                 Chance of this happening if user exists in a domain without any tenants. Calling logic depends on user
+                 type being included so fall back to looking up from scratch. This should only occur in rare circumstances
+                 so additional impact should be minimal.
+                  */
+                logger.warn(String.format("Authenticating userId '%s' resulted in no user type role when applying RCN roles. User likely has no tenants", baseUser.getId()));
+                userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(baseUser);
+            }
+        } else {
+            if (identityConfig.getReloadableConfig().useCachedClientRolesInServiceCatalog()) {
+                tenantRoles = tenantService.getTenantRolesForUserPerformant(baseUser);
+            } else {
+                tenantRoles = tenantService.getTenantRolesForUser(baseUser);
+            }
+            userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);
+        }
 
         // Translate the tenantRoles to all the info necessary to determine endpoints
         List<TenantEndpointMeta> tenantMetas = generateTenantEndpointMetaForUser(user, tenantRoles);
 
         final Set<OpenstackEndpoint> endpoints = new HashSet<>();
         for (TenantEndpointMeta tenantMeta : tenantMetas) {
-            final OpenstackEndpoint endpoint = this.endpointService.calculateOpenStackEndpointForTenantMeta(tenantMeta);
+            final OpenstackEndpoint endpoint = endpointService.calculateOpenStackEndpointForTenantMeta(tenantMeta);
             if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
                 endpoints.add(endpoint);
             }

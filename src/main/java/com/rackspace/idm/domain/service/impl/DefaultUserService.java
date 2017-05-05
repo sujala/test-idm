@@ -52,8 +52,6 @@ public class DefaultUserService implements UserService {
 
     public static final String ERROR_MSG_TOKEN_NOT_FOUND = "Token not found.";
 
-    public static final String NAST_TENANT_PREFIX_PROP_NAME = "nast.tenant.prefix";
-    public static final String NAST_TENANT_PREFIX_DEFAULT = "MossoCloudFS_";
     static final String MOSSO_BASE_URL_TYPE = "MOSSO";
     static final String NAST_BASE_URL_TYPE = "NAST";
     static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
@@ -1524,7 +1522,7 @@ public class DefaultUserService implements UserService {
     }
 
     /**
-     * The format of the nast tenant id is XY, where X is determined by the configuration property NAST_TENANT_PREFIX_PROP_NAME
+     * The format of the nast tenant id is XY, where X is determined by the configuration property NAST_TENANT_PREFIX_PROP
      * and Y is the domainId.
      *
      * Returns null if the supplied domainId is null.
@@ -1538,7 +1536,7 @@ public class DefaultUserService implements UserService {
     }
 
     private String getNastTenantPrefix() {
-        return config.getString(NAST_TENANT_PREFIX_PROP_NAME, NAST_TENANT_PREFIX_DEFAULT);
+        return identityConfig.getStaticConfig().getNastTenantPrefix();
     }
 
     private void attachRoleToUser(ClientRole role, User user) {
