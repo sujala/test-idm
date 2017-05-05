@@ -561,44 +561,6 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
     }
 
-    @Unroll
-    def "Infer tenant types on tenant based on rules: tenantName: #tenantName; tenantTypes: #tenantTypes; existinTypes: #existingTypes; expected: #expectedInferredTenantType"() {
-        given:
-        staticConfig.getNastTenantPrefix() >> "MossoCloudFS_"
-        Tenant tenant = new Tenant().with {
-            it.name = tenantName
-            it.tenantId = tenantName
-            it.types = tenantTypes
-            it
-        }
-
-        when:
-        String inferredTenantType = service.inferTenantTypeForTenant(tenant, existingTypes)
-
-        then:
-        inferredTenantType == expectedInferredTenantType
-
-        where:
-        tenantName          | tenantTypes | existingTypes                       | expectedInferredTenantType
-        // Only can set existing tenant types
-        "12345"             | [] as Set    | [] as Set                          | null
-        "MossoCloudFS_12345"| [] as Set    | [] as Set                          | null
-        "hybrid:123"        | [] as Set    | [] as Set                          | null
-        "asdf:123"          | [] as Set    | [] as Set                          | null
-
-        // Inferred rules used
-        "12345"             | [] as Set    | ["cloud"] as Set                   | "clsoud"
-        "MossoCloudFS_12345"| [] as Set    | ["cloud","managed_hosting","files"] as Set  | "files"
-        "hybrid:123"        | [] as Set    | ["cloud", "files"] as Set          | "managed_hosting"
-        "asdf:12345"        | [] as Set    | ["cloud","asdf","files"] as Set    | "asdf"
-
-        // Doesn't override existing
-        "12345"             | ["files"] as Set    | ["cloud"] as Set                   | "files"
-        "MossoCloudFS_12345"| ["cloud"] as Set    | ["cloud","managed_hosting","files"] as Set  | "cloud"
-        "hybrid:123"        | ["files"] as Set    | ["cloud", "files"] as Set          | "files"
-        "asdf:12345"        | ["files"] as Set    | ["cloud","asdf","files"] as Set    | "files"
-    }
-
     /**
      * Verify the inferring logic for determining tenant types for tenants works as expected
      * if a tenant does not have a tenant type associated with it and the feature flag `feature.infer.default.tenant.type` the application must infer the tenant type as follows:
