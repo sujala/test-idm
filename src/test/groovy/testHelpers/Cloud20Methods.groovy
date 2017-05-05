@@ -19,6 +19,7 @@ import org.apache.commons.lang.RandomStringUtils
 import org.apache.commons.lang.StringUtils
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.AuthenticationRequest
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
@@ -95,7 +96,7 @@ class Cloud20Methods {
         resource = ensureGrizzlyStarted("classpath:app-config.xml");
     }
 
-    def authenticate(username, password, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def authenticate(String username, String password, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         def credentials = v2Factory.createPasswordAuthenticationRequest(username, password)
         resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(credentials).post(ClientResponse)
@@ -346,9 +347,9 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(request).post(ClientResponse)
     }
 
-    def authenticatePassword(String username, String password=DEFAULT_PASSWORD) {
+    def authenticatePassword(String username, String password=DEFAULT_PASSWORD, String applyRcnRoles = null) {
         initOnUse()
-        authenticate(v2Factory.createPasswordAuthenticationRequest(username, password))
+        authenticate(v2Factory.createPasswordAuthenticationRequest(username, password), applyRcnRoles)
     }
 
     def authenticateForToken(username, String password=DEFAULT_PASSWORD) {
@@ -373,9 +374,13 @@ class Cloud20Methods {
         authenticate(v2Factory.createApiKeyAuthenticationRequestWithScope(username, apiKey, scope))
     }
 
-    def authenticate(request) {
+    def authenticate(AuthenticationRequest request, String applyRcnRoles = null) {
         initOnUse()
-        resource.path(path20).path(TOKENS).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
+        def queryParams = new MultivaluedMapImpl()
+        if (applyRcnRoles != null) {
+            queryParams.add("apply_rcn_roles", applyRcnRoles)
+        }
+        resource.path(path20).path(TOKENS).queryParams(queryParams).accept(APPLICATION_XML).type(APPLICATION_XML).entity(request).post(ClientResponse)
     }
 
     def samlAuthenticate(request, accept = APPLICATION_XML, contentType = APPLICATION_XML) {

@@ -148,7 +148,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
      */
     def "NAST tenant for v2.0 user call is prefixed with the value of the configuration property nast.tenant.prefix"() {
         def randomPrefix = RandomStringUtils.randomAscii(10)
-        staticIdmConfiguration.setProperty(DefaultUserService.NAST_TENANT_PREFIX_PROP_NAME, randomPrefix)
+        staticIdmConfiguration.setProperty(IdentityConfig.NAST_TENANT_PREFIX_PROP, randomPrefix)
 
         when: "create user in v20 one user call"
         def username = "v20Username" + testUtils.getRandomUUID()
@@ -1310,7 +1310,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_PROP, true)
         def domainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId()
-        reloadableConfiguration.getProperty(DefaultUserService.NAST_TENANT_PREFIX_PROP_NAME)
         def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             if (useOneCall) {
                 it.secretQA = v2Factory.createSecretQA()

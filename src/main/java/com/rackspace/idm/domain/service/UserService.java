@@ -197,7 +197,7 @@ public interface UserService {
     void expiredFederatedUsersDeletion(FederatedUsersDeletionRequest request, FederatedUsersDeletionResponse response);
 
     /**
-     * The format of the nast tenant id is XY, where X is determined by the configuration property NAST_TENANT_PREFIX_PROP_NAME
+     * The format of the nast tenant id is XY, where X is determined by the configuration property NAST_TENANT_PREFIX_PROP
      * and Y is the domainId.
      *
      * Returns null if the supplied domainId is null.

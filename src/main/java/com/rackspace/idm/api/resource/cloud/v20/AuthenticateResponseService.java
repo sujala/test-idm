@@ -24,6 +24,18 @@ public interface AuthenticateResponseService {
     Response.ResponseBuilder buildAuthResponseForAuthenticate(AuthResponseTuple authResponseTuple, AuthenticationRequest authenticationRequest);
 
     /**
+     * Builds the AuthenticateResponse object for a successful authenticate request while applying rcn role logic.
+     * This method takes the AuthResponseTuple
+     * data for the given request and the AuthenticationRequest object. Note, this method assumes that the user in the
+     * authResponseTuple has successfully authenticated.
+     *
+     * @param authResponseTuple
+     * @param authenticationRequest
+     * @return
+     */
+    Response.ResponseBuilder buildAuthResponseForAuthenticateApplyRcn(AuthResponseTuple authResponseTuple, AuthenticationRequest authenticationRequest);
+
+    /**
      * Builds the AuthenticateResponse object for a given RackerScopeAccess
      *
      * @param sa

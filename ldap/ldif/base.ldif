@@ -1377,6 +1377,50 @@ description: Role to simply grant user access to tenant
 rsPropagate: FALSE
 rsWeight: 100
 
+dn: rsId=ee3ee1fb9be046ed969b93a1c45bbaca,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:rcn-cloud
+description: Test RCN Role for cloud tenant type
+rsType: RCN
+rsTenantType: cloud
+rsAssignment: GLOBAL
+rsWeight: 500
+
+dn: rsId=aa981813224e4d56ab5eb2b02b62b303,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:rcn-files
+description: Test RCN Role for files tenant type
+rsType: RCN
+rsTenantType: files
+rsAssignment: GLOBAL
+rsWeight: 500
+
+dn: rsId=c87fa82f7a594c40b028aa312fd20019,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:rcn-managed_hosting
+description: Test RCN Role for managed_hosting tenant type
+rsType: RCN
+rsTenantType: managed_hosting
+rsAssignment: GLOBAL
+rsWeight: 500
+
+dn: rsId=1d7be4300e2141a5b49b66397ac8a145,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:rcn-all
+description: Test RCN Role for all tenant type
+rsType: RCN
+rsTenantType: *
+rsAssignment: GLOBAL
+rsWeight: 500
+
 dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicati
  ons,o=rackspace,dc=rackspace,dc=com
 objectClass: rsContainer
@@ -4181,6 +4225,11 @@ dn: cn=rcn,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: rsTenantTypeObject
 cn: rcn
 description: rcn tenant type
+
+dn: cn=*,ou=tenantTypes,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: rsTenantTypeObject
+cn: *
+description: all tenant type
 
 dn: rsId=132885,ou=tenants,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: tenant

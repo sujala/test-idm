@@ -122,6 +122,12 @@ class Cloud20Utils {
         return response.getEntity(AuthenticateResponse).value
     }
 
+    def authenticateApplyRcnRoles(String username, String applyRcnRolesParam = "true", password=DEFAULT_PASSWORD) {
+        def response = methods.authenticatePassword(username, password, applyRcnRolesParam)
+        assert (response.status == SC_OK)
+        return response.getEntity(AuthenticateResponse).value
+    }
+
     def authenticate(User user, password=DEFAULT_PASSWORD) {
         return authenticate(user.username, password)
     }

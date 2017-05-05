@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -309,6 +310,14 @@ public class DefaultDomainService implements DomainService {
     @Override
     public String getDomainUUID() {
         return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    @Override
+    public Iterable<Domain> findDomainsWithRcn(String rcn) {
+        if (StringUtils.isEmpty(rcn)) {
+            return Collections.emptyList();
+        }
+        return domainDao.findDomainsWithRcn(rcn);
     }
 
     private List<User> filterSuperAdmins(Iterable<User> userList) {

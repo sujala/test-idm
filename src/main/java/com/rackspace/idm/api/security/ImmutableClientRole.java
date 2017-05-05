@@ -3,8 +3,11 @@ package com.rackspace.idm.api.security;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.domain.entity.ClientRole;
+import org.apache.commons.collections4.CollectionUtils;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A wrapper around a client role to make it immutable. Did not simply create an interface w/ read only methods because
@@ -13,6 +16,12 @@ import java.util.HashSet;
  * immutability is critical to avoid poisoning the cache.
  */
 public class ImmutableClientRole {
+
+    private ClientRole innerClone;
+
+    public ImmutableClientRole(ClientRole innerRole) {
+        innerClone = cloneClientRole(innerRole);
+    }
 
     public String getAssignmentType() {
         return innerClone.getAssignmentType();
@@ -26,14 +35,8 @@ public class ImmutableClientRole {
         return innerClone.getAssignmentTypeAsEnum();
     }
 
-    public HashSet<String> getTenantTypes() {
-        return innerClone.getTenantTypes();
-    }
-
-    private ClientRole innerClone;
-
-    public ImmutableClientRole(ClientRole innerRole) {
-        innerClone = cloneClientRole(innerRole);
+    public Set<String> getTenantTypes() {
+        return Collections.unmodifiableSet(innerClone.getTenantTypes());
     }
 
     public String getUniqueId() {

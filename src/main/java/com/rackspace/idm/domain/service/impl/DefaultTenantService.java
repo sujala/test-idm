@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
@@ -21,11 +22,14 @@ import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +38,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.rackspace.idm.GlobalConstants.MANAGED_HOSTING_TENANT_PREFIX;
 
 @Component
 public class DefaultTenantService implements TenantService {
@@ -77,6 +84,9 @@ public class DefaultTenantService implements TenantService {
     @Lazy
     @Autowired
     private AtomHopperClient atomHopperClient;
+
+    @Autowired
+    private TenantTypeService tenantTypeService;
 
     @Autowired
     FederatedUserDao federatedUserDao;
@@ -289,6 +299,195 @@ public class DefaultTenantService implements TenantService {
             }
         }
         return userTenantRoles;
+    }
+
+
+    /**
+     * Get the effective tenant roles for a user when applying RCN rules. The application of RCN rules does the following:
+     * 1. All non-RCN global roles are assigned to all tenants within the user's domain
+     * 2. All RCN assigned roles are matched against all tenants in all domains within the user's RCN to determine on
+     * which tenants the user will gain that role.
+     *
+     * Note - this is NOT efficient when a user has an RCN role as it will cause the same domain to be looked up again
+     * as well as all tenants on which the user will gain a role to be looked up multiple times. This will need to be
+     * optimized prior to RCN roles being in widespread use.
+     *
+     * @param user
+     * @return
+     */
+    private List<TenantRole> getEffectiveTenantRolesForUserApplyRcnRoles(BaseUser user) {
+        List<TenantRole> initialRoles = getTenantRolesForUserPerformant(user); //returns full populated roles
+
+        // We'll always need the user's domain to apply the RCN logic so retrieve it from the getgo
+        String domainId = user.getDomainId();
+        Domain domain = domainService.getDomain(domainId);
+        if (domain == null) {
+            /*
+             Only possible w/ data referential integrity issues. Just return initial roles since without a domain can't
+             apply any RCN logic
+             */
+            return initialRoles;
+        }
+
+        // Determine all RCN Roles the user has assigned
+        Map<ImmutableClientRole, TenantRole> rcnRolesAssigned = new LinkedHashMap<>();
+        List<TenantRole> nonRcnRolesAssigned = new ArrayList<TenantRole>();
+        for (TenantRole initialRole : initialRoles) {
+            ImmutableClientRole clientRole = applicationService.getCachedClientRoleById(initialRole.getRoleRsId());
+            if (clientRole != null) {
+                if (clientRole.getRoleType() == RoleTypeEnum.RCN) {
+                    rcnRolesAssigned.put(clientRole, initialRole);
+                } else {
+                    nonRcnRolesAssigned.add(initialRole);
+                }
+            }
+        }
+
+        // If the user has an RCN role assigned we'll need to perform tenant type matching so look up all tenants within RCN
+        List<Tenant> rcnTenants = new ArrayList<>();
+        if (MapUtils.isNotEmpty(rcnRolesAssigned)) {
+            rcnTenants = calculateRcnTenantsForRoleMatching(domain);
+        }
+
+        // Loop over each RCN role assigned to user and apply across all tenants
+        for (Map.Entry<ImmutableClientRole, TenantRole> rcnEntry : rcnRolesAssigned.entrySet()) {
+            ImmutableClientRole clientRole = rcnEntry.getKey();
+            TenantRole tenantRole = rcnEntry.getValue();
+
+            Set<String> roleTenantTypes = clientRole.getTenantTypes();
+
+            for (Tenant rcnTenant : rcnTenants) {
+                Set<String> tenantTenantTypes = rcnTenant.getTypes();
+                // If role matches tenant, add tenant to tenantRole tenant list
+                if (roleTenantTypes.contains("*") 
+                        || CollectionUtils.isNotEmpty(CollectionUtils.intersection(roleTenantTypes, tenantTenantTypes))) {
+                    tenantRole.getTenantIds().add(rcnTenant.getTenantId());
+                }
+            }
+        }
+
+        // Loop over non-RCN global roles assigned to user and apply to all domain tenants
+        String[] domainTenants = domain.getTenantIds();
+        if (!ArrayUtils.isEmpty(domainTenants)) {
+            for (TenantRole tenantRole : nonRcnRolesAssigned) {
+                // Only apply to globally assigned roles
+                if (CollectionUtils.isEmpty(tenantRole.getTenantIds())) {
+                    for (String tenantId : domainTenants) {
+                        tenantRole.getTenantIds().add(tenantId);
+                    }
+                }
+            }
+        }
+
+        /*
+         Only "keep" roles which were assigned a tenant. This adds a potential edge case for users that belong to a
+         domain that does not have any tenant. In this case, the user will not have an identity user classification role
+         as those are always globally assigned and are never RCN roles. This is as designed and systems affected by this
+          should submit a new query with apply_rcn_roles=false to retried the "un-tenantized" list of rcn roles.
+         */
+
+        List<TenantRole> finalRoles = new ArrayList<TenantRole>();
+        for (TenantRole tenantRole : rcnRolesAssigned.values()) {
+            if (CollectionUtils.isNotEmpty(tenantRole.getTenantIds())) {
+                finalRoles.add(tenantRole);
+            }
+        }
+        for (TenantRole tenantRole : nonRcnRolesAssigned) {
+            if (CollectionUtils.isNotEmpty(tenantRole.getTenantIds())) {
+                finalRoles.add(tenantRole);
+            }
+        }
+
+        return finalRoles;
+    }
+
+    /**
+     * Determines the tenants within the domain's RCN and prepares them for matching against RCN roles. If the domain
+     * does not have an RCN, includes just the domain's tenants.
+     *
+     * @param domain
+     * @return
+     */
+    private List<Tenant> calculateRcnTenantsForRoleMatching(Domain domain) {
+        List<Tenant> rcnTenants = new ArrayList<>();
+
+        List<Domain> domainsToApply = new ArrayList<>();
+        if (StringUtils.isNotBlank(domain.getRackspaceCustomerNumber())) {
+            Iterable<Domain> domains = domainService.findDomainsWithRcn(domain.getRackspaceCustomerNumber());
+            domainsToApply.addAll(IteratorUtils.toList(domains.iterator()));
+        } else {
+            // Always search over user's domain even if RCN attribute is blank
+            domainsToApply.add(domain);
+        }
+
+        // Retrieve all the tenant types to perform matching
+        PaginatorContext<TenantType> tenantTypes = tenantTypeService.listTenantTypes(0, 999);
+        List<TenantType> typeEntities = tenantTypes.getValueList();
+        Set<String> types =typeEntities.stream().map(TenantType::getName).collect(Collectors.toSet());
+
+        // Retrieve all the tenants within these domains
+        for (Domain myDomain : domainsToApply) {
+            // Retrieve all the tenants in the domains
+            String[] tenantIds = myDomain.getTenantIds();
+            for (String tenantId : tenantIds) {
+                Tenant tenant = getTenant(tenantId);
+                if (tenant != null) {
+                    setInferredTenantTypeOnTenantIfNecessary(tenant, types);
+                    rcnTenants.add(tenant);
+                }
+            }
+        }
+        return rcnTenants;
+    }
+
+    /**
+     * Update the provided tenant's tenant types as appropriate based on infer rules. No-Op if tenant already has
+     * one or more tenant types.
+     *
+     * @param tenant
+     * @param existingTenantTypes
+     */
+    private void setInferredTenantTypeOnTenantIfNecessary(Tenant tenant, Set<String> existingTenantTypes) {
+        if (identityConfig.getReloadableConfig().inferTenantTypeForTenant()
+                && CollectionUtils.isEmpty(tenant.getTypes())) {
+            String inferredTenantType = inferTenantTypeForTenantId(tenant.getTenantId(), existingTenantTypes);
+            if (StringUtils.isNotBlank(inferredTenantType)) {
+                tenant.getTypes().add(inferredTenantType);
+            }
+        }
+    }
+
+    private String inferTenantTypeForTenantId(String tenantId, Set<String> existingTenantTypes) {
+        if (existingTenantTypes.contains(GlobalConstants.TENANT_TYPE_CLOUD)) {
+            try {
+                Integer.parseInt(tenantId);
+                return GlobalConstants.TENANT_TYPE_CLOUD;
+            } catch (NumberFormatException ex) {
+                // eat. We're just validating whether is a parsable int
+            }
+        }
+
+        if (tenantId.startsWith(identityConfig.getStaticConfig().getNastTenantPrefix())
+                && existingTenantTypes.contains(GlobalConstants.TENANT_TYPE_FILES)) {
+            return GlobalConstants.TENANT_TYPE_FILES;
+        }
+
+        if (tenantId.startsWith(MANAGED_HOSTING_TENANT_PREFIX)
+                && existingTenantTypes.contains(GlobalConstants.TENANT_TYPE_MANAGED_HOSTING)) {
+            return GlobalConstants.TENANT_TYPE_MANAGED_HOSTING;
+        }
+
+        /*
+         If prefix (up till first ':') matches an existing tenant type, use that as tenant type. TenantId have at least
+         2 parts for inferring to work so 'asf:' would not attempt to infer 'asf' as a tenant type. However, it would
+         for 'asf:a'
+          */
+        String[] prefixes = tenantId.split(":");
+        if (prefixes.length >= 2 && existingTenantTypes.contains(prefixes[0])) {
+            return prefixes[0];
+        }
+
+        return null;
     }
 
     /**
@@ -733,6 +932,12 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public List<TenantRole> getTenantRolesForUserApplyRcnRoles(BaseUser user) {
+        return getEffectiveTenantRolesForUserApplyRcnRoles(user);
+    }
+
+
+    @Override
     public List<TenantRole> getTenantRolesForUserPerformant(BaseUser user) {
         // Get the full set of tenant roles for the user
         List<TenantRole> tenantRoles = getEffectiveTenantRolesForUser(user);
@@ -743,7 +948,6 @@ public class DefaultTenantService implements TenantService {
             if (tenantRole != null) {
                 ImmutableClientRole cRole = this.applicationService.getCachedClientRoleById(tenantRole.getRoleRsId());
                 if (cRole != null) {
-                    //TODO: If the cRole doesn't exist, ignore it as if the user doesn't have it (don't return in list)
                     tenantRole.setName(cRole.getName());
                     tenantRole.setDescription(cRole.getDescription());
                     tenantRole.setPropagate(cRole.getPropagate());

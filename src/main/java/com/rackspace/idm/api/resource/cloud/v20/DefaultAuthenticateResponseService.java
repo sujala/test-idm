@@ -80,6 +80,15 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
 
     @Override
     public Response.ResponseBuilder buildAuthResponseForAuthenticate(AuthResponseTuple authResponseTuple, AuthenticationRequest authenticationRequest) {
+        return buildAuthResponseForAuthenticateInternal(authResponseTuple, authenticationRequest, false);
+    }
+
+    @Override
+    public Response.ResponseBuilder buildAuthResponseForAuthenticateApplyRcn(AuthResponseTuple authResponseTuple, AuthenticationRequest authenticationRequest) {
+        return buildAuthResponseForAuthenticateInternal(authResponseTuple, authenticationRequest, true);
+    }
+
+    private Response.ResponseBuilder buildAuthResponseForAuthenticateInternal(AuthResponseTuple authResponseTuple, AuthenticationRequest authenticationRequest, boolean applyRcnRoles) {
 
         // Load the domain as the first step in building the auth response.
         // Any subsequent use of the domain should be through the cached version in the authenticationContext
@@ -96,7 +105,12 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         * Common case will be a successful auth, so get the service catalog assuming the user has access to specified tenant.
         * The user would have successfully authenticated prior to reaching this point
         */
-        ServiceCatalogInfo scInfo = scopeAccessService.getServiceCatalogInfo(authResponseTuple.getUser());
+        ServiceCatalogInfo scInfo;
+        if (applyRcnRoles) {
+            scInfo = scopeAccessService.getServiceCatalogInfoApplyRcnRoles(authResponseTuple.getUser());
+        } else {
+            scInfo = scopeAccessService.getServiceCatalogInfo(authResponseTuple.getUser());
+        }
 
         boolean restrictingAuthByTenant = isUserRestrictingAuthByTenant(authenticationRequest);
         Tenant tenantInRequest = null;

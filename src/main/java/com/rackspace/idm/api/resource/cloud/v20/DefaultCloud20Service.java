@@ -1097,6 +1097,15 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
+        return authenticateInternal(httpHeaders, authenticationRequest, false);
+    }
+
+    public Response.ResponseBuilder authenticateApplyRcnRoles(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
+        return authenticateInternal(httpHeaders, authenticationRequest, true);
+    }
+
+
+    public Response.ResponseBuilder authenticateInternal(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, boolean applyRcnRoles) {
         /*
          TODO: Refactor this method. It's getting messy. Wait till after MFA though to avoid making it too difficult to follow the mfa changes
         */
@@ -1186,7 +1195,11 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-            return authenticateResponseService.buildAuthResponseForAuthenticate(authResponseTuple, authenticationRequest);
+            if (applyRcnRoles) {
+                return authenticateResponseService.buildAuthResponseForAuthenticateApplyRcn(authResponseTuple, authenticationRequest);
+            } else {
+                return authenticateResponseService.buildAuthResponseForAuthenticate(authResponseTuple, authenticationRequest);
+            }
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }

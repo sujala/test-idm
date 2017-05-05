@@ -66,6 +66,16 @@ public interface TenantService {
      */
     List<TenantRole> getTenantRolesForUserPerformant(BaseUser user);
 
+    /**
+     * Retrieves tenant roles assigned to the user fully populated based on information in associated client roles. The
+     * client role information is cached. The application of rcn roles means all globally assigned non-rcn roles are
+     * returned as tenant assigned roles (against all tenants in user's domain).
+     *
+     * @param user
+     * @return
+     */
+    List<TenantRole> getTenantRolesForUserApplyRcnRoles(BaseUser user);
+
     Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user);
 
     List<Tenant> getTenantsForUserByTenantRoles(BaseUser user);
