@@ -32,7 +32,7 @@ class TestGetDomain(base.TestBaseV2):
 
     def test_get_domain(self):
         domain_id = self.create_domain()
-        resp = self.service_admin_client.get_domain(domain_id=domain_id)
+        resp = self.identity_admin_client.get_domain(domain_id=domain_id)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(
             domain_id, resp.json()[const.RAX_AUTH_DOMAIN][const.ID])
