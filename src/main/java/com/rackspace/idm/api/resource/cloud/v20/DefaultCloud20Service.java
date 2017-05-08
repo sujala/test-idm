@@ -3478,6 +3478,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder addTenantType(UriInfo uriInfo, String authToken, TenantType tenantType) {
         try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
             tenantTypeService.createTenantType(tenantTypeConverter.fromTenantType(tenantType));
             UriBuilder requestUriBuilder = uriInfo.getRequestUriBuilder();
@@ -3491,6 +3492,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getTenantType(UriInfo uriInfo, String authToken, String tenantTypeName) {
         try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
             TenantType tenantType = tenantTypeConverter.toTenantType(tenantTypeService.checkAndGetTenantType(tenantTypeName));
             return Response.ok().entity(tenantType);
@@ -3502,6 +3504,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listTenantTypes(UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
         try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
             PaginatorContext<com.rackspace.idm.domain.entity.TenantType> tenantTypeContext = tenantTypeService.listTenantTypes(marker, limit);
             TenantTypes tenantTypes = tenantTypeConverter.toTenantType(tenantTypeContext.getValueList());
@@ -3516,6 +3519,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteTenantType(String authToken, String tenantTypeId) {
         try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.SERVICE_ADMIN);
             com.rackspace.idm.domain.entity.TenantType tenantType = tenantTypeService.checkAndGetTenantType(tenantTypeId);
             tenantTypeService.deleteTenantType(tenantType);

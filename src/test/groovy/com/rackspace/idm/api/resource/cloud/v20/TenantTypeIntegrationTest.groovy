@@ -407,4 +407,105 @@ class TenantTypeIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE  | _
         MediaType.APPLICATION_JSON_TYPE | _
     }
+
+    @Unroll
+    def "tenantType service can not be consumed by invalid token"() {
+        given:
+        def name = getRandomUUID("name")
+        def token = "invalidToken"
+        TenantType tenantType = v2Factory.createTenantType(name, "description")
+
+        when:
+        def response = cloud20.addTenantType(token, tenantType, contentType, contentType)
+
+        then:
+        response.status == SC_UNAUTHORIZED
+
+        when:
+        response = cloud20.deleteTenantType(token, name)
+
+        then:
+        response.status == SC_UNAUTHORIZED
+
+        when:
+        response = cloud20.listTenantTypes(token, contentType)
+
+        then:
+        response.status == SC_UNAUTHORIZED
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "tenantType service can not be consumed by revoked token"() {
+        given:
+        def name = getRandomUUID("name")
+        def token = utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
+        utils.revokeToken(token)
+        TenantType tenantType = v2Factory.createTenantType(name, "description")
+
+        when:
+        def response = cloud20.addTenantType(token, tenantType, contentType, contentType)
+
+        then:
+        response.status == SC_UNAUTHORIZED
+
+        when:
+        response = cloud20.deleteTenantType(token, name)
+
+        then:
+        response.status == SC_UNAUTHORIZED
+
+        when:
+        response = cloud20.listTenantTypes(token, contentType)
+
+        then:
+        response.status == SC_UNAUTHORIZED
+
+        where:
+        contentType                     | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "tenantType service can not be consumed by valid token that has been modified"() {
+        given:
+        def name = getRandomUUID("name")
+        def token = utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD)
+        if (truncate) {
+            token = token[0..-2]
+        } else {
+            token = token + 'a'
+        }
+        TenantType tenantType = v2Factory.createTenantType(name, "description")
+
+        when:
+        def response = cloud20.addTenantType(token, tenantType, contentType, contentType)
+
+        then:
+        response.status == SC_UNAUTHORIZED
+
+        when:
+        response = cloud20.deleteTenantType(token, name)
+
+        then:
+        response.status == SC_UNAUTHORIZED
+
+        when:
+        response = cloud20.listTenantTypes(token, contentType)
+
+        then:
+        response.status == SC_UNAUTHORIZED
+
+        where:
+        contentType                     | truncate
+        MediaType.APPLICATION_XML_TYPE  | false
+        MediaType.APPLICATION_JSON_TYPE | false
+        MediaType.APPLICATION_XML_TYPE  | true
+        MediaType.APPLICATION_JSON_TYPE | true
+    }
 }
