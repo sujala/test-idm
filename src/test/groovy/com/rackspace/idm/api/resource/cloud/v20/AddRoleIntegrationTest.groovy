@@ -7,7 +7,6 @@ import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
-import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
@@ -16,11 +15,13 @@ import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
@@ -436,7 +437,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
             it.roleType = roleType
             if (roleType == RoleTypeEnum.RCN) {
                 it.types = new Types().with {
-                    it.type = ["abc"]
+                    it.type = ["cloud"]
                     it
                 }
             }
@@ -461,10 +462,10 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         true      | null
         false     | null
         true      | RoleTypeEnum.STANDARD
-        false      | RoleTypeEnum.STANDARD
+        false     | RoleTypeEnum.STANDARD
         null      | RoleTypeEnum.STANDARD
         true      | RoleTypeEnum.RCN
-        false      | RoleTypeEnum.RCN
+        false     | RoleTypeEnum.RCN
         null      | RoleTypeEnum.RCN
     }
 
@@ -517,6 +518,36 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         administratorRole | _
         "identity:user-manage" | _
         "timbuktoo" | _
+    }
+
+    @Unroll
+    def "Any tenant types specified in 'Create Role' service must match an existing tenant type: request=#requestContentType, accept=#acceptContentType" () {
+        given:
+        def serviceId = Constants.IDENTITY_SERVICE_ID
+        def name = getRandomUUID("role")
+        Types types = new Types().with {
+            it.type = ["cloud", "doesnotexist"]
+            it
+        }
+        def role = v2Factory.createRole().with {
+            it.serviceId = serviceId
+            it.name = name
+            it.roleType = RoleTypeEnum.RCN
+            it.types = types
+            it
+        }
+
+        when: "If any provided tenant type does not match"
+        def response = cloud20.createRole(utils.getServiceAdminToken(), role, acceptContentType, requestContentType)
+
+        then: "a 400 must be returned"
+        String errMsg = String.format(Validator20.ERROR_TENANT_TYPE_WAS_NOT_FOUND, "doesnotexist");
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, errMsg)
+
+        where:
+        requestContentType              | acceptContentType
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
     }
 
     def deleteUserQuietly(user) {

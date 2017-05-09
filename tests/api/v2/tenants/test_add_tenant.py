@@ -155,5 +155,5 @@ class TestAddTenant(base.TestBaseV2):
         for id in self.tenant_ids:
             self.identity_admin_client.delete_tenant(tenant_id=id)
         for name in self.tenant_type_ids:
-            self.identity_admin_client.delete_tenant_type(name=name)
+            self.service_admin_client.delete_tenant_type(name=name)
         super(TestAddTenant, self).tearDown()

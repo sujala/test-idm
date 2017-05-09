@@ -7,6 +7,7 @@ from tests.api.v2.schema import roles as roles_json
 from tests.api.v2.models import factory
 
 from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt
@@ -44,9 +45,15 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
     def setUpClass(cls):
         super(TestRoleAddWTypeAndTenantTypes, cls).setUpClass()
 
+    def create_tenant_type(self, name):
+        request_object = requests.TenantType(name, 'description')
+        self.service_admin_client.add_tenant_type(tenant_type=request_object)
+        self.tenant_type_ids.append(name.lower())
+
     def setUp(self):
         super(TestRoleAddWTypeAndTenantTypes, self).setUp()
         self.role_ids = []
+        self.tenant_type_ids = []
         self.add_schema_fields = [const.RAX_AUTH_ROLE_TYPE]
 
     def create_role(self, add_role_obj):
@@ -108,3 +115,5 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
     def tearDown(self):
         for id_ in self.role_ids:
             self.identity_admin_client.delete_role(role_id=id_)
+        for name in self.tenant_type_ids:
+            self.service_admin_client.delete_tenant_type(name=name)
