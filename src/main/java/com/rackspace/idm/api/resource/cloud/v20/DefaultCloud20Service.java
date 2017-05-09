@@ -3030,19 +3030,19 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateDomainPasswordPolicy(HttpHeaders httpHeaders, String authToken, String domainId, String policy) {
         try {
-            //verify token exists and valid
+            // Verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
-            //verify user has appropriate role
+            // Verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
 
             Domain domain = domainService.getDomain(domainId); // Don't do checkandget cause want to return 403 if domain doesn't exist
             IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
-            if (callerType == null) {
-                throw new ForbiddenException("Unknown caller type");
+            if (callerType == null || domain == null) {
+                throw new ForbiddenException("Forbidden.");
             } else if (callerType.isDomainBasedAccessLevel()) {
                 BaseUser user = requestContextHolder.getRequestContext().getEffectiveCaller();
-                if (domain == null || !domain.getDomainId().equalsIgnoreCase(user.getDomainId())) {
+                if (!domain.getDomainId().equalsIgnoreCase(user.getDomainId())) {
                     throw new ForbiddenException("Forbidden.");
                 }
             }
@@ -3078,19 +3078,19 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder deleteDomainPasswordPolicy(HttpHeaders httpHeaders, String authToken, String domainId) {
         try {
-            //verify token exists and valid
+            // Verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
-            //verify user has appropriate role
+            // Verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
 
+            Domain domain = domainService.getDomain(domainId);
             IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
-            if (callerType == null) {
-                throw new ForbiddenException("Unknown caller type");
+            if (callerType == null || domain == null) {
+                throw new ForbiddenException("Forbidden.");
             } else if (callerType.isDomainBasedAccessLevel()) {
-                Domain domain = domainService.getDomain(domainId);
                 BaseUser user = requestContextHolder.getRequestContext().getEffectiveCaller();
-                if (domain == null || !domain.getDomainId().equalsIgnoreCase(user.getDomainId())) {
+                if (!domain.getDomainId().equalsIgnoreCase(user.getDomainId())) {
                     throw new ForbiddenException("Forbidden.");
                 }
             }
@@ -3106,19 +3106,19 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder getDomainPasswordPolicy(HttpHeaders httpHeaders, String authToken, String domainId) {
         try {
-            //verify token exists and valid
+            // Verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
-            //verify user has appropriate role
+            // Verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
 
             Domain domain = domainService.getDomain(domainId);
             IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
-            if (callerType == null) {
-                throw new ForbiddenException("Unknown caller type");
+            if (callerType == null || domain == null) {
+                throw new ForbiddenException("Forbidden.");
             } else if (callerType.isDomainBasedAccessLevel()) {
                 BaseUser user = requestContextHolder.getRequestContext().getEffectiveCaller();
-                if (domain == null || !domain.getDomainId().equalsIgnoreCase(user.getDomainId())) {
+                if (!domain.getDomainId().equalsIgnoreCase(user.getDomainId())) {
                     throw new ForbiddenException("Forbidden.");
                 }
             }
@@ -3172,7 +3172,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             user.setUserPassword(changePasswordCredentials.getNewPassword());
             user.setPassword(changePasswordCredentials.getNewPassword());
-            user.setEmail(UUID.randomUUID().toString() + "@rackspace.com");
             this.userService.updateUser(user);
 
             return Response.noContent().header(GlobalConstants.X_USER_NAME, user.getUsername());

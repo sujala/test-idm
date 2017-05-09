@@ -52,6 +52,15 @@ public class PasswordPolicy {
     @JsonIgnore
     private Duration passwordDurationAsDuration;
 
+    private static ObjectMapper mapper;
+
+    static {
+        mapper = new ObjectMapper().registerModule(new Jdk8Module()).registerModule(new JavaTimeModule());
+        mapper.enable(DeserializationFeature.UNWRAP_ROOT_VALUE);
+        mapper.enable(SerializationFeature.WRAP_ROOT_VALUE);
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
+
     /**
      * Creates a policy with the provided values. Either (or both) arguments may be null.
      *
@@ -85,7 +94,7 @@ public class PasswordPolicy {
             return null;
         }
         try {
-            PasswordPolicy policy = getMapper().readValue(json, PasswordPolicy.class);
+            PasswordPolicy policy = mapper.readValue(json, PasswordPolicy.class);
             return policy;
         } catch (Exception e) {
             if (e.getCause() instanceof InvalidPasswordPolicyException) {
@@ -113,16 +122,7 @@ public class PasswordPolicy {
     }
 
     public String toJson() throws JsonProcessingException {
-        String json = getMapper().writeValueAsString(this);
-
-//        if (passwordDuration != null) {
-//            String rawDuration = passwordDuration.toString();
-//            if (json.contains(rawDuration)) {
-//                String formattedDuration = getDurationAsString();
-//                json = json.replace(rawDuration, formattedDuration);
-//            }
-//        }
-
+        String json = mapper.writeValueAsString(this);
         return json;
     }
 
@@ -154,14 +154,5 @@ public class PasswordPolicy {
             }
         }
         return finalRep;
-    }
-
-    //TODO Can use this as a static variable
-    private static ObjectMapper getMapper() {
-        ObjectMapper mapper = new ObjectMapper().registerModule(new Jdk8Module()).registerModule(new JavaTimeModule());
-        mapper.enable(DeserializationFeature.UNWRAP_ROOT_VALUE);
-        mapper.enable(SerializationFeature.WRAP_ROOT_VALUE);
-        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        return mapper;
     }
 }
