@@ -45,6 +45,10 @@ class Constants {
     static def IDENTITY_TENANT_ACCESS_ROLE_ID = "51ce91246bfc4a5982f77b55fe786fa1"
     static def IDENTITY_RCN_CLOUD_TENANT_ROLE_ID = "ee3ee1fb9be046ed969b93a1c45bbaca"
     static def IDENTITY_RCN_CLOUD_TENANT_ROLE_NAME = "identity:rcn-cloud"
+    static def IDENTITY_RCN_FILES_TENANT_ROLE_ID = "aa981813224e4d56ab5eb2b02b62b303"
+    static def IDENTITY_RCN_FILES_TENANT_ROLE_NAME = "identity:rcn-files"
+    static def IDENTITY_RCN_MANAGED_HOSTING_TENANT_ROLE_ID = "c87fa82f7a594c40b028aa312fd20019"
+    static def IDENTITY_RCN_MANAGED_HOSTING_TENANT_ROLE_NAME = "identity:rcn-managed_hosting"
     static def IDENTITY_RCN_ALL_TENANT_ROLE_ID = "1d7be4300e2141a5b49b66397ac8a145"
     static def IDENTITY_RCN_ALL_TENANT_ROLE_NAME = "identity:rcn-all"
 
