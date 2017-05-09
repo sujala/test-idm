@@ -91,7 +91,7 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         null  | false
     }
 
-    def "apply_rcn_roles causes no global roles to be returned"() {
+    def "apply_rcn_roles returns no global roles and user's domain"() {
         given:
         def user = utils.createCloudAccount(utils.getIdentityAdminToken())
 
@@ -103,11 +103,14 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
             assert it.tenantId != null
         }
 
+        and: "Users domain is returned"
+        response.user.domainId == user.domainId
+
         cleanup:
         utils.deleteUserQuietly(user)
     }
 
-    def "apply_rcn_roles logic causes global roles to be returned as tenant assigned roles on all tenants in domain"() {
+    def "apply_rcn_roles logic returns global roles as tenant assigned roles on all tenants in domain"() {
         given:
         def user = utils.createCloudAccount(utils.getIdentityAdminToken())
         Tenants tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), user.domainId).getEntity(Tenants).value

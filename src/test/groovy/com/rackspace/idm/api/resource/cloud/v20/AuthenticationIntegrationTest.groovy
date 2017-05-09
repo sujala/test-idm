@@ -428,15 +428,19 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
         when: "auth v2.0"
         def response = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
+        AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
 
         then:
         response.status == 200
+        authResponse.user.domainId == domainId
 
         when: "auth v2.0 w/ tenant"
         response = cloud20.authenticateTokenAndTenant(utils.getToken(userAdmin.username), domainId)
+        authResponse = response.getEntity(AuthenticateResponse).value
 
         then:
         response.status == 200
+        authResponse.user.domainId == domainId
 
         when: "auth v1.1 api key"
         response = cloud11.authenticate(v1Factory.createUserKeyCredentials(userAdmin.username, apiKey))
