@@ -163,7 +163,7 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         utils.addRoleToUser(userInDomain1, Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID)
         AuthenticateResponse response = utils.authenticateApplyRcnRoles(userInDomain1.username)
 
-        then: "Use has files rcn role on both files tenants, but not cloud tenants"
+        then: "User has files rcn role on both files tenants, but not cloud tenants"
         response.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == filesTenant1.id} != null
         response.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == filesTenant2.id} != null
         response.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == cloudTenant1.id} == null

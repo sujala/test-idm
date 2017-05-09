@@ -30,6 +30,7 @@ import com.sun.jersey.api.client.ClientResponse
 import com.unboundid.util.Base32
 import groovy.json.JsonSlurper
 import org.apache.commons.codec.binary.StringUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.apache.http.client.utils.URLEncodedUtils
@@ -208,7 +209,7 @@ class Cloud20Utils {
         createUserWithTenants(identityAdminToken, testUtils.getRandomUUID("userAdmin"), String.valueOf(domainId))
     }
 
-    def createUserWithTenants(token, username=testUtils.getRandomUUID(), domainId=null) {
+    def createUserWithTenants(token=getIdentityAdminToken(), username=testUtils.getRandomUUID(), domainId=RandomStringUtils.randomNumeric(6)) {
         def user = factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
         user.secretQA = v1Factory.createRaxKsQaSecretQA()
         user.groups = new Groups()

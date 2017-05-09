@@ -43,6 +43,7 @@ class Constants {
     static def PURGE_TRR_ROLE_ID = "6e567515bacb4ba18a04d99915198b55"
     static def IDENTITY_ENDPOINT_RULE_ADMIN_ROLE_ID = "67f155a58ae841d28a745a99200a583a"
     static def IDENTITY_TENANT_ACCESS_ROLE_ID = "51ce91246bfc4a5982f77b55fe786fa1"
+    static def IDENTITY_TENANT_ACCESS_ROLE_NAME = "identity:tenant-access"
     static def IDENTITY_RCN_CLOUD_TENANT_ROLE_ID = "ee3ee1fb9be046ed969b93a1c45bbaca"
     static def IDENTITY_RCN_CLOUD_TENANT_ROLE_NAME = "identity:rcn-cloud"
     static def IDENTITY_RCN_FILES_TENANT_ROLE_ID = "aa981813224e4d56ab5eb2b02b62b303"
