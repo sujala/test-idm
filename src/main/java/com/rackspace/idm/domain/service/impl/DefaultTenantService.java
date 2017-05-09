@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.service.impl;
 import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
@@ -828,12 +829,22 @@ public class DefaultTenantService implements TenantService {
     @Override
     public List<TenantRole> getGlobalRolesForUser(BaseUser user) {
         if (user == null) {
-            throw new IllegalArgumentException(
-                    "User cannot be null.");
+            throw new IllegalArgumentException("User cannot be null.");
         }
         logger.debug("Getting Global Roles for user {}", user.getUniqueId());
-        Iterable<TenantRole> roles = getTenantRolesForUserNoDetail(user);
-        return getGlobalRoles(roles);
+        Iterable<TenantRole> tenantRoles = getTenantRolesForUserNoDetail(user);
+        return getGlobalRoles(tenantRoles, false);
+    }
+
+    @Override
+    public List<TenantRole> getGlobalRolesForUserApplyRcnRoles(BaseUser user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
+        }
+        logger.debug("Getting Global Roles (apply_rcn_roles=true) for user {}", user.getUniqueId());
+
+        Iterable<TenantRole> tenantRoles = getTenantRolesForUserNoDetail(user);
+        return getGlobalRoles(tenantRoles, true);
     }
 
     @Override
@@ -903,7 +914,14 @@ public class DefaultTenantService implements TenantService {
     public List<TenantRole> getGlobalRolesForUser(EndUser user, String applicationId) {
         logger.debug("Getting Global Roles");
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId);
-        return getGlobalRoles(roles);
+        return getGlobalRoles(roles, false);
+    }
+
+    @Override
+    public List<TenantRole> getGlobalRolesForUserApplyRcnRoles(EndUser user, String applicationId) {
+        logger.debug("Getting Global Roles (apply_rcn_roles=true)");
+        Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId);
+        return getGlobalRoles(roles, true);
     }
 
     @Override
@@ -1094,15 +1112,26 @@ public class DefaultTenantService implements TenantService {
         return tenantList;
     }
 
-    List<TenantRole> getGlobalRoles(Iterable<TenantRole> roles) {
+    List<TenantRole> getGlobalRoles(Iterable<TenantRole> roles, boolean applyRcnRoles) {
         List<TenantRole> globalRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
             if (role != null
                     && (role.getTenantIds() == null || role.getTenantIds().size() == 0)) {
-                ClientRole cRole = this.applicationService.getClientRoleById(role
-                        .getRoleRsId());
+                ClientRole cRole = this.applicationService.getClientRoleById(role.getRoleRsId());
+                if (cRole.getRoleType() == RoleTypeEnum.RCN) {
+                    // If 'apply_rcn_roles=true', RCN roles assigned to the user are NOT returned.
+                    if (applyRcnRoles) {
+                        continue;
+                    }
+                    role.setRoleType(RoleTypeEnum.RCN);
+                    Types types = new Types();
+                    types.getType().addAll(cRole.getTenantTypes());
+                    role.setTypes(types);
+                }
+
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
+
                 globalRoles.add(role);
             }
         }

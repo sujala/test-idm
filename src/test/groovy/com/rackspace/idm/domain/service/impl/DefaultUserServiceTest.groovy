@@ -16,13 +16,6 @@ import testHelpers.RootServiceTest
 
 import static com.rackspace.idm.Constants.*
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 12/6/12
- * Time: 12:41 PM
- * To change this template use File | Settings | File Templates.
- */
 class DefaultUserServiceTest extends RootServiceTest {
     @Shared DefaultUserService service
     @Shared FederatedUserDao mockFederatedUserDao

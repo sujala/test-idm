@@ -1,30 +1,31 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
-import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.RoleService
+import com.rackspace.idm.util.JSONReaderForRoles
 import org.apache.commons.configuration.Configuration
+import org.apache.commons.io.IOUtils
+import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
-import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
+import javax.ws.rs.core.MediaType
 
-/**
- * Created with IntelliJ IDEA.
- * User: jorge
- * Date: 11/4/13
- * Time: 1:35 PM
- * To change this template use File | Settings | File Templates.
- */
+import static com.rackspace.idm.Constants.*
+
 class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
 
     @Shared def identityAdmin, userAdmin, userManage, defaultUser
     @Shared def domainId
+    @Shared JSONReaderForRoles readerForRoles = new JSONReaderForRoles()
 
     @Autowired
     Configuration config
@@ -217,7 +218,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
 
         when: "service admin lists roles"
-        def response = cloud20.listRoles(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), Constants.IDENTITY_SERVICE_ID, null, "1000")
+        def response = cloud20.listRoles(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), IDENTITY_SERVICE_ID, null, "1000")
         def roleList = response.getEntity(RoleList).value
 
         then:
@@ -232,7 +233,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         roleList.role.find { it -> it.name == role2500.name}.id == role2500.id
 
         when: "identity admin lists roles"
-        response = cloud20.listRoles(utils.getToken(identityAdmin.username), Constants.IDENTITY_SERVICE_ID, null, "1000")
+        response = cloud20.listRoles(utils.getToken(identityAdmin.username), IDENTITY_SERVICE_ID, null, "1000")
         roleList = response.getEntity(RoleList).value
 
         then:
@@ -247,7 +248,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         roleList.role.find { it -> it.name == role2500.name}.id == role2500.id
 
         when: "user admin lists roles"
-        response = cloud20.listRoles(utils.getToken(userAdmin.username), Constants.IDENTITY_SERVICE_ID, null, "1000")
+        response = cloud20.listRoles(utils.getToken(userAdmin.username), IDENTITY_SERVICE_ID, null, "1000")
         roleList = response.getEntity(RoleList).value
 
         then:
@@ -262,7 +263,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         roleList.role.find { it -> it.name == role2500.name}.id == role2500.id
 
         when: "user manage lists roles"
-        response = cloud20.listRoles(utils.getToken(userManage.username), Constants.IDENTITY_SERVICE_ID, null, "1000")
+        response = cloud20.listRoles(utils.getToken(userManage.username), IDENTITY_SERVICE_ID, null, "1000")
         roleList = response.getEntity(RoleList).value
 
         then:
@@ -277,7 +278,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         roleList.role.find { it -> it.name == role2500.name}.id == role2500.id
 
         when: "default user lists roles"
-        def responseDefaultUser = cloud20.listRoles(utils.getToken(defaultUser.username), Constants.IDENTITY_SERVICE_ID, null, "1000")
+        def responseDefaultUser = cloud20.listRoles(utils.getToken(defaultUser.username), IDENTITY_SERVICE_ID, null, "1000")
 
         then:
         responseDefaultUser.status == 403
@@ -519,7 +520,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
 
     def "list roles returns 400 when you query with serviceId and roleId together"() {
         when:
-        def response = cloud20.listRoles(utils.getServiceAdminToken(), Constants.IDENTITY_SERVICE_ID, null, null, "roleName")
+        def response = cloud20.listRoles(utils.getServiceAdminToken(), IDENTITY_SERVICE_ID, null, null, "roleName")
 
         then:
         response.status == 400
@@ -586,6 +587,230 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         featureEnabled | _
         true           | _
         false          | _
+    }
+
+    @Unroll
+    def "Get global roles for user with RCN role using query param 'apply_rcn_roles' - apply_rcn_roles = #applyRcnRoles, size = #size, accept = #accept" () {
+        given: "A new user admin"
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        // Update domain to have an RCN
+        def domain = v2Factory.createDomain(domainId, domainId, true, null, null, "RCN-123-123-123")
+        utils.updateDomain(domainId, domain)
+
+        when: "Create new RCN role"
+        def role = v2Factory.createRole(false, RoleAssignmentEnum.GLOBAL, RoleTypeEnum.RCN, ["*"]).with {
+            it.serviceId = SERVERS_SERVICE_ID
+            it.otherAttributes = null
+            it
+        }
+        def createRoleResponse = cloud20.createRole(utils.getIdentityAdminToken(), role)
+        def roleEntity = createRoleResponse.getEntity(Role).value
+
+        then: "Assert new created RCN role"
+        createRoleResponse.status == HttpStatus.SC_CREATED
+
+        when: "Add global RCN role to user"
+        def addRoleToUserResponse = cloud20.addUserRole(utils.getIdentityAdminToken(), userAdmin.id, roleEntity.id)
+
+        then: "Assert role added to user"
+        addRoleToUserResponse.status == HttpStatus.SC_OK
+
+        when: "List user's global roles using 'apply_rcn_roles' query param"
+        def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), userAdmin.id, null, applyRcnRoles, accept)
+        def globalRoles = getRoleListEntity(userGlobalRolesResponse)
+
+        then:
+        assert globalRoles.role.find({it.id == USER_ADMIN_ROLE_ID}) != null
+
+        if (!applyRcnRoles) {
+            Role rcnRole = globalRoles.role.find({it.id == roleEntity.id})
+            assert rcnRole != null
+            assert rcnRole.roleType == RoleTypeEnum.RCN
+            assert rcnRole.types.type == ["*"]
+        }
+        globalRoles.role.size == size
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteRole(roleEntity)
+
+        where:
+        applyRcnRoles       | size | accept
+        true                | 1    | MediaType.APPLICATION_XML_TYPE
+        true                | 1    | MediaType.APPLICATION_JSON_TYPE
+        "True"              | 1    | MediaType.APPLICATION_XML_TYPE
+        "TRUE"              | 1    | MediaType.APPLICATION_XML_TYPE
+        false               | 2    | MediaType.APPLICATION_XML_TYPE
+        false               | 2    | MediaType.APPLICATION_JSON_TYPE
+        "False"             | 2    | MediaType.APPLICATION_XML_TYPE
+        "FALSE"             | 2    | MediaType.APPLICATION_XML_TYPE
+        "invalid1"          | 2    | MediaType.APPLICATION_XML_TYPE
+        "invalid~-_.!*'()," | 2    | MediaType.APPLICATION_XML_TYPE
+    }
+
+    @Unroll
+    def "Get global roles for user with RCN roles using 'serviceId' query param - serviceId = #serviceId size = #size, accept = #accept" () {
+        given: "A new user admin"
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        // Update domain to have an RCN
+        def domain = v2Factory.createDomain(domainId, domainId, true, null, null, "RCN-123-123-123")
+        utils.updateDomain(domainId, domain)
+
+        when: "Create new RCN role"
+        def role = v2Factory.createRole(false, RoleAssignmentEnum.GLOBAL, RoleTypeEnum.RCN, ["*"]).with {
+            it.serviceId = SERVERS_SERVICE_ID
+            it.otherAttributes = null
+            it
+        }
+        def createRoleResponse = cloud20.createRole(utils.getIdentityAdminToken(), role)
+        def roleEntity = createRoleResponse.getEntity(Role).value
+
+        then: "Assert new created RCN role"
+        createRoleResponse.status == HttpStatus.SC_CREATED
+
+        when: "Add global RCN role to user"
+        def addRoleToUserResponse = cloud20.addUserRole(utils.getIdentityAdminToken(), userAdmin.id, roleEntity.id)
+
+        then: "Assert role added to user"
+        addRoleToUserResponse.status == HttpStatus.SC_OK
+
+        when: "List user's global roles"
+        def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), userAdmin.id, serviceId, null, accept)
+        def globalRoles = getRoleListEntity(userGlobalRolesResponse)
+
+        then:
+        if (serviceId == null || serviceId == SERVERS_SERVICE_ID) {
+            Role rcnRole = globalRoles.role.find({it.id == roleEntity.id})
+            assert rcnRole != null
+            assert rcnRole.roleType == RoleTypeEnum.RCN
+            assert rcnRole.types.type == ["*"]
+        }
+        if (serviceId == null || serviceId == IDENTITY_SERVICE_ID) {
+            assert globalRoles.role.find({it.id == USER_ADMIN_ROLE_ID}) != null
+        }
+        globalRoles.role.size == size
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteRole(roleEntity)
+
+        where:
+        serviceId           | size | accept
+        SERVERS_SERVICE_ID  | 1    | MediaType.APPLICATION_XML_TYPE
+        SERVERS_SERVICE_ID  | 1    | MediaType.APPLICATION_JSON_TYPE
+        IDENTITY_SERVICE_ID | 1    | MediaType.APPLICATION_XML_TYPE
+        IDENTITY_SERVICE_ID | 1    | MediaType.APPLICATION_JSON_TYPE
+        null                | 2    | MediaType.APPLICATION_XML_TYPE
+        null                | 2    | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Get global roles for user with RCN roles - serviceId = #serviceId, apply_rcn_roles = #applyRcnRoles, size = #size" () {
+        given: "A new user admin"
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        // Update domain to have an RCN
+        def domain = v2Factory.createDomain(domainId, domainId, true, null, null, "RCN-123-123-123")
+        utils.updateDomain(domainId, domain)
+
+        when: "Create new RCN role"
+        def role = v2Factory.createRole(false, RoleAssignmentEnum.GLOBAL, RoleTypeEnum.RCN, ["*"]).with {
+            it.serviceId = SERVERS_SERVICE_ID
+            it.otherAttributes = null
+            it
+        }
+        def createRoleResponse = cloud20.createRole(utils.getIdentityAdminToken(), role)
+        def roleEntity = createRoleResponse.getEntity(Role).value
+
+        then: "Assert new created RCN role"
+        createRoleResponse.status == HttpStatus.SC_CREATED
+
+        when: "Add global RCN role to user"
+        def addRoleToUserResponse = cloud20.addUserRole(utils.getIdentityAdminToken(), userAdmin.id, roleEntity.id)
+
+        then: "Assert role added to user"
+        addRoleToUserResponse.status == HttpStatus.SC_OK
+
+        when: "List user's global roles"
+        def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), userAdmin.id, serviceId, applyRcnRoles)
+        def globalRoles = getRoleListEntity(userGlobalRolesResponse)
+
+        then:
+        if (serviceId == IDENTITY_SERVICE_ID) {
+            assert globalRoles.role.find({it.id == USER_ADMIN_ROLE_ID}) != null
+        } else if (serviceId == SERVERS_SERVICE_ID && !applyRcnRoles) {
+            Role rcnRole = globalRoles.role.find({it.id == roleEntity.id})
+            assert rcnRole != null
+            assert rcnRole.roleType == RoleTypeEnum.RCN
+            assert rcnRole.types.type == ["*"]
+        }
+
+        globalRoles.role.size == size
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteRole(roleEntity)
+
+        where:
+        serviceId           | applyRcnRoles       | size
+        SERVERS_SERVICE_ID  | true                | 0
+        IDENTITY_SERVICE_ID | true                | 1
+        SERVERS_SERVICE_ID  | false               | 1
+        IDENTITY_SERVICE_ID | false               | 1
+    }
+
+    @Unroll
+    def "Get global roles for user with no RCN roles - serviceId = #serviceId, apply_rcn_roles = #applyRcnRoles" () {
+        given: "A new user admin"
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        // Update domain to have an RCN
+        def domain = v2Factory.createDomain(domainId, domainId, true, null, null, "RCN-123-123-123")
+        utils.updateDomain(domainId, domain)
+
+        when: "List user's global roles"
+        def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), userAdmin.id, serviceId, applyRcnRoles)
+        def globalRoles = userGlobalRolesResponse.getEntity(RoleList).value
+
+        then:
+        if (size > 0) {
+            assert globalRoles.role.find({it.id == USER_ADMIN_ROLE_ID}) != null
+        }
+        globalRoles.role.size == size
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        serviceId           | applyRcnRoles       | size
+        SERVERS_SERVICE_ID  | true                | 0
+        IDENTITY_SERVICE_ID | true                | 1
+        SERVERS_SERVICE_ID  | false               | 0
+        IDENTITY_SERVICE_ID | false               | 1
+        null                | true                | 1
+        null                | false               | 1
+    }
+
+    def getRoleListEntity(response) {
+        def entity
+        if (response.getType() == MediaType.APPLICATION_JSON_TYPE) {
+            InputStream inputStream = IOUtils.toInputStream(response.getEntity(String))
+            entity =  readerForRoles.readFrom(Role, null, null, null, null, inputStream)
+        } else {
+            entity = response.getEntity(RoleList).value
+        }
+
+        return entity
     }
 
 }

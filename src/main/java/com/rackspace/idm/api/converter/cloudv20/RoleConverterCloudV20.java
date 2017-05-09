@@ -55,6 +55,7 @@ public class RoleConverterCloudV20 {
                 }
             } else {
                 Role jaxbRole = mapper.map(role, Role.class);
+                jaxbRole.setTypes(role.getTypes());
                 jaxbRoles.getRole().add(jaxbRole);
             }
         }

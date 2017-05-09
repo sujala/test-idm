@@ -125,33 +125,6 @@ public class DefaultTenantServiceTestOld {
         defaultTenantService.addTenantRoleToUser(user,null);
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void getGlobalRolesForUser_nullUser_throwsIllegalArgumentException() throws Exception {
-        defaultTenantService.getGlobalRolesForUser(null);
-    }
-
-    @Test
-    public void getGlobalRoles_roleTenantIdsIsNull_returnsCorrectRole() throws Exception {
-        TenantRole role = new TenantRole();
-        role.setRoleRsId("123");
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        roles.add(role);
-        ClientRole cRole = new ClientRole();
-        cRole.setName("John Smith");
-        cRole.setDescription("this is a description");
-        when(applicationService.getClientRoleById("123")).thenReturn(cRole);
-        List<TenantRole> list = defaultTenantService.getGlobalRoles(roles);
-        assertThat("role name", list.get(0).getName(), equalTo("John Smith"));
-        assertThat("role description",list.get(0).getDescription(),equalTo("this is a description"));
-    }
-
-    @Test
-    public void getGlobalRoles_roleNull_returnsEmptyList() throws Exception {
-        List<TenantRole> roles = new ArrayList<TenantRole>();
-        List<TenantRole> list = defaultTenantService.getGlobalRoles(roles);
-        assertThat("list size",list.size(),equalTo(0));
-    }
-
     @Test
     public void getTenantOnlyRoles_tenantIdsNull_returnsEmptyList() throws Exception {
         TenantRole role = new TenantRole();

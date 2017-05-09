@@ -1,9 +1,11 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
@@ -273,5 +275,55 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
         then:
         response.status == 403
         response.getEntity(IdentityFault).value.message == DefaultAuthorizationService.NOT_AUTHORIZED_MSG
+    }
+
+    def "Allow deleting RCN roles on user"() {
+        given: "A new user admin"
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        when: "Create new RCN role"
+        def role = v2Factory.createRole(false, RoleAssignmentEnum.GLOBAL, RoleTypeEnum.RCN, ["*"]).with {
+            it.serviceId = Constants.SERVERS_SERVICE_ID
+            it.otherAttributes = null
+            it
+        }
+        def createRoleResponse = cloud20.createRole(utils.getIdentityAdminToken(), role)
+        def roleEntity = createRoleResponse.getEntity(Role).value
+
+        then: "Assert new created RCN role"
+        createRoleResponse.status == HttpStatus.SC_CREATED
+
+        when: "Add global RCN role to user"
+        def addRoleToUserResponse = cloud20.addUserRole(utils.getIdentityAdminToken(), userAdmin.id, roleEntity.id)
+
+        then: "Assert role added to user"
+        addRoleToUserResponse.status == HttpStatus.SC_OK
+
+        when: "List user's global roles"
+        def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), userAdmin.id, null, false)
+        def globalRoles = userGlobalRolesResponse.getEntity(RoleList).value
+
+        then: "Assert RCN role exist"
+        globalRoles.role.find({it.id == roleEntity.id}) != null
+
+        when: "Delete global RNC role"
+        def deleteRoleFromUserResponse = cloud20.deleteApplicationRoleFromUser(utils.getIdentityAdminToken(), roleEntity.id, userAdmin.id)
+
+        then:
+        deleteRoleFromUserResponse.status == HttpStatus.SC_NO_CONTENT
+
+        when:
+        userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), userAdmin.id, null, false)
+        globalRoles = userGlobalRolesResponse.getEntity(RoleList).value
+
+        then:
+        globalRoles.role.find({it.id == roleEntity.id}) == null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteRole(roleEntity)
     }
 }
