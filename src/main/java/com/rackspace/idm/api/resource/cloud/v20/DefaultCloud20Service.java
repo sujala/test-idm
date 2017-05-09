@@ -588,6 +588,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             tenant.setId(tenant.getName());
             final Tenant savedTenant = this.tenantConverterCloudV20.fromTenant(tenant);
 
+            if (identityConfig.getReloadableConfig().shouldSetDefaultTenantTypeOnCreation() &&
+                    savedTenant.getTypes().isEmpty()) {
+                String inferredType = tenantService.inferTenantTypeForTenantId(savedTenant.getTenantId());
+                if (inferredType != null) {
+                    savedTenant.getTypes().add(inferredType);
+                }
+            }
+
             Domain domain;
             if (StringUtils.isBlank(tenant.getDomainId())) {
                 // New tenants get added to the default domain if no domain Id is specified. Default domain MUST exist and must be enabled

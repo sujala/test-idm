@@ -147,4 +147,16 @@ public interface TenantService {
      * @return
      */
     List<Tenant> getTenantsForEndpoint(String endpointId);
+
+    /**
+     * Given a tenant ID, return the default tenant type for the tenant based on the tenant ID/name prefix using the following logic:
+     *
+     * 1) If the tenant's id/name can be parsed as a java integer (a legacy mosso restriction), set/infer the tenant type 'cloud'
+     * 2) Else if the tenant id/name is prefixed with the value of the configuration property 'nast.tenant.prefix', set/infer the tenant type "files"
+     * 3) Else if the tenant id/name is prefixed w/ "hybrid:", set/infer the tenant type "managed_hosting"
+     * 4) Else if the tenant id/name contains a ":", search for a tenant type that matches the string prior to the first ":". If exists, set/infer that as tenant type (e.g. asdf:332 would set/infer a tenant type "asdf" if it exists)
+     * 5) Else, do not set a tenant type
+     *
+     */
+    String inferTenantTypeForTenantId(String tenantId);
 }

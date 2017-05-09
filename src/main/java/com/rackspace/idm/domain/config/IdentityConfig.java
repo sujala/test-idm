@@ -374,6 +374,10 @@ public class IdentityConfig {
     public static final String MAX_TENANT_TYPE_SIZE_PROP = "max.tenant.type.size";
     public static final int MAX_TENANT_TYPE_SIZE_DEFAULT = 999;
 
+    public static final String FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP = "feature.set.default.tenant.type.on.creation";
+    public static final boolean FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_DEFAULT = false;
+
+
     /**
      * Required static prop
      */
@@ -724,6 +728,7 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP, FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_DEFAULT);
         defaults.put(MAX_TENANT_TYPE_SIZE_PROP, MAX_TENANT_TYPE_SIZE_DEFAULT);
+        defaults.put(FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP, FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_DEFAULT);
 
         defaults.put(NAST_TENANT_PREFIX_PROP, NAST_TENANT_PREFIX_DEFAULT);
 
@@ -2109,6 +2114,12 @@ public class IdentityConfig {
         public int getMaxTenantTypes() {
             return Math.min(getIntSafely(reloadableConfiguration, MAX_TENANT_TYPE_SIZE_PROP), MAX_TENANT_TYPE_SIZE_DEFAULT);
         }
+
+        @IdmProp(key = FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP, versionAdded = "3.12.0", description = "Whether to set the default tenant type on the tenant upon creation based on the tenant name prefix.")
+        public boolean shouldSetDefaultTenantTypeOnCreation() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP);
+        }
+
     }
 
     public class RepositoryConfig {

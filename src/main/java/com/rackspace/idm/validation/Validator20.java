@@ -737,7 +737,9 @@ public class Validator20 {
         }
 
         for(String type : types.getType()) {
-            tenantTypes.add(type.toLowerCase());
+            if (type != null) {
+                tenantTypes.add(type.toLowerCase());
+            }
         }
 
         types.getType().clear();

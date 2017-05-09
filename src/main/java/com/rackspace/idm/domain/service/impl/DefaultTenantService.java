@@ -1,10 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
-import com.google.common.collect.Sets;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
@@ -29,7 +26,6 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +43,8 @@ public class DefaultTenantService implements TenantService {
 
     public static final String GETTING_TENANT_ROLES = "Getting Tenant Roles";
     public static final String GOT_TENANT_ROLES = "Got {} Tenant Roles";
+
+    public static final int TENANT_TYPE_SEARCH_LIMIT = 999;
 
     @Autowired
     private Configuration config;
@@ -421,9 +419,7 @@ public class DefaultTenantService implements TenantService {
         }
 
         // Retrieve all the tenant types to perform matching
-        PaginatorContext<TenantType> tenantTypes = tenantTypeService.listTenantTypes(0, 999);
-        List<TenantType> typeEntities = tenantTypes.getValueList();
-        Set<String> types =typeEntities.stream().map(TenantType::getName).collect(Collectors.toSet());
+        Set<String> types = getTenantTypes();
 
         // Retrieve all the tenants within these domains
         for (Domain myDomain : domainsToApply) {
@@ -455,6 +451,17 @@ public class DefaultTenantService implements TenantService {
                 tenant.getTypes().add(inferredTenantType);
             }
         }
+    }
+
+    private Set<String> getTenantTypes() {
+        PaginatorContext<TenantType> tenantTypes = tenantTypeService.listTenantTypes(0, TENANT_TYPE_SEARCH_LIMIT);
+        List<TenantType> typeEntities = tenantTypes.getValueList();
+        return typeEntities.stream().map(TenantType::getName).collect(Collectors.toSet());
+    }
+
+    @Override
+    public String inferTenantTypeForTenantId(String tenantId) {
+        return inferTenantTypeForTenantId(tenantId, getTenantTypes());
     }
 
     private String inferTenantTypeForTenantId(String tenantId, Set<String> existingTenantTypes) {
@@ -1346,4 +1353,5 @@ public class DefaultTenantService implements TenantService {
             return true;
         }
     }
+
 }

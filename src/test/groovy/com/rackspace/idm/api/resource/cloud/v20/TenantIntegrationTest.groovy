@@ -1,11 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
 import com.rackspace.idm.Constants
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.DomainService
+import com.rackspace.idm.domain.service.impl.DefaultTenantService
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
@@ -954,6 +956,189 @@ class TenantIntegrationTest extends RootIntegrationTest {
         requestContentType              | acceptContentType
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "test that the type passed in the create request overrides the prefix value - tenantPrefix = #tenantTypePrefix"() {
+        given:
+        def tenantType = utils.createTenantType()
+        def tenantName;
+        switch (tenantTypePrefix) {
+            case Constants.TENANT_TYPE_CLOUD :
+                tenantName = "" + testUtils.getRandomInteger()
+                break;
+            case Constants.TENANT_TYPE_FILES :
+                tenantName = identityConfig.getStaticConfig().getNastTenantPrefix() + RandomStringUtils.randomAlphabetic(8)
+                break;
+            case Constants.TENANT_TYPE_MANAGED_HOSTING :
+                tenantName = GlobalConstants.MANAGED_HOSTING_TENANT_PREFIX + RandomStringUtils.randomAlphabetic(8)
+                break;
+            case [Constants.TENANT_TYPE_FAWS, Constants.TENANT_TYPE_RCN] :
+                tenantName = tenantTypePrefix + ':' + RandomStringUtils.randomAlphabetic(8)
+                break;
+        }
+        def tenant = v2Factory.createTenant(tenantName, tenantName, [tenantType.name])
+
+        when:
+        def result = cloud20.addTenant(utils.getIdentityAdminToken(), tenant)
+
+        then:
+        result.status == 201
+        def createdTenant = result.getEntity(Tenant).value
+        createdTenant.types.type.size == 1
+        createdTenant.types.type[0] == tenantType.name
+
+        cleanup:
+        utils.deleteTenant(createdTenant)
+        utils.deleteTenantType(tenantType.name)
+
+        where:
+        tenantTypePrefix                        | _
+        Constants.TENANT_TYPE_CLOUD             | _
+        Constants.TENANT_TYPE_FILES             | _
+        Constants.TENANT_TYPE_MANAGED_HOSTING   | _
+        Constants.TENANT_TYPE_FAWS              | _
+        Constants.TENANT_TYPE_RCN               | _
+    }
+
+    @Unroll
+    def "test that the appropriate tenant type is applied using the tenant name prefix, when no tenant type is provided - tenantTypePrefix = #tenantTypePrefix"() {
+        given:
+        def tenantName;
+        switch (tenantTypePrefix) {
+            case Constants.TENANT_TYPE_CLOUD :
+                tenantName = "" + testUtils.getRandomInteger()
+                break;
+            case Constants.TENANT_TYPE_FILES :
+                tenantName = identityConfig.getStaticConfig().getNastTenantPrefix() + RandomStringUtils.randomAlphabetic(8)
+                break;
+            case Constants.TENANT_TYPE_MANAGED_HOSTING :
+                tenantName = GlobalConstants.MANAGED_HOSTING_TENANT_PREFIX + RandomStringUtils.randomAlphabetic(8)
+                break;
+            case [Constants.TENANT_TYPE_FAWS, Constants.TENANT_TYPE_RCN] :
+                tenantName = tenantTypePrefix + ':' + RandomStringUtils.randomAlphabetic(8)
+                break;
+        }
+        def tenant = v2Factory.createTenant(tenantName, tenantName)
+
+        when:
+        def result = cloud20.addTenant(utils.getIdentityAdminToken(), tenant)
+
+        then:
+        result.status == 201
+        def createdTenant = result.getEntity(Tenant).value
+        createdTenant.types.type.size == 1
+        createdTenant.types.type[0] == tenantTypePrefix
+
+        cleanup:
+        utils.deleteTenant(createdTenant)
+
+        where:
+        tenantTypePrefix                        | _
+        Constants.TENANT_TYPE_CLOUD             | _
+        Constants.TENANT_TYPE_FILES             | _
+        Constants.TENANT_TYPE_MANAGED_HOSTING   | _
+        Constants.TENANT_TYPE_FAWS              | _
+        Constants.TENANT_TYPE_RCN               | _
+    }
+
+    @Unroll
+    def "test scenarios where tenant name is different values of integer - tenantName = #tenantName"() {
+        given:
+        def tenant = v2Factory.createTenant(tenantName, tenantName)
+
+        when:
+        def result = cloud20.addTenant(utils.getIdentityAdminToken(), tenant)
+
+        then:
+        result.status == 201
+        def createdTenant = result.getEntity(Tenant).value
+        if ((Long.parseLong(tenantName) <= Integer.MAX_VALUE) &&
+                (Long.parseLong(tenantName) >= Integer.MIN_VALUE)) {
+            assert createdTenant.types.type.size == 1
+            assert createdTenant.types.type[0] == Constants.TENANT_TYPE_CLOUD
+        } else {
+            assert createdTenant.types == null
+        }
+
+        cleanup:
+        utils.deleteTenant(createdTenant)
+
+        where:
+        tenantName                              | _
+        "1"                                     | _
+        "0"                                     | _
+        "-1"                                    | _
+        "" + Integer.MAX_VALUE                  | _
+        "" + (((long)Integer.MAX_VALUE) + 1)    | _
+        "" + Integer.MIN_VALUE                  | _
+        "" + (((long)Integer.MIN_VALUE) - 1)    | _
+    }
+
+    def "Verify tenant names with multiple prefixes (eg faws:rcn:random_name) & no tenant types"() {
+        given:
+        def tenantName = Constants.TENANT_TYPE_FAWS + ":" + Constants.TENANT_TYPE_RCN + ":" + RandomStringUtils.randomAlphabetic(8)
+        def tenant = v2Factory.createTenant(tenantName, tenantName)
+
+        when:
+        def result = cloud20.addTenant(utils.getIdentityAdminToken(), tenant)
+
+        then:
+        result.status == 201
+        def createdTenant = result.getEntity(Tenant).value
+        createdTenant.types.type.size == 1
+        createdTenant.types.type[0] == Constants.TENANT_TYPE_FAWS
+
+        cleanup:
+        utils.deleteTenant(createdTenant)
+    }
+
+    def "test where tenant name contains a non-ASCII prefix (the same test as testing if the tenant type does not exist)"() {
+        given:
+        def tenantName = "©˚©√†˙∂®©®≈ƒ√˙∫∆˚∆˜∆˚˜˚" + ":" + RandomStringUtils.randomAlphabetic(8)
+        def tenant = v2Factory.createTenant(tenantName, tenantName)
+
+        when:
+        def result = cloud20.addTenant(utils.getIdentityAdminToken(), tenant)
+
+        then:
+        result.status == 201
+        def createdTenant = result.getEntity(Tenant).value
+        createdTenant.types == null
+
+        cleanup:
+        utils.deleteTenant(createdTenant)
+    }
+
+    @Unroll
+    def "test assigning default tenant type on create feature flag - #featureTurnedOn = #featureTurnedOn"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP, featureTurnedOn)
+        def tenantType = utils.createTenantType()
+        def tenantName = "$tenantType.name:" + testUtils.getRandomInteger()
+        def tenant = v2Factory.createTenant(tenantName, tenantName)
+
+        when:
+        def result = cloud20.addTenant(utils.getIdentityAdminToken(), tenant)
+
+        then:
+        result.status == 201
+        def createdTenant = result.getEntity(Tenant).value
+        if (featureTurnedOn) {
+            assert createdTenant.types.type.size == 1
+            assert createdTenant.types.type[0] == tenantType.name
+        } else {
+            assert createdTenant.types == null
+        }
+
+        cleanup:
+        utils.deleteTenant(createdTenant)
+        utils.deleteTenantType(tenantType.name)
+
+        where:
+        featureTurnedOn | _
+        true            | _
+        false           | _
     }
 
     def getTenant(response) {
