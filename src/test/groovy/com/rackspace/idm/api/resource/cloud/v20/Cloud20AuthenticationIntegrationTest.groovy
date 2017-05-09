@@ -500,6 +500,31 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
+    def "v2.0 Authenticate returns user's domain" () {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        utils.addApiKeyToUser(userAdmin)
+        def cred = utils.getUserApiKey(userAdmin)
+
+        when: "auth w/ api key"
+        AuthenticateResponse response = utils.authenticateApiKey(userAdmin, cred.apiKey)
+
+        then: "domainId is returned"
+        response.user.domainId == domainId
+
+        when: "auth with pwd"
+        response = utils.authenticate(userAdmin)
+
+        then: "domainId is returned"
+        response.user.domainId == domainId
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
     def void assertHasServiceCatalog(response) {
         AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
 

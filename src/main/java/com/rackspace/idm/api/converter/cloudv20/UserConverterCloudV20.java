@@ -83,6 +83,7 @@ public class UserConverterCloudV20 {
 
         jaxbUser.setId(user.getId());
         jaxbUser.setName(user.getUsername());
+        jaxbUser.setDomainId(user.getDomainId());
         if(user instanceof com.rackspace.idm.domain.entity.User) {
             jaxbUser.setContactId(((com.rackspace.idm.domain.entity.User) user).getContactId());
         }
