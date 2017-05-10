@@ -277,6 +277,12 @@ public class DefaultUserService implements UserService {
                 tenant.setTenantId(tenantId);
                 tenant.setDisplayName(tenantId);
                 tenant.setEnabled(true);
+                if (identityConfig.getReloadableConfig().shouldSetDefaultTenantTypeOnCreation()) {
+                    String tenantType = tenantService.inferTenantTypeForTenantId(tenantId);
+                    if (StringUtils.isNotBlank(tenantType)) {
+                        tenant.getTypes().add(tenantType);
+                    }
+                }
 
                 try {
                     tenantService.addTenant(tenant);
@@ -1498,6 +1504,9 @@ public class DefaultUserService implements UserService {
 
         try {
             Tenant mossoTenant = createTenant(mossoId, domainId, MOSSO_BASE_URL_TYPE);
+            if (identityConfig.getReloadableConfig().shouldSetDefaultTenantTypeOnCreation()) {
+                mossoTenant.getTypes().add(GlobalConstants.TENANT_TYPE_CLOUD);
+            }
             createTenantForDomain(mossoTenant);
         } catch (DuplicateException e) {
             Tenant storedMossoTenant = tenantService.getTenant(mossoId);
@@ -1507,6 +1516,9 @@ public class DefaultUserService implements UserService {
 
         try {
             Tenant nastTenant = createTenant(nastId, domainId, NAST_BASE_URL_TYPE);
+            if (identityConfig.getReloadableConfig().shouldSetDefaultTenantTypeOnCreation()) {
+                nastTenant.getTypes().add(GlobalConstants.TENANT_TYPE_FILES);
+            }
             createTenantForDomain(nastTenant);
         } catch (DuplicateException e) {
             Tenant storedNastTenant = tenantService.getTenant(nastId);

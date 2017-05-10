@@ -286,10 +286,14 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         }
 
         // Verify testing state.
-        assert cloudTenant1.getTypes() == null
-        assert filesTenant1.getTypes() == null
-        assert cloudTenant2.getTypes() == null
-        assert filesTenant2.getTypes() == null
+        assert cloudTenant1.types.type.size == 1
+        assert cloudTenant1.types.type[0] == Constants.TENANT_TYPE_CLOUD
+        assert filesTenant1.types.type.size == 1
+        assert filesTenant1.types.type[0] == Constants.TENANT_TYPE_FILES
+        assert cloudTenant2.types.type.size == 1
+        assert cloudTenant2.types.type[0] == Constants.TENANT_TYPE_CLOUD
+        assert filesTenant2.types.type.size == 1
+        assert filesTenant2.types.type[0] == Constants.TENANT_TYPE_FILES
 
         //update domains to have same RCN
         def rsRCN = RandomStringUtils.randomAlphanumeric(30)
