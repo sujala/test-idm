@@ -2,6 +2,7 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.BypassCodes
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ChangePasswordCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainMultiFactorEnforcementLevelEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ForgotPasswordCredentials
@@ -270,6 +271,15 @@ class V2Factory {
         new PasscodeCredentials().with {
             it.passcode = passcode
             return it
+        }
+    }
+
+    def createChangePasswordCredential(String username, String currentPassword, String newPassword) {
+        new ChangePasswordCredentials().with {
+            it.username = username
+            it.password = currentPassword
+            it.newPassword = newPassword
+            it
         }
     }
 

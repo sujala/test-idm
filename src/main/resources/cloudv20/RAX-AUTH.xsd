@@ -108,6 +108,7 @@
     <element name="rsaCredentials" type="RAX-AUTH:RsaCredentials" substitutionGroup="identity:credential" />
     <element name="passcodeCredentials" type="RAX-AUTH:PasscodeCredentials" substitutionGroup="identity:credential" />
     <element name="forgotPasswordCredentials" type="RAX-AUTH:ForgotPasswordCredentials" />
+    <element name="changePasswordCredentials" type="RAX-AUTH:ChangePasswordCredentials" />
     <element name="bypassCodes" type="RAX-AUTH:BypassCodes"/>
     <element name="multiFactorDomain" type="RAX-AUTH:MultiFactorDomain"/>
     <element name="tenantType" type="RAX-AUTH:TenantType" />
@@ -549,6 +550,16 @@
         <complexContent>
             <extension base="identity:CredentialType">
                 <attribute name="passcode" type="xsd:string" use="required" />
+            </extension>
+        </complexContent>
+    </complexType>
+
+    <complexType name="ChangePasswordCredentials">
+        <complexContent>
+            <extension base="identity:CredentialType">
+                <attribute name="username" type="xsd:string" use="required" />
+                <attribute name="password" type="xsd:string" use="required" />
+                <attribute name="newPassword" type="xsd:string" use="required" />
             </extension>
         </complexContent>
     </complexType>

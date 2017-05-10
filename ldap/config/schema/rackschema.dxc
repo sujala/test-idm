@@ -1026,7 +1026,7 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.130) = {
     ldap-names = rsAssignment
     equality = caseExactMatch
     syntax = directoryString
-    description = "Assignement type"
+    description = "Assignment type"
 };
 
 schema set attribute (1.3.6.1.4.1.20988.2.1.131) = {
@@ -1097,6 +1097,21 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.139) = {
     description = "The rackspace customer number"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.140) = {
+    name = rsPasswordPolicy
+    ldap-names = rsPasswordPolicy
+    syntax = octetString
+    description = "JSON password policy"
+};
+
+schema set attribute (1.3.6.1.4.1.20988.2.1.141) = {
+    name = rsPasswordHistory
+    ldap-names = rsPasswordHistory
+    equality = caseExactMatch
+    syntax = directoryString
+    description = "Hashed versions of a users previous passwords"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -1155,7 +1170,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
         rsMultiFactorType,
         rsContactId,
         rsMultiFactorFailedAttemptCount,
-        rsMultiFactorLastFailedTimestamp
+        rsMultiFactorLastFailedTimestamp,
+        rsPasswordHistory
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.2) = {
@@ -1513,7 +1529,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.27) = {
         useMultiFactorAuthentication,
         rsDomainMultiFactorEnforcementLevel,
         rsSessionInactivityTimeout,
-        rsRackspaceCustomerNumber
+        rsRackspaceCustomerNumber,
+        rsPasswordPolicy
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.28) = {

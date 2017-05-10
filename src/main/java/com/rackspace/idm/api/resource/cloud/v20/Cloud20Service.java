@@ -217,6 +217,12 @@ public interface Cloud20Service {
 
     ResponseBuilder deleteDomain(String authToken, String domainId);
 
+    ResponseBuilder updateDomainPasswordPolicy(HttpHeaders httpHeaders, String authToken, String domainId, String policy);
+
+    ResponseBuilder deleteDomainPasswordPolicy(HttpHeaders httpHeaders, String authToken, String domainId);
+
+    ResponseBuilder getDomainPasswordPolicy(HttpHeaders httpHeaders, String authToken, String domainId);
+
     ResponseBuilder getDomainTenants(String authToken, String domainId, String enabled);
 
     ResponseBuilder getUsersByDomainIdAndEnabledFlag(String authToken, String domainId, String enabled);
@@ -270,4 +276,6 @@ public interface Cloud20Service {
     ResponseBuilder listTenantTypes(UriInfo uriInfo, String authToken, Integer marker, Integer limit);
 
     ResponseBuilder deleteTenantType(String authToken, String tenantTypeId);
+
+    ResponseBuilder changeUserPassword(HttpHeaders httpHeaders, ChangePasswordCredentials changePasswordCredentials);
 }

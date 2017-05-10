@@ -32,6 +32,7 @@ public interface DomainService {
     String createNewDomain(String domainId);
     Iterable<Domain> getDomainsForTenants(List<Tenant> tenants);
     void expireAllTokenInDomain(String domainId);
+    void deleteDomainPasswordPolicy(String domainId);
 
     /**
      * Return all the domains that have the specified RCN. Will return an empty list if the specified RCN is empty.

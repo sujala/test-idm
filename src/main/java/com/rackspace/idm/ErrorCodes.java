@@ -101,6 +101,10 @@ public final class ErrorCodes {
     //Endpoint Assignment
     public static final String ERROR_CODE_EP_MISSING_ENDPOINT = "EP-000";
 
+    // Password policy enforcement
+    public static final String ERROR_CODE_PASSWORD_EXPIRED = "AUTH-001";
+    public static final String ERROR_CODE_PASSWOD_HISTORY_MATCH = "AUTH-002";
+
 
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
         if (StringUtils.isNotBlank(errorCode)) {

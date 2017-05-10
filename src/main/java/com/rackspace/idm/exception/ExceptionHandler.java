@@ -108,7 +108,7 @@ public class ExceptionHandler {
     public Response.ResponseBuilder exceptionResponse(Exception ex) {
         if (ex instanceof BadRequestException || ex instanceof StalePasswordException) {
             return badRequestExceptionResponse(ex.getMessage());
-        } else if (ex instanceof NotAuthorizedException || ex instanceof NotAuthenticatedException) {
+        } else if (ex instanceof NotAuthorizedException || ex instanceof NotAuthenticatedException  || ex instanceof UserPasswordExpiredException) {
             return notAuthenticatedExceptionResponse(ex.getMessage());
         } else if (ex instanceof ForbiddenException) {
             return forbiddenExceptionResponse(ex.getMessage());

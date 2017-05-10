@@ -34,6 +34,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.rackspace.idm.GlobalConstants.X_PASSWORD_EXPIRATION;
+
 @Component
 public class DefaultAuthenticateResponseService implements AuthenticateResponseService {
 
@@ -92,7 +94,8 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
 
         // Load the domain as the first step in building the auth response.
         // Any subsequent use of the domain should be through the cached version in the authenticationContext
-        if (authResponseTuple.getUser() != null && StringUtils.isNotEmpty(authResponseTuple.getUser().getDomainId())) {
+        if (authResponseTuple.getUser() != null && StringUtils.isNotEmpty(authResponseTuple.getUser().getDomainId())
+                && (authenticationContext.getDomain() == null || !authenticationContext.getDomain().getDomainId().equals(authResponseTuple.getUser().getDomainId()))) {
             Domain domain = domainService.getDomain(authResponseTuple.getUser().getDomainId());
             authenticationContext.setDomain(domain);
             if (domain == null) {
@@ -185,6 +188,10 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
             if (tenantForHeader != null) {
                 responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantForHeader.getTenantId());
             }
+        }
+
+        if (authenticationContext.getPasswordExpiration() != null) {
+            responseBuilder.header(X_PASSWORD_EXPIRATION, authenticationContext.getPasswordExpiration().toDateTimeISO());
         }
 
         return responseBuilder;

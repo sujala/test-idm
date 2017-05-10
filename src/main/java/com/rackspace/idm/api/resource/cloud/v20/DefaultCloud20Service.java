@@ -3044,6 +3044,160 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    @Override
+    public ResponseBuilder updateDomainPasswordPolicy(HttpHeaders httpHeaders, String authToken, String domainId, String policy) {
+        try {
+            // Verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            // Verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
+
+            Domain domain = domainService.getDomain(domainId); // Don't do checkandget cause want to return 403 if domain doesn't exist
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            if (callerType == null || domain == null) {
+                throw new ForbiddenException("Forbidden.");
+            } else if (callerType.isDomainBasedAccessLevel()) {
+                BaseUser user = requestContextHolder.getRequestContext().getEffectiveCaller();
+                if (!domain.getDomainId().equalsIgnoreCase(user.getDomainId())) {
+                    throw new ForbiddenException("Forbidden.");
+                }
+            }
+
+            PasswordPolicy pwdPolicy = null;
+            try {
+                pwdPolicy = PasswordPolicy.fromJson(policy);
+                if (pwdPolicy == null) {
+                    throw new BadRequestException("The supplied password policy is invalid.");
+                }
+                if (pwdPolicy.calculateEffectivePasswordHistoryRestriction() > 10) {
+                    throw new BadRequestException("Invalid Password history restriction. Must be between 0-10. 0 means to ignore history.");
+                }
+            } catch (InvalidPasswordPolicyException e) {
+                logger.debug(String.format("The supplied password policy '%s' for domainId '%s' is invalid", policy, domainId), e);
+                throw new BadRequestException("The supplied password policy is invalid. Please check your syntax and try again.");
+            }
+
+            domain.setPasswordPolicy(pwdPolicy);
+            domainService.updateDomain(domain);
+
+            String body = "{}";
+            if (pwdPolicy != null) {
+                body = pwdPolicy.toJson();
+            }
+
+            return Response.ok(body);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder deleteDomainPasswordPolicy(HttpHeaders httpHeaders, String authToken, String domainId) {
+        try {
+            // Verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            // Verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
+
+            Domain domain = domainService.getDomain(domainId);
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            if (callerType == null || domain == null) {
+                throw new ForbiddenException("Forbidden.");
+            } else if (callerType.isDomainBasedAccessLevel()) {
+                BaseUser user = requestContextHolder.getRequestContext().getEffectiveCaller();
+                if (!domain.getDomainId().equalsIgnoreCase(user.getDomainId())) {
+                    throw new ForbiddenException("Forbidden.");
+                }
+            }
+
+            domainService.deleteDomainPasswordPolicy(domainId);
+
+            return Response.noContent();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder getDomainPasswordPolicy(HttpHeaders httpHeaders, String authToken, String domainId) {
+        try {
+            // Verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            // Verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.USER_ADMIN);
+
+            Domain domain = domainService.getDomain(domainId);
+            IdentityUserTypeEnum callerType = requestContextHolder.getRequestContext().getEffectiveCallersUserType();
+            if (callerType == null || domain == null) {
+                throw new ForbiddenException("Forbidden.");
+            } else if (callerType.isDomainBasedAccessLevel()) {
+                BaseUser user = requestContextHolder.getRequestContext().getEffectiveCaller();
+                if (!domain.getDomainId().equalsIgnoreCase(user.getDomainId())) {
+                    throw new ForbiddenException("Forbidden.");
+                }
+            }
+
+            PasswordPolicy policy = domain.getPasswordPolicy();
+
+            if (policy != null) {
+                return Response.ok(policy.toJson());
+            } else {
+                return exceptionHandler.notFoundExceptionResponse("A password policy is not set on this domain");
+            }
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder changeUserPassword(HttpHeaders httpHeaders, ChangePasswordCredentials changePasswordCredentials) {
+        try {
+            if (StringUtils.isEmpty(changePasswordCredentials.getPassword()) || StringUtils.isEmpty(changePasswordCredentials.getNewPassword())
+                    || StringUtils.isEmpty(changePasswordCredentials.getUsername())) {
+                throw new BadRequestException("Username, password, and new password are required");
+            }
+            if (changePasswordCredentials.getPassword().equals(changePasswordCredentials.getNewPassword())) {
+                throw new BadRequestException("Must supply a new password that is different from the current password");
+            }
+
+            PasswordCredentialsRequiredUsername cred = jaxbObjectFactories.getOpenStackIdentityV2Factory().createPasswordCredentialsRequiredUsername();
+            cred.setPassword(changePasswordCredentials.getPassword());
+            cred.setUsername(changePasswordCredentials.getUsername());
+
+            AuthenticationRequest authRequestAdapter = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticationRequest();
+            authRequestAdapter.setCredential(jaxbObjectFactories.getOpenStackIdentityV2Factory().createPasswordCredentials(cred));
+
+            User userToUpdate = null;
+            try {
+                AuthResponseTuple auth = authWithPasswordCredentials.authenticateForAuthResponse(authRequestAdapter);
+                userToUpdate = (User) auth.getUser();
+            } catch (UserPasswordExpiredException e) {
+                // If UserPasswordExpiredException is thrown, the user's password was expired.
+                /*
+                 TODO user wasn't validated to see if user was disabled or domain was disabled. Should
+                  we allow a disabled user to update their expired password?
+                  */
+                userToUpdate = e.getUser();
+            }
+
+            // Retrieve a fresh user so we don't inadvertently update unexpected things
+            User user = userService.checkAndGetUserById(userToUpdate.getId());
+            validator.validatePasswordForCreateOrUpdate(changePasswordCredentials.getNewPassword());
+
+            user.setUserPassword(changePasswordCredentials.getNewPassword());
+            user.setPassword(changePasswordCredentials.getNewPassword());
+            this.userService.updateUser(user);
+
+            return Response.noContent().header(GlobalConstants.X_USER_NAME, user.getUsername());
+
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
     boolean containsServiceAdmin(List<User> users) {
         for(User user : users) {
             if(authorizationService.hasServiceAdminRole(user)) {

@@ -21,6 +21,12 @@ public interface DomainDao {
     boolean domainExistsWithNameAndNotId(String name, String id);
     PaginatorContext<Domain> getAllDomainsPaged(int offset, int limit);
     void updateDomain(Domain domain);
+
+    /**
+     * Updates the backend with the provided domain object. Null values result in the attribute being removed.
+     * @param domain
+     */
+    void updateDomainAsIs(Domain domain);
     void deleteDomain(String domainId);
     Iterable<Domain> getDomainsForTenant(List<Tenant> tenants);
 

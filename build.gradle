@@ -189,8 +189,15 @@ dependencies {
     compile group: 'org.jasypt', name: 'jasypt', version:'1.9.0'
     compile group: 'org.jasypt', name: 'jasypt-spring3', version:'1.9.0'
     compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.9.13'
-    compile 'com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.7.5'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.7.5'
+
+    compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jaxb-annotations', version: '2.8.7'
+
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.8.7'
+    compile 'com.fasterxml.jackson.module:jackson-modules-java8:2.8.7'
+    compile 'com.fasterxml.jackson.module:jackson-module-parameter-names:2.8.7'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.8.7'
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.8.7'
+    
     compile 'org.eclipse.persistence:eclipselink:2.5.0'
 
     compile group: 'com.google.guava', name: 'guava', version: '17.0'

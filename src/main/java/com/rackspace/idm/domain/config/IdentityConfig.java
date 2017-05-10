@@ -226,6 +226,22 @@ public class IdentityConfig {
     public static final String FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP = "feature.support.identity.provider.management";
     public static final boolean FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_DEFAULT = true;
 
+    public static final String FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP = "feature.enable.password.policy.services";
+    public static final boolean FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_DEFAULT = true;
+
+    public static final String FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP = "feature.enforce.password.policy.expiration";
+    public static final boolean FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_DEFAULT = true;
+
+    public static final String FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP = "feature.enforce.password.policy.history";
+    public static final boolean FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_DEFAULT = true;
+
+    public static final String FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP = "feature.maintain.password.history";
+    public static final boolean FEATURE_MAINTAIN_PASSWORD_HISTORY_DEFAULT = true;
+
+
+    public static final String PASSWORD_HISTORY_MAX_PROP = "password.history.max";
+    public static final int PASSWORD_HISTORY_MAX_DEFAULT = 10;
+
     public static final String IDP_MAX_SEACH_RESULT_SIZE_PROP = "identity.provider.max.search.result.size";
     public static final int IDP_MAX_SEACH_RESULT_SIZE_DEFAULT = 1000;
 
@@ -731,6 +747,12 @@ public class IdentityConfig {
         defaults.put(FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP, FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_DEFAULT);
 
         defaults.put(NAST_TENANT_PREFIX_PROP, NAST_TENANT_PREFIX_DEFAULT);
+
+        defaults.put(FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_DEFAULT);
+        defaults.put(FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_DEFAULT);
+        defaults.put(FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_DEFAULT);
+        defaults.put(FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, FEATURE_MAINTAIN_PASSWORD_HISTORY_DEFAULT);
+        defaults.put(PASSWORD_HISTORY_MAX_PROP, PASSWORD_HISTORY_MAX_DEFAULT);
 
         return defaults;
     }
@@ -1745,6 +1767,26 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP);
         }
 
+        @IdmProp(key = FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, versionAdded = "3.12.0", description = "Whether or not domain password policy support is enabled")
+        public boolean isPasswordPolicyServicesEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, versionAdded = "3.12.0", description = "Whether or not to enforce password policy password rule")
+        public boolean enforcePasswordPolicyPasswordExpiration() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, versionAdded = "3.12.0", description = "Whether or not to enforce password policy history")
+        public boolean enforcePasswordPolicyPasswordHistory() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP);
+        }
+
+        @IdmProp(key = FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, versionAdded = "3.12.0", description = "Whether or not to maintain password history. If history enforcement is enabled, this is always true")
+        public boolean maintainPasswordHistory() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP) || enforcePasswordPolicyPasswordHistory();
+        }
+
         @IdmProp(key = IDP_MAX_SEACH_RESULT_SIZE_PROP, versionAdded = "3.1.0", description = "Maximum numbers of identity providers allowed to be returned in list providers call")
         public int getMaxListIdentityProviderSize() {
             return getIntSafely(reloadableConfiguration, IDP_MAX_SEACH_RESULT_SIZE_PROP);
@@ -2088,6 +2130,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, versionAdded = "3.11.0" , description = "Whether or not to use the performant version of the service catalog.")
         public boolean usePerformantServiceCatalog() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_PERFORMANT_SERVICE_CATALOG_PROP);
+        }
+
+        @IdmProp(key = PASSWORD_HISTORY_MAX_PROP, versionAdded = "3.12.0" , description = "The maximum number of password history entries Identity will store for a user. Will actually store 1 more than this to include the 'current' password.")
+        public int getPasswordHistoryMax() {
+            return getIntSafely(reloadableConfiguration, PASSWORD_HISTORY_MAX_PROP);
         }
 
         @IdmProp(key = FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP, versionAdded = "3.11.0" , description = "Whether or not to use cached client roles for the service catalog. Only applicable when feature.performant.service.catalog=true")

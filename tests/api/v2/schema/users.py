@@ -84,7 +84,7 @@ update_user = {
                          const.RAX_AUTH_DEFAULT_REGION,
                          const.RAX_AUTH_DOMAIN_ID,
                          const.RAX_AUTH_MULTI_FACTOR_ENABLED,
-                         const.CREATED, const.UPDATED],
+                         const.CREATED],
             'additionalProperties': False}},
     'required': [const.USER],
     'additionalProperties': False

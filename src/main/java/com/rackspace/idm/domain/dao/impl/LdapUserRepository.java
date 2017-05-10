@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.audit.Audit;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
@@ -12,14 +13,13 @@ import com.unboundid.ldap.sdk.BindResult;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldap.sdk.ResultCode;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @LDAPComponent
 public class LdapUserRepository extends LdapGenericRepository<User> implements UserDao {
@@ -29,16 +29,19 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     private static final List<String> AUTH_BY_API_KEY_LIST = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY);
 
     @Autowired
-    CryptHelper cryptHelper;
+    private CryptHelper cryptHelper;
 
     @Autowired
-    EncryptionService encryptionService;
+    private EncryptionService encryptionService;
 
     @Autowired
-    Configuration config;
+    private Configuration config;
 
     @Autowired
-    GroupDao groupDao;
+    private GroupDao groupDao;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Override
     public String getBaseDn(){
@@ -64,6 +67,33 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
             user.setRsGroupId(null);
         }
         encryptionService.encryptUser(user);
+
+        if (!StringUtils.isEmpty(user.getPassword())) {
+            // We're setting a new password so update password change date
+            user.setPasswordLastUpdated(new Date());
+
+            /*
+            Store the password in the history for the user if enabled. This is done
+            regardless of whether the individual user has a password policy in effect.
+             */
+            if (identityConfig.getReloadableConfig().maintainPasswordHistory()) {
+                // Add the password to the history list and limit to 10
+                String hashedPwd = cryptHelper.createLegacySHA(user.getPassword());
+                List<String> history = user.getPasswordHistory();
+                if (history == null) {
+                    history = new ArrayList();
+                    user.setPasswordHistory(history);
+                }
+                history.add(hashedPwd);
+
+                int maxhistory = identityConfig.getReloadableConfig().getPasswordHistoryMax() + 1;
+                if (history.size() > maxhistory) {
+                    // Create a whole new list, keeping the last maxhistory entries
+                    history = new ArrayList(history.subList(history.size() - maxhistory, history.size()));
+                    user.setPasswordHistory(history);
+                }
+            }
+        }
     }
 
     @Override

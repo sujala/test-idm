@@ -4,7 +4,9 @@ import com.google.common.collect.Iterables;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRequest;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionResponse;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
@@ -22,6 +24,7 @@ import org.apache.commons.collections4.Closure;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +32,7 @@ import org.springframework.stereotype.Component;
 
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 
 import static com.rackspace.idm.GlobalConstants.MOSSO;
@@ -121,6 +125,9 @@ public class DefaultUserService implements UserService {
 
     @Autowired
     private ProvisionedUserFederationHandler federationHandler;
+
+    @Autowired
+    private AuthenticationContext authenticationContext;
 
     @Override
     public void addUserv11(User user) {
@@ -313,11 +320,44 @@ public class DefaultUserService implements UserService {
         return true;
     }
 
-    //TODO: consider removing this method. Just here so code doesn't break
     @Override
     public UserAuthenticationResult authenticate(String username, String password) {
         logger.debug("Authenticating User: {} by Username", username);
         UserAuthenticationResult authenticated = userDao.authenticate(username, password);
+
+        // Set the domain within the authentication context if auth succeeded
+        User user = (User) authenticated.getUser();
+        Domain domain = null;
+        if (authenticated.isAuthenticated() && StringUtils.isNotEmpty(user.getDomainId())) {
+            domain = domainService.getDomain(user.getDomainId());
+            authenticationContext.setDomain(domain);
+            if (domain == null) {
+                logger.error("User with ID {} references domain with ID {} but the domain does not exist.",
+                        user.getId(), user.getDomainId());
+            }
+        }
+
+        // Apply password rotation policy if applicable
+        if (authenticated.isAuthenticated() && domain != null && identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordExpiration()) {
+            Date pwdChangeDate = user.getPasswordLastUpdated();
+            Duration duration = domain.getPasswordPolicy() != null ? domain.getPasswordPolicy().getPasswordDurationAsDuration() : null;
+            if (duration != null && !duration.isZero()) {
+                boolean expired = false;
+                if (pwdChangeDate == null) {
+                    expired = true; // Expire users if no password change date
+                } else {
+                    DateTime now = new DateTime();
+                    long durationMs = duration.toMillis();
+                    DateTime pwdExpireDate = new DateTime(pwdChangeDate).plus(durationMs);
+                    authenticationContext.setPasswordExpiration(pwdExpireDate);
+                    expired = now.isAfter(pwdExpireDate);
+                }
+                if (expired) {
+                    throw new UserPasswordExpiredException(user, "The password for this user has expired and must be changed");
+                }
+            }
+        }
+
         validateUserStatus(authenticated);
         logger.debug("Authenticated User: {} by Username - {}", username,
                 authenticated);
@@ -771,6 +811,7 @@ public class DefaultUserService implements UserService {
     @Override
     public void updateUser(User user) throws IOException, JAXBException {
         logger.info("Updating User: {}", user);
+
         if(!validator.isBlank(user.getEmail())){
             validator.isEmailValid(user.getEmail());
         }
@@ -795,9 +836,45 @@ public class DefaultUserService implements UserService {
         user.setRsGroupId(currentUser.getRsGroupId());
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
         user.setSalt(currentUser.getSalt());
+
+        boolean passwordChange = checkForPasswordUpdate(user);
+        if (passwordChange) {
+            // If changing password, set the history on the user to keep existing history
+            user.setPasswordHistory(currentUser.getPasswordHistory());
+            List<String> userPasswordHistory = currentUser.getPasswordHistory();
+
+            // Only check history if enforcement is enabled
+            if (identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordHistory()) {
+                // If domain of user is changing, pull history policy from it
+                String domainForPolicy = StringUtils.isNotEmpty(user.getDomainId()) ? user.getDomainId() : currentUser.getDomainId();
+
+                // Apply passwordPolicy as appropriate
+                if (CollectionUtils.isNotEmpty(userPasswordHistory)) {
+                    Domain domain = domainService.getDomain(domainForPolicy);
+                    if (domain != null && domain.getPasswordPolicy() != null) {
+                        int pwdHistoryRestriction = domain.getPasswordPolicy().calculateEffectivePasswordHistoryRestriction();
+                        if (pwdHistoryRestriction >= 0) {
+                            // Index based on 0 so subtract 1
+                            int historyIndex = userPasswordHistory.size() - 1;
+                            // Add one to account for current password which is at end
+                            int numHistoryToCheck = pwdHistoryRestriction + 1;
+                            /*
+                            Check the password history from the end as the entries are ordered oldest first
+                             */
+                            for (int i = 0; i < numHistoryToCheck && historyIndex >= 0; ++i, historyIndex--) {
+                                if (cryptHelper.verifyLegacySHA(user.getPassword(), userPasswordHistory.get(historyIndex))) {
+                                    throw new BadRequestException(String.format("Must not repeat current or up to '%s' previous password(s)", pwdHistoryRestriction), ErrorCodes.ERROR_CODE_PASSWOD_HISTORY_MATCH);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         userDao.updateUser(user);
 
-        if(checkForPasswordUpdate(user)){
+        if(passwordChange){
             scopeAccessService.expireAllTokensForUser(user.getUsername());
         }
 

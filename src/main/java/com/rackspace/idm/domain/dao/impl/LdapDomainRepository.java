@@ -66,6 +66,11 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
     }
 
     @Override
+    public void updateDomainAsIs(Domain domain) {
+        updateObjectAsIs(domain);
+    }
+
+    @Override
     public void deleteDomain(String domainId) {
         validatePassedId(domainId);
         deleteObject(searchByIdFilter(domainId));

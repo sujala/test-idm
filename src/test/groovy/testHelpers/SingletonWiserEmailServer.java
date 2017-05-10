@@ -4,7 +4,7 @@ import com.rackspace.idm.helpers.WiserWrapper;
 
 public class SingletonWiserEmailServer {
 
-    private static WiserWrapper instance = WiserWrapper.startWiser(10025);
+    private static WiserWrapper instance = WiserWrapper.startWiser(10026);
 
     private SingletonWiserEmailServer() {
 
