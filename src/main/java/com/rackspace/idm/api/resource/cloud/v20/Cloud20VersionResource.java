@@ -470,8 +470,9 @@ public class Cloud20VersionResource {
     }
 
     @PUT
-    @Path("RAX-AUTH/domains/{domainId}/passwordPolicy")
+    @Path("RAX-AUTH/domains/{domainId}/password-policy")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response updateDomainPasswordPolicy(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -484,7 +485,7 @@ public class Cloud20VersionResource {
     }
 
     @GET
-    @Path("RAX-AUTH/domains/{domainId}/passwordPolicy")
+    @Path("RAX-AUTH/domains/{domainId}/password-policy")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDomainPasswordPolicy(
             @Context HttpHeaders httpHeaders,
@@ -497,7 +498,7 @@ public class Cloud20VersionResource {
     }
 
     @DELETE
-    @Path("RAX-AUTH/domains/{domainId}/passwordPolicy")
+    @Path("RAX-AUTH/domains/{domainId}/password-policy")
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteDomainPasswordPolicy(
             @Context HttpHeaders httpHeaders,
@@ -510,7 +511,7 @@ public class Cloud20VersionResource {
     }
 
     @POST
-    @Path("/users/RAX-AUTH/change-password")
+    @Path("/users/RAX-AUTH/change-pwd")
     public Response changeUserPassword(
             @Context HttpHeaders httpHeaders,
             ChangePasswordCredentials changePasswordCredentials) {

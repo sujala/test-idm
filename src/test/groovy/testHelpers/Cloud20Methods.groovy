@@ -87,8 +87,8 @@ class Cloud20Methods {
     static def SERVICE_PATH_RULES = "rules"
     static def SERVICE_PATH_MAPPING = "mapping"
     static def SERVICE_PATH_DOMAINS = "domains"
-    static def SERVICE_PATH_PASSWORD_POLICY = "passwordPolicy"
-    static def SERVICE_PATH_CHANGE_PASSWORD = "change-password"
+    static def SERVICE_PATH_PASSWORD_POLICY = "password-policy"
+    static def SERVICE_PATH_CHANGE_PASSWORD = "change-pwd"
 
     static def ENDPOINTS = "endpoints"
     static def ENDPOINT_TEMPLATES = "endpointTemplates"
