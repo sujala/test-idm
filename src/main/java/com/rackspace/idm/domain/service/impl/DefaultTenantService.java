@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.GlobalConstants;
@@ -426,11 +427,13 @@ public class DefaultTenantService implements TenantService {
         for (Domain myDomain : domainsToApply) {
             // Retrieve all the tenants in the domains
             String[] tenantIds = myDomain.getTenantIds();
-            for (String tenantId : tenantIds) {
-                Tenant tenant = getTenant(tenantId);
-                if (tenant != null) {
-                    setInferredTenantTypeOnTenantIfNecessary(tenant, types);
-                    rcnTenants.add(tenant);
+            if (tenantIds != null) {
+                for (String tenantId : tenantIds) {
+                    Tenant tenant = getTenant(tenantId);
+                    if (tenant != null) {
+                        setInferredTenantTypeOnTenantIfNecessary(tenant, types);
+                        rcnTenants.add(tenant);
+                    }
                 }
             }
         }
@@ -935,6 +938,33 @@ public class DefaultTenantService implements TenantService {
 
         // Original code didn't return fully populated roles (e.g. role names) so continue just returning minimal info
         List<TenantRole> allRoles = getEffectiveTenantRolesForUser(user);
+
+        List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
+        for (TenantRole role : allRoles) {
+            if (role.getTenantIds().contains(tenant.getTenantId())) {
+                TenantRole newRole = new TenantRole();
+                newRole.setClientId(role.getClientId());
+                newRole.setRoleRsId(role.getRoleRsId());
+                newRole.setName(role.getName());
+                newRole.getTenantIds().add(tenant.getTenantId());
+                tenantRoles.add(newRole);
+            }
+        }
+        logger.debug(GOT_TENANT_ROLES, tenantRoles.size());
+        return tenantRoles;
+    }
+
+    @Override
+    public List<TenantRole> getEffectiveTenantRolesForUserOnTenantApplyRcnRoles(EndUser user, Tenant tenant) {
+        if (tenant == null) {
+            throw new IllegalArgumentException(
+                    "Tenant cannot be null.");
+        }
+
+        logger.debug(GETTING_TENANT_ROLES);
+
+        // Original code didn't return fully populated roles (e.g. role names) so continue just returning minimal info
+        List<TenantRole> allRoles = getEffectiveTenantRolesForUserApplyRcnRoles(user);
 
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : allRoles) {

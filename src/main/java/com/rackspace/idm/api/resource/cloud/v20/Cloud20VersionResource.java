@@ -662,8 +662,9 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tenantId") String tenantId,
-            @PathParam("userId") String userId) {
-        return cloud20Service.listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId).build();
+            @PathParam("userId") String userId,
+            @QueryParam("apply_rcn_roles") boolean applyRcnRoles) {
+        return cloud20Service.listRolesForUserOnTenant(httpHeaders, authToken, tenantId, userId, applyRcnRoles).build();
     }
 
     @POST

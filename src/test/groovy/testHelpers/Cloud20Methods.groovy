@@ -716,8 +716,13 @@ class Cloud20Methods {
     }
 
     def listRolesForUserOnTenant(String token, String tenantId, String userId, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        listRolesForUserOnTenant(token, tenantId, userId, false, acceptMediaType)
+    }
+
+    def listRolesForUserOnTenant(String token, String tenantId, String userId, boolean applyRcnRoles, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(TENANTS).path(tenantId).path(USERS).path(userId).path(ROLES)
+                .queryParam(APPLY_RCN_ROLES, applyRcnRoles.toString())
                 .header(X_AUTH_TOKEN, token).accept(acceptMediaType).get(ClientResponse)
     }
 
