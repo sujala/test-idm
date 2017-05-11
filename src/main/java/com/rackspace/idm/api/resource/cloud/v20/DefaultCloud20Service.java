@@ -4139,12 +4139,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             Tenant tenantDO = tenantService.checkAndGetTenant(tenantId);
 
+            /*
+            Update those fields that are allowed to be updated via updateTenant. Note - the tenant 'name' is NOT allowed
+            to be updated as it must always match the tenant id.
+             */
             tenantDO.setDescription(tenant.getDescription());
             tenantDO.setDisplayName(tenant.getDisplayName());
             tenantDO.setEnabled(tenant.isEnabled());
-            if (identityConfig.getReloadableConfig().getAllowTenantNameToBeChangedViaUpdateTenant()) {
-                tenantDO.setName(tenant.getName());
-            }
 
             if (tenant.getTypes() != null) {
                 tenantDO.getTypes().clear();

@@ -64,42 +64,6 @@ class TenantIntegrationTest extends RootIntegrationTest {
         utils.deleteTenant(createdTenant64)
     }
 
-    def "update tenant limits tenant name to 64 characters"() {
-        given:
-        def tenant = utils.createTenant()
-        def tenantName63 = testUtils.getRandomUUIDOfLength("tenant", 63)
-        def tenantName64 = testUtils.getRandomUUIDOfLength("tenant", 64)
-        def tenantName65 = testUtils.getRandomUUIDOfLength("tenant", 65)
-        def tenant63 = v2Factory.createTenant(tenantName63, tenantName63, true)
-        def tenant64 = v2Factory.createTenant(tenantName64, tenantName64, true)
-        def tenant65 = v2Factory.createTenant(tenantName65, tenantName65, true)
-
-        when: "update tenant with name length < max name length"
-        def response = cloud20.updateTenant(utils.getServiceAdminToken(), tenant.id, tenant63)
-
-        then:
-        response.status == 200
-        def createdTenant63 = response.getEntity(Tenant).value
-        createdTenant63.name == tenantName63
-
-        when: "update tenant with name length == max name length"
-        response = cloud20.updateTenant(utils.getServiceAdminToken(), tenant.id, tenant64)
-
-        then:
-        response.status == 200
-        def createdTenant64 = response.getEntity(Tenant).value
-        createdTenant64.name == tenantName64
-
-        when: "update tenant with name length > max name length"
-        response = cloud20.updateTenant(utils.getServiceAdminToken(), tenant.id, tenant65)
-
-        then:
-        response.status == 400
-
-        cleanup:
-        utils.deleteTenant(tenant)
-    }
-
     def "delete tenant deletes the tenantId off of the domain"() {
         given:
         def tenant = utils.createTenant()
@@ -275,76 +239,6 @@ class TenantIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "updated tenant name is reflected in authenticate and validate token responses, useTenantNameFeatureFlag = #useTenantNameFeatureFlag"() {
-        given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT, useTenantNameFeatureFlag)
-        def users, userAdmin
-        (userAdmin, users) = utils.createUserAdminWithTenants()
-        def userAdminToken = utils.getToken(userAdmin.username)
-        def mossoTenantId = userAdmin.domainId
-        def mossoTenant = utils.updateTenant(mossoTenantId, true, testUtils.getRandomUUID())
-        def otherTenantId = testUtils.getRandomInteger()
-        def otherTenant = utils.createTenant(otherTenantId)
-        otherTenant = utils.updateTenant(otherTenant.id, true, testUtils.getRandomUUID())
-        def role = utils.createRole()
-        utils.addRoleToUserOnTenant(userAdmin, otherTenant, role.id)
-        utils.addApiKeyToUser(userAdmin)
-
-        when: "auth and validate w/ mosso tenant"
-        def authWithPasswordResponse = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
-        def authWithApiKeyResponse = cloud20.authenticateApiKey(userAdmin.username, Constants.DEFAULT_API_KEY)
-        def authWithTokenResponse = cloud20.authenticateTokenAndTenant(userAdminToken, mossoTenantId)
-        def validateResponse = cloud20.validateToken(utils.getServiceAdminToken(), userAdminToken)
-
-        then: "assert on auth responses"
-        def authWithPasswordData = authWithPasswordResponse.getEntity(AuthenticateResponse).value
-        def authWithApiKeyData = authWithApiKeyResponse.getEntity(AuthenticateResponse).value
-        def authWithTokenData = authWithTokenResponse.getEntity(AuthenticateResponse).value
-        assertAuthTenantNameAndId(authWithPasswordData, mossoTenant, useTenantNameFeatureFlag)
-        assertAuthTenantNameAndId(authWithApiKeyData, mossoTenant, useTenantNameFeatureFlag)
-        //NOTE: existing logic for auth w/ token and tenant always returned the correct tenant name in the response
-        assertAuthTenantNameAndId(authWithTokenData, mossoTenant, useTenantNameFeatureFlag)
-
-        and: "assert on validate response"
-        validateResponse.status == 200
-        AuthenticateResponse validateData = validateResponse.getEntity(AuthenticateResponse).value
-        assertAuthTenantNameAndId(validateData, mossoTenant, useTenantNameFeatureFlag)
-
-        when: "delete the mosso tenant off the user to fall back to 'numeric tenant ID logic' and auth and validate w/ nast tenant"
-        utils.deleteRoleFromUserOnTenant(userAdmin, mossoTenant, Constants.MOSSO_ROLE_ID)
-        def authWithPasswordResponse2 = cloud20.authenticate(userAdmin.username, Constants.DEFAULT_PASSWORD)
-        def authWithApiKeyResponse2 = cloud20.authenticateApiKey(userAdmin.username, Constants.DEFAULT_API_KEY)
-        def authWithTokenResponse2 = cloud20.authenticateTokenAndTenant(userAdminToken, otherTenantId)
-        def validateResponse2 = cloud20.validateToken(utils.getServiceAdminToken(), userAdminToken)
-
-        then: "assert on auth responses"
-        def authWithPasswordData2 = authWithPasswordResponse2.getEntity(AuthenticateResponse).value
-        def authWithApiKeyData2 = authWithApiKeyResponse2.getEntity(AuthenticateResponse).value
-        def authWithTokenData2 = authWithTokenResponse2.getEntity(AuthenticateResponse).value
-        assertAuthTenantNameAndId(authWithPasswordData2, otherTenant, useTenantNameFeatureFlag)
-        assertAuthTenantNameAndId(authWithApiKeyData2, otherTenant, useTenantNameFeatureFlag)
-        //NOTE: existing logic for auth w/ token and tenant always returned the correct tenant name in the response
-        assertAuthTenantNameAndId(authWithTokenData2, otherTenant, useTenantNameFeatureFlag)
-
-        and: "assert on validate response"
-        validateResponse.status == 200
-        AuthenticateResponse validateData2 = validateResponse2.getEntity(AuthenticateResponse).value
-        assertAuthTenantNameAndId(validateData2, otherTenant, useTenantNameFeatureFlag)
-
-        cleanup:
-        reloadableConfiguration.reset()
-        utils.deleteUsers(users)
-        utils.deleteRole(role)
-        utils.deleteTenant(mossoTenant)
-        utils.deleteTenant(otherTenant)
-
-        where:
-        useTenantNameFeatureFlag | _
-        true                     | _
-        false                    | _
-    }
-
-    @Unroll
     def "test create tenant with domain ID - accept: #acceptMediaType, request = #requestMediaType"() {
         given: "A domain and tenant"
         def adminToken = utils.getIdentityAdminToken()
@@ -466,10 +360,8 @@ class TenantIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Do not allow tenant name to be changed via update tenant - allowUpdate: #allowUpdate" () {
+    def "Do not allow tenant name to be changed via update tenant" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_TENANT_NAME_TO_BE_CHANGED_VIA_UPDATE_TENANT, allowUpdate)
-
         def tenantId = UUID.randomUUID().toString().replace("-", "")
         def tenant = v2Factory.createTenant(tenantId, tenantId)
         def updateTenant = v2Factory.createTenant(tenantId, "name")
@@ -481,17 +373,10 @@ class TenantIntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenant(utils.getServiceAdminToken(), addTenant.id)
 
         then:
-        if (allowUpdate) {
-            addTenant.name != updatedTenant.name
-        } else {
-            addTenant.name == updatedTenant.name
-        }
+        addTenant.name == updatedTenant.name
 
         cleanup:
         reloadableConfiguration.reset()
-
-        where:
-        allowUpdate << [true, false]
     }
 
     @Unroll

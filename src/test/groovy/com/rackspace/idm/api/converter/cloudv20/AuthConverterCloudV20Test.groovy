@@ -25,7 +25,7 @@ class AuthConverterCloudV20Test extends RootServiceTest{
     def "toAuthenticationResponse using a racker verifies that toUserForAuthenticateResponse uses a Racker as a parameter" () {
         given:
         Racker racker = entityFactory.createRacker()
-        def sa = entityFactory.createScopeAccess()
+        def sa = entityFactory.createRackerScopeAccess()
         def tenantRole = entityFactory.createTenantRole()
         def roles = [tenantRole].asList()
         def endpoint = entityFactory.createOpenstackEndpoint()

@@ -448,8 +448,6 @@ FEATURE_RESTRICTING_USER_CREATE_IN_EXIST_DOM = (
     "feature.restrict.create.user.in.domain.with.users")
 FEATURE_RESTRICTING_USER_CREATE_IN_DISABLED_DOM = (
     "feature.restrict.create.user.in.disabled.domain")
-FEATURE_FLAG_ALLOW_TENANT_NAME_UPDATE = (
-    'feature.allow.tenant.name.to.be.changed.via.update.tenant')
 FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED = (
     'feature.global.endpoints.for.all.roles.enabled')
 FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE = (

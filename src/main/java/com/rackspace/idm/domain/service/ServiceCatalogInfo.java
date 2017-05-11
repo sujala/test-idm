@@ -1,11 +1,14 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +22,7 @@ import java.util.List;
  */
 @Getter
 public class ServiceCatalogInfo {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private List<OpenstackEndpoint> userEndpoints;
     private List<TenantRole> userTenantRoles;
@@ -88,6 +92,46 @@ public class ServiceCatalogInfo {
         }
 
         return new ServiceCatalogInfo(userTenantRoles, userTenants, tenantEndpoints, userTypeEnum);
+    }
+
+    /**
+     * This service finds the a tenant role assigned to the user by name
+     *
+     * @return
+     */
+    public TenantRole findAssignedRoleByName(String roleName) {
+        for (TenantRole tenantRole : getUserTenantRoles()) {
+            if (tenantRole.getName().equals(roleName)) {
+                return tenantRole;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Determine whether the service catalog was generated using RCN role logic. This can be determined simply by
+     * looking at the identity user classification role and whether it has
+     * tenants associated with it. If it does, then the logic was applied. If not, then it wasn't.
+     *
+     * This depends on the user having an Identity user classification role - which is a requirement for all users. Identity
+     * does not guarantee anything w/ respect to the API for users without such a role. As such, this service will always
+     * return false in this case.
+     *
+     * @return
+     */
+    public boolean wereRcnRolesAppliedForCatalog() {
+        if (userTypeEnum == null) {
+            logger.warn("Service Catalog info was generated for a user w/o specifying the user type");
+            return false;
+        }
+
+        TenantRole userTypeRole = findAssignedRoleByName(userTypeEnum.getRoleName());
+        if (userTypeRole == null) {
+            logger.warn("Service Catalog info was generated for a user w/o containing a tenant role for the user type");
+            return false;
+        }
+
+        return CollectionUtils.isNotEmpty(userTypeRole.getTenantIds());
     }
 
     /**

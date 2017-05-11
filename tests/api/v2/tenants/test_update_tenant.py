@@ -22,22 +22,6 @@ class TestUpdateTenant(base.TestBaseV2):
     def setUpClass(cls):
         super(TestUpdateTenant, cls).setUpClass()
 
-        '''Feature Flag:
-        feature.allow.tenant.name.to.be.changed.via.update.tenant=true will
-        allow tenant name to be updated via the update tenant call.
-        feature.allow.tenant.name.to.be.changed.via.update.tenant=false will
-        cause the tenant name to be ignored in the update tenant call.
-        '''
-        if cls.test_config.run_service_admin_tests:
-            update_tenant_name_flag_properties = (
-                cls.devops_client.get_devops_properties(
-                    const.FEATURE_FLAG_ALLOW_TENANT_NAME_UPDATE))
-            update_tenant_name_resp_dict = (
-                update_tenant_name_flag_properties.json())
-            cls.update_tenant_name_feature_flag = (
-                update_tenant_name_resp_dict[
-                    const.PROPERTIES][0][const.VALUE])
-
     def create_tenant_type(self, name):
         request_object = requests.TenantType(name, 'description')
         self.service_admin_client.add_tenant_type(tenant_type=request_object)
@@ -278,10 +262,8 @@ class TestUpdateTenant(base.TestBaseV2):
             tenant_id=self.tenant_id)
         updated_tenant = responses.Tenant(after.json())
 
-        if self.update_tenant_name_feature_flag:
-            self.assertEqual(updated_tenant.name, new_name)
-        else:
-            self.assertEqual(updated_tenant.name, before_tenant.name)
+        # Tenant name can not be updated
+        self.assertEqual(updated_tenant.name, before_tenant.name)
 
         # Get Auth Token for User
         user_client = client.IdentityAPIClient(
@@ -304,13 +286,9 @@ class TestUpdateTenant(base.TestBaseV2):
             for item in auth_tenant_with_token.access.user.roles if
             item.id == role.id][0]
         self.assertEqual(tenant_id_after_update, before_tenant.id)
-        if self.update_tenant_name_feature_flag:
-            self.assertEqual(
-                auth_tenant_with_token.access.token.tenant.name, new_name)
-        else:
-            self.assertEqual(
-                auth_tenant_with_token.access.token.tenant.name,
-                before_tenant.name)
+        self.assertEqual(
+             auth_tenant_with_token.access.token.tenant.name,
+             before_tenant.name)
 
         # Auth as user with password
         auth_obj = requests.AuthenticateWithPassword(user_name=user.user_name,
@@ -385,12 +363,8 @@ class TestUpdateTenant(base.TestBaseV2):
             tenant_id=one_call_user.domain_id)
         updated_one_call_tenant = responses.Tenant(after.json())
 
-        if self.update_tenant_name_feature_flag:
-            self.assertEqual(
-                updated_one_call_tenant.name, new_one_call_tenant_name)
-        else:
-            self.assertEqual(
-                updated_one_call_tenant.name, one_call_req_obj.domain_id)
+        self.assertEqual(
+            updated_one_call_tenant.name, one_call_req_obj.domain_id)
 
         # Auth as one_call_user with password
         user_client = client.IdentityAPIClient(
@@ -402,15 +376,9 @@ class TestUpdateTenant(base.TestBaseV2):
         resp = user_client.get_auth_token(request_object=auth_obj)
         auth_one_call_user_with_password = responses.Access(resp.json())
 
-        # Auth response will/not reflect updated tenant name based on flag.
-        if self.update_tenant_name_feature_flag:
-            self.assertEqual(
-                auth_one_call_user_with_password.access.token.tenant.name,
-                updated_one_call_tenant.name)
-        else:
-            self.assertEqual(
-                auth_one_call_user_with_password.access.token.tenant.name,
-                one_call_tenant.name)
+        self.assertEqual(
+            auth_one_call_user_with_password.access.token.tenant.name,
+            one_call_tenant.name)
 
     def tearDown(self):
         # Delete all resources created in the tests
