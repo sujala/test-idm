@@ -2668,17 +2668,20 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) {
+    public ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, boolean applyRcnRoles, Integer marker, Integer limit) {
         try {
             ScopeAccess access = getScopeAccessForValidToken(authToken);
             authorizationService.verifyUserLevelAccess(access);
 
-            List<Tenant> tenants = null;
-
             //safe cast as only enduser would pass verify check
             EndUser user = (EndUser) userService.getUserByScopeAccess(access);
 
-            tenants = this.tenantService.getTenantsForUserByTenantRoles(user);
+            List<Tenant> tenants;
+            if (applyRcnRoles) {
+                tenants = tenantService.getTenantsForUserByTenantRolesApplyRcnRoles(user);
+            } else {
+                tenants = this.tenantService.getTenantsForUserByTenantRoles(user);
+            }
 
             return Response.ok(
                     jaxbObjectFactories.getOpenStackIdentityV2Factory().createTenants(tenantConverterCloudV20.toTenantList(tenants)).getValue());

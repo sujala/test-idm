@@ -1,10 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.DomainService
-import com.rackspace.idm.domain.service.impl.DefaultTenantService
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
@@ -195,13 +195,8 @@ class TenantIntegrationTest extends RootIntegrationTest {
 
         then:
         response.status == 200
-        if(accept == MediaType.APPLICATION_XML_TYPE) {
-            def tenantsResponse = response.getEntity(Tenants).value
-            assert tenantsResponse.tenant.find { it.domainId == domainId } != null
-        } else {
-            def tenantsResponse = new JsonSlurper().parseText(response.getEntity(String))
-            assert tenantsResponse['tenants'].find { it['RAX-AUTH:domainId'] == domainId } != null
-        }
+        def tenants = getTenantsFromResponse(response)
+        assert tenants.tenant.find { it.domainId == domainId } != null
 
         cleanup:
         utils.deleteUsers(users)
@@ -1139,6 +1134,81 @@ class TenantIntegrationTest extends RootIntegrationTest {
         featureTurnedOn | _
         true            | _
         false           | _
+    }
+
+    @Unroll
+    def "Test list tenants with query param 'apply_rcn_roles' - apply_rcn_roles=#applyRcnRoles, accpet=#accept" () {
+        given: "Two new users"
+        def user1 = utils.createCloudAccount(utils.identityAdminToken)
+        def user2 = utils.createCloudAccount(utils.identityAdminToken)
+        def rcn = testUtils.getRandomRCN()
+
+        when: "Updating both user's domain to the same RCN"
+        def domain = v2Factory.createDomain().with {
+            it.rackspaceCustomerNumber = rcn
+            it
+        }
+        def updateDomain1 = cloud20.updateDomain(utils.identityAdminToken, user1.domainId, domain).getEntity(Domain)
+        def updateDomain2 = cloud20.updateDomain(utils.identityAdminToken, user2.domainId, domain).getEntity(Domain)
+
+        then: "Assert both domains where updated correctly"
+        updateDomain1.rackspaceCustomerNumber == rcn
+        updateDomain2.rackspaceCustomerNumber == rcn
+
+        when: "Listing tenants for user1 prior to adding RCN role"
+        def user1Token = utils.getToken(user1.username)
+        def listTenantResponse = cloud20.listTenants(user1Token, applyRcnRoles, accept)
+        def user1Tenants = getTenantsFromResponse(listTenantResponse)
+
+        then: "Assert user1 tenants are return whether or not RCN roles are applied"
+        user1Tenants.tenant.find({it.id == user1.domainId}) != null
+        user1Tenants.tenant.find({it.id == utils.getNastTenant(user1.domainId)}) != null
+        user1Tenants.tenant.size == 2
+
+        when: "Add global 'rcn-all' role to user1"
+        def addRoleToUserResponse = cloud20.addUserRole(utils.getIdentityAdminToken(), user1.id, Constants.IDENTITY_RCN_ALL_TENANT_ROLE_ID)
+
+        then: "Assert role added to user1"
+        addRoleToUserResponse.status == HttpStatus.SC_OK
+
+        when: "Listing tenants for user1"
+        listTenantResponse = cloud20.listTenants(user1Token, applyRcnRoles, accept)
+        user1Tenants = getTenantsFromResponse(listTenantResponse)
+
+        then:
+        // When 'apply_rcn_roles=true` all tenant from user2 are added to the list of user1 tenants
+        if (applyRcnRoles instanceof String) {
+            applyRcnRoles = Boolean.parseBoolean(applyRcnRoles)
+        }
+        if (applyRcnRoles) {
+            assert user1Tenants.tenant.find({it.id == user2.domainId}) != null
+            assert user1Tenants.tenant.find({it.id == utils.getNastTenant(user2.domainId)}) != null
+            assert user1Tenants.tenant.size == 4
+        } else{
+            assert user1Tenants.tenant.find({it.id == user2.domainId}) == null
+            assert user1Tenants.tenant.find({it.id == utils.getNastTenant(user2.domainId)}) == null
+            assert user1Tenants.tenant.size == 2
+        }
+        user1Tenants.tenant.find({it.id == user1.domainId}) != null
+        user1Tenants.tenant.find({it.id == utils.getNastTenant(user1.domainId)}) != null
+
+        cleanup:
+        utils.deleteUser(user1)
+        utils.deleteUser(user2)
+        utils.deleteDomain(user1.domainId)
+        utils.deleteDomain(user2.domainId)
+
+        where:
+        applyRcnRoles | accept
+        true          | MediaType.APPLICATION_XML_TYPE
+        true          | MediaType.APPLICATION_JSON_TYPE
+        "TRUE"        | MediaType.APPLICATION_XML_TYPE
+        "TrUe"        | MediaType.APPLICATION_XML_TYPE
+        false         | MediaType.APPLICATION_XML_TYPE
+        false         | MediaType.APPLICATION_JSON_TYPE
+        "FALSE"       | MediaType.APPLICATION_XML_TYPE
+        "FaLSe"       | MediaType.APPLICATION_XML_TYPE
+        "invalid"     | MediaType.APPLICATION_XML_TYPE
     }
 
     def getTenant(response) {

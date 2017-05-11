@@ -3,12 +3,10 @@ package com.rackspace.idm.helpers
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
-import com.rackspace.idm.domain.entity.TokenRevocationRecord
 import com.rackspace.idm.util.OTPHelper
 import com.unboundid.util.Base32
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang3.RandomStringUtils
-import org.apache.commons.lang3.RandomUtils
 import org.apache.http.HttpHeaders
 import org.apache.http.client.utils.URLEncodedUtils
 import org.mockserver.model.Header
@@ -54,6 +52,10 @@ class CloudTestUtils {
 
     def getRandomIntegerString() {
         String.valueOf(getRandomInteger())
+    }
+
+    def getRandomRCN() {
+        return String.format("RCN-%d-%d-%d", random.nextInt(900) + 100, random.nextInt(900) + 100, random.nextInt(900) + 100)
     }
 
     def getOTPCode(String keyUri) {

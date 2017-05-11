@@ -1909,7 +1909,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
 
         when:
-        def result = service.listTenants(headers, authToken, null, null).build()
+        def result = service.listTenants(headers, authToken, false, null, null).build()
 
         then:
         1 * userService.getUserByScopeAccess(_) >> user
