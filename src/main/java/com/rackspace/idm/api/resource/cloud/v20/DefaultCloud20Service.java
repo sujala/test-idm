@@ -3070,8 +3070,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 if (pwdPolicy == null) {
                     throw new BadRequestException("The supplied password policy is invalid.");
                 }
-                if (pwdPolicy.calculateEffectivePasswordHistoryRestriction() > 10) {
-                    throw new BadRequestException("Invalid Password history restriction. Must be between 0-10. 0 means to ignore history.");
+                if (pwdPolicy.calculateEffectivePasswordHistoryRestriction() > identityConfig.getReloadableConfig().getPasswordHistoryMax()) {
+                    throw new BadRequestException(String.format("Invalid Password history restriction. Must be between 0-%s. 0 means to ignore history.", identityConfig.getReloadableConfig().getPasswordHistoryMax()));
                 }
             } catch (InvalidPasswordPolicyException e) {
                 logger.debug(String.format("The supplied password policy '%s' for domainId '%s' is invalid", policy, domainId), e);
