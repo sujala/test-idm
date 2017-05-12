@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.Constants
 import com.rackspace.idm.validation.Validator20
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.User
@@ -162,7 +163,7 @@ class TenantTypeIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "TenantType description required - max 255 characters"() {
+    def "TenantType description required - max 255 characters, contentType = #contentType"() {
         given:
         def name = getRandomUUID("name")[0..15]
         TenantType tenantType = v2Factory.createTenantType(name, description)
@@ -177,17 +178,23 @@ class TenantTypeIntegrationTest extends RootIntegrationTest {
         cloud20.deleteTenantType(serviceAdminToken, name)
 
         where:
-        contentType                     | description   | expectedStatus
-        MediaType.APPLICATION_XML_TYPE  | 'description' | SC_CREATED
-        MediaType.APPLICATION_JSON_TYPE | 'description' | SC_CREATED
-        MediaType.APPLICATION_XML_TYPE  | 'a' * 255     | SC_CREATED
-        MediaType.APPLICATION_JSON_TYPE | 'a' * 255     | SC_CREATED
-        MediaType.APPLICATION_XML_TYPE  | 'a' * 256     | SC_BAD_REQUEST
-        MediaType.APPLICATION_JSON_TYPE | 'a' * 256     | SC_BAD_REQUEST
-        MediaType.APPLICATION_XML_TYPE  | ''            | SC_BAD_REQUEST
-        MediaType.APPLICATION_JSON_TYPE | ''            | SC_BAD_REQUEST
-        MediaType.APPLICATION_XML_TYPE  | null          | SC_BAD_REQUEST
-        MediaType.APPLICATION_JSON_TYPE | null          | SC_BAD_REQUEST
+        contentType                     | description     | expectedStatus
+        MediaType.APPLICATION_XML_TYPE  | 'description'   | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | 'description'   | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | 'a' * 255       | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | 'a' * 255       | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | 'a' * 256       | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | 'a' * 256       | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | ''              | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | ''              | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | null            | SC_BAD_REQUEST
+        MediaType.APPLICATION_JSON_TYPE | null            | SC_BAD_REQUEST
+        MediaType.APPLICATION_XML_TYPE  | '&#abc123'      | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | '&#abc123'      | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | '\u0430'        | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | '\u0430'        | SC_CREATED
+        MediaType.APPLICATION_XML_TYPE  | 'description 1' | SC_CREATED
+        MediaType.APPLICATION_JSON_TYPE | 'description 1' | SC_CREATED
     }
 
     @Unroll
@@ -198,6 +205,12 @@ class TenantTypeIntegrationTest extends RootIntegrationTest {
 
         when:
         def response = cloud20.addTenantType(token, tenantType, contentType, contentType)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when:
+        response = cloud20.getTenantType(token, name)
 
         then:
         response.status == SC_FORBIDDEN
@@ -331,8 +344,41 @@ class TenantTypeIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | _
     }
 
-    @Unroll
-    def "Cannot delete tenantType service that is referenced by other objects"() {
+    def "Cannot delete tenantType service that is referenced by tenant"() {
+        given:
+        def tenantTypeName = getRandomUUID("name")[0..15]
+        TenantType tenantType = v2Factory.createTenantType(tenantTypeName, "description")
+
+        def tenantId = getRandomUUID("tenant")
+        def tenant = v2Factory.createTenant(tenantId, tenantId, [tenantTypeName])
+        def contentType = MediaType.APPLICATION_JSON_TYPE
+
+        when:
+        def response = cloud20.addTenantType(serviceAdminToken, tenantType, contentType, contentType)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "delete tenantType with existing tenant with tenantType reference"
+        response = cloud20.addTenant(serviceAdminToken, tenant, contentType, contentType)
+        def createdTenant = getEntity(response, Tenant)
+
+        response = cloud20.deleteTenantType(serviceAdminToken, tenantTypeName)
+
+        then:
+        response.status == SC_BAD_REQUEST
+        String errMsg = "TenantType with name ${tenantType.name} is referenced and cannot be deleted"
+        response.getEntity(BadRequestFault).value.message == errMsg
+
+        when: "delete tenantType when tenant with tenantType reference deleted"
+        cloud20.deleteTenant(serviceAdminToken, createdTenant.id)
+        response = cloud20.deleteTenantType(serviceAdminToken, tenantTypeName)
+
+        then: "Return 204 if type is found and deleted"
+        response.status == SC_NO_CONTENT
+    }
+
+    def "Cannot delete tenantType service that is referenced by RCN role"() {
         given:
         def tenantTypeName = getRandomUUID("name")[0..15]
         TenantType tenantType = v2Factory.createTenantType(tenantTypeName, "description")
@@ -350,15 +396,7 @@ class TenantTypeIntegrationTest extends RootIntegrationTest {
             it.types = types
             it
         }
-
-        def rule = new TenantTypeEndpointRule().with {
-            it.tenantType = tenantTypeName
-            it.description = "description"
-            it
-        }
-
-        def tenantId = getRandomUUID("tenant")
-        def tenant = v2Factory.createTenant(tenantId, tenantId, [tenantTypeName])
+        def contentType = MediaType.APPLICATION_JSON_TYPE
 
         when:
         def response = cloud20.addTenantType(serviceAdminToken, tenantType, contentType, contentType)
@@ -372,21 +410,36 @@ class TenantTypeIntegrationTest extends RootIntegrationTest {
 
         response = cloud20.deleteTenantType(serviceAdminToken, tenantTypeName)
 
-        cloud20.deleteRole(identityAdminToken, role.id)
-
         then:
         response.status == SC_BAD_REQUEST
+        String errMsg = "TenantType with name ${tenantType.name} is referenced and cannot be deleted"
+        response.getEntity(BadRequestFault).value.message == errMsg
 
-        when: "delete tenantType with existing tenant with tenantType reference"
-        response = cloud20.addTenant(serviceAdminToken, tenant, contentType, contentType)
-        def createdTenant = getEntity(response, Tenant)
-
+        when: "delete tenantType when role with tenantType reference deleted"
+        cloud20.deleteRole(identityAdminToken, role.id)
         response = cloud20.deleteTenantType(serviceAdminToken, tenantTypeName)
 
-        cloud20.deleteTenant(serviceAdminToken, createdTenant.id)
+        then: "Return 204 if type is found and deleted"
+        response.status == SC_NO_CONTENT
+    }
+
+    def "Cannot delete tenantType service that is referenced by rule"() {
+        given:
+        def tenantTypeName = getRandomUUID("name")[0..15]
+        TenantType tenantType = v2Factory.createTenantType(tenantTypeName, "description")
+
+        def rule = new TenantTypeEndpointRule().with {
+            it.tenantType = tenantTypeName
+            it.description = "description"
+            it
+        }
+        def contentType = MediaType.APPLICATION_JSON_TYPE
+
+        when:
+        def response = cloud20.addTenantType(serviceAdminToken, tenantType, contentType, contentType)
 
         then:
-        response.status == SC_BAD_REQUEST
+        response.status == SC_CREATED
 
         when: "delete tenantType with existing rule with tenantType reference"
         response = cloud20.addEndpointAssignmentRule(identityAdminToken, rule)
@@ -394,18 +447,17 @@ class TenantTypeIntegrationTest extends RootIntegrationTest {
 
         response = cloud20.deleteTenantType(serviceAdminToken, tenantTypeName)
 
-        cloud20.deleteEndpointAssignmentRule(identityAdminToken, createdRule.id)
-
         then:
         response.status == SC_BAD_REQUEST
+        String errMsg = "TenantType with name ${tenantType.name} is referenced and cannot be deleted"
+        response.getEntity(BadRequestFault).value.message == errMsg
 
-        cleanup:
-        cloud20.deleteTenantType(serviceAdminToken, tenantTypeName)
+        when: "delete tenantType when rule with tenantType reference deleted"
+        cloud20.deleteEndpointAssignmentRule(identityAdminToken, createdRule.id)
+        response = cloud20.deleteTenantType(serviceAdminToken, tenantTypeName)
 
-        where:
-        contentType                     | _
-        MediaType.APPLICATION_XML_TYPE  | _
-        MediaType.APPLICATION_JSON_TYPE | _
+        then: "Return 204 if type is found and deleted"
+        response.status == SC_NO_CONTENT
     }
 
     @Unroll
