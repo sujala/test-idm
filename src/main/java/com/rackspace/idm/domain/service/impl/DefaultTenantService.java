@@ -235,6 +235,21 @@ public class DefaultTenantService implements TenantService {
         return tenants;
     }
 
+    @Override
+    public List<Tenant> getTenantsForUserByTenantRolesApplyRcnRoles(BaseUser user) {
+        if (user == null) {
+            throw new IllegalStateException();
+        }
+
+        logger.info("Getting Tenants (apply_rcn_roles=true");
+
+        Iterable<TenantRole> tenantRoles = getEffectiveTenantRolesForUserApplyRcnRoles(user);
+        List<Tenant> tenants = getTenants(tenantRoles, new TenantEnabledPredicate());
+
+        logger.info("Got {} tenants", tenants.size());
+        return tenants;
+    }
+
     /**
      * Returns a list of effective tenant roles the user has assigned. This includes all roles the user explicitly has
      * assigned on tenants and, if enabled, the automatically assigned "access" role to all tenants within the user's

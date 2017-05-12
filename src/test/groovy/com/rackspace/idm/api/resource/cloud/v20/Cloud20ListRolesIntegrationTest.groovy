@@ -596,7 +596,7 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
         // Update domain to have an RCN
-        def domain = v2Factory.createDomain(domainId, domainId, true, null, null, "RCN-123-123-123")
+        def domain = v2Factory.createDomain(domainId, domainId, true, null, null, testUtils.getRandomRCN())
         utils.updateDomain(domainId, domain)
 
         when: "Create new RCN role"

@@ -681,13 +681,14 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("name") String name,
+            @QueryParam("apply_rcn_roles") boolean applyRcnRoles,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
         // Note: getTenantByName only available to admin
         if (!StringUtils.isBlank(name)) {
             return cloud20Service.getTenantByName(httpHeaders, authToken, name).build();
         } else {
-            return cloud20Service.listTenants(httpHeaders, authToken, validateMarker(marker), validateLimit(limit)).build();
+            return cloud20Service.listTenants(httpHeaders, authToken, applyRcnRoles, validateMarker(marker), validateLimit(limit)).build();
         }
     }
 

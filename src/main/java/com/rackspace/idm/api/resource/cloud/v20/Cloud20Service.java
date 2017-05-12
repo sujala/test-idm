@@ -70,7 +70,7 @@ public interface Cloud20Service {
 
     ResponseBuilder deleteUserRoles(HttpHeaders httpHeaders, String authToken, String userId, String roleType);
 
-    ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, Integer marker, Integer limit) ;
+    ResponseBuilder listTenants(HttpHeaders httpHeaders, String authToken, boolean applyRcnRoles, Integer marker, Integer limit) ;
 
     ResponseBuilder getTenantByName(HttpHeaders httpHeaders, String authToken, String name) ;
 

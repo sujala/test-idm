@@ -83,6 +83,8 @@ public interface TenantService {
 
     List<Tenant> getTenantsForUserByTenantRoles(BaseUser user);
 
+    List<Tenant> getTenantsForUserByTenantRolesApplyRcnRoles(BaseUser user);
+
     /**
      * Returns TRUE if the user matches the following criteria:
      * - The user does not have any tenants
