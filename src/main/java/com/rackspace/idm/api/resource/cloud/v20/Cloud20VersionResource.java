@@ -403,8 +403,9 @@ public class Cloud20VersionResource {
     public Response listEndpointsForToken(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @QueryParam("apply_rcn_roles") boolean applyRcnRoles,
             @PathParam("tokenId") String tokenId) {
-        return cloud20Service.listEndpointsForToken(httpHeaders, authToken, tokenId).build();
+        return cloud20Service.listEndpointsForToken(httpHeaders, authToken, tokenId, applyRcnRoles).build();
     }
 
     @GET

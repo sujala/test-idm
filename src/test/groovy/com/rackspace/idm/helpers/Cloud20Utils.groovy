@@ -166,6 +166,14 @@ class Cloud20Utils {
         return entity.token.id
     }
 
+    def listEndpointsForToken(token, authToken=getServiceAdminToken(), applyRcnRoles=false) {
+        def response = methods.listEndpointsForToken(authToken, token, applyRcnRoles)
+        assert response.status == 200
+        def entity = response.getEntity(EndpointList).value
+        assert entity != null
+        return entity
+    }
+
     def createUser(token, username=testUtils.getRandomUUID(), domainId=null, defaultRegion=null) {
         def response = methods.createUser(token, factory.createUserForCreate(username, "display", "${username}@rackspace.com", true, defaultRegion, domainId, DEFAULT_PASSWORD))
 

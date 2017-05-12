@@ -52,7 +52,7 @@ public interface Cloud20Service {
 
     ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken, String userToken) throws IOException, JAXBException;
 
-    ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId) ;
+    ResponseBuilder listEndpointsForToken(HttpHeaders httpHeaders, String authToken, String tokenId, boolean applyRcnRoles);
 
     ResponseBuilder listExtensions(HttpHeaders httpHeaders) ;
 

@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TenantService
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.EndpointList
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.Tenants
@@ -224,43 +225,144 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
 
         when: "Assign RCN files role to user and auth"
         utils.addRoleToUser(userInDomain1, Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID)
-        AuthenticateResponse response = utils.authenticateApplyRcnRoles(userInDomain1.username)
+        AuthenticateResponse authResponse = utils.authenticateApplyRcnRoles(userInDomain1.username)
+        def token = authResponse.token.id
+        EndpointList listEndpointsReponse = utils.listEndpointsForToken(token, token, true)
 
         then: "User receives all explicitly assigned endpoints on files tenant in external domain and files/cloud in local domain"
         filesTenant1Endpoint.getBaseUrls().each {baseUrl ->
-            assert response.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant1.id && it.publicURL == baseUrl.publicUrl } != null
+            assert authResponse.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant1.id && it.publicURL == baseUrl.publicUrl } != null
+            assert listEndpointsReponse.endpoint.find { it.tenantId == filesTenant1.id && it.publicURL == baseUrl.publicUrl } != null
         }
         filesTenant2Endpoint.getBaseUrls().each {baseUrl ->
-            assert response.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant2.id && it.publicURL == baseUrl.publicUrl } != null
+            assert authResponse.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant2.id && it.publicURL == baseUrl.publicUrl } != null
+            assert listEndpointsReponse.endpoint.find { it.tenantId == filesTenant2.id && it.publicURL == baseUrl.publicUrl } != null
         }
         cloudTenant1Endpoint.getBaseUrls().each {baseUrl ->
-            assert response.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant1.id && it.publicURL == baseUrl.publicUrl } != null
+            assert authResponse.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant1.id && it.publicURL == baseUrl.publicUrl } != null
+            assert listEndpointsReponse.endpoint.find { it.tenantId == cloudTenant1.id && it.publicURL == baseUrl.publicUrl } != null
         }
         cloudTenant2Endpoint.getBaseUrls().each {baseUrl ->
-            assert response.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } == null
+            assert authResponse.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } == null
+            assert listEndpointsReponse.endpoint.find { it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } == null
         }
 
         when: "Assign RCN cloud role to user and auth"
         utils.addRoleToUser(userInDomain1, Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID)
-        AuthenticateResponse response2 = utils.authenticateApplyRcnRoles(userInDomain1.username)
+        AuthenticateResponse authResponse2 = utils.authenticateApplyRcnRoles(userInDomain1.username)
+        EndpointList listEndpointsReponse2 = utils.listEndpointsForToken(token, token, true)
 
         then: "User receives all explicitly assigned endpoints on files/cloud tenants in both domains"
         filesTenant1Endpoint.getBaseUrls().each {baseUrl ->
-            assert response2.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant1.id && it.publicURL == baseUrl.publicUrl } != null
+            assert authResponse2.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant1.id && it.publicURL == baseUrl.publicUrl } != null
+            assert listEndpointsReponse2.endpoint.find { it.tenantId == filesTenant1.id && it.publicURL == baseUrl.publicUrl } != null
         }
         filesTenant2Endpoint.getBaseUrls().each {baseUrl ->
-            assert response2.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant2.id && it.publicURL == baseUrl.publicUrl } != null
+            assert authResponse2.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant2.id && it.publicURL == baseUrl.publicUrl } != null
+            assert listEndpointsReponse2.endpoint.find { it.tenantId == filesTenant2.id && it.publicURL == baseUrl.publicUrl } != null
         }
         cloudTenant1Endpoint.getBaseUrls().each {baseUrl ->
-            assert response2.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant1.id && it.publicURL == baseUrl.publicUrl } != null
+            assert authResponse2.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant1.id && it.publicURL == baseUrl.publicUrl } != null
+            assert listEndpointsReponse2.endpoint.find { it.tenantId == cloudTenant1.id && it.publicURL == baseUrl.publicUrl } != null
         }
         cloudTenant2Endpoint.getBaseUrls().each {baseUrl ->
-            assert response2.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } != null
+            assert authResponse2.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } != null
+            assert listEndpointsReponse2.endpoint.find { it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } != null
         }
 
         cleanup:
         utils.deleteUserQuietly(userInDomain1)
         utils.deleteUserQuietly(userInDomain2)
+    }
+
+    @Unroll
+    def "test apply rcn query peram works for list endpoints for token - applyRcnRoles = #applyRcnRoles"() {
+        given:
+        def userInDomain1
+        def userInDomain2
+        (userInDomain1, userInDomain2) = createCloudAccountsInRcn()
+        def domain1 = userInDomain1.domainId
+        def domain2 = userInDomain2.domainId
+        Tenants domain1Tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), domain1).getEntity(Tenants).value
+        Tenants domain2Tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), domain2).getEntity(Tenants).value
+        Tenant cloudTenant1 = domain1Tenants.tenant.find {it.id == domain1}
+        Tenant cloudTenant2 = domain2Tenants.tenant.find {it.id == domain2}
+        OpenstackEndpoint cloudTenant1Endpoint = endpointService.getOpenStackEndpointForTenant(tenantService.getTenant(cloudTenant1.id))
+        OpenstackEndpoint cloudTenant2Endpoint = endpointService.getOpenStackEndpointForTenant(tenantService.getTenant(cloudTenant2.id))
+        utils.addRoleToUser(userInDomain1, Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID)
+        AuthenticateResponse authResponse = utils.authenticateApplyRcnRoles(userInDomain1.username)
+        def token = authResponse.token.id
+
+        when: "list endpoints for token"
+        EndpointList listEndpointsReponse = utils.listEndpointsForToken(token, token, applyRcnRoles)
+
+        then: "the user always has the endpoints in their domain"
+        cloudTenant1Endpoint.getBaseUrls().each {baseUrl ->
+            assert listEndpointsReponse.endpoint.find { it.tenantId == cloudTenant1.id && it.publicURL == baseUrl.publicUrl } != null
+        }
+
+        and: "but only shows endpoints in the other domain when applying RCN roles"
+        if (applyRcnRoles) {
+            cloudTenant2Endpoint.getBaseUrls().each {baseUrl ->
+                assert listEndpointsReponse.endpoint.find { it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } != null
+            }
+        } else {
+            cloudTenant2Endpoint.getBaseUrls().each {baseUrl ->
+                assert listEndpointsReponse.endpoint.find { it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } == null
+            }
+        }
+
+        cleanup:
+        utils.deleteUserQuietly(userInDomain1)
+        utils.deleteUserQuietly(userInDomain2)
+
+        where:
+        applyRcnRoles << [true, false]
+    }
+    @Unroll
+    def "test list endpoints for token only returns RCN endpoints if feature.performant.service.catalog is enabled - perfCatalogEnabled = #perfCatalogEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, perfCatalogEnabled)
+        def userInDomain1
+        def userInDomain2
+        (userInDomain1, userInDomain2) = createCloudAccountsInRcn()
+        def domain1 = userInDomain1.domainId
+        def domain2 = userInDomain2.domainId
+        Tenants domain1Tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), domain1).getEntity(Tenants).value
+        Tenants domain2Tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), domain2).getEntity(Tenants).value
+        Tenant cloudTenant1 = domain1Tenants.tenant.find {it.id == domain1}
+        Tenant cloudTenant2 = domain2Tenants.tenant.find {it.id == domain2}
+        OpenstackEndpoint cloudTenant1Endpoint = endpointService.getOpenStackEndpointForTenant(tenantService.getTenant(cloudTenant1.id))
+        OpenstackEndpoint cloudTenant2Endpoint = endpointService.getOpenStackEndpointForTenant(tenantService.getTenant(cloudTenant2.id))
+        utils.addRoleToUser(userInDomain1, Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID)
+        AuthenticateResponse authResponse = utils.authenticateApplyRcnRoles(userInDomain1.username)
+        def token = authResponse.token.id
+
+        when: "list endpoints for token"
+        EndpointList listEndpointsReponse = utils.listEndpointsForToken(token, token, true)
+
+        then: "the user always has the endpoints in their domain"
+        cloudTenant1Endpoint.getBaseUrls().each {baseUrl ->
+            assert listEndpointsReponse.endpoint.find { it.tenantId == cloudTenant1.id && it.publicURL == baseUrl.publicUrl } != null
+        }
+
+        and: "but only shows endpoints in the other domain when applying RCN roles and performant service catalog enabled"
+        if (perfCatalogEnabled) {
+            cloudTenant2Endpoint.getBaseUrls().each {baseUrl ->
+                assert listEndpointsReponse.endpoint.find { it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } != null
+            }
+        } else {
+            cloudTenant2Endpoint.getBaseUrls().each {baseUrl ->
+                assert listEndpointsReponse.endpoint.find { it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } == null
+            }
+        }
+
+        cleanup:
+        utils.deleteUserQuietly(userInDomain1)
+        utils.deleteUserQuietly(userInDomain2)
+
+        where:
+        perfCatalogEnabled << [true, false]
     }
 
     def createCloudAccountsInRcn() {

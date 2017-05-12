@@ -57,7 +57,7 @@ class ListEndpointsForTokenApiTest extends RootServiceTest {
         authorizationService.restrictTokenEndpoints(_) >> true
 
         when:
-        service.listEndpointsForToken(headers, tokenId, tokenId)
+        service.listEndpointsForToken(headers, tokenId, tokenId, false)
 
         then:
         1 * scopeAccessService.getServiceCatalogInfo(user) >> new ServiceCatalogInfo()

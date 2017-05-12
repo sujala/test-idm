@@ -3484,7 +3484,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         AuthenticateResponse authenticateResponse = getEntity(cloud20.authenticate(username, password, contentType, contentType), AuthenticateResponse)
         def service = authenticateResponse.serviceCatalog.service.find {it.name.equals("cloudServers")}
-        def endpointList = getEntity(cloud20.listEndpointsForToken(identityAdminToken, authenticateResponse.token.id, contentType), EndpointList)
+        def endpointList = getEntity(cloud20.listEndpointsForToken(identityAdminToken, authenticateResponse.token.id, false, contentType), EndpointList)
 
         cloud20.deleteEndpointAssignmentRule(serviceAdminToken, createEndpointRule.id)
         cloud20.destroyUser(serviceAdminToken, createUser.id)
@@ -3662,7 +3662,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         AuthenticateResponse authenticateResponse = getEntity(cloud20.authenticate(username, password, contentType, contentType), AuthenticateResponse)
         def service = authenticateResponse.serviceCatalog.service.find {it.name.equals("cloudServers")}
-        def endpointList = getEntity(cloud20.listEndpointsForToken(identityAdminToken, authenticateResponse.token.id, contentType), EndpointList)
+        def endpointList = getEntity(cloud20.listEndpointsForToken(identityAdminToken, authenticateResponse.token.id, false, contentType), EndpointList)
 
         cloud20.deleteEndpointAssignmentRule(serviceAdminToken, createEndpointRule.id)
         cloud20.destroyUser(serviceAdminToken, createUser.id)

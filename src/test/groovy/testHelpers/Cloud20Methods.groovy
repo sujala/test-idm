@@ -552,9 +552,11 @@ class Cloud20Methods {
         resource.path(path20).path(TENANTS).path(tenantId).path(OS_KSCATALOG).path(ENDPOINTS).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).get(ClientResponse)
     }
 
-    def listEndpointsForToken(String authToken, token, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def listEndpointsForToken(String authToken, token, boolean applyRcnRoles = false, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(TOKENS).path(token).path(ENDPOINTS).header(X_AUTH_TOKEN, authToken).accept(acceptMediaType.toString()).get(ClientResponse)
+        def queryParams = new MultivaluedMapImpl()
+        queryParams.add("apply_rcn_roles", applyRcnRoles)
+        resource.path(path20).path(TOKENS).path(token).path(ENDPOINTS).queryParams(queryParams).header(X_AUTH_TOKEN, authToken).accept(acceptMediaType.toString()).get(ClientResponse)
     }
 
     def createRole(String token, Role role, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
