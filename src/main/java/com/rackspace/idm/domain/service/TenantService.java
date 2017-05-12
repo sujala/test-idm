@@ -57,6 +57,7 @@ public interface TenantService {
     List<TenantRole> getGlobalRolesForUser(EndUser user, String applicationId);
     List<TenantRole> getGlobalRolesForUserApplyRcnRoles(EndUser user, String applicationId);
     List<TenantRole> getEffectiveTenantRolesForUserOnTenant(EndUser user, Tenant tenant);
+    List<TenantRole> getEffectiveTenantRolesForUserOnTenantApplyRcnRoles(EndUser user, Tenant tenant);
     List<TenantRole> getTenantRolesForUser(BaseUser user);
 
     /**

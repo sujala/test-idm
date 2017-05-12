@@ -1,5 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.ClientRole
@@ -230,6 +233,229 @@ class ListRolesOnTenantTest extends RootIntegrationTest {
         cleanup:
         deleteUserQuietly(userAdmin)
         deleteTenantQuietly(tenant)
+    }
+
+    def "If the tenant lives within the user's domain, the user will receive each non-RCN globally assigned role on that tenant"() {
+        given:
+        def userAdmin = createUserAdmin()
+        def domainId = userAdmin.domainId
+        def tenant = v2Factory.createTenant().with {
+            it.name = testUtils.getRandomUUID("tenant")
+            it.domainId = domainId
+            it
+        }
+        def createdTenant = utils.createTenant(tenant)
+
+        def roleName = getRandomUUID("role")
+        def role = v2Factory.createRole().with {
+            it.serviceId = Constants.IDENTITY_SERVICE_ID
+            it.name = roleName
+            it.roleType = RoleTypeEnum.STANDARD
+            it.assignment = RoleAssignmentEnum.GLOBAL
+            it
+        }
+
+        def createdRole = utils.createRole(role)
+        utils.addRoleToUser(userAdmin, createdRole.id)
+
+        when:
+        def listUserRoleOnTenant = cloud20.listRolesForUserOnTenant(specificationIdentityAdminToken, createdTenant.id, userAdmin.id, true).getEntity(RoleList).value
+
+        then:
+        listUserRoleOnTenant != null
+        def globalNonRcnRole = listUserRoleOnTenant.role.find { it.id == createdRole.id }
+        globalNonRcnRole.tenantId == createdTenant.id
+
+        cleanup:
+        deleteUserQuietly(userAdmin)
+        deleteRoleQuietly(createdRole)
+        deleteTenantQuietly(createdTenant)
+    }
+
+    def "Each RCN role the user is assigned that applies to the tenant."() {
+        given:
+        def tenantType = "cloud"
+        Types types = new Types().with {
+            it.type = [tenantType]
+            it
+        }
+        def userAdmin = createUserAdmin()
+        def domainId = userAdmin.domainId
+        def tenant = v2Factory.createTenant().with {
+            it.name = testUtils.getRandomUUID("tenant")
+            it.domainId = domainId
+            it.types = types
+            it
+        }
+        def createdTenant = utils.createTenant(tenant)
+
+        def roleName = getRandomUUID("role")
+        def role = v2Factory.createRole().with {
+            it.serviceId = Constants.IDENTITY_SERVICE_ID
+            it.name = roleName
+            it.roleType = RoleTypeEnum.RCN
+            it.assignment = RoleAssignmentEnum.GLOBAL
+            it.types = types
+            it
+        }
+
+        def createdRole = utils.createRole(role)
+        utils.addRoleToUser(userAdmin, createdRole.id)
+
+        when:
+        def listUserRoleOnTenant = cloud20.listRolesForUserOnTenant(specificationIdentityAdminToken, createdTenant.id, userAdmin.id, true).getEntity(RoleList).value
+
+        then:
+        listUserRoleOnTenant != null
+        def globalNonRcnRole = listUserRoleOnTenant.role.find { it.id == createdRole.id }
+        globalNonRcnRole.tenantId == createdTenant.id
+
+        cleanup:
+        deleteUserQuietly(userAdmin)
+        deleteRoleQuietly(createdRole)
+        deleteTenantQuietly(createdTenant)
+    }
+
+    def "The RCN role is not returned for a tenant within the user's domain if the tenant doesn't 'match' the RCN role."() {
+        given:
+        def tenantType = "cloud"
+        Types types = new Types().with {
+            it.type = [tenantType]
+            it
+        }
+        def userAdmin = createUserAdmin()
+        def domainId = userAdmin.domainId
+        def tenant = v2Factory.createTenant().with {
+            it.name = testUtils.getRandomUUID("tenant")
+            it.domainId = domainId
+            it
+        }
+        def createdTenant = utils.createTenant(tenant)
+
+        def roleName = getRandomUUID("role")
+        def role = v2Factory.createRole().with {
+            it.serviceId = Constants.IDENTITY_SERVICE_ID
+            it.name = roleName
+            it.roleType = RoleTypeEnum.RCN
+            it.assignment = RoleAssignmentEnum.GLOBAL
+            it.types = types
+            it
+        }
+
+        def createdRole = utils.createRole(role)
+        utils.addRoleToUser(userAdmin, createdRole.id)
+
+        when:
+        def listUserRoleOnTenant = cloud20.listRolesForUserOnTenant(specificationIdentityAdminToken, createdTenant.id, userAdmin.id, true).getEntity(RoleList).value
+
+        then:
+        listUserRoleOnTenant != null
+        def globalNonRcnRole = listUserRoleOnTenant.role.find { it.id == createdRole.id }
+        globalNonRcnRole == null
+
+        cleanup:
+        deleteUserQuietly(userAdmin)
+        deleteRoleQuietly(createdRole)
+        deleteTenantQuietly(createdTenant)
+    }
+
+    def "The RCN role would be returned for a matching tenant outside the user's domain, as long as that external tenant is within the same RCN"() {
+        given:
+        def tenantType = "cloud"
+        Types types = new Types().with {
+            it.type = [tenantType]
+            it
+        }
+        def userAdmin = createUserAdmin()
+        def otherUserAdmin = createUserAdmin()
+
+        def rcn = testUtils.getRandomUUID()
+        utils.updateDomain(userAdmin.domainId, v2Factory.createDomain().with {it.rackspaceCustomerNumber = rcn; it})
+        utils.updateDomain(otherUserAdmin.domainId, v2Factory.createDomain().with {it.rackspaceCustomerNumber = rcn; it})
+
+        def tenant = v2Factory.createTenant().with {
+            it.name = testUtils.getRandomUUID("tenant")
+            it.domainId = otherUserAdmin.domainId
+            it.types = types
+            it
+        }
+        def createdTenant = utils.createTenant(tenant)
+
+        def roleName = getRandomUUID("role")
+        def role = v2Factory.createRole().with {
+            it.serviceId = Constants.IDENTITY_SERVICE_ID
+            it.name = roleName
+            it.roleType = RoleTypeEnum.RCN
+            it.assignment = RoleAssignmentEnum.GLOBAL
+            it.types = types
+            it
+        }
+
+        def createdRole = utils.createRole(role)
+        utils.addRoleToUser(userAdmin, createdRole.id)
+
+        when:
+        def listUserRoleOnTenant = cloud20.listRolesForUserOnTenant(specificationIdentityAdminToken, createdTenant.id, userAdmin.id, true).getEntity(RoleList).value
+
+        then:
+        listUserRoleOnTenant != null
+        def globalNonRcnRole = listUserRoleOnTenant.role.find { it.id == createdRole.id }
+        globalNonRcnRole.tenantId == createdTenant.id
+
+        cleanup:
+        deleteUserQuietly(userAdmin)
+        deleteUserQuietly(otherUserAdmin)
+        deleteRoleQuietly(createdRole)
+        deleteTenantQuietly(createdTenant)
+    }
+
+    def "A globally assigned non-RCN role is not returned for a tenant outside the user's domain, but within the same RCN"() {
+        given:
+        def tenantType = "cloud"
+        Types types = new Types().with {
+            it.type = [tenantType]
+            it
+        }
+        def userAdmin = createUserAdmin()
+        def otherUserAdmin = createUserAdmin()
+
+        def rcn = testUtils.getRandomUUID()
+        utils.updateDomain(userAdmin.domainId, v2Factory.createDomain().with {it.rackspaceCustomerNumber = rcn; it})
+        utils.updateDomain(otherUserAdmin.domainId, v2Factory.createDomain().with {it.rackspaceCustomerNumber = rcn; it})
+
+        def tenant = v2Factory.createTenant().with {
+            it.name = testUtils.getRandomUUID("tenant")
+            it.domainId = otherUserAdmin.domainId
+            it.types = types
+            it
+        }
+        def createdTenant = utils.createTenant(tenant)
+
+        def roleName = getRandomUUID("role")
+        def role = v2Factory.createRole().with {
+            it.serviceId = Constants.IDENTITY_SERVICE_ID
+            it.name = roleName
+            it.roleType = RoleTypeEnum.STANDARD
+            it.assignment = RoleAssignmentEnum.GLOBAL
+            it
+        }
+
+        def createdRole = utils.createRole(role)
+        utils.addRoleToUser(userAdmin, createdRole.id)
+
+        when:
+        def listUserRoleOnTenant = cloud20.listRolesForUserOnTenant(specificationIdentityAdminToken, createdTenant.id, userAdmin.id, true).getEntity(RoleList).value
+
+        then:
+        listUserRoleOnTenant != null
+        def globalNonRcnRole = listUserRoleOnTenant.role.find { it.id == createdRole.id }
+        globalNonRcnRole == null
+
+        cleanup:
+        deleteUserQuietly(userAdmin)
+        deleteUserQuietly(otherUserAdmin)
+        deleteRoleQuietly(createdRole)
+        deleteTenantQuietly(createdTenant)
     }
 
     def deleteUserQuietly(user) {

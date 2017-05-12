@@ -2605,7 +2605,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder listRolesForUserOnTenant(HttpHeaders httpHeaders, String authToken, String tenantId,
-                                                    String userId) {
+                                                    String userId, boolean applyRcnRoles) {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
@@ -2621,7 +2621,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
             }
 
-            List<TenantRole> roles = this.tenantService.getEffectiveTenantRolesForUserOnTenant(user, tenant);
+            List<TenantRole> roles;
+
+            if (applyRcnRoles) {
+                roles = this.tenantService.getEffectiveTenantRolesForUserOnTenantApplyRcnRoles(user, tenant);
+            } else {
+                roles = this.tenantService.getEffectiveTenantRolesForUserOnTenant(user, tenant);
+            }
 
             return Response.ok(
                     jaxbObjectFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
