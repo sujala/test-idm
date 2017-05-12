@@ -389,6 +389,13 @@ class EntityFactory extends Specification {
         }
     }
 
+    def createRackerScopeAccess() {
+        new RackerScopeAccess().with {
+            it.accessTokenString = "ats"
+            return it
+        }
+    }
+
     def createFederatedToken() {
         new UserScopeAccess().with {
             it.accessTokenString = "ats"

@@ -365,6 +365,11 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).entity(request).post(ClientResponse)
     }
 
+    def authenticateTokenAndTenantApplyRcn(token, tenantId, String applyRcnRoles = null) {
+        initOnUse()
+        authenticate(v2Factory.createTokenAuthenticationRequest(token, tenantId.toString(), null), applyRcnRoles)
+    }
+
     def authenticatePassword(String username, String password=DEFAULT_PASSWORD, String applyRcnRoles = null) {
         initOnUse()
         authenticate(v2Factory.createPasswordAuthenticationRequest(username, password), applyRcnRoles)

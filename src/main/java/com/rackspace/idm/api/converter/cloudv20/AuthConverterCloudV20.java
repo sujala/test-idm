@@ -30,6 +30,12 @@ public class AuthConverterCloudV20 {
     @Autowired
     private EndpointConverterCloudV20 endpointConverterCloudV20;
 
+    /**
+     * Generate an authentication response for a federated user
+     *
+     * @param samlAuthResponse
+     * @return
+     */
     public AuthenticateResponse toAuthenticationResponse(SamlAuthResponse samlAuthResponse) {
         AuthenticateResponse auth = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
@@ -44,20 +50,27 @@ public class AuthConverterCloudV20 {
         return getAuthResponseWithoutServiceId(auth);
     }
 
+    /**
+     * Generate an authentication response for a provisioned user
+     *
+     * @param authResponseTuple
+     * @param scInfo
+     * @return
+     */
     public AuthenticateResponse toAuthenticationResponse(AuthResponseTuple authResponseTuple, ServiceCatalogInfo scInfo) {
         AuthenticateResponse auth = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
-        auth.setToken(this.tokenConverterCloudV20.toToken(authResponseTuple.getUserScopeAccess(), scInfo.getUserTenantRoles()));
+        auth.setToken(this.tokenConverterCloudV20.toEndUserToken(authResponseTuple.getUserScopeAccess(), authResponseTuple.getUser(), scInfo));
         auth.setUser(this.userConverterCloudV20.toUserForAuthenticateResponse(authResponseTuple.getUser(), scInfo.getUserTenantRoles()));
         auth.setServiceCatalog(this.endpointConverterCloudV20.toServiceCatalog(scInfo.getUserEndpoints()));
 
         return getAuthResponseWithoutServiceId(auth);
     }
 
-    public AuthenticateResponse toRackerAuthenticationResponse(Racker user, ScopeAccess scopeAccess, List<TenantRole> roles, List<OpenstackEndpoint> endpoints) {
+    public AuthenticateResponse toRackerAuthenticationResponse(Racker user, RackerScopeAccess scopeAccess, List<TenantRole> roles, List<OpenstackEndpoint> endpoints) {
         AuthenticateResponse auth = jaxbObjectFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
-        auth.setToken(this.tokenConverterCloudV20.toToken(scopeAccess, roles));
+        auth.setToken(this.tokenConverterCloudV20.toRackerToken(scopeAccess));
         auth.setUser(this.userConverterCloudV20.toRackerForAuthenticateResponse(user, roles));
         auth.setServiceCatalog(this.endpointConverterCloudV20.toServiceCatalog(endpoints));
 

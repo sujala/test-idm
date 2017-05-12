@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.entity.OpenstackEndpoint
 import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TenantService
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.EndpointList
 import org.openstack.docs.identity.api.v2.Role
@@ -363,6 +364,120 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
 
         where:
         perfCatalogEnabled << [true, false]
+    }
+
+    /**
+     * A user has endpoints on a tenant in one of 3 ways - explicit assignment, global assignment, and tenant type
+     * endpoint assignment rules. This test verifies the user receives endpoints on tenants in external domains for
+     * explicit assignment. A user receives these endpoints by having _any_ role on that tenant.
+     *
+     * @return
+     */
+    def "User can authenticate against a tenant from RCN domain and limit service catalog to that tenant's endpoints"() {
+        given:
+        def userInDomain1
+        def userInDomain2
+        (userInDomain1, userInDomain2) = createCloudAccountsInRcn()
+
+        def domain1 = userInDomain1.domainId
+        def domain2 = userInDomain2.domainId
+
+        Tenants domain1Tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), domain1).getEntity(Tenants).value
+        Tenants domain2Tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), domain2).getEntity(Tenants).value
+        Tenant cloudTenant1 = domain1Tenants.tenant.find {it.id == domain1}
+        Tenant filesTenant1 = domain1Tenants.tenant.find() {it.id != domain1}
+        Tenant cloudTenant2 = domain2Tenants.tenant.find {it.id == domain2}
+        Tenant filesTenant2 = domain2Tenants.tenant.find() {it.id != domain2}
+
+        // Add uber RCN role to user so receives role on all tenants in all RCN's domains
+        utils.addRoleToUser(userInDomain1, Constants.IDENTITY_RCN_ALL_TENANT_ROLE_ID)
+
+        def token = utils.getToken(userInDomain1.username)
+
+        when: "Auth w/ apply_rcn_roles and specify cloud tenant in external domain"
+        def response = cloud20.authenticateTokenAndTenantApplyRcn(token, cloudTenant2.id, "true")
+
+        then: "Auth is successful"
+        response.status == HttpStatus.SC_OK
+
+        and: "Endpoints are limited to those on the specified tenant"
+        AuthenticateResponse authResponse = response.getEntity(AuthenticateResponse).value
+        assert authResponse.serviceCatalog.service.endpoint.flatten().find {it.tenantId != cloudTenant2.id} == null
+
+        and: "access.token.tenant is the specified tenant from external domain"
+        authResponse.token.tenant.id == cloudTenant2.id
+
+        when: "Auth w/ apply_rcn_roles and specify files tenant in external domain"
+        def response2 = cloud20.authenticateTokenAndTenantApplyRcn(token, filesTenant2.id, "true")
+
+        then: "Auth is successful"
+        response2.status == HttpStatus.SC_OK
+
+        and: "Endpoints are limited to those on the specified tenant"
+        AuthenticateResponse authResponse2 = response2.getEntity(AuthenticateResponse).value
+        assert authResponse2.serviceCatalog.service.endpoint.flatten().find {it.tenantId != filesTenant2.id} == null
+
+        and: "access.token.tenant is the files tenant in external domain"
+        authResponse2.token.tenant.id == filesTenant2.id
+
+        when: "Auth w/ apply_rcn_roles and specify own domain's cloud tenant"
+        def response3 = cloud20.authenticateTokenAndTenantApplyRcn(token, cloudTenant1.id, "true")
+
+        then: "Auth is successful"
+        response3.status == HttpStatus.SC_OK
+
+        and: "access.token.tenant is the local cloud tenant"
+        AuthenticateResponse authResponse3 = response3.getEntity(AuthenticateResponse).value
+        authResponse3.token.tenant != null
+        authResponse3.token.tenant.id == cloudTenant1.id
+
+        and: "Endpoints for all tenants are returned"
+        assert authResponse3.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant1.id} != null
+        assert authResponse3.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant2.id} != null
+        assert authResponse3.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant1.id} != null
+        assert authResponse3.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant2.id} != null
+
+        when: "Auth w/ apply_rcn_roles and don't specify a tenant"
+        AuthenticateResponse authResponse4 = utils.authenticateApplyRcnRoles(userInDomain1.username)
+
+        then: "access.token.tenant is the local cloud tenant since have compute:default role on it"
+        authResponse4.token.tenant != null
+        authResponse4.token.tenant.id == cloudTenant1.id
+
+        and: "Endpoints for all tenants are returned"
+        assert authResponse4.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant1.id} != null
+        assert authResponse4.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant2.id} != null
+        assert authResponse4.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant1.id} != null
+        assert authResponse4.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant2.id} != null
+
+        when: "Remove compute:default role from tenant1 and don't specify tenant"
+        utils.deleteRoleFromUserOnTenant(userInDomain1, cloudTenant1, Constants.DEFAULT_COMPUTE_ROLE_ID)
+        AuthenticateResponse authResponse5 = utils.authenticateApplyRcnRoles(userInDomain1.username)
+
+        then: "access.token.tenant is null since when RCN applied, only based on compute:default role"
+        authResponse5.token.tenant == null
+
+        and: "Endpoints for all tenants are returned"
+        assert authResponse5.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant1.id} != null
+        assert authResponse5.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant2.id} != null
+        assert authResponse5.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant1.id} != null
+        assert authResponse5.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant2.id} != null
+
+        when: "Delete tenant1 and don't specify tenant"
+        utils.deleteTenant(cloudTenant1)
+        AuthenticateResponse authResponse6 = utils.authenticateApplyRcnRoles(userInDomain1.username)
+
+        then: "access.token.tenant is null since no compute:default role on tenant or all numeric tenant in domain1"
+        authResponse6.token.tenant == null
+
+        and: "Endpoints for all remaining tenants are returned"
+        assert authResponse6.serviceCatalog.service.endpoint.flatten().find {it.tenantId == cloudTenant2.id} != null
+        assert authResponse6.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant1.id} != null
+        assert authResponse6.serviceCatalog.service.endpoint.flatten().find {it.tenantId == filesTenant2.id} != null
+
+        cleanup:
+        utils.deleteUserQuietly(userInDomain1)
+        utils.deleteUserQuietly(userInDomain2)
     }
 
     def createCloudAccountsInRcn() {

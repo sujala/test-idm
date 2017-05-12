@@ -150,6 +150,12 @@ class Cloud20Utils {
         return response.getEntity(AuthenticateResponse).value
     }
 
+    def authenticateTokenWithTenant(token, tenantId) {
+        def response = methods.authenticateTokenAndTenant(token, tenantId)
+        assert(response.status == 200)
+        return response.getEntity(AuthenticateResponse).value
+    }
+
     def getTokenFromApiKeyAuth(String username, String apikey = DEFAULT_API_KEY) {
         def response = methods.authenticateApiKey(username, apikey)
         assert (response.status == SC_OK)

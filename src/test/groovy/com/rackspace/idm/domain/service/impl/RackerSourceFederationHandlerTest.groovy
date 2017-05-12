@@ -140,7 +140,7 @@ class RackerSourceFederationHandlerTest extends Specification {
         Racker newRacker = entityFactory.createRacker(newRackerUsername + "@" + IDP_URI)
 
         when:
-        def newUserSamlResponse = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, newRackerUsername, 1)
+        def newUserSamlResponse = samlAssertionFactory.generateSamlAssertionResponseForFederatedRacker(IDP_URI, newRackerUsername, 10)
         SamlAuthResponse newRackerResponse = federationHandler.processRequestForProvider(new SamlResponseDecorator(newUserSamlResponse), identityProvider)
 
         then: "racker not added, token added, no clean tokens, retrieve racker roles"
