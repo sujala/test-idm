@@ -51,6 +51,8 @@ class TestAddTenant(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         self.assertSchema(response=resp,
                           json_schema=add_tenant_with_types_schema)
+        tenant = responses.Tenant(resp.json())
+        self.tenant_ids.append(tenant.id)
         self.assertEqual(
             len(resp.json()[const.TENANT][const.NS_TYPES]), 3)
         for tenant_type in [self.tenant_type_1.lower(),
@@ -75,6 +77,8 @@ class TestAddTenant(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         self.assertSchema(response=resp,
                           json_schema=add_tenant_with_types_schema)
+        tenant = responses.Tenant(resp.json())
+        self.tenant_ids.append(tenant.id)
         self.assertEqual(
             len(resp.json()[const.TENANT][const.NS_TYPES]), 1)
         self.assertIn(self.tenant_type_1,
@@ -149,6 +153,24 @@ class TestAddTenant(base.TestBaseV2):
         if tenant_object.description:
             self.assertEqual(tenant.description, tenant_object.description)
         self.assertHeaders(response=resp)
+
+    def test_add_tenant_with_non_existing_tenant_type(self):
+
+        # Randomness is making sure it does not exist before. This avoids
+        # using service-admin client to check if tenant type already exists
+        tenant_type_name = self.generate_random_string(
+            pattern='newtype[\-][0-9a-z]{8}')
+
+        tenant_name = tenant_id = self.generate_random_string(
+            const.TENANT_NAME_PATTERN)
+        request_object = requests.Tenant(
+                tenant_name=tenant_name, tenant_id=tenant_id,
+                tenant_types=[tenant_type_name])
+        resp = self.identity_admin_client.add_tenant(tenant=request_object)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['badRequest']['message'],
+                         "TenantType with name: '{0}' was not found.".format(
+                             tenant_type_name))
 
     def tearDown(self):
         # Delete all tenants created in the tests
