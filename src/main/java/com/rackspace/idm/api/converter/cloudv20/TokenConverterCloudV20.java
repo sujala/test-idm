@@ -87,8 +87,8 @@ public class TokenConverterCloudV20 {
      * token part of the AuthenticationResponse for Authentication. As validate does not include generating a
      * ServiceCatalogInfo object, this method is here to provide a temporary means to adapt to that method.
      *
-     * Do not use this unless necessary it it incurs a performance cost to look up tenants. Deprecating this from the
-     * getgo.
+     * Do not use this unless necessary as it incurs a performance cost to look up tenants. Deprecating this from the
+     * getgo as it's a temporary workaround
      *
      * @param scopeAccess
      * @param user
@@ -236,7 +236,7 @@ public class TokenConverterCloudV20 {
              tenant. If a user does not have that specific role, use other default horrible logic which is mosso tenant
              is numerical while nast tenant is a string. Currently users are restricted to those two tenants.
             */
-            if (result != null) {
+            if (result == null) {
                 for (TenantRole tenantRole : tenantRoleList) {
                     for (String tenantId : tenantRole.getTenantIds()) {
                         if (tenantId.matches("\\d+")) {

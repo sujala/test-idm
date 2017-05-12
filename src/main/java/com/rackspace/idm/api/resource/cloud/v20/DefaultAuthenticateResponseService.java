@@ -218,8 +218,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
     private AuthenticateResponse buildAuthResponseForValidateTokenInternal(UserScopeAccess sa, String tenantId, boolean applyRcnRoles) {
         AuthenticateResponse authenticateResponse = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
-        UserScopeAccess usa = sa;
-        EndUser user = (EndUser) userService.getUserByScopeAccess(usa);
+        EndUser user = (EndUser) userService.getUserByScopeAccess(sa);
         List<TenantRole> roles;
         if (applyRcnRoles) {
             roles = tenantService.getTenantRolesForUserApplyRcnRoles(user);

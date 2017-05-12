@@ -556,6 +556,84 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         utils.deleteUserQuietly(userInDomain2)
     }
 
+    /**
+     * Access token tenant returned from validate always returns the local domain's compute:default tenant or none
+     * when apply_rcn_roles applied. When not applied, returns the compute:default tenant or the all numeric tenant
+     *
+     * @return
+     */
+    def "Verify validate returns appropriate access.token.tenant under various circumstances "() {
+        given:
+        def userInDomain1
+        def userInDomain2
+        (userInDomain1, userInDomain2) = createCloudAccountsInRcn()
+
+        def domain1 = userInDomain1.domainId
+        def domain2 = userInDomain2.domainId
+
+        Tenants domain1Tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), domain1).getEntity(Tenants).value
+        Tenants domain2Tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), domain2).getEntity(Tenants).value
+        Tenant cloudTenant1 = domain1Tenants.tenant.find {it.id == domain1}
+        Tenant filesTenant1 = domain1Tenants.tenant.find() {it.id != domain1}
+        Tenant cloudTenant2 = domain2Tenants.tenant.find {it.id == domain2}
+        Tenant filesTenant2 = domain2Tenants.tenant.find() {it.id != domain2}
+
+        // Add uber RCN role to user so receives role on all tenants in all RCN's domains
+        utils.addRoleToUser(userInDomain1, Constants.IDENTITY_RCN_ALL_TENANT_ROLE_ID)
+        def token = utils.getToken(userInDomain1.username)
+
+        when: "Validate w/ apply_rcn_roles w/ access to all tenants in both domains"
+        AuthenticateResponse valResponse = utils.validateTokenApplyRcnRoles(token, "true")
+        AuthenticateResponse valResponseLegacy = utils.validateTokenApplyRcnRoles(token, "false")
+
+        then: "tenant is the local domain's cloud tenant when applyign RCN"
+        valResponse.token.tenant != null
+        valResponse.token.tenant.id == cloudTenant1.id
+
+        and: "tenant is not null when not applying RCN and set to local cloud tenant"
+        valResponseLegacy.token.tenant != null
+        valResponseLegacy.token.tenant.id == cloudTenant1.id
+
+        when: "Remove compute:default role from cloudTenant1; leaving on cloudTenant2 when rcn applied"
+        utils.deleteRoleFromUserOnTenant(userInDomain1, cloudTenant1, Constants.DEFAULT_COMPUTE_ROLE_ID)
+        AuthenticateResponse valResponse2 = utils.validateTokenApplyRcnRoles(token, "true")
+        AuthenticateResponse valResponseLegacy2 = utils.validateTokenApplyRcnRoles(token, "false")
+
+        then: "tenant is null when applying RCN"
+        valResponse2.token.tenant == null
+
+        and: "tenant is not null when not applying RCN and is set to cloudTenant1 - an all numeric domain"
+        valResponseLegacy2.token.tenant != null
+        valResponseLegacy2.token.tenant.id == cloudTenant1.id
+
+        when: "Delete tenant1"
+        utils.deleteTenant(cloudTenant1)
+        AuthenticateResponse valResponse3 = utils.validateTokenApplyRcnRoles(token, "true")
+        AuthenticateResponse valResponseLegacy3 = utils.validateTokenApplyRcnRoles(token, "false")
+
+        then: "access.token.tenant is null when rcn applied since no compute:default role on tenant in domain1"
+        valResponse3.token.tenant == null
+
+        and: "access.token.tenant is null when rcn not applied since no compute:default role on tenant or all numeric tenant in domain1"
+        valResponseLegacy3.token.tenant == null
+
+        when: "Give user explicit access to compute tenant in domain2 via compute default role"
+        utils.addRoleToUserOnTenant(userInDomain1, cloudTenant2, Constants.DEFAULT_COMPUTE_ROLE_ID)
+        AuthenticateResponse valResponse4 = utils.validateTokenApplyRcnRoles(token, "true")
+        AuthenticateResponse valResponseLegacy4 = utils.validateTokenApplyRcnRoles(token, "false")
+
+        then: "access.token.tenant is null when rcn applied since no compute:default role on tenant in domain1"
+        valResponse4.token.tenant == null
+
+        and: "access.token.tenant is cloud2 tenant since have compute:default role on it"
+        valResponseLegacy4.token.tenant != null
+        valResponseLegacy4.token.tenant.id == cloudTenant2.id
+
+        cleanup:
+        utils.deleteUserQuietly(userInDomain1)
+        utils.deleteUserQuietly(userInDomain2)
+    }
+
     def createCloudAccountsInRcn() {
         def rcn = UUID.randomUUID().toString().replaceAll("-", "")
         def userInDomain1 = utils.createCloudAccount(utils.getIdentityAdminToken())
