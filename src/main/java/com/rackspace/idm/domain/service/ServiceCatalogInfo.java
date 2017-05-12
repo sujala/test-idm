@@ -63,7 +63,7 @@ public class ServiceCatalogInfo {
     public Tenant findUserTenantById(String id) {
         if (id != null) {
             for (Tenant userTenant : userTenants) {
-                if (id.equals(userTenant.getTenantId())) {
+                if (id.equalsIgnoreCase(userTenant.getTenantId())) {
                     return userTenant;
                 }
             }
@@ -74,7 +74,7 @@ public class ServiceCatalogInfo {
     public Tenant findUserTenantByName(String name) {
         if (name != null) {
             for (Tenant userTenant : userTenants) {
-                if (name.equals(userTenant.getName())) {
+                if (name.equalsIgnoreCase(userTenant.getName())) {
                     return userTenant;
                 }
             }
@@ -86,7 +86,7 @@ public class ServiceCatalogInfo {
         List<OpenstackEndpoint> tenantEndpoints = new ArrayList<>();
 
         for (OpenstackEndpoint endpoint : this.userEndpoints) {
-            if (tenant.getTenantId().equals(endpoint.getTenantId())) {
+            if (tenant.getTenantId().equalsIgnoreCase(endpoint.getTenantId())) {
                 tenantEndpoints.add(endpoint);
             }
         }
@@ -101,7 +101,7 @@ public class ServiceCatalogInfo {
      */
     public TenantRole findAssignedRoleByName(String roleName) {
         for (TenantRole tenantRole : getUserTenantRoles()) {
-            if (tenantRole.getName().equals(roleName)) {
+            if (tenantRole.getName().equalsIgnoreCase(roleName)) {
                 return tenantRole;
             }
         }

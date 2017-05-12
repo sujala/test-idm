@@ -86,14 +86,14 @@ public class TokenConverterCloudV20 {
         return toTokenInternal(scopeAccess, tokenTenantId);
     }
 
-        /**
-         * This service finds the default tenant for the user based on the roles assigned and tenants to which the user has
-         * access based on prioritized rules:
-         * 1. The tenant, within the user's own domain, on which the user has the 'compute:default' role
-         * 2. No tenant
-         *
-         * @return
-         */
+    /**
+     * This service finds the default tenant for the user based on the roles assigned and tenants to which the user has
+     * access based on prioritized rules:
+     * 1. The tenant, within the user's own domain, on which the user has the 'compute:default' role
+     * 2. No tenant
+     *
+     * @return
+     */
     private Tenant findDefaultTenantForUser(BaseUser user, ServiceCatalogInfo scInfo) {
         Tenant defaultTenant = null;
 
@@ -110,7 +110,7 @@ public class TokenConverterCloudV20 {
                     Tenant tenant = scInfo.findUserTenantById(tenantId);
 
                     // Tenant must exist within user's domain
-                    if (tenant != null && user.getDomainId().equals(tenant.getDomainId())) {
+                    if (tenant != null && user.getDomainId().equalsIgnoreCase(tenant.getDomainId())) {
                         defaultTenant = tenant;
                         break;
                     }
@@ -174,20 +174,26 @@ public class TokenConverterCloudV20 {
                 // trying to identify the mosso tenant, and any tenant that has the role "compute:default"
                 // is deemed the mosso tenant. In the future we will get rid of this completely by allowing
                 // multiple tenants in the token response. We are stuck because the contract controlled by openstack.
-                if (tenantRole.getName().equals(GlobalConstants.COMPUTE_DEFAULT_ROLE) && !tenantRole.getTenantIds().isEmpty()) {
+                if (tenantRole.getName().equalsIgnoreCase(GlobalConstants.COMPUTE_DEFAULT_ROLE) && !tenantRole.getTenantIds().isEmpty()) {
                     result = tenantRole.getTenantIds().iterator().next();
+                    break;
                 }
             }
 
-            //Another terrible hack. Check above sees if you have the "compute:default" role assigned to you.
-            //The tenant for that role is assumed to be the "mosso tenant". Because of restrictions in the
-            //keystone contract, we can only display one tenant, and Rackspace assumes this tenant is the mosso
-            //tenant. If a user does not have that specific role, use other default horrible logic which is mosso tenant
-            //is numerical while nast tenant is a string. Currently users are restricted to those two tenants.
-            for (TenantRole tenantRole : tenantRoleList) {
-                for (String tenantId : tenantRole.getTenantIds()) {
-                    if (tenantId.matches("\\d+")) {
-                        result = tenantId;
+            /*
+             Another terrible hack. Check above sees if you have the "compute:default" role assigned to you.
+             The tenant for that role is assumed to be the "mosso tenant". Because of restrictions in the
+             keystone contract, we can only display one tenant, and Rackspace assumes this tenant is the mosso
+             tenant. If a user does not have that specific role, use other default horrible logic which is mosso tenant
+             is numerical while nast tenant is a string. Currently users are restricted to those two tenants.
+            */
+            if (result != null) {
+                for (TenantRole tenantRole : tenantRoleList) {
+                    for (String tenantId : tenantRole.getTenantIds()) {
+                        if (tenantId.matches("\\d+")) {
+                            result = tenantId;
+                            break;
+                        }
                     }
                 }
             }
