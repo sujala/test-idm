@@ -112,10 +112,12 @@ public class TokenConverterCloudV20 {
                     // Tenant must exist within user's domain
                     if (tenant != null && user.getDomainId().equals(tenant.getDomainId())) {
                         defaultTenant = tenant;
+                        break;
                     }
                 }
             }
         }
+
         return defaultTenant;
     }
 
@@ -143,6 +145,7 @@ public class TokenConverterCloudV20 {
                     Tenant tenant = scInfo.findUserTenantById(tenantId);
                     if (tenant != null) {
                         defaultTenant = tenant;
+                        break;
                     }
                 }
             }
@@ -152,6 +155,7 @@ public class TokenConverterCloudV20 {
                 for (Tenant tenant : scInfo.getUserTenants()) {
                     if (tenant.getTenantId().matches("\\d+")) {
                         defaultTenant = tenant;
+                        break;
                     }
                 }
             }
