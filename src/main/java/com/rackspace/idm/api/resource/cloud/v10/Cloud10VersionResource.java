@@ -165,7 +165,7 @@ public class Cloud10VersionResource {
             builder.header(CACHE_CONTROL, "s-maxage=" + secondsLeft);
 
             if (identityConfig.getReloadableConfig().shouldIncludeTenantInV10AuthResponse()) {
-                Tenant tenant = authenticateResponseService.getTenantForAuthResponse(scInfo);
+                Tenant tenant = authenticateResponseService.getTenantForAuthResponseTenantHeader(scInfo);
                 if (tenant != null) {
                     builder.header(GlobalConstants.X_TENANT_ID, tenant.getTenantId());
                 }

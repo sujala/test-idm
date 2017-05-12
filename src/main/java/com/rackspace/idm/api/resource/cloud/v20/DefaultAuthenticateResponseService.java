@@ -14,7 +14,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.Predicate;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
@@ -29,10 +28,7 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.Response;
 import javax.xml.bind.JAXBElement;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import static com.rackspace.idm.GlobalConstants.X_PASSWORD_EXPIRATION;
 
@@ -184,7 +180,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         if (tenantInRequest != null) {
             responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantInRequest.getTenantId());
         } else {
-            Tenant tenantForHeader = getTenantForAuthResponse(scInfo);
+            Tenant tenantForHeader = getTenantForAuthResponseTenantHeader(scInfo);
             if (tenantForHeader != null) {
                 responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantForHeader.getTenantId());
             }
@@ -198,11 +194,10 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
     }
 
     @Override
-    public AuthenticateResponse buildAuthResponseForValidateToken(RackerScopeAccess sa) {
+    public AuthenticateResponse buildAuthResponseForValidateToken(RackerScopeAccess rackerScopeAccess) {
         AuthenticateResponse authenticateResponse = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
-        authenticateResponse.setToken(this.tokenConverterCloudV20.toToken(sa, null));
-        RackerScopeAccess rackerScopeAccess = (RackerScopeAccess) sa;
+        authenticateResponse.setToken(this.tokenConverterCloudV20.toToken(rackerScopeAccess, null));
         Racker racker = userService.getRackerByRackerId(rackerScopeAccess.getRackerId());
         List<TenantRole> roleList = tenantService.getEphemeralRackerTenantRoles(racker.getRackerId());
         authenticateResponse.setUser(userConverterCloudV20.toRackerForAuthenticateResponse(racker, roleList));
@@ -212,19 +207,34 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
 
     @Override
     public AuthenticateResponse buildAuthResponseForValidateToken(UserScopeAccess sa, String tenantId) {
+        return buildAuthResponseForValidateTokenInternal(sa, tenantId, false);
+    }
+
+    @Override
+    public AuthenticateResponse buildAuthResponseForValidateTokenApplyRcnRoles(UserScopeAccess sa, String tenantId) {
+       return buildAuthResponseForValidateTokenInternal(sa, tenantId, true);
+    }
+
+    private AuthenticateResponse buildAuthResponseForValidateTokenInternal(UserScopeAccess sa, String tenantId, boolean applyRcnRoles) {
         AuthenticateResponse authenticateResponse = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
-        authenticateResponse.setToken(this.tokenConverterCloudV20.toToken(sa, null));
 
         UserScopeAccess usa = sa;
         EndUser user = (EndUser) userService.getUserByScopeAccess(usa);
         List<TenantRole> roles;
-        if (identityConfig.getReloadableConfig().useCachedClientRolesInValidate()) {
-            roles = tenantService.getTenantRolesForUserPerformant(user);
-        } else {
-            roles = tenantService.getTenantRolesForUser(user);
+        if (applyRcnRoles) {
+            roles = tenantService.getTenantRolesForUserApplyRcnRoles(user);
+            authenticateResponse.setToken(tokenConverterCloudV20.toValidateResponseToken(sa, user, roles));
+        }
+        else {
+            if (identityConfig.getReloadableConfig().useCachedClientRolesInValidate()) {
+                roles = tenantService.getTenantRolesForUserPerformant(user);
+            } else {
+                roles = tenantService.getTenantRolesForUser(user);
+            }
+            authenticateResponse.setToken(tokenConverterCloudV20.toToken(sa, roles));
         }
         validator20.validateTenantIdInRoles(tenantId, roles);
-        authenticateResponse.setToken(tokenConverterCloudV20.toToken(sa, roles));
+
         authenticateResponse.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
 
         return authenticateResponse;
@@ -232,8 +242,16 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
 
     @Override
     public AuthenticateResponse buildAuthResponseForValidateToken(ImpersonatedScopeAccess isa, String tenantId) {
+        return buildAuthResponseForValidateImpersonateTokenInternal(isa, tenantId, false);
+    }
+
+    @Override
+    public AuthenticateResponse buildAuthResponseForValidateTokenApplyRcnRoles(ImpersonatedScopeAccess isa, String tenantId) {
+        return buildAuthResponseForValidateImpersonateTokenInternal(isa, tenantId, true);
+    }
+
+    private AuthenticateResponse buildAuthResponseForValidateImpersonateTokenInternal(ImpersonatedScopeAccess isa, String tenantId, boolean applyRcnRoles) {
         AuthenticateResponse authenticateResponse = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
-        authenticateResponse.setToken(this.tokenConverterCloudV20.toToken(isa, null));
 
         List<TenantRole> roles;
         ScopeAccess impersonatedToken = scopeAccessService.getScopeAccessByAccessToken(isa.getImpersonatingToken());
@@ -251,9 +269,25 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         UserScopeAccess usaImpersonatedToken = (UserScopeAccess) impersonatedToken;
         EndUser user = identityUserService.getEndUserById(usaImpersonatedToken.getUserRsId());
 
-        roles = tenantService.getTenantRolesForUser(user);
+        if (applyRcnRoles) {
+            roles = tenantService.getTenantRolesForUserApplyRcnRoles(user);
+            authenticateResponse.setToken(tokenConverterCloudV20.toValidateResponseToken(isa, user, roles));
+        }
+        else {
+            /*
+             TODO: This portion of validate should be switched to use performant version as appropriate
+              This is based on feature flag added in 3.11. This should have been updated then, but was missed.
+              However this is not part of current applyRcn story so not changing it now either...
+              if (identityConfig.getReloadableConfig().useCachedClientRolesInValidate()) {
+                roles = tenantService.getTenantRolesForUserPerformant(user);
+              } else {
+                roles = tenantService.getTenantRolesForUser(user);
+              }
+              */
+             roles = tenantService.getTenantRolesForUser(user);
+             authenticateResponse.setToken(tokenConverterCloudV20.toToken(isa, roles));
+        }
         validator20.validateTenantIdInRoles(tenantId, roles);
-        authenticateResponse.setToken(tokenConverterCloudV20.toToken(isa, roles));
         authenticateResponse.setUser(userConverterCloudV20.toUserForAuthenticateResponse(user, roles));
 
         if(!authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, null)) {
@@ -262,6 +296,8 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
         }
 
         UserForAuthenticateResponse userForAuthenticateResponse = null;
+
+        // NOT applying RCN roles for impersonator, just the user being impersonated
         List<TenantRole> impRoles = this.tenantService.getGlobalRolesForUser(impersonator);
         if (impersonator instanceof User) {
             userForAuthenticateResponse = userConverterCloudV20.toUserForAuthenticateResponse((User)impersonator, impRoles);
@@ -282,7 +318,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
     }
 
     @Override
-    public Tenant getTenantForAuthResponse(ServiceCatalogInfo scInfo) {
+    public Tenant getTenantForAuthResponseTenantHeader(ServiceCatalogInfo scInfo) {
         Validate.isTrue(scInfo != null && scInfo.getUserTenants() != null);
 
         if (scInfo.getUserTenants().size() == 1) {

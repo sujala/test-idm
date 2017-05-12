@@ -27,7 +27,6 @@ import lombok.Setter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.NumberUtils;
 import org.joda.time.DateTime;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
@@ -1126,7 +1125,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             if (tenantId != null) {
                 responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantId);
             } else {
-                Tenant tenantForHeader = authenticateResponseService.getTenantForAuthResponse(v11AuthResponseTuple.serviceCatalogInfo);
+                Tenant tenantForHeader = authenticateResponseService.getTenantForAuthResponseTenantHeader(v11AuthResponseTuple.serviceCatalogInfo);
                 if (tenantForHeader != null) {
                     responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantForHeader.getTenantId());
                 }
@@ -1234,7 +1233,7 @@ public class DefaultCloud11Service implements Cloud11Service {
             Response.ResponseBuilder responseBuilder = Response.ok(OBJ_FACTORY.createAuth(this.authConverterCloudV11.toCloudv11AuthDataJaxb(v11AuthResponseTuple.userScopeAccess, endpoints)).getValue());
 
             if (identityConfig.getReloadableConfig().shouldIncludeTenantInV11AuthResponse()) {
-                Tenant tenantForHeader = authenticateResponseService.getTenantForAuthResponse(v11AuthResponseTuple.serviceCatalogInfo);
+                Tenant tenantForHeader = authenticateResponseService.getTenantForAuthResponseTenantHeader(v11AuthResponseTuple.serviceCatalogInfo);
                 if (tenantForHeader != null) {
                     responseBuilder.header(GlobalConstants.X_TENANT_ID, tenantForHeader.getTenantId());
                 }

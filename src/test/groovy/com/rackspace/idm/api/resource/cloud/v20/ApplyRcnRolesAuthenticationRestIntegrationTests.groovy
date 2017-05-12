@@ -61,7 +61,7 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
      * @return
      */
     @Unroll
-    def "apply_rcn_roles logic only used when apply_rcn_roles = true (case insensitive): value: #param"() {
+    def "auth/validate: apply_rcn_roles logic only used when apply_rcn_roles = true (case insensitive): value: #param"() {
         given:
         def user = utils.createCloudAccount(utils.getIdentityAdminToken())
 
@@ -75,6 +75,16 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
             assert idAdminRole2.getTenantId() != null
         } else {
             assert idAdminRole2.getTenantId() == null
+        }
+
+        and: "validate returns same"
+        AuthenticateResponse valResponse = utils.validateTokenApplyRcnRoles(response2.token.id, param)
+        def foundRole = valResponse.user.roles.role.find {it.name == IdentityUserTypeEnum.USER_ADMIN.roleName}
+        foundRole != null
+        if (applied) {
+            assert foundRole.getTenantId() != null
+        } else {
+            assert foundRole.getTenantId() == null
         }
 
         cleanup:
@@ -93,7 +103,7 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         null  | false
     }
 
-    def "apply_rcn_roles returns no global roles and user's domain"() {
+    def "auth/validate: apply_rcn_roles returns no global roles and user's domain"() {
         given:
         def user = utils.createCloudAccount(utils.getIdentityAdminToken())
 
@@ -108,11 +118,25 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         and: "Users domain is returned"
         response.user.domainId == user.domainId
 
+        and: "validate shows same"
+        AuthenticateResponse valResponse = utils.validateTokenApplyRcnRoles(response.token.id)
+        valResponse.user.roles.role.each {
+            assert it.tenantId != null
+        }
+        valResponse.user.domainId == user.domainId
+
+        and: "validate impersonation shows same"
+        AuthenticateResponse valImpResponse = utils.validateTokenApplyRcnRoles(utils.getImpersonatedTokenWithToken(utils.getIdentityAdminToken(), user))
+        valImpResponse.user.roles.role.each {
+            assert it.tenantId != null
+        }
+        valResponse.user.domainId == user.domainId
+
         cleanup:
         utils.deleteUserQuietly(user)
     }
 
-    def "apply_rcn_roles logic returns global roles as tenant assigned roles on all tenants in domain"() {
+    def "auth/validate: apply_rcn_roles logic returns global roles as tenant assigned roles on all tenants in domain"() {
         given:
         def user = utils.createCloudAccount(utils.getIdentityAdminToken())
         Tenants tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), user.domainId).getEntity(Tenants).value
@@ -134,6 +158,18 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         then: "role is returned as a tenant role on both cloud/files tenants"
         tenants.tenant.each {innerTenant ->
             assert response2.user.roles.role.find { it.name == newRole.name && it.tenantId == innerTenant.id != null}
+        }
+
+        and: "validate shows same"
+        AuthenticateResponse valResponse = utils.validateTokenApplyRcnRoles(response2.token.id)
+        tenants.tenant.each {innerTenant ->
+            assert valResponse.user.roles.role.find { it.name == newRole.name && it.tenantId == innerTenant.id != null}
+        }
+
+        and: "validate impersonation token shows same"
+        AuthenticateResponse valImpResponse = utils.validateTokenApplyRcnRoles(utils.getImpersonatedTokenWithToken(utils.getIdentityAdminToken(), user))
+        tenants.tenant.each {innerTenant ->
+            assert valImpResponse.user.roles.role.find { it.name == newRole.name && it.tenantId == innerTenant.id != null}
         }
 
         cleanup:
@@ -173,6 +209,24 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         response.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant1.id} == null
         response.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant2.id} == null
 
+        and: "validate shows same"
+        AuthenticateResponse valResponse = utils.validateTokenApplyRcnRoles(response.token.id)
+        valResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == filesTenant1.id} != null
+        valResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == filesTenant2.id} != null
+        valResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == cloudTenant1.id} == null
+        valResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == cloudTenant2.id} == null
+        valResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant1.id} == null
+        valResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant2.id} == null
+
+        and: "validate impersonation token shows same"
+        AuthenticateResponse valImpResponse = utils.validateTokenApplyRcnRoles(utils.getImpersonatedTokenWithToken(utils.getIdentityAdminToken(), userInDomain1))
+        valImpResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == filesTenant1.id} != null
+        valImpResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == filesTenant2.id} != null
+        valImpResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == cloudTenant1.id} == null
+        valImpResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == cloudTenant2.id} == null
+        valImpResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant1.id} == null
+        valImpResponse.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant2.id} == null
+
         when: "Now assign RCN cloud role to user as well and re-auth"
         utils.addRoleToUser(userInDomain1, Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID)
         AuthenticateResponse response2 = utils.authenticateApplyRcnRoles(userInDomain1.username)
@@ -183,12 +237,34 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         response2.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant1.id} != null
         response2.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant2.id} != null
 
+        and: "validate shows same"
+        AuthenticateResponse valResponse2 = utils.validateTokenApplyRcnRoles(response2.token.id)
+        valResponse2.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == filesTenant1.id} != null
+        valResponse2.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == filesTenant2.id} != null
+        valResponse2.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant1.id} != null
+        valResponse2.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant2.id} != null
+
+        and: "validate impersonation token shows same"
+        AuthenticateResponse valImpResponse2 = utils.validateTokenApplyRcnRoles(utils.getImpersonatedTokenWithToken(utils.getIdentityAdminToken(), userInDomain1))
+        valImpResponse2.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == filesTenant1.id} != null
+        valImpResponse2.user.roles.role.find {it.id == Constants.IDENTITY_RCN_FILES_TENANT_ROLE_ID && it.tenantId == filesTenant2.id} != null
+        valImpResponse2.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant1.id} != null
+        valImpResponse2.user.roles.role.find {it.id == Constants.IDENTITY_RCN_CLOUD_TENANT_ROLE_ID && it.tenantId == cloudTenant2.id} != null
+
         when: "Now assign RCN managed_hosting role to user as well and re-auth"
         utils.addRoleToUser(userInDomain1, Constants.IDENTITY_RCN_MANAGED_HOSTING_TENANT_ROLE_ID)
         AuthenticateResponse response3 = utils.authenticateApplyRcnRoles(userInDomain1.username)
 
         then: "User roles should not list this role since no tenants will match"
         response2.user.roles.role.find {it.id == Constants.IDENTITY_RCN_MANAGED_HOSTING_TENANT_ROLE_ID} == null
+
+        and: "validate shows same"
+        AuthenticateResponse valResponse3 = utils.validateTokenApplyRcnRoles(response3.token.id)
+        valResponse3.user.roles.role.find {it.id == Constants.IDENTITY_RCN_MANAGED_HOSTING_TENANT_ROLE_ID} == null
+
+        and: "validate impersonation token shows same"
+        AuthenticateResponse valImpResponse3 = utils.validateTokenApplyRcnRoles(utils.getImpersonatedTokenWithToken(utils.getIdentityAdminToken(), userInDomain1))
+        valImpResponse3.user.roles.role.find {it.id == Constants.IDENTITY_RCN_MANAGED_HOSTING_TENANT_ROLE_ID} == null
 
         cleanup:
         utils.deleteUserQuietly(userInDomain1)

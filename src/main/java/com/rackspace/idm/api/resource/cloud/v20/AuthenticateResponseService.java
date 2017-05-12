@@ -52,12 +52,32 @@ public interface AuthenticateResponseService {
     AuthenticateResponse buildAuthResponseForValidateToken(UserScopeAccess sa, String tenantId);
 
     /**
+     * Builds the AuthenticateResponse object for a given UserScopeAccess object and the given tenant while applying
+     * the rcn role logic.
+     *
+     * @param sa
+     * @param tenantId
+     * @return
+     */
+    AuthenticateResponse buildAuthResponseForValidateTokenApplyRcnRoles(UserScopeAccess sa, String tenantId);
+
+    /**
      * Builds the AuthenticateResponse object for a given ImpersonatedScopeAccess object and the given tenant
      *
      * @param sa
      * @return
      */
     AuthenticateResponse buildAuthResponseForValidateToken(ImpersonatedScopeAccess sa, String tenantId);
+
+    /**
+     * Builds the AuthenticateResponse object for a given ImpersonatedScopeAccess object and the given tenant including
+     * the application of RCN role logic.
+     *
+     * @param isa
+     * @param tenantId
+     * @return
+     */
+    AuthenticateResponse buildAuthResponseForValidateTokenApplyRcnRoles(ImpersonatedScopeAccess isa, String tenantId);
 
     /**
      * Return the tenant to reflect in the X-Tenant-Id header on authenticate calls. This tenant is
@@ -69,6 +89,6 @@ public interface AuthenticateResponseService {
      * 4. If user does not have any tenants then return null
      *
      */
-    Tenant getTenantForAuthResponse(ServiceCatalogInfo serviceCatalogInfo);
+    Tenant getTenantForAuthResponseTenantHeader(ServiceCatalogInfo serviceCatalogInfo);
     
 }

@@ -1,6 +1,5 @@
 package com.rackspace.idm.domain.service;
 
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.domain.entity.OpenstackEndpoint;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;

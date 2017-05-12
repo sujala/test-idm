@@ -384,8 +384,13 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tokenId") String tokenId,
-            @QueryParam("belongsTo") String belongsTo) {
-        return cloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo).build();
+            @QueryParam("belongsTo") String belongsTo,
+            @QueryParam("apply_rcn_roles") boolean applyRcnRoles) {
+        if (applyRcnRoles) {
+            return cloud20Service.validateTokenApplyRcnRoles(httpHeaders, authToken, tokenId, belongsTo).build();
+        } else {
+            return cloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo).build();
+        }
     }
 
     @HEAD
@@ -394,8 +399,13 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("tokenId") String tokenId,
-            @QueryParam("belongsTo") String belongsTo) {
-        return cloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo).build();
+            @QueryParam("belongsTo") String belongsTo,
+            @QueryParam("apply_rcn_roles") boolean applyRcnRoles) {
+        if (applyRcnRoles) {
+            return cloud20Service.validateTokenApplyRcnRoles(httpHeaders, authToken, tokenId, belongsTo).build();
+        } else {
+            return cloud20Service.validateToken(httpHeaders, authToken, tokenId, belongsTo).build();
+        }
     }
 
     @GET

@@ -133,6 +133,15 @@ class Cloud20Methods {
         resource.path(path20).path(TOKENS).path(token).header(X_AUTH_TOKEN, authToken).accept(accept).get(ClientResponse)
     }
 
+    def validateTokenApplyRcnRoles(authToken, token, String applyRcnRoles, MediaType accept = APPLICATION_XML_TYPE) {
+        initOnUse()
+        def queryParams = new MultivaluedMapImpl()
+        if (applyRcnRoles != null) {
+            queryParams.add("apply_rcn_roles", applyRcnRoles)
+        }
+        resource.path(path20).path(TOKENS).queryParams(queryParams).path(token).header(X_AUTH_TOKEN, authToken).accept(accept).get(ClientResponse)
+    }
+
     def getUserByName(String token, String name, MediaType mediaType = APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(USERS).queryParam("name", name).accept(mediaType).header(X_AUTH_TOKEN, token).get(ClientResponse)
