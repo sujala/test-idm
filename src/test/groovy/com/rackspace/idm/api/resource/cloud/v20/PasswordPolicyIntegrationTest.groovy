@@ -198,7 +198,31 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(user)
     }
 
-        def "Password policy controls validity period for password"() {
+    def "password.history.max config property controls max history value for policy"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, true)
+        Domain domain = utils.createDomainEntity()
+
+        when: "Set history storage to 8"
+        reloadableConfiguration.setProperty(IdentityConfig.PASSWORD_HISTORY_MAX_PROP, 8)
+
+        then: "can set policy to 8"
+        cloud20.updateDomainPasswordPolicy(serviceAdminToken, domain.id, new PasswordPolicy(null, 8)).status == SC_OK
+
+        and: "can't set to 9"
+        cloud20.updateDomainPasswordPolicy(serviceAdminToken, domain.id, new PasswordPolicy(null, 9)).status == SC_BAD_REQUEST
+
+        when: "Set history storage to 2"
+        reloadableConfiguration.setProperty(IdentityConfig.PASSWORD_HISTORY_MAX_PROP, 2)
+
+        then: "can set policy to 2"
+        cloud20.updateDomainPasswordPolicy(serviceAdminToken, domain.id, new PasswordPolicy(null, 2)).status == SC_OK
+
+        and: "can't set to 8"
+        cloud20.updateDomainPasswordPolicy(serviceAdminToken, domain.id, new PasswordPolicy(null, 8)).status == SC_BAD_REQUEST
+    }
+
+    def "Password policy controls validity period for password"() {
         given:
         DateTime now = new DateTime()
         User user = utils.createGenericUserAdmin()
