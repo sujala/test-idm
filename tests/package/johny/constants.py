@@ -17,8 +17,8 @@ ADD_ROLE_TO_USER_URL = '/users/{user_id}/roles/OS-KSADM/{role_id}'
 ADD_TENANT_TO_DOMAIN_URL = DELETE_TENANT_FROM_DOMAIN_URL = (
     '/RAX-AUTH/domains/{domain_id}/tenants/{tenant_id}')
 ADD_TENANT_URL = LIST_TENANTS = '/tenants'
-ADD_TENANT_TYPE_URL = '/RAX-AUTH/tenant-types'
-DELETE_TENANT_TYPE_URL = '/RAX-AUTH/tenant-types/{name}'
+TENANT_TYPE_URL = '/RAX-AUTH/tenant-types'
+RD_TENANT_TYPE_URL = '/RAX-AUTH/tenant-types/{name}'
 ADMINS_OF_A_USER_URL = '/users/{user_id}/RAX-AUTH/admins'
 CERTIFICATE_ADD_URL = ("/RAX-AUTH/federation/identity-providers/{idp_id}/"
                        "certificates")
@@ -282,6 +282,7 @@ SERVICE_TYPE = 'type'
 TARGET = 'target'
 TENANT = 'tenant'
 RAX_AUTH_TENANT_TYPE = 'RAX-AUTH:tenantType'
+RAX_AUTH_TENANT_TYPES = 'RAX-AUTH:tenantTypes'
 TENANT_ALIAS = 'tenantAlias'
 TENANTS = 'tenants'
 TENANT_ID = 'tenantId'
