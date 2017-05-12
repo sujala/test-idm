@@ -813,12 +813,13 @@ class Domain(base.AutoMarshallingModel):
     """Marshalling for Add/ Update Tenant Request."""
     # TODO: Add _obj_to_xml()
 
-    def __init__(self, domain_name, domain_id=None,
-                 description=None, enabled=True):
+    def __init__(self, domain_name=None, domain_id=None,
+                 description=None, rcn=None, enabled=True):
         self.domain_name = domain_name
         self.domain_id = domain_id or domain_name
         self.description = description
         self.enabled = enabled
+        self.rcn = rcn
 
     def _obj_to_json(self):
         add_domain_request = {const.RAX_AUTH_DOMAIN: {
@@ -829,6 +830,9 @@ class Domain(base.AutoMarshallingModel):
         if self.description:
             add_domain_request[const.RAX_AUTH_DOMAIN][const.DESCRIPTION] = (
                 self.description)
+        if self.rcn:
+            add_domain_request[const.RAX_AUTH_DOMAIN][const.RCN_LONG] = (
+                self.rcn)
         if self.enabled:
             add_domain_request[const.RAX_AUTH_DOMAIN][const.ENABLED] = (
                 self.enabled)

@@ -125,6 +125,7 @@ NUMERIC_DOMAIN_ID_PATTERN = '[1-9]{1}[0-9]{6}'
 MAX_SIZE_IN_KILOBYTES = 2
 OTP_NAME_PATTERN = 'otp[\-][\d]{8}'
 PASSWORD_PATTERN = 'Password1[\d\w]{10}'
+RCN_PATTERN = 'RCN[\-][\d]{6}'
 RACKER = "RACKER"
 # 'RACKSPACE_DOMAIN' is to be used in racker-auth call
 RACKSPACE_DOMAIN = 'Rackspace'
@@ -279,6 +280,7 @@ SERVICE_ENDPOINTS = 'endpoints'
 SERVICE_ID = 'serviceId'
 SERVICE_NAME = 'name'
 SERVICE_TYPE = 'type'
+SESSION_TIMEOUT = 'sessionInactivityTimeout'
 TARGET = 'target'
 TENANT = 'tenant'
 RAX_AUTH_TENANT_TYPE = 'RAX-AUTH:tenantType'
@@ -357,6 +359,8 @@ RAX_AUTH_PROPAGATE = 'RAX-AUTH:propagate'
 RAX_AUTH_ASSIGNMENT = 'RAX-AUTH:assignment'
 RAX_AUTH_ROLE_TYPE = 'RAX-AUTH:roleType'
 RAX_KSQA_NAMESPACE = 'RAX-KSQA'
+RCN_LONG = 'rackspaceCustomerNumber'
+
 NS_SERVICE = OS_KSADM_NAMESPACE + ':service'
 NS_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE = (
     RAX_AUTH + ':tenantTypeEndpointRule')
