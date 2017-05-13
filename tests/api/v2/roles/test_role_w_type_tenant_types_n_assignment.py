@@ -5,7 +5,7 @@ import copy
 from tests.api.v2 import base
 from tests.api.v2.schema import roles as roles_json
 from tests.api.v2.schema import tokens as token_json
-from tests.api.v2.models import factory
+from tests.api.v2.models import factory, responses
 
 
 from tests.package.johny import constants as const
@@ -55,6 +55,8 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
         cls.user_ids = []
         cls.tenant_ids = []
         cls.domain_ids = []
+        cls.tenant_type_ids = []
+        cls.role_ids = []
 
         # create user
         user_resp = cls.create_user()
@@ -82,6 +84,11 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
         resp = self.identity_admin_client.add_user(request_object=add_obj)
         return resp
 
+    def create_tenant_type(self, name):
+        request_object = requests.TenantType(name, 'description')
+        self.service_admin_client.add_tenant_type(tenant_type=request_object)
+        self.tenant_type_ids.append(name.lower())
+
     def verify_role_from_auth_and_token_validation_resp(self, resp):
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp,
@@ -94,6 +101,8 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
     def test_list_roles(self):
         # list role
 
+        if not self.test_config.run_service_admin_tests:
+            self.skipTest('Skipping Service Admin Tests per config value')
         list_resp = self.identity_admin_client.list_roles()
         self.assertEqual(list_resp.status_code, 200)
         if self.devops_client.get_feature_flag(
@@ -137,10 +146,56 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
             self.assertNotIn(const.RAX_AUTH_ROLE_TYPE, role)
             self.assertNotIn(const.RAX_AUTH_ASSIGNMENT, role)
 
+    @ddt.data(True, False)
+    def test_list_global_roles_for_user_with_query_param(self, apply_rcn):
+
+        if not self.test_config.run_service_admin_tests:
+            self.skipTest('Skipping Service Admin Tests per config value')
+        tenant_type = self.generate_random_string(
+            pattern=const.TENANT_TYPE_PATTERN)
+        self.create_tenant_type(name=tenant_type)
+
+        # create an RCN role
+        role_obj = requests.RoleAdd(
+            role_name=self.generate_random_string(
+                pattern=const.ROLE_NAME_PATTERN), role_type=const.RCN,
+            tenant_types=[tenant_type])
+        add_role_resp = self.identity_admin_client.add_role(
+            request_object=role_obj)
+        self.assertEqual(add_role_resp.status_code, 201)
+        rcn_role = responses.Role(add_role_resp.json())
+        self.role_ids.append(rcn_role.id)
+
+        # create a user
+        create_user_resp = self.create_user()
+        self.assertEqual(create_user_resp.status_code, 201)
+        created_user = responses.User(create_user_resp.json())
+        self.user_ids.append(created_user.id)
+
+        # add the RCN role to the user
+        resp = self.identity_admin_client.add_role_to_user(
+            role_id=rcn_role.id, user_id=created_user.id
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        # list global roles for user
+        global_roles_resp = self.identity_admin_client.list_roles_for_user(
+            user_id=created_user.id, apply_rcn_roles=apply_rcn)
+        self.assertEqual(global_roles_resp.status_code, 200)
+        list_of_roles = [role[const.ID] for role in global_roles_resp.json()[
+            const.ROLES]]
+
+        # Not adding schema validation as of now, because this check is
+        # more than sufficient to validate the api response
+        if apply_rcn:
+            self.assertNotIn(rcn_role.id, list_of_roles)
+        else:
+            self.assertIn(rcn_role.id, list_of_roles)
+
     def test_list_role_for_user_on_tenant(self):
         # list role for user on tenant
         roles_tenant_resp = (
-            self.service_admin_client.list_roles_for_user_on_tenant(
+            self.identity_admin_client.list_roles_for_user_on_tenant(
                 tenant_id=self.tenant_id, user_id=self.user_id)
         )
         self.assertEqual(roles_tenant_resp.status_code, 200)
@@ -170,6 +225,13 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
             cls.identity_admin_client.delete_user(user_id=id_)
         for id_ in cls.tenant_ids:
             cls.identity_admin_client.delete_tenant(tenant_id=id_)
+        for id_ in cls.role_ids:
+            # Using identity admin here, because the role being cleaned up
+            # has administrative-role as 'identity:admin'. But, if other
+            # roles are to be cleaned up, we may need to update the client
+            cls.identity_admin_client.delete_role(role_id=id_)
+        for name in cls.tenant_type_ids:
+            cls.service_admin_client.delete_tenant_type(name=name)
         for id_ in cls.domain_ids:
             cls.identity_admin_client.delete_domain(domain_id=id_)
         super(TestListRoleWTypeTenantTypesNAssignment, cls).tearDownClass()

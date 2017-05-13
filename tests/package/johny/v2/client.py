@@ -1250,14 +1250,18 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             resp.json = types.MethodType(json, resp, type(resp))
         return resp
 
-    def list_roles_for_user(self, user_id, requestslib_kwargs=None):
+    def list_roles_for_user(self, user_id, apply_rcn_roles=None,
+                            requestslib_kwargs=None):
         """
         List global roles assigned to a user
         GET /v2.0/users/{userId}/roles
         :return return a list of roles assigned to a user
         """
         url = self.url + const.LIST_USER_ROLES_URL.format(user_id=user_id)
-        resp = self.request(method='GET', url=url,
+        params = None
+        if apply_rcn_roles:
+            params = {'apply_rcn_roles': apply_rcn_roles}
+        resp = self.request(method='GET', url=url, params=params,
                             requestslib_kwargs=requestslib_kwargs)
         if self.deserialize_format == const.XML:
             def json(self):
