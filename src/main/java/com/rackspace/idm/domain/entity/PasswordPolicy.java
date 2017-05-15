@@ -50,7 +50,7 @@ public class PasswordPolicy {
     private Integer passwordHistoryRestriction;
 
     @JsonIgnore
-    private Duration passwordDurationAsDuration;
+    private Duration passwordDurationAsDuration = null;
 
     private static ObjectMapper mapper;
 

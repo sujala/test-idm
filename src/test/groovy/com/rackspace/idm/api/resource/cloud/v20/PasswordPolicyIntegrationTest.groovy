@@ -505,12 +505,143 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(user)
     }
 
+    def "If rotation is enforced for domain, can't set password to same password as existing"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, false)
+
+        User user = utils.createGenericUserAdmin()
+
+        // Create a password policy w/ long enough duration that it won't expire while test is running
+        utils.updateDomainPasswordPolicy(user.domainId, createPasswordPolicy("PT1H", null))
+
+        def passwordOriginal = Constants.DEFAULT_PASSWORD
+        def passworda = Constants.DEFAULT_PASSWORD + "a"
+        def userUpdateOriginal = new User().with {
+            it.password = passwordOriginal
+            it
+        }
+        def userUpdateA = new User().with {
+            it.password = passworda
+            it
+        }
+
+        // Test Reset Password (starting password is passwordOriginal)
+        when: "reset the password with current password when rotation enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, true)
+        def emailToken = getPasswordResetToken(user)
+        def response = cloud20.resetPassword(emailToken, v2Factory.createPasswordReset(passwordOriginal))
+
+        then: "denied"
+        response.status == SC_BAD_REQUEST
+
+        when: "reset the password with current password when rotation not enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
+        response = cloud20.resetPassword(emailToken, v2Factory.createPasswordReset(passwordOriginal))
+        sleepAsNeeded()
+
+        then: "can reset to same pwd"
+        response.status == SC_NO_CONTENT
+
+        when: "reset the password with new password when rotation enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, true)
+        emailToken = getPasswordResetToken(user)
+        response = cloud20.resetPassword(emailToken, v2Factory.createPasswordReset(passworda))
+        sleepAsNeeded()
+
+        then: "can reset to new pwd"
+        response.status == SC_NO_CONTENT
+
+        when: "reset the password with new password when rotation not enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
+        emailToken = getPasswordResetToken(user)
+        response = cloud20.resetPassword(emailToken, v2Factory.createPasswordReset(passwordOriginal))
+        sleepAsNeeded()
+
+        then: "can reset to new pwd"
+        response.status == SC_NO_CONTENT
+
+        // Test Change Password (starting password is passwordOriginal)
+        when: "reset the password with current password when rotation enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, true)
+        response = cloud20.changeUserPassword(user.username, passwordOriginal, passwordOriginal)
+
+        then: "denied"
+        response.status == SC_BAD_REQUEST
+
+        when: "reset the password with current password when rotation not enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
+        response = cloud20.changeUserPassword(user.username, passwordOriginal, passwordOriginal)
+        sleepAsNeeded()
+
+        then: "can not reset to same pwd w/ change password regardless of whether policy expiration is enforced or not"
+        response.status == SC_BAD_REQUEST
+
+        when: "reset the password with new password when rotation enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, true)
+        response = cloud20.changeUserPassword(user.username, passwordOriginal, passworda)
+        sleepAsNeeded()
+
+        then: "can reset to new pwd"
+        response.status == SC_NO_CONTENT
+
+        when: "reset the password with new password when rotation not enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
+        response = cloud20.changeUserPassword(user.username, passworda, passwordOriginal)
+        sleepAsNeeded()
+
+        then: "can reset to new pwd"
+        response.status == SC_NO_CONTENT
+
+        // Test Update User to updated Password (starting password is passwordOriginal)
+        when: "reset the password with current password when rotation enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, true)
+        response = cloud20.updateUser(identityAdminToken, user.id, userUpdateOriginal)
+
+        then: "denied"
+        response.status == SC_BAD_REQUEST
+
+        when: "reset the password with current password when rotation not enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
+        response = cloud20.updateUser(identityAdminToken, user.id, userUpdateOriginal)
+        sleepAsNeeded()
+
+        then: "can reset to same pwd"
+        response.status == SC_OK
+
+        when: "reset the password with new password when rotation enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, true)
+        response = cloud20.updateUser(identityAdminToken, user.id, userUpdateA)
+        sleepAsNeeded()
+
+        then: "can reset to new pwd"
+        response.status == SC_OK
+
+        when: "reset the password with new password when rotation not enforced"
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
+        response = cloud20.updateUser(identityAdminToken, user.id, userUpdateOriginal)
+        sleepAsNeeded()
+
+        then: "can reset to new pwd"
+        response.status == SC_OK
+
+        cleanup:
+        utils.deleteUsers(user)
+    }
+
     def getPasswordResetToken(userAdmin) {
         clearEmailServerMessages()
         def creds = v2Factory.createForgotPasswordCredentials(userAdmin.username, null)
         cloud20.forgotPassword(creds)
         WiserMessage message = wiserWrapper.wiserServer.getMessages().get(0)
         EmailUtils.extractTokenFromDefaultForgotPasswordEmail(message.getMimeMessage())
+    }
+
+    def sleepAsNeeded() {
+        //delay so new token will not be revoked due to User TRR generated when identity admin disabled
+        sleep(1001-new DateTime().getMillisOfSecond())
     }
 
     String createPasswordPolicyJson(String durationStr, Integer historyRestriction) {
