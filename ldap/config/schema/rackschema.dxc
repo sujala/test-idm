@@ -1107,8 +1107,7 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.140) = {
 schema set attribute (1.3.6.1.4.1.20988.2.1.141) = {
     name = rsPasswordHistory
     ldap-names = rsPasswordHistory
-    equality = caseExactMatch
-    syntax = directoryString
+    syntax = octetString
     description = "Hashed versions of a users previous passwords"
 };
 
