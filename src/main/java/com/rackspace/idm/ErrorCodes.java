@@ -103,7 +103,8 @@ public final class ErrorCodes {
 
     // Password policy enforcement
     public static final String ERROR_CODE_PASSWORD_EXPIRED = "AUTH-001";
-    public static final String ERROR_CODE_PASSWOD_HISTORY_MATCH = "AUTH-002";
+    public static final String ERROR_CODE_PASSWORD_HISTORY_MATCH = "AUTH-002";
+    public static final String ERROR_CODE_CURRENT_PASSWORD_MATCH = "AUTH-003";
 
 
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {

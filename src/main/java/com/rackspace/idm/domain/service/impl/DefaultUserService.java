@@ -845,37 +845,7 @@ public class DefaultUserService implements UserService {
 
         boolean passwordChange = checkForPasswordUpdate(user);
         if (passwordChange) {
-            // If changing password, set the history on the user to keep existing history
-            user.setPasswordHistory(currentUser.getPasswordHistory());
-            List<String> userPasswordHistory = currentUser.getPasswordHistory();
-
-            // Only check history if enforcement is enabled
-            if (identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordHistory()) {
-                // If domain of user is changing, pull history policy from it
-                String domainForPolicy = StringUtils.isNotEmpty(user.getDomainId()) ? user.getDomainId() : currentUser.getDomainId();
-
-                // Apply passwordPolicy as appropriate
-                if (CollectionUtils.isNotEmpty(userPasswordHistory)) {
-                    Domain domain = domainService.getDomain(domainForPolicy);
-                    if (domain != null && domain.getPasswordPolicy() != null) {
-                        int pwdHistoryRestriction = domain.getPasswordPolicy().calculateEffectivePasswordHistoryRestriction();
-                        if (pwdHistoryRestriction >= 0) {
-                            // Index based on 0 so subtract 1
-                            int historyIndex = userPasswordHistory.size() - 1;
-                            // Add one to account for current password which is at end
-                            int numHistoryToCheck = pwdHistoryRestriction + 1;
-                            /*
-                            Check the password history from the end as the entries are ordered oldest first
-                             */
-                            for (int i = 0; i < numHistoryToCheck && historyIndex >= 0; ++i, historyIndex--) {
-                                if (cryptHelper.verifyLegacySHA(user.getPassword(), userPasswordHistory.get(historyIndex))) {
-                                    throw new BadRequestException(String.format("Must not repeat current or up to '%s' previous password(s)", pwdHistoryRestriction), ErrorCodes.ERROR_CODE_PASSWOD_HISTORY_MATCH);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            performPasswordUpdateLogic(user, currentUser);
         }
 
         userDao.updateUser(user);
@@ -895,6 +865,67 @@ public class DefaultUserService implements UserService {
         }
 
         logger.info("Updated User: {}", user);
+    }
+
+    /**
+     * The user's password is being changed. Need to update the provided user, as appropriate, to account for this change,
+     * as well as perform various password policy checks.
+     *
+     * @param user - the user object will be modified as necessary for a password update
+     * @param currentUser
+     */
+    private void performPasswordUpdateLogic(User user, User currentUser) {
+        if (!checkForPasswordUpdate(user)) {
+            throw new IllegalArgumentException("User's password not changing");
+        }
+
+        // If changing password, set the history on the user to keep existing history
+        user.setPasswordHistory(currentUser.getPasswordHistory());
+        List<String> userPasswordHistory = currentUser.getPasswordHistory();
+
+        if (identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordExpiration()
+                || identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordHistory()) {
+
+            // Pull history policy from user's domain
+            String domainForPolicy = StringUtils.isNotEmpty(user.getDomainId()) ? user.getDomainId() : currentUser.getDomainId();
+
+            if (StringUtils.isNotEmpty(domainForPolicy)) {
+                Domain domain = domainService.getDomain(domainForPolicy);
+                if (domain != null && domain.getPasswordPolicy() != null) {
+                    PasswordPolicy policy = domain.getPasswordPolicy();
+
+                    // History is only enforced if the application wide feature is enabled AND the user's domain uses it
+                    boolean historyEnforced = identityConfig.getReloadableConfig().enforcePasswordPolicyPasswordHistory()
+                            && policy.calculateEffectivePasswordHistoryRestriction() >= 0;
+
+                    // User can't set password to existing password when password policy is not null regardless of whether
+                    // rotation/history enforcement is actually used
+                    if (cryptHelper.verifyLegacySHA(user.getPassword(), currentUser.getUserPassword())) {
+                        throw new BadRequestException(String.format("Must not repeat current password"), ErrorCodes.ERROR_CODE_CURRENT_PASSWORD_MATCH);
+                    }
+
+                    if (historyEnforced) {
+                        if (CollectionUtils.isNotEmpty(userPasswordHistory)) {
+                            int pwdHistoryRestriction = domain.getPasswordPolicy().calculateEffectivePasswordHistoryRestriction();
+                            if (pwdHistoryRestriction > 0) {
+                                /*
+                                Check the password history from the end (ignoring current password) as the entries are ordered oldest first
+
+                                Subtract 2 from history length to determine index to array (1 due to 0 based index, 1 due to last
+                                entry is "current" password, which is already checked above so no point in checking again)
+                                */
+                                int historyIndex = userPasswordHistory.size() - 2;
+                                for (int i = 0; i < pwdHistoryRestriction && historyIndex >= 0; ++i, historyIndex--) {
+                                    if (cryptHelper.verifyLegacySHA(user.getPassword(), userPasswordHistory.get(historyIndex))) {
+                                        throw new BadRequestException(String.format("Must not repeat current or up to '%s' previous password(s)", pwdHistoryRestriction), ErrorCodes.ERROR_CODE_PASSWORD_HISTORY_MATCH);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override
