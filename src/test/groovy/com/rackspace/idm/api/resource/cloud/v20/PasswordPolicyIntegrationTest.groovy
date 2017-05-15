@@ -47,6 +47,15 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
     }
 
+    def setup() {
+        // Ensure all tests start with common setting for password policy features
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.PASSWORD_HISTORY_MAX_PROP, 10)
+    }
+
     @Unroll
     def "Can not use password policy services when feature disabled - user type: #type"() {
         given:
