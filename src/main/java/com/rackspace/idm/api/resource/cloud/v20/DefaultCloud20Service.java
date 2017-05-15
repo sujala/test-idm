@@ -1104,10 +1104,12 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
+    @Override
     public Response.ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
         return authenticateInternal(httpHeaders, authenticationRequest, false);
     }
 
+    @Override
     public Response.ResponseBuilder authenticateApplyRcnRoles(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest) {
         return authenticateInternal(httpHeaders, authenticationRequest, true);
     }
@@ -4290,9 +4292,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     // Core Admin Token Methods
-
-    @Override
-    public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId) {
+    private ResponseBuilder validateTokenInternal(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId, boolean applyRcnRoles) {
         try {
             // Feature flag to enable self-validating tokens (B-80571:TK-171274).
             final boolean selfValidate = config.getBoolean(FEATURE_USER_TOKEN_SELF_VALIDATION, FEATURE_USER_TOKEN_SELF_VALIDATION_DEFAULT_VALUE);
@@ -4323,15 +4323,33 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (sa instanceof RackerScopeAccess) {
                 authenticateResponse = authenticateResponseService.buildAuthResponseForValidateToken((RackerScopeAccess) sa);
             } else if (sa instanceof UserScopeAccess) {
-                authenticateResponse = authenticateResponseService.buildAuthResponseForValidateToken((UserScopeAccess) sa, tenantId);
+                if (applyRcnRoles) {
+                    authenticateResponse = authenticateResponseService.buildAuthResponseForValidateTokenApplyRcnRoles((UserScopeAccess) sa, tenantId);
+                } else {
+                    authenticateResponse = authenticateResponseService.buildAuthResponseForValidateToken((UserScopeAccess) sa, tenantId);
+                }
             } else {
-                authenticateResponse = authenticateResponseService.buildAuthResponseForValidateToken((ImpersonatedScopeAccess) sa, tenantId);
+                if (applyRcnRoles) {
+                    authenticateResponse = authenticateResponseService.buildAuthResponseForValidateTokenApplyRcnRoles((ImpersonatedScopeAccess) sa, tenantId);
+                } else {
+                    authenticateResponse = authenticateResponseService.buildAuthResponseForValidateToken((ImpersonatedScopeAccess) sa, tenantId);
+                }
             }
 
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createAccess(authenticateResponse).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    @Override
+    public ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId) {
+        return validateTokenInternal(httpHeaders, authToken, tokenId, tenantId, false);
+    }
+
+    @Override
+    public ResponseBuilder validateTokenApplyRcnRoles(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId) {
+        return validateTokenInternal(httpHeaders, authToken, tokenId, tenantId, true);
     }
 
     @Override

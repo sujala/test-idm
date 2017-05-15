@@ -18,6 +18,8 @@ import java.io.IOException;
 
 public interface Cloud20Service {
 
+    ResponseBuilder authenticateApplyRcnRoles(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest);
+
     ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest);
 
     ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponse);
@@ -47,6 +49,8 @@ public interface Cloud20Service {
     ResponseBuilder deleteIdentityProviderCert(HttpHeaders httpHeaders, String authToken, String identityProviderId, String certificateId);
 
     ResponseBuilder validateToken(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo);
+
+    ResponseBuilder validateTokenApplyRcnRoles(HttpHeaders httpHeaders, String authToken, String tokenId, String belongsTo);
 
     ResponseBuilder revokeToken(HttpHeaders httpHeaders, String authToken) throws IOException, JAXBException;
 

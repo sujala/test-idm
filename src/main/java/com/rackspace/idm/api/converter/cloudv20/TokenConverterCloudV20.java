@@ -5,6 +5,8 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.domain.service.ServiceCatalogInfo;
 import com.rackspace.idm.domain.service.TenantService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -19,14 +21,19 @@ import org.springframework.stereotype.Component;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.util.GregorianCalendar;
-import java.util.List;
+import java.util.*;
 
 @Component
 public class TokenConverterCloudV20 {
 
     @Autowired
     private JAXBObjectFactories objFactories;
+
+    @Autowired
+    private TenantService tenantService;
+
+    @Autowired
+    private AuthorizationService authorizationService;
 
     private Logger logger = LoggerFactory.getLogger(TokenConverterCloudV20.class);
 
@@ -73,6 +80,48 @@ public class TokenConverterCloudV20 {
 
     public Token toRackerToken(ScopeAccess scopeAccess) {
         return toTokenInternal(scopeAccess, null);
+    }
+
+    /**
+     * Used as a temporarily means to adapt validate (which only knows roles) to the same mechanism used to generate the
+     * token part of the AuthenticationResponse for Authentication. As validate does not include generating a
+     * ServiceCatalogInfo object, this method is here to provide a temporary means to adapt to that method.
+     *
+     * Do not use this unless necessary as it incurs a performance cost to look up tenants. Deprecating this from the
+     * getgo as it's a temporary workaround
+     *
+     * @param scopeAccess
+     * @param user
+     * @param roles
+     * @return
+     * @deprecated
+     */
+    @Deprecated
+    public Token toValidateResponseToken(ScopeAccess scopeAccess, EndUser user, List<TenantRole> roles) {
+        // Convert roles to a service catalog to use
+        /*
+            TODO: Fix this performance issue. Need to lookup all the tenants to determine the tenant id
+            to return in response
+        */
+        Set<String> uniqueTenantIds = new HashSet<>();
+        for (TenantRole role : roles) {
+            uniqueTenantIds.addAll(role.getTenantIds());
+        }
+
+        // Look up tenants
+        List<Tenant> tenants = new ArrayList<>(uniqueTenantIds.size());
+        for (String uniqueTenantId : uniqueTenantIds) {
+            Tenant tenant = tenantService.getTenant(uniqueTenantId);
+            if (tenant != null) {
+                tenants.add(tenant);
+            }
+        }
+        IdentityUserTypeEnum targetUserType = authorizationService.getIdentityTypeRoleAsEnum(roles);
+
+        // Adapter to allow use existing logic written in service catalog.
+        ServiceCatalogInfo scInfo = new ServiceCatalogInfo(roles, tenants, null, targetUserType);
+
+        return toEndUserToken(scopeAccess, user, scInfo);
     }
 
     public Token toEndUserToken(ScopeAccess scopeAccess, EndUser user, ServiceCatalogInfo scInfo) {
@@ -187,7 +236,7 @@ public class TokenConverterCloudV20 {
              tenant. If a user does not have that specific role, use other default horrible logic which is mosso tenant
              is numerical while nast tenant is a string. Currently users are restricted to those two tenants.
             */
-            if (result != null) {
+            if (result == null) {
                 for (TenantRole tenantRole : tenantRoleList) {
                     for (String tenantId : tenantRole.getTenantIds()) {
                         if (tenantId.matches("\\d+")) {

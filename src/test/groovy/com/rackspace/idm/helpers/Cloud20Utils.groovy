@@ -577,6 +577,12 @@ class Cloud20Utils {
         response.getEntity(AuthenticateResponse).value
     }
 
+    def validateTokenApplyRcnRoles(token, String applyRcnRolesParam = "true") {
+        def response = methods.validateTokenApplyRcnRoles(getServiceAdminToken(), token, applyRcnRolesParam)
+        assert (response.status == SC_OK)
+        response.getEntity(AuthenticateResponse).value
+    }
+
     def validateToken(token, tokenToValidate) {
         def response = methods.validateToken(token, tokenToValidate)
         assert (response.status == SC_OK)
