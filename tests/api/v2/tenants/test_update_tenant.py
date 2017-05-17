@@ -29,7 +29,7 @@ class TestUpdateTenant(base.TestBaseV2):
 
     def setUp(self):
         super(TestUpdateTenant, self).setUp()
-        self.description = 'Orginal description'
+        self.description = 'Original description'
         self.display_name = 'A name to display'
         self.tenant_name = self.generate_random_string(
             const.TENANT_NAME_PATTERN)
@@ -379,6 +379,36 @@ class TestUpdateTenant(base.TestBaseV2):
         self.assertEqual(
             auth_one_call_user_with_password.access.token.tenant.name,
             one_call_tenant.name)
+
+    def test_update_tenant_with_non_existing_tenant_type(self):
+
+        tenant_name = tenant_id = self.generate_random_string(
+            const.TENANT_NAME_PATTERN)
+
+        tenant_type_name = self.generate_random_string(
+            pattern=const.TENANT_TYPE_PATTERN)
+        self.create_tenant_type(name=tenant_type_name)
+        request_object = requests.Tenant(
+            tenant_name=tenant_name, tenant_id=tenant_id,
+            tenant_types=[tenant_type_name])
+        create_resp = self.identity_admin_client.add_tenant(
+            tenant=request_object)
+        self.assertEqual(create_resp.status_code, 201)
+        self.tenant_ids.append(create_resp.json()[const.TENANT][const.ID])
+
+        # Randomness is making sure it does not exist before. This avoids
+        # using service-admin client to check if tenant type already exists
+        new_tenant_type_name = self.generate_random_string(
+            pattern='newtype[\-][0-9a-z]{8}')
+        request_object = requests.Tenant(
+            tenant_name=tenant_name, tenant_id=tenant_id,
+            tenant_types=[new_tenant_type_name])
+        update_resp = self.identity_admin_client.update_tenant(
+            tenant_id=tenant_id, request_object=request_object)
+        self.assertEqual(update_resp.status_code, 400)
+        self.assertEqual(update_resp.json()['badRequest']['message'],
+                         "TenantType with name: '{0}' was not found.".format(
+                             new_tenant_type_name))
 
     def tearDown(self):
         # Delete all resources created in the tests
