@@ -1501,3 +1501,41 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + const.TENANT_TYPE_URL
         resp = self.request('GET', url)
         return resp
+
+    def add_update_password_policy(
+            self, domain_id, request_object, requestslib_kwargs=None):
+        """Return response object from the add/update password policy api call
+
+        PUT {{AUTH_URL}}/v2.0/RAX-AUTH/domains/{{USER_DOMAIN}}/passwordPolicy
+        """
+        url = self.url + const.PASSWORD_POLICY_URL.format(domain_id=domain_id)
+        return self.request('PUT', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
+
+    def get_password_policy(self, domain_id, requestslib_kwargs=None):
+        """Return response object from the add/update password policy api call
+
+        GET {{AUTH_URL}}/v2.0/RAX-AUTH/domains/{{USER_DOMAIN}}/passwordPolicy
+        """
+        url = self.url + const.PASSWORD_POLICY_URL.format(domain_id=domain_id)
+        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
+
+    def delete_password_policy(self, domain_id, requestslib_kwargs=None):
+        """Return response object from the add/update password policy api call
+
+        DELETE
+        {AUTH_URL}}/v2.0/RAX-AUTH/domains/{{USER_DOMAIN}}/passwordPolicy
+        """
+        url = self.url + const.PASSWORD_POLICY_URL.format(domain_id=domain_id)
+        return self.request(
+            'DELETE', url, requestslib_kwargs=requestslib_kwargs)
+
+    def change_password(self, request_object, requestslib_kwargs=None):
+        """Return response object from the change password api call
+
+        POST
+        {AUTH_URL}}/v2.0/RAX-AUTH/domains/{{USER_DOMAIN}}/passwordPolicy
+        """
+        url = self.url + const.CHANGE_PASSWORD_URL
+        return self.request('POST', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)
