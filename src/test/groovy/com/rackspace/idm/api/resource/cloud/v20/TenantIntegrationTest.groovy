@@ -1096,6 +1096,76 @@ class TenantIntegrationTest extends RootIntegrationTest {
         "invalid"     | MediaType.APPLICATION_XML_TYPE
     }
 
+    @Unroll
+    def "Assert no duplicate on list tenants with query param 'apply_rcn_roles=true' - accpet=#accept" () {
+        given: "Two new users"
+        def user1 = utils.createCloudAccount(utils.identityAdminToken)
+        def user2 = utils.createCloudAccount(utils.identityAdminToken)
+        def rcn = testUtils.getRandomRCN()
+
+        when: "Updating both user's domain to the same RCN"
+        def domain = v2Factory.createDomain().with {
+            it.rackspaceCustomerNumber = rcn
+            it
+        }
+        def updateDomain1 = cloud20.updateDomain(utils.identityAdminToken, user1.domainId, domain).getEntity(Domain)
+        def updateDomain2 = cloud20.updateDomain(utils.identityAdminToken, user2.domainId, domain).getEntity(Domain)
+
+        then: "Assert both domains where updated correctly"
+        updateDomain1.rackspaceCustomerNumber == rcn
+        updateDomain2.rackspaceCustomerNumber == rcn
+
+        when: "Add global 'rcn-all' role to user1"
+        def addRoleToUserResponse = cloud20.addUserRole(utils.getIdentityAdminToken(), user1.id, Constants.IDENTITY_RCN_ALL_TENANT_ROLE_ID)
+
+        then: "Assert role added to user1"
+        addRoleToUserResponse.status == HttpStatus.SC_OK
+
+        when: "Add new tenant role on both users"
+        def tenant = utils.createTenant()
+        def role = utils.createRole()
+        utils.addRoleToUserOnTenant(user1, tenant, role.id)
+        utils.addRoleToUserOnTenant(user2, tenant, role.id)
+
+        def user1Token = utils.getToken(user1.username)
+        def user2Token = utils.getToken(user2.username)
+
+        def user1ListTenantsResponse = cloud20.listTenants(user1Token, false, accept)
+        def user2ListTenantsResponse = cloud20.listTenants(user2Token, false, accept)
+
+        def user1Tenants = getTenantsFromResponse(user1ListTenantsResponse)
+        def user2Tenants = getTenantsFromResponse(user2ListTenantsResponse)
+
+        then: "Assert tenants on users"
+        user1Tenants.tenant.find({it.id == tenant.id}) != null
+        user2Tenants.tenant.find({it.id == tenant.id}) != null
+
+        when: "Listing tenants for user1 with 'apply_rcn_roles=true'"
+        user1ListTenantsResponse = cloud20.listTenants(user1Token, true, accept)
+        user1Tenants = getTenantsFromResponse(user1ListTenantsResponse)
+
+        then: "Assert tenant is not duplicated"
+        user1Tenants.tenant.find({it.id == user2.domainId}) != null
+        user1Tenants.tenant.find({it.id == utils.getNastTenant(user2.domainId)}) != null
+        user1Tenants.tenant.find({it.id == user1.domainId}) != null
+        user1Tenants.tenant.find({it.id == utils.getNastTenant(user1.domainId)}) != null
+        user1Tenants.tenant.find({it.id == tenant.id}) != null
+        assert user1Tenants.tenant.size == 5
+
+        cleanup:
+        utils.deleteUser(user1)
+        utils.deleteUser(user2)
+        utils.deleteDomain(user1.domainId)
+        utils.deleteDomain(user2.domainId)
+        utils.deleteTenant(tenant)
+        utils.deleteRole(role)
+
+        where:
+        accept                          | _
+        MediaType.APPLICATION_XML_TYPE  | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
     def getTenant(response) {
         def tenant = response.getEntity(Tenant)
 
