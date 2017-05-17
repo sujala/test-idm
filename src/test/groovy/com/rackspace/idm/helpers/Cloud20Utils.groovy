@@ -688,6 +688,13 @@ class Cloud20Utils {
         response.getEntity(Tenant).value
     }
 
+    def createTenantWithType(name=testUtils.getRandomUUID("tenant"), type=null) {
+        def tenant = factory.createTenant(name, name, type)
+        def response = methods.addTenant(getServiceAdminToken(), tenant)
+        assert (response.status == SC_CREATED)
+        response.getEntity(Tenant).value
+    }
+
     def createTenantType(name=testUtils.getRandomUUID("type")[0..15], description="description") {
         def tenantType = factory.createTenantType(name, description)
         def response = methods.addTenantType(getServiceAdminToken(), tenantType)

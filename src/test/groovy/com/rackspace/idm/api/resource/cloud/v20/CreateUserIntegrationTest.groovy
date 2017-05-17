@@ -1695,4 +1695,96 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteTenantType(tenantTypeName)
     }
 
+    @Unroll
+    def "test create user with a tenant having a non-existing type and verify tenant gets created without type, featureEnabled = #featureEnabled" () {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP, featureEnabled)
+        def domainId = utils.createDomain()
+
+        def tenantTypeName = RandomStringUtils.randomAlphabetic(8).toLowerCase()
+        def tenantName = "${tenantTypeName}:${RandomStringUtils.randomAlphabetic(8)}"
+
+        def role = utils.createRole()
+        def tenantRole = v2Factory.createRole(role.name).with {
+            it.tenantId = tenantName
+            it
+        }
+        def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@example.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.roles = new RoleList().with {
+                it.role.add(tenantRole)
+                it
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
+
+        then: "user created successfully"
+        response.status == 201
+
+        when:
+        def createdTenant = utils.getTenant(tenantName)
+
+        then:
+        createdTenant.types == null
+
+        cleanup:
+        reloadableConfiguration.reset()
+        utils.deleteUser(utils.getUserByName(userAdminToCreate.username))
+        utils.deleteDomain(domainId)
+        utils.deleteRole(role)
+        utils.deleteTenant(tenantName)
+
+        where:
+        featureEnabled << [true, false]
+    }
+
+    @Unroll
+    def "test create user does not alter type on an already exist tenant, featureEnabled = #featureEnabled"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP, featureEnabled)
+        def userAdmin = utils.createUserWithTenants()
+        def domainId = userAdmin.domainId
+        def tenantTypeName = RandomStringUtils.randomAlphabetic(8).toLowerCase()
+        def tenantName = "${tenantTypeName}:${RandomStringUtils.randomAlphabetic(8)}"
+
+        utils.createTenantType(tenantTypeName)
+        utils.createTenantWithType(tenantName, [Constants.TENANT_TYPE_CLOUD])
+
+        def role = utils.createRole()
+        def tenantRole = v2Factory.createRole(role.name).with {
+            it.tenantId = tenantName
+            it
+        }
+        def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP)), tenantRole].asList())
+        def defaultUserToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("user"), "display", "email@example.com", true, null, domainId, DEFAULT_PASSWORD).with {
+            it.roles = defaultUserRoles
+            it
+        }
+
+        when: "create a default user with a role on a tenant without a tenant type set"
+        def response = cloud20.createUser(utils.getIdentityAdminToken(), defaultUserToCreate)
+
+        then: "user created successfully"
+        response.status == 201
+
+        when:
+        def tenant = utils.getTenant(tenantName)
+
+        then:
+        tenant.types.type[0] == Constants.TENANT_TYPE_CLOUD
+
+        cleanup:
+        reloadableConfiguration.reset()
+        utils.deleteUser(utils.getUserByName(defaultUserToCreate.username))
+        utils.deleteUser(userAdmin)
+        utils.deleteDomain(domainId)
+        utils.deleteRole(role)
+        utils.deleteTenant(tenantName)
+        utils.deleteTenantType(tenantTypeName)
+
+        where:
+        featureEnabled << [true, false]
+    }
 }
