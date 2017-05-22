@@ -27,6 +27,10 @@ class PasswordPolicyTest extends Specification {
         from | expectedIfDifferent
         // nothing
         "{\"passwordPolicy\":{}}" | null
+        "{\"passwordPolicy\":{\"passwordDuration\":\" \"}}" | null
+        "{\"passwordPolicy\":{\"passwordDuration\": null}}" | "{\"passwordPolicy\":{}}"
+        "{\"passwordPolicy\":{\"passwordHistoryRestriction\":\" \"}}" | "{\"passwordPolicy\":{}}"
+        "{\"passwordPolicy\":{\"passwordHistoryRestriction\": null}}" | "{\"passwordPolicy\":{}}"
 
         // Durations by self
         "{\"passwordPolicy\":{\"passwordDuration\":\"P90D\"}}" | null
@@ -68,17 +72,18 @@ class PasswordPolicyTest extends Specification {
     @Unroll
     def "Invalid password policy durations are rejected: policy: #policy"() {
         when:
-        PasswordPolicy.fromJson(from).toJson()
+        PasswordPolicy.fromJson(policy).toJson()
 
         then:
         thrown(InvalidPasswordPolicyException)
 
         where:
-        from | errorMsg
+        policy | errorMsg
         // Week, Month, Year durations are not allowed
         "{\"passwordPolicy\":{\"passwordDuration\":\"P1W\"}}" | PasswordPolicy.INVALID_POLICY_GENERIC_MSG
         "{\"passwordPolicy\":{\"passwordDuration\":\"P1M\"}}" | PasswordPolicy.INVALID_POLICY_GENERIC_MSG
         "{\"passwordPolicy\":{\"passwordDuration\":\"P1Y\"}}" | PasswordPolicy.INVALID_POLICY_GENERIC_MSG
+
 
         // Negative durations not allowed
         "{\"passwordPolicy\":{\"passwordDuration\":\"P-1D\"}}" | PasswordPolicy.INVALID_DURATION_MSG

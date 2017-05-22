@@ -270,6 +270,24 @@ class PasswordPolicyIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(user)
         }
 
+    def "Password Policy applies to all users within the domain"(){
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        def userManageToken = utils.getToken(userManage.username)
+
+        given:
+        PasswordPolicy policy = createPasswordPolicy("PT5M", 0)
+        utils.updateDomainPasswordPolicy(domainId, policy)
+
+        expect: "Expiration header is returned for all users in the domain on authenticate"
+        cloud20.authenticatePassword(userAdmin.username).getHeaders().getFirst(GlobalConstants.X_PASSWORD_EXPIRATION) != null
+        cloud20.authenticatePassword(userManage.username).getHeaders().getFirst(GlobalConstants.X_PASSWORD_EXPIRATION) != null
+        cloud20.authenticatePassword(defaultUser.username).getHeaders().getFirst(GlobalConstants.X_PASSWORD_EXPIRATION) != null
+    }
+
     def "Password policy can be removed or not enforced"() {
         given:
         DateTime now = new DateTime()

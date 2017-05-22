@@ -1,4 +1,4 @@
-""" Schema Definitions for groups end points. """
+"""Schema Definitions for groups end points."""
 from tests.package.johny import constants as const
 
 add_group = {

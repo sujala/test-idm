@@ -995,6 +995,43 @@ class IDP(base.AutoMarshallingModel):
         return json.dumps(create_idp_request)
 
 
+class ChangePassword(base.AutoMarshallingModel):
+    """
+    Marshalling for change password request
+    """
+    def __init__(self, user_name, current_password, new_password):
+        self.user_name = user_name
+        self.current_password = current_password
+        self.new_password = new_password
+
+    def _obj_to_json(self):
+        change_password_request = {
+            const.RAX_AUTH_CHANGE_PASSWORD_CREDENTIALS: {
+                const.USERNAME: self.user_name,
+                const.PASSWORD: self.current_password,
+                const.NEW_PASSWORD: self.new_password}
+        }
+
+        return json.dumps(change_password_request)
+
+
+class PasswordPolicy(base.AutoMarshallingModel):
+    """
+    Marshalling for password policy requests
+    """
+    def __init__(self, duration=None, history_restriction=None):
+        self.duration = duration
+        self.history_restriction = history_restriction
+
+    def _obj_to_json(self):
+        password_policy_request = {
+            const.PASSWORD_POLICY: {
+                const.PASSWORD_DURATION: self.duration,
+                const.PASSWORD_HISTORY_RESTRICTION: self.history_restriction}
+        }
+        return json.dumps(password_policy_request)
+
+
 class ImpersonateUser(base.AutoMarshallingModel):
     """
     Marshalling for impersonation request
