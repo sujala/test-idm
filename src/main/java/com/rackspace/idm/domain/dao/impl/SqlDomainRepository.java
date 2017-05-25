@@ -93,6 +93,11 @@ public class SqlDomainRepository implements DomainDao {
     }
 
     @Override
+    public PaginatorContext<Domain> getRCNDomainsPaged(String rcn, Integer marker, Integer limit) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Iterable<Domain> getDomainsForTenant(List<Tenant> tenants) {
         if (CollectionUtils.isEmpty(tenants)) {
             return Collections.EMPTY_LIST;

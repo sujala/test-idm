@@ -105,6 +105,23 @@ public class CloudUserAccessibility {
         return result;
     }
 
+    public Domains removeNonRcnDomains(Domains domains, String rcn) {
+        if (domains == null) {
+            return new Domains();
+        }
+
+        List<Domain> list = new ArrayList<>();
+
+        for (Domain domain : domains.getDomain()) {
+            if (rcn.equalsIgnoreCase(domain.getRackspaceCustomerNumber())) {
+                list.add(domain);
+            }
+        }
+        Domains result = new Domains();
+        result.getDomain().addAll(list);
+        return result;
+    }
+
     public List<OpenstackEndpoint> getAccessibleDomainEndpoints(List<OpenstackEndpoint> endpoints, List<Tenant> tenants, User user) {
         if(hasAccess(user)) {
             List<OpenstackEndpoint> openstackEndpoints = new ArrayList<OpenstackEndpoint>();
