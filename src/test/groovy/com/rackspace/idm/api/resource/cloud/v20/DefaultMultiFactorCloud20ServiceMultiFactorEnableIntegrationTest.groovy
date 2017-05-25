@@ -173,6 +173,38 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         cloud20.validateToken(specificationIdentityAdminToken, pwdToken).status == HttpStatus.SC_NOT_FOUND
     }
 
+    def "When domain enforcement is applied, ensure password reset tokens are not revoked"() {
+        setup:
+        addPhone()
+        verifyPhone()
+        createMultiFactorDefaultUser()
+
+        // Get reset token for userAdmin
+        def userAdminToken = utils.getToken(userAdmin.username)
+        cloud20.forgotPassword(v2Factory.createForgotPasswordCredentials(userAdmin.username, null))
+        List<WiserMessage> messages = wiserWrapper.wiserServer.getMessages()
+        WiserMessage message = messages.get(messages.size() - 1)
+        def resetUserAdminToken = EmailUtils.extractTokenFromDefaultForgotPasswordEmail(message.getMimeMessage())
+        // Get reset token for defaultUser
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        cloud20.forgotPassword(v2Factory.createForgotPasswordCredentials(defaultUser.username, null))
+        messages = wiserWrapper.wiserServer.getMessages()
+        message = messages.get(messages.size() - 1)
+        def resetDefaultUserToken = EmailUtils.extractTokenFromDefaultForgotPasswordEmail(message.getMimeMessage())
+
+        when: "Update MFA domain settings"
+        MultiFactorDomain settings = v2Factory.createMultiFactorDomainSettings()
+        settings.domainMultiFactorEnforcementLevel = DomainMultiFactorEnforcementLevelEnum.REQUIRED
+        def response = cloud20.updateMultiFactorDomainSettings(utils.identityAdminToken, userAdmin.domainId, settings)
+
+        then:
+        response.status == 204
+        cloud20.validateToken(utils.identityAdminToken, userAdminToken).status == 404
+        cloud20.validateToken(utils.identityAdminToken, defaultUserToken).status == 404
+        cloud20.validateToken(resetUserAdminToken, resetUserAdminToken).status == 403
+        cloud20.validateToken(resetDefaultUserToken, resetDefaultUserToken).status == 403
+    }
+
     def "Enabling MFA sends cloud feed event for enabling MFA, and one for disabling only Password tokens"() {
         setup:
         addPhone()
