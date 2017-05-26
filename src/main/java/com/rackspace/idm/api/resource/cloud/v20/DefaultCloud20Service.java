@@ -95,9 +95,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String SETUP_MFA_SCOPE_FORBIDDEN = "SETUP-MFA SCOPE not supported";
     public static final String MUST_SETUP_MFA = "User must setup multi-factor";
 
-    public static final String FEATURE_USER_TOKEN_SELF_VALIDATION = "feature.user.token.selfValidation";
-    public static final boolean FEATURE_USER_TOKEN_SELF_VALIDATION_DEFAULT_VALUE = false;
-
     public static final String INVALID_DOMAIN_ERROR = "Invalid domain";
     public static final String DOMAIN_ID_NOT_FOUND_ERROR_MESSAGE = "Domain ID %s does not exist.";
     public static final String CANNOT_SPECIFY_GROUPS_ERROR = "Cannot specify groups for sub-users";
@@ -4294,13 +4291,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     // Core Admin Token Methods
     private ResponseBuilder validateTokenInternal(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId, boolean applyRcnRoles) {
         try {
-            // Feature flag to enable self-validating tokens (B-80571:TK-171274).
-            final boolean selfValidate = config.getBoolean(FEATURE_USER_TOKEN_SELF_VALIDATION, FEATURE_USER_TOKEN_SELF_VALIDATION_DEFAULT_VALUE);
             final boolean sameToken = StringUtils.equals(authToken, tokenId);
 
             // User can validate his own token (B-80571:TK-165775).
             ScopeAccess callerToken = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
-            if (!(selfValidate && sameToken)) {
+            if (!sameToken) {
                 //TODO: This token can be a Racker, Service or User of Proper Level
                 authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.VALIDATE_TOKEN_GLOBAL.getRoleName());
             }
