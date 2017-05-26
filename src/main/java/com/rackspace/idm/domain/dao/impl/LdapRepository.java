@@ -1,8 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.audit.Audit;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.ldap.event.LdapMigrationChangeApplicationEvent;
 import com.unboundid.ldap.sdk.*;
 import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl;
 import com.unboundid.ldap.sdk.controls.SortKey;
@@ -336,7 +334,6 @@ public abstract class LdapRepository {
             deleteRequest.addControl(new SubtreeDeleteRequestControl(true));
             LDAPInterface inter = getAppInterface();
             inter.delete(deleteRequest);
-            emitMigrationDeleteEventIfNecessary(dn);
         } catch (LDAPException e) {
             audit.fail();
             getLogger().error(LDAP_SEARCH_ERROR, e.getMessage());
@@ -355,21 +352,10 @@ public abstract class LdapRepository {
             }
 
             getAppInterface().delete(dn);
-            emitMigrationDeleteEventIfNecessary(dn);
         } catch (LDAPException e) {
             audit.fail();
             getLogger().error(LDAP_SEARCH_ERROR, e.getMessage());
             throw new IllegalStateException(e.getMessage(), e);
-        }
-    }
-
-    private void emitMigrationDeleteEventIfNecessary(String dn) {
-        if (shouldEmitEventForDN(dn)) {
-            try {
-                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.DELETE, dn, null));
-            } catch (Exception e) {
-                LOGGER.error("Cannot emmit 'DELETE' change event (DN: " + dn + ")!", e);
-            }
         }
     }
 

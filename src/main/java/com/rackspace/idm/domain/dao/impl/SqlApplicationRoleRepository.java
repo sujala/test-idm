@@ -6,8 +6,6 @@ import com.rackspace.idm.domain.dao.ApplicationRoleDao;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.RoleRepository;
 import com.rackspace.idm.domain.sql.dao.TenantRoleRepository;
 import com.rackspace.idm.domain.sql.entity.SqlRole;
@@ -42,7 +40,6 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
         final SqlRole sqlRole = repository.save(mapper.toSQL(role));
 
         final ClientRole clientRole = mapper.fromSQL(sqlRole, role);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, clientRole.getUniqueId(), mapper.toLDIF(clientRole)));
     }
 
     @Override
@@ -51,7 +48,6 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
         final SqlRole sqlRole = repository.save(mapper.toSQL(role, repository.findOne(role.getId())));
 
         final ClientRole clientRole = mapper.fromSQL(sqlRole, role);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, clientRole.getUniqueId(), mapper.toLDIF(clientRole)));
     }
 
     @Override
@@ -60,7 +56,6 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
         tenantRoleRepository.deleteBySqlRoleId(role.getId());
         repository.delete(role.getId());
 
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, role.getUniqueId(), null));
     }
 
     @Override

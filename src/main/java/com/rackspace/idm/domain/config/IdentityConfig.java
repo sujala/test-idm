@@ -6,7 +6,6 @@ import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdRe
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.entity.IdentityProperty;
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType;
-import com.rackspace.idm.domain.migration.ChangeType;
 import com.rackspace.idm.domain.security.TokenFormat;
 import com.rackspace.idm.domain.service.IdentityPropertyService;
 import com.rackspace.idm.exception.MissingRequiredConfigIdmException;
@@ -419,25 +418,6 @@ public class IdentityConfig {
     private static final int SQL_MIN_IDLE_DEFAULT = 3;
 
     /* ************************
-     * MIGRATION PROPS
-     **************************/
-    public static final String FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP = "feature.migration.read.only.mode.enabled";
-    public static final Boolean FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_DEFAULT = false;
-
-    public static final String FEATURE_MIGRATION_SAVE_DELTA_ASYNC_PROP = "feature.migration.save.async";
-    public static final Boolean FEATURE_MIGRATION_SAVE_DELTA_ASYNC_DEFAULT = false;
-
-    public static final String MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP = "handle.migration.change.events.default";
-    public static final Boolean MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_DEFAULT = false;
-    public static final String MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP = "ignore.migration.change.events.of.type.default";
-    public static final List MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_DEFAULT = Collections.EMPTY_LIST;
-
-    public static final String MIGRATION_LISTENER_HANDLES_CHANGE_EVENTS_PROP_PREFIX = "handle.migration.change.events.for.listener";
-    public static final String MIGRATION_LISTENER_HANDLES_MIGRATION_CHANGE_EVENTS_PROP_REG = MIGRATION_LISTENER_HANDLES_CHANGE_EVENTS_PROP_PREFIX + ".%s";
-    public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX = "ignore.migration.change.events.of.type.for.listener";
-    public static final String MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_REG = MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_PREFIX + ".%s";
-
-    /* ************************
     FEEDS Connection Props. Feed calls are asynchronous so a larger default timeout is acceptable
      ************************** */
     public static final String FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP = "feeds.use.configurable.httpclient";
@@ -614,10 +594,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
         defaults.put(SQL_SHOW_SQL_PROP, SQL_SHOW_DEFAULT);
-        defaults.put(FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP, FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_DEFAULT);
-        defaults.put(FEATURE_MIGRATION_SAVE_DELTA_ASYNC_PROP, FEATURE_MIGRATION_SAVE_DELTA_ASYNC_DEFAULT);
-        defaults.put(MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP, MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_DEFAULT);
-        defaults.put(MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP, MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_DEFAULT);
         defaults.put(SQL_INITIAL_SIZE_PROP, SQL_INITIAL_SIZE_DEFAULT);
         defaults.put(SQL_MAX_ACTIVE_PROP, SQL_MAX_ACTIVE_DEFAULT);
         defaults.put(SQL_MAX_IDLE_PROP, SQL_MAX_IDLE_DEFAULT);
@@ -1065,26 +1041,6 @@ public class IdentityConfig {
         } else {
             return TokenFormat.UUID;
         }
-    }
-
-    private ChangeType convertToChangeType(String strFormat) {
-        for (ChangeType tokenFormat : ChangeType.values()) {
-            if (tokenFormat.name().equalsIgnoreCase(strFormat)) {
-                return tokenFormat;
-            }
-        }
-        return null;
-    }
-
-    private Set<ChangeType> convertToChangeType(Set<String> strFormats) {
-        Set<ChangeType> result = new HashSet<ChangeType>(strFormats.size());
-        for (String changeTypeStr : strFormats) {
-            ChangeType converted = convertToChangeType(changeTypeStr);
-            if (converted != null) {
-                result.add(converted);
-            }
-        }
-        return result;
     }
 
     /**
@@ -1639,46 +1595,9 @@ public class IdentityConfig {
             return getStringSafely(reloadableConfiguration, ENDPOINT_REGIONID_DEFAULT);
         }
 
-        @IdmProp(key = FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP, description = "Whether entities that can be switched to read-only should be switched", versionAdded = "3.0.0")
-        public boolean migrationReadOnlyEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_MIGRATION_READ_ONLY_MODE_ENABLED_PROP);
-        }
-
-        @IdmProp(key = FEATURE_MIGRATION_SAVE_DELTA_ASYNC_PROP, description = "Whether the delta migration events should be recorded in an asynchronous fashion", versionAdded = "3.2.0")
-        public boolean migrationSaveAsyncEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_MIGRATION_SAVE_DELTA_ASYNC_PROP);
-        }
-
         @IdmProp(key = IDENTITY_ROLE_TENANT_DEFAULT, description = "Identity role default tenant", versionAdded = "3.0.0")
         public String getIdentityRoleDefaultTenant() {
             return getStringSafely(reloadableConfiguration, IDENTITY_ROLE_TENANT_DEFAULT);
-        }
-
-        public boolean isMigrationListenerEnabled(String listenerName) {
-            return reloadableConfiguration.getBoolean(String.format(MIGRATION_LISTENER_HANDLES_MIGRATION_CHANGE_EVENTS_PROP_REG, listenerName), areMigrationListenersEnabledByDefault());
-        }
-
-        public Set<ChangeType> getIgnoredChangeTypesForMigrationListener(String listenerName) {
-            String dynamicPropName = String.format(MIGRATION_LISTENER_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP_REG, listenerName);
-            Set configuredVal = getSetSafely(reloadableConfiguration, dynamicPropName);
-
-            Set<ChangeType> changeTypes = null;
-            if (!CollectionUtils.isEmpty(configuredVal) || reloadableConfiguration.containsKey(dynamicPropName)) {
-                changeTypes = convertToChangeType(configuredVal);
-            } else {
-                changeTypes = getDefaultMigrationListenerIgnoredChangeTypes();
-            }
-            return changeTypes;
-        }
-
-        @IdmProp(key = MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP, description = "Whether a migration listener is enabled by default", versionAdded = "3.0.0")
-        public boolean areMigrationListenersEnabledByDefault() {
-            return getBooleanSafely(reloadableConfiguration, MIGRATION_LISTENER_DEFAULT_HANDLES_CHANGE_EVENTS_PROP);
-        }
-
-        @IdmProp(key = MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP, description = "What change types types migration listeners should ignore by default", versionAdded = "3.0.0")
-        public Set<ChangeType> getDefaultMigrationListenerIgnoredChangeTypes() {
-            return convertToChangeType(getSetSafely(reloadableConfiguration, MIGRATION_LISTENER_DEFAULT_IGNORES_CHANGE_EVENTS_OF_TYPE_PROP));
         }
 
         @IdmProp(key = FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, description = "Whether domains must be disabled before they can be deleted", versionAdded = "3.0.0")

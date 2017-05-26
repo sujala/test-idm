@@ -7,8 +7,6 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.ProjectRepository;
 import com.rackspace.idm.domain.sql.entity.SqlProject;
 import com.rackspace.idm.domain.sql.mapper.impl.DomainMapper;
@@ -53,14 +51,12 @@ public class SqlTenantRepository implements TenantDao {
         final SqlProject sqlProject = projectRepository.save(mapper.toSQL(tenant));
 
         final Tenant newTenant = mapper.fromSQL(sqlProject, tenant);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newTenant.getUniqueId(), mapper.toLDIF(newTenant)));
 
         //publish an update event for the associated domain
         Domain domainToUpdate = domainDao.getDomain(tenant.getDomainId());
         List<String> tenantIds = new ArrayList<String>(Arrays.asList(domainToUpdate.getTenantIds()));
         tenantIds.add(tenant.getTenantId());
         domainToUpdate.setTenantIds(tenantIds.toArray(new String[0]));
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, domainToUpdate.getUniqueId(), domainMapper.toLDIF(domainToUpdate)));
     }
 
     @Override
@@ -70,7 +66,6 @@ public class SqlTenantRepository implements TenantDao {
         sqlProject = projectRepository.save(mapper.toSQL(tenant, sqlProject));
 
         final Tenant newTenant = mapper.fromSQL(sqlProject, tenant);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newTenant.getUniqueId(), mapper.toLDIF(newTenant)));
     }
 
     @Override
@@ -100,7 +95,6 @@ public class SqlTenantRepository implements TenantDao {
         projectRepository.delete(tenantId);
 
         final Tenant newTenant = mapper.fromSQL(sqlProject);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newTenant.getUniqueId(), null));
     }
 
     @Override

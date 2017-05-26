@@ -4,8 +4,6 @@ import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum;
 import com.rackspace.idm.domain.entity.IdentityProvider;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.IdentityProviderRepository;
 import com.rackspace.idm.domain.sql.entity.SqlIdentityProvider;
 import com.rackspace.idm.domain.sql.mapper.impl.IdentityProviderMapper;
@@ -99,7 +97,6 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
         sqlProvider = repository.save(sqlProvider);
 
         final IdentityProvider newProvider = mapper.fromSQL(sqlProvider, identityProvider);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newProvider.getUniqueId(), mapper.toLDIF(newProvider)));
     }
 
     @Override
@@ -108,7 +105,6 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
         sqlProvider = repository.save(sqlProvider);
 
         final IdentityProvider newProvider = mapper.fromSQL(sqlProvider, identityProvider);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newProvider.getUniqueId(), mapper.toLDIF(newProvider)));
     }
 
     @Override
@@ -122,6 +118,5 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
         repository.delete(identityProviderId);
 
         final IdentityProvider newProvider = mapper.fromSQL(sqlProvider);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newProvider.getUniqueId(), null));
     }
 }

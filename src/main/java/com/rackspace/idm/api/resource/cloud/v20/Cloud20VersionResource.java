@@ -429,11 +429,7 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/default-region/services")
     public Response setDefaultRegionServices(@HeaderParam(X_AUTH_TOKEN) String authToken,
                                              DefaultRegionServices defaultRegionServices){
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.setDefaultRegionServices(authToken, defaultRegionServices).build();
-        }
+        return cloud20Service.setDefaultRegionServices(authToken, defaultRegionServices).build();
     }
 
     @POST
@@ -988,11 +984,7 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             Role role) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.addRole(httpHeaders, uriInfo, authToken, role).build();
-        }
+        return cloud20Service.addRole(httpHeaders, uriInfo, authToken, role).build();
     }
 
     @GET
@@ -1010,11 +1002,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("roleId") String roleId) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.deleteRole(httpHeaders, authToken, roleId).build();
-        }
+        return cloud20Service.deleteRole(httpHeaders, authToken, roleId).build();
     }
 
     @GET
@@ -1047,11 +1035,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken, Service service) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.addService(httpHeaders, uriInfo, authToken, service).build();
-        }
+        return cloud20Service.addService(httpHeaders, uriInfo, authToken, service).build();
     }
 
     @GET
@@ -1069,11 +1053,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("serviceId") String serviceId) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.deleteService(httpHeaders, authToken, serviceId).build();
-        }
+        return cloud20Service.deleteService(httpHeaders, authToken, serviceId).build();
     }
 
     @GET
@@ -1091,11 +1071,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken, EndpointTemplate endpoint) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint).build();
-        }
+        return cloud20Service.addEndpointTemplate(httpHeaders, uriInfo, authToken, endpoint).build();
     }
 
     @PUT
@@ -1105,11 +1081,7 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @PathParam("endpointTemplateId") String endpointTemplateId,
             @HeaderParam(X_AUTH_TOKEN) String authToken, EndpointTemplate endpoint) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.updateEndpointTemplate(httpHeaders, uriInfo, authToken, endpointTemplateId, endpoint).build();
-        }
+        return cloud20Service.updateEndpointTemplate(httpHeaders, uriInfo, authToken, endpointTemplateId, endpoint).build();
     }
 
     @GET
@@ -1127,11 +1099,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("endpointTemplateId") String enpdointTemplateId) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.deleteEndpointTemplate(httpHeaders, authToken, enpdointTemplateId).build();
-        }
+        return cloud20Service.deleteEndpointTemplate(httpHeaders, authToken, enpdointTemplateId).build();
     }
 
     @GET
@@ -1218,11 +1186,7 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             Group group) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.addGroup(httpHeaders, uriInfo, authToken, group).build();
-        }
+        return cloud20Service.addGroup(httpHeaders, uriInfo, authToken, group).build();
     }
 
     @GET
@@ -1255,11 +1219,7 @@ public class Cloud20VersionResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId,
             Group group) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.updateGroup(httpHeaders, authToken, groupId, group).build();
-        }
+        return cloud20Service.updateGroup(httpHeaders, authToken, groupId, group).build();
     }
 
     @DELETE
@@ -1268,11 +1228,7 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("groupId") String groupId) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.deleteGroup(httpHeaders, authToken, groupId).build();
-        }
+        return cloud20Service.deleteGroup(httpHeaders, authToken, groupId).build();
     }
 
     @GET
@@ -1309,11 +1265,7 @@ public class Cloud20VersionResource {
     @POST
     @Path("RAX-AUTH/regions")
     public Response createRegion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Region region) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.addRegion(uriInfo, authToken, region).build();
-        }
+        return cloud20Service.addRegion(uriInfo, authToken, region).build();
     }
 
     @GET
@@ -1331,31 +1283,19 @@ public class Cloud20VersionResource {
     @PUT
     @Path("RAX-AUTH/regions/{name}")
     public Response updateRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Region region) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.updateRegion(authToken, name, region).build();
-        }
+        return cloud20Service.updateRegion(authToken, name, region).build();
     }
 
     @DELETE
     @Path("RAX-AUTH/regions/{name}")
     public Response deleteRegion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.deleteRegion(authToken, name).build();
-        }
+        return cloud20Service.deleteRegion(authToken, name).build();
     }
 
     @POST
     @Path("RAX-AUTH/secretqa/questions")
     public Response createQuestion(@Context UriInfo uriInfo, @HeaderParam(X_AUTH_TOKEN) String authToken, Question question) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.addQuestion(uriInfo, authToken, question).build();
-        }
+        return cloud20Service.addQuestion(uriInfo, authToken, question).build();
     }
 
     @GET
@@ -1373,21 +1313,13 @@ public class Cloud20VersionResource {
     @PUT
     @Path("RAX-AUTH/secretqa/questions/{name}")
     public Response updateQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("name") String name, Question question) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.updateQuestion(authToken, name, question).build();
-        }
+        return cloud20Service.updateQuestion(authToken, name, question).build();
     }
 
     @DELETE
     @Path("RAX-AUTH/secretqa/questions/{questionId}")
     public Response deleteQuestion(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("questionId") String questionId) {
-        if (identityConfig.getReloadableConfig().migrationReadOnlyEnabled()) {
-            return exceptionHandler.exceptionResponse(new MigrationReadOnlyIdmException()).build();
-        } else {
-            return cloud20Service.deleteQuestion(authToken, questionId).build();
-        }
+        return cloud20Service.deleteQuestion(authToken, questionId).build();
     }
 
     @POST

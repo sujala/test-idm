@@ -8,8 +8,6 @@ import com.rackspace.idm.domain.dao.GenericDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.Auditable;
 import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.ldap.event.LdapMigrationChangeApplicationEvent;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.StalePasswordException;
@@ -182,7 +180,6 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             //this is an approximation of the date this occurred
             LDAPResult result = persister.add(object, getAppInterface(), dn);
             audit.succeed();
-            emitMigrationAddEventIfNecessary(object);
             getLogger().info("Added: {}", object);
         } catch (final LDAPException e) {
             getLogger().error("Error adding object", e);
@@ -192,30 +189,6 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
                     throw new DuplicateException(e.getMessage());
                 default:
                     throw new IllegalStateException(e);
-            }
-        }
-    }
-    private void emitMigrationAddEventIfNecessary(T object) {
-        emitMigrationAddEventIfNecessary(object.getUniqueId());
-    }
-
-    private void emitMigrationAddEventIfNecessary(String dn) {
-        if (shouldEmitEventForDN(dn)) {
-            try {
-                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.ADD, dn, getAppInterface().getEntry(dn).toLDIFString()));
-            } catch (Exception e) {
-                LOGGER.error("Cannot emmit 'ADD' change event (DN: " + dn + ")!", e);
-            }
-        }
-    }
-
-    private void emitMigrationModifyEventIfNecessary(T object) {
-        final String dn = object.getUniqueId();
-        if (shouldEmitEventForDN(dn)) {
-            try {
-                applicationEventPublisher.publishEvent(new LdapMigrationChangeApplicationEvent(this, ChangeType.MODIFY, dn, getAppInterface().getEntry(dn).toLDIFString()));
-            } catch (Exception e) {
-                LOGGER.error("Cannot emmit 'MODIFY' change event (DN: " + dn + ")!", e);
             }
         }
     }
@@ -232,7 +205,6 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             String dn = new LdapDnBuilder(partialDnString).addAttribute(ATTR_NAME, containerName).build();
             try {
                 getAppInterface().add(dn, attributeArray);
-                emitMigrationAddEventIfNecessary(dn);
                 audit.succeed();
                 return dn;
             } catch (LDAPException e) {
@@ -368,7 +340,6 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
         audit.succeed();
-        emitMigrationModifyEventIfNecessary(object);
         getLogger().info("Updated - {}", object);
     }
 
@@ -393,7 +364,6 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
             throw new IllegalStateException(ldapEx.getMessage(), ldapEx);
         }
         audit.succeed();
-        emitMigrationModifyEventIfNecessary(object);
         getLogger().info("Updated - {}", object);
     }
 

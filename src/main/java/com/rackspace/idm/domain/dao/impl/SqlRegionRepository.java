@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.RegionDao;
 import com.rackspace.idm.domain.entity.Region;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.RegionRepository;
 import com.rackspace.idm.domain.sql.entity.SqlRegion;
 import com.rackspace.idm.domain.sql.mapper.impl.RegionMapper;
@@ -41,7 +39,6 @@ public class SqlRegionRepository implements RegionDao {
             sqlRegion = regionRepository.save(sqlRegion);
 
             final Region newRegion = mapper.fromSQL(sqlRegion, region);
-            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newRegion.getUniqueId(), mapper.toLDIF(newRegion)));
         } catch (Exception e) {
             LOGGER.error("Cannot add region: " + region.getName(), e);
         }
@@ -59,7 +56,6 @@ public class SqlRegionRepository implements RegionDao {
             sqlRegion = regionRepository.save(sqlRegion);
 
             final Region newRegion = mapper.fromSQL(sqlRegion, region);
-            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newRegion.getUniqueId(), mapper.toLDIF(newRegion)));
         } catch (Exception e) {
             LOGGER.error("Cannot update region: " + region.getName(), e);
         }
@@ -73,7 +69,6 @@ public class SqlRegionRepository implements RegionDao {
             regionRepository.delete(name);
 
             final Region newRegion = mapper.fromSQL(sqlRegion);
-            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newRegion.getUniqueId(), null));
         } catch (Exception e) {
             LOGGER.error("Cannot delete region: " + name, e);
         }

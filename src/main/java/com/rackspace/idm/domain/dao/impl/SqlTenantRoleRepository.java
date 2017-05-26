@@ -2,11 +2,8 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.SQLComponent;
-import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.FederatedRoleRepository;
 import com.rackspace.idm.domain.sql.dao.RoleRepository;
 import com.rackspace.idm.domain.sql.dao.TenantRoleRepository;
@@ -93,11 +90,6 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
 
             newTenantRole = mapper.fromSQL(sqlTenantRoles);
         }
-        if(tenantRoleAdded) {
-            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole)));
-        } else {
-            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole)));
-        }
     }
 
     @Override
@@ -117,13 +109,6 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
             for (SqlTenantRole sqlTenantRole : existingSqlTenantRoles) {
                 if (!containsTenantRole(sqlTenantRoles, sqlTenantRole)) {
                     tenantRoleRepository.delete(sqlTenantRole);
-
-                    //do not publish a DELETE event if the role is associated with more than just this tenant
-                    if (tenantRole.getTenantIds().size() != 0) {
-                        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, tenantRole.getUniqueId(), mapper.toLDIF(tenantRole)));
-                    } else {
-                        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, tenantRole.getUniqueId(), null));
-                    }
                 }
             }
 
@@ -137,7 +122,6 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
                     tenantRoleRepository.save(sqlTenantRole);
 
                     final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole, tenantRole);
-                    applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole)));
                 }
             }
             return;
@@ -149,7 +133,6 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
             federatedRoleRax = federatedRoleRepository.save(federatedRoleRaxMapper.toSQL(tenantRole, federatedRoleRax));
 
             final TenantRole newTenantRole = federatedRoleRaxMapper.fromSQL(federatedRoleRax, tenantRole);
-            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newTenantRole.getUniqueId(), mapper.toLDIF(newTenantRole)));
         }
     }
 
@@ -164,7 +147,6 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
                 tenantRoleRepository.delete(sqlTenantRole);
 
                 final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole);
-                applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newTenantRole.getUniqueId(), null));
             }
         }
     }
@@ -191,7 +173,6 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
 
             for (SqlTenantRole sqlTenantRole : list) {
                 final TenantRole newTenantRole = mapper.fromSQL(sqlTenantRole);
-                applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newTenantRole.getUniqueId(), null));
             }
         }
     }

@@ -5,8 +5,6 @@ import com.rackspace.idm.domain.dao.BypassDeviceDao;
 import com.rackspace.idm.domain.dao.UniqueId;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.BypassDevice;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.BypassDeviceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlBypassDevice;
 import com.rackspace.idm.domain.sql.mapper.impl.BypassDeviceMapper;
@@ -43,7 +41,6 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
             device = repository.save(device);
 
             final BypassDevice newBypassDevice = mapper.fromSQL(device, bypassDevice);
-            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newBypassDevice.getUniqueId(), mapper.toLDIF(newBypassDevice)));
         }
     }
 
@@ -54,7 +51,6 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
             final SqlBypassDevice device = repository.save(mapper.toSQL(bypassDevice, repository.findOne(bypassDevice.getId())));
 
             final BypassDevice newBypassDevice = mapper.fromSQL(device, bypassDevice);
-            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newBypassDevice.getUniqueId(), mapper.toLDIF(newBypassDevice)));
         } catch (Exception e) {
             LOGGER.error("Cannot update bypass device: " + bypassDevice.getId(), e);
         }
@@ -72,7 +68,6 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
                 if (devices != null) {
                     for (SqlBypassDevice device : devices) {
                         final BypassDevice bypassDevice = mapper.fromSQL(device);
-                        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, bypassDevice.getUniqueId(), null));
                     }
                 }
             }
@@ -86,7 +81,6 @@ public class SqlBypassDeviceRepository implements BypassDeviceDao {
     public boolean deleteBypassDevice(BypassDevice bypassDevice) {
         try {
             repository.delete(bypassDevice.getId());
-            applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, bypassDevice.getUniqueId(), null));
             return true;
         } catch (Exception e) {
             LOGGER.error("Cannot remove bypass device: " + bypassDevice.getId(), e);

@@ -5,8 +5,6 @@ import com.rackspace.idm.domain.dao.DomainDao;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.DomainRepository;
 import com.rackspace.idm.domain.sql.entity.SqlDomain;
 import com.rackspace.idm.domain.sql.mapper.impl.DomainMapper;
@@ -39,7 +37,6 @@ public class SqlDomainRepository implements DomainDao {
         final SqlDomain sqlDomain = domainRepository.save(mapper.toSQL(domain));
 
         final Domain newDomain = mapper.fromSQL(sqlDomain, domain);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, newDomain.getUniqueId(), mapper.toLDIF(newDomain)));
     }
 
     @Override
@@ -48,7 +45,6 @@ public class SqlDomainRepository implements DomainDao {
         final SqlDomain sqlDomain = domainRepository.save(mapper.toSQL(domain, domainRepository.findOne(domain.getDomainId())));
 
         final Domain newDomain = mapper.fromSQL(sqlDomain, domain);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, newDomain.getUniqueId(), mapper.toLDIF(newDomain)));
     }
 
     @Override
@@ -58,7 +54,6 @@ public class SqlDomainRepository implements DomainDao {
         domainRepository.delete(domainId);
 
         final Domain newDomain = mapper.fromSQL(sqlDomain);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, newDomain.getUniqueId(), null));
     }
 
     @Override

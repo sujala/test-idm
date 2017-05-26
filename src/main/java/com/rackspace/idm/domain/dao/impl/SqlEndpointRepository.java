@@ -3,8 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.EndpointDao;
 import com.rackspace.idm.domain.entity.CloudBaseUrl;
-import com.rackspace.idm.domain.migration.ChangeType;
-import com.rackspace.idm.domain.migration.sql.event.SqlMigrationChangeApplicationEvent;
 import com.rackspace.idm.domain.sql.dao.EndpointRepository;
 import com.rackspace.idm.domain.sql.entity.SqlEndpoint;
 import com.rackspace.idm.domain.sql.mapper.impl.AdminEndpointMapper;
@@ -68,7 +66,6 @@ public class SqlEndpointRepository implements EndpointDao {
         }
 
         final String ldif = publicEndpointMapper.toLDIF(buildCloudBaseUrl(endpoints));
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.ADD, baseUrl.getUniqueId(), ldif));
     }
 
     @Override
@@ -93,7 +90,6 @@ public class SqlEndpointRepository implements EndpointDao {
         }
 
         final String ldif = publicEndpointMapper.toLDIF(buildCloudBaseUrl(endpoints));
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.MODIFY, cloudBaseUrl.getUniqueId(), ldif));
     }
 
     @Override
@@ -108,7 +104,6 @@ public class SqlEndpointRepository implements EndpointDao {
         endpointRepository.delete(endpoints);
 
         final CloudBaseUrl baseUrl = buildCloudBaseUrl(endpoints);
-        applicationEventPublisher.publishEvent(new SqlMigrationChangeApplicationEvent(this, ChangeType.DELETE, baseUrl.getUniqueId(), null));
     }
 
     @Override
