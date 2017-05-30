@@ -337,7 +337,6 @@ class AtomHopperClientGroovyTest extends Specification {
 
     def "When feeds deamon is enabled, idle connection monitor thread is created"() {
         given:
-        staticConfig.useFeedsConfigurableHttpClient() >> true
         staticConfig.getFeedsDeamonEnabled() >> true
         staticConfig.getFeedsMaxConnectionsPerRoute() >> 100
         staticConfig.getFeedsMaxTotalConnections() >> 200
@@ -358,7 +357,6 @@ class AtomHopperClientGroovyTest extends Specification {
         given:
         def client = new AtomHopperClient()
         setupMock(client)
-        staticConfig.useFeedsConfigurableHttpClient() >> true
         staticConfig.getFeedsDeamonEnabled() >> false
         staticConfig.getFeedsMaxConnectionsPerRoute() >> 100
         staticConfig.getFeedsMaxTotalConnections() >> 200

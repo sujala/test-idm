@@ -14,7 +14,6 @@ import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.Validate;
-import org.apache.http.ConnectionReuseStrategy;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -25,22 +24,14 @@ import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.slf4j.Logger;
@@ -78,11 +69,6 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class AtomHopperClient {
 
-    public static final int PORT80 = 80;
-    public static final int PORT443 = 443;
-    public static final int MAX_TOTAL_CONNECTION = 200;
-    public static final int DEFAULT_MAX_PER_ROUTE = 200;
-
     @Autowired
     private IdentityUserService identityUserService;
 
@@ -119,11 +105,7 @@ public class AtomHopperClient {
      */
     @PostConstruct
     public void init() {
-        if (identityConfig.getStaticConfig().useFeedsConfigurableHttpClient()) {
-            httpClient = createHttpClient();
-        } else {
-            httpClient = createLegacyHttpClient();
-        }
+        httpClient = createHttpClient();
     }
 
     /**
@@ -132,45 +114,20 @@ public class AtomHopperClient {
     @PreDestroy
     public void destroy() {
         if (idleConnectionMonitorThread != null) {
-            //shutdown the daemon just to help clean threads up. Since daemon, shouldn't technically be necessary.
+            // Shutdown the daemon just to help clean threads up. Since daemon, shouldn't technically be necessary.
             idleConnectionMonitorThread.shutdown();
         }
 
-        //the connection manager has a finalize as well, but this allows spring to shut down on application context
-        // closing without relying on iffy finalizers
+        /*
+            The connection manager has a finalize as well, but this allows spring to shut down on application context
+            closing without relying on iffy finalizers
+        */
         if (httpClient != null) {
             try {
                 httpClient.close();
             } catch (Exception e) {
                 logger.debug("Error closing httpclient. Ignoring since closing", e);
             }
-        }
-    }
-
-    private CloseableHttpClient createLegacyHttpClient() {
-        try {
-            final SSLSocketFactory sslsf = new SSLSocketFactory(new TrustStrategy() {
-                @Override
-                public boolean isTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-                    return true;
-                }
-            }, SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-
-            final SchemeRegistry schemeRegistry = new SchemeRegistry();
-            schemeRegistry.register(new Scheme("http", PORT80, PlainSocketFactory.getSocketFactory()));
-            schemeRegistry.register(new Scheme("https", PORT443, sslsf));
-
-            final PoolingClientConnectionManager cm = new PoolingClientConnectionManager(schemeRegistry);
-
-            // Increase max total connection to 200
-            cm.setMaxTotal(MAX_TOTAL_CONNECTION);
-            // Increase default max connection per route to 200
-            cm.setDefaultMaxPerRoute(DEFAULT_MAX_PER_ROUTE);
-
-            return new DefaultHttpClient(cm);
-        } catch (Exception e) {
-            logger.error(String.format("Unable to setup SSL trust manager: %s", e.getMessage()), e);
-            return new DefaultHttpClient();
         }
     }
 
@@ -190,7 +147,7 @@ public class AtomHopperClient {
 
         HostnameVerifier hostnameVerifier = NoopHostnameVerifier.INSTANCE;
 
-        //create the connection factor to use weak trust strategy/verifier, then register it for use for https connections
+        // Create the connection factor to use weak trust strategy/verifier, then register it for use for https connections
         SSLConnectionSocketFactory sslFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier);
         Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("http", PlainConnectionSocketFactory.getSocketFactory())
@@ -198,12 +155,12 @@ public class AtomHopperClient {
                 .build();
 
         /*
-        create pooling connection manager to reuse connections across threads. initialize with custom registry to accept
+        Create pooling connection manager to reuse connections across threads. initialize with custom registry to accept
         all SSL
          */
         PoolingHttpClientConnectionManager poolingHttpClientConnectionManager = new PoolingHttpClientConnectionManager(registry);
 
-        //set default connection params based on static properties
+        // Set default connection params based on static properties
         SocketConfig socketConfig = SocketConfig.copy(SocketConfig.DEFAULT)
                 .setSoTimeout(identityConfig.getStaticConfig().getFeedsNewConnectionSocketTimeout())
                 .build();
@@ -222,8 +179,10 @@ public class AtomHopperClient {
 
         poolingHttpClientConnectionManager.setDefaultSocketConfig(socketConfig);
 
-        //set default connection params used for post socket creation based on settings during app launch. The settings
-        //will be overridden at request time.
+        /*
+         Set default connection params used for post socket creation based on settings during app launch. The settings
+         will be overridden at request time.
+          */
         RequestConfig requestConfig = RequestConfig.copy(RequestConfig.DEFAULT)
                 .setSocketTimeout(identityConfig.getReloadableConfig().getFeedsSocketTimeout())
                 .setConnectTimeout(identityConfig.getReloadableConfig().getFeedsConnectionTimeout())
@@ -628,10 +587,6 @@ public class AtomHopperClient {
         usageEntry.setTitle(entryTitle);
 
         return usageEntry;
-    }
-
-    public void setDefaultTenantService(DefaultTenantService defaultTenantService) {
-        this.defaultTenantService = defaultTenantService;
     }
 
     /**

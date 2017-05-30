@@ -420,9 +420,6 @@ public class IdentityConfig {
     /* ************************
     FEEDS Connection Props. Feed calls are asynchronous so a larger default timeout is acceptable
      ************************** */
-    public static final String FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP = "feeds.use.configurable.httpclient";
-    public static final boolean FEEDS_USE_CONFIGURABLE_HTTPCLIENT_DEFAULT = true;
-
     public static final String FEEDS_MAX_CONNECTIONS_PROP = "feeds.max.connections";
     public static final int FEEDS_MAX_CONNECTIONS_DEFAULT = 200;
 
@@ -661,7 +658,6 @@ public class IdentityConfig {
         defaults.put(FEEDS_SOCKET_TIMEOUT_MS_PROP, FEEDS_SOCKET_TIMEOUT_DEFAULT);
         defaults.put(FEEDS_CONNECTION_TIMEOUT_MS_PROP, FEEDS_CONNECTION_TIMEOUT_MS_DEFAULT);
         defaults.put(FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_PROP, FEEDS_CONNECTION_REQUEST_TIMEOUT_MS_DEFAULT);
-        defaults.put(FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP, FEEDS_USE_CONFIGURABLE_HTTPCLIENT_DEFAULT);
         defaults.put(FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP, FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_DEFAULT);
 
         defaults.put(FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP, FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_DEFAULT);
@@ -1375,13 +1371,6 @@ public class IdentityConfig {
         @IdmProp(key = FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP, versionAdded = "3.5.0", description = "The total http connections allowed by the HttpClient for each route used to post feed events")
         public int getFeedsMaxConnectionsPerRoute() {
             return getIntSafely(staticConfiguration, FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP);
-        }
-
-        @IdmProp(key = FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP, versionAdded = "3.5.0"
-                , description = "Whether or not to configure the http client used to establish feed connections using " +
-                "the other 'feeds*' properties")
-        public boolean useFeedsConfigurableHttpClient() {
-            return getBooleanSafely(staticConfiguration, FEEDS_USE_CONFIGURABLE_HTTPCLIENT_PROP);
         }
 
         @IdmProp(key = FEEDS_NEW_CONNECTION_SOCKET_TIMEOUT_MS_PROP, versionAdded = "3.5.0", description = "The timeout to establish a new socket for non-blocking I/O operations ")
