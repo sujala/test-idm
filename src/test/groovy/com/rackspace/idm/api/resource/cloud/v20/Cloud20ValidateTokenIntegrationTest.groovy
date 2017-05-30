@@ -429,7 +429,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "trying to validate a UUID impersonation token for deleted federated user token returns 404"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
@@ -476,7 +475,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
         reloadableConfiguration.setProperty(String.format(IdentityConfig.IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, DEFAULT_IDP_URI), "UUID")
         utils.resetServiceAdminToken()
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
@@ -524,7 +522,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     @Unroll
     def "validate impersonation token for federated user contains user's IDP acceptContentType=#accept"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, true)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("userAdminForSaml")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS

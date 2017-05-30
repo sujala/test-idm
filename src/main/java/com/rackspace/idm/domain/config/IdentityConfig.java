@@ -135,7 +135,6 @@ public class IdentityConfig {
     private static final String INVALID_PROPERTY_ERROR_MESSAGE = "Configuration Property '%s' is invalid";
     private static final String MISSING_REQUIRED_PROPERTY_ERROR_LOG_MESSAGE = "Configuration Property '%s' is invalid";
     private static final String MISSING_REQUIRED_PROPERTY_ERROR_RESPONSE_MESSAGE = "This service is currently unavailable in Identity.";
-    public static final String FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP = "feature.allow.federated.impersonation";
     public static final String EXPOSE_V11_ADD_BASE_URL_PROP = "feature.v11.add.base.url.exposed";
     public static final String FEATURE_BASE_URL_RESPECT_ENABLED_FLAG = "feature.base.url.respect.enabled.flag";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP = "feature.endpoint.template.type.use.config.mapping";
@@ -564,7 +563,6 @@ public class IdentityConfig {
         defaults.put(PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME, PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE);
         defaults.put(IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, "UUID");
         defaults.put(KEYCZAR_DN_CONFIG, "ou=keystore,o=configuration,dc=rackspace,dc=com");
-        defaults.put(FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, false);
         defaults.put(EXPOSE_V11_ADD_BASE_URL_PROP, true);
         defaults.put(FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, false);
         defaults.put(FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP, false);
@@ -1205,11 +1203,6 @@ public class IdentityConfig {
         @IdmProp(key = KEYCZAR_DN_CONFIG)
         public String getKeyCzarDN() {
             return getStringSafely(staticConfiguration, KEYCZAR_DN_CONFIG);
-        }
-
-        @IdmProp(key = FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP)
-        public boolean allowFederatedImpersonation() {
-            return getBooleanSafely(staticConfiguration, FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP);
         }
 
         @IdmProp(key = PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME)
@@ -2139,11 +2132,6 @@ public class IdentityConfig {
     @Deprecated
     public String getKeyCzarDN() {
         return getStaticConfig().getKeyCzarDN();
-    }
-
-    @Deprecated
-    public boolean allowFederatedImpersonation() {
-        return getStaticConfig().allowFederatedImpersonation();
     }
 
     @Deprecated

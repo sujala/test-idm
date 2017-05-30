@@ -451,11 +451,9 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     /* *******************
     UUID only tests
     ************************* */
-    @Unroll
     @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
-    def "ability to impersonate federated user depends on feature flag : featureFlagAllows=#federatedImpersonationAllowed"() {
+    def "Allow to impersonate federated user"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_FEDERATED_IMPERSONATION_PROP, federatedImpersonationAllowed)
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
         utils.resetServiceAdminToken()
         def domainId = utils.createDomain()
@@ -474,17 +472,12 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser, 10800)
 
         then: "the request was successful as appropriate"
-        federatedImpersonationAllowed ? impersonationResponse.status == HttpStatus.SC_OK : impersonationResponse.status == HttpStatus.SC_FORBIDDEN
+        impersonationResponse.status == HttpStatus.SC_OK
 
         cleanup:
         deleteFederatedUserQuietly(username)
         utils.deleteUsers(users)
         staticIdmConfiguration.reset()
-
-        where:
-        federatedImpersonationAllowed    | _
-        true                    | _
-        false                   | _
     }
 
     @Unroll
