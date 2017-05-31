@@ -168,19 +168,16 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
     @Unroll
     def "test get user shows contact ID, userType = #userType, request = #request, accept = #accept"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId = utils.createDomain()
         def contactId = testUtils.getRandomUUID("contactId")
-        def email = testUtils.getRandomUUID() + "@example.com"
-        def username = testUtils.getRandomUUID("defaultUser")
-        def identityAdmin, userAdmin, userManage, defaultUser
-        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
-        def users = [defaultUser, userManage, userAdmin, identityAdmin]
-        def userForCreate = v2Factory.createUserForCreate(username, "display", email, true, null, domainId, DEFAULT_PASSWORD).with {
+        def users = utils.createUsers(domainId).reverse()
+        def defaultUser = users.find({it.username =~ /^defaultUser.*/})
+        def userForUpdate = new User().with {
+            it.id = defaultUser.id
             it.contactId = contactId
             it
         }
-        def user = cloud20.createUser(utils.getIdentityAdminToken(), userForCreate).getEntity(User).value
+        utils.updateUser(userForUpdate)
 
         when: "get user by ID"
         def token
@@ -192,13 +189,15 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
                 token = utils.getIdentityAdminToken()
                 break
             case IdentityUserTypeEnum.USER_ADMIN:
+                def userAdmin = users.find({it.username =~ /^userAdmin.*/})
                 token = utils.getToken(userAdmin.username)
                 break
             case IdentityUserTypeEnum.USER_MANAGER:
+                def userManage = users.find({it.username =~ /^userManage.*/})
                 token = utils.getToken(userManage.username)
                 break
         }
-        def getUserByIdResponse = cloud20.getUserById(token, user.id, accept)
+        def getUserByIdResponse = cloud20.getUserById(token, defaultUser.id, accept)
 
         then:
         getUserByIdResponse.status == 200
@@ -210,7 +209,7 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         }
 
         when: "get user by name"
-        def getByNameResponse = cloud20.getUserByName(token, username, accept)
+        def getByNameResponse = cloud20.getUserByName(token, defaultUser.username, accept)
         returnedContactId = getContactIdFromResponse(getByNameResponse, accept)
 
         then:
@@ -222,8 +221,8 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         }
 
         when: "get users by email"
-        def getUsersByEmail = cloud20.getUsersByEmail(token, email, accept)
-        returnedContactId = getContactIdFromResponse(getUsersByEmail, user.id, accept)
+        def getUsersByEmail = cloud20.getUsersByEmail(token, defaultUser.email, accept)
+        returnedContactId = getContactIdFromResponse(getUsersByEmail, defaultUser.id, accept)
 
         then:
         getUsersByEmail.status == 200
@@ -234,7 +233,6 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         }
 
         cleanup:
-        cloud20.deleteUser(utils.getServiceAdminToken(), user.id)
         utils.deleteUsers(users)
 
         where:

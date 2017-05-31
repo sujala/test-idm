@@ -2959,7 +2959,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def password = "Password1"
         def random = UUID.randomUUID().toString().replace("-", "")
         def username = "userApiKey$random"
-        def flag = config.getBoolean("generate.apiKey.userForCreate")
 
         when:
         def createUser = cloud20.createUser(identityAdminToken, v2Factory.createUserForCreate(username, username, "email@email.email", true, "DFW", "Domain$username", password)).getEntity(User).value
@@ -2968,16 +2967,12 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def authenticate = cloud20.authenticateApiKey(username, apiKey)
 
         then:
-        if(flag){
-            createUser != null
-            listCredResponse != null
-            assert (listCredResponse.contains(JSONConstants.API_KEY_CREDENTIALS))
-            assert (!listCredResponse.contains(JSONConstants.PASSWORD_CREDENTIALS))
-            apiKey != null
-            authenticate.status == 200
-        } else {
-            true
-        }
+        createUser != null
+        listCredResponse != null
+        assert (listCredResponse.contains(JSONConstants.API_KEY_CREDENTIALS))
+        assert (!listCredResponse.contains(JSONConstants.PASSWORD_CREDENTIALS))
+        apiKey != null
+        authenticate.status == 200
 
         cleanup:
         cloud20.destroyUser(identityAdminToken, createUser.id)

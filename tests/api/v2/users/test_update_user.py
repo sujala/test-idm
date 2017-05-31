@@ -24,29 +24,32 @@ class TestUpdateUser(base.TestBaseV2):
         """
         super(TestUpdateUser, cls).setUpClass()
 
+        domain_id = cls.generate_random_string(pattern='[\d]{7}')
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': const.DOMAIN_API_TEST})
+            additional_input_data={'domain_id': domain_id})
 
         sub_user_name = cls.generate_random_string(
             pattern=const.SUB_USER_PATTERN)
         cls.user_client = cls.generate_client(
             parent_client=cls.user_admin_client,
             additional_input_data={
-                'domain_id': const.DOMAIN_API_TEST,
+                'domain_id': domain_id,
                 'user_name': sub_user_name})
 
         contact_id = randrange(start=const.CONTACT_ID_MIN,
                                stop=const.CONTACT_ID_MAX)
 
         # these client will be updated by the test
+        test_domain_id = cls.generate_random_string(
+            pattern='[\d]{7}')
         cls.test_identity_admin_client = cls.generate_client(
             parent_client=cls.service_admin_client,
-            additional_input_data={'domain_id': const.DOMAIN_API_TEST})
+            additional_input_data={'domain_id': test_domain_id})
 
         cls.test_user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': const.DOMAIN_API_TEST,
+            additional_input_data={'domain_id': test_domain_id,
                                    'contact_id': contact_id})
 
         sub_user_name = cls.generate_random_string(
@@ -54,7 +57,7 @@ class TestUpdateUser(base.TestBaseV2):
         cls.test_user_client = cls.generate_client(
             parent_client=cls.user_admin_client,
             additional_input_data={
-                'domain_id': const.DOMAIN_API_TEST,
+                'domain_id': test_domain_id,
                 'user_name': sub_user_name})
 
     def setUp(self):
@@ -67,8 +70,9 @@ class TestUpdateUser(base.TestBaseV2):
 
         # create identity admin user to test
         ida_username = "iadm_" + self.generate_random_string()
+        ida_domain_id = self.generate_random_string(pattern='[\d]{7}')
         request_object = requests.UserAdd(ida_username,
-                                          domain_id=const.DOMAIN_TEST)
+                                          domain_id=ida_domain_id)
         resp = self.service_admin_client.add_user(
             request_object=request_object)
         self.test_identity_adm_id = resp.json()[const.USER][const.ID]
@@ -76,8 +80,9 @@ class TestUpdateUser(base.TestBaseV2):
 
         # create user admin to test
         user_name = self.generate_random_string()
+        domain_id = self.generate_random_string(pattern='[\d]{7}')
         request_object = requests.UserAdd(user_name,
-                                          domain_id=const.DOMAIN_TEST)
+                                          domain_id=domain_id)
         resp = self.identity_admin_client.add_user(
             request_object=request_object)
         self.test_user_admin_id = resp.json()[const.USER][const.ID]
@@ -86,7 +91,7 @@ class TestUpdateUser(base.TestBaseV2):
         # create sub user to test
         sub_username = "sub_" + self.generate_random_string()
         request_object = requests.UserAdd(sub_username,
-                                          domain_id=const.DOMAIN_TEST)
+                                          domain_id=domain_id)
         resp = self.user_admin_client.add_user(request_object=request_object)
         self.test_sub_user_id = resp.json()[const.USER][const.ID]
         self.sub_user_ids.append(resp.json()[const.USER][const.ID])

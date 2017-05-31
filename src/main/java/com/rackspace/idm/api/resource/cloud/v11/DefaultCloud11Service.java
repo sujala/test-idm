@@ -1326,10 +1326,6 @@ public class DefaultCloud11Service implements Cloud11Service {
         this.credentialUnmarshaller = credentialUnmarshaller;
     }
 
-    private Boolean getGenerateApiKeyUserForCreate(){
-        return config.getBoolean("generate.apiKey.userForCreate");
-    }
-
     private String getCloudAuthUserAdminRole() {
         return config.getString("cloudAuth.userAdminRole");
     }

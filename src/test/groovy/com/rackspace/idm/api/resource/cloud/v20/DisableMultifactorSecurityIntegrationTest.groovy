@@ -6,6 +6,9 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.entity.BaseUser
+import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.service.TenantService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Unroll
@@ -22,6 +25,9 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
     private UserDao userRepository;
 
     @Autowired
+    private TenantService tenantService
+
+    @Autowired
     @Qualifier("scopeAccessDao")
     ScopeAccessDao scopeAccessRepository
 
@@ -33,13 +39,12 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
 
     def setup() {
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId1 = utils.createDomain()
         def domainId2 = utils.createDomain()
         (identityAdmin1, userAdmin1Domain1, userManage1Domain1, defaultUser1Domain1) = utils.createUsers(domainId1)
-        (userAdmin2Domain1, userManage2Domain1, defaultUser2Domain1) = createUsersInDomain(identityAdmin1, domainId1)
+        (userAdmin2Domain1, userManage2Domain1, defaultUser2Domain1) = createUsersInDomain(userAdmin1Domain1, domainId1)
         (identityAdmin2, userAdmin1Domain2, userManage1Domain2, defaultUser1Domain2) = utils.createUsers(domainId2)
-        (userAdmin2Domain2, userManage2Domain2, defaultUser2Domain2) = createUsersInDomain(identityAdmin2, domainId2)
+        (userAdmin2Domain2, userManage2Domain2, defaultUser2Domain2) = createUsersInDomain(userAdmin1Domain2, domainId2)
         serviceAdmin1 = utils.getUserByName(SERVICE_ADMIN_USERNAME, utils.getServiceAdminToken())
         serviceAdmin2 = utils.getUserByName(SERVICE_ADMIN_2_USERNAME, utils.getServiceAdminToken())
         serviceAdmin1Token = utils.getToken(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PASSWORD)
@@ -272,17 +277,39 @@ class DisableMultifactorSecurityIntegrationTest extends RootIntegrationTest {
         }
     }
     
-    def createUsersInDomain(identityAdmin, domainId) {
-        def identityAdminToken = utils.getToken(identityAdmin.username)
-        def userAdmin = utils.createUser(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
-        def userAdminToken = utils.getToken(userAdmin.username, DEFAULT_PASSWORD)
+    def createUsersInDomain(userAdmin, domainId) {
+        def userAdminToken = utils.getToken(userAdmin.username)
 
-        def userManage = utils.createUser(userAdminToken, testUtils.getRandomUUID("userManage"), domainId)
+        def userAdmin2 = utils.createUser(userAdminToken)
+        // Create second userAdmin in domain by avoiding api restrictions
+        BaseUser userAdmin2BaseUser = entityFactory.createUser().with {
+            it.uniqueId = String.format("rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", userAdmin2.id)
+            it.id = userAdmin2.id
+            it
+        }
+
+        TenantRole tenantRole = new TenantRole().with {
+            it.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.USER_ADMIN_ROLE_ID, userAdmin2.id)
+            it.roleRsId = Constants.USER_ADMIN_ROLE_ID
+            it.name = Constants.IDENTITY_USER_ADMIN_ROLE
+            it.clientId = Constants.IDENTITY_SERVICE_ID
+            it
+        }
+        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole)
+
+        tenantRole.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.DEFAULT_USER_ROLE_ID, userAdmin2.id)
+        tenantRole.roleRsId = Constants.DEFAULT_USER_ROLE_ID
+        tenantRole.name = Constants.DEFAULT_USER_ROLE_NAME
+        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole)
+
+        def userAdmin2Token = utils.getToken(userAdmin2.username, DEFAULT_PASSWORD)
+
+        def userManage = utils.createUser(userAdmin2Token, testUtils.getRandomUUID("userManage"), domainId)
         utils.addRoleToUser(userManage, USER_MANAGE_ROLE_ID)
 
-        def defaultUser = utils.createUser(userAdminToken, testUtils.getRandomUUID("defaultUser"), domainId)
+        def defaultUser = utils.createUser(userAdmin2Token, testUtils.getRandomUUID("defaultUser"), domainId)
 
-        return [userAdmin, userManage, defaultUser]
+        return [userAdmin2, userManage, defaultUser]
     }
 
     def resetAndGetToken(user) {

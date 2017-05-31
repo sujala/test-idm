@@ -137,21 +137,20 @@ class ListUsersOnTenantIntegrationTest extends RootIntegrationTest {
     def "List Users for Tenants: Automatic assignment of tenant access ignores tenants associated with default domain" () {
         given: "A new user and 2 tenants"
         reloadableConfiguration.setProperty(IdentityConfig.AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME_PROP, "identity:tenant-access")
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def adminToken = utils.getIdentityAdminToken()
-        def domainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId()
+        def defaultDomainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId()
+        def domainId = utils.createDomain()
 
         def username = testUtils.getRandomUUID("name")
         def user = utils.createUser(adminToken, username, domainId)
+        // NOTE(jorge.munoz) Add user to domain still allows to add user to default domain
+        utils.addUserToDomain(utils.getIdentityAdminToken(), user.id, defaultDomainId)
 
         def tenantId1 = testUtils.getRandomUUID("tenant")
         def tenant1 = utils.createTenant(v2Factory.createTenant(tenantId1, tenantId1, ["cloud"]).with {
             it.domainId = domainId
             it
         })
-
-        def userAdminToken = utils.getToken(username)
 
         when: "List users for tenant"
         def listTenantResponse = cloud20.listUsersWithTenantId(adminToken, tenantId1)

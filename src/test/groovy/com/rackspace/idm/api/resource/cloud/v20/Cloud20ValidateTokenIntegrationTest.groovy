@@ -587,13 +587,9 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     @Unroll
     def "validate token returns contact ID for service and Identity Admins, userType = #userType, accept = #accept, request = #request"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId = utils.createDomain()
         def contactId = testUtils.getRandomUUID("contactId")
         def username = testUtils.getRandomUUID("defaultUser")
-        def identityAdmin, userAdmin, userManage, defaultUser
-        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
-        def users = [defaultUser, userManage, userAdmin, identityAdmin]
         def userForCreate = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.contactId = contactId
             it
@@ -635,8 +631,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         }
 
         cleanup:
-        cloud20.deleteUser(utils.getServiceAdminToken(), user.id)
-        utils.deleteUsers(users)
+        utils.deleteUser(user)
 
         where:
         userType                            | attributeSet | accept                          | request

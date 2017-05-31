@@ -10,8 +10,10 @@ import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
+import com.rackspace.idm.domain.entity.BaseUser
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import org.apache.commons.collections.CollectionUtils
@@ -44,6 +46,9 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     DomainDao domainDao
+
+    @Autowired
+    TenantService tenantService
 
     @Autowired
     IdentityConfig identityConfig
@@ -356,15 +361,34 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
     def "trying to pass a saml assertion for a domain with more than one user admin returns 500 if 'domain.restricted.to.one.user.admin.enabled' == true"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", false)
         def domainId = utils.createDomain()
         def username = testUtils.getRandomUUID("samlUser")
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
-        def userAdmin1, userAdmin2, users1, users2
+        def userAdmin1, users1
         (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
-        (userAdmin2, users2) = utils.createUserAdmin(domainId)
+        def userAdmin2 = utils.createUser(utils.getToken(userAdmin1.username))
+        // Create second userAdmin in domain by avoiding api restrictions
+        BaseUser userAdmin2BaseUser = entityFactory.createUser().with {
+            it.uniqueId = String.format("rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", userAdmin2.id)
+            it.id = userAdmin2.id
+            it
+        }
+        // Add user admin role
+        TenantRole tenantRole = new TenantRole().with {
+            it.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.USER_ADMIN_ROLE_ID, userAdmin2.id)
+            it.roleRsId = Constants.USER_ADMIN_ROLE_ID
+            it.name = Constants.IDENTITY_USER_ADMIN_ROLE
+            it.clientId = Constants.IDENTITY_SERVICE_ID
+            it
+        }
+        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole)
+        // Delete default user role
+        tenantRole.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.DEFAULT_USER_ROLE_ID, userAdmin2.id)
+        tenantRole.roleRsId = Constants.DEFAULT_USER_ROLE_ID
+        tenantRole.name = Constants.DEFAULT_USER_ROLE_NAME
+        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole)
 
         when:
         staticIdmConfiguration.setProperty("domain.restricted.to.one.user.admin.enabled", true)
@@ -375,7 +399,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users1)
-        utils.deleteUsers(users2)
+        utils.deleteUsers(userAdmin2)
         staticIdmConfiguration.reset()
     }
 

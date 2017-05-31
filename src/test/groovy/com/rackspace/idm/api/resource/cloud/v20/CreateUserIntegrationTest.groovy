@@ -8,6 +8,8 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.DomainDao
+import com.rackspace.idm.domain.entity.BaseUser
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.EndpointService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -295,9 +297,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         cloud11.deleteUser(username)
     }
 
-    def "Allow more than one userAdmin per domain" () {
+    def "Do not allow more than one userAdmin per domain" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
@@ -308,11 +309,10 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def userAdmin2Response = cloud20.createUser(adminToken, user)
 
         then:
-        userAdmin2Response.status == 201
+        userAdmin2Response.status == HttpStatus.SC_FORBIDDEN
 
         cleanup:
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
-        utils.deleteUser(userAdmin2Response.getEntity(User).value)
         utils.deleteDomain(domainId)
     }
 
@@ -361,56 +361,49 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteGroup(group)
     }
 
-    def "Subuser can be created in domain with 2 existing user-admins" () {
+    def "Allow sub-user to be created in domain with 2 existing user-admins" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
-        def userAdmin2Region = "DFW"
-        def userAdmin3Region = "ORD"
         def domainId = utils.createDomain()
         def allUsers
         def userAdmin
         (userAdmin, allUsers) = utils.createUserAdmin(domainId)
-        def identityAdmin = allUsers.get(0)
-        def identityAdminToken  = utils.getToken(identityAdmin.username)
+        def userAdminToken  = utils.getToken(userAdmin.username)
 
-        def userAdmin2 = v2Factory.createUserForCreate(testUtils.getRandomUUID(), "display", "email@email.com", true, userAdmin2Region, domainId, DEFAULT_PASSWORD)
-        def userAdmin2Response = cloud20.createUser(identityAdminToken, userAdmin2)
-        def userAdmin2Entity = userAdmin2Response.getEntity(User).value;
-        assert userAdmin2Response.status == 201
-        def userAdmin2Token  = utils.getToken(userAdmin2Entity.username)
+        def userAdmin2 = utils.createUser(userAdminToken)
+        // Create second userAdmin in domain by avoiding api restrictions
+        BaseUser userAdmin2BaseUser = entityFactory.createUser().with {
+            it.uniqueId = String.format("rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", userAdmin2.id)
+            it.id = userAdmin2.id
+            it
+        }
 
-        def userAdmin3 = v2Factory.createUserForCreate(testUtils.getRandomUUID(), "display", "email@email.com", true, userAdmin3Region, domainId, DEFAULT_PASSWORD)
-        def userAdmin3Response = cloud20.createUser(identityAdminToken, userAdmin3)
-        def userAdmin3Entity = userAdmin3Response.getEntity(User).value;
-        assert userAdmin3Response.status == 201
-        def userAdmin3Token  = utils.getToken(userAdmin3Entity.username)
+        TenantRole tenantRole = new TenantRole().with {
+            it.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.USER_ADMIN_ROLE_ID, userAdmin2.id)
+            it.roleRsId = Constants.USER_ADMIN_ROLE_ID
+            it.name = Constants.IDENTITY_USER_ADMIN_ROLE
+            it.clientId = Constants.IDENTITY_SERVICE_ID
+            it
+        }
+        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole)
+
+        tenantRole.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.DEFAULT_USER_ROLE_ID, userAdmin2.id)
+        tenantRole.roleRsId = Constants.DEFAULT_USER_ROLE_ID
+        tenantRole.name = Constants.DEFAULT_USER_ROLE_NAME
+        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole)
+        def userAdmin2Token = utils.getToken(userAdmin2.username)
 
         when: "create a default user from user admin 2"
         def defaultUser = v2Factory.createUserForCreate(testUtils.getRandomUUID(), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
         def defaultUserResponse = cloud20.createUser(userAdmin2Token, defaultUser)
-        assert defaultUserResponse.status == 201
-        def defaultUserEntity = defaultUserResponse.getEntity(User).value;
+        def defaultUserEntity = defaultUserResponse.getEntity(User).value
 
-        then: "default user created with user admin 2 region"
-        defaultUserEntity != null
-        defaultUserEntity.getDefaultRegion() == userAdmin2Region
-
-        when: "create a default user from user admin 3"
-        def defaultUser3 = v2Factory.createUserForCreate(testUtils.getRandomUUID(), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD)
-        def defaultUser3Response = cloud20.createUser(userAdmin3Token, defaultUser3)
-        assert defaultUser3Response.status == 201
-        def defaultUser3Entity = defaultUser3Response.getEntity(User).value;
-
-        then: "default user created with user admin 3 region"
-        defaultUser3Entity != null
-        defaultUser3Entity.getDefaultRegion() == userAdmin3Region
+        then: "Assert default user created"
+        defaultUserResponse.status == HttpStatus.SC_CREATED
 
         cleanup:
         utils.deleteUser(defaultUserEntity)
-        utils.deleteUser(defaultUser3Entity)
-        utils.deleteUser(userAdmin2Entity)
-        utils.deleteUser(userAdmin3Entity)
         utils.deleteUsers(allUsers)
+        utils.deleteUser(userAdmin2)
         utils.deleteDomain(domainId)
     }
 
@@ -681,16 +674,35 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
     }
 
-    def "a default user CAN be added by identity admin in domain with a disabled user-admin IF there is also an enabled user-admin"() {
+    def "A default user CAN be added by identity admin in domain with a disabled user-admin IF there is also an enabled user-admin"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId = utils.createDomain()
         def username1 = testUtils.getRandomUUID("defaultUser")
         def userAdmin1, users1
         (userAdmin1, users1) = utils.createUserAdminWithTenants(domainId)
-        def userAdmin2, users2
-        (userAdmin2, users2) = utils.createUserAdmin(domainId)
+        def userAdmin2 = utils.createUser(utils.getToken(userAdmin1.username))
+        // Create second userAdmin in domain by avoiding api restrictions
+        BaseUser userAdmin2BaseUser = entityFactory.createUser().with {
+            it.uniqueId = String.format("rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", userAdmin2.id)
+            it.id = userAdmin2.id
+            it
+        }
+
+        TenantRole tenantRole = new TenantRole().with {
+            it.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.USER_ADMIN_ROLE_ID, userAdmin2.id)
+            it.roleRsId = Constants.USER_ADMIN_ROLE_ID
+            it.name = Constants.IDENTITY_USER_ADMIN_ROLE
+            it.clientId = Constants.IDENTITY_SERVICE_ID
+            it
+        }
+        tenantService.addTenantRoleToUser(userAdmin2BaseUser, tenantRole)
+
+        tenantRole.uniqueId = String.format("roleRsId=%s,cn=ROLES,rsId=%s,ou=users,o=rackspace,dc=rackspace,dc=com", Constants.DEFAULT_USER_ROLE_ID, userAdmin2.id)
+        tenantRole.roleRsId = Constants.DEFAULT_USER_ROLE_ID
+        tenantRole.name = Constants.DEFAULT_USER_ROLE_NAME
+        tenantService.deleteTenantRoleForUser(userAdmin2BaseUser, tenantRole)
+
         users1 = users1.reverse()
         def defaultUserRoles = v2Factory.createRoleList([v2Factory.createRole(staticIdmConfiguration.getProperty(IdentityConfig.IDENTITY_DEFAULT_USER_ROLE_NAME_PROP))].asList())
         def userForCreate = v2Factory.createUserForCreate(username1, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
@@ -709,24 +721,20 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(response.getEntity(User).value)
         utils.deleteUser(userAdmin2)
         utils.deleteUsers(users1)
-        utils.deleteUsers(users2[0])
         staticIdmConfiguration.reset()
     }
 
     @Unroll
     def "#userType setting contact ID on user on create, #userType, accept = #accept, request = #request"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
         def domainId = utils.createDomain()
         def contactId = testUtils.getRandomUUID("contactId")
         def username = testUtils.getRandomUUID("defaultUser")
-        def identityAdmin, userAdmin, userManage, defaultUser
-        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
-        def users = [defaultUser, userManage, userAdmin, identityAdmin]
         def userForCreate = v2Factory.createUserForCreate(username, "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             it.contactId = contactId
             it
         }
+        def users = []
 
         when: "create the user"
         def token
@@ -738,13 +746,14 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
                 token = utils.getIdentityAdminToken()
                 break
             case IdentityUserTypeEnum.USER_ADMIN:
+                def userAdmin = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID('adminUser'), domainId)
+                users = [userAdmin]
                 token = utils.getToken(userAdmin.username)
                 break
             case IdentityUserTypeEnum.USER_MANAGER:
+                users = utils.createUsers(domainId).reverse()
+                def userManage = users.find({it.username =~ /^userManage.*/})
                 token = utils.getToken(userManage.username)
-                break
-            case IdentityUserTypeEnum.DEFAULT_USER:
-                token = utils.getToken(defaultUser.username)
                 break
         }
         def userResponse = cloud20.createUser(token, userForCreate, request, accept)
@@ -777,8 +786,9 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         }
 
         cleanup:
-        cloud20.deleteUser(utils.getServiceAdminToken(), user.id)
+        utils.deleteUser(user)
         utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
 
         where:
         userType                            | result | attributeSet | accept                          | request
@@ -1308,7 +1318,6 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Can not create a new account in the default domain: useOneCall = #useOneCall"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DEFAULT_DOMAIN_PROP, true)
         def domainId = identityConfig.getReloadableConfig().getTenantDefaultDomainId()
         def userAdminToCreate = v2Factory.createUserForCreate(testUtils.getRandomUUID("userAdmin"), "display", "email@email.com", true, null, domainId, DEFAULT_PASSWORD).with {
             if (useOneCall) {
@@ -1345,23 +1354,13 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         }
 
         when: "try to create the user in one-call"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_PROP, true)
         utils.createDomain(domain)
         def response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
 
         then: "forbidden"
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultUserService.ERROR_MSG_NEW_ACCOUNT_IN_DISABLED_DOMAIN)
 
-        when: "update feature flag, and try to create the user again"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DISABLED_DOMAIN_PROP, false)
-        response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate)
-        def user = response.getEntity(User).value
-
-        then: "User created"
-        response.status == 201
-
         cleanup:
-        utils.deleteUser(user)
         utils.deleteDomain(domainId)
 
         where:
@@ -1395,23 +1394,13 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         response.status == 201
 
         when: "try to create the user again"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, true)
         response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate2)
 
         then: "forbidden"
         IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultUserService.ERROR_MSG_NEW_ACCOUNT_IN_DOMAIN_WITH_USERS)
 
-        when: "allow and try to create the user again"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_RESTRICT_CREATE_USER_IN_DOMAIN_WITH_USERS_PROP, false)
-        response = cloud20.createUser(utils.getIdentityAdminToken(), userAdminToCreate2)
-        def user2 = response.getEntity(User).value
-
-        then: "user created"
-        response.status == 201
-
         cleanup:
         utils.deleteUser(user)
-        utils.deleteUser(user2)
         utils.deleteDomain(domainId)
 
         where:
