@@ -3441,9 +3441,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "include endpoints based on endpoint rules: content-type=#contentType; useEndpointRules=#useEndpointRules; performanceSc: #performantSc" () {
+    def "include endpoints based on endpoint rules: content-type=#contentType; useEndpointRules=#useEndpointRules" () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, performantSc)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, useEndpointRules)
 
         def password = "Password1"
@@ -3495,21 +3494,15 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         }
 
         where:
-        contentType                     | useEndpointRules | performantSc
-        MediaType.APPLICATION_XML_TYPE  | true             | false
-        MediaType.APPLICATION_XML_TYPE  | true             | true
-        MediaType.APPLICATION_XML_TYPE  | false            | false
-        MediaType.APPLICATION_XML_TYPE  | false             | true
-        MediaType.APPLICATION_JSON_TYPE | true            | false
-        MediaType.APPLICATION_JSON_TYPE | true             | true
-        MediaType.APPLICATION_JSON_TYPE | false            | false
-        MediaType.APPLICATION_JSON_TYPE | false             | true
+        contentType                     | useEndpointRules
+        MediaType.APPLICATION_XML_TYPE  | true
+        MediaType.APPLICATION_XML_TYPE  | false
+        MediaType.APPLICATION_JSON_TYPE | true
+        MediaType.APPLICATION_JSON_TYPE | false
     }
 
-    @Unroll
-    def "Authentication include endpoints using endpoint rules when only have implicit role. Performant Service Catalog: #performantSc" () {
+    def "Authentication include endpoints using endpoint rules when only have implicit role." () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, performantSc)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, true)
 
         def random = UUID.randomUUID().toString().replace("-", "")
@@ -3547,17 +3540,10 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         } catch (Exception ex) {
             //eat
         }
-
-        where:
-        performantSc | _
-        true | _
-        false | _
     }
 
-    @Unroll
-    def "List endpoints for Token include endpoints using endpoint rules when only have implicit role. Performant Service Catalog: #performantSc" () {
+    def "List endpoints for Token include endpoints using endpoint rules when only have implicit role." () {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, performantSc)
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_INCLUDE_ENDPOINTS_BASED_ON_RULES_PROP, true)
 
         def random = UUID.randomUUID().toString().replace("-", "")
@@ -3596,11 +3582,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         } catch (Exception ex) {
             //eat
         }
-
-        where:
-        performantSc | _
-        true | _
-        false | _
     }
 
     def "List endpoints for Token returns empty list for rackers regardless of implicit role" () {

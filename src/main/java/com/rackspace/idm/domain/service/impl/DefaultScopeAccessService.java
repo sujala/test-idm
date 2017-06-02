@@ -152,61 +152,12 @@ public class DefaultScopeAccessService implements ScopeAccessService {
 
     @Override
     public ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser) {
-        if (identityConfig.getReloadableConfig().usePerformantServiceCatalog()) {
-            return identityUserService.getServiceCatalogInfo(baseUser);
-        }
-        return getServiceCatalogInfoLegacy(baseUser);
+        return identityUserService.getServiceCatalogInfo(baseUser);
     }
 
     @Override
     public ServiceCatalogInfo getServiceCatalogInfoApplyRcnRoles(BaseUser baseUser) {
-        if (identityConfig.getReloadableConfig().usePerformantServiceCatalog()) {
-            return identityUserService.getServiceCatalogInfoApplyRcnRoles(baseUser);
-        }
-        logger.warn("Attempted to retrieve service catalog applying RCN roles, but performant service catalog is not enabled.");
-        return getServiceCatalogInfoLegacy(baseUser);
-    }
-
-    private ServiceCatalogInfo getServiceCatalogInfoLegacy(BaseUser baseUser) {
-        final Set<OpenstackEndpoint> endpoints = new HashSet<>();
-        final List<Tenant> tenants = new ArrayList<>();
-
-        // First get the tenantRoles for the token
-        final List<TenantRole> tenantRoles = this.tenantService.getTenantRolesForUser(baseUser);
-
-        String region = null;
-        if (baseUser != null && EndUser.class.isAssignableFrom(baseUser.getClass())) {
-            EndUser user = (EndUser) baseUser;
-            region = user.getRegion();
-        }
-
-        Map<Tenant, HashSet<OpenstackType>> tenantMap = new HashedMap<>();
-        // Second get the tenants from each of those roles
-        if (CollectionUtils.isNotEmpty(tenantRoles)) {
-            if (identityConfig.getReloadableConfig().getFeatureGlobalEndpointsForAllRoles()) {
-                tenantMap = mapTenantsAndOpenstackTypesForRoles(tenantRoles);
-            } else {
-                Map<Tenant, HashSet<OpenstackType>> tenantOpenstackTypeMap = getTenantsAndOpenstackTypesForRoles(tenantRoles);
-                for (Tenant tenant : tenantOpenstackTypeMap.keySet()) {
-                    tenantMap.put(tenant, tenantOpenstackTypeMap.get(tenant));
-                }
-            }
-            CollectionUtils.addAll(tenants, tenantMap.keySet());
-            for (Tenant tenant : tenantMap.keySet()) {
-                List<Rule> rules = null;
-                if (identityConfig.getReloadableConfig().includeEndpointsBasedOnRules()) {
-                    rules = ruleService.findEndpointAssignmentRulesForTenantType(tenant.getTypes());
-                }
-
-                final OpenstackEndpoint endpoint = this.endpointService.getOpenStackEndpointForTenant(tenant, tenantMap.get(tenant), region, rules);
-                if (endpoint != null && endpoint.getBaseUrls().size() > 0) {
-                    endpoints.add(endpoint);
-                }
-            }
-        }
-
-        IdentityUserTypeEnum userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);
-        return new ServiceCatalogInfo(tenantRoles, tenants, new ArrayList<>(endpoints), userTypeEnum);
+        return identityUserService.getServiceCatalogInfoApplyRcnRoles(baseUser);
     }
 
     /**

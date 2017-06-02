@@ -29,9 +29,6 @@ class TestGlobalEndpoints(base.TestBaseV2):
         # These are preset role names to ldif to follow alphabetical order
         cls.ROLE_NAME_COMPUTE = 'compute:default'
         cls.ROLE_NAME_FILES = 'object-store:default'
-        cls.feature_flag_value, cls.feature_flag_default_value = (
-            cls.get_feature_flag_value_and_default_value(flag_name=(
-                const.FEATURE_PERFORMANT_SERVICE_CATALOG)))
 
     @classmethod
     def get_feature_flag_value_and_default_value(self, flag_name):
@@ -50,9 +47,6 @@ class TestGlobalEndpoints(base.TestBaseV2):
 
     def setUp(self):
         super(TestGlobalEndpoints, self).setUp()
-        if not self.feature_flag_value:
-            self.skipTest('Skipping testing performance global endpoints as' +
-                          ' feature is disabled')
         if not self.test_config.run_local_and_jenkins_only:
             self.skipTest('Skipping local and jenkins run tests')
         # hard code to get specific service for compute

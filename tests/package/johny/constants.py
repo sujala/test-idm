@@ -467,5 +467,3 @@ FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE = (
 TENANT_DEFAULT_DOMAIN = 'tenant.domainId.default'
 FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES = (
     'feature.list.support.additional.role.properties')
-FEATURE_PERFORMANT_SERVICE_CATALOG = (
-    'feature.performant.service.catalog')

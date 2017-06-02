@@ -367,9 +367,6 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
      */
     def "v1.0/v1.1/v2.0 Authentication uses cached roles"() {
         given:
-        //without performant catalog, doesn't matter what cache role feature is set to
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-
         def domainId = utils.createDomain()
         def user, users1
         (user, users1) = utils.createUserAdmin(domainId)
