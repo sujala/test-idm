@@ -587,8 +587,9 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("marker") Integer marker,
-            @QueryParam("limit") Integer limit) {
-        return cloud20Service.getAccessibleDomains(uriInfo, authToken, validateMarker(marker), validateLimit(limit)).build();
+            @QueryParam("limit") Integer limit,
+            @QueryParam("rcn") String rcn) {
+        return cloud20Service.getAccessibleDomains(uriInfo, authToken, validateMarker(marker), validateLimit(limit), rcn).build();
     }
 
     @GET

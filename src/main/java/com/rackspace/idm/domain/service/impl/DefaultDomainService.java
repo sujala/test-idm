@@ -105,6 +105,11 @@ public class DefaultDomainService implements DomainService {
     }
 
     @Override
+    public PaginatorContext<Domain> getDomainsByRCN(String rcn, Integer marker, Integer limit) {
+        return domainDao.getRCNDomainsPaged(rcn, marker, limit);
+    }
+
+    @Override
     public void updateDomain(Domain domain) {
         if(domain == null){
             throw new BadRequestException(DOMAIN_CANNOT_BE_NULL);

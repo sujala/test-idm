@@ -99,6 +99,11 @@ public class LdapDomainRepository extends LdapGenericRepository<Domain> implemen
     }
 
     @Override
+    public PaginatorContext<Domain> getRCNDomainsPaged(String rcn, Integer marker, Integer limit) {
+        return getObjectsPaged(searchByRcnFilter(rcn), marker, limit);
+    }
+
+    @Override
     public Iterable<Domain> findDomainsWithRcn(String rcn) {
         return getObjects(searchByRcnFilter(rcn));
     }

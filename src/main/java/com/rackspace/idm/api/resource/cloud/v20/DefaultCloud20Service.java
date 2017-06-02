@@ -3348,12 +3348,18 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, Integer marker, Integer limit) {
+    public ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, Integer marker, Integer limit, String rcn) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
             if (this.authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken) ||
                     this.authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken)) {
-                PaginatorContext<Domain> domainContext = this.domainService.getDomains(marker, limit);
+
+                PaginatorContext<Domain> domainContext;
+                if (StringUtils.isNotBlank(rcn)) {
+                    domainContext = this.domainService.getDomainsByRCN(rcn, marker, limit);
+                } else {
+                    domainContext = this.domainService.getDomains(marker, limit);
+                }
                 String linkHeader = this.domainPaginator.createLinkHeader(uriInfo, domainContext);
 
                 Domains domains = new Domains();
@@ -3364,7 +3370,11 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             } else {
                 User user = (User) userService.getUserByScopeAccess(scopeAccessByAccessToken);
-                return getAccessibleDomainsForUser(authToken, user.getId());
+                if (StringUtils.isNotBlank(rcn)) {
+                    return getAccessibleDomainsForUserInRCN(authToken, user.getId(), rcn);
+                } else {
+                    return getAccessibleDomainsForUser(authToken, user.getId());
+                }
             }
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
@@ -3373,6 +3383,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Override
     public ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId) {
+        return getAccessibleDomainsForUserInRCN(authToken, userId, null);
+    }
+
+    public ResponseBuilder getAccessibleDomainsForUserInRCN(String authToken, String userId, String rcn) {
         try {
             ScopeAccess scopeAccessByAccessToken = getScopeAccessForValidToken(authToken);
 
@@ -3383,6 +3397,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             domains = cloudUserAccessibility.addUserDomainToDomains(user, domains);
             domains = cloudUserAccessibility.removeDuplicateDomains(domains);
+
+            if (StringUtils.isNotBlank(rcn)) {
+                domains = cloudUserAccessibility.removeNonRcnDomains(domains, rcn);
+            }
 
             com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains domainsObj = domainConverterCloudV20.toDomains(domains);
 

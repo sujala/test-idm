@@ -20,6 +20,7 @@ public interface DomainDao {
     boolean domainExistsWithName(String name);
     boolean domainExistsWithNameAndNotId(String name, String id);
     PaginatorContext<Domain> getAllDomainsPaged(int offset, int limit);
+    PaginatorContext<Domain> getRCNDomainsPaged(String rcn, Integer marker, Integer limit);
     void updateDomain(Domain domain);
 
     /**

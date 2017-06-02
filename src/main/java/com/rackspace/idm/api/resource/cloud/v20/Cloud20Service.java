@@ -239,7 +239,7 @@ public interface Cloud20Service {
 
     ResponseBuilder removeTenantFromDomain(String authToken, String domainId, String tenantId);
 
-    ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, Integer marker, Integer limit);
+    ResponseBuilder getAccessibleDomains(UriInfo uriInfo, String authToken, Integer marker, Integer limit, String rcn);
 
     ResponseBuilder getAccessibleDomainsForUser(String authToken, String userId);
 

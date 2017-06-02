@@ -13,7 +13,6 @@ import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.validation.Validator20
-import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpStatus
@@ -23,7 +22,6 @@ import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
-import testHelpers.Cloud20Methods
 import testHelpers.IdmAssert
 import testHelpers.junit.IgnoreByRepositoryProfile
 
@@ -36,7 +34,6 @@ import javax.xml.datatype.DatatypeFactory
 import java.time.Duration
 
 import static com.rackspace.idm.Constants.*
-import static com.rackspace.idm.JSONConstants.DOMAINS
 import static javax.servlet.http.HttpServletResponse.*
 import static org.mockito.Mockito.mock
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
@@ -89,7 +86,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def domain = utils.getDomain(domainId)
 
         when: "list accessible domains w/o a session timeout set on the domain"
-        def response = cloud20.getAccessibleDomains(userAdminToken, null, null, accept)
+        def response = cloud20.getAccessibleDomains(userAdminToken, null, null, null, accept)
 
         then: "returns the default session timeout"
         response.status == 200
@@ -100,7 +97,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
                 identityConfig.getReloadableConfig().getDomainDefaultSessionInactivityTimeout().plusHours(3).toString());
         domain.sessionInactivityTimeout = domainDuration
         utils.updateDomain(domain.id, domain)
-        response = cloud20.getAccessibleDomains(userAdminToken, null, null, accept)
+        response = cloud20.getAccessibleDomains(userAdminToken, null, null, null, accept)
 
         then: "returns the session timeout set on the domain"
         assertSessionInactivityTimeoutForSingleDomainList(response, accept, domain.sessionInactivityTimeout.toString())
@@ -165,7 +162,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         response.status == SC_CREATED
 
         when: "list accessible domains"
-        def getAccessibleDomainsResponse = cloud20.getAccessibleDomains(utils.identityAdminToken, null, null, accept)
+        def getAccessibleDomainsResponse = cloud20.getAccessibleDomains(utils.identityAdminToken, null, null, null, accept)
         def testDomain = getDomainFromAccessibleDomainListById(getAccessibleDomainsResponse, domainId)
 
         then:
@@ -1471,6 +1468,273 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         utils.deleteDomain(domainId)
     }
 
+    @Unroll
+    def "Assert list accessible domains returns only rcn domains - rcn = #rcnQueryParam, content-type = #content, accept = #accept"() {
+        given:
+        def rcnDomainId = utils.createDomain()
+        def rcnDomain = v1Factory.createDomain(rcnDomainId, rcnDomainId)
+        def rcn = testUtils.getRandomUUID("rcn")[0..16]
+        rcnDomain.rackspaceCustomerNumber = rcn
+        if (rcnQueryParam == 'rcn') {
+            rcnQueryParam = rcn
+        }
+
+        def domainId = utils.createDomain()
+        def domain = v1Factory.createDomain(domainId, domainId)
+
+        when: "Create rcn domain"
+        def response = cloud20.addDomain(utils.identityAdminToken, rcnDomain, accept, content)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "Create domain"
+        response = cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "list accessible domains"
+        def getAccessibleDomainsResponse = cloud20.getAccessibleDomains(utils.identityAdminToken, null, null, rcnQueryParam, accept)
+        def domains = getAccessibleDomains(getAccessibleDomainsResponse)
+
+        then:
+        def rcnDomains  = domains.findAll { it.rackspaceCustomerNumber == rcn }
+        def nonRcnDomains = domains.findAll { it.rackspaceCustomerNumber != rcn }
+
+        assert rcnDomains.size() > 0
+
+        if (StringUtils.isNotBlank(rcnQueryParam)) {
+            assert nonRcnDomains.size() == 0
+        } else {
+            assert nonRcnDomains.size() > 0
+        }
+
+        cleanup:
+        utils.deleteDomain(domainId)
+        utils.deleteDomain(rcnDomainId)
+
+        where:
+        rcnQueryParam | accept                          | content
+        "rcn"         | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        "rcn"         | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        ""            | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        ""            | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        null          | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        null          | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Create two domains w/ an RCN and list domains for that RCN to verify both domains appear in the list - content-type = #content, accept = #accept"() {
+        given:
+        def rcn = testUtils.getRandomUUID("rcn")[0..16]
+
+        def rcnDomainId = utils.createDomain()
+        def rcnDomain = v1Factory.createDomain(rcnDomainId, rcnDomainId)
+        rcnDomain.rackspaceCustomerNumber = rcn
+
+        def rcnDomainId2 = utils.createDomain()
+        def rcnDomain2 = v1Factory.createDomain(rcnDomainId2, rcnDomainId2)
+        rcnDomain2.rackspaceCustomerNumber = rcn
+
+        when: "Create rcn domain"
+        def response = cloud20.addDomain(utils.identityAdminToken, rcnDomain, accept, content)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "Create rcn domain"
+        response = cloud20.addDomain(utils.identityAdminToken, rcnDomain2, accept, content)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "list accessible domains"
+        def getAccessibleDomainsResponse = cloud20.getAccessibleDomains(utils.identityAdminToken, null, null, rcn, accept)
+        def domains = getAccessibleDomains(getAccessibleDomainsResponse)
+
+        then:
+        assert domains.find { it.id == rcnDomainId }
+        assert domains.find { it.id == rcnDomainId2 }
+
+        cleanup:
+        utils.deleteDomain(rcnDomainId)
+        utils.deleteDomain(rcnDomainId2)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Create a domain w/ an RCN and list domains for that RCN to verify the domain appears in the list - content-type = #content, accept = #accept"() {
+        given:
+        def rcn = testUtils.getRandomUUID("rcn")[0..16]
+
+        def rcnDomainId = utils.createDomain()
+        def rcnDomain = v1Factory.createDomain(rcnDomainId, rcnDomainId)
+        rcnDomain.rackspaceCustomerNumber = rcn
+
+        when: "Create rcn domain"
+        def response = cloud20.addDomain(utils.identityAdminToken, rcnDomain, accept, content)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "list accessible domains"
+        def getAccessibleDomainsResponse = cloud20.getAccessibleDomains(utils.identityAdminToken, null, null, rcn, accept)
+        def domains = getAccessibleDomains(getAccessibleDomainsResponse)
+
+        then:
+        assert domains.find { it.id == rcnDomainId }
+
+        cleanup:
+        utils.deleteDomain(rcnDomainId)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "List domains w/ query param `rcn` for a non-existing RCN - rcn = #rcnQueryParam, content-type = #content, accept = #accept"() {
+        given:
+        def rcnDomainId = utils.createDomain()
+        def rcnDomain = v1Factory.createDomain(rcnDomainId, rcnDomainId)
+        def rcn = testUtils.getRandomUUID("rcn")[0..16]
+        rcnDomain.rackspaceCustomerNumber = rcn
+
+        when: "Create rcn domain"
+        def response = cloud20.addDomain(utils.identityAdminToken, rcnDomain, accept, content)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "list accessible domains"
+        def getAccessibleDomainsResponse = cloud20.getAccessibleDomains(utils.identityAdminToken, null, null, rcnQueryParam, accept)
+        def domains = getAccessibleDomains(getAccessibleDomainsResponse)
+
+        then:
+        def rcnDomains  = domains.findAll { it.rackspaceCustomerNumber == rcn }
+        def nonRcnDomains = domains.findAll { it.rackspaceCustomerNumber != rcn }
+
+        assert rcnDomains.size() == 0
+        assert nonRcnDomains.size() == 0
+
+        cleanup:
+        utils.deleteDomain(rcnDomainId)
+
+        where:
+        rcnQueryParam  | accept                          | content
+        "doesnotexist" | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        "doesnotexist" | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "List domains for an existing RCN w.o any domains associated results w/ 200 and empty list - rcn = #rcnQueryParam, content-type = #content, accept = #accept"() {
+        given:
+        def rcnDomainId = utils.createDomain()
+        def rcnDomain = v1Factory.createDomain(rcnDomainId, rcnDomainId)
+        def rcn = testUtils.getRandomUUID("rcn")[0..16]
+        rcnDomain.rackspaceCustomerNumber = rcn
+
+        when: "Create rcn domain"
+        def response = cloud20.addDomain(utils.identityAdminToken, rcnDomain, accept, content)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "list accessible domains"
+        def getAccessibleDomainsResponse = cloud20.getAccessibleDomains(utils.identityAdminToken, null, null, rcnQueryParam, accept)
+        def domains = getAccessibleDomains(getAccessibleDomainsResponse)
+
+        then:
+        def rcnDomains  = domains.findAll { it.rackspaceCustomerNumber == rcn }
+        def nonRcnDomains = domains.findAll { it.rackspaceCustomerNumber != rcn }
+
+        assert rcnDomains.size() == 0
+        assert nonRcnDomains.size() == 0
+
+        cleanup:
+        utils.deleteDomain(rcnDomainId)
+
+        where:
+        rcnQueryParam     | accept                          | content
+        "RNC-123-123-124" | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        "RNC-123-123-124" | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Create a disabled domain w/ an RCN. Call list domains for that RCN and verify if that disabled domain appears in the list - content-type = #content, accept = #accept"() {
+        given:
+        def rcn = testUtils.getRandomUUID("rcn")[0..16]
+
+        def rcnDomainId = utils.createDomain()
+        def rcnDomain = v1Factory.createDomain(rcnDomainId, rcnDomainId)
+        rcnDomain.enabled = false
+        rcnDomain.rackspaceCustomerNumber = rcn
+
+        when: "Create rcn domain"
+        def response = cloud20.addDomain(utils.identityAdminToken, rcnDomain, accept, content)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "list accessible domains"
+        def getAccessibleDomainsResponse = cloud20.getAccessibleDomains(utils.identityAdminToken, null, null, rcn, accept)
+        def domains = getAccessibleDomains(getAccessibleDomainsResponse)
+
+        then:
+        assert domains.find { it.id == rcnDomainId }
+
+        cleanup:
+        utils.deleteDomain(rcnDomainId)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "User-admin making a call to list domains. w/ query param `rcn`. Verify that its own domain appears in the list - content-type = #content, accept = #accept"() {
+        given:
+        def rcn = testUtils.getRandomUUID("rcn")[0..16]
+
+        def rcnDomainId = utils.createDomain()
+        def rcnDomain = v1Factory.createDomain(rcnDomainId, rcnDomainId)
+        rcnDomain.rackspaceCustomerNumber = rcn
+
+        when: "Create rcn domain and userAdmin"
+        def response = cloud20.addDomain(utils.identityAdminToken, rcnDomain, accept, content)
+
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(rcnDomainId)
+
+        then:
+        response.status == SC_CREATED
+
+
+        when: "list accessible domains"
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def getAccessibleDomainsResponse = cloud20.getAccessibleDomains(userAdminToken, null, null, rcn, accept)
+        def domains = getAccessibleDomains(getAccessibleDomainsResponse)
+
+        then:
+        assert domains.find { it.id == rcnDomainId }
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(rcnDomainId)
+
+        where:
+        accept                          | content
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
     def removeDomainFromUser(username) {
         def user = userService.checkAndGetUserByName(username)
         user.setDomainId(null)
@@ -1519,6 +1783,22 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         }
 
         return domain
+    }
+
+    def getAccessibleDomains(def response, rcn = null) {
+        List<Domain> domains = response.getEntity(Domains).domain
+        def link = response.headers.get("link", new ArrayList<String>())
+        if (link.size() == 0) {
+            return domains
+        }
+        def queryParams = parseLinks(link)
+        while (queryParams.containsKey("next")) {
+            response = cloud20.getAccessibleDomains(utils.getIdentityAdminToken(), queryParams["next"][0], queryParams["next"][1], rcn)
+            domains.addAll(response.getEntity(Domains).domain)
+            queryParams = parseLinks(response.headers.get("link"))
+        }
+
+        return domains
     }
 
     def parseLinks(List<String> header) {
