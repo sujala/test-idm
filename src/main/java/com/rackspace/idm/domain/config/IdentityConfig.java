@@ -112,6 +112,9 @@ public class IdentityConfig {
     public static final String IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP = "federated.provider.maxUserCount.per.domain.default";
     public static final int IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT = 1000;
 
+    public static final String IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP = "federated.max.identity.provider.per.domain";
+    public static final int IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_DEFAULT = 10;
+
     /**
      * The format of the property name to set the token format for a specific IDP. The '%s' is replaced by the IDP's labeledUri. This
      * means that each IDP has a custom property. If no such property exists for the IDP, the value for {@link #IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP}
@@ -598,6 +601,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_SUPPORT_SAML_LOGOUT_PROP, FEATURE_SUPPORT_SAML_LOGOUT_DEFAULT);
         defaults.put(FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP, FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_DEFAULT);
         defaults.put(IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT);
+        defaults.put(IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP, IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_DEFAULT);
         defaults.put(IDP_MAX_SEACH_RESULT_SIZE_PROP, IDP_MAX_SEACH_RESULT_SIZE_DEFAULT);
         defaults.put(FEDERATED_DELTA_EXPIRATION_SECONDS_PROP, FEDERATED_DELTA_EXPIRATION_SECONDS_DEFAULT);
         defaults.put(FEATURE_FEDERATION_DELETION_MAX_DELAY_PROP, FEATURE_FEDERATION_DELETION_MAX_DELAY_DEFAULT);
@@ -2031,6 +2035,10 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP);
         }
 
+        @IdmProp(key = IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP, versionAdded = "3.13.0", description = "Maximum number of explicit IDPs per domain")
+        public int getIdentityFederatedMaxIDPPerDomain() {
+            return getIntSafely(reloadableConfiguration, IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP);
+        }
     }
 
     public class RepositoryConfig {
