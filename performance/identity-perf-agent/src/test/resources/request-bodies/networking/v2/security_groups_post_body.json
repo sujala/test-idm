@@ -1,0 +1,5 @@
+{
+    "security_group": {
+        "name": "${:security_group/name}"
+    }
+}

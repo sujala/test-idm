@@ -1,0 +1,9 @@
+{
+    "user":
+    {
+        "username": "per_stg_1_${next_int}",
+        "RAX-AUTH:domainId": ${next_int}, 
+        "enabled": true, 
+        "OS-KSADM:password": "Password1" 
+    }
+}

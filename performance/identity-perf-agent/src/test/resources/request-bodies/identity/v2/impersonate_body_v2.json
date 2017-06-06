@@ -1,0 +1,6 @@
+{ 
+    "RAX-AUTH:impersonation" : { 
+        "user": 
+            { "username": "${username}" } 
+    } 
+}

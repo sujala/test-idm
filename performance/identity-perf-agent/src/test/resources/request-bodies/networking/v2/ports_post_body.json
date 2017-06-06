@@ -1,0 +1,6 @@
+{
+    "port": {
+        "network_id": "${networkID}",
+        "name": "${portName}"
+    }
+}

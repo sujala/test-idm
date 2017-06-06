@@ -1,0 +1,7 @@
+{
+    "subnet": {
+        "network_id": "${:subnet/network_id}",
+        "ip_version": 4,
+        "cidr": "${:subnet/cidr}"
+    }
+}
