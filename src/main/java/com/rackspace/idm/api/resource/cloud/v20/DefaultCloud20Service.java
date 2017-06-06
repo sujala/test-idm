@@ -18,8 +18,6 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
-import com.rackspace.idm.domain.service.impl.*;
-import com.rackspace.idm.validation.Cloud20CreateUserValidator;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
@@ -30,13 +28,14 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Domains;
-import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
+import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlUnmarshaller;
+import com.rackspace.idm.validation.Cloud20CreateUserValidator;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
@@ -50,10 +49,10 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
+import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.saml.saml2.core.LogoutResponse;
 import org.opensaml.saml.saml2.core.StatusCode;
 import org.opensaml.saml.saml2.core.impl.LogoutResponseMarshaller;
-import org.opensaml.core.xml.io.MarshallingException;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -80,10 +79,15 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamSource;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
@@ -1284,6 +1288,65 @@ public class DefaultCloud20Service implements Cloud20Service {
             validator20.validateIdentityProviderForCreation(provider);
 
             com.rackspace.idm.domain.entity.IdentityProvider newProvider = identityProviderConverterCloudV20.fromIdentityProvider(provider);
+
+            String defaultPolicy = identityConfig.getRepositoryConfig().getIdentityProviderDefaultPolicy();
+            if (defaultPolicy == null) {
+                throw new ServiceUnavailableException(FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE);
+            }
+            newProvider.setPolicy(defaultPolicy.getBytes(StandardCharsets.UTF_8));
+
+            federatedIdentityService.addIdentityProvider(newProvider);
+            atomHopperClient.asyncPostIdpEvent(newProvider, EventType.CREATE);
+            ResponseBuilder builder = Response.created(uriInfo.getRequestUriBuilder().path(newProvider.getProviderId()).build());
+            return builder.entity(identityProviderConverterCloudV20.toIdentityProvider(newProvider));
+        } catch (DuplicateException de) {
+            return exceptionHandler.conflictExceptionResponse(de.getMessage());
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder addIdentityProviderUsingMetadata(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, byte[] metadata) {
+        try {
+            // Verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+
+            // Verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.IDENTITY_RCN_ADMIN.getRoleName()));
+
+            // Verify domain for user
+            if (StringUtils.isBlank(caller.getDomainId()) || caller.getDomainId().equals(identityConfig.getReloadableConfig().getGroupDefaultDomainId())
+                    || caller.getDomainId().equals(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
+            // Verify user's groups
+            for (Group group : userService.getGroupsForUser(caller.getId())) {
+                if (group.getName().equals("rax_status_restricted")) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+            }
+
+            IdentityProvider identityProvider = identityProviderConverterCloudV20.toIdentityProvider(metadata, caller.getDomainId());
+
+            validator20.validateIdentityProviderMetadataForCreation(identityProvider, caller.getDomainId());
+
+            // Increment a digit at end of name until a unique name is found
+            int count = 2;
+            String uniqueName = identityProvider.getName();
+            while (federatedIdentityService.getIdentityProviderByName(uniqueName) != null) {
+                // NOTE: '_' is not an approved character for IDP names.
+                uniqueName = String.format("%s_%d", identityProvider.getName(), count++);
+            }
+            identityProvider.setName(uniqueName);
+
+            com.rackspace.idm.domain.entity.IdentityProvider newProvider =
+                    identityProviderConverterCloudV20.fromIdentityProvider(identityProvider);
 
             String defaultPolicy = identityConfig.getRepositoryConfig().getIdentityProviderDefaultPolicy();
             if (defaultPolicy == null) {

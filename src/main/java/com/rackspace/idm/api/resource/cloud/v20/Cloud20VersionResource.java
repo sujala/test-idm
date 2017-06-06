@@ -5,13 +5,19 @@ import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import com.rackspace.idm.JSONConstants;
+import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
+import com.rackspace.idm.api.resource.cloud.XMLReader;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.exception.*;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.ExceptionHandler;
+import com.rackspace.idm.exception.IdmException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.endpointassignment.api.resource.EndpointAssignmentRuleResource;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.io.IOUtils;
 import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
@@ -20,6 +26,7 @@ import org.openstack.docs.identity.api.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
+import org.w3c.dom.Element;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -27,7 +34,9 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 
 /**
@@ -66,6 +75,9 @@ public class Cloud20VersionResource {
 
     @Autowired
     private RequestContextHolder requestContextHolder;
+
+    @Autowired
+    private IdentityProviderConverterCloudV20 identityProviderConverterCloudV20;
 
     private static final String JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH = "org.openstack.docs.common.api.v1:org.w3._2005.atom";
     private static final String SERVICE_NOT_FOUND_ERROR_MESSAGE = "Service Not Found";
@@ -257,16 +269,47 @@ public class Cloud20VersionResource {
     }
 
     @POST
+    @Consumes(MediaType.APPLICATION_JSON)
     @Path("RAX-AUTH/federation/identity-providers")
     public Response addIdentityProvider(
             @Context HttpHeaders httpHeaders
             , @Context UriInfo uriInfo
             , @HeaderParam(X_AUTH_TOKEN) String authToken
-            , IdentityProvider identityProvider)  {
+            , IdentityProvider identityProvider) {
         if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
             throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
         }
         return cloud20Service.addIdentityProvider(httpHeaders, uriInfo, authToken, identityProvider).build();
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_XML)
+    @Path("RAX-AUTH/federation/identity-providers")
+    public Response addIdentityProviderXML(
+            @Context HttpHeaders httpHeaders
+            , @Context UriInfo uriInfo
+            , @HeaderParam(X_AUTH_TOKEN) String authToken
+            , InputStream inputStream) throws IOException {
+        if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
+
+        byte[] bytes;
+        try {
+            bytes = IOUtils.toByteArray(inputStream);
+            inputStream.close();
+
+            Element rootElement = identityProviderConverterCloudV20.getXMLRootElement(bytes);
+            if (rootElement.getLocalName().equals(JSONConstants.IDENTITY_PROVIDER)){
+                XMLReader xmlReader = new XMLReader();
+                IdentityProvider identityProvider = (IdentityProvider) xmlReader.readFrom(Object.class, IdentityProvider.class, null, null, null, new ByteArrayInputStream(bytes));
+                return cloud20Service.addIdentityProvider(httpHeaders, uriInfo, authToken, identityProvider).build();
+            }
+
+            return cloud20Service.addIdentityProviderUsingMetadata(httpHeaders, uriInfo, authToken, bytes).build();
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @PUT

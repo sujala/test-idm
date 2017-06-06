@@ -17,6 +17,8 @@ class Constants {
     static def IDENTITY_ADMIN_PASSWORD = "auth123"
     static def IDENTITY_ADMIN_API_KEY = "thisismykey"
 
+    static def USER_WITH_NO_DOMAIN_USERNAME = "userWithNoDomain"
+
     static def DEFAULT_PASSWORD = "Password1"
     static def DEFAULT_API_KEY = "Password1"
 
@@ -53,9 +55,11 @@ class Constants {
     static def IDENTITY_RCN_MANAGED_HOSTING_TENANT_ROLE_NAME = "identity:rcn-managed_hosting"
     static def IDENTITY_RCN_ALL_TENANT_ROLE_ID = "1d7be4300e2141a5b49b66397ac8a145"
     static def IDENTITY_RCN_ALL_TENANT_ROLE_NAME = "identity:rcn-all"
-
+    static def IDENTITY_RCN_ADMIN_ROLE_ID = "c5f683e2b554ee8b28b9a8b612954c4"
 
     static def DEFAULT_GROUP = "Default"
+    static def RAX_STATUS_RESTRICTED_GROUP_NAME = "rax_status_restricted"
+    static def RAX_STATUS_RESTRICTED_GROUP_ID = "1"
 
     static def DEFAULT_SECRET_ANWSER = "home"
     static def DEFAULT_SECRET_QUESTION_ID = "1"

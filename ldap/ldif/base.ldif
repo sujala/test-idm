@@ -1338,6 +1338,14 @@ cn: identity:endpoint-rule-admin
 description: Can manage endpoint assignment rules
 rsWeight: 50
 
+dn: rsId=c5f683e2b554ee8b28b9a8b612954c4,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
+ 4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:rcn-admin
+description: Can manage entities under RCN
+rsWeight: 50
+
 dn: rsId=a2e0811ceedc46d4a87f6b8230e94267,cn=CLIENT ROLES,clientId=bde1268ebab
  eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole
@@ -5793,6 +5801,34 @@ dn: cn=TOKENS,rsId=fa9ddbf7cc904a75b8bd40c26bc738cd,ou=users,o=rackspace,dc
  =rackspace,dc=com
 objectClass: rsContainer
 cn: TOKENS
+
+dn: rsId=9b336a2ba2b14b098c1210aec5ae9616,ou=users,o=rackspace,dc=rackspace,
+ dc=com
+objectClass: rsPerson
+rsId: 9b336a2ba2b14b098c1210aec5ae9616
+enabled: TRUE
+encryptionSalt: 14 04 ac 8a 85 fc b8 26 94 59 c1 34 ad 5d b2 e3
+encryptionVersionId: 0
+mail: test@rackspace.com
+passwordSelfUpdated: FALSE
+passwordUpdatedTimestamp: 20170608163824.479Z
+rsApiKey:: gvIrBVxbs1T6oUmXWKR3QQnqTZBGmWCDvqWvQZ6q5OsDIm+GdfgnFeoMImuA7QyO
+rsRegion: ORD
+uid: userWithNoDomain
+userPassword:: e1NTSEE1MTJ9OG1ZcmtNZ0NTUnF1YUNnaVZxSWpsa2lwa3hvM0hzMnlpY3NpQ
+ 1R1ZEdiWC85RkNQczE0QThWMGpmWkE3aCsvR1B3QnowOUFLWWlIRXF5UmtDdXNWaUJDL0hERT0=
+
+dn: cn=ROLES,rsId=9b336a2ba2b14b098c1210aec5ae9616,ou=users,o=rackspace,dc=r
+ ackspace,dc=com
+objectClass: rsContainer
+cn: ROLES
+
+dn: roleRsId=3,cn=ROLES,rsId=9b336a2ba2b14b098c1210aec5ae9616,ou=users,o=rac
+ kspace,dc=rackspace,dc=com
+objectClass: tenantRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+roleRsId: 3
+userRsId: 9b336a2ba2b14b098c1210aec5ae9616
 
 dn: o=tokens,dc=rackspace,dc=com
 objectClass: top

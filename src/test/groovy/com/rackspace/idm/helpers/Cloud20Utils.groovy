@@ -1,29 +1,16 @@
 package com.rackspace.idm.helpers
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationResponse
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhones
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactor
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.MultiFactorDomain
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import com.rackspace.idm.Constants
-import com.rackspace.idm.api.resource.cloud.devops.JsonWriterForIdmProperty
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.config.IdmProperty
 import com.rackspace.idm.domain.config.IdmPropertyList
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
-import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.PasswordPolicy
 import com.rackspace.idm.util.OTPHelper
 import com.rackspace.idm.util.SamlUnmarshaller
@@ -33,21 +20,14 @@ import groovy.json.JsonSlurper
 import org.apache.commons.codec.binary.StringUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA
 import org.apache.http.client.utils.URLEncodedUtils
 import org.apache.log4j.Logger
-import org.opensaml.saml.saml2.core.LogoutResponse
 import org.joda.time.DateTime
+import org.opensaml.saml.saml2.core.LogoutResponse
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.EndpointList
-import org.openstack.docs.identity.api.v2.Role
-import org.openstack.docs.identity.api.v2.RoleList
-import org.openstack.docs.identity.api.v2.Tenant
-import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import spock.lang.Shared
@@ -55,7 +35,6 @@ import testHelpers.Cloud20Methods
 import testHelpers.DevOpsMethods
 import testHelpers.V1Factory
 import testHelpers.V2Factory
-import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
 
 import javax.annotation.PostConstruct
@@ -63,10 +42,6 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
-import static com.rackspace.idm.JSONConstants.USERS
-import static com.rackspace.idm.JSONConstants.USERS
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
 
@@ -922,6 +897,11 @@ class Cloud20Utils {
 
     def addUserToGroup(Group group, User user, String token=getServiceAdminToken()) {
         def response = methods.addUserToGroup(token, group.id, user.id)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def removeUserFromGroup(Group group, User user, String token=getServiceAdminToken()) {
+        def response = methods.removeUserFromGroup(token, group.id, user.id)
         assert (response.status == SC_NO_CONTENT)
     }
 

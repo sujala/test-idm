@@ -24,6 +24,10 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
     @Autowired
     private IdentityConfig identityConfig;
 
+    public String[] getSearchAttributes(){
+        return ATTR_IDENTITY_PROVIDER_ATTRIBUTES;
+    }
+
     @Override
     public String getBaseDn() {
         return EXTERNAL_PROVIDERS_BASE_DN;

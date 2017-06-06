@@ -5,13 +5,42 @@ import com.rackspace.idm.domain.decorator.SAMLAuthContext
 import net.shibboleth.utilities.java.support.xml.SerializeSupport
 import org.apache.commons.codec.binary.StringUtils
 import org.joda.time.DateTime
+import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport
+import org.opensaml.core.xml.io.Marshaller
+import org.opensaml.core.xml.io.MarshallerFactory
 import org.opensaml.saml.saml2.core.LogoutRequest
 import org.opensaml.saml.saml2.core.Response
 import org.opensaml.saml.saml2.core.impl.LogoutRequestMarshaller
 import org.opensaml.saml.saml2.core.impl.ResponseMarshaller
+import org.opensaml.saml.saml2.metadata.EntityDescriptor
+import org.opensaml.saml.saml2.metadata.IDPSSODescriptor
+import org.opensaml.saml.saml2.metadata.KeyDescriptor
+import org.opensaml.saml.saml2.metadata.SingleSignOnService
+import org.opensaml.saml.saml2.metadata.impl.EntityDescriptorImpl
+import org.opensaml.saml.saml2.metadata.impl.IDPSSODescriptorImpl
+import org.opensaml.saml.saml2.metadata.impl.KeyDescriptorImpl
+import org.opensaml.saml.saml2.metadata.impl.SingleSignOnServiceImpl
+import org.opensaml.security.credential.UsageType
+import org.opensaml.xmlsec.signature.KeyInfo
+import org.opensaml.xmlsec.signature.X509Certificate
+import org.opensaml.xmlsec.signature.X509Data
+import org.opensaml.xmlsec.signature.impl.KeyInfoImpl
+import org.opensaml.xmlsec.signature.impl.X509CertificateImpl
+import org.opensaml.xmlsec.signature.impl.X509DataImpl
+import org.w3c.dom.Document
 import org.w3c.dom.Element
 
-import static com.rackspace.idm.Constants.*
+import javax.xml.parsers.DocumentBuilder
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.OutputKeys
+import javax.xml.transform.Transformer
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
+
+import static com.rackspace.idm.Constants.DEFAULT_IDP_PRIVATE_KEY
+import static com.rackspace.idm.Constants.DEFAULT_IDP_PUBLIC_KEY
+import static org.opensaml.saml.common.xml.SAMLConstants.*;
 
 class SamlFactory {
 
@@ -86,6 +115,67 @@ class SamlFactory {
         LogoutRequest logoutRequest = producer.createSAMLLogoutRequest(subject, issuer, issueInstant);
         def requestString = convertLogoutRequestToString(logoutRequest)
         return org.apache.xml.security.utils.Base64.encode(StringUtils.getBytesUtf8(requestString))
+    }
+
+    def generateMetadataXMLForIDP(issuer, authenticationUrl) {
+        EntityDescriptor entityDescriptor = new EntityDescriptorImpl(SAML20MD_NS, "EntityDescriptor", "md")
+        entityDescriptor.entityID = issuer
+
+        IDPSSODescriptor idpSSODescriptor = new IDPSSODescriptorImpl(SAML20MD_NS, "IDPSSODescriptor", "md")
+        idpSSODescriptor.addSupportedProtocol(SAML20P_NS)
+
+        // Create KeyDescriptor
+        KeyDescriptor keyDescriptor = new KeyDescriptorImpl(SAML20MD_NS, "KeyDescriptor", "md")
+        keyDescriptor.use = UsageType.SIGNING
+        KeyInfo keyInfo = new KeyInfoImpl("http://www.w3.org/2000/09/xmldsig#", "KeyInfo", "md1")
+        X509Data x509Data = new X509DataImpl("http://www.w3.org/2000/09/xmldsig#", "X509Data", "md1")
+        X509Certificate x509Certificate = new X509CertificateImpl("http://www.w3.org/2000/09/xmldsig#", "X509Certificate", "md1")
+        def keyPair = SamlCredentialUtils.generateKeyPair()
+        def cert = SamlCredentialUtils.generateCertificate(keyPair)
+        x509Certificate.value = SamlCredentialUtils.getCertificateAsPEMString(cert)
+        x509Data.x509Certificates.add(x509Certificate)
+        keyInfo.XMLObjects.add(x509Data)
+        keyDescriptor.keyInfo = keyInfo
+        idpSSODescriptor.keyDescriptors.add(keyDescriptor)
+
+        // Create SingleSignOnService
+        SingleSignOnService singleSignOnService = new SingleSignOnServiceImpl(SAML20MD_NS, "SingleSignOnService", "md")
+        singleSignOnService.binding = SAML2_REDIRECT_BINDING_URI
+        singleSignOnService.location = authenticationUrl
+        idpSSODescriptor.singleSignOnServices.add(singleSignOnService)
+
+        entityDescriptor.roleDescriptors.add(idpSSODescriptor)
+
+        return convertEntityDescriptorToString(entityDescriptor);
+    }
+
+    def convertEntityDescriptorToString(EntityDescriptor entityDescriptor) {
+        // Get apropriate unmarshaller
+        MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
+        Marshaller marshaller = marshallerFactory.getMarshaller(entityDescriptor);
+
+        // convert EntityDescriptor to XML document
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        DocumentBuilder builder = factory.newDocumentBuilder()
+        Document document = builder.newDocument()
+        marshaller.marshall(entityDescriptor, document)
+
+        // Convert XML document to string
+        StringWriter sw = new StringWriter();
+        try {
+            TransformerFactory tf = TransformerFactory.newInstance();
+            Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+            transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.transform(new DOMSource(document), new StreamResult(sw));
+        } catch (Exception ex) {
+            throw new RuntimeException("Error converting to String", ex);
+        }
+
+        return sw.toString();
     }
 
     def convertLogoutRequestToString(LogoutRequest logoutRequest) {

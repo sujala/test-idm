@@ -9,10 +9,33 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dozer.Mapper;
+import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
+import org.opensaml.core.xml.io.Marshaller;
+import org.opensaml.core.xml.io.MarshallerFactory;
+import org.opensaml.core.xml.io.UnmarshallerFactory;
+import org.opensaml.core.xml.io.UnmarshallingException;
+import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
+import org.opensaml.saml.saml2.metadata.KeyDescriptor;
+import org.opensaml.saml.saml2.metadata.SingleSignOnService;
+import org.opensaml.security.credential.UsageType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -20,6 +43,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.opensaml.saml.common.xml.SAMLConstants.SAML20P_NS;
+import static org.opensaml.saml.common.xml.SAMLConstants.SAML2_REDIRECT_BINDING_URI;
 
 @Component
 public class IdentityProviderConverterCloudV20 {
@@ -29,6 +55,7 @@ public class IdentityProviderConverterCloudV20 {
     @Autowired
     private JAXBObjectFactories objFactories;
 
+    // NOTE: Metadata is not return as part of the IDP object.
     public IdentityProvider toIdentityProvider(com.rackspace.idm.domain.entity.IdentityProvider identityProvider) {
         com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider provider = mapper.map(identityProvider, IdentityProvider.class);
 
@@ -58,6 +85,121 @@ public class IdentityProviderConverterCloudV20 {
         }
 
         return provider;
+    }
+
+    public IdentityProvider toIdentityProvider(byte[] metadata, String domainId) {
+        EntityDescriptor entityDescriptor = getEntityDescriptor(getXMLRootElement(metadata));
+        if (entityDescriptor == null) {
+            throw new BadRequestException("Invalid XML metadata file.");
+        }
+
+        // IDP cannot be created without a IDPSSODescriptor
+        IDPSSODescriptor idpSSODescriptor = entityDescriptor.getIDPSSODescriptor(SAML20P_NS);
+        if (idpSSODescriptor == null) {
+            String errMsg = String.format("Invalid XML metadata: %s is a required element.",
+                                          IDPSSODescriptor.DEFAULT_ELEMENT_LOCAL_NAME);
+            throw new BadRequestException(errMsg);
+        }
+
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setIssuer(entityDescriptor.getEntityID());
+        identityProvider.setMetadata(convertEntityDescriptorToString(entityDescriptor));
+        // Set IDP name to caller's domainId
+        identityProvider.setName(domainId);
+        identityProvider.setFederationType(IdentityProviderFederationTypeEnum.DOMAIN);
+        ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds();
+        approvedDomainIds.getApprovedDomainId().add(domainId);
+        identityProvider.setApprovedDomainIds(approvedDomainIds);
+
+        // Set description to organization name if present, else set it to the domainId of caller.
+        if (entityDescriptor.getOrganization() != null && entityDescriptor.getOrganization().getDisplayNames() != null) {
+            identityProvider.setDescription(entityDescriptor.getOrganization().getOrganizationNames().get(0).getValue());
+        } else {
+            identityProvider.setDescription(domainId);
+        }
+
+        // Set authenticationUrl based on SingleSignOnService using binding HTTP-Redirect
+        for (SingleSignOnService ssos : idpSSODescriptor.getSingleSignOnServices()) {
+            if (ssos.getBinding().equals(SAML2_REDIRECT_BINDING_URI)) {
+                identityProvider.setAuthenticationUrl(ssos.getLocation());
+                break;
+            }
+        }
+
+        // Set publicCertificates
+        PublicCertificates publicCertificates = objFactories.getRackspaceIdentityExtRaxgaV1Factory().createPublicCertificates();
+        for (KeyDescriptor keyDescriptor : idpSSODescriptor.getKeyDescriptors()) {
+            if (keyDescriptor.getUse() == UsageType.SIGNING) {
+                for (org.opensaml.xmlsec.signature.X509Certificate x509Certificate : keyDescriptor.getKeyInfo().getX509Datas().get(0).getX509Certificates()) {
+                    PublicCertificate publicCertificate = new PublicCertificate();
+                    publicCertificate.setPemEncoded(x509Certificate.getValue());
+                    publicCertificates.getPublicCertificate().add(publicCertificate);
+                }
+            }
+        }
+        identityProvider.setPublicCertificates(publicCertificates);
+
+        return identityProvider;
+    }
+
+    public Element getXMLRootElement(byte[] data) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document metadataDoc = builder.parse(new ByteArrayInputStream(data));
+            return metadataDoc.getDocumentElement();
+        } catch (SAXException | ParserConfigurationException | IOException e) {
+            String errMsg = "Invalid XML";
+            throw new BadRequestException(errMsg, e);
+        }
+    }
+
+    private EntityDescriptor getEntityDescriptor(Element element) {
+        // Parse XML metadata file
+        try {
+            // Get apropriate unmarshaller
+            UnmarshallerFactory unmarshallerFactory = XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
+            org.opensaml.core.xml.io.Unmarshaller unmarshaller = unmarshallerFactory.getUnmarshaller(element);
+
+            if (unmarshaller == null) {
+                return null;
+            }
+
+            // Unmarshall using the document root element EntityDescriptor
+            return (EntityDescriptor) unmarshaller.unmarshall(element);
+        } catch (UnmarshallingException e) {
+            String errMsg = "Invalid XML";
+            throw new BadRequestException(errMsg, e);
+        }
+    }
+
+    private String convertEntityDescriptorToString(EntityDescriptor entityDescriptor) {
+        try {
+            // Get apropriate unmarshaller
+            MarshallerFactory marshallerFactory = XMLObjectProviderRegistrySupport.getMarshallerFactory();
+            Marshaller marshaller = marshallerFactory.getMarshaller(entityDescriptor);
+
+            // convert EntityDescriptor to XML document
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document document = builder.newDocument();
+            marshaller.marshall(entityDescriptor, document);
+
+            // Convert XML document to string
+            StringWriter sw = new StringWriter();
+            TransformerFactory tf = TransformerFactory.newInstance();
+            Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+            transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.transform(new DOMSource(document), new StreamResult(sw));
+            return sw.toString();
+        } catch (Exception ex) {
+            throw new RuntimeException("Error converting EntityDescriptor to String", ex);
+        }
     }
 
     public IdentityProviders toIdentityProviderList(List<com.rackspace.idm.domain.entity.IdentityProvider> identityProviders) {
@@ -107,6 +249,10 @@ public class IdentityProviderConverterCloudV20 {
         //convert empty strings to nulls since they can't be persisted to LDAP
         if (StringUtils.isWhitespace(jaxbProvider.getDescription())) {
             provider.setDescription(null);
+        }
+
+        if (jaxbProvider.getMetadata() != null) {
+            provider.setXmlMetadata(jaxbProvider.getMetadata().getBytes());
         }
 
         return provider;
