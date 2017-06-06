@@ -4,7 +4,7 @@ gatling-rax
 Gatling Simulations for Rackspace OpenStack Cloud
 
 ## Dependecies
-Maven (there is a build.sbt but that's outdated ... use maven instead)
+Maven
 
 ## Running in intelliJ
 
@@ -12,6 +12,6 @@ Maven (there is a build.sbt but that's outdated ... use maven instead)
 * Import Project
 * Select pom.xml
 * Let intellij do its magic (pull down dependencies, etc.)
-* Mark `src/test` directory as `Test Resources Root`
-* In `src/test/scala/Engine.scala` set `props.SimulationClass` to whatever you want to run
+* Mark `performance/identity-perf-agent/src/test` directory as `Test Resources Root`
+* In `performance/identity-perf-agent/src/test/scala/Engine.scala` set `props.SimulationClass` to whatever you want to run
 * Right click and run `Engine`

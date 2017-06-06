@@ -1,9 +1,0 @@
-{
-  "port": {
-    "network_id": "${networkID}",
-    "segment_id": "${segmentID}",
-    "tenant_id": "${tenantID}",
-    "admin_state_up": "${adminStateUp}",
-    "device_id": "${deviceID}"
-  }
-}

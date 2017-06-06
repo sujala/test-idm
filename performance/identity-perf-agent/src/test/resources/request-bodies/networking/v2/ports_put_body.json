@@ -1,5 +1,0 @@
-{
-    "port": {
-        "security_groups": ["${:port/security_groups}"]
-    }
-}

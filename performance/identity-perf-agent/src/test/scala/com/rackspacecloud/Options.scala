@@ -3,18 +3,6 @@ package com.rackspacecloud
 import io.gatling.jdbc.feeder.JdbcFeederSource
 
 object Options {
-  val OS_REGION_NAME =
-    System.getProperty("rackspacecloud.options.osRegion", "ORD")
-
-  val SERVICE_NAME =
-    System.getProperty("rackspacecloud.options.novaServiceName", "cloudServers")
-
-  val VOLUME_SERVICE_NAME =
-    System.getProperty("rackspacecloud.options.volumesServiceName", "cloudBlockStorage")
-
-  val NETWORKS_SERVICE_NAME =
-    System.getProperty("rackspacecloud.options.networksServiceName", "cloudNetworks")
-
   val GATLING_DEPLOYMENT_NAME = {
     val name =
       System.getProperty("rackspacecloud.options.gatling.deploymentName", "staging")
@@ -42,8 +30,4 @@ object Options {
       "https://staging.identity.api.rackspacecloud.com"
   }
 
-//  val OS_MAIN_EXTERNAL_AUTH_URL = System.getProperty("rackspacecloud.options.osAuthURL", getAuthURL)
-//  val OS_MAIN_INTERNAL_AUTH_URL = System.getProperty("rackspacecloud.options.osAuthURL", getAuthURL)
-//  val OS_REPL_EXTERNAL_AUTH_URL = System.getProperty("rackspacecloud.options.osAuthURL", getAuthURL)
-//  val OS_REPL_INTERNAL_AUTH_URL = System.getProperty("rackspacecloud.options.osAuthURL", getAuthURL)
 }
