@@ -195,16 +195,10 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
      *
      * @return
      */
-    @Unroll
-    def "Federated Authentication uses cached roles based on reloadable property feature.use.cached.client.roles.for.service.catalog: #useCachedRoles"() {
+    def "Federated Authentication uses cached roles"() {
         given:
-        // If either of these are 0 then cacheing is disabled altogether and this test would be pointless
-        assert identityConfig.getStaticConfig().getClientRoleByIdCacheTtl().toMillis() > 0
-        assert identityConfig.getStaticConfig().getClientRoleByIdCacheSize() > 0
-
         //without performant catalog, doesn't matter what cache role feature is set to
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP, useCachedRoles)
 
         // Create Fed assignable role
         def originalRole = utils.createRole()
@@ -243,23 +237,12 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
                 .convertResponseToString(samlResponseUpdated)).getEntity(AuthenticateResponse).value
 
         then: "Roles returned in auth use the cache as appropriate"
-        if (useCachedRoles) {
-            // The role name should be the old value as the client role was cached during initial auth
-            assert authClientResponse.user.roles.role.find {it.name == originalRole.name} != null
-            assert authClientResponse.user.roles.role.find {it.name == updatedRole.name} == null
-        } else {
-            // The role name should be the new value as the client role is always retrieved from backend
-            assert authClientResponse.user.roles.role.find {it.name == originalRole.name} == null
-            assert authClientResponse.user.roles.role.find {it.name == updatedRole.name} != null
-        }
+        // The role name should be the old value as the client role was cached during initial auth
+        assert authClientResponse.user.roles.role.find {it.name == originalRole.name} != null
+        assert authClientResponse.user.roles.role.find {it.name == updatedRole.name} == null
 
         cleanup:
         deleteFederatedUserQuietly(fedRequest.username)
-
-        where:
-        useCachedRoles | _
-        true | _
-        false | _
     }
 
 

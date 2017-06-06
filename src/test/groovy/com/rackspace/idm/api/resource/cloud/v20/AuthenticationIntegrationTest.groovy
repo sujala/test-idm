@@ -365,17 +365,10 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
      *
      * @return
      */
-    @Unroll
-    def "v1.0/v1.1/v2.0 Authentication uses cached roles based on reloadable property feature.use.cached.client.roles.for.service.catalog: #useCachedRoles"() {
+    def "v1.0/v1.1/v2.0 Authentication uses cached roles"() {
         given:
-        // If either of these are 0 then cacheing is disabled altogether and this test would be pointless
-        assert identityConfig.getStaticConfig().getClientRoleByIdCacheTtl().toMillis() > 0
-        assert identityConfig.getStaticConfig().getClientRoleByIdCacheSize() > 0
-
         //without performant catalog, doesn't matter what cache role feature is set to
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP, useCachedRoles)
 
         def domainId = utils.createDomain()
         def user, users1
@@ -397,24 +390,13 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         responseV20 = utils.authenticate(user.username, Constants.DEFAULT_PASSWORD)
 
         then:
-        if (useCachedRoles) {
-            // The role name should be the old value as the client role was cached during initial auth
-            assert responseV20.user.roles.role.find {it.name == originalRole.name} != null
-            assert responseV20.user.roles.role.find {it.name == updatedRole.name} == null
-        } else {
-            // The role name should be the new value as the client role is always retrieved from backend
-            assert responseV20.user.roles.role.find {it.name == originalRole.name} == null
-            assert responseV20.user.roles.role.find {it.name == updatedRole.name} != null
-        }
+        // The role name should be the old value as the client role was cached during initial auth
+        assert responseV20.user.roles.role.find {it.name == originalRole.name} != null
+        assert responseV20.user.roles.role.find {it.name == updatedRole.name} == null
 
         cleanup:
         utils.deleteUsers(users1)
         utils.deleteRoleQuietly(originalRole)
-
-        where:
-        useCachedRoles | _
-        true | _
-        false | _
     }
 
     def "users with a nonexistent domain are able to authenticate"() {

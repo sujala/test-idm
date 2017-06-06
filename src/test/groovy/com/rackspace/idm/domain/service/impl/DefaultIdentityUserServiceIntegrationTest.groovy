@@ -45,17 +45,11 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
     }
 
-    @Unroll
-    def "Retrieving service catalog info uses cached roles based on reloadable property feature.use.cached.client.roles.for.service.catalog: #useCachedRoles"() {
+    def "Retrieving service catalog info uses cached roles"() {
         given:
-        // If either of these are 0 then cacheing is disabled altogether and this test would be pointless
-        assert identityConfig.getStaticConfig().getClientRoleByIdCacheTtl().toMillis() > 0
-        assert identityConfig.getStaticConfig().getClientRoleByIdCacheSize() > 0
 
         // Without performant catalog, doesn't matter what cache role feature is set to
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP, useCachedRoles)
 
         // Create user to test with
         def domainId = utils.createDomain()
@@ -80,54 +74,13 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
         scInfo = identityUserService.getServiceCatalogInfo(userEntity)
 
         then:
-        if (useCachedRoles) {
-            // The role name should be the old value as the client role was cached during initial auth
-            assert scInfo.userTenantRoles.find {it.name == originalRole.name} != null
-            assert scInfo.userTenantRoles.find {it.name == updatedRole.name} == null
-        } else {
-            // The role name should be the new value as the client role is always retreived from backend
-            assert scInfo.userTenantRoles.find {it.name == originalRole.name} == null
-            assert scInfo.userTenantRoles.find {it.name == updatedRole.name} != null
-        }
-
-        when: "switch using cached to opposite value and update client role"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP, !useCachedRoles)
-
-        // Auth after making setting change to populate caches as appropriate
-        scInfo = identityUserService.getServiceCatalogInfo(userEntity)
-
-        // Change the role name for a final time
-        ClientRole finalUpdatedRole = applicationRoleDao.getClientRole(originalRole.id)
-        finalUpdatedRole.setName("final_" + RandomStringUtils.randomAlphabetic(10))
-        applicationRoleDao.updateClientRole(finalUpdatedRole)
-
-        // Re-auth now that the role has changed
-        scInfo = identityUserService.getServiceCatalogInfo(userEntity)
-
-        then:
-        if (useCachedRoles) {
-            // Original setting was to use cached roles, now we're not, so should return the final updated value
-            assert scInfo.userTenantRoles.find {it.name == originalRole.name} == null
-            assert scInfo.userTenantRoles.find {it.name == updatedRole.name} == null
-            assert scInfo.userTenantRoles.find {it.name == finalUpdatedRole.name} != null
-        } else {
-            /*
-             Original setting was not to use cached roles, now we are. We auth after enabling, but before updating the
-             role for the final time so final auth should return the cached value after 2nd update
-              */
-            assert scInfo.userTenantRoles.find {it.name == originalRole.name} == null
-            assert scInfo.userTenantRoles.find {it.name == updatedRole.name} != null
-            assert scInfo.userTenantRoles.find {it.name == finalUpdatedRole.name} == null
-        }
+        // The role name should be the old value as the client role was cached during initial auth
+        assert scInfo.userTenantRoles.find {it.name == originalRole.name} != null
+        assert scInfo.userTenantRoles.find {it.name == updatedRole.name} == null
 
         cleanup:
         utils.deleteUsers(users1)
         utils.deleteRoleQuietly(originalRole)
-
-        where:
-        useCachedRoles | _
-        true | _
-        false | _
     }
 
     /**

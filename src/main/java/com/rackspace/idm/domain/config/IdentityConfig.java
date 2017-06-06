@@ -363,12 +363,6 @@ public class IdentityConfig {
     public static final String CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP = "cache.client.role.by.id.size";
     public static final int CACHE_CLIENT_ROLES_BY_ID_SIZE_DEFAULT = 200;
 
-    public static final String FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP = "feature.use.cached.client.roles.for.service.catalog";
-    public static final boolean FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_DEFAULT = true;
-
-    public static final String FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_PROP = "feature.use.cached.client.roles.for.validate";
-    public static final boolean FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_DEFAULT = true;
-
     public static final String FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP = "feature.force.standard.v2.exceptions.end.user.services";
     public static final boolean FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_DEFAULT = true;
 
@@ -689,8 +683,6 @@ public class IdentityConfig {
         defaults.put(SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_DEFAULT);
         defaults.put(SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_DEFAULT);
 
-        defaults.put(FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP, FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_DEFAULT);
-        defaults.put(FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_PROP, FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_DEFAULT);
         defaults.put(CACHE_CLIENT_ROLES_BY_ID_TTL_PROP, CACHE_CLIENT_ROLES_BY_ID_TTL_DEFAULT);
         defaults.put(CACHE_CLIENT_ROLES_BY_ID_SIZE_PROP, CACHE_CLIENT_ROLES_BY_ID_SIZE_DEFAULT);
         defaults.put(FEATURE_INFER_DEFAULT_TENANT_TYPE_PROP, FEATURE_INFER_DEFAULT_TENANT_TYPE_DEFAULT);
@@ -1999,16 +1991,6 @@ public class IdentityConfig {
         @IdmProp(key = PASSWORD_HISTORY_MAX_PROP, versionAdded = "3.12.0" , description = "The maximum number of password history entries Identity will store for a user. Will actually store 1 more than this to include the 'current' password.")
         public int getPasswordHistoryMax() {
             return getIntSafely(reloadableConfiguration, PASSWORD_HISTORY_MAX_PROP);
-        }
-
-        @IdmProp(key = FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP, versionAdded = "3.11.0" , description = "Whether or not to use cached client roles for the service catalog. Only applicable when feature.performant.service.catalog=true")
-        public boolean useCachedClientRolesInServiceCatalog() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_USE_CACHED_CLIENT_ROLES_FOR_SERVICE_CATALOG_PROP);
-        }
-
-        @IdmProp(key = FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_PROP, versionAdded = "3.11.0" , description = "Whether or not to use cached client roles in the validate call.")
-        public boolean useCachedClientRolesInValidate() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_PROP);
         }
 
         @IdmProp(key = FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP, versionAdded = "3.11.0", description = "Whether to change contract for set of services accessible to user-admin/default users which currently return non-standard v2.0 error objects to now return the standard errors")

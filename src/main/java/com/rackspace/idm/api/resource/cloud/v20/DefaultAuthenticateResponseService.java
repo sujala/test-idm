@@ -225,11 +225,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
             authenticateResponse.setToken(tokenConverterCloudV20.toValidateResponseToken(sa, user, roles));
         }
         else {
-            if (identityConfig.getReloadableConfig().useCachedClientRolesInValidate()) {
-                roles = tenantService.getTenantRolesForUserPerformant(user);
-            } else {
-                roles = tenantService.getTenantRolesForUser(user);
-            }
+            roles = tenantService.getTenantRolesForUserPerformant(user);
             authenticateResponse.setToken(tokenConverterCloudV20.toToken(sa, roles));
         }
         validator20.validateTenantIdInRoles(tenantId, roles);
