@@ -1,0 +1,6 @@
+{
+    "credentials": {
+      "username": "${username}",
+      "key": "${apikey}"
+    }
+}
