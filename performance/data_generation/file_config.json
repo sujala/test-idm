@@ -1,0 +1,31 @@
+[{
+    "users" : 700,
+    "region" : "us",
+    "name": "mossoid_staging.dat",
+    "columns": ["mossoid", "ipaddress"],
+    "column_mappings" : {"mossoid":"mossoId"}
+},{
+    "users" : 700,
+    "region" : "us",
+    "name": "nastid_staging.dat",
+    "columns": ["ipaddress", "nastid"],
+    "column_mappings" : {}
+},{
+    "users" : 700,
+    "region" : "us",
+    "name": "user_id.dat",
+    "columns": ["userid", "ipaddress"],
+    "column_mappings" : {"userid":"userId"}
+},{
+    "users" : 700,
+    "region" : "us",
+    "name": "users.dat",
+    "columns": ["username","apikey","ipaddress"],
+    "column_mappings" : {}
+},{
+    "users" : 200,
+    "region" : "us",
+    "name": "dom_users_for_fed.dat",
+    "columns": ["username","apikey","ipaddress", "domainid"],
+    "column_mappings" : {}
+}]

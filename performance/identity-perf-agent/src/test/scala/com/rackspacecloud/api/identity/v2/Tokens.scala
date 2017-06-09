@@ -47,8 +47,8 @@ object Tokens {
   val originCredential = SamlCredentialUtils.getSigningCredential(originPublicKey, originPrivateKey)
   val generator = new FederatedDomainAuthRequestGenerator(brokerCredential, originCredential)
 
-  val usersFeeder = csv(DATA_LOCATION + "data/identity/users_tokens.dat").circular
-  val usersFeeder_v20_admin = csv(DATA_LOCATION + "data/identity/admin_users_tokens.dat").circular
+  val usersFeeder = csv(DATA_LOCATION + "data/identity/users.dat").circular
+  val usersFeeder_v20_admin = csv(DATA_LOCATION + "data/identity/admin_users.dat").circular
   val mossoIDFeeder = csv(DATA_LOCATION + "data/identity/mossoid_staging.dat").circular
   val nastIDFeeder = csv(DATA_LOCATION + "data/identity/nastid_staging.dat").circular
   val userIDFeeder = csv(DATA_LOCATION + "data/identity/user_id.dat").circular

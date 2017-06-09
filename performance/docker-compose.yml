@@ -1,0 +1,98 @@
+cloudFeeds:
+    image: docker.ciidentity.com/cloud-feeds
+    ports:
+        - 8888:8080
+    environment:
+        HOST: cloudFeeds:8080
+
+edir:
+    image: docker.ciidentity.com/e-directory-instance
+    ports:
+        - 20636:636
+        - 10389:389
+
+directory:
+    image: docker.ciidentity.com/ca-directory-instance-sp18
+    ports:
+        - 10636:10636
+    environment:
+        NEXUS_HOST: http://d-build1.iad2.corp.rackspace.com:8100
+        VERSION: LATEST
+
+postfix:
+    image: docker.ciidentity.com/postfix
+    ports:
+        - 10025:10025
+
+identity:
+    image: docker.ciidentity.com/cloud-identity-instance
+    ports:
+        - 8079:8080
+    links:
+        - cloudFeeds
+        - edir
+        - directory
+        - postfix
+    environment:
+        NEXUS_HOST: http://d-build1.iad2.corp.rackspace.com:8100
+        VERSION: LATEST
+        SPRING_PROFILE: LDAP
+    volumes:
+        - ./keys:/etc/idm/config/keys
+
+repose:
+    image: docker.ciidentity.com/repose-instance:8.4.1.0
+    links:
+        - identity
+    ports:
+        - 8082:8080
+    environment:
+        NEXUS_HOST: http://d-build1.iad2.corp.rackspace.com:8100
+        VERSION: 3.11.0-1491846564159
+        IDENTITY_HOSTNAME: identity
+
+feedProcessor:
+    image: docker.ciidentity.com/feed-processor
+    links:
+        - repose:identity
+        - cloudFeeds
+        - customerMock
+    environment:
+        NEXUS_HOST: http://d-build1.iad2.corp.rackspace.com:8100
+        RPM_HOST: http://repo.staging.us.ccp.rackspace.net/identity-builds
+        VERSION: LATEST
+
+customerMock:
+    image: docker.ciidentity.com/mock-api
+    ports:
+        - 8091:8080
+
+
+identity_perf_agent:
+    image: "ubuntu:16.04"
+    volumes: 
+        - $PWD/identity-perf-agent:/root/identity-perf-agent
+    command: sleep 10d
+    links:
+        - repose
+
+scheduler:
+    image: "ubuntu:16.04"
+    volumes:
+        - $PWD/scheduler:/root/scheduler
+    ports:
+        - 9080:8080
+        - 3306:3306
+    command: sleep 10d
+
+controller:
+    image: "ubuntu:16.04"
+    volumes:
+        - $PWD/controller:/root/controller
+    volumes_from: 
+        - identity_perf_agent
+        - scheduler
+    links:
+        - identity_perf_agent
+        - scheduler
+    command: sleep 10d
