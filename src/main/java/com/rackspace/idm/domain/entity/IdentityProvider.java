@@ -69,6 +69,9 @@ public class IdentityProvider implements Auditable, UniqueId {
     @LDAPField(attribute = LdapRepository.ATTR_IDP_POLICY, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
     private byte[] policy;
 
+    @LDAPField(attribute = LdapRepository.ATTR_IDP_METADATA, objectClass = LdapRepository.OBJECTCLASS_EXTERNALPROVIDER, requiredForEncode = false)
+    private byte[] xmlMetadata;
+
     @Override
     public String getAuditContext() {
         String format = "identityProviderId=%s";

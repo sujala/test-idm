@@ -171,6 +171,7 @@ public abstract class LdapRepository {
     public static final String ATTR_GLOBAL = "rsGlobal";
     public static final String ATTR_OPENSTACK_TYPE = "openstackType";
     public static final String ATTR_IDP_POLICY = "rsIdpPolicy";
+    public static final String ATTR_IDP_METADATA = "rsIdpMetadata";
     public static final String ATTR_IMPERSONATING_USERNAME = "impersonatingUsername";
     public static final String ATTR_IMPERSONATING_RS_ID = "rsImpersonatingRsId";
     public static final String ATTR_IMPERSONATING_TOKEN = "impersonatingToken";

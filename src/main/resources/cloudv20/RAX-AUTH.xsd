@@ -1009,6 +1009,15 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="metadata" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The metadata of the provider.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
     </complexType>
 
     <complexType name="IdentityProviders">

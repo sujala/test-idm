@@ -1111,6 +1111,13 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.141) = {
     description = "Hashed versions of a users previous passwords"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.142) = {
+    name = rsIdpMetadata
+    ldap-names = rsIdpMetadata
+    syntax = octetString
+    description = "Metadata of identity provider"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -1647,7 +1654,8 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.35) = {
         rsApprovedDomainGroup,
         rsApprovedDomainIds,
         rsAuthenticationUrl,
-        rsIdpPolicy
+        rsIdpPolicy,
+        rsIdpMetadata
 };
 
 schema set object-class (1.3.6.1.4.1.20988.2.2.36) = {
