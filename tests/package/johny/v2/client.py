@@ -60,11 +60,14 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 resp_json[const.ACCESS][const.SERVICE_CATALOG] = [
                     'not_implemented']
 
+                user = root[const.USER]
                 resp_json[const.ACCESS][const.USER] = {}
                 resp_json[const.ACCESS][const.USER][const.RAX_AUTH_DEFAULT_REGION] = 1 # noqa
-                resp_json[const.ACCESS][const.USER][const.ID] = '55'
+                resp_json[const.ACCESS][const.USER][const.ID] = \
+                    unicode(user.attrib[const.ID])
                 resp_json[const.ACCESS][const.USER][const.ROLES] = []
-                resp_json[const.ACCESS][const.USER][const.NAME] = 1
+                resp_json[const.ACCESS][const.USER][const.NAME] = \
+                    user.attrib[const.NAME]
 
                 return resp_json
             resp.json = types.MethodType(json, resp, type(resp))
@@ -540,6 +543,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             domainId=domain_id)
         resp = self.request('GET', url,
                             requestslib_kwargs=requestslib_kwargs)
+
         return resp
 
     def list_users_for_tenant(self, tenant_id, option=None,
@@ -1365,6 +1369,29 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             enabled = None
         resp = self.request(method='GET', url=url, params=enabled,
                             requestslib_kwargs=requestslib_kwargs)
+        if self.deserialize_format == const.XML:
+            def json(self):
+                resp_json = {}
+                resp_json[const.USERS] = []
+
+                root_string = resp.text.encode(const.ASCII)
+                root = objectify.fromstring(root_string)
+                user = root.user
+
+                item = {}
+                item[const.ID] = user.attrib[const.ID]
+                item[const.USERNAME] = user.attrib[const.USERNAME]
+                item[const.EMAIL] = user.attrib[const.EMAIL]
+                if user.attrib[const.ENABLED] == 'true':
+                    item[const.ENABLED] = True
+                else:
+                    item[const.ENABLED] = False
+
+                resp_json[const.USERS].append(item)
+                return resp_json
+
+            resp.json = types.MethodType(json, resp, type(resp))
+
         return resp
 
     def create_idp(self, request_object, requestslib_kwargs=None):

@@ -34,14 +34,13 @@ class AuthAndValidateTokens(base.TestBaseV2):
         super(AuthAndValidateTokens, self).setUp()
         self.user_ids = []
         self.tenant_ids = []
-        self.domain_ids = []
         self.acct_info = self.create_user_with_tenant_id()
 
     def create_user_with_tenant_id(self):
         # Create a userAdmin with tenantId
         username = self.generate_random_string(
             pattern=const.USER_ADMIN_PATTERN)
-        domain_id = self.generate_random_string(
+        self.domain_id = self.generate_random_string(
             pattern=const.NUMERIC_DOMAIN_ID_PATTERN)
         input_data = {'email': const.EMAIL_RANDOM,
                       'secret_qa': {
@@ -49,14 +48,13 @@ class AuthAndValidateTokens(base.TestBaseV2):
                               pattern=const.LOWER_CASE_LETTERS),
                           const.SECRET_ANSWER: self.generate_random_string(
                               pattern=const.UPPER_CASE_LETTERS)},
-                      'domain_id': domain_id}
+                      'domain_id': self.domain_id}
         req_obj = requests.UserAdd(user_name=username, **input_data)
 
         resp = self.identity_admin_client.add_user(request_object=req_obj)
         self.assertEqual(resp.status_code, 201)
         create_user_with_tenant_resp = responses.User(resp.json())
         self.user_ids.append(create_user_with_tenant_resp.id)
-        self.domain_ids.append(domain_id)
         password = resp.json()[const.USER][const.NS_PASSWORD]
 
         # Get user's tenant ID
@@ -91,7 +89,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
             self.assertSchema(response=resp,
                               json_schema=groups_json.list_groups)
 
-    @attr(type='smoke')
+    @attr(type='smoke_alpha')
     def test_auth_with_api_key(self):
         username = self.acct_info['username']
         user_id = self.acct_info['user_id']
@@ -169,13 +167,37 @@ class AuthAndValidateTokens(base.TestBaseV2):
             self.assertSchema(response=resp,
                               json_schema=tokens_json.validate_token)
 
+    @base.base.log_tearDown_error
     def tearDown(self):
-        for user_id in self.user_ids:
-            self.identity_admin_client.delete_user(user_id=user_id)
-        for tenant_id in self.tenant_ids:
-            self.identity_admin_client.delete_tenant(tenant_id=tenant_id)
-        for domain_id in self.domain_ids:
-            self.identity_admin_client.delete_domain(domain_id=domain_id)
+        resp = self.identity_admin_client.list_users_in_domain(
+            domain_id=self.domain_id)
+        users = resp.json()[const.USERS]
+        user_ids = [item[const.ID] for item in users]
+        for user_id in user_ids:
+            resp = self.identity_admin_client.delete_user(user_id=user_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(user_id))
+
+        resp = self.identity_admin_client.list_tenants_in_domain(
+            domain_id=self.domain_id)
+
+        if resp.status_code == 200:
+            tenants = resp.json()[const.TENANTS]
+            tenant_ids = [item[const.ID] for item in tenants]
+            for tenant_id in tenant_ids:
+                resp = self.identity_admin_client.delete_tenant(
+                    tenant_id=tenant_id)
+                self.assertEqual(
+                    resp.status_code, 204,
+                    msg='Tenant with ID {0} failed to delete'.format(
+                        tenant_id))
+
+        resp = self.identity_admin_client.delete_domain(
+            domain_id=self.domain_id)
+        self.assertEqual(
+            resp.status_code, 204,
+            msg='Domain with ID {0} failed to delete'.format(self.domain_id))
 
     @classmethod
     def tearDownClass(cls):
