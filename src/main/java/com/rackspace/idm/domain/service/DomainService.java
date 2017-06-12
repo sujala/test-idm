@@ -7,13 +7,6 @@ import com.rackspace.idm.domain.entity.User;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: matt.colton
- * Date: 8/6/12
- * Time: 3:38 PM
- * To change this template use File | Settings | File Templates.
- */
 public interface DomainService {
 
     void addDomain(Domain domain);

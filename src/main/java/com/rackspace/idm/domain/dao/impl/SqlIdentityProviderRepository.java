@@ -40,6 +40,11 @@ public class SqlIdentityProviderRepository implements IdentityProviderDao {
     }
 
     @Override
+    public IdentityProvider getIdentityProviderWithMetadataById(String id) {
+        throw new NotImplementedException();
+    }
+
+    @Override
     public IdentityProvider getIdentityProviderApprovedForDomain(String name, String domainId) {
         throw new NotImplementedException();
     }

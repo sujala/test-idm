@@ -68,6 +68,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.naming.ServiceUnavailableException;
@@ -131,6 +132,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String UPDATE_USER_CANNOT_UPDATE_HIGHER_LEVEL_USER_ERROR_MESSAGE = "Cannot update user with same or higher access level";
     public static final String USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE = "A user's username cannot be updated.";
     public static final String ERROR_CANNOT_UPDATE_USER_WITH_HIGHER_ACCESS = "Cannot update user with same or higher access level";
+
+    public static final String RAX_STATUS_RESTRICTED_GROUP_NAME = "rax_status_restricted";
+    public static final String METADATA_NOT_FOUND_ERROR_MESSAGE = "No metadata found for identity provider '%s'.";
 
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
@@ -1351,7 +1355,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // Verify user's groups
             for (Group group : userService.getGroupsForUser(caller.getId())) {
-                if (group.getName().equals("rax_status_restricted")) {
+                if (group.getName().equalsIgnoreCase(RAX_STATUS_RESTRICTED_GROUP_NAME)) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
@@ -1560,6 +1564,90 @@ public class DefaultCloud20Service implements Cloud20Service {
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
+    }
+
+    @Override
+    public ResponseBuilder getIdentityProvidersMetadata(HttpHeaders httpHeaders, String authToken, String providerId) {
+        try {
+            // Verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+
+            // Verify domain for user
+            if (StringUtils.isBlank(caller.getDomainId()) || caller.getDomainId().equals(identityConfig.getReloadableConfig().getGroupDefaultDomainId())
+                    || caller.getDomainId().equals(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
+            com.rackspace.idm.domain.entity.IdentityProvider identityProvider;
+            if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()))) {
+
+                // Verify user's groups
+                for (Group group : userService.getGroupsForUser(caller.getId())) {
+                    if (group.getName().equalsIgnoreCase(RAX_STATUS_RESTRICTED_GROUP_NAME)) {
+                        throw new ForbiddenException(NOT_AUTHORIZED);
+                    }
+                }
+
+                identityProvider = federatedIdentityService.checkAndGetIdentityProvider(providerId);
+
+                List<String> approvedDomainIds = identityProvider.getApprovedDomainIds();
+                if (approvedDomainIds == null || approvedDomainIds.size() != 1) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+
+                if (!approvedDomainIds.get(0).equals(caller.getDomainId())) {
+                    // Verify domain within the same RCN as the IDP's approvedDomainId if user has the "rcn:admin" role
+                    if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.RCN_ADMIN.getRoleName())) {
+                        Domain callerDomain = domainService.getDomain(caller.getDomainId());
+                        Domain idpApprovedDomain = domainService.getDomain(approvedDomainIds.get(0));
+
+                        if (!assertDomainsBelongToRcn(callerDomain, idpApprovedDomain)) {
+                            throw new ForbiddenException(NOT_AUTHORIZED);
+                        }
+                    } else {
+                        throw new ForbiddenException(NOT_AUTHORIZED);
+                    }
+                }
+            } else {
+                authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                        IdentityRole.IDENTITY_PROVIDER_READ_ONLY.getRoleName(),
+                        IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName()));
+                federatedIdentityService.checkAndGetIdentityProvider(providerId);
+            }
+
+            identityProvider = federatedIdentityService.getIdentityProviderWithMetadataById(providerId);
+            if (identityProvider.getXmlMetadata() == null) {
+                throw new NotFoundException(String.format(METADATA_NOT_FOUND_ERROR_MESSAGE, providerId));
+            }
+
+            Document xmlDocument;
+            try {
+                xmlDocument = identityProviderConverterCloudV20.getXMLDocument(identityProvider.getXmlMetadata());
+            } catch (BadRequestException ex) {
+                String errMsg = String.format("Failed to convert stored metadata for Identity provider %s to XML.", providerId);
+                logger.error(errMsg);
+                throw new UnrecoverableIdmException(errMsg);
+            }
+            return Response.ok(xmlDocument);
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private boolean assertDomainsBelongToRcn(Domain... domains) {
+        Set<String> rcn = new HashSet<>();
+        for(Domain domain : domains) {
+            if (domain == null || domain.getRackspaceCustomerNumber() == null ) {
+                return false;
+            } else {
+                rcn.add(domain.getRackspaceCustomerNumber());
+            }
+        }
+        return rcn.size() == 1;
     }
 
     @Override

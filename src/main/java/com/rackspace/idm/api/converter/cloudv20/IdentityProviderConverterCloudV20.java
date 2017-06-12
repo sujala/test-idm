@@ -88,7 +88,8 @@ public class IdentityProviderConverterCloudV20 {
     }
 
     public IdentityProvider toIdentityProvider(byte[] metadata, String domainId) {
-        EntityDescriptor entityDescriptor = getEntityDescriptor(getXMLRootElement(metadata));
+        Document xmlDocument = getXMLDocument(metadata);
+        EntityDescriptor entityDescriptor = getEntityDescriptor(xmlDocument.getDocumentElement());
         if (entityDescriptor == null) {
             throw new BadRequestException("Invalid XML metadata file.");
         }
@@ -142,20 +143,20 @@ public class IdentityProviderConverterCloudV20 {
         return identityProvider;
     }
 
-    public Element getXMLRootElement(byte[] data) {
+    public Document getXMLDocument(byte[] data) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document metadataDoc = builder.parse(new ByteArrayInputStream(data));
-            return metadataDoc.getDocumentElement();
+            return metadataDoc;
         } catch (SAXException | ParserConfigurationException | IOException e) {
             String errMsg = "Invalid XML";
             throw new BadRequestException(errMsg, e);
         }
     }
 
-    private EntityDescriptor getEntityDescriptor(Element element) {
+    public EntityDescriptor getEntityDescriptor(Element element) {
         // Parse XML metadata file
         try {
             // Get apropriate unmarshaller

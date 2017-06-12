@@ -19,6 +19,14 @@ public interface IdentityProviderDao {
     IdentityProvider getIdentityProviderByName(String name);
 
     /**
+     * Return the identity provider by id with only metadata attribute populated.
+     *
+     * @param id
+     * @return
+     */
+    IdentityProvider getIdentityProviderWithMetadataById(String id);
+
+    /**
      * Return the identity provider by name that can received tokens for the given domainId
      *
      * @param name
