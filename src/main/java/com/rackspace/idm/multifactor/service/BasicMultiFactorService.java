@@ -1,6 +1,8 @@
 package com.rackspace.idm.multifactor.service;
 
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Trace;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.identity.multifactor.domain.*;
 import com.rackspace.identity.multifactor.providers.*;
@@ -702,6 +704,7 @@ public class BasicMultiFactorService implements MultiFactorService {
         }
     }
 
+    @Trace
     @Override
     public void sendSmsPasscode(String userId) {
         User user = userService.checkAndGetUserById(userId);
@@ -721,6 +724,7 @@ public class BasicMultiFactorService implements MultiFactorService {
      * @param passcode
      * @return
      */
+    @Trace
     @Override
     public MfaAuthenticationResponse verifyPasscode(String userId, String passcode) {
         User user = userService.checkAndGetUserById(userId);

@@ -1,6 +1,8 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.google.i18n.phonenumbers.Phonenumber;
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Trace;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice;
 import com.rackspace.identity.multifactor.domain.BasicPin;
@@ -15,6 +17,7 @@ import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.MultiFactorDeviceConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.OTPDeviceConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.NewRelicTransactionNames;
 import com.rackspace.idm.api.resource.cloud.email.EmailClient;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionIdReaderWriter;
@@ -330,8 +333,19 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         }
     }
 
+    @Trace
     @Override
     public Response.ResponseBuilder performMultiFactorChallenge(User user, List<String> alreadyAuthenticatedBy) {
+        try {
+            if (multiFactorService.isMultiFactorTypeOTP(user)) {
+                NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthMfaFirstOtp.getTransactionName());
+            } else if (multiFactorService.isMultiFactorTypePhone(user)) {
+                NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthMfaFirstSms.getTransactionName());
+            }
+        } catch (Exception ex) {
+            // Eat
+        }
+
         if (multiFactorService.isUserLocalLocked(user)) {
             throw new NotAuthorizedException(INVALID_CREDENTIALS_LOCKOUT_ERROR_MSG);
         }
@@ -393,6 +407,7 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         return String.format(HEADER_WWW_AUTHENTICATE_VALUE, sessionId, factor);
     }
 
+    @Trace
     @Override
     public AuthResponseTuple authenticateSecondFactor(String encodedSessionId, CredentialType credential) {
         if (!(credential instanceof PasscodeCredentials)) {
@@ -453,7 +468,17 @@ public class DefaultMultiFactorCloud20Service implements MultiFactorCloud20Servi
         User user = userService.getUserById(userId);
         if (user != null) {
             requestContextHolder.getAuthenticationContext().setUsername(user.getUsername());
+            try {
+                if (multiFactorService.isMultiFactorTypeOTP(user)) {
+                    NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthMfaSecondOtp.getTransactionName());
+                } else if (multiFactorService.isMultiFactorTypePhone(user)) {
+                    NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthMfaSecondSms.getTransactionName());
+                }
+            } catch (Exception ex) {
+                // Eat
+            }
         }
+
         userService.validateUserIsEnabled(user);
 
         //TODO: FIXME: pass the user not the ID

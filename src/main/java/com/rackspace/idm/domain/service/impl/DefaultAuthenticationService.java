@@ -1,5 +1,7 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Trace;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.error.ApiError;
 import com.rackspace.idm.audit.Audit;
@@ -56,6 +58,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Trace
     @Override
     public UserAuthenticationResult authenticateDomainUsernamePassword(String username, String password, Domain domain) {
         // ToDo: Check what Domain to authenticate against, default Rackers
@@ -65,6 +68,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
         return authenticateRacker(username, password, false);
     }
 
+    @Trace
     @Override
     public UserAuthenticationResult authenticateDomainRSA(String username, String tokenkey, Domain domain) {
         // ToDo: Check what Domain to authenticate against, default Rackers

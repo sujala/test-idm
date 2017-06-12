@@ -263,6 +263,8 @@ dependencies {
         exclude(module: 'avalon-framework', group: 'org.slf4j')
         exclude(module: 'slf4j-api', group: 'org.slf4j')
     }
+
+    compile 'com.newrelic.agent.java:newrelic-api:3.29.0'
 }
 
 task copyConfig(type: Copy) {
@@ -388,6 +390,9 @@ gretty {
     servletContainer = "tomcat7"
     systemProperty 'idm.properties.location', System.getProperty('idm.properties.location', 'build/config/VAGRANT')
     debugSuspend = false
+
+    // Uncomment this when want to submit new relic metrics to new relic. Need new relic config
+    // jvmArgs = ["-javaagent:/etc/idm/newrelic/newrelic.jar"]
 }
 
 artifacts {

@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
 import com.google.common.collect.ImmutableList;
+import com.newrelic.api.agent.NewRelic;
 import com.rackspace.docs.core.event.EventType;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
@@ -15,6 +16,7 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.*;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.NewRelicTransactionNames;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
@@ -937,6 +939,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         RackerScopeAccess rsa;
         List<String> authenticatedBy = new ArrayList<String>();
         if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
+            NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthRackerPwd.getTransactionName());
             PasswordCredentialsBase creds = (PasswordCredentialsBase) authenticationRequest.getCredential().getValue();
             creds.setUsername(creds.getUsername().trim());
             validator20.validatePasswordCredentials(creds);
@@ -945,6 +948,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             racker = (Racker) result.getUser();
             authenticatedBy.add(GlobalConstants.AUTHENTICATED_BY_PASSWORD);
         } else if (authenticationRequest.getCredential().getValue() instanceof RsaCredentials) {
+            NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthRackerRsa.getTransactionName());
             RsaCredentials creds = (RsaCredentials) authenticationRequest.getCredential().getValue();
             creds.setUsername(creds.getUsername().trim());
             validator20.validateUsername(creds.getUsername());
@@ -1113,6 +1117,8 @@ public class DefaultCloud20Service implements Cloud20Service {
 
 
     public Response.ResponseBuilder authenticateInternal(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest, boolean applyRcnRoles) {
+        NewRelic.setTransactionName(null, NewRelicTransactionNames.V2Auth.getTransactionName());
+
         /*
          TODO: Refactor this method. It's getting messy. Wait till after MFA though to avoid making it too difficult to follow the mfa changes
         */
@@ -1127,8 +1133,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             // Check for domain in request
             com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain = authenticationRequest.getDomain();
             if(domain != null) {
-                // Scoped tokens not supported here
+                // Racker Auth
                 if (authenticationRequest.getScope() != null) {
+                    // Scoped tokens not supported here
                     throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
                 }
 
@@ -1137,6 +1144,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             if (authenticationRequest.getCredential() != null && authenticationRequest.getCredential().getValue() instanceof PasscodeCredentials) {
+                NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthMfaSecond.getTransactionName());
+
                 // Scoped tokens not supported here
                 if (authenticationRequest.getScope() != null) {
                     throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
@@ -1155,6 +1164,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
             else if (authenticationRequest.getToken() != null) {
+                NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthWithToken.getTransactionName());
                 // Scoped tokens not supported here
                 if (authenticationRequest.getScope() != null) {
                     throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
@@ -1165,9 +1175,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 boolean canUseMfaWithCredential = false;
                 UserAuthenticationFactor userAuthenticationFactor = null;
                 if (authenticationRequest.getCredential().getValue() instanceof PasswordCredentialsBase) {
+                    String tname = applyRcnRoles ? NewRelicTransactionNames.V2AuthWithPwdRcn.getTransactionName() : NewRelicTransactionNames.V2AuthWithPwd.getTransactionName();
+                    NewRelic.setTransactionName(null, tname);
                     userAuthenticationFactor = authWithPasswordCredentials;
                     canUseMfaWithCredential = true;
                 } else if (authenticationRequest.getCredential().getDeclaredType().isAssignableFrom(ApiKeyCredentials.class)) {
+                    NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthWithApi.getTransactionName());
                     userAuthenticationFactor = authWithApiKeyCredentials;
                 }
                 else {
@@ -1177,6 +1190,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 UserAuthenticationResult authResult = userAuthenticationFactor.authenticate(authenticationRequest);
 
                 if (canUseMfaWithCredential && ((User)authResult.getUser()).isMultiFactorEnabled()) {
+                    NewRelic.setTransactionName(null, NewRelicTransactionNames.V2AuthMfaFirst.getTransactionName());
                     // Scoped tokens not supported here
                     if (authenticationRequest.getScope() != null) {
                         throw new ForbiddenException(SETUP_MFA_SCOPE_FORBIDDEN);
@@ -4306,6 +4320,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     // Core Admin Token Methods
     private ResponseBuilder validateTokenInternal(HttpHeaders httpHeaders, String authToken, String tokenId, String tenantId, boolean applyRcnRoles) {
         try {
+            NewRelic.setTransactionName(null, NewRelicTransactionNames.V2Validate.getTransactionName());
             final boolean sameToken = StringUtils.equals(authToken, tokenId);
 
             // User can validate his own token (B-80571:TK-165775).
@@ -4323,11 +4338,18 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new NotFoundException("Token not found.");
             }
 
-            final ScopeAccess sa = checkAndGetToken(tokenId); //throws not found exception if token can't not be decrypted
-            //no scoped tokens can currently be validated through the v2 validate call
+            final ScopeAccess sa = checkAndGetToken(tokenId); // Throws not found exception if token can't not be decrypted
+
+            /*
+             Scoped tokens can not currently be validated through the v2 validate call. This is because external systems
+             have been accustomed to a 200 meaning the token is valid for anything, whereas scoped tokens have limited
+             functionality (currently within Identity only) and should not be considered valid user tokens in general.
+              */
             if (sa.isAccessTokenExpired(new DateTime()) || StringUtils.isNotBlank(sa.getScope())) {
                 throw new NotFoundException("Token not found.");
             }
+
+            setNewRelicTransactionNameForValidateToken(sa, applyRcnRoles);
 
             AuthenticateResponse authenticateResponse;
             if (sa instanceof RackerScopeAccess) {
@@ -4349,6 +4371,32 @@ public class DefaultCloud20Service implements Cloud20Service {
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createAccess(authenticateResponse).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    private void setNewRelicTransactionNameForValidateToken(ScopeAccess token, boolean applyRcnRoles) {
+        boolean isFederatedToken = token.getAuthenticatedBy().contains(AuthenticatedByMethodEnum.FEDERATION.getValue());
+
+        String transactionName = null;
+        if (token instanceof RackerScopeAccess) {
+            if (isFederatedToken) {
+                transactionName = NewRelicTransactionNames.V2ValidateFederatedRacker.getTransactionName();
+            } else {
+                transactionName = NewRelicTransactionNames.V2ValidateRacker.getTransactionName();
+            }
+        } else if (token instanceof UserScopeAccess) {
+            if (isFederatedToken) {
+                transactionName = NewRelicTransactionNames.V2ValidateFederatedDomain.getTransactionName();
+            } else if (applyRcnRoles) {
+                transactionName = NewRelicTransactionNames.V2ValidateDomainRcn.getTransactionName();
+            } else {
+                transactionName = NewRelicTransactionNames.V2ValidateDomain.getTransactionName();
+            }
+        } else if (token instanceof ImpersonatedScopeAccess) {
+            transactionName =  NewRelicTransactionNames.V2ValidateImpersonation.getTransactionName();
+        }
+        if (StringUtils.isNotEmpty(transactionName)) {
+            NewRelic.setTransactionName(null, transactionName);
         }
     }
 

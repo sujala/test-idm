@@ -152,7 +152,7 @@ class DefaultMultiFactorCloud20ServiceDuoFailureIntegrationTest extends RootConc
 
         then:
         1 * mockedBasicMultiFactorService.sendSmsPasscode(_) >> {throw new DuoLockedOutException(new FailureResult(0, "status", "message"))}
-        1 * mockedBasicMultiFactorService.isMultiFactorTypePhone(_) >> true
+        mockedBasicMultiFactorService.isMultiFactorTypePhone(_) >> true
         thrown(ForbiddenException)
 
         cleanup:
