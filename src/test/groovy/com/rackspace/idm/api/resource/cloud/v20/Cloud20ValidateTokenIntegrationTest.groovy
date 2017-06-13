@@ -811,9 +811,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
      */
     def "Validation uses cached roles"() {
         given:
-        //disable performant catalog so authentication won't populate the cache
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, false)
-
         def domainId = utils.createDomain()
         def user, users1
         (user, users1) = utils.createUserAdmin(domainId)

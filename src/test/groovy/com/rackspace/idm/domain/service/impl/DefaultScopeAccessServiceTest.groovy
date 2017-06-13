@@ -1,31 +1,16 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.ImpersonatorType
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.UUIDScopeAccessDao
-import com.rackspace.idm.domain.entity.Application
-import com.rackspace.idm.domain.entity.CloudBaseUrl
-import com.rackspace.idm.domain.entity.OpenstackEndpoint
-import com.rackspace.idm.domain.entity.Racker
-import com.rackspace.idm.domain.entity.UserAuthenticationResult
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.security.TokenFormat
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum
-import com.rsa.cryptoj.c.uu
 import com.unboundid.util.LDAPSDKUsageException
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
+import org.joda.time.DateTime
 import spock.lang.Ignore
 import spock.lang.Shared
-import com.rackspace.idm.domain.entity.ScopeAccess
-import org.joda.time.DateTime
-import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.rackspace.idm.domain.entity.RackerScopeAccess
-import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest
-import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 class DefaultScopeAccessServiceTest extends RootServiceTest {
@@ -960,35 +945,6 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
         }
     }
 
-    def "Duplicate tenant reference in roles doesn't create duplicate endpoints" (){
-        given:
-        mockAuthorizationService(service)
-        mockIdentityConfig(service)
-        def role = Mock(com.rackspace.idm.domain.entity.TenantRole)
-        def listRoles = [role, role].asList()
-        def token = Mock(ScopeAccess)
-        def endPoint = Mock(OpenstackEndpoint)
-        def tenant = Mock(com.rackspace.idm.domain.entity.Tenant)
-        def tenant2 = Mock(com.rackspace.idm.domain.entity.Tenant)
-
-        tenantService.getTenantRolesForUser(_) >>listRoles
-        tenantService.getTenant(_)>>>[tenant, tenant2];
-        role.getTenantIds() >> ["1"].asList()
-        endPoint.getBaseUrls() >> [Mock(CloudBaseUrl)].asList()
-        endpointService.getOpenStackEndpointForTenant(_, _, _,_) >> endPoint
-        identityConfig.reloadableConfig.getFeatureGlobalEndpointsForAllRoles() >> false
-        applicationService.getById(_) >> new Application().with {
-            it.openStackType = "compute"
-            it
-        }
-
-        when:
-        def endPointList = service.getOpenstackEndpointsForScopeAccess(token)
-
-        then:
-        endPointList.size() == 1
-    }
-
     def "Verify provision user scope access adds token expiration entropy"() {
         when:
         def range = getRange(exSeconds, entropy)
@@ -1146,27 +1102,7 @@ class DefaultScopeAccessServiceTest extends RootServiceTest {
 
     }
 
-    def "Retrieving service catalog info for user uses legacy or performant version based on performant property"() {
-        given:
-        def fakeUser = new User()
-
-        when: "Set to false"
-        reloadableConfig.usePerformantServiceCatalog() >> false
-        service.getServiceCatalogInfo(fakeUser)
-
-        then: "Do not use the performant version"
-        0 * identityUserService.getServiceCatalogInfo(_)
-        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
-
-        when: "Set to true"
-        reloadableConfig.usePerformantServiceCatalog() >> true
-        service.getServiceCatalogInfo(fakeUser)
-
-        then: "Use the performant version"
-        1 * identityUserService.getServiceCatalogInfo(_)
-    }
-
-        def getRange(seconds, entropy) {
+    def getRange(seconds, entropy) {
         /*
         to account for processing time, add +- the fudgeSeconds to the calculated range.
 

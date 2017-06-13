@@ -40,9 +40,6 @@ class TestRCNAccountManagement(base.TestBaseV2):
         cls.feature_flag_value, cls.feature_flag_default_value = (
             cls.get_feature_flag_value_and_default_value(flag_name=(
                 const.FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED)))
-        cls.perf_feature_flag_value, cls.feature_flag_default_value = (
-            cls.get_feature_flag_value_and_default_value(flag_name=(
-                const.FEATURE_PERFORMANT_SERVICE_CATALOG)))
 
     @classmethod
     def get_feature_flag_value_and_default_value(self, flag_name):
@@ -60,9 +57,6 @@ class TestRCNAccountManagement(base.TestBaseV2):
             self.skipTest('Skipping Service Admin Tests per config value')
         if not self.test_config.run_local_and_jenkins_only:
             self.skipTest('Skipping local and jenkins run tests')
-        if self.perf_feature_flag_value:
-            self.skipTest('Skipping testing generic global endpoints as' +
-                          ' feature is disabled')
         # hard code to get specific service for compute
         self.SERVICE_NAME = 'cloudServers'
         self.service_id = self.get_service_id_by_name(
@@ -97,7 +91,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
         return user_id, resp
 
     def create_tenant(self):
-        tenant_types = ['type1']
+        tenant_types = ['cloud']
         tenant_name = self.generate_random_string(
             pattern=const.NUMBERS_PATTERN)
         tenant_req = factory.get_add_tenant_request_object(
@@ -253,6 +247,10 @@ class TestRCNAccountManagement(base.TestBaseV2):
             Compute Role (ROLE_ID1) comes before identity role (ROLE_ID2)
             new global endpoint in service catalog
         """
+
+        self.skipTest('Skipping testing generic global endpoints as' +
+                      ' feature is disabled')
+
         # get compute role
         role_id1 = self.get_role_by_name(role_name=self.ROLE_NAME2)
         # get identity role

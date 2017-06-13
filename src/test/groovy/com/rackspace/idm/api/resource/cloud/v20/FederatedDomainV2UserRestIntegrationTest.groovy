@@ -197,9 +197,6 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
      */
     def "Federated Authentication uses cached roles"() {
         given:
-        //without performant catalog, doesn't matter what cache role feature is set to
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-
         // Create Fed assignable role
         def originalRole = utils.createRole()
 

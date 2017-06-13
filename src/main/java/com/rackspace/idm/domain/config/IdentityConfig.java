@@ -354,9 +354,6 @@ public class IdentityConfig {
     public static final String SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP = "session.inactivity.timeout.min.duration";
     public static final Duration SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_DEFAULT = Duration.parse("PT5M");
 
-    public static final String FEATURE_PERFORMANT_SERVICE_CATALOG_PROP = "feature.performant.service.catalog";
-    public static final boolean FEATURE_PERFORMANT_SERVICE_CATALOG_DEFAULT = true;
-
     public static final String FEATURE_INFER_DEFAULT_TENANT_TYPE_PROP = "feature.infer.default.tenant.type";
     public static final boolean FEATURE_INFER_DEFAULT_TENANT_TYPE_DEFAULT = true;
 
@@ -681,7 +678,6 @@ public class IdentityConfig {
         defaults.put(FEEDS_CONNECTION_KEEP_ALIVE_MS_PROP, FEEDS_CONNECTION_KEEP_ALIVE_MS_DEFAULT);
 
         defaults.put(FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_PROP, FEATURE_ALLOW_UPDATING_APPROVED_DOMAIN_IDS_FOR_IDP_DEFAULT);
-        defaults.put(FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, FEATURE_PERFORMANT_SERVICE_CATALOG_DEFAULT);
 
         defaults.put(DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_PROP, DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT);
         defaults.put(SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_PROP, SESSION_INACTIVITY_TIMEOUT_MAX_DURATION_DEFAULT);
@@ -1985,11 +1981,6 @@ public class IdentityConfig {
         @IdmProp(key = SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP, versionAdded = "3.11.0", description = "Session inactivity timeout min duration in ISO 8601 format.")
         public Duration getSessionInactivityTimeoutMinDuration() {
             return getDurationSafely(reloadableConfiguration, SESSION_INACTIVITY_TIMEOUT_MIN_DURATION_PROP);
-        }
-
-        @IdmProp(key = FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, versionAdded = "3.11.0" , description = "Whether or not to use the performant version of the service catalog.")
-        public boolean usePerformantServiceCatalog() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_PERFORMANT_SERVICE_CATALOG_PROP);
         }
 
         @IdmProp(key = PASSWORD_HISTORY_MAX_PROP, versionAdded = "3.12.0" , description = "The maximum number of password history entries Identity will store for a user. Will actually store 1 more than this to include the 'current' password.")

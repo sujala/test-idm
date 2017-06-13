@@ -48,9 +48,6 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
     def "Retrieving service catalog info uses cached roles"() {
         given:
 
-        // Without performant catalog, doesn't matter what cache role feature is set to
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-
         // Create user to test with
         def domainId = utils.createDomain()
         def user, users1
@@ -94,8 +91,6 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
      */
     def "getServiceCatalogInfoApplyRcnRoles - Assigns non-RCN global roles to local tenants on cloud account"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-
         org.openstack.docs.identity.api.v2.User userAdmin = utils.createCloudAccount(utils.getIdentityAdminToken())
         def userEntity = userService.getUserById(userAdmin.id)
         def tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), userEntity.domainId).getEntity(Tenants).value
@@ -124,8 +119,6 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
      */
     def "getServiceCatalogInfoApplyRcnRoles - Assigns RCN roles to local tenants on cloud account"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-
         org.openstack.docs.identity.api.v2.User userAdmin = utils.createCloudAccount(utils.getIdentityAdminToken())
         def userEntity = userService.getUserById(userAdmin.id)
         def tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), userEntity.domainId).getEntity(Tenants).value
@@ -164,8 +157,6 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
      */
     def "getServiceCatalogInfoApplyRcnRoles - Assign multiple RCN roles to local tenants on cloud account"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-
         org.openstack.docs.identity.api.v2.User userAdmin = utils.createCloudAccount(utils.getIdentityAdminToken())
         def userEntity = userService.getUserById(userAdmin.id)
         def tenants = cloud20.getDomainTenants(utils.getIdentityAdminToken(), userEntity.domainId).getEntity(Tenants).value
@@ -215,8 +206,6 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
      */
     def "getServiceCatalogInfoApplyRcnRoles - Assigns RCN roles to all matching tenants within RCN"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-
         org.openstack.docs.identity.api.v2.User userAdmin1 = utils.createCloudAccount(utils.getIdentityAdminToken())
         org.openstack.docs.identity.api.v2.User userAdmin2 = utils.createCloudAccount(utils.getIdentityAdminToken())
 
@@ -338,10 +327,9 @@ class DefaultIdentityUserServiceIntegrationTest extends RootIntegrationTest {
      */
     def "getServiceCatalogInfoApplyRcnRoles - User in domain with no tenants returns no roles"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-
+        def domainId = utils.createDomain()
         def userAdmin, users
-        (userAdmin, users) = utils.createUserAdmin()
+        (userAdmin, users) = utils.createUserAdmin(domainId)
         def userEntity = userService.getUserById(userAdmin.id)
 
         when:

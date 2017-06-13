@@ -29,32 +29,6 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         reloadableConfiguration.reset()
     }
 
-    def "apply_rcn_roles logic only used when feature.performant.service.catalog is enabled"() {
-        given:
-        def user = utils.createCloudAccount(utils.getIdentityAdminToken())
-
-        when: "auth as standard user-admin with feature disabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, false)
-        AuthenticateResponse response = utils.authenticateApplyRcnRoles(user.username)
-
-        then: "identity:admin role is a global role"
-        def idAdminRole = response.user.roles.role.find {it.name == IdentityUserTypeEnum.USER_ADMIN.roleName}
-        idAdminRole != null
-        idAdminRole.getTenantId() == null
-
-        when: "auth as standard user-admin with feature enabled"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, true)
-        AuthenticateResponse response2 = utils.authenticateApplyRcnRoles(user.username)
-
-        then: "identity:user-admin role is not a global role"
-        def idAdminRole2 = response2.user.roles.role.find {it.name == IdentityUserTypeEnum.USER_ADMIN.roleName}
-        idAdminRole2 != null
-        idAdminRole2.getTenantId() != null
-
-        cleanup:
-        utils.deleteUserQuietly(user)
-    }
-
     /**
      * Tests whether the rcn role logic is applied to the user's roles based on query param. Does this by using
      * the user's Identity Classification role is denormalized and set on individual tenants as the canary
@@ -396,10 +370,10 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         where:
         applyRcnRoles << [true, false]
     }
+
     @Unroll
-    def "test list endpoints for token only returns RCN endpoints if feature.performant.service.catalog is enabled - perfCatalogEnabled = #perfCatalogEnabled"() {
+    def "test list endpoints for token only returns RCN endpoints"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, perfCatalogEnabled)
         def userInDomain1
         def userInDomain2
         (userInDomain1, userInDomain2) = createCloudAccountsInRcn()
@@ -424,22 +398,13 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         }
 
         and: "but only shows endpoints in the other domain when applying RCN roles and performant service catalog enabled"
-        if (perfCatalogEnabled) {
-            cloudTenant2Endpoint.getBaseUrls().each {baseUrl ->
-                assert listEndpointsReponse.endpoint.find { it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } != null
-            }
-        } else {
-            cloudTenant2Endpoint.getBaseUrls().each {baseUrl ->
-                assert listEndpointsReponse.endpoint.find { it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } == null
-            }
+        cloudTenant2Endpoint.getBaseUrls().each {baseUrl ->
+            assert listEndpointsReponse.endpoint.find { it.tenantId == cloudTenant2.id && it.publicURL == baseUrl.publicUrl } != null
         }
 
         cleanup:
         utils.deleteUserQuietly(userInDomain1)
         utils.deleteUserQuietly(userInDomain2)
-
-        where:
-        perfCatalogEnabled << [true, false]
     }
 
     /**
