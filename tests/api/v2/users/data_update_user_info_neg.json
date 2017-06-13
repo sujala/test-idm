@@ -5,24 +5,28 @@
     },
     "update_schema_fields": [
       "email"
-    ]
+    ],
+    "response_status": 400
   },
   "update_name": {
     "update_input": {
       "user_name": "api_test_newname123?"
     },
-    "update_schema_fields": []
+    "update_schema_fields": [],
+    "response_status": 403
   },
   "update_password": {
     "update_input": {
       "password": "test"
     },
-    "update_schema_fields": []
+    "update_schema_fields": [],
+    "response_status": 400
   },
   "update_password_2": {
     "update_input": {
       "password": "12134567778"
     },
-    "update_schema_fields": []
+    "update_schema_fields": [],
+    "response_status": 400
   }
 }

@@ -507,7 +507,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def getUserResponse = cloud20.getUser(serviceAdminToken, response.location)
         def userEntity = getUserResponse.getEntity(User).value
         //Update user
-        def userForUpdate = v2Factory.createUserForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
+        def userForUpdate = v2Factory.createUserForUpdate(null, null, "Bob", "test@rackspace.com", false, null, null)
         def updateUserResponse = cloud20.updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
         def updateUser = updateUserResponse.getEntity(User).value
         //Delete user
@@ -537,7 +537,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def getUserByNameResponse = cloud20.getUserByName(serviceAdminToken, userEntity.getUsername())
         def getUserByEmailResponse = cloud20.getUsersByEmail(serviceAdminToken, userEntity.getEmail())
         //Update User
-        def userForUpdate = v2Factory.createUserForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
+        def userForUpdate = v2Factory.createUserForUpdate(null, null, "Bob", "test@rackspace.com", false, null, null)
         def updateUserResponse = cloud20.updateUser(serviceAdminToken, userEntity.getId(), userForUpdate)
         //Delete user
         def deleteResponses = cloud20.deleteUser(serviceAdminToken, userEntity.getId())
@@ -679,7 +679,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def userEntity = getUserResponse.getEntity(User).value
 
         //Update User
-        def userForUpdate = v2Factory.createUserForUpdate(null, "updatedBob" + random, "Bob", "test@rackspace.com", false, null, null)
+        def userForUpdate = v2Factory.createUserForUpdate(null, null, "Bob", "test@rackspace.com", false, null, null)
         def updateUserResponse = cloud20.updateUser(defaultUserManageRoleToken, userEntity.getId(), userForUpdate)
 
         //Delete user

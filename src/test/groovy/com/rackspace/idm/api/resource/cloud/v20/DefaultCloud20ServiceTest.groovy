@@ -2257,7 +2257,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         service.userConverterCloudV20 = converter
 
         UserForCreate user = new UserForCreate().with {
-            it.username = "name"
             it.id = "2"
             it.enabled = false
             it.email = "someEmail@rackspace.com"
@@ -2507,7 +2506,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
         service.userConverterCloudV20 = Mock(UserConverterCloudV20)
         UserForCreate user = new UserForCreate().with {
-            it.username = "name"
             it.id = "2"
             it.enabled = true
             it.email = "someEmail@rackspace.com"
@@ -2539,7 +2537,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         allowUserAccess()
         service.userConverterCloudV20 = Mock(UserConverterCloudV20)
         UserForCreate user = new UserForCreate().with {
-            it.username = "name"
             it.id = "2"
             it.enabled = true
             it.email = "someEmail@rackspace.com"

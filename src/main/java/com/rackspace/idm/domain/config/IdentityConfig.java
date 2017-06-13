@@ -372,6 +372,9 @@ public class IdentityConfig {
     public static final String FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP = "feature.set.default.tenant.type.on.creation";
     public static final boolean FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_DEFAULT = false;
 
+    public static final String FEATURE_ALLOW_USERNAME_UPDATE_PROP = "feature.allow.username.updates";
+    public static final boolean FEATURE_ALLOW_USERNAME_UPDATE_DEFAULT = false;
+
 
     /**
      * Required static prop
@@ -690,6 +693,7 @@ public class IdentityConfig {
         defaults.put(FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_PROP, FEATURE_FORCE_STANDARD_V2_EXCEPTIONS_FOR_END_USER_SERVICES_DEFAULT);
         defaults.put(MAX_TENANT_TYPE_SIZE_PROP, MAX_TENANT_TYPE_SIZE_DEFAULT);
         defaults.put(FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP, FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_DEFAULT);
+        defaults.put(FEATURE_ALLOW_USERNAME_UPDATE_PROP, FEATURE_ALLOW_USERNAME_UPDATE_DEFAULT);
 
         defaults.put(NAST_TENANT_PREFIX_PROP, NAST_TENANT_PREFIX_DEFAULT);
 
@@ -2006,6 +2010,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP, versionAdded = "3.12.0", description = "Whether to set the default tenant type on the tenant upon creation based on the tenant name prefix.")
         public boolean shouldSetDefaultTenantTypeOnCreation() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SET_DEFAULT_TENANT_TYPE_ON_CREATION_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ALLOW_USERNAME_UPDATE_PROP, versionAdded = "3.13.0", description = "Whether to allow a provisioned user's username to be updated.")
+        public boolean isUsernameUpdateAllowed() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_USERNAME_UPDATE_PROP);
         }
 
         @IdmProp(key = IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP, versionAdded = "3.13.0", description = "Maximum number of explicit IDPs per domain")

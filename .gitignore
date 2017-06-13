@@ -29,3 +29,4 @@ rpmbuild/rpms
 rpmbuild/source
 src/*/resources/build_info.properties
 performance/identity-perf-agent/.idea
+tests/api/utils/keys/

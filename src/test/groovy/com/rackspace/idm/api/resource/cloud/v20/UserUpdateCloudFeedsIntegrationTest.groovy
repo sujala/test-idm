@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.core.event.EventType
+import org.apache.commons.lang.RandomStringUtils
 import org.mockserver.verify.VerificationTimes
 import testHelpers.RootIntegrationTest
 
@@ -43,7 +44,7 @@ class UserUpdateCloudFeedsIntegrationTest extends RootIntegrationTest {
 
         when:
         resetCloudFeedsMock()
-        user.username = testUtils.getRandomUUID("newUsername")
+        user.email = "${RandomStringUtils.randomAlphabetic(8)}@example.com"
         def response = cloud20.updateUser(utils.getIdentityAdminToken(), user.id, user)
 
         then:
