@@ -809,16 +809,10 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
      *
      * @return
      */
-    @Unroll
-    def "Validation uses cached roles based on reloadable property feature.use.cached.client.roles.for.validation: #useCachedRoles"() {
+    def "Validation uses cached roles"() {
         given:
-        // If either of these are 0 then cacheing is disabled altogether and this test would be pointless
-        assert identityConfig.getStaticConfig().getClientRoleByIdCacheTtl().toMillis() > 0
-        assert identityConfig.getStaticConfig().getClientRoleByIdCacheSize() > 0
-
         //disable performant catalog so authentication won't populate the cache
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_PERFORMANT_SERVICE_CATALOG_PROP, false)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_CACHED_CLIENT_ROLES_FOR_VALIDATE_PROP, useCachedRoles)
 
         def domainId = utils.createDomain()
         def user, users1
@@ -842,24 +836,13 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         responseV20 = utils.validateToken(token)
 
         then:
-        if (useCachedRoles) {
-            // The role name should be the old value as the client role was cached during initial auth
-            assert responseV20.user.roles.role.find {it.name == originalRole.name} != null
-            assert responseV20.user.roles.role.find {it.name == updatedRole.name} == null
-        } else {
-            // The role name should be the new value as the client role is always retrieved from backend
-            assert responseV20.user.roles.role.find {it.name == originalRole.name} == null
-            assert responseV20.user.roles.role.find {it.name == updatedRole.name} != null
-        }
+        // The role name should be the old value as the client role was cached during initial auth
+        assert responseV20.user.roles.role.find {it.name == originalRole.name} != null
+        assert responseV20.user.roles.role.find {it.name == updatedRole.name} == null
 
         cleanup:
         utils.deleteUsers(users1)
         utils.deleteRoleQuietly(originalRole)
-
-        where:
-        useCachedRoles | _
-        true | _
-        false | _
     }
 
 

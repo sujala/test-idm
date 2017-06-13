@@ -288,11 +288,7 @@ public class DefaultIdentityUserService implements IdentityUserService {
                 userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(baseUser);
             }
         } else {
-            if (identityConfig.getReloadableConfig().useCachedClientRolesInServiceCatalog()) {
-                tenantRoles = tenantService.getTenantRolesForUserPerformant(baseUser);
-            } else {
-                tenantRoles = tenantService.getTenantRolesForUser(baseUser);
-            }
+            tenantRoles = tenantService.getTenantRolesForUserPerformant(baseUser);
             userTypeEnum = authorizationService.getIdentityTypeRoleAsEnum(tenantRoles);
         }
 
