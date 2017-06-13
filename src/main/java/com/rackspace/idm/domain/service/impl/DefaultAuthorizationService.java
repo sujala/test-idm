@@ -55,8 +55,9 @@ public class DefaultAuthorizationService implements AuthorizationService {
     private ClientRole cloudIdentityAdminRole = null;
     private ClientRole cloudUserAdminRole = null;
     private ClientRole cloudUserRole = null;
-    private ClientRole cloudUserManagedRole = null ;
-    private ClientRole rackerRole = null ;
+    private ClientRole cloudUserManagedRole = null;
+    private ClientRole rackerRole = null;
+    private ClientRole rcnAdminRole = null;
 
     /**
      * A map of the identity role names to an immutable client role. Use immutable to prevent inadvertent changes that
@@ -99,10 +100,15 @@ public class DefaultAuthorizationService implements AuthorizationService {
         cloudUserRole = loadClientRole(getCloudAuthClientId(), getCloudAuthUserRole());
         cloudUserManagedRole = loadClientRole(getCloudAuthClientId(), getCloudAuthUserManagedRole());
         rackerRole = loadClientRole(getIdmClientId(), GlobalConstants.ROLE_NAME_RACKER);
+        rcnAdminRole = loadClientRole(getCloudAuthClientId(), IdentityRole.RCN_ADMIN.getRoleName());
 
         //add in racker role as we may make auth decisions on it
         if (rackerRole != null) {
             populateMapsWithRole(rackerRole);
+        }
+
+        if (rcnAdminRole != null) {
+            populateMapsWithRole(rcnAdminRole);
         }
     }
 
