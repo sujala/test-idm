@@ -2646,4 +2646,37 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | _
     }
 
+    def "test that a metadata IDP cannot have certs updated outside of updating the metadata" () {
+        given:
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        IdentityProvider idp = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata).getEntity(IdentityProvider)
+        def keyPair = SamlCredentialUtils.generateKeyPair()
+        def cert = SamlCredentialUtils.generateCertificate(keyPair)
+        def pubCertPemString = SamlCredentialUtils.getCertificateAsPEMString(cert)
+        def pubCertEntity = v2Factory.createPublicCertificate(pubCertPemString)
+
+        when: "add IDP cert"
+        def response = cloud20.createIdentityProviderCertificates(utils.getServiceAdminToken(), idp.id, pubCertEntity)
+
+        then:
+        assertOpenStackV2FaultResponseWithErrorCode(response, ForbiddenFault, SC_FORBIDDEN, ErrorCodes.ERROR_CODE_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP)
+
+        when: "delete IDP cert"
+        response = cloud20.deleteIdentityProviderCertificates(utils.getServiceAdminToken(), idp.id, "1")
+
+        then:
+        assertOpenStackV2FaultResponseWithErrorCode(response, ForbiddenFault, SC_FORBIDDEN, ErrorCodes.ERROR_CODE_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+    }
+
 }

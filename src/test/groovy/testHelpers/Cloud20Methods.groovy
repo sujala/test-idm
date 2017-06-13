@@ -502,9 +502,9 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).delete(ClientResponse)
     }
 
-    def createIdentityProviderCertificates(token, identityProviderId, publicCertificate, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
+    def createIdentityProviderCertificates(token, identityProviderId, publicCertificate, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptContentMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(CERTIFICATES).header(X_AUTH_TOKEN, token).type(requestContentMediaType.toString()).entity(publicCertificate).put(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(CERTIFICATES).header(X_AUTH_TOKEN, token).type(requestContentMediaType.toString()).accept(acceptContentMediaType).entity(publicCertificate).put(ClientResponse)
     }
 
     def deleteIdentityProviderCertificates(token, identityProviderId, certificateId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {

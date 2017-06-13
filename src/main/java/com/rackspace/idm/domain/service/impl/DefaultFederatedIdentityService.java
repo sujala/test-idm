@@ -171,6 +171,13 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     }
 
     @Override
+    public IdentityProvider checkAndGetIdentityProviderWithMetadataById(String id) {
+        IdentityProvider idp = identityProviderDao.getIdentityProviderWithMetadataById(id);
+        checkIdpIsNotNull(id, idp);
+        return idp;
+    }
+
+    @Override
     public IdentityProvider getIdentityProviderApprovedForDomain(String name, String domainId) {
         return identityProviderDao.getIdentityProviderApprovedForDomain(name, domainId);
     }
@@ -193,12 +200,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     @Override
     public IdentityProvider checkAndGetIdentityProvider(String id) {
         IdentityProvider provider = getIdentityProvider(id);
-
-        if (provider == null) {
-            String errMsg = String.format(IDENTITY_PROVIDER_NOT_FOUND_ERROR_MESSAGE, id);
-            log.info(errMsg);
-            throw new NotFoundException(errMsg);
-        }
+        checkIdpIsNotNull(id, provider);
         return provider;
     }
 
@@ -246,14 +248,6 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         }
     }
 
-    private IdentityProvider getIdentityProviderForResponse(SamlResponseDecorator samlResponseDecorator) {
-        IdentityProvider provider = identityProviderDao.getIdentityProviderByUri(samlResponseDecorator.checkAndGetIssuer());
-        if (provider == null) {
-            throw new BadRequestException(ErrorCodes.generateErrorCodeFormattedMessage(ErrorCodes.ERROR_CODE_FEDERATION_INVALID_PROVIDER, "Issuer is unknown"));
-        }
-        return provider;
-    }
-
     private void validateSignatureForProvider(Signature signature, IdentityProvider provider) {
         try {
             samlSignatureValidator.validateSignatureForIdentityProvider(signature, provider);
@@ -266,4 +260,13 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     private String getNextId() {
         return UUID.randomUUID().toString().replaceAll("-", "");
     }
+
+    private void checkIdpIsNotNull(String idpId, IdentityProvider idp) {
+        if (idp == null) {
+            String errMsg = String.format(IDENTITY_PROVIDER_NOT_FOUND_ERROR_MESSAGE, idpId);
+            log.info(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+    }
+
 }

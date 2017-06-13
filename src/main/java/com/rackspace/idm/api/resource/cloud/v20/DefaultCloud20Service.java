@@ -89,9 +89,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
-
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
@@ -113,6 +110,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE = "Unable to load and parse the default IDP policy.";
     public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE = "The default IDP policy is not properly configured.";
     public static final String FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE = "IDP creation is currently unavailable due to missing default for IDP policy.";
+    public static final String FEDERATION_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP_MESSAGE = "IDP certificates cannot be updated outside of providing a new IDP metadata xml.";
 
     public static final String DUPLICATE_SERVICE_NAME_ERROR_MESSAGE = "More than one service exists with the given name. Please specify a different service name for the endpoint template.";
     public static final String DUPLICATE_SERVICE_ERROR_MESSAGE = "Unable to fulfill request. More than one service exists with the given name.";
@@ -1680,7 +1678,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
 
             //load the IDP, return 404 is does not exist
-            com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
+            com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.checkAndGetIdentityProviderWithMetadataById(identityProviderId);
+
+            if (ArrayUtils.isNotEmpty(provider.getXmlMetadata())) {
+                throw new ForbiddenException(FEDERATION_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP_MESSAGE, ErrorCodes.ERROR_CODE_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP);
+            }
 
             validator20.validatePublicCertificateForIdentityProvider(publicCertificate, provider);
 
@@ -1713,7 +1715,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             //load the IDP, return 404 is does not exist
-            com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
+            com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.checkAndGetIdentityProviderWithMetadataById(identityProviderId);
+
+            if (ArrayUtils.isNotEmpty(provider.getXmlMetadata())) {
+                throw new ForbiddenException(FEDERATION_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP_MESSAGE, ErrorCodes.ERROR_CODE_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP);
+            }
 
             //verify that the cert exists on the IDP
             boolean certExists = false;

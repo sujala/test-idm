@@ -75,6 +75,13 @@ public interface FederatedIdentityService {
      */
     IdentityProvider getIdentityProviderWithMetadataById(String id);
 
+    /**
+     * Return the identity provider by id with only metadata attribute populated.
+     * @param id
+     * @return
+     * @throws com.rackspace.idm.exception.NotFoundException when the IDP is not found
+     */
+    IdentityProvider checkAndGetIdentityProviderWithMetadataById(String id);
 
     /**
      * Return the identity provider by name that can create tokens for the given name and domainId
