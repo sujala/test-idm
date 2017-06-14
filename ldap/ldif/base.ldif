@@ -1342,7 +1342,7 @@ dn: rsId=c5f683e2b554ee8b28b9a8b612954c4,cn=CLIENT ROLES,clientId=bde1268ebabeea
  4,ou=applications,o=rackspace,dc=rackspace,dc=com
 objectClass: clientRole
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-cn: identity:rcn-admin
+cn: rcn:admin
 description: Can manage entities under RCN
 rsWeight: 50
 

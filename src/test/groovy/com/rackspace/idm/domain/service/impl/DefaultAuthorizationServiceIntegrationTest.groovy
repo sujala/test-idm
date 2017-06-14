@@ -1,13 +1,11 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
-import com.rackspace.idm.domain.service.ServiceCatalogInfo
-import com.rackspacecloud.docs.auth.api.v1.Service
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
@@ -35,9 +33,10 @@ class DefaultAuthorizationServiceIntegrationTest extends Specification {
             service.identityRoleNameToRoleMap.find {it.key == expectedRoleName && it.key == it.value.name} != null
         }
 
-        //only loads "identity:" roles and the racker role
+        //only loads "identity:" roles, rcn:admin and the racker role
         service.identityRoleNameToRoleMap.find {!(it.key.startsWith(GlobalConstants.IDENTITY_ROLE_PREFIX)
-                || it.key.equals(GlobalConstants.ROLE_NAME_RACKER))} == null
+                || it.key.equals(GlobalConstants.ROLE_NAME_RACKER)
+                || it.key.equals(IdentityRole.RCN_ADMIN.roleName))} == null
     }
 
     def "Service loads all identity roles into id map on construction"() {
@@ -50,9 +49,10 @@ class DefaultAuthorizationServiceIntegrationTest extends Specification {
             service.identityRoleIdToRoleMap.find {it.value.name == expectedRoleName && it.key == it.value.id} != null
         }
 
-        //only loads "identity:" roles and the racker role
+        //only loads "identity:" roles, rcn:admin and the racker role
         service.identityRoleNameToRoleMap.find {!(it.value.name.startsWith(GlobalConstants.IDENTITY_ROLE_PREFIX)
-                || it.value.name.equals(GlobalConstants.ROLE_NAME_RACKER))} == null
+                || it.value.name.equals(GlobalConstants.ROLE_NAME_RACKER)
+                || it.key.equals(IdentityRole.RCN_ADMIN.roleName))} == null
     }
 
     def "Service loads cached role variables on construction"() {

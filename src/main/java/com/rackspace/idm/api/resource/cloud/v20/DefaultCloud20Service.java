@@ -1331,7 +1331,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
                     IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
                     IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
-                    IdentityRole.IDENTITY_RCN_ADMIN.getRoleName()));
+                    IdentityRole.RCN_ADMIN.getRoleName()));
 
             // Verify domain for user
             if (StringUtils.isBlank(caller.getDomainId()) || caller.getDomainId().equals(identityConfig.getReloadableConfig().getGroupDefaultDomainId())

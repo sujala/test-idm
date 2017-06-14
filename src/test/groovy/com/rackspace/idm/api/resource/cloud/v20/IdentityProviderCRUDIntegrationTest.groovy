@@ -426,7 +426,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         utils.deleteIdentityProvider(idp)
     }
 
-    def "Verify users with roles identity:user-admin, identity:user-manage, identity:rcn-admin can create IDP by metadata" () {
+    def "Verify users with roles identity:user-admin, identity:user-manage, rcn:admin can create IDP by metadata" () {
         given:
         String issuer = testUtils.getRandomUUID("issuer")
         String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
@@ -461,8 +461,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         idp2.issuer == issuer
         idp2.authenticationUrl == authenticationUrl
 
-        when: "Creating IDP using defaultUser token"
-        utils.addRoleToUser(defaultUser, Constants.IDENTITY_RCN_ADMIN_ROLE_ID)
+        when: "Creating IDP using defaultUser token with rcn:admin role"
+        utils.addRoleToUser(defaultUser, Constants.RCN_ADMIN_ROLE_ID)
         def defaultUserToken = utils.getToken(defaultUser.username)
         issuer = testUtils.getRandomUUID("issuer")
         metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
