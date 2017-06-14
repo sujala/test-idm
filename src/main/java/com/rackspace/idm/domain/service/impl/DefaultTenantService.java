@@ -651,6 +651,7 @@ public class DefaultTenantService implements TenantService {
             throw new IllegalArgumentException(
                     "User cannot be null and must have uniqueID; role cannot be null");
         }
+        role.setUserId(user.getId());
 
         validateTenantRole(role);
 
@@ -903,18 +904,36 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
-    public List<TenantRole> getRbacRolesForUser(EndUser user) {
+    public List<TenantRole> getGlobalRbacRolesForUser(EndUser user) {
         if (user == null) {
             throw new IllegalArgumentException(
                     "User cannot be null.");
         }
         logger.debug("Getting Global Rbac Roles for user {}", user.getUniqueId());
+
+        List<TenantRole> allRbacRoles = getRbacRolesForUser(user);
+
+        List<TenantRole> globalRbacRoles = new ArrayList<TenantRole>();
+        for (TenantRole role : allRbacRoles) {
+            if (role.getTenantIds() == null || role.getTenantIds().size() == 0) {
+                globalRbacRoles.add(role);
+            }
+        }
+        return globalRbacRoles;
+    }
+
+    @Override
+    public List<TenantRole> getRbacRolesForUser(EndUser user) {
+        if (user == null) {
+            throw new IllegalArgumentException(
+                    "User cannot be null.");
+        }
+        logger.debug("Getting Rbac Roles for user {}", user.getUniqueId());
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user);
 
         List<TenantRole> globalRbacRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
-            if (role != null
-                    && (role.getTenantIds() == null || role.getTenantIds().size() == 0)) {
+            if (role != null) {
                 //TODO: Caching option?
                 ClientRole cRole = this.applicationService.getClientRoleById(role
                         .getRoleRsId());

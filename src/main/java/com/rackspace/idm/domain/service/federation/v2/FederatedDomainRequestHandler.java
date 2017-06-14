@@ -1,11 +1,13 @@
 package com.rackspace.idm.domain.service.federation.v2;
 
+import com.google.common.collect.Sets;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.FederatedUserDao;
+import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
@@ -14,7 +16,8 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.util.predicate.UserEnabledPredicate;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.ListUtils;
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
@@ -57,6 +60,9 @@ public class FederatedDomainRequestHandler {
     private TenantService tenantService;
 
     @Autowired
+    private TenantRoleDao tenantRoleDao;
+
+    @Autowired
     private AuthorizationService authorizationService;
 
     @Autowired
@@ -95,7 +101,7 @@ public class FederatedDomainRequestHandler {
         authenticationContext.setDomain(requestedDomain);
 
         // Validate the requested roles exist
-        List<TenantRole> requestedRoles = validateAndGenerateRequestedRoles(authRequest);
+        List<TenantRole> requestedRoles = validateAndGenerateRequestedRoles(authRequest, originIdentityProvider);
 
         FederatedUser federatedUser = processUserForRequest(authRequest, requestedRoles, domainUserAdmin, originIdentityProvider);
 
@@ -167,25 +173,78 @@ public class FederatedDomainRequestHandler {
         return firstEnabledUserAdmin;
     }
 
-    private List<TenantRole> validateAndGenerateRequestedRoles(FederatedDomainAuthRequest authRequest) {
-        Set<String> requestedRoles = authRequest.getRoleNames();
+    private List<TenantRole> validateAndGenerateRequestedRoles(FederatedDomainAuthRequest authRequest, IdentityProvider originIdentityProvider) {
+        Map<String, Set<String>> requestedRoles = authRequest.getRoleNames();
 
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
-        if (CollectionUtils.isNotEmpty(requestedRoles)) {
-            for (String roleName : requestedRoles) {
+        if (MapUtils.isNotEmpty(requestedRoles)) {
+            Map<String, Tenant> validatedTenantNames = new HashMap<>();
+            boolean globalIdp = ApprovedDomainGroupEnum.GLOBAL == originIdentityProvider.getApprovedDomainGroupAsEnum();
+
+            for (String roleName : requestedRoles.keySet()) {
                 //TODO: Candidate for caching...
                 ClientRole role = roleService.getRoleByName(roleName);
-                if (role == null || role.getRsWeight() != PrecedenceValidator.RBAC_ROLES_WEIGHT
-                        || role.getAssignmentTypeAsEnum() == RoleAssignmentEnum.TENANT) {
+                // Verify role is non-null and assignable by user
+                if (role == null || role.getRsWeight() != PrecedenceValidator.RBAC_ROLES_WEIGHT) {
                     throw new BadRequestException(String.format("Invalid role '%s'", roleName), ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE);
                 }
 
-                // Create a new globally assigned tenant role
+                // Verify role can be assigned in the manner requested
+                Set<String> assignedTenants = requestedRoles.get(roleName);
+                boolean assignGlobally = assignedTenants == null || CollectionUtils.isEmpty(assignedTenants);
+                if (assignGlobally && role.getAssignmentTypeAsEnum() == RoleAssignmentEnum.TENANT) {
+                    throw new BadRequestException(String.format("Role '%s' can not be assigned as a global role", roleName), ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE);
+                }
+
+                if (!assignGlobally && role.getAssignmentTypeAsEnum() == RoleAssignmentEnum.GLOBAL) {
+                    throw new BadRequestException(String.format("Role '%s' can not be assigned as a tenant role", roleName), ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE);
+                }
+
+                Set<String> assignedTenantIds = new HashSet<String>();
+                if (!assignGlobally) {
+                    // Validate the specified tenants exist and, if necessary, are within the IDPs purview of allowed tenants
+                    for (String assignedTenantName : assignedTenants) {
+                        // See if we've already validate the tenant for the IDP
+                        Tenant tenant = validatedTenantNames.get(assignedTenantName.toLowerCase());
+
+                        if (tenant == null) {
+                            tenant = tenantService.getTenantByName(assignedTenantName);
+                            if (tenant == null) {
+                                log.debug(String.format("Invalid request. Tenant '%s' not found. ", assignedTenantName));
+                                throw new BadRequestException(String.format("IDP can not assign role to tenant '%s'", assignedTenantName), ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT);
+                            }
+
+                            if (!globalIdp) {
+                                /*
+                                 Must verify the IDP can assign a role on this tenant. Use the backpointer on a tenant to
+                                 determine the domain to which it belongs and ensure the IDP contains this domain
+                                 */
+                                List<String> approvedDomainIds = originIdentityProvider.getApprovedDomainIds();
+                                if (StringUtils.isBlank(tenant.getDomainId()) || approvedDomainIds == null || CollectionUtils.isEmpty(approvedDomainIds)
+                                        || !approvedDomainIds.contains(tenant.getDomainId())) {
+                                    if (StringUtils.isBlank(tenant.getDomainId())) {
+                                        log.error(String.format("Data integrity violation. Tenant '%s' does not point to a domain.", assignedTenantName));
+                                    } else {
+                                        log.debug(String.format("Invalid request. IDP forbidden to assign roles to tenant '%s' on domain '%s'", tenant.getTenantId(), tenant.getDomainId()));
+                                    }
+                                    throw new BadRequestException(String.format("IDP can not assign role to tenant '%s'", assignedTenantName), ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT);
+                                }
+                            }
+                            validatedTenantNames.put(assignedTenantName.toLowerCase(), tenant);
+                        }
+
+                        assignedTenantIds.add(tenant.getTenantId());
+                    }
+                }
+
+                // Create assigned tenant role
                 TenantRole tenantRole = new TenantRole();
                 tenantRole.setRoleRsId(role.getId());
                 tenantRole.setClientId(role.getClientId());
                 tenantRole.setName(role.getName());
                 tenantRole.setDescription(role.getDescription());
+                tenantRole.setPropagate(role.getPropagate());
+                tenantRole.setTenantIds(assignedTenantIds);
                 tenantRoles.add(tenantRole);
             }
         }
@@ -290,31 +349,113 @@ public class FederatedDomainRequestHandler {
      * @param desiredRbacRolesOnUser
      */
     private void reconcileRequestedRbacRolesFromRequest(FederatedUser existingFederatedUser, List<TenantRole> desiredRbacRolesOnUser) {
+        boolean userRoleAssignmentChanged = false;
+
         Map<String, TenantRole> desiredRbacRoleMap = new HashMap<String, TenantRole>();
         for (TenantRole tenantRole : desiredRbacRolesOnUser) {
             desiredRbacRoleMap.put(tenantRole.getName(), tenantRole);
         }
 
+        /*
+        Retrieve all the existing roles assigned to the user that Identity Providers manage. These are often referred
+        to as "RBAC" roles even though that is really a misnomer. If effect we wipe out all these roles on the user
+        and replace them with that provided in the federated auth request.
+         */
         List<TenantRole> existingRbacRolesOnUser = tenantService.getRbacRolesForUser(existingFederatedUser);
         Map<String, TenantRole> existingRbacRoleMap = new HashMap<String, TenantRole>();
         for (TenantRole tenantRole : existingRbacRolesOnUser) {
             existingRbacRoleMap.put(tenantRole.getName(), tenantRole);
         }
 
-        Collection<String> add = ListUtils.removeAll(desiredRbacRoleMap.keySet(), existingRbacRoleMap.keySet());
-        Collection<String> remove = ListUtils.removeAll(existingRbacRoleMap.keySet(), desiredRbacRoleMap.keySet());
+        // Determine the list of roles that should be removed outright
+        Set<String> remove = Sets.difference(existingRbacRoleMap.keySet(), desiredRbacRoleMap.keySet());
 
-        // Remove roles that user should no longer have
+        // Reconcile roles that user should no longer have
         for (String roleToRemove : remove) {
-            tenantService.deleteGlobalRole(existingRbacRoleMap.get(roleToRemove));
+            boolean iterChange = reconcileAssignedTenantsForRoleOnUser(existingFederatedUser, null, existingRbacRoleMap.get(roleToRemove));
+            userRoleAssignmentChanged = userRoleAssignmentChanged || iterChange;
         }
 
-        // Add roles that user should have
-        for (String roleToAdd : add) {
-            tenantService.addTenantRoleToUser(existingFederatedUser, desiredRbacRoleMap.get(roleToAdd));
+        // Reconcile roles the user should have
+        for (String reconcileRoleName : desiredRbacRoleMap.keySet()) {
+            TenantRole newAssignment = desiredRbacRoleMap.get(reconcileRoleName);
+            TenantRole existingAssignment = existingRbacRoleMap.get(reconcileRoleName); // may be null
+            boolean iterChange =  reconcileAssignedTenantsForRoleOnUser(existingFederatedUser, newAssignment, existingAssignment);
+            userRoleAssignmentChanged = userRoleAssignmentChanged || iterChange;
+        }
+
+        if (userRoleAssignmentChanged) {
+            log.debug("User roles changed");
         }
 
         existingFederatedUser.setRoles(desiredRbacRolesOnUser);
+    }
+
+    /**
+     * Takes in a tenant role and makes whatever changes are required to ensure the user has the specified tenants
+     * assigned for that role. If the passed in role does not have any tenants, it will cause the role to be assigned
+     * globally. As such, this method could result in:
+     * <ul>
+     * <li>Adding a new tenant role on the user if the user doesn't currently have it assigned</li>
+     * <li>Removing a tenant role altogether if user shouldn't have it assigned</li>
+     * <li>Removing tenants from an existing tenant role on the user</li>
+     * <li>Adding tenants to an existing tenant role on the user</li>
+     * <li>Converting an existing tenant role from being globally assigned to a tenant based role</li>
+     * <li>Converting an existing tenant role from a tenant based role to globally assigned</li>
+     * </ul>
+     * @param user
+     * @param newAssignment
+     * @param existingAssignment
+     */
+    private boolean reconcileAssignedTenantsForRoleOnUser(BaseUser user, TenantRole newAssignment, TenantRole existingAssignment) {
+        boolean modified = true;
+
+        if (newAssignment == null && existingAssignment == null) {
+            modified = false;
+        } else if (existingAssignment == null) {
+            // Adding new role
+            newAssignment.setUserId(user.getId());
+            tenantService.addTenantRoleToUser(user, newAssignment);
+        } else if (newAssignment == null) {
+            /*
+             Removing role. Doesn't matter if user is assigned this role as a tenant role or globally.
+             This will delete the assignment
+             */
+            tenantService.deleteGlobalRole(existingAssignment);
+        } else {
+            // Reconcile the tenant ids assigned to the role
+            Set<String> desiredTenantIds = newAssignment.getTenantIds();
+            Set<String> existingTenantIds = existingAssignment.getTenantIds();
+
+            Set<String> symDiff = Sets.symmetricDifference(desiredTenantIds, existingTenantIds);
+            if (symDiff.isEmpty()) {
+                // no change in tenant ids.
+                modified = false; // No-Op
+
+                // Previous versions of federation did not set the backpointer appropriately so update if needed
+                try {
+                    if (StringUtils.isBlank(existingAssignment.getUserId())) {
+                        log.info(String.format("Updating existing federated tenant role '%s' on user '%s' to contain backpointer to user", existingAssignment.getRoleRsId(), user.getId()));
+                        existingAssignment.setUserId(user.getId());
+                        tenantRoleDao.updateTenantRole(existingAssignment);
+                    }
+                } catch (Exception e) {
+                    // Eat. Just trying to fix data to be consistent, but is not a showstopper if fails
+                    log.warn(String.format("Failed to update existing federated tenant role '%s' on user '%s' to contain backpointer to user", existingAssignment.getRoleRsId(), user.getId()), e);
+                }
+            } else {
+                // The existing assignment has tenant ids that should be removed, added, or both. Just replace outright
+                existingAssignment.setTenantIds(newAssignment.getTenantIds());
+
+                if (StringUtils.isBlank(existingAssignment.getUserId())) {
+                    log.info(String.format("Updating existing federated tenant role '%s' on user '%s' to contain backpointer to user", existingAssignment.getRoleRsId(), user.getId()));
+                    existingAssignment.setUserId(user.getId());
+                }
+                tenantRoleDao.updateTenantRole(existingAssignment);
+            }
+        }
+
+        return modified;
     }
 
     private FederatedUser createNewFederatedUser(FederatedDomainAuthRequest authRequest, List<TenantRole> requestedRoles, User domainUserAdmin, IdentityProvider originIdp) {
@@ -336,6 +477,7 @@ public class FederatedDomainRequestHandler {
         federatedUserDao.addUser(originIdp, federatedUser);
         tenantService.addTenantRolesToUser(federatedUser, userRoles);
 
+        federatedUser.setRoles(userRoles);
         return federatedUser;
     }
 

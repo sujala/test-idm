@@ -790,7 +790,7 @@ class ProvisionedUserSourceFederationHandlerTest extends Specification {
         1 * mockScopeAccessService.addUserScopeAccess(user, _)
         0 * mockTenantService.addTenantRolesToUser(_,_)
         0 * mockFederatedUserDao.addUser(_,_)
-        1 * mockTenantService.getRbacRolesForUser(_) >> Collections.EMPTY_LIST
+        1 * mockTenantService.getGlobalRbacRolesForUser(_) >> Collections.EMPTY_LIST
 
         authInfo.token != null
         authInfo.endpoints == endpoints

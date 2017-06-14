@@ -67,6 +67,7 @@ public final class ErrorCodes {
 
     public static final String ERROR_CODE_FEDERATION2_MISSING_AUTH_CONTEXT = "FED-018";
     public static final String ERROR_CODE_FEDERATION2_INVALID_AUTH_CONTEXT = "FED-019";
+    public static final String ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT = "FED2-020";
 
     // *********************************************************************
 

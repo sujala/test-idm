@@ -1,7 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum;
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.SAMLConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
@@ -376,7 +375,7 @@ public class ProvisionedUserSourceFederationHandler implements ProvisionedUserFe
             desiredRbacRoleMap.put(tenantRole.getName(), tenantRole);
         }
 
-        List<TenantRole> existingRbacRolesOnUser = tenantService.getRbacRolesForUser(existingFederatedUser);
+        List<TenantRole> existingRbacRolesOnUser = tenantService.getGlobalRbacRolesForUser(existingFederatedUser);
         Map<String, TenantRole> existingRbacRoleMap = new HashMap<String, TenantRole>();
         for (TenantRole tenantRole : existingRbacRolesOnUser) {
             existingRbacRoleMap.put(tenantRole.getName(), tenantRole);

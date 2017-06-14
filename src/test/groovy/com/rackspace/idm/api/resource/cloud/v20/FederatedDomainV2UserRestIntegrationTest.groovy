@@ -19,17 +19,21 @@ import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.domain.service.federation.v2.FederatedDomainAuthRequest
+import com.rackspace.idm.domain.service.federation.v2.FederatedRoleAssignment
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.rackspace.idm.util.SamlUnmarshaller
 import groovy.json.JsonSlurper
 import org.apache.commons.lang.BooleanUtils
 import org.apache.commons.lang.RandomStringUtils
+import org.apache.commons.lang.StringUtils
 import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.joda.time.DateTime
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.Tenants
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -96,7 +100,8 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
     Credential sharedOriginIdpCredential
 
     @Shared org.openstack.docs.identity.api.v2.User sharedUserAdmin
-
+    @Shared org.openstack.docs.identity.api.v2.Tenant sharedUserAdminCloudTenant
+    @Shared org.openstack.docs.identity.api.v2.Tenant sharedUserAdminFilesTenant
     @Shared
     FederatedDomainAuthRequestGenerator sharedFederatedDomainAuthRequestGenerator
 
@@ -112,6 +117,13 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         sharedFederatedDomainAuthRequestGenerator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
 
         sharedUserAdmin = cloud20.createCloudAccount(sharedIdentityAdminToken)
+        Tenants tenants = cloud20.getDomainTenants(sharedIdentityAdminToken, sharedUserAdmin.domainId).getEntity(Tenants).value
+        sharedUserAdminCloudTenant = tenants.tenant.find {
+            it.id == sharedUserAdmin.domainId
+        }
+        sharedUserAdminFilesTenant = tenants.tenant.find() {
+            it.id != sharedUserAdmin.domainId
+        }
     }
 
     def createIdpViaRest(IdentityProviderFederationTypeEnum type, Credential cred) {
@@ -164,11 +176,38 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         }
     }
 
-    def "New fed user created correctly when valid roles provided"() {
+    def "New fed user created correctly when valid global assigned roles provided"() {
         given:
         User userAdminEntity = userService.getUserById(sharedUserAdmin.id)
         def fedRequest = createFedRequest().with {
             it.roleNames = [ROLE_RBAC1_NAME, ROLE_RBAC2_NAME] as Set
+            it
+        }
+
+        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+
+        when:
+        def authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+
+        then: "Response contains appropriate content"
+        authClientResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
+        verifyAuthenticateResult(authResponse, fedRequest, userAdminEntity)
+
+        cleanup:
+        try {
+            deleteFederatedUserQuietly(fedRequest.username)
+        } catch (Exception ex) {
+            // Eat
+        }
+    }
+
+    def "New fed user created correctly when valid tenant assigned roles provided"() {
+        given:
+        User userAdminEntity = userService.getUserById(sharedUserAdmin.id)
+        def fedRequest = createFedRequest().with {
+            it.roleNames = [ROLE_RBAC1_NAME + "/" + sharedUserAdminCloudTenant.name
+                            , ROLE_RBAC2_NAME + "/" + sharedUserAdminFilesTenant.name] as Set
             it
         }
 
@@ -323,7 +362,12 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
 
         if (originalRequest.roleNames) {
             originalRequest.roleNames.each() { requestedRole ->
-                assert authResponse.user.getRoles().role.find { r -> r.name == requestedRole} != null
+                FederatedRoleAssignment ra = new FederatedRoleAssignment(requestedRole)
+                if (StringUtils.isNotBlank(ra.tenantName)) {
+                    assert authResponse.user.getRoles().role.find { r -> r.name == ra.roleName && r.tenantId == ra.tenantName} != null
+                } else {
+                    assert authResponse.user.getRoles().role.find { r -> r.name == ra.roleName && ra.tenantName == null} != null
+                }
             }
         }
 

@@ -13,9 +13,11 @@ public enum ApprovedDomainGroupEnum {
     }
 
     public static ApprovedDomainGroupEnum lookupByStoredValue(String value) {
-        for (ApprovedDomainGroupEnum approvedDomainGroupEnum : values()) {
-            if (approvedDomainGroupEnum.storedVal.equals(value)) {
-                return approvedDomainGroupEnum;
+        if (value != null) {
+            for (ApprovedDomainGroupEnum approvedDomainGroupEnum : values()) {
+                if (approvedDomainGroupEnum.storedVal.equals(value)) {
+                    return approvedDomainGroupEnum;
+                }
             }
         }
         return null;
