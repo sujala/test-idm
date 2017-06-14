@@ -27,6 +27,7 @@ public enum IdentityRole {
     , IDENTITY_ENDPOINT_RULE_ADMIN("identity:endpoint-rule-admin")
     , IDENTITY_PROPERTY_ADMIN("identity:property-admin")
     , IDENTITY_INTERNAL("identity:internal")
+    , IDENTITY_RCN_ADMIN("identity:rcn-admin")
     ;
 
     @Getter

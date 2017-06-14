@@ -268,6 +268,10 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_REGION_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_CLIENT_ROLE_SEARCH_ATTRIBUTES = {"*"};
     protected static final String[] ATTR_SCOPE_ACCESS_ATTRIBUTES = {"*", ATTR_CREATED_DATE};
+    protected static final String[] ATTR_IDENTITY_PROVIDER_ATTRIBUTES = {ATTR_OU, ATTR_NAME, ATTR_URI, ATTR_DESCRIPTION,
+                                                                         ATTR_USER_CERTIFICATES, ATTR_TARGET_USER_SOURCE,
+                                                                         ATTR_APPROVED_DOMAIN_GROUP, ATTR_APPROVED_DOMAIN_IDS,
+                                                                         ATTR_AUTHENTICATION_URL, ATTR_IDP_POLICY };
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
     //LDAP Change Event

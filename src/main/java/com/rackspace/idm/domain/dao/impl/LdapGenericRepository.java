@@ -273,13 +273,13 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     }
 
     @Override
-    public T getObject(Filter searchFilter, String dn, SearchScope scope) {
+    public T getObject(Filter searchFilter, String dn, SearchScope scope, String... searchAttributes) {
         String loggerMsg = String.format("Doing search for %s", entityType.toString());
         getLogger().debug(loggerMsg);
 
         T object;
         try {
-            object = getSingleObject(dn, scope, searchFilter);
+            object = getSingleObject(dn, scope, searchFilter, searchAttributes);
         } catch (LDAPPersistException e) {
             getLogger().error(ERROR_GETTING_OBJECT, e);
             throw new IllegalStateException(e);
@@ -534,8 +534,13 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         getLogger().debug("Deleted: {}", object);
     }
 
-    private T getSingleObject(String dn, SearchScope scope, Filter searchFilter) throws LDAPPersistException {
-        SearchResultEntry entry = this.getSingleEntry(dn, scope, searchFilter, getSearchAttributes());
+    private T getSingleObject(String dn, SearchScope scope, Filter searchFilter, String... searchAttributes) throws LDAPPersistException {
+        SearchResultEntry entry;
+        if (searchAttributes != null && searchAttributes.length > 0) {
+            entry = this.getSingleEntry(dn, scope, searchFilter, searchAttributes);
+        } else {
+            entry = this.getSingleEntry(dn, scope, searchFilter, getSearchAttributes());
+        }
         if (entry == null) {
             return null;
         }

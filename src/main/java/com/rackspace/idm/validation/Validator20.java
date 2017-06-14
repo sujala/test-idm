@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantTypeDao;
@@ -14,6 +15,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.validation.entity.Constants;
 import org.apache.commons.codec.binary.Base64;
@@ -33,7 +35,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
-import java.security.cert.*;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -144,6 +148,9 @@ public class Validator20 {
     @Autowired
     TenantTypeDao tenantTypeDao;
 
+    @Autowired
+    IdentityProviderConverterCloudV20 identityProviderConverterCloudV20;
+
     public void validateUsername(String username) {
         if (StringUtils.isBlank(username)) {
             String errorMsg = "Expecting username";
@@ -165,7 +172,7 @@ public class Validator20 {
     }
 
     public void validateEmail(String email) {
-        
+
         if (StringUtils.isBlank(email) || !emailValidator.isValid(email, null)) {
             String errorMsg = "Expecting valid email address";
             logger.warn(errorMsg);
@@ -184,7 +191,7 @@ public class Validator20 {
         }
     }
 
-    public void validatePasswordForCreateOrUpdate(String password){
+    public void validatePasswordForCreateOrUpdate(String password) {
         String errMsg = "Password must be at least 8 characters in length, must contain at least one uppercase letter, one lowercase letter, and one numeric character.";
         if (password.length() < PASSWORD_MIN_LENGTH) {
             logger.warn(errMsg);
@@ -204,7 +211,7 @@ public class Validator20 {
         }
     }
 
-    public void validatePasswordCredentialsForCreateOrUpdate(PasswordCredentialsBase passwordCredentials){
+    public void validatePasswordCredentialsForCreateOrUpdate(PasswordCredentialsBase passwordCredentials) {
         validatePasswordCredentials(passwordCredentials);
         validatePasswordForCreateOrUpdate(passwordCredentials.getPassword());
     }
@@ -242,11 +249,11 @@ public class Validator20 {
         } else if (impersonationRequest.getUser().getUsername().isEmpty() || StringUtils.isBlank(impersonationRequest.getUser().getUsername())) {
             throw new BadRequestException(USERNAME_EMPTY_IMPERSONATION_ERROR_MSG);
         } else if (impersonationRequest.getExpireInSeconds() != null) {
-           if (impersonationRequest.getExpireInSeconds() < 1) {
-            throw new BadRequestException(EXPIRE_IN_ELEMENT_LESS_ONE_IMPERSONATION_ERROR_MSG);
-           } else if (impersonationRequest.getExpireInSeconds() > maxRequestedExpireTimeForType) {
-               throw new BadRequestException(String.format(EXPIRE_IN_ELEMENT_EXCEEDS_MAX_IMPERSONATION_ERROR_MSG, maxRequestedExpireTimeForType));
-           }
+            if (impersonationRequest.getExpireInSeconds() < 1) {
+                throw new BadRequestException(EXPIRE_IN_ELEMENT_LESS_ONE_IMPERSONATION_ERROR_MSG);
+            } else if (impersonationRequest.getExpireInSeconds() > maxRequestedExpireTimeForType) {
+                throw new BadRequestException(String.format(EXPIRE_IN_ELEMENT_EXCEEDS_MAX_IMPERSONATION_ERROR_MSG, maxRequestedExpireTimeForType));
+            }
         }
     }
 
@@ -275,6 +282,7 @@ public class Validator20 {
             throw new NotFoundException(errMsg);
         }
     }
+
     public void validateToken(String token) {
         if (!token.matches("^[A-Za-z0-9-]+$")) {
             String errMsg = "Invalid token";
@@ -296,7 +304,7 @@ public class Validator20 {
         }
 
         //need to verify that these values are supplied due to them being optional in the schema and the use of json
-        if ( !StringUtils.isBlank(endpoint.getServiceId())){
+        if (!StringUtils.isBlank(endpoint.getServiceId())) {
             // Make sure that service name and type are empty when passing in a serviceId in endpointTemplate creation
             if (StringUtils.isNotBlank(endpoint.getName()) || StringUtils.isNotBlank(endpoint.getType())) {
                 logger.warn(ENDPOINT_TEMPLATE_EXTRA_ATTRIBUTES_ERROR_MSG);
@@ -310,7 +318,7 @@ public class Validator20 {
             }
         } else {
             // assignmentType cannot be provided without a serviceId.
-            if (endpoint.getAssignmentType() != null && !StringUtils.isBlank(endpoint.getAssignmentType().value())){
+            if (endpoint.getAssignmentType() != null && !StringUtils.isBlank(endpoint.getAssignmentType().value())) {
                 logger.warn(ENDPOINT_TEMPLATE_EMPTY_SERVICE_ID_ERROR_MSG);
                 throw new BadRequestException(ENDPOINT_TEMPLATE_EMPTY_SERVICE_ID_ERROR_MSG);
             }
@@ -331,6 +339,7 @@ public class Validator20 {
 
     /**
      * Ideally would use the bean validation logic, but trying to do a quick and thorough implementation.
+     *
      * @param identityProvider
      */
     public void validateIdentityProviderForCreation(IdentityProvider identityProvider) {
@@ -398,6 +407,43 @@ public class Validator20 {
                 throw new BadRequestException(String.format("%s and %s are not valid attributes for this federation type", APPROVED_DOMAIN_GROUP_NAME, APPROVED_DOMAINS), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN_OPTIONS);
             }
         }
+    }
+
+    public void validateIdentityProviderMetadataForCreation(IdentityProvider identityProvider, String domainId) {
+        List<com.rackspace.idm.domain.entity.IdentityProvider> identityProviderList =
+                federatedIdentityService.findIdentityProvidersExplicitlyApprovedForDomain(domainId);
+
+        if (identityProviderList.size() >= identityConfig.getReloadableConfig().getIdentityFederatedMaxIDPPerDomain()) {
+            String errMsg = String.format("Maximum number of explicit IDPs already exist for domain %s.", domainId);
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg, ErrorCodes.ERROR_CODE_IDP_LIMIT_PER_DOMAIN);
+        }
+
+        // Validate name
+        validateIdentityProviderName(identityProvider.getName());
+
+        // Validate issuer
+        validateStringNotNullWithMaxLength("issuer", identityProvider.getIssuer(), MAX_IDENTITY_PROVIDER_ISSUER);
+        if (federatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) != null) {
+            throw new DuplicateException("Provider already exists with this issuer", ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS);
+        }
+
+        // Validate description
+        validateStringMaxLength("description", identityProvider.getDescription(), MAX_IDENTITY_PROVIDER_DESCRIPTION);
+
+        // Validate authenticationUrl
+        validateStringNotNullWithMaxLength("authenticationUrl",
+                                           identityProvider.getAuthenticationUrl(),
+                                           MAX_IDENTITY_PROVIDER_AUTH_URL);
+
+        // Validate public certificates
+        PublicCertificates publicCertificatesWrapper = identityProvider.getPublicCertificates();
+        if (publicCertificatesWrapper != null && CollectionUtils.isNotEmpty(publicCertificatesWrapper.getPublicCertificate())) {
+            for (PublicCertificate publicCertificate : publicCertificatesWrapper.getPublicCertificate()) {
+                validatePublicCertificate(publicCertificate);
+            }
+        }
+
     }
 
     private void validateIdentityProviderName(String name) {

@@ -1,11 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.core.event.EventType
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.ApprovedDomainIds
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviders
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
@@ -13,21 +9,24 @@ import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.FederatedUser
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.FederatedIdentityService
 import com.rackspace.idm.domain.service.IdentityProviderTypeFilterEnum
 import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
+import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.mockserver.verify.VerificationTimes
+import org.opensaml.saml.saml2.metadata.EntityDescriptor
+import org.opensaml.saml.saml2.metadata.IDPSSODescriptor
+import org.opensaml.saml.saml2.metadata.impl.EntityDescriptorImpl
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.ItemNotFoundFault
-import org.openstack.docs.identity.api.v2.ServiceUnavailableFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
 import spock.lang.Unroll
@@ -39,9 +38,12 @@ import testHelpers.saml.SamlProducer
 
 import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
+import java.util.regex.Pattern
 
 import static org.apache.http.HttpStatus.*
+import static org.opensaml.saml.common.xml.SAMLConstants.SAML20MD_NS
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
+import static testHelpers.IdmAssert.assertOpenStackV2FaultResponseWithErrorCode
 
 class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
@@ -56,6 +58,9 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     FederatedUserDao federatedUserRepository
+
+    @Autowired
+    UserService userService
 
     @Unroll
     def "CRUD a DOMAIN IDP with approvedDomainGroup, but no certs - request: #requestContentType"() {
@@ -389,6 +394,251 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | _
     }
 
+    def "Create IDP using Metadata" () {
+        given:
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        when: "Creating IDP using metadata"
+        def response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+        IdentityProvider idp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+        Pattern pattern = Pattern.compile(".*/cloud/v2.0/RAX-AUTH/federation/identity-providers/" + idp.id)
+        response.headers.get("Location").get(0).toString().matches(pattern)
+        idp.issuer == issuer
+        idp.authenticationUrl == authenticationUrl
+        idp.name == domainId
+        idp.approvedDomainIds.approvedDomainId.size() == 1
+        idp.approvedDomainIds.approvedDomainId.get(0) == domainId
+        idp.description == domainId
+        idp.publicCertificates.publicCertificate.get(0).pemEncoded != null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+    }
+
+    def "Verify users with roles identity:user-admin, identity:user-manage, identity:rcn-admin can create IDP by metadata" () {
+        given:
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when: "Creating IDP using userAdmin token"
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+        IdentityProvider idp = response.getEntity(IdentityProvider)
+        Pattern pattern = Pattern.compile(".*/cloud/v2.0/RAX-AUTH/federation/identity-providers/" + idp.id)
+
+        then:
+        response.status == SC_CREATED
+        response.headers.get("Location").get(0).toString().matches(pattern)
+        idp.issuer == issuer
+        idp.authenticationUrl == authenticationUrl
+
+        when: "Creating IDP using userManage token"
+        def userManageToken = utils.getToken(userManage.username)
+        issuer = testUtils.getRandomUUID("issuer")
+        metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        response = cloud20.createIdentityProviderWithMetadata(userManageToken, metadata)
+        def idp2 = response.getEntity(IdentityProvider)
+        pattern = Pattern.compile(".*/cloud/v2.0/RAX-AUTH/federation/identity-providers/" + idp2.id)
+
+        then:
+        response.status == SC_CREATED
+        response.headers.get("Location").get(0).toString().matches(pattern)
+        idp2.issuer == issuer
+        idp2.authenticationUrl == authenticationUrl
+
+        when: "Creating IDP using defaultUser token"
+        utils.addRoleToUser(defaultUser, Constants.IDENTITY_RCN_ADMIN_ROLE_ID)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        issuer = testUtils.getRandomUUID("issuer")
+        metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        response = cloud20.createIdentityProviderWithMetadata(defaultUserToken, metadata)
+        def idp3 = response.getEntity(IdentityProvider)
+        pattern = Pattern.compile(".*/cloud/v2.0/RAX-AUTH/federation/identity-providers/" + idp3.id)
+
+        then:
+        response.status == SC_CREATED
+        response.headers.get("Location").get(0).toString().matches(pattern)
+        idp3.issuer == issuer
+        idp3.authenticationUrl == authenticationUrl
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+        utils.deleteIdentityProvider(idp2)
+        utils.deleteIdentityProvider(idp3)
+    }
+
+    def "Create IDP using Metadata: Verify the name is updated with integer suffixes when IDP name already exists" () {
+        given:
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        when: "Create IDP using metadata"
+        def response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+        IdentityProvider idp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+        idp.name == domainId
+
+        when: "Create second IDP using metadata"
+        issuer = testUtils.getRandomUUID("issuer2")
+        String metadata2 = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata2)
+        def idp2 = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+        idp2.name == String.format("%s_2", domainId)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+        utils.deleteIdentityProvider(idp2)
+    }
+
+    def "Error check create IDP with metadata" () {
+        given:
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = null;
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        when: "Creating IDP using invalid metadata"
+        def response = cloud20.createIdentityProviderWithMetadata(userAdminToken, "invalid")
+
+        then: "Assert badRequest"
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, "Invalid XML")
+
+        when: "Creating IDP when IDPSSPDescriptor is null"
+        EntityDescriptor entityDescriptor = new EntityDescriptorImpl(SAML20MD_NS, "EntityDescriptor", "md")
+        entityDescriptor.entityID = issuer
+        metadata = new SamlFactory().convertEntityDescriptorToString(entityDescriptor)
+        response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+
+        then: "Assert badRequest"
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST,
+                String.format("Invalid XML metadata: %s is a required element.",
+                IDPSSODescriptor.DEFAULT_ELEMENT_LOCAL_NAME))
+
+        when: "Creating IDP when issuer is null"
+        String invalidMetadata = new SamlFactory().generateMetadataXMLForIDP(null, authenticationUrl)
+        response = cloud20.createIdentityProviderWithMetadata(userAdminToken, invalidMetadata)
+
+        then: "Assert badRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
+
+        when: "Creating IDP when authenticationUrl is null"
+        invalidMetadata = new SamlFactory().generateMetadataXMLForIDP(issuer, null)
+        response = cloud20.createIdentityProviderWithMetadata(userAdminToken, invalidMetadata)
+
+        then: "Assert badRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE)
+
+        when: "Creating IDP using same issuer"
+        userAdminToken = utils.getToken(userAdmin.username)
+        metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+        IdentityProvider idp = response.getEntity(IdentityProvider)
+        assert response.status == SC_CREATED
+        response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+
+        then: "Assert badRequest"
+        assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault , SC_CONFLICT, ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS)
+
+        when: "Exceed number of IDPs for the domain's limit"
+        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP, 1)
+        issuer = testUtils.getRandomUUID("issuer")
+        metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+
+        then: "Assert forbidden"
+        assertOpenStackV2FaultResponseWithErrorCode(response, ForbiddenFault , SC_FORBIDDEN, ErrorCodes.ERROR_CODE_IDP_LIMIT_PER_DOMAIN)
+
+        when: "Creating IDP using identity admin"
+        response = cloud20.createIdentityProviderWithMetadata(utils.identityAdminToken, metadata)
+
+        then: "Assert forbidden"
+        assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
+
+        when: "Creating IDP using service admin"
+        response = cloud20.createIdentityProviderWithMetadata(utils.serviceAdminToken, metadata)
+
+        then: "Assert forbidden"
+        assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
+
+        when: "Creating IDP using default user"
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        response = cloud20.createIdentityProviderWithMetadata(defaultUserToken, metadata)
+
+        then: "Assert forbidden"
+        assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
+
+        when: "Creating IDP using user with no domain"
+        def userWithNoDomainToken = utils.getToken(Constants.USER_WITH_NO_DOMAIN_USERNAME)
+        response = cloud20.createIdentityProviderWithMetadata(userWithNoDomainToken, metadata)
+
+        then: "Assert forbidden"
+        assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
+
+        when: "Creating IDP using user admin user w/ 'rax_status_restricted' group"
+        def rax_status_restricted_group = v2Factory.createGroup(Constants.RAX_STATUS_RESTRICTED_GROUP_NAME).with {
+            it.id = Constants.RAX_STATUS_RESTRICTED_GROUP_ID
+            it
+        }
+        utils.addUserToGroup(rax_status_restricted_group, userAdmin)
+        userAdminToken = utils.getToken(userAdmin.username)
+        response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+        utils.removeUserFromGroup(rax_status_restricted_group, userAdmin)
+
+        then: "Assert forbidden"
+        assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
+
+        when: "Creating IDP using user admin user default domain"
+        def user = new User().with {
+            it.id = userAdmin.id
+            it.domainId = identityConfig.getReloadableConfig().getGroupDefaultDomainId()
+            it
+        }
+        userService.updateUser(user)
+        userAdminToken = utils.getToken(userAdmin.username)
+        response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+
+        then: "Assert forbidden"
+        assertOpenStackV2FaultResponse(response, ForbiddenFault, SC_FORBIDDEN, DefaultCloud20Service.NOT_AUTHORIZED)
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+        reloadableConfiguration.reset()
+    }
+
     def "test post IDP events to feed feature flag: postEvents = #postEvents"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_POST_IDP_FEED_EVENTS_PROP, postEvents)
@@ -493,9 +743,16 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         cloud20.addDomain(utils.getServiceAdminToken(), v2Factory.createDomain(domainId, domainId))
         resetCloudFeedsMock()
 
+        when: "create IDP with invalid XML"
+        def response = cloud20.createIdentityProvider(idpManagerToken, "invalid", MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE)
+
+        then: "bad request"
+        response.status == SC_BAD_REQUEST
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, "Invalid XML")
+
         when: "create a DOMAIN IDP with approvedDomainGroup, empty approvedDomainId list"
         IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, Collections.EMPTY_LIST)
-        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE) //our json reader would send NULL rather than empty array so json would pass (appropriately)
+        response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_XML_TYPE) //our json reader would send NULL rather than empty array so json would pass (appropriately)
 
         then: "bad request"
         response.status == SC_BAD_REQUEST

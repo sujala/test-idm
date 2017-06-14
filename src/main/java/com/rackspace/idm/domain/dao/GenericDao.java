@@ -5,8 +5,6 @@ import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 
-import java.util.List;
-
 /**
  * Created by IntelliJ IDEA.
  * User: jorge
@@ -20,7 +18,7 @@ public interface GenericDao<T> {
     T getObject(Filter searchFilter);
     T getObject(Filter searchFilter, SearchScope scope);
     T getObject(Filter searchFilter, String dn);
-    T getObject(Filter searchFilter, String dn, SearchScope scope);
+    T getObject(Filter searchFilter, String dn, SearchScope scope, String... searchAttributes);
     Iterable<T> getObjects(Filter searchFilter);
     Iterable<T> getObjects(Filter searchFilter, String dn);
     Iterable<T> getObjects(Filter searchFilter, String dn, SearchScope scope);
