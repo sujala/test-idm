@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Trace;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.entity.UserAuthenticationResult;
@@ -29,6 +31,7 @@ public class AuthWithApiKeyCredentials extends BaseUserAuthenticationFactor {
         return scopeAccessService.createScopeAccessForUserAuthenticationResult(authResult);
     }
 
+    @Trace()
     public UserAuthenticationResult authenticate(AuthenticationRequest authenticationRequest) {
         String scope = null;
         if (authenticationRequest.getScope() != null) {

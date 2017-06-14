@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.newrelic.api.agent.Trace;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ImpersonationRequest;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient;
@@ -150,6 +151,7 @@ public class DefaultScopeAccessService implements ScopeAccessService {
         return scInfo.getUserEndpoints();
     }
 
+    @Trace
     @Override
     public ServiceCatalogInfo getServiceCatalogInfo(BaseUser baseUser) {
         return identityUserService.getServiceCatalogInfo(baseUser);

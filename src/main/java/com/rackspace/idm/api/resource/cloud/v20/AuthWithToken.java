@@ -1,5 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Trace;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.entity.*;
@@ -36,6 +38,7 @@ public class AuthWithToken {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    @Trace
     AuthResponseTuple authenticate(AuthenticationRequest authenticationRequest) {
         if (StringUtils.isBlank(authenticationRequest.getToken().getId())) {
             throw new BadRequestException("Invalid Token Id");

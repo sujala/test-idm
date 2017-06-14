@@ -1,10 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20;
 
+import com.newrelic.api.agent.NewRelic;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20;
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
+import com.rackspace.idm.api.resource.cloud.NewRelicTransactionNames;
 import com.rackspace.idm.api.security.AuthenticationContext;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
@@ -196,7 +198,6 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
     @Override
     public AuthenticateResponse buildAuthResponseForValidateToken(RackerScopeAccess rackerScopeAccess) {
         AuthenticateResponse authenticateResponse = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
-
         authenticateResponse.setToken(this.tokenConverterCloudV20.toToken(rackerScopeAccess, null));
         Racker racker = userService.getRackerByRackerId(rackerScopeAccess.getRackerId());
         List<TenantRole> roleList = tenantService.getEphemeralRackerTenantRoles(racker.getRackerId());
@@ -218,6 +219,7 @@ public class DefaultAuthenticateResponseService implements AuthenticateResponseS
     private AuthenticateResponse buildAuthResponseForValidateTokenInternal(UserScopeAccess sa, String tenantId, boolean applyRcnRoles) {
         AuthenticateResponse authenticateResponse = objFactories.getOpenStackIdentityV2Factory().createAuthenticateResponse();
 
+        // Throws NotFoundException if user can not be retrieved
         EndUser user = (EndUser) userService.getUserByScopeAccess(sa);
         List<TenantRole> roles;
         if (applyRcnRoles) {
