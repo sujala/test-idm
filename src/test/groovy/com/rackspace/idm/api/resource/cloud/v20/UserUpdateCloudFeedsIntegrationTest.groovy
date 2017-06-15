@@ -37,7 +37,7 @@ class UserUpdateCloudFeedsIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(user)
     }
 
-    def "test v2.0 update username creates only an update cloud feeds event"() {
+    def "test v2.0 updating an attribute that is not the 'enabled' attribute creates only an update cloud feeds event"() {
         given:
         def domainId = utils.createDomain()
         def user = utils.createUser(utils.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin"), domainId)
