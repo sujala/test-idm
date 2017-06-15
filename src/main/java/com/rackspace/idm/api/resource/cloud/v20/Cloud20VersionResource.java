@@ -26,7 +26,7 @@ import org.openstack.docs.identity.api.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tuckey.web.filters.urlrewrite.utils.StringUtils;
-import org.w3c.dom.Element;
+import org.w3c.dom.Document;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
@@ -299,8 +299,8 @@ public class Cloud20VersionResource {
             bytes = IOUtils.toByteArray(inputStream);
             inputStream.close();
 
-            Element rootElement = identityProviderConverterCloudV20.getXMLRootElement(bytes);
-            if (rootElement.getLocalName().equals(JSONConstants.IDENTITY_PROVIDER)){
+            Document xmlDocument = identityProviderConverterCloudV20.getXMLDocument(bytes);
+            if (xmlDocument.getDocumentElement().getLocalName().equals(JSONConstants.IDENTITY_PROVIDER)){
                 XMLReader xmlReader = new XMLReader();
                 IdentityProvider identityProvider = (IdentityProvider) xmlReader.readFrom(Object.class, IdentityProvider.class, null, null, null, new ByteArrayInputStream(bytes));
                 return cloud20Service.addIdentityProvider(httpHeaders, uriInfo, authToken, identityProvider).build();
@@ -368,6 +368,20 @@ public class Cloud20VersionResource {
             throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
         }
         return cloud20Service.deleteIdentityProvider(httpHeaders, authToken, identityProviderId).build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_XML)
+    @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/metadata")
+    public Response getIdentityProviderMetadata(
+            @Context HttpHeaders httpHeaders
+            , @Context UriInfo uriInfo
+            , @HeaderParam(X_AUTH_TOKEN) String authToken
+            , @PathParam("identityProviderId") String identityProviderId) {
+        if (!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()) {
+            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
+        }
+        return cloud20Service.getIdentityProvidersMetadata(httpHeaders, authToken, identityProviderId).build();
     }
 
     @PUT

@@ -69,6 +69,7 @@ class Cloud20Methods {
     static def SERVICE_PATH_PASSWORD_RESET = "pwd-reset"
     static def SERVICE_PATH_RULES = "rules"
     static def SERVICE_PATH_MAPPING = "mapping"
+    static def SERVICE_PATH_METADATA = "metadata"
     static def SERVICE_PATH_DOMAINS = "domains"
     static def SERVICE_PATH_PASSWORD_POLICY = "password-policy"
     static def SERVICE_PATH_CHANGE_PASSWORD = "change-pwd"
@@ -468,6 +469,11 @@ class Cloud20Methods {
     def getIdentityProviderPolicy(token, identityProviderId, MediaType acceptMediaType = MediaType.APPLICATION_JSON_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(SERVICE_PATH_MAPPING).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).get(ClientResponse)
+    }
+
+    def getIdentityProviderMetadata(token, identityProviderId, MediaType acceptMediaType = APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(SERVICE_PATH_METADATA).header(X_AUTH_TOKEN, token).accept(acceptMediaType).get(ClientResponse)
     }
 
     def listIdentityProviders(token, name = null, issuer = null, domainId = null, idpType = null, tenantId = null, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {

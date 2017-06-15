@@ -69,6 +69,14 @@ public interface FederatedIdentityService {
     IdentityProvider getIdentityProviderByName(String name);
 
     /**
+     * Return the identity provider by id with only metadata attribute populated.
+     * @param id
+     * @return
+     */
+    IdentityProvider getIdentityProviderWithMetadataById(String id);
+
+
+    /**
      * Return the identity provider by name that can create tokens for the given name and domainId
      *
      * @param name

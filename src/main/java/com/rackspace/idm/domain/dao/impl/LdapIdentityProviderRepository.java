@@ -49,6 +49,11 @@ public class LdapIdentityProviderRepository extends LdapGenericRepository<Identi
     }
 
     @Override
+    public IdentityProvider getIdentityProviderWithMetadataById(String id) {
+        return getObject(searchByIdFilter(id), getBaseDn(), SearchScope.ONE, LdapRepository.ATTR_DEFAULT_SEARCH_ATTRIBUTES);
+    }
+
+    @Override
     public IdentityProvider getIdentityProviderApprovedForDomain(String name, String domainId) {
         return getObject(searchFilterGetIdentityProviderApprovedForDomain(name, domainId));
     }

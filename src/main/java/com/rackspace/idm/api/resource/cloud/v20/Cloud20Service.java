@@ -4,8 +4,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.opensaml.saml.saml2.metadata.EntitiesDescriptor;
-import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -45,6 +43,8 @@ public interface Cloud20Service {
     ResponseBuilder getIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId);
 
     ResponseBuilder getIdentityProviders(HttpHeaders httpHeaders, String authToken, String name, String issuer, String domainId, String idpType, String approvedTenantId);
+
+    ResponseBuilder getIdentityProvidersMetadata(HttpHeaders httpHeaders, String authToken, String providerId);
 
     ResponseBuilder deleteIdentityProvider(HttpHeaders httpHeaders, String authToken, String providerId);
 

@@ -6,7 +6,9 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
 import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
-import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.entity.IdentityProvider;
+import com.rackspace.idm.domain.entity.SamlAuthResponse;
+import com.rackspace.idm.domain.entity.SamlLogoutResponse;
 import com.rackspace.idm.domain.service.FederatedIdentityService;
 import com.rackspace.idm.domain.service.federation.v2.FederatedAuthHandlerV2;
 import com.rackspace.idm.exception.BadRequestException;
@@ -14,10 +16,11 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.SignatureValidationException;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
-import lombok.Setter;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
-import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.LogoutRequest;
+import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.StatusCode;
 import org.opensaml.xmlsec.signature.Signature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +61,8 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     private IdentityConfig identityConfig;
 
     public static final String ERROR_SERVICE_UNAVAILABLE = "Service Unavailable";
+
+    public static final String IDENTITY_PROVIDER_NOT_FOUND_ERROR_MESSAGE = "Identity Provider with id/name: '%s' was not found.";
 
     @Override
     public SamlAuthResponse processSamlResponse(Response response) throws ServiceUnavailableException {
@@ -161,6 +166,11 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     }
 
     @Override
+    public IdentityProvider getIdentityProviderWithMetadataById(String id) {
+        return identityProviderDao.getIdentityProviderWithMetadataById(id);
+    }
+
+    @Override
     public IdentityProvider getIdentityProviderApprovedForDomain(String name, String domainId) {
         return identityProviderDao.getIdentityProviderApprovedForDomain(name, domainId);
     }
@@ -185,7 +195,7 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         IdentityProvider provider = getIdentityProvider(id);
 
         if (provider == null) {
-            String errMsg = String.format("Identity Provider with id/name: '%s' was not found.", id);
+            String errMsg = String.format(IDENTITY_PROVIDER_NOT_FOUND_ERROR_MESSAGE, id);
             log.info(errMsg);
             throw new NotFoundException(errMsg);
         }
