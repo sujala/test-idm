@@ -902,6 +902,11 @@ class Cloud20Utils {
         users
     }
 
+    def addUserToGroupWithId(String groupId, User user, String token=getServiceAdminToken()) {
+        def response = methods.addUserToGroup(token, groupId, user.id)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
     def addUserToGroup(Group group, User user, String token=getServiceAdminToken()) {
         def response = methods.addUserToGroup(token, group.id, user.id)
         assert (response.status == SC_NO_CONTENT)
