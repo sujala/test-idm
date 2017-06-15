@@ -4,6 +4,7 @@ import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.TenantDao
@@ -395,6 +396,26 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | _
     }
 
+    def "Create IDP with name having '_' and ':'" () {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def idpName = testUtils.getRandomUUID("test:example_1")
+
+        when: "create a IDP"
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(idpName, "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp)
+        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+        creationResultIdp.name == idpName
+
+        cleanup:
+        utils.deleteUser(idpManager)
+        utils.deleteIdentityProvider(creationResultIdp)
+    }
+
     def "Create IDP using Metadata" () {
         given:
         String issuer = testUtils.getRandomUUID("issuer")
@@ -420,6 +441,30 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         idp.approvedDomainIds.approvedDomainId.get(0) == domainId
         idp.description == domainId
         idp.publicCertificates.publicCertificate.get(0).pemEncoded != null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+    }
+
+    def "Create IDP using Metadata using dedicated domain format name" () {
+        given:
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def domainId = testUtils.getRandomUUIDOfLength("dedicated:123", 30)
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        when: "Creating IDP using metadata"
+        def response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+        IdentityProvider idp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+        idp.name == domainId.substring(0, IdentityProviderConverterCloudV20.METADATA_IDP_MAX_NAME_SIZE)
 
         cleanup:
         utils.deleteUsers(users)

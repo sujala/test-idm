@@ -55,6 +55,8 @@ public class IdentityProviderConverterCloudV20 {
     @Autowired
     private JAXBObjectFactories objFactories;
 
+    public static final int METADATA_IDP_MAX_NAME_SIZE = 29;
+
     // NOTE: Metadata is not return as part of the IDP object.
     public IdentityProvider toIdentityProvider(com.rackspace.idm.domain.entity.IdentityProvider identityProvider) {
         com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider provider = mapper.map(identityProvider, IdentityProvider.class);
@@ -105,8 +107,8 @@ public class IdentityProviderConverterCloudV20 {
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setIssuer(entityDescriptor.getEntityID());
         identityProvider.setMetadata(convertEntityDescriptorToString(entityDescriptor));
-        // Set IDP name to caller's domainId
-        identityProvider.setName(domainId);
+        // Set IDP name to the first 29 characters of the caller's domainId
+        identityProvider.setName(StringUtils.substring(domainId, 0, METADATA_IDP_MAX_NAME_SIZE));
         identityProvider.setFederationType(IdentityProviderFederationTypeEnum.DOMAIN);
         ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds();
         approvedDomainIds.getApprovedDomainId().add(domainId);

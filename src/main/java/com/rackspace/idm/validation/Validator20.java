@@ -64,7 +64,7 @@ public class Validator20 {
     public static final String DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG = "Identity provider with name %s already exist.";
     public static final String INVALID_IDENTITY_PROVIDER_APPROVED_DOMAIN_ERROR_MSG = "The provided approved domain '%s' does not exist.";
     public static final String EMPTY_IDENTITY_PROVIDER_APPROVED_DOMAIN_ERROR_MSG = "ApprovedDomainIds must contain at least one valid domain Id.";
-    public static final Pattern IDENTITY_PROVIDER_NAME_REGEX = Pattern.compile("[\\p{Alnum}.\\-']*");
+    public static final Pattern IDENTITY_PROVIDER_NAME_REGEX = Pattern.compile("[\\p{Alnum}.\\-_:']*");
 
     public static final String ERROR_TENANT_REQUIRED_WHEN_TYPE_IS_RCN = "Tenant types are required when role type is 'rcn'.";
 

@@ -1344,7 +1344,7 @@ objectClass: clientRole
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 cn: rcn:admin
 description: Can manage entities under RCN
-rsWeight: 50
+rsWeight: 500
 
 dn: rsId=a2e0811ceedc46d4a87f6b8230e94267,cn=CLIENT ROLES,clientId=bde1268ebab
  eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
