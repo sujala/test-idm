@@ -129,7 +129,7 @@ class TestUpdateIDP(base.TestBaseV2):
         self.assertEqual(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
                          idp_name)
 
-    @ddt.data("?test", "test_update_idp", "test*", "*", "$test#", "test@cid")
+    @ddt.data("?test", "test*", "*", "$test#", "test@cid")
     def test_update_idp_name_with_invalid_characters(self, idp_name):
         """Update idp name with a invalid name"""
         common_error_msg = (

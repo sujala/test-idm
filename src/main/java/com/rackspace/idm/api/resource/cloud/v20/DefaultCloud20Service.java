@@ -1364,7 +1364,6 @@ public class DefaultCloud20Service implements Cloud20Service {
             int count = 2;
             String uniqueName = identityProvider.getName();
             while (federatedIdentityService.getIdentityProviderByName(uniqueName) != null) {
-                // NOTE: '_' is not an approved character for IDP names.
                 uniqueName = String.format("%s_%d", identityProvider.getName(), count++);
             }
             identityProvider.setName(uniqueName);
