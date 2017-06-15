@@ -84,6 +84,7 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_IDP_EMPTY_APPROVED_DOMAIN = "FED_IDP-006";
     public static final String ERROR_CODE_IDP_EXISTING_APPROVED_DOMAIN_GROUP = "FED_IDP-007";
     public static final String ERROR_CODE_IDP_LIMIT_PER_DOMAIN = "FED_IDP-008";
+    public static final String ERROR_CODE_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP = "FED_IDP-009";
 
     //generic errors
     public static final String ERROR_CODE_GENERIC_BAD_REQUEST = "GEN-000";
