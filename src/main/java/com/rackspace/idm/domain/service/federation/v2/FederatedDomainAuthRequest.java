@@ -9,10 +9,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.opensaml.saml.saml2.core.Response;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.rackspace.idm.ErrorCodes.*;
 
@@ -34,8 +31,13 @@ public class FederatedDomainAuthRequest {
     @Getter
     private String email;
 
+    /**
+     * A mapping of a role name to the tenant assignments of the role. A null value in the map (or an empty set)
+     * for a role name indicates the role is globally assigned. If the set of tenants is empty, it should also be
+     * considered a global assignment.
+     */
     @Getter
-    private Set<String> roleNames = Collections.EMPTY_SET;
+    private Map<String, Set<String>> roleNames = Collections.EMPTY_MAP;
 
     @Getter
     private AuthenticatedByMethodEnum authenticatedByForRequest;
@@ -46,9 +48,42 @@ public class FederatedDomainAuthRequest {
         username = federatedAuthRequest.getWrappedSamlResponse().getUsername();
         domainId = getSingleValueAttribute(getBrokerAssertion(), SAMLConstants.ATTR_DOMAIN);
         email = getSingleValueAttribute(getBrokerAssertion(), SAMLConstants.ATTR_EMAIL);
-        List<String> allRoleNames = federatedAuthRequest.getWrappedSamlResponse().getAttributeWithinAssertion(getBrokerAssertion(), SAMLConstants.ATTR_ROLES);
-        if (CollectionUtils.isNotEmpty(allRoleNames)) {
-            roleNames = new HashSet<>(allRoleNames);
+        List<String> allRoleValues = federatedAuthRequest.getWrappedSamlResponse().getAttributeWithinAssertion(getBrokerAssertion(), SAMLConstants.ATTR_ROLES);
+        if (CollectionUtils.isNotEmpty(allRoleValues)) {
+            roleNames = new HashMap<>(); // Could store a null key and a null value
+            for (String roleAssignmentValue : allRoleValues) {
+                FederatedRoleAssignment ra = new FederatedRoleAssignment(roleAssignmentValue);
+                if (StringUtils.isBlank(ra.roleName)) {
+                    throw new BadRequestException(String.format("Invalid role assignment '%s'. A role name must be provided", roleAssignmentValue), ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT);
+                }
+                if (!roleNames.containsKey(ra.roleName)) {
+                /*
+                 If list doesn't contain the role yet, then we haven't seen this rolename yet. Will need to populate
+                 the map. Populating the value with null (as opposed to a Set) means the role assignment is global
+                 */
+                    HashSet<String> tenants = null;
+                    if (StringUtils.isNotBlank(ra.tenantName)) {
+                        tenants = new HashSet<>();
+                        tenants.add(ra.tenantName);
+                    }
+                    roleNames.put(ra.roleName, tenants);
+                } else {
+                    /*
+                     If the list already contains the role, we either add a tenant, or ignore a tenant assignment
+                     if the role is already assigned globally
+                     */
+                    Set<String> roleTenants = roleNames.get(ra.roleName);
+                    if (roleTenants != null) {
+                        if (StringUtils.isNotBlank(ra.tenantName)) {
+                            // Another tenant assignment, add to list
+                            roleTenants.add(ra.tenantName);
+                        } else {
+                            // Global assignment. Null out list so assigned globally
+                            roleNames.put(ra.roleName, null);
+                        }
+                    }
+                }
+            }
         }
         authenticatedByForRequest = processAuthenticatedByForRequest();
 

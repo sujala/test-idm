@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.security.AuthenticationContext
@@ -29,6 +30,8 @@ import org.apache.log4j.Logger
 import org.joda.time.DateTime
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.Role
+import org.openstack.docs.identity.api.v2.Tenant
+import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -82,6 +85,8 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
 
     @Shared User sharedUserAdmin
     @Shared com.rackspace.idm.domain.entity.User sharedUserAdminEntity
+    @Shared Tenant sharedUserAdminCloudTenant
+    @Shared Tenant sharedUserAdminFilesTenant
 
     def setupSpec() {
         sharedServiceAdminToken = cloud20.authenticateForToken(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PASSWORD)
@@ -96,6 +101,13 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         sharedRequestGenerator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
 
         sharedUserAdmin = cloud20.createCloudAccount(sharedIdentityAdminToken)
+        Tenants tenants = cloud20.getDomainTenants(sharedIdentityAdminToken, sharedUserAdmin.domainId).getEntity(Tenants).value
+        sharedUserAdminCloudTenant = tenants.tenant.find {
+            it.id == sharedUserAdmin.domainId
+        }
+        sharedUserAdminFilesTenant = tenants.tenant.find() {
+            it.id != sharedUserAdmin.domainId
+        }
     }
 
     def cleanupSpec() {
@@ -654,18 +666,226 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         }
     }
 
-    def createValidFedRequest(domainId = sharedUserAdmin.domainId) {
+    def "Existing user tenant roles are updated w/ latest info"() {
+        given:
+        // Create initial request w/ role assigned as global role
+        FederatedDomainAuthGenerationRequest req1 = createValidFedRequest().with {
+            it.roleNames = [ROLE_RBAC1_NAME, ROLE_RBAC2_NAME] as Set
+            it
+        }
+        FederatedDomainAuthRequest origRequest = createFedDomainAuthRequest(req1)
+
+        when: "Request initial"
+        def origSamlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(origRequest, sharedOriginIdpEntity)
+
+        then: "Global roles added successfully"
+        origSamlAuthResponse.userRoles.find {it.name == ROLE_RBAC1_NAME} != null
+        origSamlAuthResponse.userRoles.find {it.name == ROLE_RBAC1_NAME}.tenantIds.isEmpty()
+        origSamlAuthResponse.userRoles.find {it.name == ROLE_RBAC2_NAME} != null
+        origSamlAuthResponse.userRoles.find {it.name == ROLE_RBAC2_NAME}.tenantIds.isEmpty()
+
+        when: "Update one global role to be tenant based, remove global role"
+        // Create another request that changes the updatable info
+        FederatedDomainAuthGenerationRequest updatedReq = createValidFedRequest(origRequest.username).with {
+            it.roleNames = [ROLE_RBAC1_NAME + "/" + sharedUserAdminCloudTenant.name] as Set
+            it
+        }
+        def updatedSamlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updatedReq), sharedOriginIdpEntity)
+
+        then: "roles updated"
+        updatedSamlAuthResponse.userRoles.find {it.name == ROLE_RBAC1_NAME} != null
+        updatedSamlAuthResponse.userRoles.find {it.name == ROLE_RBAC1_NAME}.tenantIds.contains(sharedUserAdminCloudTenant.name)
+        updatedSamlAuthResponse.userRoles.find {it.name == ROLE_RBAC2_NAME} == null
+
+        when: "Add second tenant to existing tenant role, add new tenant role"
+        // Create another request that changes the updatable info
+        FederatedDomainAuthGenerationRequest updateReq2 = createValidFedRequest(origRequest.username).with {
+            it.roleNames = [ROLE_RBAC1_NAME + "/" + sharedUserAdminCloudTenant.name
+            , ROLE_RBAC1_NAME + "/" + sharedUserAdminFilesTenant.name
+            , ROLE_RBAC2_NAME + "/" + sharedUserAdminCloudTenant.name] as Set
+            it
+        }
+        def updatedSamlAuthResponse2 = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updateReq2), sharedOriginIdpEntity)
+
+        then: "roles updated"
+        updatedSamlAuthResponse2.userRoles.find {it.name == ROLE_RBAC1_NAME} != null
+        updatedSamlAuthResponse2.userRoles.find {it.name == ROLE_RBAC1_NAME}.tenantIds.contains(sharedUserAdminCloudTenant.name)
+        updatedSamlAuthResponse2.userRoles.find {it.name == ROLE_RBAC1_NAME}.tenantIds.contains(sharedUserAdminFilesTenant.name)
+        updatedSamlAuthResponse2.userRoles.find {it.name == ROLE_RBAC2_NAME} != null
+        updatedSamlAuthResponse2.userRoles.find {it.name == ROLE_RBAC2_NAME}.tenantIds.contains(sharedUserAdminCloudTenant.name)
+
+        when: "Remove second tenant from existing tenant role, turn existing tenant role to global role"
+        // Create another request that changes the updatable info
+        FederatedDomainAuthGenerationRequest updateReq3 = createValidFedRequest(origRequest.username).with {
+            it.roleNames = [ROLE_RBAC1_NAME + "/" + sharedUserAdminCloudTenant.name
+                            , ROLE_RBAC2_NAME] as Set
+            it
+        }
+        def updatedSamlAuthResponse3 = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updateReq3), sharedOriginIdpEntity)
+
+        then: "roles updated"
+        updatedSamlAuthResponse3.userRoles.find {it.name == ROLE_RBAC1_NAME} != null
+        updatedSamlAuthResponse3.userRoles.find {it.name == ROLE_RBAC1_NAME}.tenantIds.contains(sharedUserAdminCloudTenant.name)
+        !updatedSamlAuthResponse3.userRoles.find {it.name == ROLE_RBAC1_NAME}.tenantIds.contains(sharedUserAdminFilesTenant.name)
+        updatedSamlAuthResponse3.userRoles.find {it.name == ROLE_RBAC2_NAME} != null
+        updatedSamlAuthResponse3.userRoles.find {it.name == ROLE_RBAC2_NAME}.tenantIds.isEmpty()
+
+        when: "Remove all explicit roles"
+        // Create another request that changes the updatable info
+        FederatedDomainAuthGenerationRequest updateReq4 = createValidFedRequest(origRequest.username).with {
+            it.roleNames = [] as Set
+            it
+        }
+        def updatedSamlAuthResponse4 = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updateReq4), sharedOriginIdpEntity)
+
+        then: "roles updated"
+        updatedSamlAuthResponse4.userRoles.find {it.name == ROLE_RBAC1_NAME} == null
+        updatedSamlAuthResponse4.userRoles.find {it.name == ROLE_RBAC2_NAME} == null
+
+        cleanup:
+        reloadableConfiguration.reset()
+    }
+
+    def "Auth requests w/ empty role names w/ tenant assignment are rejected"() {
+        when: "missing role name"
+        FederatedDomainAuthGenerationRequest req1 = createValidFedRequest().with {
+            it.roleNames = ["/" + sharedUserAdminCloudTenant.name] as Set
+            it
+        }
+        createFedDomainAuthRequest(req1)
+
+        then: "rejected"
+        BadRequestException ex = thrown()
+        ex.errorCode == ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT
+
+        when: "whitespace only role name"
+        // Create another request that changes the updatable info
+        FederatedDomainAuthGenerationRequest req2 = createValidFedRequest().with {
+            it.roleNames = ["  /" + sharedUserAdminCloudTenant.name] as Set
+            it
+        }
+        createFedDomainAuthRequest(req2)
+
+        then:
+        BadRequestException ex2 = thrown()
+        ex2.errorCode == ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT
+
+        when: "invalid role name"
+        // Create another request that changes the updatable info
+        FederatedDomainAuthGenerationRequest req3 = createValidFedRequest().with {
+            it.roleNames = ["missingrole234/abc"
+                            , ROLE_RBAC1_NAME + "/" + sharedUserAdminCloudTenant.name] as Set
+            it
+        }
+        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req3), sharedOriginIdpEntity)
+        ex.errorCode == ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT
+
+        then:
+        BadRequestException ex3 = thrown()
+        ex3.errorCode == ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE
+
+        when: "invalid second role"
+        // Create another request that changes the updatable info
+        FederatedDomainAuthGenerationRequest req4 = createValidFedRequest().with {
+            it.roleNames = [ROLE_RBAC1_NAME + "/" + sharedUserAdminCloudTenant.name
+                            , "missingrole234"] as Set
+            it
+        }
+        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req4), sharedOriginIdpEntity)
+
+        then:
+        BadRequestException ex4 = thrown()
+        ex4.errorCode == ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE
+
+        cleanup:
+        reloadableConfiguration.reset()
+    }
+
+    def "Auth requests w/ invalid tenant names are rejected"() {
+        when: "invalid tenant"
+        FederatedDomainAuthGenerationRequest req1 = createValidFedRequest().with {
+            it.roleNames = [ROLE_RBAC1_NAME + "/" + RandomStringUtils.randomAlphabetic(15)] as Set
+            it
+        }
+        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req1), sharedOriginIdpEntity)
+
+        then: "rejected"
+        BadRequestException ex = thrown()
+        ex.errorCode == ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT
+
+        cleanup:
+        reloadableConfiguration.reset()
+    }
+
+    def "Auth requests w/ attempt to assign role on tenant for which idp is not authorized are rejected"() {
+        given:
+        def otherDomainId = utils.createDomain()
+        def otherDomainName = testUtils.getRandomUUID(otherDomainId)
+        def otherDomain = utils.createDomain(v2Factory.createDomain(otherDomainId, otherDomainName))
+        Tenant otherTenant = utils.createTenant(otherDomainId, true, "name", otherDomainId)
+
+        IdentityProvider idp = cloud20.generateDomainIdIdentityProviderWithCred(sharedServiceAdminToken, [sharedUserAdminEntity.domainId], sharedOriginIdpCredential)
+        def idpEntity = identityProviderDao.getIdentityProviderById(idp.id)
+
+        when: "try to assign tenant from different domain"
+        FederatedDomainAuthGenerationRequest req1 = createValidFedRequest().with {
+            it.roleNames = [ROLE_RBAC1_NAME + "/" + otherTenant.name] as Set
+            it.originIssuer = idp.issuer
+            it
+        }
+        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req1), idpEntity)
+
+        then:
+        BadRequestException ex = thrown()
+        ex.errorCode == ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT
+
+        cleanup:
+        reloadableConfiguration.reset()
+    }
+
+    def "Auth requests w/ assigning global only role on tenant are rejected"() {
+        Role role = new Role().with {
+            it.name = UUID.randomUUID().toString().replace("-", "")
+            it.roleType = RoleTypeEnum.STANDARD
+            it.assignment = RoleAssignmentEnum.GLOBAL
+            it.administratorRole = IdentityUserTypeEnum.USER_MANAGER.roleName
+            it
+        }
+        Role createdRole = utils.createRole(role)
+
+        when:
+        FederatedDomainAuthGenerationRequest req1 = createValidFedRequest().with {
+            it.roleNames = [createdRole.name + "/" + sharedUserAdminCloudTenant.name] as Set
+            it
+        }
+        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req1), sharedOriginIdpEntity)
+
+        then: "rejected"
+        BadRequestException ex = thrown()
+        ex.errorCode == ERROR_CODE_FEDERATION2_FORBIDDEN_FEDERATED_ROLE
+
+        cleanup:
+        reloadableConfiguration.reset()
+    }
+
+    def createValidFedRequest(username = UUID.randomUUID()) {
         new FederatedDomainAuthGenerationRequest().with {
-            it.domainId = domainId
+            it.domainId = sharedUserAdmin.domainId
             it.validitySeconds = 100
             it.brokerIssuer = sharedBrokerIdp.issuer
             it.originIssuer = sharedOriginIdp.issuer
             it.email = DEFAULT_FED_EMAIL
             it.responseIssueInstant = new DateTime()
             it.authContextRefClass = SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
-            it.username = UUID.randomUUID()
+            it.username = username
             it.roleNames = [] as Set
             it
         }
+    }
+
+    FederatedDomainAuthRequest createFedDomainAuthRequest(FederatedDomainAuthGenerationRequest generationRequest) {
+        def samlResponse = sharedRequestGenerator.createSignedSAMLResponse(generationRequest)
+        FederatedDomainAuthRequest fdar = new FederatedDomainAuthRequest(samlResponse)
+        return fdar
     }
 }

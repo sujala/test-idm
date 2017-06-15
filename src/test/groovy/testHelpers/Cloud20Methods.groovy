@@ -1124,6 +1124,18 @@ class Cloud20Methods {
         createIdentityProvider(token, idp)
     }
 
+    def createDomainIdIdentityProviderWithCred(String token, List<String> domainIds, Credential cred) {
+        def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cred.entityCertificate)
+        def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)
+        def publicCertificates = v2Factory.createPublicCertificates(pubCerts1)
+
+        def idp = v2Factory.createIdentityProvider(UUID.randomUUID().toString(), "blah", UUID.randomUUID().toString(), IdentityProviderFederationTypeEnum.DOMAIN, null, domainIds).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        createIdentityProvider(token, idp)
+    }
+
     /**
      * Creates a new IDP, verifying the IDP was created successfully, and return the IDP rather than the raw response
      * @param type
@@ -1132,6 +1144,18 @@ class Cloud20Methods {
      */
     def generateIdentityProviderWithCred(String token, IdentityProviderFederationTypeEnum type, Credential cred) {
         def response = createIdentityProviderWithCred(token, type, cred)
+        assert (response.status == SC_CREATED)
+        return response.getEntity(IdentityProvider)
+    }
+
+    /**
+     * Creates a new IDP, verifying the IDP was created successfully, and return the IDP rather than the raw response
+     * @param type
+     * @param cred
+     * @return
+     */
+    def generateDomainIdIdentityProviderWithCred(String token, List<String> domainIds, Credential cred) {
+        def response = createDomainIdIdentityProviderWithCred(token, domainIds, cred)
         assert (response.status == SC_CREATED)
         return response.getEntity(IdentityProvider)
     }
