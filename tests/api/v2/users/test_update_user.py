@@ -106,9 +106,6 @@ class TestUpdateUser(base.TestBaseV2):
         """
         user_id = self.test_identity_adm_id
         update_data = test_data['update_input']
-        if 'user_name' in update_data:
-            update_data['user_name'] = self.generate_random_string(
-                pattern='newname[\d]{10}')
         request_object = requests.UserUpdate(**update_data)
         resp = self.service_admin_client.update_user(
             user_id=user_id, request_object=request_object
@@ -130,9 +127,6 @@ class TestUpdateUser(base.TestBaseV2):
         """
         user_id = self.test_user_admin_id
         update_data = test_data['update_input']
-        if 'user_name' in update_data:
-            update_data['user_name'] = self.generate_random_string(
-                pattern='newname[\d]{10}')
         request_object = requests.UserUpdate(**update_data)
         resp = self.identity_admin_client.update_user(
             user_id=user_id, request_object=request_object
@@ -154,9 +148,6 @@ class TestUpdateUser(base.TestBaseV2):
         """
         user_id = self.test_sub_user_id
         update_data = test_data['update_input']
-        if 'user_name' in update_data:
-            update_data['user_name'] = self.generate_random_string(
-                pattern='newname[\d]{10}')
         request_object = requests.UserUpdate(**update_data)
         resp = self.user_admin_client.update_user(
             user_id=user_id, request_object=request_object
@@ -179,8 +170,6 @@ class TestUpdateUser(base.TestBaseV2):
         update_data = test_data['update_input']
         # avoid update password
         if 'password' not in update_data:
-            if 'user_name' in update_data:
-                update_data['user_name'] = 'testsomething'
             request_object = requests.UserUpdate(**update_data)
             resp = self.test_identity_admin_client.update_user(
                 user_id=user_id, request_object=request_object)
@@ -203,10 +192,6 @@ class TestUpdateUser(base.TestBaseV2):
         update_data = test_data['update_input']
         # avoid update password
         if 'password' not in update_data:
-            sub_user_name = self.generate_random_string(
-                pattern=const.SUB_USER_PATTERN)
-            if 'user_name' in update_data:
-                update_data['user_name'] = sub_user_name
             request_object = requests.UserUpdate(**update_data)
             resp = self.test_user_admin_client.update_user(
                 user_id=user_id, request_object=request_object)
@@ -229,10 +214,6 @@ class TestUpdateUser(base.TestBaseV2):
         update_data = test_data['update_input']
         # avoid update password
         if 'password' not in update_data:
-            sub_user_name = self.generate_random_string(
-                pattern=const.SUB_USER_PATTERN)
-            if 'user_name' in update_data:
-                update_data['user_name'] = sub_user_name
             request_object = requests.UserUpdate(**update_data)
             resp = self.test_user_client.update_user(
                 user_id=user_id, request_object=request_object)
@@ -365,7 +346,7 @@ class TestUpdateUser(base.TestBaseV2):
         resp = self.service_admin_client.update_user(
             user_id=user_id, request_object=request_object
         )
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.status_code, test_data['response_status'])
 
     @ddt.file_data('data_update_user_info_neg.json')
     def test_update_user_admin_user_neg(self, test_data):
@@ -380,7 +361,7 @@ class TestUpdateUser(base.TestBaseV2):
         resp = self.identity_admin_client.update_user(
             user_id=user_id, request_object=request_object
         )
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.status_code, test_data['response_status'])
 
     @ddt.file_data('data_update_user_info_neg.json')
     def test_update_default_user_neg(self, test_data):
@@ -395,7 +376,7 @@ class TestUpdateUser(base.TestBaseV2):
         resp = self.user_admin_client.update_user(
             user_id=user_id, request_object=request_object
         )
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.status_code, test_data['response_status'])
 
     @ddt.data('identity_admin_client', 'user_admin_client', 'user_client')
     def test_identity_admin_update_permission(self, access_level):

@@ -128,6 +128,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String USER_NOT_FOUND_ERROR_MESSAGE = "User with ID %s not found.";
 
+    public static final String UPDATE_USER_CANNOT_UPDATE_HIGHER_LEVEL_USER_ERROR_MESSAGE = "Cannot update user with same or higher access level";
+    public static final String USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE = "A user's username cannot be updated.";
+    public static final String ERROR_CANNOT_UPDATE_USER_WITH_HIGHER_ACCESS = "Cannot update user with same or higher access level";
+
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -752,7 +756,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             //identity admins can not update service admin accounts
             if (callerIsIdentityAdmin && authorizationService.hasServiceAdminRole(retrievedUser)) {
-                throw new ForbiddenException("Cannot update user with same or higher access level");
+                throw new ForbiddenException(ERROR_CANNOT_UPDATE_USER_WITH_HIGHER_ACCESS);
             }
 
             //sub users who are not user-managers can only update their own accounts.
@@ -768,7 +772,13 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if((callerHasUserManageRole && authorizationService.hasUserManageRole(retrievedUser) && !isUpdatingSelf) ||
                     (callerHasUserManageRole && authorizationService.hasUserAdminRole(retrievedUser))) {
-                throw new ForbiddenException("Cannot update user with same or higher access level");
+                throw new ForbiddenException(UPDATE_USER_CANNOT_UPDATE_HIGHER_LEVEL_USER_ERROR_MESSAGE);
+            }
+
+            if (StringUtils.isNotBlank(user.getUsername()) &&
+                    !retrievedUser.getUsername().equals(user.getUsername()) &&
+                    !identityConfig.getReloadableConfig().isUsernameUpdateAllowed()) {
+                throw new ForbiddenException(USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE);
             }
 
             if (!StringUtils.isBlank(user.getUsername())) {

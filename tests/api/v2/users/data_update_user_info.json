@@ -7,12 +7,6 @@
             "email"
         ]
     },
-    "update_name": {
-        "update_input": {
-            "user_name": "new_name"
-        },
-        "update_schema_fields": []
-    },
     "update_enabled": {
         "update_input": {
             "enabled": false
