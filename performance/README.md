@@ -23,9 +23,11 @@ In order for us to validate any performance characteristics of the target identi
 3. Generate fed_origin cert: `pushd data_generation && jar xf identity-saml-generator-* sample_keys/fed-origin.crt && popd`
 4. Generate sample data:
 
-   4.1. Generate users in temporary directories (positional values are: ip, loops, normal users per loop, and admin users per loop): `pushd data_generation && ./create_users.sh http://${docker_ip}:8082/idm/cloud 1 10 5 && popd`.  This will create loops * (normal users per loop) users and loops * (admin users per loop) admins.
-   4.2. Generate admin user data: `pushd data_generation && ./generate_files.py -u admins -c admin_file_config.json -o ../identity-perf-agent/localhost/data/identity  && popd`
-   4.3. Generate regular user data: `pushd data_generation && ./generate_files.py -u users -c file_config.json -o ../identity-perf-agent/localhost/data/identity && popd`
+   4.0. Set `docker_ip` variable to IP that your docker is running under.  Usually localhost on OSs that run native docker and 192.168.x.x on those that run in docker-machine.
+   4.1. There are python scripts.  You should run under latest Python 3.x version (use pyenv to set the version and virtualenv to not install packages in your system)
+   4.2. Generate users in temporary directories (positional values are: ip, loops, normal users per loop, and admin users per loop): `pushd data_generation && ./create_users.sh http://${docker_ip}:8082/idm/cloud 1 10 5 && popd`.  This will create loops * (normal users per loop) users and loops * (admin users per loop) admins.
+   4.3. Generate admin user data: `pushd data_generation && ./generate_files.py -u admins -c admin_file_config.json -o ../identity-perf-agent/localhost/data/identity  && popd`
+   4.4. Generate regular user data: `pushd data_generation && ./generate_files.py -u users -c file_config.json -o ../identity-perf-agent/localhost/data/identity && popd`
 5. Set up `identity-perf-agent/src/test/resources/application.properties` to the values you want to run with.  While there are many values, you can figure out the ones you need from your Simulation.  An example would be in `com.rackspacecloud.simulations.identity.IdentityDemo`:
 
         val conf = ConfigFactory.load()
