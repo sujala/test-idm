@@ -385,6 +385,18 @@ public class Cloud20VersionResource {
     }
 
     @PUT
+    @Consumes(MediaType.APPLICATION_XML)
+    @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/metadata")
+    public Response updateIdentityProviderUsingMetadata(
+            @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam("identityProviderId") String identityProviderId,
+            String metadata) {
+        return cloud20Service.updateIdentityProviderUsingMetadata(httpHeaders, uriInfo, authToken, identityProviderId, metadata).build();
+    }
+
+    @PUT
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/certificates")
     public Response addCertToIdp(@Context HttpHeaders httpHeaders,
                                  @HeaderParam(X_AUTH_TOKEN) String authToken,

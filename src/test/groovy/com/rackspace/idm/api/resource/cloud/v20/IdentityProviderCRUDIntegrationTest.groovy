@@ -18,6 +18,7 @@ import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
+import groovy.xml.XmlUtil
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
@@ -465,6 +466,207 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then:
         response.status == SC_CREATED
         idp.name == domainId.substring(0, IdentityProviderConverterCloudV20.METADATA_IDP_MAX_NAME_SIZE)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+    }
+
+    def "test update IDP using Metadata" () {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def idp = utils.createIdentityProvider(utils.getServiceAdminToken(), IdentityProviderFederationTypeEnum.DOMAIN, domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        String issuer = idp.issuer
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+
+        when: "update IDP using metadata"
+        def response = cloud20.updateIdentityProviderUsingMetadata(userAdminToken, idp.id, metadata)
+        IdentityProvider responseIdp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_OK
+        responseIdp.issuer == issuer
+        responseIdp.authenticationUrl == authenticationUrl
+        responseIdp.approvedDomainIds.approvedDomainId.size() == 1
+        responseIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
+        responseIdp.metadata == null
+
+        when: "get IDP and verify that the values persisted correctly"
+        def getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), idp.id)
+
+        then:
+        getIdp.issuer == issuer
+        getIdp.authenticationUrl == authenticationUrl
+        getIdp.approvedDomainIds.approvedDomainId.size() == 1
+        getIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
+        getIdp.metadata == null
+
+        when: "get the IDP metadata and verify it was updated"
+        def updatedMetadata = cloud20.getIdentityProviderMetadata(userAdminToken, idp.id)
+
+        then:
+        // we have to pretty print the xml so we can compare them as strings
+        XmlUtil.serialize(updatedMetadata.getEntity(String)) == XmlUtil.serialize(metadata)
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+    }
+
+    def "test update IDP error cases" () {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def idp = utils.createIdentityProvider(utils.getServiceAdminToken(), IdentityProviderFederationTypeEnum.DOMAIN, domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        when: "the request body is invalid xml"
+        def response = cloud20.updateIdentityProviderUsingMetadata(userAdminToken, idp.id, "I am not valid xml!!!")
+
+        then:
+        response.status == SC_BAD_REQUEST
+
+        when: "the issuer in the metadata is not the issuer for the existing IDP"
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(RandomStringUtils.randomAlphabetic(8), idp.authenticationUrl)
+        response = cloud20.updateIdentityProviderUsingMetadata(userAdminToken, idp.id, metadata)
+
+        then:
+        response.status == SC_BAD_REQUEST
+
+        when: "the auth URL is empty"
+        metadata = new SamlFactory().generateMetadataXMLForIDP(idp.issuer, "")
+        response = cloud20.updateIdentityProviderUsingMetadata(userAdminToken, idp.id, metadata)
+
+        then:
+        response.status == SC_BAD_REQUEST
+
+        when: "the auth URL is null"
+        metadata = new SamlFactory().generateMetadataXMLForIDP(idp.issuer, null)
+        response = cloud20.updateIdentityProviderUsingMetadata(userAdminToken, idp.id, metadata)
+
+        then:
+        response.status == SC_BAD_REQUEST
+
+        when: "the auth URL is longer than the max allowed length"
+        metadata = new SamlFactory().generateMetadataXMLForIDP(idp.issuer, RandomStringUtils.randomAlphabetic(Validator20.MAX_IDENTITY_PROVIDER_AUTH_URL + 1))
+        response = cloud20.updateIdentityProviderUsingMetadata(userAdminToken, idp.id, metadata)
+
+        then:
+        response.status == SC_BAD_REQUEST
+
+        when: "provide an invalid cert"
+        metadata = new SamlFactory().generateMetadataXMLForIDP(idp.issuer, idp.authenticationUrl, ["invalidCert"])
+        response = cloud20.updateIdentityProviderUsingMetadata(userAdminToken, idp.id, metadata)
+
+        then:
+        response.status == SC_BAD_REQUEST
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+    }
+
+    def "test Update IDP certs using metadata" () {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def idp = utils.createIdentityProvider(utils.getServiceAdminToken(), IdentityProviderFederationTypeEnum.DOMAIN, domainId)
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        def keyPair1 = SamlCredentialUtils.generateKeyPair()
+        def cert1 = SamlCredentialUtils.generateCertificate(keyPair1)
+        def pubKey1 = SamlCredentialUtils.getCertificateAsPEMString(cert1)
+        def keyPair2 = SamlCredentialUtils.generateKeyPair()
+        def cert2 = SamlCredentialUtils.generateCertificate(keyPair2)
+        def pubKey2 = SamlCredentialUtils.getCertificateAsPEMString(cert2)
+
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(idp.issuer, idp.authenticationUrl, [pubKey1])
+
+        when: "update IDP using metadata w/ key 1"
+        def response = cloud20.updateIdentityProviderUsingMetadata(userAdminToken, idp.id, metadata)
+        IdentityProvider responseIdp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_OK
+        responseIdp.authenticationUrl == idp.authenticationUrl
+        responseIdp.approvedDomainIds.approvedDomainId.size() == 1
+        responseIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
+        responseIdp.publicCertificates.publicCertificate.size() == 1
+        responseIdp.publicCertificates.publicCertificate[0].pemEncoded == pubKey1
+        responseIdp.metadata == null
+
+        when: "get IDP and verify that the values persisted correctly"
+        def getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), idp.id)
+
+        then:
+        getIdp.authenticationUrl == idp.authenticationUrl
+        getIdp.approvedDomainIds.approvedDomainId.size() == 1
+        getIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
+        getIdp.publicCertificates.publicCertificate.size() == 1
+        getIdp.publicCertificates.publicCertificate[0].pemEncoded == pubKey1
+        getIdp.metadata == null
+
+        when: "update IDP using metadata w/ key 2"
+        metadata = new SamlFactory().generateMetadataXMLForIDP(idp.issuer, idp.authenticationUrl, [pubKey2])
+        response = cloud20.updateIdentityProviderUsingMetadata(userAdminToken, idp.id, metadata)
+        responseIdp = response.getEntity(IdentityProvider)
+
+        then: "key 1 is removed and only key 2 is on the IDP"
+        response.status == SC_OK
+        responseIdp.authenticationUrl == idp.authenticationUrl
+        responseIdp.approvedDomainIds.approvedDomainId.size() == 1
+        responseIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
+        responseIdp.publicCertificates.publicCertificate.size() == 1
+        responseIdp.publicCertificates.publicCertificate[0].pemEncoded == pubKey2
+        responseIdp.metadata == null
+
+        when: "get IDP and verify that the values persisted correctly"
+        getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), idp.id)
+
+        then:
+        getIdp.authenticationUrl == idp.authenticationUrl
+        getIdp.approvedDomainIds.approvedDomainId.size() == 1
+        getIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
+        getIdp.publicCertificates.publicCertificate.size() == 1
+        getIdp.publicCertificates.publicCertificate[0].pemEncoded == pubKey2
+        getIdp.metadata == null
+
+        when: "update IDP using metadata w/ key 1 and key 2"
+        metadata = new SamlFactory().generateMetadataXMLForIDP(idp.issuer, idp.authenticationUrl, [pubKey1, pubKey2])
+        response = cloud20.updateIdentityProviderUsingMetadata(userAdminToken, idp.id, metadata)
+        responseIdp = response.getEntity(IdentityProvider)
+
+        then: "both key 1 and key 2 are on the IDP"
+        response.status == SC_OK
+        responseIdp.authenticationUrl == idp.authenticationUrl
+        responseIdp.approvedDomainIds.approvedDomainId.size() == 1
+        responseIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
+        responseIdp.publicCertificates.publicCertificate.size() == 2
+        responseIdp.publicCertificates.publicCertificate.find {it -> it.pemEncoded == pubKey1} != null
+        responseIdp.publicCertificates.publicCertificate.find {it -> it.pemEncoded == pubKey2} != null
+        responseIdp.metadata == null
+
+        when: "get IDP and verify that the values persisted correctly"
+        getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), idp.id)
+
+        then:
+        getIdp.authenticationUrl == idp.authenticationUrl
+        getIdp.approvedDomainIds.approvedDomainId.size() == 1
+        getIdp.approvedDomainIds.approvedDomainId.get(0) == domainId
+        getIdp.publicCertificates.publicCertificate.size() == 2
+        responseIdp.publicCertificates.publicCertificate.find {it -> it.pemEncoded == pubKey1} != null
+        responseIdp.publicCertificates.publicCertificate.find {it -> it.pemEncoded == pubKey2} != null
+        getIdp.metadata == null
 
         cleanup:
         utils.deleteUsers(users)

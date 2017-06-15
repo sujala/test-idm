@@ -4,6 +4,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.decorator.SAMLAuthContext
 import net.shibboleth.utilities.java.support.xml.SerializeSupport
 import org.apache.commons.codec.binary.StringUtils
+import org.apache.commons.collections.CollectionUtils
 import org.joda.time.DateTime
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport
 import org.opensaml.core.xml.io.Marshaller
@@ -117,26 +118,26 @@ class SamlFactory {
         return org.apache.xml.security.utils.Base64.encode(StringUtils.getBytesUtf8(requestString))
     }
 
-    def generateMetadataXMLForIDP(issuer, authenticationUrl) {
+    def generateMetadataXMLForIDP(issuer, authenticationUrl, Collection<String> pubKeys = null) {
         EntityDescriptor entityDescriptor = new EntityDescriptorImpl(SAML20MD_NS, "EntityDescriptor", "md")
         entityDescriptor.entityID = issuer
 
         IDPSSODescriptor idpSSODescriptor = new IDPSSODescriptorImpl(SAML20MD_NS, "IDPSSODescriptor", "md")
         idpSSODescriptor.addSupportedProtocol(SAML20P_NS)
 
-        // Create KeyDescriptor
-        KeyDescriptor keyDescriptor = new KeyDescriptorImpl(SAML20MD_NS, "KeyDescriptor", "md")
-        keyDescriptor.use = UsageType.SIGNING
-        KeyInfo keyInfo = new KeyInfoImpl("http://www.w3.org/2000/09/xmldsig#", "KeyInfo", "md1")
-        X509Data x509Data = new X509DataImpl("http://www.w3.org/2000/09/xmldsig#", "X509Data", "md1")
-        X509Certificate x509Certificate = new X509CertificateImpl("http://www.w3.org/2000/09/xmldsig#", "X509Certificate", "md1")
-        def keyPair = SamlCredentialUtils.generateKeyPair()
-        def cert = SamlCredentialUtils.generateCertificate(keyPair)
-        x509Certificate.value = SamlCredentialUtils.getCertificateAsPEMString(cert)
-        x509Data.x509Certificates.add(x509Certificate)
-        keyInfo.XMLObjects.add(x509Data)
-        keyDescriptor.keyInfo = keyInfo
-        idpSSODescriptor.keyDescriptors.add(keyDescriptor)
+        if (CollectionUtils.isEmpty(pubKeys)) {
+            // Create a public key
+            def keyPair = SamlCredentialUtils.generateKeyPair()
+            def cert = SamlCredentialUtils.generateCertificate(keyPair)
+
+            // Add the public key to the list of keys
+            idpSSODescriptor.keyDescriptors.add(createKeyDescriptor(SamlCredentialUtils.getCertificateAsPEMString(cert)))
+        } else {
+            for (key in pubKeys) {
+                // Add the public key to the list of keys
+                idpSSODescriptor.keyDescriptors.add(createKeyDescriptor(key))
+            }
+        }
 
         // Create SingleSignOnService
         SingleSignOnService singleSignOnService = new SingleSignOnServiceImpl(SAML20MD_NS, "SingleSignOnService", "md")
@@ -147,6 +148,19 @@ class SamlFactory {
         entityDescriptor.roleDescriptors.add(idpSSODescriptor)
 
         return convertEntityDescriptorToString(entityDescriptor);
+    }
+
+    static KeyDescriptor createKeyDescriptor(String pubKey) {
+        KeyDescriptor keyDescriptor = new KeyDescriptorImpl(SAML20MD_NS, "KeyDescriptor", "md")
+        keyDescriptor.use = UsageType.SIGNING
+        X509Data x509Data = new X509DataImpl("http://www.w3.org/2000/09/xmldsig#", "X509Data", "md1")
+        KeyInfo keyInfo = new KeyInfoImpl("http://www.w3.org/2000/09/xmldsig#", "KeyInfo", "md1")
+        X509Certificate x509Certificate = new X509CertificateImpl("http://www.w3.org/2000/09/xmldsig#", "X509Certificate", "md1")
+        x509Certificate.value = pubKey
+        x509Data.x509Certificates.add(x509Certificate)
+        keyInfo.XMLObjects.add(x509Data)
+        keyDescriptor.keyInfo = keyInfo
+        return keyDescriptor
     }
 
     def convertEntityDescriptorToString(EntityDescriptor entityDescriptor) {

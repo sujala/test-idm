@@ -354,8 +354,15 @@ class Cloud20Utils {
         return identityAdmin
     }
 
-    def createIdentityProvider(token = getServiceAdminToken(), IdentityProviderFederationTypeEnum providerType = IdentityProviderFederationTypeEnum.DOMAIN) {
+    def createIdentityProvider(token = getServiceAdminToken(), IdentityProviderFederationTypeEnum providerType = IdentityProviderFederationTypeEnum.DOMAIN, def approvedDomainId = null) {
         def idp = factory.createIdentityProvider(testUtils.getRandomUUID(), testUtils.getRandomUUID("My IDP - "), testUtils.getRandomUUID("http://example.com/"), providerType)
+        if (approvedDomainId != null) {
+            idp.approvedDomainIds = new ApprovedDomainIds().with {
+                it.approvedDomainId = [approvedDomainId]
+                it
+            }
+            idp.approvedDomainGroup = null
+        }
         def response = methods.createIdentityProvider(token, idp)
         assert (response.status == SC_CREATED)
         return response.getEntity(IdentityProvider)

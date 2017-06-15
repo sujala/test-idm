@@ -105,4 +105,6 @@ public final class GlobalConstants {
     public static final String  TENANT_TYPE_MANAGED_HOSTING = "managed_hosting";
 
     public static final String  MANAGED_HOSTING_TENANT_PREFIX = "hybrid:";
+
+    public static final String RAX_STATUS_RESTRICTED_GROUP_NAME = "rax_status_restricted";
 }
