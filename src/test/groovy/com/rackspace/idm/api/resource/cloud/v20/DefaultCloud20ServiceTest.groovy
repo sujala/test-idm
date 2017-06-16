@@ -6,6 +6,7 @@ import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.converter.cloudv20.*
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.AuthorizationService
@@ -3548,8 +3549,17 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "Update identity provider with approvedDomainIds"() {
         given:
+        def mockAuthorizationService = Mock(AuthorizationService)
+
         def mockFederatedIdentityService = Mock(FederatedIdentityService)
         service.federatedIdentityService = mockFederatedIdentityService
+        service.authorizationService = mockAuthorizationService
+
+        IdentityConfig identityConfig = Mock(IdentityConfig)
+        IdentityConfig.ReloadableConfig reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
+        identityConfig.getReloadableConfig() >> reloadableConfig
+        service.identityConfig = identityConfig
+
         com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider idp = new com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider().with {
             ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
             approvedDomainIds.approvedDomainId = ["id", "id3", "id2"].asList()
@@ -3562,7 +3572,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
             it.approvedDomainIds = ["id", "id2", "id3"].asList()
             it
         }
-        mockFederatedIdentityService.checkAndGetIdentityProvider(_) >> existingIdp
+        mockFederatedIdentityService.checkAndGetIdentityProviderWithMetadataById(_) >> existingIdp
+        mockAuthorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName()) >> true
 
         when: "Update IDP with same list of approvedDomainIds"
         service.updateIdentityProvider(headers, uriInfo(), authToken, "id", idp)

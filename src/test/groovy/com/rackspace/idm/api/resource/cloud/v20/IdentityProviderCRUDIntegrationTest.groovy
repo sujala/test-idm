@@ -3173,4 +3173,256 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         utils.deleteIdentityProvider(idp)
     }
 
+    @Unroll
+    def "Update IDP supports end user modifictaion - request: #requestContentType"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, true)
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def domainId = utils.createDomain()
+        def otherDomainId = utils.createDomain()
+        def otherDomain = utils.createDomainEntity(otherDomainId)
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def userManageToken = utils.getToken(userManage.username)
+
+        when: "Create IDP can set federationType of 'DOMAIN' in same domain"
+        IdentityProvider domainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId])
+        def response = cloud20.createIdentityProvider(idpManagerToken, domainGroupIdp, requestContentType, requestContentType)
+        IdentityProvider creationResultIdp = response.getEntity(IdentityProvider)
+
+        then: "created successfully"
+        response.status == SC_CREATED
+
+        when: "Create IDP can set federationType of 'DOMAIN' in other domain"
+        IdentityProvider outsideDomainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [otherDomainId])
+        response = cloud20.createIdentityProvider(idpManagerToken, outsideDomainGroupIdp, requestContentType, requestContentType)
+        IdentityProvider creationResultIdpWithOtherDomain = response.getEntity(IdentityProvider)
+
+        then: "created successfully"
+        response.status == SC_CREATED
+
+        when: "Create IDP can set federationType of 'DOMAIN' with multiple domains include domain"
+        IdentityProvider multipleDomainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId, otherDomainId])
+        response = cloud20.createIdentityProvider(idpManagerToken, multipleDomainGroupIdp, requestContentType, requestContentType)
+        IdentityProvider creationResultIdpWithMultipleDomain = response.getEntity(IdentityProvider)
+
+        then: "created successfully"
+        response.status == SC_CREATED
+
+        when: "Create IDP can set federationType of 'DOMAIN' without domains"
+        IdentityProvider emptyDomainGroupIdp = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        response = cloud20.createIdentityProvider(idpManagerToken, emptyDomainGroupIdp, requestContentType, requestContentType)
+        IdentityProvider creationResultIdpWithoutDomain = response.getEntity(IdentityProvider)
+
+        then: "created successfully"
+        response.status == SC_CREATED
+
+        when: "User-admin try to update IdP's name whose approvedDomainId matches their own domain & is the only approved domain."
+        resetCloudFeedsMock()
+        def name = RandomStringUtils.randomAlphanumeric(10)
+        IdentityProvider updateDomainGroupIdp = new IdentityProvider().with {
+            it.name = name
+            it
+        }
+        def updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, creationResultIdp.id, updateDomainGroupIdp, requestContentType, requestContentType)
+        IdentityProvider updateResultIdp = updateIdpResponse.getEntity(IdentityProvider)
+
+        then: "Expect a 200 w/ updated name in response"
+        updateIdpResponse.status == SC_OK
+        updateResultIdp.name == name
+
+        when: "User-manage try to update IdP's name whose approvedDomainId matches their own domain & is the only approved domain."
+        resetCloudFeedsMock()
+        name = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.name = name
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, creationResultIdp.id, updateDomainGroupIdp, requestContentType, requestContentType)
+        updateResultIdp = updateIdpResponse.getEntity(IdentityProvider)
+
+        then: "Expect a 200 w/ updated name in response"
+        updateIdpResponse.status == SC_OK
+        updateResultIdp.name == name
+
+        when: "User-admin try to update IdP's name whose approvedDomainId doesn't match their own domain."
+        resetCloudFeedsMock()
+        name = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.name = name
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, creationResultIdpWithOtherDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
+
+        then: "Expect a 403"
+        updateIdpResponse.status == SC_FORBIDDEN
+
+        when: "User-manage try to update IdP's name whose approvedDomainId doesn't match their own domain."
+        resetCloudFeedsMock()
+        name = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.name = name
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, creationResultIdpWithOtherDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
+
+        then: "Expect a 403"
+        updateIdpResponse.status == SC_FORBIDDEN
+
+        when: "User-admin try to update IdP's description whose approvedDomainId matches their own domain & is the only approved domain."
+        resetCloudFeedsMock()
+        def description = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.description = description
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, creationResultIdp.id, updateDomainGroupIdp, requestContentType, requestContentType)
+        updateResultIdp = updateIdpResponse.getEntity(IdentityProvider)
+
+        then: "Expect a 200 w/ updated description in response"
+        updateIdpResponse.status == SC_OK
+        updateResultIdp.description == description
+
+        when: "User-manage try to update IdP's description whose approvedDomainId matches their own domain & is the only approved domain."
+        resetCloudFeedsMock()
+        description = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.description = description
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, creationResultIdp.id, updateDomainGroupIdp, requestContentType, requestContentType)
+        updateResultIdp = updateIdpResponse.getEntity(IdentityProvider)
+
+        then: "Expect a 200 w/ updated description in response"
+        updateIdpResponse.status == SC_OK
+        updateResultIdp.description == description
+
+        when: "User-admin try to update IdP's description whose approvedDomainId doesn't match their own domain."
+        resetCloudFeedsMock()
+        description = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.description = description
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, creationResultIdpWithOtherDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
+
+        then: "Expect a 403"
+        updateIdpResponse.status == SC_FORBIDDEN
+
+        when: "User-manage try to update IdP's description whose approvedDomainId doesn't match their own domain."
+        resetCloudFeedsMock()
+        description = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.description = description
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, creationResultIdpWithOtherDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
+
+        then: "Expect a 403"
+        updateIdpResponse.status == SC_FORBIDDEN
+
+        when: "User-admin try to update IdP's name for which their domain is one of the approved domains"
+        resetCloudFeedsMock()
+        name = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.name = name
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, creationResultIdpWithMultipleDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
+
+        then: "Expect a 403"
+        updateIdpResponse.status == SC_FORBIDDEN
+
+        when: "User-manage try to update IdP's name for which their domain is one of the approved domains"
+        resetCloudFeedsMock()
+        name = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.name = name
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, creationResultIdpWithMultipleDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
+
+        then: "Expect a 403"
+        updateIdpResponse.status == SC_FORBIDDEN
+
+        when: "User-admin try to update IdP's description for which their domain is one of the approved domains"
+        resetCloudFeedsMock()
+        description = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.description = description
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, creationResultIdpWithMultipleDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
+
+        then: "Expect a 403"
+        updateIdpResponse.status == SC_FORBIDDEN
+
+        when: "User-manage try to update IdP's description for which their domain is one of the approved domains"
+        resetCloudFeedsMock()
+        description = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.description = description
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, creationResultIdpWithMultipleDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
+
+        then: "Expect a 403"
+        updateIdpResponse.status == SC_FORBIDDEN
+
+        when: "User-admin try to update IdP for which `approvedDomainGroup` attribute is not None"
+        resetCloudFeedsMock()
+        name = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.name = name
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, creationResultIdpWithoutDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
+
+        then: "Expect a 403"
+        updateIdpResponse.status == SC_FORBIDDEN
+
+        when: "User-manage try to update IdP for which `approvedDomainGroup` attribute is not None"
+        resetCloudFeedsMock()
+        name = RandomStringUtils.randomAlphanumeric(10)
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.name = name
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, creationResultIdpWithoutDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
+
+        then: "Expect a 403"
+        updateIdpResponse.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdpWithoutDomain.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdpWithOtherDomain.id)
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdpWithMultipleDomain.id)
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+        utils.deleteDomain(otherDomainId)
+        utils.deleteUserQuietly(idpManager)
+
+        where:
+        requestContentType | _
+        MediaType.APPLICATION_XML_TYPE | _
+        MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    private IdentityProvider getUpdateDomainGroupIdp(name, description, domainId=null) {
+        IdentityProvider updateDomainGroupIdp = new IdentityProvider().with {
+            it.name = name
+            it.description = description
+            if (domainId) {
+                ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
+                approvedDomainIds.getApprovedDomainId().addAll([domainId])
+                it.approvedDomainIds = approvedDomainIds
+            }
+            it
+        }
+        updateDomainGroupIdp
+    }
 }

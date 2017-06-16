@@ -115,6 +115,9 @@ public class IdentityConfig {
     public static final String IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP = "federated.max.identity.provider.per.domain";
     public static final int IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_DEFAULT = 10;
 
+    public static final String IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP = "feature.enable.external.user.idp.management";
+    public static final boolean IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT = false;
+
     /**
      * The format of the property name to set the token format for a specific IDP. The '%s' is replaced by the IDP's labeledUri. This
      * means that each IDP has a custom property. If no such property exists for the IDP, the value for {@link #IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP}
@@ -702,6 +705,8 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_DEFAULT);
         defaults.put(FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, FEATURE_MAINTAIN_PASSWORD_HISTORY_DEFAULT);
         defaults.put(PASSWORD_HISTORY_MAX_PROP, PASSWORD_HISTORY_MAX_DEFAULT);
+
+        defaults.put(IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT);
 
         return defaults;
     }
@@ -2020,6 +2025,11 @@ public class IdentityConfig {
         @IdmProp(key = IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP, versionAdded = "3.13.0", description = "Maximum number of explicit IDPs per domain")
         public int getIdentityFederatedMaxIDPPerDomain() {
             return getIntSafely(reloadableConfiguration, IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP);
+        }
+
+        @IdmProp(key = IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, versionAdded = "3.13.0", description = "Maximum number of explicit IDPs per domain")
+        public boolean getEnableExternalUserIdpManagement() {
+            return getBooleanSafely(reloadableConfiguration, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP);
         }
     }
 
