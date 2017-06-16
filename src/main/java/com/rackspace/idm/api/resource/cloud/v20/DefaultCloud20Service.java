@@ -131,7 +131,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE = "A user's username cannot be updated.";
     public static final String ERROR_CANNOT_UPDATE_USER_WITH_HIGHER_ACCESS = "Cannot update user with same or higher access level";
 
-    public static final String RAX_STATUS_RESTRICTED_GROUP_NAME = "rax_status_restricted";
     public static final String METADATA_NOT_FOUND_ERROR_MESSAGE = "No metadata found for identity provider '%s'.";
 
     @Autowired
@@ -1353,7 +1352,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // Verify user's groups
             for (Group group : userService.getGroupsForUser(caller.getId())) {
-                if (group.getName().equalsIgnoreCase(RAX_STATUS_RESTRICTED_GROUP_NAME)) {
+                if (group.getName().equalsIgnoreCase(GlobalConstants.RAX_STATUS_RESTRICTED_GROUP_NAME)) {
                     throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
@@ -1438,6 +1437,76 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             ResponseBuilder builder = Response.ok(uriInfo.getRequestUriBuilder().path(existingProvider.getProviderId()).build());
             return builder.entity(identityProviderConverterCloudV20.toIdentityProvider(existingProvider));
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder updateIdentityProviderUsingMetadata(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String identityProviderId, String metadata) {
+        try {
+            // Verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+
+            // Verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()));
+
+            // Verify user's groups
+            for (Group group : userService.getGroupsForUser(caller.getId())) {
+                if (GlobalConstants.RAX_STATUS_RESTRICTED_GROUP_NAME.equals(group.getName())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+            }
+
+            com.rackspace.idm.domain.entity.IdentityProvider identityProvider = federatedIdentityService.checkAndGetIdentityProviderWithMetadataById(identityProviderId);
+
+            List<String> approvedDomainIds = identityProvider.getApprovedDomainIds();
+            if (approvedDomainIds == null || approvedDomainIds.size() != 1) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
+            if (!approvedDomainIds.get(0).equals(caller.getDomainId())) {
+                // Verify domain within the same RCN as the IDP's approvedDomainId if user has the "rcn:admin" role
+                if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.RCN_ADMIN.getRoleName())) {
+                    Domain callerDomain = domainService.getDomain(caller.getDomainId());
+                    Domain idpApprovedDomain = domainService.getDomain(approvedDomainIds.get(0));
+
+                    if (!assertDomainsBelongToRcn(callerDomain, idpApprovedDomain)) {
+                        throw new ForbiddenException(NOT_AUTHORIZED);
+                    }
+                } else {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
+                }
+            }
+
+            IdentityProvider idpRequest = identityProviderConverterCloudV20.toIdentityProvider(metadata.getBytes(), caller.getDomainId());
+            com.rackspace.idm.domain.entity.IdentityProvider idpUpdates = identityProviderConverterCloudV20.fromIdentityProvider(idpRequest);
+
+            if (!identityProvider.getUri().equals(idpUpdates.getUri())) {
+                throw new BadRequestException("The issuer for the IDP specified in the request does not mach the issuer for the IDP being updated.");
+            }
+
+            validator20.validateIdentityProviderAuthenticationUrl(idpRequest);
+
+            validator20.validateIdentityProviderPublicCertificates(idpRequest);
+
+            // Set only the attributes that we allow to be updated through metadata
+            identityProvider.setAuthenticationUrl(idpUpdates.getAuthenticationUrl());
+            identityProvider.setUserCertificates(idpUpdates.getUserCertificates());
+            identityProvider.setXmlMetadata(idpUpdates.getXmlMetadata());
+
+            federatedIdentityService.updateIdentityProvider(identityProvider);
+            atomHopperClient.asyncPostIdpEvent(identityProvider, EventType.UPDATE);
+
+            // We do not expose the IDP's metadata within the IDP. Use the get metadata call to get the metadata
+            identityProvider.setXmlMetadata(null);
+
+            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().
+                    createIdentityProvider(identityProviderConverterCloudV20.toIdentityProvider(identityProvider)).getValue());
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
         }
@@ -1584,7 +1653,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
                 // Verify user's groups
                 for (Group group : userService.getGroupsForUser(caller.getId())) {
-                    if (group.getName().equalsIgnoreCase(RAX_STATUS_RESTRICTED_GROUP_NAME)) {
+                    if (group.getName().equalsIgnoreCase(GlobalConstants.RAX_STATUS_RESTRICTED_GROUP_NAME)) {
                         throw new ForbiddenException(NOT_AUTHORIZED);
                     }
                 }

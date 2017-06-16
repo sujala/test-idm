@@ -431,11 +431,20 @@ public class Validator20 {
         // Validate description
         validateStringMaxLength("description", identityProvider.getDescription(), MAX_IDENTITY_PROVIDER_DESCRIPTION);
 
+        validateIdentityProviderAuthenticationUrl(identityProvider);
+
+        validateIdentityProviderPublicCertificates(identityProvider);
+
+    }
+
+    public void validateIdentityProviderAuthenticationUrl(IdentityProvider identityProvider) {
         // Validate authenticationUrl
         validateStringNotNullWithMaxLength("authenticationUrl",
-                                           identityProvider.getAuthenticationUrl(),
-                                           MAX_IDENTITY_PROVIDER_AUTH_URL);
+                identityProvider.getAuthenticationUrl(),
+                MAX_IDENTITY_PROVIDER_AUTH_URL);
+    }
 
+    public void validateIdentityProviderPublicCertificates(IdentityProvider identityProvider) {
         // Validate public certificates
         PublicCertificates publicCertificatesWrapper = identityProvider.getPublicCertificates();
         if (publicCertificatesWrapper != null && CollectionUtils.isNotEmpty(publicCertificatesWrapper.getPublicCertificate())) {
@@ -443,7 +452,6 @@ public class Validator20 {
                 validatePublicCertificate(publicCertificate);
             }
         }
-
     }
 
     private void validateIdentityProviderName(String name) {
