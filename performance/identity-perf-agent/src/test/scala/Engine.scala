@@ -8,7 +8,8 @@ object Engine extends App {
 	props.resultsDirectory(IDEPathHelper.resultsDirectory.toString)
 	props.bodiesDirectory(IDEPathHelper.bodiesDirectory.toString)
 	props.binariesDirectory(IDEPathHelper.mavenBinariesDirectory.toString)
-	props.simulationClass("com.rackspacecloud.simulations.identity.IdentityDemo")
+	props.simulationClass("com.rackspacecloud.simulations.identity.IdentityConstantTputGenerateTokens")
+	//props.simulationClass("com.rackspacecloud.simulations.identity.IdentityDemo")
 
 	Gatling.fromMap(props.build)
 }
