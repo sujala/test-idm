@@ -289,18 +289,15 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders
             , @Context UriInfo uriInfo
             , @HeaderParam(X_AUTH_TOKEN) String authToken
-            , InputStream inputStream) throws IOException {
+            , String requestBody) throws IOException {
         if(!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()){
             throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
         }
 
-        byte[] bytes;
+        byte[] bytes = org.apache.commons.codec.binary.StringUtils.getBytesUtf8(requestBody);
         try {
-            bytes = IOUtils.toByteArray(inputStream);
-            inputStream.close();
-
             Document xmlDocument = identityProviderConverterCloudV20.getXMLDocument(bytes);
-            if (xmlDocument.getDocumentElement().getLocalName().equals(JSONConstants.IDENTITY_PROVIDER)){
+            if (xmlDocument.getDocumentElement().getLocalName().equals(JSONConstants.IDENTITY_PROVIDER)) {
                 XMLReader xmlReader = new XMLReader();
                 IdentityProvider identityProvider = (IdentityProvider) xmlReader.readFrom(Object.class, IdentityProvider.class, null, null, null, new ByteArrayInputStream(bytes));
                 return cloud20Service.addIdentityProvider(httpHeaders, uriInfo, authToken, identityProvider).build();
@@ -392,8 +389,9 @@ public class Cloud20VersionResource {
             @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("identityProviderId") String identityProviderId,
-            String metadata) {
-        return cloud20Service.updateIdentityProviderUsingMetadata(httpHeaders, uriInfo, authToken, identityProviderId, metadata).build();
+            String requestBody) {
+        return cloud20Service.updateIdentityProviderUsingMetadata(httpHeaders, uriInfo, authToken,
+                identityProviderId, org.apache.commons.codec.binary.StringUtils.getBytesUtf8(requestBody)).build();
     }
 
     @PUT
