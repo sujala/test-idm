@@ -1384,22 +1384,50 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder updateIdentityProvider(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String providerId, IdentityProvider provider) {
         try {
             // Verify token exists and valid
-            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            ScopeAccess sa = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             // Verify user has appropriate role
-            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+            if(identityConfig.getReloadableConfig().getEnableExternalUserIdpManagement()) {
+                authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                        IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                        IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                        IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                        IdentityRole.RCN_ADMIN.getRoleName()));
+            } else {
+                authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+            }
 
-            com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProvider(providerId);
+            com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProviderWithMetadataById(providerId);
 
-            validator20.validateIdentityProviderForUpdate(provider, existingProvider);
+            boolean isUserAdmin = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName());
+            boolean isUserManage = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityUserTypeEnum.USER_MANAGER.getRoleName());
+            boolean isRcnAdmin = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.RCN_ADMIN.getRoleName());
+            boolean isIdentityProviderManager = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+
+            if (isUserAdmin || isUserManage) {
+                verifyDomainUserHasAccessToIdentityProviderMetadata(existingProvider, caller);
+                validator20.validateIdentityProviderForUpdateForUserAdminOrUserManage(provider);
+            } else if (isRcnAdmin) {
+                verifyDomainUserHasAccessToIdentityProviderMetadata(existingProvider, caller);
+                validator20.validateIdentityProviderForUpdateForRcnAdmin(provider, existingProvider);
+            } else {
+                validator20.validateIdentityProviderForUpdate(provider, existingProvider);
+            }
 
             // Copy over the only attributes allowed to be updated
             if (provider.getName() != null) {
                 existingProvider.setName(provider.getName());
             }
-            if (provider.getAuthenticationUrl() != null) {
+
+            if (provider.getDescription() != null) {
+                existingProvider.setDescription(provider.getDescription());
+            }
+
+            if (isIdentityProviderManager && existingProvider.getXmlMetadata() == null && provider.getAuthenticationUrl() != null) {
                 existingProvider.setAuthenticationUrl(provider.getAuthenticationUrl());
             }
+
             List<String> existingProviderApprovedDomainIds = existingProvider.getApprovedDomainIds() != null ? existingProvider.getApprovedDomainIds() : Collections.EMPTY_LIST ;
 
             List<String> suppliedProviderApprovedDomainIds = null;
@@ -1407,23 +1435,28 @@ public class DefaultCloud20Service implements Cloud20Service {
                 // Remove duplicates within supplied list by adding to a hashset
                 Set<String> approvedDomainIds = new LinkedHashSet<>(provider.getApprovedDomainIds().getApprovedDomainId());
                 suppliedProviderApprovedDomainIds = new ArrayList<>(approvedDomainIds);
-                existingProvider.setApprovedDomainIds(suppliedProviderApprovedDomainIds);
+
+                if (isIdentityProviderManager || isRcnAdmin) {
+                    existingProvider.setApprovedDomainIds(suppliedProviderApprovedDomainIds);
+                }
             }
 
             federatedIdentityService.updateIdentityProvider(existingProvider); //update
             atomHopperClient.asyncPostIdpEvent(existingProvider, EventType.UPDATE);
 
-            /*
-             Only delete fed users for the IDP if the existingProviderApprovedDomainIds contains one or more domainIds
-             that were not included in the new set of domainIds
-            */
-            if (suppliedProviderApprovedDomainIds != null && CollectionUtils.isNotEmpty(suppliedProviderApprovedDomainIds)
-                    && !CollectionUtils.isEqualCollection(existingProviderApprovedDomainIds, suppliedProviderApprovedDomainIds)) {
-                Iterable<FederatedUser> federatedUsersForDeletion = identityUserService.getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(
-                        suppliedProviderApprovedDomainIds, providerId);
-                for (FederatedUser federatedUser : federatedUsersForDeletion) {
-                    // Delete federated user
-                    provisionedUserSourceFederationHandler.deleteFederatedUser(federatedUser);
+            if (isIdentityProviderManager || isRcnAdmin) {
+                /*
+                 Only delete fed users for the IDP if the existingProviderApprovedDomainIds contains one or more domainIds
+                 that were not included in the new set of domainIds
+                */
+                if (suppliedProviderApprovedDomainIds != null && CollectionUtils.isNotEmpty(suppliedProviderApprovedDomainIds)
+                        && !CollectionUtils.isEqualCollection(existingProviderApprovedDomainIds, suppliedProviderApprovedDomainIds)) {
+                    Iterable<FederatedUser> federatedUsersForDeletion = identityUserService.getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(
+                            suppliedProviderApprovedDomainIds, providerId);
+                    for (FederatedUser federatedUser : federatedUsersForDeletion) {
+                        // Delete federated user
+                        provisionedUserSourceFederationHandler.deleteFederatedUser(federatedUser);
+                    }
                 }
             }
             ResponseBuilder builder = Response.ok(uriInfo.getRequestUriBuilder().path(existingProvider.getProviderId()).build());
@@ -1512,6 +1545,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     private void verifyDomainUserHasAccessToIdentityProviderMetadata(com.rackspace.idm.domain.entity.IdentityProvider identityProvider, BaseUser user) {
         List<String> approvedDomainIds = identityProvider.getApprovedDomainIds();
 
+        if(!identityProvider.getFederationTypeAsEnum().equals(IdentityProviderFederationTypeEnum.DOMAIN)) {
+            throw new ForbiddenException(NOT_AUTHORIZED);
+        }
         verifyIdpHasOneAndOnlyOneApprovedDomainId(identityProvider);
 
         if (!approvedDomainIds.get(0).equals(user.getDomainId())) {
@@ -1527,7 +1563,6 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
         }
-
     }
 
     private void verifyIdpHasOneAndOnlyOneApprovedDomainId(com.rackspace.idm.domain.entity.IdentityProvider idp) {

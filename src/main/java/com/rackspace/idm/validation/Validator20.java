@@ -42,6 +42,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.NOT_AUTHORIZED;
+
 @Component
 public class Validator20 {
 
@@ -410,14 +412,7 @@ public class Validator20 {
     }
 
     public void validateIdentityProviderMetadataForCreation(IdentityProvider identityProvider, String domainId) {
-        List<com.rackspace.idm.domain.entity.IdentityProvider> identityProviderList =
-                federatedIdentityService.findIdentityProvidersExplicitlyApprovedForDomain(domainId);
-
-        if (identityProviderList.size() >= identityConfig.getReloadableConfig().getIdentityFederatedMaxIDPPerDomain()) {
-            String errMsg = String.format("Maximum number of explicit IDPs already exist for domain %s.", domainId);
-            logger.warn(errMsg);
-            throw new ForbiddenException(errMsg, ErrorCodes.ERROR_CODE_IDP_LIMIT_PER_DOMAIN);
-        }
+        validateIdentityProviderExplicitThreshold(domainId);
 
         // Validate name
         validateIdentityProviderName(identityProvider.getName());
@@ -451,6 +446,17 @@ public class Validator20 {
             for (PublicCertificate publicCertificate : publicCertificatesWrapper.getPublicCertificate()) {
                 validatePublicCertificate(publicCertificate);
             }
+        }
+    }
+
+    private void validateIdentityProviderExplicitThreshold(String domainId) {
+        List<com.rackspace.idm.domain.entity.IdentityProvider> identityProviderList =
+                federatedIdentityService.findIdentityProvidersExplicitlyApprovedForDomain(domainId);
+
+        if (identityProviderList.size() >= identityConfig.getReloadableConfig().getIdentityFederatedMaxIDPPerDomain()) {
+            String errMsg = String.format("Maximum number of explicit IDPs already exist for domain %s.", domainId);
+            logger.warn(errMsg);
+            throw new ForbiddenException(errMsg, ErrorCodes.ERROR_CODE_IDP_LIMIT_PER_DOMAIN);
         }
     }
 
@@ -514,6 +520,41 @@ public class Validator20 {
         }
         if (identityProvider.getAuthenticationUrl() != null && !identityProvider.getAuthenticationUrl().equalsIgnoreCase(existingProvider.getAuthenticationUrl())) {
             validateStringMaxLength("authenticationUrl", identityProvider.getAuthenticationUrl(), MAX_IDENTITY_PROVIDER_AUTH_URL);
+        }
+    }
+
+    public void validateIdentityProviderForUpdateForUserAdminOrUserManage(IdentityProvider identityProvider) {
+        validateAttributeForUpdate("name", identityProvider.getName());
+        validateAttributeForUpdate("description", identityProvider.getDescription());
+    }
+
+    public void validateIdentityProviderForUpdateForRcnAdmin(IdentityProvider identityProvider, com.rackspace.idm.domain.entity.IdentityProvider existingProvider) {
+        validateAttributeForUpdate("name", identityProvider.getName());
+        validateAttributeForUpdate("description", identityProvider.getDescription());
+
+        ApprovedDomainIds providedApprovedDomainIds = identityProvider.getApprovedDomainIds();
+
+        if (providedApprovedDomainIds != null) {
+            List<String> approvedDomainIds = providedApprovedDomainIds.getApprovedDomainId();
+            if (approvedDomainIds.size() != 1) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
+            String domainId = identityProvider.getApprovedDomainIds().getApprovedDomainId().get(0);
+            Domain domain = domainService.getDomain(domainId);
+            if (domain == null) {
+                throw new BadRequestException(String.format(INVALID_IDENTITY_PROVIDER_APPROVED_DOMAIN_ERROR_MSG, domainId), ErrorCodes.ERROR_CODE_IDP_INVALID_APPROVED_DOMAIN);
+            }
+
+            Domain existingDomain = domainService.getDomain(existingProvider.getApprovedDomainIds().get(0));
+
+            if (!domain.getRackspaceCustomerNumber().equalsIgnoreCase(existingDomain.getRackspaceCustomerNumber())) {
+                throw new ForbiddenException(NOT_AUTHORIZED);
+            }
+
+            if (!existingProvider.getApprovedDomainIds().contains(domainId)) {
+                validateIdentityProviderExplicitThreshold(domainId);
+            }
         }
     }
 
