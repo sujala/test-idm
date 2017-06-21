@@ -55,6 +55,8 @@ IDP_URL = '/RAX-AUTH/federation/identity-providers'
 IDP_RUD_URL = (IDP_URL + "/{idp_id}")
 IDP_MAPPING_CR_URL = ("/RAX-AUTH/federation/identity-providers/{idp_id}/"
                       "mapping")
+IDP_METADATA_RUD_URL = ("/RAX-AUTH/federation/identity-providers/{idp_id}/"
+                        "metadata")
 IMPERSONATION_URL = '/RAX-AUTH/impersonation-tokens'
 LEGACY_FED_AUTH_URL = '/RAX-AUTH/saml-tokens'
 LIST_CREDENTIALS_URL = "/users/{user_id}/OS-KSADM/credentials"

@@ -1419,7 +1419,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         """
         url = self.url + const.CERTIFICATE_ADD_URL.format(idp_id=idp_id)
 
-        resp = self.request(method='POST', url=url,
+        resp = self.request(method='PUT', url=url,
                             request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
@@ -1453,6 +1453,26 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + const.IDP_MAPPING_CR_URL.format(idp_id=idp_id)
 
         resp = self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def get_idp_metadata(self, idp_id, requestslib_kwargs=None):
+        """Return response object from the get_idp_metadata api call
+        """
+        url = self.url + const.IDP_METADATA_RUD_URL.format(idp_id=idp_id)
+
+        resp = self.request(method='GET', url=url,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def update_idp_metadata(self, idp_id, request_object,
+                            requestslib_kwargs=None):
+        """Return response object from the update_idp_metadata api call
+        """
+        url = self.url + const.IDP_METADATA_RUD_URL.format(idp_id=idp_id)
+
+        resp = self.request(method='PUT', url=url,
+                            request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
