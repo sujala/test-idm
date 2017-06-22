@@ -22,7 +22,8 @@ object IdentityUserTokenGeneration {
   }
  
   val results = new PrintWriter(new File(DATA_LOCATION + "data/identity/users_tokens.dat"))
-  
+  results.append("token_id,username,apikey,ipaddress\n")
+
   val user_generate_tokens = exec(TokensUserGeneration.v20_user_gen_tokens).exec {session => results.write(
        session("token_id").as[String] + "," + 
        session("username").as[String] + "," + 
