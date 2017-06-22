@@ -1,0 +1,42 @@
+{
+    "new_fed_auth_wo_metadata_and_no_role_update": {
+        "fed_input": {
+            "base64_url_encode": true,
+            "new_url": true,
+            "content_type": "x-www-form-urlencoded",
+            "fed_api": "v2",
+            "metadata": false,
+            "update_roles": false
+        }
+    },
+    "new_fed_auth_with_metadata_and_no_role_update": {
+        "fed_input": {
+            "base64_url_encode": false,
+            "new_url": true,
+            "content_type": "x-www-form-urlencoded",
+            "fed_api": "v2",
+            "metadata": true,
+            "update_roles": false
+        }
+    },
+    "new_fed_auth_wo_metadata_and_update_roles": {
+        "fed_input": {
+            "base64_url_encode": true,
+            "new_url": true,
+            "content_type": "x-www-form-urlencoded",
+            "fed_api": "v2",
+            "metadata": false,
+            "update_roles": true
+        }
+    },
+    "new_fed_auth_with_metadata_and_update_roles": {
+        "fed_input": {
+            "base64_url_encode": false,
+            "new_url": true,
+            "content_type": "x-www-form-urlencoded",
+            "fed_api": "v2",
+            "metadata": true,
+            "update_roles": true
+        }
+    }
+}
