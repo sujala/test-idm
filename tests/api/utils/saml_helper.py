@@ -11,8 +11,8 @@ def check_datetime_format(datetime_str):
                     datetime_str)
 
 
-def get_params_and_command(public_key_path, private_key_path,
-                           for_logout=False, fed_api='v1'):
+def get_params_and_command(public_key_path, private_key_path, fed_api=None,
+                           for_logout=False, for_metadata=False):
     """
     Common logic for 'create_saml_assertion' and 'create_saml_logout'
     """
@@ -25,7 +25,7 @@ def get_params_and_command(public_key_path, private_key_path,
         src_path = tests_path.group(1)
     jar_path = os.path.join(
         src_path, 'tests', 'resources',
-        'identity-saml-generator-2.0-1488397788311-all.jar')
+        'identity-saml-generator-2.0-1498141615086-all.jar')
     key_path = os.path.join(src_path, 'src',
                             'test', 'resources')
     public_key_path = public_key_path or os.path.join(
@@ -38,9 +38,15 @@ def get_params_and_command(public_key_path, private_key_path,
             java_exec_path, '-jar', jar_path, fed_api,
             '-publicKey', public_key_path, '-privateKey', private_key_path
         ]
-    else:
+    elif fed_api == 'v2':
         command_list = [
             java_exec_path, '-jar', jar_path, fed_api,
+        ]
+
+    if for_metadata:
+        command_list = [
+            java_exec_path, '-jar', jar_path, '-metadata', 'true',
+            '-publicKey', public_key_path, '-privateKey', private_key_path
         ]
 
     if for_logout:
@@ -264,7 +270,7 @@ def create_saml_logout(issuer=None, days_to_issue_instant=None,
 
     public_key_path, private_key_path, command_list = get_params_and_command(
         public_key_path=public_key_path, private_key_path=private_key_path,
-        for_logout=True)
+        for_logout=True, fed_api='v1')
 
     if issuer is not None:
         command_list.extend(['-issuer', issuer])
@@ -307,3 +313,28 @@ def create_saml_logout(issuer=None, days_to_issue_instant=None,
     cert = subprocess.check_output(command_list).strip()
 
     return cert
+
+
+def create_metadata(issuer=None, org_name=None, auth_url=None,
+                    private_key_path=None, public_key_path=None):
+    """
+    This is a client to help generate metadata.xml for create IdP with
+    metadata.xml
+    """
+    public_key_path, private_key_path, command_list = get_params_and_command(
+        public_key_path=public_key_path, private_key_path=private_key_path,
+        for_metadata=True)
+
+    if issuer is not None:
+        command_list.extend(['-issuer', issuer])
+
+    if auth_url is not None:
+        command_list.extend(['-authenticationUrl', auth_url])
+
+    if org_name is not None:
+        command_list.extend(['-orgName', org_name])
+
+    metadata = subprocess.check_output(command_list,
+                                       stderr=subprocess.STDOUT).strip()
+
+    return metadata
