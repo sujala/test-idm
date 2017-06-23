@@ -243,7 +243,7 @@ public class FederatedDomainRequestHandler {
                 tenantRole.setClientId(role.getClientId());
                 tenantRole.setName(role.getName());
                 tenantRole.setDescription(role.getDescription());
-                tenantRole.setPropagate(role.getPropagate());
+                tenantRole.setRoleType(role.getRoleType());
                 tenantRole.setTenantIds(assignedTenantIds);
                 tenantRoles.add(tenantRole);
             }

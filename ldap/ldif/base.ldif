@@ -755,7 +755,7 @@ clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
 cn: object-store:default
 description: A Role that allows a user access to keystone Service methods
 rsWeight: 500
-rsPropagate: TRUE
+rsType: PROPAGATE
 
 dn: clientId=613ab2dd9e314ae0854933286cd4c8c1,ou=applications,o=rackspace,d
  c=rackspace,dc=com
@@ -985,7 +985,7 @@ clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 cn: compute:default
 description: A Role that allows a user access to keystone Service methods
 rsWeight: 500
-rsPropagate: TRUE
+rsType: PROPAGATE
 
 dn: clientId=b1b53e09b2cc4b2d96a7a470f7566774,ou=applications,o=rackspace,d
  c=rackspace,dc=com
@@ -1200,7 +1200,7 @@ rsId: 249
 cn: rax_managed
 description: Rackspace Managed Cloud Customer
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-rsPropagate: TRUE
+rsType: PROPAGATE
 rsWeight: 500
 
 dn: rsId=250,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d
@@ -1210,7 +1210,7 @@ rsId: 250
 cn: rack_connect
 description: Rackspace RackConnect Customer
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
-rsPropagate: TRUE
+rsType: PROPAGATE
 rsWeight: 500
 
 dn: rsId=3,cn=CLIENT ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c
@@ -1353,7 +1353,7 @@ clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 cn: testRole1
 rsId: a2e0811ceedc46d4a87f6b8230e94267
 description: test a role for global endpoint point
-rsPropagate: FALSE
+rsType: STANDARD
 rsWeight: 500
 
 dn: rsId=b2e0811ceedc46d4a87f6b8230e94267,cn=CLIENT ROLES,clientId=a45b14e394a
@@ -1363,7 +1363,7 @@ clientId: a45b14e394a57e3fd4e45d59ff3693ead204998b
 cn: testRole2
 rsId: b2e0811ceedc46d4a87f6b8230e94267
 description: test a role for global endpoint point
-rsPropagate: FALSE
+rsType: STANDARD
 rsWeight: 500
 
 dn: rsId=c2e0811ceedc46d4a87f6b8230e94267,cn=CLIENT ROLES,clientId=bde1268ebab
@@ -1373,7 +1373,7 @@ clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 cn: testRole3
 rsId: c2e0811ceedc46d4a87f6b8230e94267
 description: test a role for global endpoint point
-rsPropagate: FALSE
+rsType: STANDARD
 rsWeight: 500
 
 dn: rsId=51ce91246bfc4a5982f77b55fe786fa1,cn=CLIENT ROLES,clientId=bde1268ebab
@@ -1382,7 +1382,7 @@ objectClass: clientRole
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 cn: identity:tenant-access
 description: Role to simply grant user access to tenant
-rsPropagate: FALSE
+rsType: STANDARD
 rsWeight: 100
 
 dn: rsId=ee3ee1fb9be046ed969b93a1c45bbaca,cn=CLIENT ROLES,clientId=bde1268ebab

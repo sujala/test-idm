@@ -1039,7 +1039,7 @@ public class DefaultTenantService implements TenantService {
                 if (cRole != null) {
                     tenantRole.setName(cRole.getName());
                     tenantRole.setDescription(cRole.getDescription());
-                    tenantRole.setPropagate(cRole.getPropagate());
+                    tenantRole.setRoleType(cRole.getRoleType());
                     populatedTenantRoles.add(tenantRole);
                 } else {
                     logger.error(String.format("User w/ id '%s' is assigned a tenant role that is associated with " +
@@ -1077,7 +1077,7 @@ public class DefaultTenantService implements TenantService {
                 //TODO: If the cRole returns null, this will cause NPE. Should just not populate role details
                 role.setName(cRole.getName());
                 role.setDescription(cRole.getDescription());
-                role.setPropagate(cRole.getPropagate());
+                role.setRoleType(cRole.getRoleType());
                 tenantRoles.add(role);
             }
         }

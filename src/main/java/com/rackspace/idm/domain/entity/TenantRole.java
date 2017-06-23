@@ -38,13 +38,16 @@ public class TenantRole implements Auditable, UniqueId {
 
     private String name;
     private String description;
-    private Boolean propagate;
     private RoleTypeEnum roleType;
     private Types types;
 
     @Override
     public String toString() {
         return getAuditContext();
+    }
+
+    public Boolean getPropagate() {
+        return roleType != null && roleType.equals(RoleTypeEnum.PROPAGATE);
     }
 
     @Override

@@ -61,7 +61,7 @@ public class ImmutableTenantRole {
     private TenantRole cloneTenantRole(TenantRole source) {
         TenantRole target = new TenantRole();
         target.setName(source.getName());
-        target.setPropagate(source.getPropagate());
+        target.setRoleType(source.getRoleType());
         target.setDescription(source.getDescription());
         target.setRoleRsId(source.getRoleRsId());
         target.setClientId(source.getClientId());

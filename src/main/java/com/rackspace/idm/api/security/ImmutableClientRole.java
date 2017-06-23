@@ -80,7 +80,6 @@ public class ImmutableClientRole {
     private ClientRole cloneClientRole(ClientRole source) {
         ClientRole target = new ClientRole();
         target.setName(source.getName());
-        target.setPropagate(source.getPropagate());
         target.setDescription(source.getDescription());
         target.setId(source.getId());
         target.setClientId(source.getClientId());

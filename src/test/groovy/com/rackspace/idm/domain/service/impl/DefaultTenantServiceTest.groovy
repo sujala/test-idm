@@ -1,4 +1,6 @@
 package com.rackspace.idm.domain.service.impl
+
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
@@ -159,7 +161,11 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def roleName = "identity"
         def identityRole = entityFactory.createTenantRole(roleName)
         def role = entityFactory.createTenantRole()
-        def cRole = entityFactory.createClientRole().with {it.name = roleName; it.propagate = true; return it}
+        def cRole = entityFactory.createClientRole().with {
+            it.name = roleName
+            it.roleType = RoleTypeEnum.PROPAGATE
+            return it
+        }
         def user = entityFactory.createUser()
         def subUser = entityFactory.createUser("subUser", "subUserId", "domainId", "REGION")
 
@@ -299,7 +305,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def role = entityFactory.createTenantRole()
         def cRole = entityFactory.createClientRole().with {
-            it.propagate = false
+            it.roleType = RoleTypeEnum.STANDARD
             return it
         }
 
@@ -322,7 +328,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def subUser = entityFactory.createUser("subuser", "subuserid", "domainid", "region")
         def role = entityFactory.createTenantRole()
         def cRole = entityFactory.createClientRole().with {
-            it.propagate = true
+            it.roleType = RoleTypeEnum.PROPAGATE
             return it
         }
 
@@ -346,7 +352,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def role = entityFactory.createTenantRole()
         def cRole = entityFactory.createClientRole().with {
-            it.propagate = true
+            it.roleType = RoleTypeEnum.PROPAGATE
             return it
         }
 
@@ -382,7 +388,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def role = entityFactory.createTenantRole()
         def cRole = entityFactory.createClientRole().with {
-            it.propagate = false
+            it.roleType = RoleTypeEnum.STANDARD
             return it
         }
 
@@ -405,7 +411,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def subUser = entityFactory.createUser("subuser", "subuserid", "domainid", "region")
         def role = entityFactory.createTenantRole()
         def cRole = entityFactory.createClientRole().with {
-            it.propagate = true
+            it.roleType = RoleTypeEnum.PROPAGATE
             return it
         }
 
@@ -429,7 +435,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         def role = entityFactory.createTenantRole()
         def cRole = entityFactory.createClientRole().with {
-            it.propagate = true
+            it.roleType = RoleTypeEnum.PROPAGATE
             return it
         }
 
@@ -476,7 +482,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def roleName = "thisRole"
         def role = entityFactory.createClientRole().with {
             it.name = roleName
-            it.propagate = true
+            it.roleType = RoleTypeEnum.PROPAGATE
             return it
         }
         def tenantRole = entityFactory.createTenantRole()

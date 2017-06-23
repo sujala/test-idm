@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationDao
@@ -50,7 +51,7 @@ class ApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
             it.clientId = clientId
             it.id = roleName
             it.name = roleName
-            it.propagate = true
+            it.roleType = RoleTypeEnum.PROPAGATE
             it.rsWeight = rsWeight
             return it
         }
@@ -92,7 +93,7 @@ class ApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
             it.clientId = clientId
             it.id = roleName1
             it.name = roleName1
-            it.propagate = true
+            it.roleType = RoleTypeEnum.PROPAGATE
             return it
         }
 
@@ -100,7 +101,7 @@ class ApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
             it.clientId = clientId
             it.id = roleName2
             it.name = roleName2
-            it.propagate = false
+            it.roleType = RoleTypeEnum.STANDARD
             return it
         }
 
@@ -135,7 +136,6 @@ class ApplicationRoleRepositoryIntegrationTest extends RootServiceTest {
             it.clientId = clientId
             it.id = roleName
             it.name = roleName
-            it.propagate = null
             return it
         }
 
