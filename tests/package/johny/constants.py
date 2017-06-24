@@ -448,6 +448,7 @@ PROVIDER_MANAGEMENT_ROLE_NAME = 'identity:identity-provider-manager'
 PROVIDER_RO_ROLE_NAME = 'identity:identity-provider-read-only'
 IDENTITY_INTERNAL_ROLE_NAME = 'identity:internal'
 IDENTITY_PROPERTY_ADMIN_ROLE_NAME = 'identity:property-admin'
+RCN_ADMIN_ROLE_NAME = 'rcn:admin'
 
 '''FEATURE FLAGS'''
 FEATURE_FLAG_FOR_ENDPOINTS_BASED_ON_RULES = (
