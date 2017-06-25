@@ -536,6 +536,7 @@ public class Validator20 {
 
         if (providedApprovedDomainIds != null) {
             List<String> approvedDomainIds = providedApprovedDomainIds.getApprovedDomainId();
+            // THIS fails on updating > 1 approved domain ids for rcn admin
             if (approvedDomainIds.size() != 1) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
@@ -548,6 +549,7 @@ public class Validator20 {
 
             Domain existingDomain = domainService.getDomain(existingProvider.getApprovedDomainIds().get(0));
 
+            // THIS fails when the passed in domain doesn't have a customer number with a null pointer exception
             if (!domain.getRackspaceCustomerNumber().equalsIgnoreCase(existingDomain.getRackspaceCustomerNumber())) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
