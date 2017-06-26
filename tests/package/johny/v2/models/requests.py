@@ -1047,9 +1047,10 @@ class ImpersonateUser(base.AutoMarshallingModel):
     """
     Marshalling for impersonation request
     """
-    def __init__(self, user_name, expire_in_seconds=None):
+    def __init__(self, user_name, idp=None, expire_in_seconds=None):
         self.user_name = user_name
         self.expire_in_seconds = expire_in_seconds
+        self.idp = idp
 
     def _obj_to_json(self):
 
@@ -1061,6 +1062,9 @@ class ImpersonateUser(base.AutoMarshallingModel):
             impersonation_request[IMPERSONATION][
                 const.EXPIRE_IN_SECONDS] = self.expire_in_seconds
 
+        if self.idp:
+            impersonation_request[
+                IMPERSONATION][const.USER][const.NS_FEDERATED_IDP] = self.idp
         return json.dumps(impersonation_request)
 
 
