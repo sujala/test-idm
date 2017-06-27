@@ -11,8 +11,9 @@ def check_datetime_format(datetime_str):
                     datetime_str)
 
 
-def get_params_and_command(public_key_path, private_key_path, fed_api=None,
-                           for_logout=False, for_metadata=False):
+def get_params_and_command(public_key_path, private_key_path=None,
+                           fed_api=None, for_logout=False,
+                           for_metadata=False):
     """
     Common logic for 'create_saml_assertion' and 'create_saml_logout'
     """
@@ -25,13 +26,14 @@ def get_params_and_command(public_key_path, private_key_path, fed_api=None,
         src_path = tests_path.group(1)
     jar_path = os.path.join(
         src_path, 'tests', 'resources',
-        'identity-saml-generator-2.0-1498141615086-all.jar')
+        'identity-saml-generator-2.0-1498166922926-all.jar')
     key_path = os.path.join(src_path, 'src',
                             'test', 'resources')
     public_key_path = public_key_path or os.path.join(
         key_path, 'saml-qe-idp.crt')
-    private_key_path = private_key_path or os.path.join(
-        key_path, 'saml-qe-idp.pkcs8')
+    if not for_metadata:
+        private_key_path = private_key_path or os.path.join(
+            key_path, 'saml-qe-idp.pkcs8')
 
     if fed_api == 'v1':
         command_list = [
@@ -46,8 +48,9 @@ def get_params_and_command(public_key_path, private_key_path, fed_api=None,
     if for_metadata:
         command_list = [
             java_exec_path, '-jar', jar_path, '-metadata', 'true',
-            '-publicKey', public_key_path, '-privateKey', private_key_path
+            '-publicKey', public_key_path,
         ]
+        return public_key_path, command_list
 
     if for_logout:
         command_list.extend(['-logout', 'true'])
@@ -316,14 +319,13 @@ def create_saml_logout(issuer=None, days_to_issue_instant=None,
 
 
 def create_metadata(issuer=None, org_name=None, auth_url=None,
-                    private_key_path=None, public_key_path=None):
+                    public_key_path=None):
     """
     This is a client to help generate metadata.xml for create IdP with
     metadata.xml
     """
-    public_key_path, private_key_path, command_list = get_params_and_command(
-        public_key_path=public_key_path, private_key_path=private_key_path,
-        for_metadata=True)
+    public_key_path, command_list = get_params_and_command(
+        public_key_path=public_key_path, for_metadata=True)
 
     if issuer is not None:
         command_list.extend(['-issuer', issuer])

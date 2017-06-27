@@ -30,16 +30,6 @@ class TestGlobalEndpoints(base.TestBaseV2):
         cls.ROLE_NAME_COMPUTE = 'compute:default'
         cls.ROLE_NAME_FILES = 'object-store:default'
 
-    @classmethod
-    def get_feature_flag_value_and_default_value(self, flag_name):
-        feature_flag_resp = (
-            self.devops_client.get_devops_properties(flag_name))
-        feature_flag_value = feature_flag_resp.json()[
-            const.PROPERTIES][0][const.VALUE]
-        feature_flag_default_value = feature_flag_resp.json()[
-            const.PROPERTIES][0][const.DEFAULT_VALUE]
-        return feature_flag_value, feature_flag_default_value
-
     def create_tenant_type(self, name):
         request_object = requests.TenantType(name, 'description')
         self.service_admin_client.add_tenant_type(tenant_type=request_object)

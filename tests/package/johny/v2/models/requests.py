@@ -995,6 +995,17 @@ class IDP(base.AutoMarshallingModel):
         return json.dumps(create_idp_request)
 
 
+class IDPMetadata(base.AutoMarshallingModel):
+    """Marshalling for Create IDP with Metadata Requests."""
+
+    def __init__(self, metadata):
+        self.metadata = metadata
+
+    def _obj_to_xml(self):
+        root = etree.XML(self.metadata)
+        return etree.tostring(root)
+
+
 class ChangePassword(base.AutoMarshallingModel):
     """
     Marshalling for change password request

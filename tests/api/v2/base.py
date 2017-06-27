@@ -122,14 +122,15 @@ class TestBaseV2(base.TestBase):
             user_resp = parent_client.add_user(request_object=request_object)
             user_id = user_resp.json()[const.USER][const.ID]
 
-            if ('is_user_manager' in additional_input_data and
-                    additional_input_data['is_user_manager'] is True):
-                parent_client.add_role_to_user(
-                    user_id=user_id, role_id=const.USER_MANAGER_ROLE_ID)
+            if additional_input_data:
+                if ('is_user_manager' in additional_input_data and
+                        additional_input_data['is_user_manager'] is True):
+                    parent_client.add_role_to_user(
+                        user_id=user_id, role_id=const.USER_MANAGER_ROLE_ID)
 
             username = user_resp.json()[const.USER][const.USERNAME]
             password = user_resp.json()[const.USER][const.NS_PASSWORD]
-            if const.TENANT_ID in str(user_resp.json()[const.USER]):
+            if const.TENANT_ID in user_resp.json()[const.USER]:
                 id_client.default_headers[const.TENANT_ID] = (
                     user_resp.json()[const.USER][const.TENANT_ID])
             if const.DOMAINID in str(user_resp.json()[const.USER]):
