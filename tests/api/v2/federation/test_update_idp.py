@@ -221,6 +221,7 @@ class TestUpdateIDP(base.TestBaseV2):
         resp = self.idp_ia_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
+        self.provider_ids.append(provider_id)
 
         return provider_id, cert_path, key_path
 
@@ -348,6 +349,7 @@ class TestUpdateIDP(base.TestBaseV2):
         resp = self.idp_ia_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
+        self.provider_ids.append(provider_id)
 
         # update the approved domains list
         new_list_of_domains = [domain_id, domain_id]
@@ -355,6 +357,61 @@ class TestUpdateIDP(base.TestBaseV2):
             provider_id=provider_id, new_list_of_domains=new_list_of_domains)
         self.assertEqual(resp.json()[const.NS_IDENTITY_PROVIDER][
                              const.APPROVED_DOMAIN_Ids], [domain_id])
+
+    def test_update_idp_by_rcn_admin(self):
+
+        request_object = factory.get_domain_request_object({})
+        dom_resp = self.idp_ia_client.add_domain(request_object)
+        domain_id = dom_resp.json()[const.RAX_AUTH_DOMAIN][const.ID]
+        self.domains.append(domain_id)
+        request_object = factory.get_add_idp_request_object(
+            federation_type='DOMAIN', approved_domain_ids=[domain_id])
+        resp = self.idp_ia_client.create_idp(request_object)
+        self.assertEquals(resp.status_code, 201)
+        provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
+        self.provider_ids.append(provider_id)
+
+        option = {
+            const.PARAM_ROLE_NAME: const.RCN_ADMIN_ROLE_NAME
+        }
+        list_resp = self.idp_ia_client.list_roles(option=option)
+        rcn_admin_role_id = list_resp.json()[const.ROLES][0][const.ID]
+
+        request_object = factory.get_add_user_one_call_request_object(
+            domainid=domain_id)
+        user_client = self.generate_client(parent_client=self.idp_ia_client,
+                                           request_object=request_object)
+        user_id = user_client.default_headers[const.X_USER_ID]
+
+        new_idp_name = self.generate_random_string(
+            pattern=const.IDP_NAME_PATTERN)
+
+        # update idp using user:admin
+        update_idp_obj = requests.IDP(idp_name=new_idp_name)
+        resp = user_client.update_idp(idp_id=provider_id,
+                                      request_object=update_idp_obj)
+        # Docker containers have the f-flag turned OFF. Hence, currently
+        # checking for 403. But, when this is ready to be used for Staging
+        # or Prod with the feature flag turned ON, we can update it to 200 or
+        # as appropriate. We can keep it under if/else, but that will again
+        # make a call to devops client to read the flag value. So,avoiding it.
+        self.assertEqual(resp.status_code, 403)
+
+        # add rcn:admin to the user created
+        add_role_to_user_resp = self.idp_ia_client.add_role_to_user(
+            user_id=user_id, role_id=rcn_admin_role_id)
+        self.assertEqual(add_role_to_user_resp.status_code, 200)
+
+        new_idp_name = self.generate_random_string(
+            pattern=const.IDP_NAME_PATTERN)
+        # update idp using user with role rcn:admin
+        update_idp_obj = requests.IDP(idp_name=new_idp_name)
+        resp = user_client.update_idp(idp_id=provider_id,
+                                      request_object=update_idp_obj)
+        # This may need to change once we test this in Staging/Prod w/ flag ON.
+        # Because, currently, the user is user admin as well as rcn admin. It
+        # should be changed to test w/ an existing RCN in Staging/Prod,
+        self.assertEqual(resp.status_code, 403)
 
     def tearDown(self):
         # Delete all providers created in the tests
