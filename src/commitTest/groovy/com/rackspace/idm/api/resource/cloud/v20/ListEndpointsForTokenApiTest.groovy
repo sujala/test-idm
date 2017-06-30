@@ -33,7 +33,6 @@ class ListEndpointsForTokenApiTest extends RootServiceTest {
 
         ScopeAccess access = new UserScopeAccess()
         service.requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(_) >> access
-        reloadableConfig.isFeatureListEndpointsForOwnTokenEnabled() >> true
         scopeAccessService.getScopeAccessByAccessToken(_) >> access
 
         headers = Mock(HttpHeaders)

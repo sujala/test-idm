@@ -153,10 +153,6 @@ public class IdentityConfig {
     public static final String OTP_CREATE_ENABLED = "feature.otp.create.enabled.flag";
     public static final boolean OTP_CREATE_ENABLED_DEFAULT = true;
 
-    public static final String FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP = "feature.user.disabled.by.tenants.enabled";
-    public static final boolean FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT = false;
-    public static final String FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP = "feature.list.endpoints.for.token.filtered.for.terminator";
-    public static final boolean FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_DEFAULT = false;
     public static final String FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP = "domain.restricted.to.one.user.admin.enabled";
     public static final String MAX_OTP_DEVICE_PER_USER_PROP = "max.otp.device.per.user";
     public static final int MAX_OTP_DEVICE_PER_USER_DEFAULT = 5;
@@ -271,8 +267,6 @@ public class IdentityConfig {
 
     public static final String FEATURE_LIST_GROUPS_FOR_SELF_PROP = "feature.list.groups.for.self";
     public static final boolean FEATURE_LIST_GROUPS_FOR_SELF_DEFAULT = false;
-    public static final String FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP = "feature.list.endpoints.for.own.token";
-    public static final boolean FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_DEFAULT = false;
 
     public static final String FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP = "feature.issue.restricted.token.session.ids";
     public static final boolean FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_DEFAULT = false;
@@ -549,8 +543,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP, false);
         defaults.put(OTP_ISSUER, "Rackspace");
         defaults.put(OTP_ENTROPY, 25);
-        defaults.put(FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT);
-        defaults.put(FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_DEFAULT);
         defaults.put(FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, false);
         defaults.put(FEATURE_AE_TOKENS_ENCRYPT, true);
         defaults.put(FEATURE_AE_TOKENS_DECRYPT, true);
@@ -609,7 +601,6 @@ public class IdentityConfig {
 
         defaults.put(FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_DEFAULT);
         defaults.put(FEATURE_LIST_GROUPS_FOR_SELF_PROP, FEATURE_LIST_GROUPS_FOR_SELF_DEFAULT);
-        defaults.put(FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_DEFAULT);
 
         defaults.put(FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP, FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_DEFAULT);
 
@@ -1454,16 +1445,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, OTP_CREATE_ENABLED);
         }
 
-        @IdmProp(key = FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP)
-        public boolean getFeatureUserDisabledByTenantsEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP);
-        }
-
-        @IdmProp(key = FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, versionAdded = "3.5.0", description = "Whether to strip out all the endpoints from the list endpoints for token call for a user that is SUSPENDED by terminator")
-        public boolean getFeatureListEndpointsForTokenFilteredForTerminator() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP);
-        }
-
         @IdmProp(key = FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, versionAdded = "2.15.0", description = "How long, in seconds, after which the last invalid MFA logic attempt will be ignored. This affects when an account will be automatically unlocked when using local locking")
         public int getFeatureMultifactorLoginFailureTtl() {
             return getIntSafely(reloadableConfiguration, FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP);
@@ -1742,11 +1723,6 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_LIST_GROUPS_FOR_SELF_PROP, versionAdded = "3.3.0", description = "Whether or not the feature to allow for a user to list groups for self is enabled")
         public boolean isListGroupsForSelfEnabled() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_LIST_GROUPS_FOR_SELF_PROP);
-        }
-
-        @IdmProp(key = FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, versionAdded = "3.3.0", description = "Whether or not to allow for a user to list endpoints for their own token")
-        public boolean isFeatureListEndpointsForOwnTokenEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP);
         }
 
         @IdmProp(key = FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, versionAdded = "3.4.0", description = "Whether or not to issued restricted AE Tokens w/ a sessionid scope for MFA X-Session-Ids")

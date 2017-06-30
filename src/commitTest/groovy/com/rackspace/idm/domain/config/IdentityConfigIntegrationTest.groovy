@@ -95,34 +95,6 @@ class IdentityConfigIntegrationTest  extends Specification {
         localConfig.getString(newProp) == newPropOrigValue2
     }
 
-    def "test fallback for invalid property set for FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP"() {
-        given:
-        def tempFile = File.createTempFile("temp",".tmp").with {
-            deleteOnExit()
-            return it
-        }
-        def reloadablePropertiesFile = config.reloadableConfiguration.idmPropertiesConfig.file
-        config.reloadableConfiguration.idmPropertiesConfig.file = tempFile
-
-        when:
-        writeProp(tempFile, IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, propertyValue)
-        config.reloadableConfiguration.idmPropertiesConfig.refresh()
-        boolean returnedProp = config.reloadableConfig.getFeatureUserDisabledByTenantsEnabled()
-
-        then:
-        returnedProp == returnValue
-
-        cleanup:
-        config.reloadableConfiguration.idmPropertiesConfig.file = reloadablePropertiesFile
-        config.reloadableConfiguration.idmPropertiesConfig.refresh()
-
-        where:
-        propertyValue | returnValue
-        true          | true
-        false         | false
-        "not_valid"   | IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT
-    }
-
     @Unroll
     def "Test correct user count limit per idp per domain retrieved when override: #overrideVal; defaultVal: #defaultValue; expectedVal: #expectedVal"() {
         given:

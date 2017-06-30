@@ -2816,11 +2816,10 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
-            boolean allowForSameToken = identityConfig.getReloadableConfig().isFeatureListEndpointsForOwnTokenEnabled();
             boolean sameToken = StringUtils.equals(authToken, tokenId);
 
-            //skip authorization checks if the token being used is the same token to list endpionts for
-            if (!(allowForSameToken && sameToken)) {
+            // Skip authorization checks if the token being used is the same token to list endpoints for token.
+            if (!sameToken) {
                 authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.getRoleName());
             }
 

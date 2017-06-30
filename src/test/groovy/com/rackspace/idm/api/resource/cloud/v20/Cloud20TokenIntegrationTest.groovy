@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.api.security.IdentityRole
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -88,26 +87,17 @@ class Cloud20TokenIntegrationTest extends RootIntegrationTest {
 
         def endpointRole = authorizationService.getCachedIdentityRoleByName(IdentityRole.GET_TOKEN_ENDPOINTS_GLOBAL.getRoleName())
 
-        when: "user admin tries to load own endpoints w/ different tokens (feature flag enabled)"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, true)
+        when: "user admin tries to load own endpoints w/ different tokens"
         def uaResponse = cloud20.listEndpointsForToken(uaToken, iaToken)
 
         then:
         uaResponse.status == HttpStatus.SC_FORBIDDEN
 
-        when: "user admin tries to load own endpoints w/ same tokens (feature flag enabled)"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, true)
+        when: "user admin tries to load own endpoints w/ same tokens"
         uaResponse = cloud20.listEndpointsForToken(uaToken, uaToken)
 
         then:
         uaResponse.status == HttpStatus.SC_OK
-
-        when: "user admin tries to load own endpoints w/ same token (feature flag disabled)"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_OWN_TOKEN_PROP, false)
-        uaResponse = cloud20.listEndpointsForToken(uaToken, uaToken)
-
-        then:
-        uaResponse.status == HttpStatus.SC_FORBIDDEN
 
         when: "give user global endpoint role"
         utils.addRoleToUser(userAdmin, endpointRole.id)
