@@ -441,6 +441,7 @@ SEARCHABLE = "searchable"
 
 '''ROLES'''
 COMPUTE_ROLE_NAME = "compute:default"
+COMPUTE_ROLE_ID = '6'
 ENDPOINT_RULE_ADMIN_ROLE_NAME = 'identity:endpoint-rule-admin'
 IDENTITY_ADMIN_ROLE_ID = '1'
 OBJECT_STORE_ROLE_NAME = 'object-store:default'
@@ -465,8 +466,6 @@ AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME = (
     'auto.assign.role.on.domain.tenants.role.name')
 FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
     "feature.endpoint.template.disable.name.type")
-FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED = (
-    'feature.global.endpoints.for.all.roles.enabled')
 FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE = (
     'feature.restrict.user.manager.list.users.usage')
 FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE = (

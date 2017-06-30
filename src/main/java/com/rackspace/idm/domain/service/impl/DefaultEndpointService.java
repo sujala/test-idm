@@ -155,18 +155,8 @@ public class DefaultEndpointService implements EndpointService {
     public List<CloudBaseUrl> getBaseUrlsByBaseUrlType(String baseUrlType) {
         logger.debug("Getting baseurls by baseUrlType");
         List<CloudBaseUrl> filteredBaseUrls = new ArrayList<CloudBaseUrl>();
-        if(identityConfig.getBaseUlrRespectEnabledFlag()) {
-            for (CloudBaseUrl baseUrl : endpointDao.getDefaultBaseUrlsByBaseUrlTypeAndEnabled(baseUrlType, true)) {
-                filteredBaseUrls.add(baseUrl);
-            }
-        } else {
-            for (CloudBaseUrl baseUrl : endpointDao.getBaseUrls()) {
-                if (baseUrl.getBaseUrlType() != null) {
-                    if (baseUrl.getBaseUrlType().equals(baseUrlType)) {
-                        filteredBaseUrls.add(baseUrl);
-                    }
-                }
-            }
+        for (CloudBaseUrl baseUrl : endpointDao.getDefaultBaseUrlsByBaseUrlTypeAndEnabled(baseUrlType, true)) {
+            filteredBaseUrls.add(baseUrl);
         }
         logger.debug("Got {} baseurls", filteredBaseUrls.size());
         return filteredBaseUrls;

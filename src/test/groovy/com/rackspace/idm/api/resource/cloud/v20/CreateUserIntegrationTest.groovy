@@ -225,9 +225,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "test feature flag for respecting enabled property on default base URLs when assigning them to a new user (CIDMDEV-1248): useEnabled = #useEnabledFlag"() {
+    def "test for respecting enabled on default base URLs when assigning them to a new user (CIDMDEV-1248)"() {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, useEnabledFlag)
         def endpointTemplateId = testUtils.getRandomInteger().toString()
         def publicUrl = testUtils.getRandomUUID("http://public/")
         def endpointTemplateResp = cloud20.addEndpointTemplate(utils.getServiceAdminToken(), v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", publicUrl, "cloudFiles", false, "ORD")).getEntity(EndpointTemplate).value
@@ -241,22 +240,13 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def authUser = utils.authenticate(createdUser)
 
         then:
-        if(useEnabledFlag) {
-            authUser.serviceCatalog.service.endpoint.flatten().publicURL.find({t -> t.startsWith(endpointTemplateEntity.publicUrl)}) == null
-        } else {
-            authUser.serviceCatalog.service.endpoint.flatten().publicURL.find({t -> t.startsWith(endpointTemplateEntity.publicUrl)}) != null
-        }
+        authUser.serviceCatalog.service.endpoint.flatten().publicURL.find({t -> t.startsWith(endpointTemplateEntity.publicUrl)}) == null
+
 
         cleanup:
         utils.deleteUsers(createdUser)
         utils.deleteTenant(utils.getNastTenant(domainId))
         utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
-        staticIdmConfiguration.reset()
-
-        where:
-        useEnabledFlag  | _
-        true            | _
-        false           | _
     }
 
 

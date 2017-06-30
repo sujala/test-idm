@@ -20,19 +20,13 @@ class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
     # if anyone deleles it from LDAP then this test won't work.
     service_with_undefined_openstacktype = "02aec197e76448b6b3730725ccbc2c3c"
 
-    def service_admin_and_flags_set(self):
-        resp = self.devops_client.get_devops_properties(
-            prop_name=const.FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED)
-        self.assertEqual(resp.status_code, 200)
-        global_epts_for_all_roles = resp.json()[
-            const.PROPERTIES][0][const.VALUE]
-        return (global_epts_for_all_roles and
-                self.test_config.run_local_and_jenkins_only and
+    def service_admin(self):
+        return (self.test_config.run_local_and_jenkins_only and
                 self.test_config.run_service_admin_tests)
 
     def setUp(self):
         super(AuthUserWithRoleMissingOpenstackType, self).setUp()
-        if not self.service_admin_and_flags_set():
+        if not self.service_admin():
             self.skipTest("Environment is not set")
         self.user_ids = []
         self.role_ids = []
@@ -185,7 +179,7 @@ class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
         self.assertEqual(
             [],
             service_catalog,
-            msg="Should not have found custom enpoints in catalog")
+            msg="Should not have found custom endpoints in catalog")
         """
         Now make sure a role on a service with a valid openstacktype
         has its custom endpoints show up in the serviceCatalog
@@ -201,6 +195,12 @@ class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
         # Add role to user for tenant
         resp = self.service_admin_client.add_role_to_user_for_tenant(
             user_id=user_id, tenant_id=tenant_id, role_id=new_role_id)
+        self.assertEqual(resp.status_code, 200)
+        # Add compute:default role to user for tenant
+        resp = self.service_admin_client.add_role_to_user_for_tenant(
+            user_id=user_id,
+            tenant_id=tenant_id,
+            role_id=const.COMPUTE_ROLE_ID)
         self.assertEqual(resp.status_code, 200)
         # get service catalog
         service_catalog = self.get_service_catalog(user_name, user_password)

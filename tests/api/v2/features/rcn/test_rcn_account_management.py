@@ -37,19 +37,6 @@ class TestRCNAccountManagement(base.TestBaseV2):
         cls.ROLE_NAME1 = 'testRole1'
         cls.ROLE_NAME2 = 'testRole2'
         cls.ROLE_NAME3 = 'testRole3'
-        cls.feature_flag_value, cls.feature_flag_default_value = (
-            cls.get_feature_flag_value_and_default_value(flag_name=(
-                const.FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED)))
-
-    @classmethod
-    def get_feature_flag_value_and_default_value(self, flag_name):
-        feature_flag_resp = (
-            self.devops_client.get_devops_properties(flag_name))
-        feature_flag_value = feature_flag_resp.json()[
-            const.PROPERTIES][0][const.VALUE]
-        feature_flag_default_value = feature_flag_resp.json()[
-            const.PROPERTIES][0][const.DEFAULT_VALUE]
-        return feature_flag_value, feature_flag_default_value
 
     def setUp(self):
         super(TestRCNAccountManagement, self).setUp()
@@ -171,8 +158,6 @@ class TestRCNAccountManagement(base.TestBaseV2):
         """
         # get identity role
         role_id1 = self.get_role_by_name(role_name=self.ROLE_NAME1)
-        # get compute role
-        role_id2 = self.get_role_by_name(role_name=self.ROLE_NAME2)
 
         # create user
         user_id, user_resp = self.create_admin_user()
@@ -198,7 +183,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
 
         # add compute role to user on tenant
         add_resp2 = self.identity_admin_client.add_role_to_user_for_tenant(
-            tenant_id=tenant_id, user_id=user_id, role_id=role_id2
+            tenant_id=tenant_id, user_id=user_id, role_id=const.COMPUTE_ROLE_ID
         )
         self.assertEqual(add_resp2.status_code, 200)
 
@@ -207,8 +192,6 @@ class TestRCNAccountManagement(base.TestBaseV2):
             service_id=self.service_id)
         template_name = temp_resp.json()[const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
             const.NAME]
-        template_type = temp_resp.json()[const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
-            const.TYPE]
         public_url = temp_resp.json()[const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
             const.PUBLIC_URL]
 
@@ -222,22 +205,15 @@ class TestRCNAccountManagement(base.TestBaseV2):
 
         endpoints_list = auth_resp.json()[const.ACCESS][
             const.SERVICE_CATALOG]
-        if self.feature_flag_value | self.feature_flag_default_value:
-            # verify endpoint with new service name in the endpionts list
-            self.assertIn(template_name, str(endpoints_list))
-            endpoints = [item for item in endpoints_list
-                         if item[const.NAME] == template_name]
-            self.assertEqual(endpoints[0][const.ENDPOINTS][0][const.TENANT_ID],
-                             tenant_id)
-            self.assertEqual(endpoints[0][const.ENDPOINTS][0][
-                                 const.PUBLIC_URL], urljoin(public_url,
-                                                            tenant_id))
-        else:
-            # since compute role appear to be after other in alphabetical order
-            # will never see the endpoint list in service catalog
-            self.assertNotIn(template_name, str(endpoints_list))
-            self.assertNotIn(template_type, str(endpoints_list))
-            self.assertNotIn(public_url, str(endpoints_list))
+        # verify endpoint with new service name in the endpionts list
+        self.assertIn(template_name, str(endpoints_list))
+        endpoints = [item for item in endpoints_list
+                     if item[const.NAME] == template_name]
+        self.assertEqual(endpoints[0][const.ENDPOINTS][0][const.TENANT_ID],
+                         tenant_id)
+        self.assertEqual(endpoints[0][const.ENDPOINTS][0][
+                             const.PUBLIC_URL], urljoin(public_url,
+                                                        tenant_id))
 
     def test_assign_global_endpoints_for_all_roles_on_tenant_case2(self):
         """3.7.0 features assign global endpoints for all roles on tenant
@@ -251,8 +227,6 @@ class TestRCNAccountManagement(base.TestBaseV2):
         self.skipTest('Skipping testing generic global endpoints as' +
                       ' feature is disabled')
 
-        # get compute role
-        role_id1 = self.get_role_by_name(role_name=self.ROLE_NAME2)
         # get identity role
         role_id2 = self.get_role_by_name(role_name=self.ROLE_NAME3)
 
@@ -274,11 +248,11 @@ class TestRCNAccountManagement(base.TestBaseV2):
 
         # add role to user on tenant
         add_resp1 = self.identity_admin_client.add_role_to_user_for_tenant(
-            tenant_id=tenant_id, user_id=user_id, role_id=role_id1
+            tenant_id=tenant_id, user_id=user_id, role_id=const.COMPUTE_ROLE_ID
         )
         self.assertEqual(add_resp1.status_code, 200)
 
-        # add compute role to user on tenant
+        # add identity role to user on tenant
         add_resp2 = self.identity_admin_client.add_role_to_user_for_tenant(
             tenant_id=tenant_id, user_id=user_id, role_id=role_id2
         )
@@ -367,27 +341,18 @@ class TestRCNAccountManagement(base.TestBaseV2):
 
         endpoints_list = auth_resp.json()[const.ACCESS][
             const.SERVICE_CATALOG]
-        if self.feature_flag_value | self.feature_flag_default_value:
-            # verify endpoint with new service name in the endpionts list
-            self.assertIn(service_name, str(endpoints_list))
-            endpoints = [item for item in endpoints_list
-                         if item[const.NAME] == service_name]
-            self.assertEqual(endpoints[0][const.ENDPOINTS][0][const.TENANT_ID],
-                             tenant_id)
-            # verify endpoint exist endpoint compute endpoint in tenant
-            self.assertIn('cloudServers', str(endpoints_list))
-            endpoints = [item for item in endpoints_list
-                         if item[const.NAME] == 'cloudServers']
-            self.assertEqual(endpoints[0][const.ENDPOINTS][0][const.TENANT_ID],
-                             tenant_id)
-        else:
-            # see cloudServers endpoint for tenant but may or maynot see other
-            # verify endpoint exist endpoint compute endpoint in tenant
-            self.assertIn('cloudServers', str(endpoints_list))
-            endpoints = [item for item in endpoints_list
-                         if item[const.NAME] == 'cloudServers']
-            self.assertEqual(endpoints[0][const.ENDPOINTS][0][const.TENANT_ID],
-                             tenant_id)
+        # verify endpoint with new service name in the endpionts list
+        self.assertIn(service_name, str(endpoints_list))
+        endpoints = [item for item in endpoints_list
+                     if item[const.NAME] == service_name]
+        self.assertEqual(endpoints[0][const.ENDPOINTS][0][const.TENANT_ID],
+                         tenant_id)
+        # verify endpoint exist endpoint compute endpoint in tenant
+        self.assertIn('cloudServers', str(endpoints_list))
+        endpoints = [item for item in endpoints_list
+                     if item[const.NAME] == 'cloudServers']
+        self.assertEqual(endpoints[0][const.ENDPOINTS][0][const.TENANT_ID],
+                         tenant_id)
 
     def tearDown(self):
         # Delete all resources created in the tests
