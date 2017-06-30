@@ -2190,8 +2190,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             //the only user-type role you can delete on a user is the "identity:user-manage" role
             IdentityUserTypeEnum userTypeEnum = IdentityUserTypeEnum.fromRoleName(role.getName());
-            if (identityConfig.getReloadableConfig().isDeleteIdentityAccessRolePreventionEnabled() &&
-                    userTypeEnum != null && userTypeEnum != IdentityUserTypeEnum.USER_MANAGER) {
+            if (userTypeEnum != null && userTypeEnum != IdentityUserTypeEnum.USER_MANAGER) {
                 throw new ForbiddenException(ERROR_CANNOT_DELETE_USER_TYPE_ROLE_MESSAGE);
             }
 
@@ -2998,53 +2997,26 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User caller = getUser(callersScopeAccess);
 
-            if (identityConfig.getReloadableConfig().listGlobalRolesForUserPrecedenceRestrictionEnabled()) {
-                /*
-                1. Users with role 'identity:get-user-roles-global' can list roles for any user
+            /*
+            1. Users with role 'identity:get-user-roles-global' can list roles for any user
 
-                2. Users can always list roles for themselves
+            2. Users can always list roles for themselves
 
-                3. Users can list roles based on usual order of precedence service-admin -> identity-admin -> user-admin -> user-manage -> default-user
+            3. Users can list roles based on usual order of precedence service-admin -> identity-admin -> user-admin -> user-manage -> default-user
 
-                4. If user-admin or below, the users must be in the same domain
-                */
-                if (!user.getId().equals(caller.getId()) &&
-                        !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName())) {
+            4. If user-admin or below, the users must be in the same domain
+            */
+            if (!user.getId().equals(caller.getId()) &&
+                    !authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName())) {
 
-                    precedenceValidator.verifyCallerPrecedenceOverUserForListGlobalRoles(caller, user);
+                precedenceValidator.verifyCallerPrecedenceOverUserForListGlobalRoles(caller, user);
 
-                    IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(caller);
-                    if (userType.isDomainBasedAccessLevel() && !caller.getDomainId().equals(user.getDomainId())) {
-                        throw new ForbiddenException(NOT_AUTHORIZED);
-                    }
-                }
-            } else {
-                /*
-                ********** LEGACY AUTHORIZATION LOGIC. Will be removed in CID-282 **********
-                1. service-admins, identity-admins, and users with global role can perform this against anyone.
-
-                2. user-admins, user-manager can get roles for any user within same domain (but not at same level (e.g. -
-                user manager getting roles on another user-manager)
-
-                3. default users can get only their own roles
-                */
-                boolean mustVerifyDomainAndPrecedence = true;
-                if (authorizationService.authorizeEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN
-                        , IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName()) || user.getId().equals(caller.getId())) {
-                    mustVerifyDomainAndPrecedence = false;
-                }
-
-                if (mustVerifyDomainAndPrecedence) {
-                    if(caller.getDomainId() == null) {
-                        //caller is a user admin, user manage, or default user but with a null domain ID
-                        //this is bad data, but protecting against it anyways
-                        throw new ForbiddenException(NOT_AUTHORIZED);
-                    } else if(!caller.getDomainId().equals(user.getDomainId())) {
-                        throw new ForbiddenException(NOT_AUTHORIZED);
-                    }
-                    precedenceValidator.verifyCallerPrecedenceOverUser(caller, user);
+                IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(caller);
+                if (userType.isDomainBasedAccessLevel() && !caller.getDomainId().equals(user.getDomainId())) {
+                    throw new ForbiddenException(NOT_AUTHORIZED);
                 }
             }
+
             List<TenantRole> roles;
             if (applyRcnRoles) {
                 roles = tenantService.getGlobalRolesForUserApplyRcnRoles(user);
