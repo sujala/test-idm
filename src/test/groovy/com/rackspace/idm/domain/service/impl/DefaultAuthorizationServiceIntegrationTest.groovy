@@ -96,7 +96,7 @@ class DefaultAuthorizationServiceIntegrationTest extends Specification {
     }
 
     def TenantRole createTenantRoleForClientRole(ImmutableClientRole cr) {
-        entityFactory.createTenantRole(cr.name, cr.propagate).with {
+        entityFactory.createTenantRole(cr.name, cr.roleType).with {
             it.clientId = cr.clientId
             it.roleRsId = cr.id
             it

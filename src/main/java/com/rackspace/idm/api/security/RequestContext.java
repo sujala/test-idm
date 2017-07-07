@@ -142,7 +142,7 @@ public class RequestContext {
                     //role on user is an "identity" role so add to list of effective identity roles
                     userTenantRole.setName(identityRole.getName());
                     userTenantRole.setDescription(identityRole.getDescription());
-                    userTenantRole.setPropagate(identityRole.getPropagate());
+                    userTenantRole.setRoleType(identityRole.getRoleType());
                     explicitIdentityRoles.add(new ImmutableTenantRole(userTenantRole));
 
                     //get the "implicit" roles associated with the client role, if any. Implicit roles are such that if user has Role X, they implicitly

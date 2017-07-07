@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
@@ -298,13 +299,13 @@ class EntityFactory extends Specification {
     }
 
     def createTenantRole(String name) {
-        createTenantRole(name, false)
+        createTenantRole(name, RoleTypeEnum.STANDARD)
     }
 
-    def createTenantRole(String name, boolean propagate) {
+    def createTenantRole(String name, RoleTypeEnum roleType) {
         new TenantRole().with {
             it.name = name
-            it.propagate = propagate
+            it.roleType = roleType
             it.tenantIds = []
             it.userId = "1"
             it.roleRsId = "1"

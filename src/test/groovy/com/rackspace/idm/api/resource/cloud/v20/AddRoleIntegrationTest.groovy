@@ -274,7 +274,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         def userAdminToken = authenticate(userAdmin.username)
         def defaultUser = createDefaultUser(userAdminToken)
 
-        Role role = createPropagateRole(false, 1000)
+        Role role = createPropagateRole(RoleTypeEnum.STANDARD, 1000)
 
         when: "As user-admin, add 1000 weight role to default user within my domain"
         def status = addRoleToUser(userAdminToken, defaultUser, role)
@@ -402,10 +402,9 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         createdRole.propagate
         createdRole.roleType == roleType
 
-        and: "Backend stores roleType as STANDARD, propagating attribute as true"
+        and: "Backend stores roleType as PROPAGATE"
         ClientRole ldapRole = applicationRoleDao.getClientRole(createdRole.id)
-        ldapRole.getRawRoleType() == RoleTypeEnum.STANDARD.name()
-        ldapRole.propagate
+        ldapRole.getRawRoleType() == RoleTypeEnum.PROPAGATE.name()
 
         and: "Get role by Id also correctly returns prop attributes"
         Role getRole = utils.getRole(createdRole.id)
@@ -570,11 +569,11 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         }
     }
 
-    def createPropagateRole(boolean propagate = true, int weight = STANDARD_PROPAGATING_ROLE_WEIGHT, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
+    def createPropagateRole(RoleTypeEnum roleType = RoleTypeEnum.PROPAGATE, int weight = STANDARD_PROPAGATING_ROLE_WEIGHT, String roleName = ROLE_NAME_PREFIX + getNormalizedRandomString()) {
         def role = entityFactory.createClientRole().with {
             it.id = getNormalizedRandomString()
             it.name = roleName
-            it.propagate = propagate
+            it.roleType = roleType
             it.rsWeight = weight
             it.clientId = Constants.IDENTITY_SERVICE_ID
             it

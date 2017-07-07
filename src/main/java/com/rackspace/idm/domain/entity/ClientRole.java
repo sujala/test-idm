@@ -37,10 +37,6 @@ public class ClientRole implements Auditable, UniqueId {
     @LDAPField(attribute=LdapRepository.ATTR_RS_WEIGHT, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private int rsWeight;
 
-    @Mapping("propagate")
-    @LDAPField(attribute=LdapRepository.ATTR_RS_PROPAGATE, objectClass=LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
-    private Boolean propagate;
-
     @LDAPField(attribute = LdapRepository.ATTR_ASSIGNMENT, objectClass = LdapRepository.OBJECTCLASS_CLIENT_ROLE, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED, requiredForEncode = false)
     private String assignmentType;
 
@@ -51,15 +47,6 @@ public class ClientRole implements Auditable, UniqueId {
     private HashSet<String> tenantTypes;
 
     public RoleTypeEnum getRoleType() {
-        /*
-         Backwards compatibility. "STANDARD" roles used to be able to be propagating roles so some roles may exist in
-         backend such that roleType = STANDARD & propagate = true. Want to override these to report these roles as
-         PROPAGATE roleTypes
-          */
-        if (Boolean.TRUE.equals(propagate)) {
-            return RoleTypeEnum.PROPAGATE;
-        }
-
         RoleTypeEnum result = RoleTypeEnum.STANDARD;
         if (roleType != null) {
             try {
@@ -93,10 +80,7 @@ public class ClientRole implements Auditable, UniqueId {
     }
 
     public Boolean getPropagate() {
-        if (Boolean.TRUE.equals(propagate) || RoleTypeEnum.PROPAGATE.name().equalsIgnoreCase(roleType)) {
-            return true;
-        }
-        return false;
+        return RoleTypeEnum.PROPAGATE.name().equalsIgnoreCase(roleType);
     }
 
     public RoleAssignmentEnum getAssignmentTypeAsEnum() {
@@ -133,11 +117,6 @@ public class ClientRole implements Auditable, UniqueId {
         String[] tenantTypes = entry.getAttributeValues(LdapRepository.ATTR_RS_TENANT_TYPE);
         if (tenantTypes != null && tenantTypes.length == 0) {
             entry.removeAttribute(LdapRepository.ATTR_TENANT_RS_ID);
-        }
-
-        // Temporarily saving prop types as standard for backwards compatibility reasons
-        if (getRoleType() == RoleTypeEnum.PROPAGATE) {
-            entry.setAttribute(LdapRepository.ATTR_RS_TYPE, RoleTypeEnum.STANDARD.name());
         }
     }
 

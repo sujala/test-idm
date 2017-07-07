@@ -31,10 +31,10 @@ class RoleConverterCloudV20Test extends RootServiceTest {
 
     def "can convert tenantRole to jaxb role"() {
         given:
-        def propagate = true
+        def roleType = RoleTypeEnum.PROPAGATE
         def serviceId = "serviceId"
         def tenantRole = entityFactory.createTenantRole().with {
-            it.propagate = propagate
+            it.roleType = roleType
             it.clientId = serviceId
             return it
         }
@@ -43,14 +43,13 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         def result = converter.toRole(tenantRole)
 
         then:
-        result.propagate == propagate
+        result.roleType == roleType
         result.serviceId == serviceId
     }
 
     def "can convert clientRole to jaxb role"() {
         given:
         def weight = 100
-        def propagate = false
         def serviceId = "serviceId"
         def assignment = RoleAssignmentEnum.TENANT.value()
         def roleType = RoleTypeEnum.RCN.value()
@@ -58,7 +57,6 @@ class RoleConverterCloudV20Test extends RootServiceTest {
 
         def clientRole = entityFactory.createClientRole().with {
             it.rsWeight = weight
-            it.propagate = propagate
             it.clientId = serviceId
             it.assignmentType = assignment
             it.roleType = roleType
@@ -70,7 +68,7 @@ class RoleConverterCloudV20Test extends RootServiceTest {
         def result = converter.toRoleFromClientRole(clientRole)
 
         then:
-        result.propagate == propagate
+        result.propagate == false
         result.serviceId == serviceId
         result.assignment == RoleAssignmentEnum.fromValue(assignment)
         result.roleType == RoleTypeEnum.valueOf(roleType)

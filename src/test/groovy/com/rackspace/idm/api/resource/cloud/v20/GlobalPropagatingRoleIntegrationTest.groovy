@@ -427,11 +427,11 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
             it.id = getRandomUUID()
             it.name = getRandomUUID()
             it.clientId = identityApp.clientId
-            it.propagate = propagate
             it.roleType = roleType
             it.assignmentType = RoleAssignmentEnum.BOTH.name()
             it.description = "test role"
             it.rsWeight = 500
+            it.roleType = RoleTypeEnum.PROPAGATE
             it
         }
 
@@ -461,7 +461,6 @@ class GlobalPropagatingRoleIntegrationTest extends RootIntegrationTest {
             it.id = getRandomUUID()
             it.clientId = identityApp.clientId
             it.name = getRandomUUID()
-            it.propagate = false
             it.roleType = RoleTypeEnum.STANDARD
             it.assignmentType = RoleAssignmentEnum.BOTH.name()
             it.description = "test role"

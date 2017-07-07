@@ -65,7 +65,6 @@ public class RoleConverterCloudV20 {
 
     public ClientRole fromRole(Role role, String clientId) {
         ClientRole clientRole = mapper.map(role, ClientRole.class);
-        clientRole.setPropagate(role.isPropagate());
         clientRole.setClientId(clientId);
         IdentityUserTypeEnum administratorRole = IdentityUserTypeEnum.fromRoleName(role.getAdministratorRole());
 
@@ -130,6 +129,7 @@ public class RoleConverterCloudV20 {
         jaxbRole.setDescription(role.getDescription());
         jaxbRole.setId(role.getRoleRsId());
         jaxbRole.setPropagate(role.getPropagate());
+        jaxbRole.setRoleType(role.getRoleType());
         jaxbRole.setServiceId(role.getClientId());
 
         return jaxbRole;
