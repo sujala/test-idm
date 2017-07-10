@@ -1801,14 +1801,31 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             //verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             //verify user has appropriate role
-            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()));
 
-            com.rackspace.idm.domain.entity.IdentityProvider idp = federatedIdentityService.getIdentityProvider(providerId);
+            verifyUserIsNotInDefaultDomain(caller);
+            verifyUserIsNotInRaxRestrictedGroup(caller);
+
+            com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProvider(providerId);
+
+            if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList((
+                            IdentityUserTypeEnum.USER_ADMIN.getRoleName()),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()))) {
+
+                verifyDomainUserHasAccessToIdentityProviderMetadata(existingProvider, caller);
+            }
+
             federatedIdentityService.deleteIdentityProviderById(providerId);
-            if (idp != null) {
-                atomHopperClient.asyncPostIdpEvent(idp, EventType.DELETE);
+            if (existingProvider != null) {
+                atomHopperClient.asyncPostIdpEvent(existingProvider, EventType.DELETE);
             }
             return Response.noContent();
         } catch (Exception ex) {
