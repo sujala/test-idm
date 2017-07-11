@@ -10,10 +10,11 @@ public enum AuthenticatedByMethodEnum {
     ,IMPERSONATION("IMPERSONATION")
     ,PASSCODE("PASSCODE")
     ,RSAKEY("RSAKEY")
-    ,SYSTEM("SYSTEM") //auto created by system. Should not be exposed externally
+    ,SYSTEM("SYSTEM") // Auto created by system. Should not be exposed externally
     ,OTPPASSCODE("OTPPASSCODE")
-    ,TOKEN("TOKEN") //when a NEW token is issued based on passing a previous token (v3 concept of scoping an unscoped token)
-    ,EMAIL("EMAIL") //user could only receive token via email. So by fact they know token, they must have access to user email
+    ,TOKEN("TOKEN") // When a NEW token is issued based on passing a previous token (v3 concept of scoping an unscoped token)
+    ,EMAIL("EMAIL") // User could only receive token via email. So by fact they know token, they must have access to user email
+    ,OTHER("OTHER") // Used in Fed when IDP sends unrecognized (or no) AuthContextClassRef value
     ;
 
     String value;

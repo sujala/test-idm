@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
-import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
@@ -19,7 +18,6 @@ import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
-import com.rackspace.idm.domain.service.federation.v2.FederatedDomainAuthRequest
 import com.rackspace.idm.domain.service.federation.v2.FederatedRoleAssignment
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import com.rackspace.idm.util.SamlUnmarshaller
@@ -53,6 +51,8 @@ import static org.apache.http.HttpStatus.SC_CREATED
 class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
 
     private static final Logger LOG = Logger.getLogger(FederatedDomainV2UserRestIntegrationTest.class)
+    @Shared AuthenticatedByMethodGroup fedAndPasswordGroup = AuthenticatedByMethodGroup.getGroup(AuthenticatedByMethodEnum.FEDERATION, AuthenticatedByMethodEnum.PASSWORD)
+    @Shared AuthenticatedByMethodGroup fedAndOtherGroup = AuthenticatedByMethodGroup.getGroup(AuthenticatedByMethodEnum.FEDERATION, AuthenticatedByMethodEnum.OTHER)
 
     @Autowired
     FederatedUserDao federatedUserRepository
@@ -152,7 +152,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         then: "Response contains appropriate content"
         authClientResponse.status == HttpServletResponse.SC_OK
         AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
-        verifyAuthenticateResult(authResponse, fedRequest, userAdminEntity)
+        verifyAuthenticateResult(fedRequest, authResponse, fedAndPasswordGroup, userAdminEntity)
 
         when: "retrieve user from backend"
         FederatedUser fedUser = federatedUserRepository.getUserById(authResponse.user.id)
@@ -176,6 +176,51 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         }
     }
 
+    @Unroll
+    def "authContextRefClass mapped to appropriate auth by: authContextRefClass: '#authContextRefClass'; expectedAuthBy: '#authBy'"() {
+        given:
+        User userAdminEntity = userService.getUserById(sharedUserAdmin.id)
+        def fedRequest = createFedRequest().with {
+            it.authContextRefClass = authContextRefClass
+            it
+        }
+        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+
+        when:
+        def authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+
+        then: "Response contains appropriate content"
+        authClientResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
+        verifyAuthenticateResult(fedRequest, authResponse, authBy, userAdminEntity)
+
+        where:
+        authContextRefClass | authBy
+        SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS | fedAndPasswordGroup
+        null | fedAndOtherGroup
+        "" | fedAndOtherGroup
+        UUID.randomUUID().toString() | fedAndOtherGroup
+    }
+
+    def "missing authContextRefClass mapped to OTHER auth by"() {
+        given:
+        User userAdminEntity = userService.getUserById(sharedUserAdmin.id)
+        def fedRequest = createFedRequest().with {
+            it.authContextRefClass = null
+            it
+        }
+        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+
+
+        when:
+        def authClientResponse = cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+
+        then: "Response contains appropriate content"
+        authClientResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
+        verifyAuthenticateResult(fedRequest, authResponse, fedAndOtherGroup, userAdminEntity)
+    }
+
     def "New fed user created correctly when valid global assigned roles provided"() {
         given:
         User userAdminEntity = userService.getUserById(sharedUserAdmin.id)
@@ -192,7 +237,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         then: "Response contains appropriate content"
         authClientResponse.status == HttpServletResponse.SC_OK
         AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
-        verifyAuthenticateResult(authResponse, fedRequest, userAdminEntity)
+        verifyAuthenticateResult(fedRequest, authResponse, fedAndPasswordGroup, userAdminEntity)
 
         cleanup:
         try {
@@ -219,7 +264,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         then: "Response contains appropriate content"
         authClientResponse.status == HttpServletResponse.SC_OK
         AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
-        verifyAuthenticateResult(authResponse, fedRequest, userAdminEntity)
+        verifyAuthenticateResult(fedRequest, authResponse, fedAndPasswordGroup, userAdminEntity)
 
         cleanup:
         try {
@@ -336,7 +381,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | _
     }
 
-    def void verifyAuthenticateResult(AuthenticateResponse authResponse, FederatedDomainAuthGenerationRequest originalRequest, User userAdminEntity) {
+    def void verifyAuthenticateResult(FederatedDomainAuthGenerationRequest originalRequest, AuthenticateResponse authResponse, AuthenticatedByMethodGroup authByGroup, User userAdminEntity) {
         //check the user object
         assert authResponse.user.id != null
         assert authResponse.user.name == originalRequest.username
@@ -346,12 +391,19 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         def domain = domainService.getDomain(userAdminEntity.domainId)
         assert authResponse.user.sessionInactivityTimeout.toString() == domain.sessionInactivityTimeout != null ? domain.sessionInactivityTimeout.toString() : IdentityConfig.DOMAIN_DEFAULT_SESSION_INACTIVITY_TIMEOUT_DEFAULT
 
-        //check the token
+        // Check the token
         assert authResponse.token.id != null
         assert authResponse.token.authenticatedBy.credential.contains(GlobalConstants.AUTHENTICATED_BY_FEDERATION)
         assert authResponse.token.tenant.id == userAdminEntity.domainId
 
-        //check the standard roles all fed users should get (assigned identity default role as well as (propagating roles))
+        // Check Auth By
+        List<String> expectedAuthByVals = authByGroup.authenticatedByMethodsAsValues
+        assert authResponse.token.authenticatedBy.credential.size() == expectedAuthByVals.size()
+        expectedAuthByVals.each {
+            assert authResponse.token.authenticatedBy.credential.contains(it)
+        }
+
+        // Check the standard roles all fed users should get (assigned identity default role as well as (propagating roles))
         authResponse.user.getRoles().role.find { r -> r.name == IdentityUserTypeEnum.DEFAULT_USER.name() } != null
         def userAdminRoles = tenantService.getTenantRolesForUser(userAdminEntity)
         userAdminRoles.each() { userAdminRole ->

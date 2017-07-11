@@ -80,7 +80,7 @@ public class ClientRole implements Auditable, UniqueId {
     }
 
     public Boolean getPropagate() {
-        return RoleTypeEnum.PROPAGATE.name().equalsIgnoreCase(roleType);
+        return RoleTypeEnum.PROPAGATE == getRoleType();
     }
 
     public RoleAssignmentEnum getAssignmentTypeAsEnum() {

@@ -115,7 +115,8 @@ public class FederatedDomainAuthRequest {
     }
 
     private enum DomainAuthContextEnum {
-        PASSWORD(SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS, AuthenticatedByMethodEnum.PASSWORD);
+        PASSWORD(SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS, AuthenticatedByMethodEnum.PASSWORD),
+        OTHER("", AuthenticatedByMethodEnum.OTHER); // Use "" as value so non-null value
 
         private String samlAuthnContextClassRef;
         private AuthenticatedByMethodEnum idmAuthBy;
@@ -141,7 +142,7 @@ public class FederatedDomainAuthRequest {
                     return domainAuthContextEnum;
                 }
             }
-            return null;
+            return OTHER;
         }
     }
 }

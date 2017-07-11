@@ -15,6 +15,7 @@ import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
@@ -45,6 +46,7 @@ class FederatedRackerV2UserRestIntegrationTest extends RootIntegrationTest {
 
     @Shared AuthenticatedByMethodGroup fedAndPasswordGroup = AuthenticatedByMethodGroup.getGroup(AuthenticatedByMethodEnum.FEDERATION, AuthenticatedByMethodEnum.PASSWORD)
     @Shared AuthenticatedByMethodGroup fedAndRsaKeyGroup = AuthenticatedByMethodGroup.getGroup(AuthenticatedByMethodEnum.FEDERATION, AuthenticatedByMethodEnum.RSAKEY)
+    @Shared AuthenticatedByMethodGroup fedAndOtherGroup = AuthenticatedByMethodGroup.getGroup(AuthenticatedByMethodEnum.FEDERATION, AuthenticatedByMethodEnum.OTHER)
 
     def setupSpec() {
         sharedServiceAdminToken = cloud20.authenticateForToken(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PASSWORD)
@@ -135,11 +137,12 @@ class FederatedRackerV2UserRestIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(authClientResponse, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_FEDERATION2_INVALID_REQUIRED_ATTRIBUTE)
     }
 
-    def "Error: BadRequest invalid auth context"() {
+    @Unroll
+    def "authContextRefClass mapped to appropriate auth by: authContextRefClass: '#authContextRefClass'; expectedAuthBy: '#authBy'"() {
         given:
-        def username = RandomStringUtils.randomAlphabetic(10)
+        def username = RACKER_IMPERSONATE
         def fedRequest = createFedRequest(username).with {
-            it.authContextRefClass = "invalid"
+            it.authContextRefClass = authContextRefClass
             it
         }
 
@@ -149,7 +152,17 @@ class FederatedRackerV2UserRestIntegrationTest extends RootIntegrationTest {
         def authClientResponse = cloud20.federatedAuthenticateV2(sharedRackerAuthRequestGenerator.convertResponseToString(samlResponse))
 
         then: "Response contains appropriate content"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(authClientResponse, BadRequestFault, HttpStatus.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_FEDERATION2_INVALID_AUTH_CONTEXT)
+        authClientResponse.status == HttpServletResponse.SC_OK
+        AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
+        verifyAuthenticateResult(fedRequest, authResponse, authBy, [identityConfig.getStaticConfig().getRackerImpersonateRoleName()])
+
+        where:
+        authContextRefClass | authBy
+        SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS | fedAndPasswordGroup
+        SAMLConstants.TIMESYNCTOKEN_PROTECTED_AUTHCONTEXT_REF_CLASS | fedAndRsaKeyGroup
+        null | fedAndOtherGroup
+        "" | fedAndOtherGroup
+        UUID.randomUUID().toString() | fedAndOtherGroup
     }
 
     def "Validate racker token received matches initial federated auth response."() {

@@ -7,6 +7,7 @@ import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.IdentityProviderDao
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.FederatedBaseUser
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.Racker
@@ -248,7 +249,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
 
         /*
          Hack the returned response to change the assertion issuer since the generator sets both response and broker assertion
-         to same value from request
+         to same value from request. Signature won't validate after hack, but should fail before signature validation
           */
         samlResponse.getAssertions().get(0).setIssuer(generator.createIssuer(sharedOriginIdp.getIssuer()))
 
