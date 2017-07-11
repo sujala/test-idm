@@ -80,12 +80,12 @@ class TestIDPMetadata(federation.TestBaseFederation):
         self.user_admin_client.deserialize_format = \
             self.test_config.deserialize_format
 
-        # Get IDP - Fails with 403 https://jira.rax.io/browse/CID-943
-        # resp = self.user_admin_client.get_idp(idp_id=idp_id)
-        # self.assertEqual(resp.status_code, 200)
-        # self.assertSchema(
-        #     response=resp,
-        #     json_schema=idp_json.identity_provider)
+        # Get IDP
+        resp = self.user_admin_client.get_idp(idp_id=idp_id)
+        self.assertEqual(resp.status_code, 200)
+        self.assertSchema(
+            response=resp,
+            json_schema=idp_json.identity_provider)
 
         # V1 Federation - Auth as fed user in the registered domain
         subject = self.generate_random_string(

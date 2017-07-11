@@ -1577,14 +1577,29 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             //verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
-            //verify user has appropriate role
-            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
-                    IdentityRole.IDENTITY_PROVIDER_READ_ONLY.getRoleName()));
+            // Verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                    IdentityRole.IDENTITY_PROVIDER_READ_ONLY.getRoleName(),
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()));
 
-            com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.checkAndGetIdentityProvider(providerId);
+            verifyUserIsNotInDefaultDomain(caller);
+            verifyUserIsNotInRaxRestrictedGroup(caller);
 
-            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProvider(identityProviderConverterCloudV20.toIdentityProvider(provider)).getValue());
+            com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProviderWithMetadataById(providerId);
+
+            if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()))) {
+                verifyDomainUserHasAccessToIdentityProviderMetadata(existingProvider, caller);
+            }
+
+            return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProvider(identityProviderConverterCloudV20.toIdentityProvider(existingProvider)).getValue());
         } catch (SizeLimitExceededException ex) {
             throw new BadRequestException(ex.getMessage());
         } catch (Exception ex) {
