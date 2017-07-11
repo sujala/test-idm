@@ -721,11 +721,11 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         utils.deleteIdentityProvider(idp)
     }
 
-    def "test update and get IDP using metadata with user in rax restricted group"() {
+    @Unroll
+    def "test update, get, and list IDPs using metadata with user in rax restricted group"() {
         given:
         def domainId = utils.createDomain()
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdmin(domainId)
+        def users = utils.createUsers(domainId)
         def idpData = v2Factory.createIdentityProvider(testUtils.getRandomUUID(), testUtils.getRandomUUID("My IDP - "), testUtils.getRandomUUID("http://example.com/"), IdentityProviderFederationTypeEnum.DOMAIN)
         idpData.approvedDomainIds = new ApprovedDomainIds().with {
             it.approvedDomainId = [domainId]
@@ -733,33 +733,56 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         }
         idpData.approvedDomainGroup = null
         def idp = cloud20.createIdentityProvider(utils.getServiceAdminToken(), idpData).getEntity(IdentityProvider)
+        def user = users.find { it.username =~ regex }
+        def userToken = utils.getToken(user.username)
 
         when: "update w/o the restricted group"
         String metadata = new SamlFactory().generateMetadataXMLForIDP(idp.issuer, RandomStringUtils.randomAlphabetic(8))
-        def response = cloud20.updateIdentityProviderUsingMetadata(utils.getToken(userAdmin.username), idp.id, metadata)
+        def response = cloud20.updateIdentityProviderUsingMetadata(userToken, idp.id, metadata)
 
         then: "success"
         response.status == SC_OK
 
-        when: "update w/ the restricted group"
+        when: "Get IDP w/o the restricted group"
+        response = cloud20.getIdentityProvider(userToken, idp.id)
+
+        then: "Valid"
+        response.status == SC_OK
+
+        when: "List IDPs w/ the restricted group"
+        response = cloud20.listIdentityProviders(userToken)
+
+        then: "Valid"
+        response.status == SC_OK
+
+        when: "update w/ the restricted group to parent user"
         metadata = new SamlFactory().generateMetadataXMLForIDP(idp.issuer, RandomStringUtils.randomAlphabetic(8))
-        utils.addUserToGroupWithId(Constants.RAX_STATUS_RESTRICTED_GROUP_ID, userAdmin)
-        def userAdminToken = utils.getToken(userAdmin.username)
-        response = cloud20.updateIdentityProviderUsingMetadata(userAdminToken, idp.id, metadata)
+        utils.addUserToGroupWithId(Constants.RAX_STATUS_RESTRICTED_GROUP_ID, users.find { it.username =~ "userAdmin*" })
+        userToken = utils.getToken(user.username)
+        response = cloud20.updateIdentityProviderUsingMetadata(userToken, idp.id, metadata)
 
         then: "error"
         response.status == SC_FORBIDDEN
 
         when: "get w/ the restricted group"
-        response = cloud20.getIdentityProvider(userAdminToken, idp.id)
+        response = cloud20.getIdentityProvider(userToken, idp.id)
+
+        then: "error"
+        response.status == SC_FORBIDDEN
+
+        when: "List IDPs w/ the restricted group"
+        response = cloud20.listIdentityProviders(userToken)
 
         then: "error"
         response.status == SC_FORBIDDEN
 
         cleanup:
-        utils.deleteUsers(users)
+        utils.deleteUsers(users.reverse())
         utils.deleteDomain(domainId)
         utils.deleteIdentityProvider(idp)
+
+        where:
+        regex << ["userAdmin*", "userManage*"]
     }
 
     def "test update IDP error cases" () {
@@ -2319,6 +2342,105 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         getRandomUUID("idp") | false         | IdentityProviderTypeFilterEnum.EXPLICIT.name() | false         | MediaType.APPLICATION_JSON_TYPE
     }
 
+    def "Check for list IDP"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+
+        def domainId = utils.createDomain()
+        def domainId2 = utils.createDomain()
+        def users = utils.createUsers(domainId)
+        def users2 = utils.createUsers(domainId2)
+
+        def rcn = testUtils.getRandomRCN()
+        def updateDomainEntity = new Domain().with {
+            it.rackspaceCustomerNumber = rcn
+            it
+        }
+        utils.updateDomain(domainId, updateDomainEntity)
+        utils.updateDomain(domainId2, updateDomainEntity)
+
+        def dummyDomain = utils.createDomainEntity()
+
+        def userAdmin = users.find { it.username =~ "userAdmin*" }
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def userAdmin2 = users2.find { it.username =~ "userAdmin*" }
+        def userAdmin2Token = utils.getToken(userAdmin2.username)
+
+        when: "Create IDP using metadata"
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def response = cloud20.createIdentityProviderWithMetadata(userAdmin2Token, metadata)
+        IdentityProvider idp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "Create IDP with multiple approvedDomainIds"
+        IdentityProvider idpToCreate = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [dummyDomain.id, domainId].asList())
+        response = cloud20.createIdentityProvider(idpManagerToken, idpToCreate)
+        def idpMultipleApprovedDomainIds = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+        idpMultipleApprovedDomainIds.approvedDomainIds.approvedDomainId.size() == 2
+
+        when: "Create IDP with multiple approvedDomainIds"
+        idpToCreate = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [dummyDomain.id].asList())
+        response = cloud20.createIdentityProvider(idpManagerToken, idpToCreate)
+        def idpNotInUsersDomain = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+        idpNotInUsersDomain.approvedDomainIds.approvedDomainId.size() == 1
+
+        when: "List IDPs using userAdmin"
+        response = cloud20.listIdentityProviders(userAdminToken)
+        def listIdps = response.getEntity(IdentityProviders)
+
+        then:
+        response.status == SC_OK
+        listIdps.identityProvider.size() == 0
+
+        when: "List IDPs with 'rcn:admin' user"
+        def defaultUser = users.find { it.username =~ "defaultUser*" }
+        utils.addRoleToUser(defaultUser, Constants.RCN_ADMIN_ROLE_ID)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        response = cloud20.listIdentityProviders(defaultUserToken)
+        listIdps = response.getEntity(IdentityProviders)
+
+        then:
+        response.status == SC_OK
+        listIdps.identityProvider.size() == 1
+
+        when: "List IDPs with query params"
+        response = cloud20.listIdentityProviders(userAdmin2Token, idp.name, idp.issuer, domainId2)
+        listIdps = response.getEntity(IdentityProviders)
+
+        then:
+        response.status == SC_OK
+        listIdps.identityProvider.size() == 1
+
+        when: "List IDPs with invalid query params"
+        response = cloud20.listIdentityProviders(userAdmin2Token, "invalid")
+        listIdps = response.getEntity(IdentityProviders)
+
+        then:
+        response.status == SC_OK
+        listIdps.identityProvider.size() == 0
+
+        cleanup:
+        utils.deleteUsers(users.reverse())
+        utils.deleteUsers(users2.reverse())
+        utils.deleteDomain(domainId)
+        utils.deleteDomain(domainId2)
+        utils.deleteDomain(dummyDomain.id)
+        utils.deleteIdentityProvider(idp)
+        utils.deleteIdentityProvider(idpNotInUsersDomain)
+        utils.deleteIdentityProvider(idpMultipleApprovedDomainIds)
+    }
+
     @Unroll
     def "Valid list IDPs with query parameters - name = #name, issuer = #issuer, domainId = #domainId, idpType = #idpType, tenantName = #tenantName, accept = #accept"() {
         given:
@@ -2389,6 +2511,83 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         null                  | getRandomUUID("issuer") | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | getRandomUUID("tenant") | MediaType.APPLICATION_XML_TYPE
         null                  | getRandomUUID("issuer") | null                    | IdentityProviderTypeFilterEnum.EXPLICIT.name() | getRandomUUID("tenant") | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    def "Test list of IDPs created by metadata" () {
+        given:
+        def domainId = utils.createDomain()
+        def domainId2 = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        def identityAdmin2, userAdmin2, userManage2, defaultUser2
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+        (identityAdmin2, userAdmin2, userManage2, defaultUser2) = utils.createUsers(domainId2)
+        // Add domains to same RCN
+        def rcn = testUtils.getRandomRCN()
+        def updateDomainEntity = new Domain().with {
+            it.rackspaceCustomerNumber = rcn
+            it
+        }
+        utils.updateDomain(domainId, updateDomainEntity)
+        utils.updateDomain(domainId2, updateDomainEntity)
+
+        when: "Create IDP using metadata"
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+        IdentityProvider idpWithMetadata = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "Create IDP within same RCN"
+        issuer = testUtils.getRandomUUID("issuer")
+        def userAdmin2Token = utils.getToken(userAdmin2.username)
+        metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        response = cloud20.createIdentityProviderWithMetadata(userAdmin2Token, metadata)
+        IdentityProvider idpWithSameRcn = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "List IDPs with userAdmin token"
+        response = cloud20.listIdentityProviders(userAdminToken)
+        IdentityProviders identityProviders = response.getEntity(IdentityProviders)
+
+        then:
+        response.status == SC_OK
+        identityProviders.identityProvider.size() == 1
+        identityProviders.identityProvider.get(0).id == idpWithMetadata.id
+
+        when: "List IDPs with userAdmin token"
+        def userManageToken = utils.getToken(userManage.username)
+        response = cloud20.listIdentityProviders(userManageToken)
+        identityProviders = response.getEntity(IdentityProviders)
+
+        then:
+        response.status == SC_OK
+        identityProviders.identityProvider.size() == 1
+        identityProviders.identityProvider.get(0).id == idpWithMetadata.id
+
+        when: "List IDPs with user that has the rcn:admin role"
+        utils.addRoleToUser(defaultUser, Constants.RCN_ADMIN_ROLE_ID)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        response = cloud20.listIdentityProviders(defaultUserToken)
+        identityProviders = response.getEntity(IdentityProviders)
+
+        then:
+        response.status == SC_OK
+        identityProviders.identityProvider.size() == 2
+        identityProviders.identityProvider.find {it.id == idpWithMetadata.id} != null
+        identityProviders.identityProvider.find {it.id == idpWithSameRcn.id} != null
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteUsers(defaultUser2, userManage2, userAdmin2, identityAdmin2)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idpWithMetadata)
+        utils.deleteIdentityProvider(idpWithSameRcn)
     }
 
     @Unroll
