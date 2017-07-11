@@ -203,6 +203,30 @@ class DefaultMultiFactorCloud20ServiceMultiFactorEnableIntegrationTest extends R
         cloud20.validateToken(utils.identityAdminToken, defaultUserToken).status == 404
         cloud20.validateToken(resetUserAdminToken, resetUserAdminToken).status == 403
         cloud20.validateToken(resetDefaultUserToken, resetDefaultUserToken).status == 403
+
+        when: "Reset password is successful with the reset token, even after the mfa enforcement"
+        def newPassword = "newPassword1"
+        def userAdminResetPasswordResponse = cloud20.resetPassword(resetUserAdminToken, v2Factory.createPasswordReset(newPassword))
+        //sleep for a second to avoid race condition with docker image
+        sleep(1000)
+        def userAdminAuthResponseOld = cloud20.authenticate(userAdmin.username, DEFAULT_PASSWORD)
+        def userAdminAuthResponseNew = cloud20.authenticate(userAdmin.username, newPassword)
+
+        def defaultUserResetPasswordResponse = cloud20.resetPassword(resetDefaultUserToken, v2Factory.createPasswordReset(newPassword))
+        //sleep for a second to avoid race condition with docker image
+        sleep(1000)
+        def defaultUserAuthResponseOld = cloud20.authenticate(defaultUser.username, DEFAULT_PASSWORD)
+        def defaultUserAuthResponseNew = cloud20.authenticate(defaultUser.username, newPassword)
+
+        then:
+        userAdminResetPasswordResponse.status == 204
+        defaultUserResetPasswordResponse.status == 204
+        // As password validation is performed before MFA enforcement check, 401 is expected as password is incorrect
+        userAdminAuthResponseOld.status == 401
+        defaultUserAuthResponseOld.status == 401
+        // Due to MFA enforcement, this is a 403 until the user enables MFA
+        userAdminAuthResponseNew.status == 403
+        defaultUserAuthResponseNew.status == 403
     }
 
     def "Enabling MFA sends cloud feed event for enabling MFA, and one for disabling only Password tokens"() {
