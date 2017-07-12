@@ -549,8 +549,7 @@ public class Validator20 {
 
             Domain existingDomain = domainService.getDomain(existingProvider.getApprovedDomainIds().get(0));
 
-            // THIS fails when the passed in domain doesn't have a customer number with a null pointer exception
-            if (!domain.getRackspaceCustomerNumber().equalsIgnoreCase(existingDomain.getRackspaceCustomerNumber())) {
+            if (domain.getRackspaceCustomerNumber() == null || !domain.getRackspaceCustomerNumber().equalsIgnoreCase(existingDomain.getRackspaceCustomerNumber())) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
             }
 

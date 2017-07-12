@@ -3852,7 +3852,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    @spock.lang.Ignore
     def "CID-948 - Update IDP supports end user modification for rcn - request: #requestContentType"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, true)
@@ -3898,16 +3897,15 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response.status == SC_CREATED
 
         when: "rcn:admin try to update IdP's approvedDomainId whose approvedDomainId is in a different rcn."
-        // TODO: currently throws a 500 on Validate20, line 551 because thirdDomain's rackspacecustomernumber is null
         resetCloudFeedsMock()
-        name = RandomStringUtils.randomAlphanumeric(10)
+        def name = RandomStringUtils.randomAlphanumeric(10)
         IdentityProvider updateDomainGroupIdp = new IdentityProvider().with {
             ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
             approvedDomainIds.getApprovedDomainId().addAll([thirdDomainId])
             it.approvedDomainIds = approvedDomainIds
             it
         }
-        updateIdpResponse = cloud20.updateIdentityProvider(defaultUserToken, creationResultIdpWithOtherDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
+        def updateIdpResponse = cloud20.updateIdentityProvider(defaultUserToken, creationResultIdpWithOtherDomain.id, updateDomainGroupIdp, requestContentType, requestContentType)
 
         then: "Expect a 403"
         updateIdpResponse.status == SC_FORBIDDEN
@@ -3925,8 +3923,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_XML_TYPE | _
         MediaType.APPLICATION_JSON_TYPE | _
     }
-
-
 
     @Unroll
     def "Attempt to update IDP with feature disabled - request: #requestContentType"() {
