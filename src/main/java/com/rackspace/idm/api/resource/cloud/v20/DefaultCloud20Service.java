@@ -1612,10 +1612,18 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             //verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
-            //verify user has appropriate role
-            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
-                    IdentityRole.IDENTITY_PROVIDER_READ_ONLY.getRoleName()));
+            // Verify user has appropriate role
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                    IdentityRole.IDENTITY_PROVIDER_READ_ONLY.getRoleName(),
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()));
+
+            verifyUserIsNotInDefaultDomain(caller);
+            verifyUserIsNotInRaxRestrictedGroup(caller);
 
             IdentityProviderTypeFilterEnum idpFilter = null;
             if (StringUtils.isNotBlank(idpType)) {
@@ -1697,6 +1705,28 @@ public class DefaultCloud20Service implements Cloud20Service {
                 providerEntities = federatedIdentityService.findIdentityProvidersExplicitlyApprovedForAnyDomain();
             } else {
                 providerEntities = federatedIdentityService.findAllIdentityProviders();
+            }
+
+            /*
+            If the user is authorized to call the service based on having the identity:user-admin, identity:user-manage,
+            or rcn:admin roles, the IDPs returned must be further filtered based on caller.
+             */
+            if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()))) {
+                List<com.rackspace.idm.domain.entity.IdentityProvider> filteredProviderEntities = new ArrayList<>();
+                for (com.rackspace.idm.domain.entity.IdentityProvider idp : providerEntities) {
+                    try {
+                        verifyDomainUserHasAccessToIdentityProviderMetadata(idp, caller);
+                        filteredProviderEntities.add(idp);
+                    } catch (ForbiddenException ex) {
+                        String infoMsg = String.format("User with ID %s does not have access to Identity Provider with ID %s.",
+                                                       caller.getId(), idp.getProviderId());
+                        logger.info(infoMsg);
+                    }
+                }
+                providerEntities = filteredProviderEntities;
             }
 
             return Response.ok(jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createIdentityProviders(identityProviderConverterCloudV20.toIdentityProviderList(providerEntities)).getValue());
