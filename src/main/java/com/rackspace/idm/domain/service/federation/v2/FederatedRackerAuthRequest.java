@@ -6,6 +6,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import org.apache.commons.lang.StringUtils;
+import org.opensaml.saml.saml2.core.Response;
 
 import static com.rackspace.idm.ErrorCodes.*;
 
@@ -33,6 +34,10 @@ public class FederatedRackerAuthRequest {
         validateStructure();
     }
 
+    public FederatedRackerAuthRequest(Response samlResponse) {
+        this(new FederatedAuthRequest(samlResponse));
+    }
+
     private void validateStructure() {
         if (StringUtils.isBlank(username)) {
             throw new BadRequestException("Invalid username. One, and only one, username must be provided.");
@@ -48,7 +53,8 @@ public class FederatedRackerAuthRequest {
 
     private enum RackerAuthContextEnum {
         PASSWORD(SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS, AuthenticatedByMethodEnum.PASSWORD),
-        TIMESYNCTOKEN(SAMLConstants.TIMESYNCTOKEN_PROTECTED_AUTHCONTEXT_REF_CLASS, AuthenticatedByMethodEnum.RSAKEY);
+        TIMESYNCTOKEN(SAMLConstants.TIMESYNCTOKEN_PROTECTED_AUTHCONTEXT_REF_CLASS, AuthenticatedByMethodEnum.RSAKEY),
+        OTHER("", AuthenticatedByMethodEnum.OTHER); // Use "" as value so non-null value
 
         private String samlAuthnContextClassRef;
         private AuthenticatedByMethodEnum idmAuthBy;
@@ -68,7 +74,7 @@ public class FederatedRackerAuthRequest {
                     return rackerAuthContextEnum;
                 }
             }
-            return null;
+            return OTHER;
         }
     }
 }

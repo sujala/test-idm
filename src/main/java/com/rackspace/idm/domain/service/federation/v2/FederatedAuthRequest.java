@@ -80,9 +80,6 @@ public class FederatedAuthRequest {
         if (!brokerIssuer.equalsIgnoreCase(brokerAssertion.getIssuer().getValue())) {
             throw new BadRequestException("The broker assertion must match the response issuer", ERROR_CODE_FEDERATION2_INVALID_BROKER_ASSERTION);
         }
-        if (StringUtils.isBlank(getIdpAuthContext())) {
-            throw new BadRequestException("Request is missing required authentication context", ERROR_CODE_FEDERATION2_MISSING_AUTH_CONTEXT);
-        }
 
         if (requestedTokenExpiration == null) {
             throw new BadRequestException("Token expiration date is not specified", ERROR_CODE_FEDERATION2_INVALID_REQUESTED_TOKEN_EXP);
