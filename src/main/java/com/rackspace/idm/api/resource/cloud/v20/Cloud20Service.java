@@ -288,4 +288,6 @@ public interface Cloud20Service {
     ResponseBuilder deleteTenantType(String authToken, String tenantTypeId);
 
     ResponseBuilder changeUserPassword(HttpHeaders httpHeaders, ChangePasswordCredentials changePasswordCredentials);
+
+    ResponseBuilder modifyDomainAdministrator(String authToken, DomainAdministratorChange accountAdministratorChange);
 }

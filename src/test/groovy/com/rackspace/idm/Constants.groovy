@@ -56,6 +56,8 @@ class Constants {
     static def IDENTITY_RCN_ALL_TENANT_ROLE_ID = "1d7be4300e2141a5b49b66397ac8a145"
     static def IDENTITY_RCN_ALL_TENANT_ROLE_NAME = "identity:rcn-all"
     static def RCN_ADMIN_ROLE_ID = "c5f683e2b554ee8b28b9a8b612954c4"
+    static def IDENTITY_CHANGE_DOMAIN_ADMIN_ROLE_ID="bfa826160e644c4fa48fd2da3f039153"
+    static def IDENTITY_CHANGE_DOMAIN_ADMIN_ROLE_NAME="identity:domain-admin-change"
 
     static def DEFAULT_GROUP = "Default"
     static def RAX_STATUS_RESTRICTED_GROUP_NAME = "rax_status_restricted"

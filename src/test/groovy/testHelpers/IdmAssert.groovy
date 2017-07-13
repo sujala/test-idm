@@ -1,6 +1,8 @@
 package testHelpers
 
+import com.rackspace.idm.exception.IdmException
 import com.sun.jersey.api.client.ClientResponse
+import org.apache.commons.lang.StringUtils
 import org.openstack.docs.identity.api.v2.IdentityFault
 
 import javax.ws.rs.core.MediaType
@@ -84,6 +86,30 @@ class IdmAssert {
     }
 
     /**
+     * The provided pattern will be used to generate a regex using {@link #generateErrorCodePattern(java.lang.String, java.lang.String)} if
+     * a non-null error code is specified
+     *
+     * @param actualException
+     * @param expectedTypeClazz
+     * @param expectedErrorCode
+     * @param expectedErrorMessagePattern A regex formatted string
+     */
+    static <T extends IdmException> void assertIdmExceptionWithMessagePattern(Throwable actualException, Class<T> expectedTypeClazz, String expectedErrorCode, String expectedErrorMessagePattern) {
+        Pattern errorMessagePattern;
+        if (StringUtils.isNotBlank()) {
+            errorMessagePattern = generateErrorCodePattern(expectedErrorCode, expectedErrorMessagePattern)
+        } else {
+            errorMessagePattern = Pattern.compile(expectedErrorMessagePattern)
+        }
+
+        assert actualException.class.isAssignableFrom(expectedTypeClazz)
+
+        IdmException exception = (IdmException) actualException
+        assert exception.errorCode == expectedErrorCode
+        assert errorMessagePattern.matcher(exception.getMessage())
+    }
+
+    /**
      * This is the required format for messages that return error codes. This allows consumers to parse error messages
      * for specific issues without having the message changed underneath them. Only the first part of the message is
      * guaranteed per contract. After the ';', change is fair game.
@@ -95,5 +121,7 @@ class IdmAssert {
         Pattern.compile(String.format("^Error code: '%s';.*", errorCode))
     }
 
-
+    static Pattern generateErrorCodePattern(String errorCode, String errorMessagePattern) {
+        Pattern.compile(String.format("^Error code: '%s'; %s", errorCode, errorMessagePattern))
+    }
 }

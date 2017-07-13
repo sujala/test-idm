@@ -640,6 +640,14 @@ public class Cloud20VersionResource {
         return cloud20Service.addUserToDomain(authToken, domainId, userId).build();
     }
 
+    @PUT
+    @Path("RAX-AUTH/domains/{domainId}/domainAdministratorChange")
+    public Response modifyDomainAdministrator(
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            DomainAdministratorChange domainAdministratorChange) throws IOException, JAXBException {
+        return cloud20Service.modifyDomainAdministrator(authToken, domainAdministratorChange).build();
+    }
+
     @GET
     @Path("RAX-AUTH/domains/{domainId}/endpoints")
     public Response getEndpointsByDomain(

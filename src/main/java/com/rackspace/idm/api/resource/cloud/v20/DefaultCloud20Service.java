@@ -22,6 +22,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants;
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCredentialType;
 import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.security.IdentityRole;
+import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.audit.Audit;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -88,6 +89,7 @@ import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
@@ -4764,6 +4766,202 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         scopeAccessService.expireAccessToken(tokenId);
         return Response.status(204);
+    }
+
+    @Override
+    public ResponseBuilder modifyDomainAdministrator(String authToken, DomainAdministratorChange domainAdministratorChange) {
+        try {
+            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+
+            /*
+             Verifies the user exists (else NotFoundException), is enabled (else NotAuthorizedException) AND has the
+             specified role (else ForbiddenException). Does not validate domain is enabled, because when disabled all
+             tokens for domain are immediately revoked.
+             */
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_DOMAIN_ADMIN_CHANGE.getRoleName());
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+
+            // Verify both promote and demote users are specified
+            if (StringUtils.isBlank(domainAdministratorChange.getPromoteUserId())
+                    || StringUtils.isBlank(domainAdministratorChange.getDemoteUserId())) {
+                throw new BadRequestException("Both promote and demote userIds must be provided", ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE);
+            }
+
+            // Verify promote and demote users are distinct
+            if (domainAdministratorChange.getPromoteUserId().equalsIgnoreCase(domainAdministratorChange.getDemoteUserId())) {
+                throw new ForbiddenException("Must specify different users to promote and demote", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+            }
+
+            // Retrieve the 2 users being changed and verify they exist (else ForbiddenException)
+            EndUser promotingEndUser = identityUserService.checkAndGetEndUserById(domainAdministratorChange.getPromoteUserId());
+            EndUser demotingEndUser = identityUserService.checkAndGetEndUserById(domainAdministratorChange.getDemoteUserId());
+
+            if (!(promotingEndUser instanceof User) || !(demotingEndUser instanceof User)) {
+                throw new ForbiddenException("Both the promote and demote users must be Rackspace managed users", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+            }
+
+            User promoteUser = (User) promotingEndUser;
+            User demoteUser = (User) demotingEndUser;
+
+            // Belong to same domain
+            if (StringUtils.isBlank(promoteUser.getDomainId()) || StringUtils.isBlank(demoteUser.getDomainId())
+                    || !promoteUser.getDomainId().equalsIgnoreCase(demoteUser.getDomainId())) {
+                throw new ForbiddenException("Both the promote and demote users must belong to the same domain", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+            }
+
+            // Both users must be enabled
+            if (promoteUser.isDisabled() || demoteUser.isDisabled()) {
+                throw new ForbiddenException("Both the promote and demote users must be enabled", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+            }
+
+            // Verify user to promote does NOT have the user-admin role.
+            List<TenantRole> promoteUserRoles = tenantService.getTenantRolesForUserPerformant(promoteUser);
+
+//            TenantRole promoteUserAdminRole = promoteUserRoles.stream()
+//                    .filter(r -> IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(r.getName()))
+//                    .findFirst().orElse(null);
+
+            TenantRole promoteUserAdminRole = null;
+            for (TenantRole tenantRole : promoteUserRoles) {
+                if (IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(tenantRole.getName())) {
+                    promoteUserAdminRole = tenantRole;
+                    break;
+                }
+            }
+
+
+            if (promoteUserAdminRole != null) {
+                throw new ForbiddenException("Promote user is already an admin", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+            }
+
+            // Verify user to demote has the user-admin role.
+            List<TenantRole> demoteUserRoles = tenantService.getTenantRolesForUserPerformant(demoteUser);
+//            TenantRole demoteUserAdminRole = demoteUserRoles.stream()
+//                    .filter(r -> IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(r.getName()))
+//                    .findFirst().orElse(null);
+
+            TenantRole demoteUserAdminRole = null;
+            for (TenantRole tenantRole : demoteUserRoles) {
+                if (IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(tenantRole.getName())) {
+                    demoteUserAdminRole = tenantRole;
+                    break;
+                }
+            }
+
+            if (demoteUserAdminRole == null) {
+                throw new ForbiddenException("Demote user is not an admin", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+            }
+
+            // Verify users have same propagating roles by creating map keyed by roleId w/ tenants it's assigned
+//            Map<String, Set<String>> promotePropRoles = promoteUserRoles.stream()
+//                    .filter(TenantRole::getPropagate)
+//                    .collect(HashMap::new,
+//                            (m, c) -> {m.put(c.getRoleRsId(), c.getTenantIds());},
+//                            HashMap::putAll
+//                    );
+
+            Map<String, Set<String>> promotePropRoles = new HashMap<>();
+            for (TenantRole tenantRole : promoteUserRoles) {
+                if (tenantRole.getPropagate()) {
+                    promotePropRoles.put(tenantRole.getRoleRsId(), tenantRole.getTenantIds());
+                }
+            }
+
+//            Map<String, Set<String>> demotePropRoles = demoteUserRoles.stream()
+//                    .filter(TenantRole::getPropagate)
+//                    .collect(HashMap::new,
+//                            (m, c) -> {m.put(c.getRoleRsId(), c.getTenantIds());},
+//                            HashMap::putAll
+//                    );
+
+            Map<String, Set<String>> demotePropRoles = new HashMap<>();
+            for (TenantRole tenantRole : demoteUserRoles) {
+                if (tenantRole.getPropagate()) {
+                    demotePropRoles.put(tenantRole.getRoleRsId(), tenantRole.getTenantIds());
+                }
+            }
+
+            if (!promotePropRoles.equals(demotePropRoles)) {
+                throw new ForbiddenException("The promote and demote users must have the same propagating roles", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+            }
+
+            logger.info(String.format("Domain admin change for domain '%s'. Promoting user '%s' to user-admin and demoting user '%s'"
+                    , promoteUser.getDomainId(), domainAdministratorChange.getPromoteUserId(), domainAdministratorChange.getDemoteUserId()));
+
+            ClientRole userAdminRole = authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()).asClientRole();
+            ClientRole userDefaultRole = authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()).asClientRole();
+
+            /*
+             Modify the user to promote by first adding the user-admin role and then iterating through user's other roles
+              and removing any roles assignable by user-admin and user classification roles
+             */
+            assignRoleToUser(promoteUser, userAdminRole);
+            List<TenantRole> rolesDeletedFromPromotedUser = deleteUserClassificationAndRbacTenantRoles(promoteUserRoles);
+
+            /*
+             Modify the user to demote by first adding the user default role and then iterating through user's other roles
+             and removing any roles assignable by user-admin and user classification roles
+             */
+            assignRoleToUser(demoteUser, userDefaultRole);
+            List<TenantRole> rolesDeletedFromDemotedUser = deleteUserClassificationAndRbacTenantRoles(demoteUserRoles);
+
+            if (logger.isInfoEnabled()) {
+                try {
+//                    String promotedRemovedRoleNames = rolesDeletedFromPromotedUser.stream()
+//                            .map(r -> r.getName())
+//                            .collect(Collectors.joining(", "));
+
+                    String promotedRemovedRoleNames = "";
+                    for (TenantRole tenantRole : rolesDeletedFromPromotedUser) {
+                        promotedRemovedRoleNames += tenantRole.getName() + ",";
+                    }
+
+//                    String demotedRemovedRoleNames = rolesDeletedFromDemotedUser.stream()
+//                            .map(r -> r.getName())
+//                            .collect(Collectors.joining(", "));
+
+                    String demotedRemovedRoleNames = "";
+                    for (TenantRole tenantRole : rolesDeletedFromDemotedUser) {
+                        demotedRemovedRoleNames += tenantRole.getName() + ",";
+                    }
+
+                    logger.info(String.format("Domain admin change for domain '%s'. Promoted user '%s' to user-admin and removed roles '%s'. Demoted user '%s' and removed roles '%s'"
+                            , promoteUser.getDomainId(), domainAdministratorChange.getPromoteUserId(), promotedRemovedRoleNames, domainAdministratorChange.getDemoteUserId(), demotedRemovedRoleNames));
+                } catch (Exception ex) {
+                    // Eat. Just trying to log
+                    logger.error("Error logging results of domain administrator change", ex);
+                }
+            }
+
+            return Response.noContent();
+
+        } catch (Exception ex) {
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    /**
+     * Given a list of tenantRoles, delete all tenant roles that:
+     * <ol>
+     *     <li>Are a user classification role</li>
+     *     <li>Are assignable by a identity:user-manage user</li>
+     * </ol>
+     *
+     * Return the list of roles that were removed.
+     *
+     * @return
+     */
+    private List<TenantRole> deleteUserClassificationAndRbacTenantRoles(List<TenantRole> tenantRoles) {
+        List<TenantRole> tenantRolesDeleted = new ArrayList<>();
+        for (TenantRole tenantRole : tenantRoles) {
+            ImmutableClientRole icr = applicationService.getCachedClientRoleById(tenantRole.getRoleRsId());
+            if (IdentityUserTypeEnum.isIdentityUserTypeRoleName(tenantRole.getName())
+                    || icr.getRsWeight() == RoleLevelEnum.LEVEL_1000.getLevelAsInt()) {
+                tenantRolesDeleted.add(tenantRole);
+                tenantService.deleteTenantRole(tenantRole);
+            }
+        }
+        return tenantRolesDeleted;
     }
 
     ClientRole checkAndGetClientRole(String id) {
