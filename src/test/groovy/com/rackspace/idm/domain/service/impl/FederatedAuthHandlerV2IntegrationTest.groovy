@@ -7,7 +7,6 @@ import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.IdentityProviderDao
-import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.FederatedBaseUser
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.Racker

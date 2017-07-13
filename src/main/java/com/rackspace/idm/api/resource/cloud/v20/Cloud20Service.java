@@ -289,5 +289,5 @@ public interface Cloud20Service {
 
     ResponseBuilder changeUserPassword(HttpHeaders httpHeaders, ChangePasswordCredentials changePasswordCredentials);
 
-    ResponseBuilder modifyDomainAdministrator(String authToken, DomainAdministratorChange accountAdministratorChange);
+    ResponseBuilder modifyDomainAdministrator(String authToken, String domainId, DomainAdministratorChange accountAdministratorChange);
 }

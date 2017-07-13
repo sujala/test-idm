@@ -643,9 +643,10 @@ public class Cloud20VersionResource {
     @PUT
     @Path("RAX-AUTH/domains/{domainId}/domainAdministratorChange")
     public Response modifyDomainAdministrator(
+            @PathParam("domainId") String domainId,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             DomainAdministratorChange domainAdministratorChange) throws IOException, JAXBException {
-        return cloud20Service.modifyDomainAdministrator(authToken, domainAdministratorChange).build();
+        return cloud20Service.modifyDomainAdministrator(authToken, domainId, domainAdministratorChange).build();
     }
 
     @GET

@@ -95,8 +95,8 @@ class IdmAssert {
      * @param expectedErrorMessagePattern A regex formatted string
      */
     static <T extends IdmException> void assertIdmExceptionWithMessagePattern(Throwable actualException, Class<T> expectedTypeClazz, String expectedErrorCode, String expectedErrorMessagePattern) {
-        Pattern errorMessagePattern;
-        if (StringUtils.isNotBlank()) {
+        Pattern errorMessagePattern
+        if (StringUtils.isNotBlank(expectedErrorMessagePattern)) {
             errorMessagePattern = generateErrorCodePattern(expectedErrorCode, expectedErrorMessagePattern)
         } else {
             errorMessagePattern = Pattern.compile(expectedErrorMessagePattern)
@@ -122,6 +122,6 @@ class IdmAssert {
     }
 
     static Pattern generateErrorCodePattern(String errorCode, String errorMessagePattern) {
-        Pattern.compile(String.format("^Error code: '%s'; %s", errorCode, errorMessagePattern))
+        Pattern.compile(String.format("^Error code: '%s'; %s\$", errorCode, errorMessagePattern))
     }
 }

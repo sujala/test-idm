@@ -75,7 +75,7 @@ class DomainAdminChangeServiceTest extends Specification {
         DomainAdministratorChange changeRequest = new DomainAdministratorChange()
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
 
         then: "Verifies the provided token"
         1 * securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
@@ -87,7 +87,7 @@ class DomainAdminChangeServiceTest extends Specification {
         DomainAdministratorChange changeRequest = new DomainAdministratorChange()
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator("atoken", changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator("atoken", "adomain", changeRequest)
 
         then:
         securityContext.getAndVerifyEffectiveCallerToken(_) >> { throw exceptionToThrow}
@@ -104,7 +104,7 @@ class DomainAdminChangeServiceTest extends Specification {
         securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
 
         then: "Verifies the caller token"
         1 * authorizationService.verifyEffectiveCallerHasRoleByName(Constants.IDENTITY_CHANGE_DOMAIN_ADMIN_ROLE_NAME)
@@ -118,7 +118,7 @@ class DomainAdminChangeServiceTest extends Specification {
         securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
 
         then: "Verifies the caller token"
         1 * authorizationService.verifyEffectiveCallerHasRoleByName(Constants.IDENTITY_CHANGE_DOMAIN_ADMIN_ROLE_NAME) >> {throw exception}
@@ -146,7 +146,7 @@ class DomainAdminChangeServiceTest extends Specification {
         securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
 
         then:
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
@@ -172,7 +172,7 @@ class DomainAdminChangeServiceTest extends Specification {
         securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
 
         then:
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
@@ -194,7 +194,7 @@ class DomainAdminChangeServiceTest extends Specification {
         securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
 
         then:
         identityUserService.checkAndGetEndUserById("exist") >> new User()
@@ -212,7 +212,7 @@ class DomainAdminChangeServiceTest extends Specification {
     }
 
     @Unroll
-    def "Negative Test: Promote and demote must be in same non-blank domain: promoteUserDomain: '#promoteUserDomain', demoteUserDomain: '#demoteUserDomain'"() {
+    def "Negative Test: Promote and demote must be in same non-blank domain and match that in url: promoteUserDomain: '#promoteUserDomain', demoteUserDomain: '#demoteUserDomain'"() {
         given:
         def callerToken = "atoken"
         DomainAdministratorChange changeRequest = new DomainAdministratorChange().with{
@@ -223,7 +223,7 @@ class DomainAdminChangeServiceTest extends Specification {
         securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, urlDomain, changeRequest)
 
         then:
         identityUserService.checkAndGetEndUserById("promoteUser") >> new User().with{
@@ -237,19 +237,21 @@ class DomainAdminChangeServiceTest extends Specification {
             it
         }
         1 * exceptionHandler.exceptionResponse(_) >> {args ->
-            IdmAssert.assertIdmExceptionWithMessagePattern(args[0], ForbiddenException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, "Both the promote and demote users must belong to the same domain")
+            IdmAssert.assertIdmExceptionWithMessagePattern(args[0], ForbiddenException, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, "Both the promote and demote users must belong to the same domain as the domain in the url")
             Response.ok() //just always return ok. Return value here isn't important as we trust exceptionHandler works
         }
 
         where:
-        promoteUserDomain | demoteUserDomain
-        "domainX"  | "domainY"
-        "domainX"     | null
-        null  | "domainY"
-        null | null
-        ""   | "domainY"
-        "domainX"   | ""
-        "" | ""
+        promoteUserDomain | demoteUserDomain | urlDomain
+        "domainX"  | "domainY" | "domainX"
+        "domainX"  | "domainY" | "domainY"
+        "domainX"  | "domainX" | "domainY"
+        "domainX"     | null | "domainX"
+        null  | "domainY" | "domainY"
+        null | null | "adomain"
+        ""   | "domainY" | "something"
+        "domainX"   | "" | "domainX"
+        "" | "" | "domain"
     }
 
     @Unroll
@@ -264,7 +266,7 @@ class DomainAdminChangeServiceTest extends Specification {
         securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest)
 
         then:
         identityUserService.checkAndGetEndUserById("enabled") >> new User().with{
@@ -301,7 +303,7 @@ class DomainAdminChangeServiceTest extends Specification {
         securityContext.getAndVerifyEffectiveCallerToken(callerToken) >> new ScopeAccess()
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "adomain", changeRequest)
 
         then:
         identityUserService.checkAndGetEndUserById("provisioned") >> new User().with{
@@ -342,7 +344,7 @@ class DomainAdminChangeServiceTest extends Specification {
         }}
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest)
 
         then:
         tenantService.getTenantRolesForUserPerformant(_) >> userRoles
@@ -375,7 +377,7 @@ class DomainAdminChangeServiceTest extends Specification {
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest)
 
         then:
         tenantService.getTenantRolesForUserPerformant(promoteUser) >> [createTenantRole(USER_MANAGER.roleName)]
@@ -409,7 +411,7 @@ class DomainAdminChangeServiceTest extends Specification {
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest)
 
         then:
         tenantService.getTenantRolesForUserPerformant(promoteUser) >> promoteUserRoles
@@ -448,7 +450,7 @@ class DomainAdminChangeServiceTest extends Specification {
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
         when:
-        defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest)
+        defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest)
 
         then:
         1 * tenantService.getTenantRolesForUserPerformant(promoteUser) >> promoteUserRoles
@@ -488,7 +490,7 @@ class DomainAdminChangeServiceTest extends Specification {
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
         when:
-        Response response = defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest).build()
+        Response response = defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest).build()
 
         then: "Promote users roles are properly modified"
         1 * tenantService.addTenantRoleToUser(promoteUser, {it.name == USER_ADMIN.roleName})
@@ -519,7 +521,7 @@ class DomainAdminChangeServiceTest extends Specification {
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
         when:
-        Response response = defaultCloud20Service.modifyDomainAdministrator(callerToken, changeRequest).build()
+        Response response = defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest).build()
 
         then: "Promote users roles are properly modified"
         1 * tenantService.addTenantRoleToUser(promoteUser, {it.name == USER_ADMIN.roleName})

@@ -4769,7 +4769,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder modifyDomainAdministrator(String authToken, DomainAdministratorChange domainAdministratorChange) {
+    public ResponseBuilder modifyDomainAdministrator(String authToken, String domainId, DomainAdministratorChange domainAdministratorChange) {
         try {
             ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
@@ -4803,10 +4803,11 @@ public class DefaultCloud20Service implements Cloud20Service {
             User promoteUser = (User) promotingEndUser;
             User demoteUser = (User) demotingEndUser;
 
-            // Belong to same domain
-            if (StringUtils.isBlank(promoteUser.getDomainId()) || StringUtils.isBlank(demoteUser.getDomainId())
-                    || !promoteUser.getDomainId().equalsIgnoreCase(demoteUser.getDomainId())) {
-                throw new ForbiddenException("Both the promote and demote users must belong to the same domain", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+            // Belong to same domain AND the provided domain in the path is the same as the users
+            if (StringUtils.isBlank(domainId) || StringUtils.isBlank(promoteUser.getDomainId()) || StringUtils.isBlank(demoteUser.getDomainId())
+                    || !promoteUser.getDomainId().equalsIgnoreCase(demoteUser.getDomainId())
+                    || !domainId.equalsIgnoreCase(promoteUser.getDomainId())) {
+                throw new ForbiddenException("Both the promote and demote users must belong to the same domain as the domain in the url", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
             }
 
             // Both users must be enabled
@@ -4816,11 +4817,6 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // Verify user to promote does NOT have the user-admin role.
             List<TenantRole> promoteUserRoles = tenantService.getTenantRolesForUserPerformant(promoteUser);
-
-//            TenantRole promoteUserAdminRole = promoteUserRoles.stream()
-//                    .filter(r -> IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(r.getName()))
-//                    .findFirst().orElse(null);
-
             TenantRole promoteUserAdminRole = null;
             for (TenantRole tenantRole : promoteUserRoles) {
                 if (IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(tenantRole.getName())) {
@@ -4829,17 +4825,12 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
-
             if (promoteUserAdminRole != null) {
                 throw new ForbiddenException("Promote user is already an admin", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
             }
 
             // Verify user to demote has the user-admin role.
             List<TenantRole> demoteUserRoles = tenantService.getTenantRolesForUserPerformant(demoteUser);
-//            TenantRole demoteUserAdminRole = demoteUserRoles.stream()
-//                    .filter(r -> IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(r.getName()))
-//                    .findFirst().orElse(null);
-
             TenantRole demoteUserAdminRole = null;
             for (TenantRole tenantRole : demoteUserRoles) {
                 if (IdentityUserTypeEnum.USER_ADMIN.getRoleName().equalsIgnoreCase(tenantRole.getName())) {
@@ -4853,26 +4844,12 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             // Verify users have same propagating roles by creating map keyed by roleId w/ tenants it's assigned
-//            Map<String, Set<String>> promotePropRoles = promoteUserRoles.stream()
-//                    .filter(TenantRole::getPropagate)
-//                    .collect(HashMap::new,
-//                            (m, c) -> {m.put(c.getRoleRsId(), c.getTenantIds());},
-//                            HashMap::putAll
-//                    );
-
             Map<String, Set<String>> promotePropRoles = new HashMap<>();
             for (TenantRole tenantRole : promoteUserRoles) {
                 if (tenantRole.getPropagate()) {
                     promotePropRoles.put(tenantRole.getRoleRsId(), tenantRole.getTenantIds());
                 }
             }
-
-//            Map<String, Set<String>> demotePropRoles = demoteUserRoles.stream()
-//                    .filter(TenantRole::getPropagate)
-//                    .collect(HashMap::new,
-//                            (m, c) -> {m.put(c.getRoleRsId(), c.getTenantIds());},
-//                            HashMap::putAll
-//                    );
 
             Map<String, Set<String>> demotePropRoles = new HashMap<>();
             for (TenantRole tenantRole : demoteUserRoles) {
@@ -4907,18 +4884,10 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             if (logger.isInfoEnabled()) {
                 try {
-//                    String promotedRemovedRoleNames = rolesDeletedFromPromotedUser.stream()
-//                            .map(r -> r.getName())
-//                            .collect(Collectors.joining(", "));
-
                     String promotedRemovedRoleNames = "";
                     for (TenantRole tenantRole : rolesDeletedFromPromotedUser) {
                         promotedRemovedRoleNames += tenantRole.getName() + ",";
                     }
-
-//                    String demotedRemovedRoleNames = rolesDeletedFromDemotedUser.stream()
-//                            .map(r -> r.getName())
-//                            .collect(Collectors.joining(", "));
 
                     String demotedRemovedRoleNames = "";
                     for (TenantRole tenantRole : rolesDeletedFromDemotedUser) {
