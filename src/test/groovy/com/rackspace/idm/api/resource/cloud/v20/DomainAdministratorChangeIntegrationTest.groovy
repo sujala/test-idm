@@ -3,7 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainAdministratorChange
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
-import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import spock.lang.Shared
@@ -12,7 +11,6 @@ import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static com.rackspace.idm.Constants.USER_MANAGE_ROLE_ID
 import static org.apache.http.HttpStatus.SC_OK
 

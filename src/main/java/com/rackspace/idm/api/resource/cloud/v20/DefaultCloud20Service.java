@@ -4771,7 +4771,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder modifyDomainAdministrator(String authToken, String domainId, DomainAdministratorChange domainAdministratorChange) {
         try {
-            ScopeAccess token = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
             /*
              Verifies the user exists (else NotFoundException), is enabled (else NotAuthorizedException) AND has the
@@ -4779,7 +4779,7 @@ public class DefaultCloud20Service implements Cloud20Service {
              tokens for domain are immediately revoked.
              */
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_DOMAIN_ADMIN_CHANGE.getRoleName());
-            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
+            requestContextHolder.getRequestContext().getEffectiveCaller();
 
             // Verify both promote and demote users are specified
             if (StringUtils.isBlank(domainAdministratorChange.getPromoteUserId())
