@@ -4351,12 +4351,19 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then:
         response1.status == SC_NO_CONTENT
 
-        when: "Deleting IDP using defaultUser token with rcn:admin role"
+        when: "Deleting IDP using defaultUser token w/o rcn:admin role"
         def response2 = cloud20.createIdentityProvider(idpManagerToken, approvedDomainsIdp)
         IdentityProvider idp2 = response2.getEntity(IdentityProvider)
-        utils.addRoleToUser(defaultUser, Constants.RCN_ADMIN_ROLE_ID)
         def defaultUserToken = utils.getToken(defaultUser.username)
         response2 = cloud20.deleteIdentityProvider(defaultUserToken, idp2.id)
+
+        then:
+        response2.status == SC_FORBIDDEN
+
+        when: "Deleting IDP using defaultUser token with rcn:admin role"
+        utils.addRoleToUser(defaultUser, Constants.RCN_ADMIN_ROLE_ID)
+        def defaultUserTokenWithRcnRole = utils.getToken(defaultUser.username)
+        response2 = cloud20.deleteIdentityProvider(defaultUserTokenWithRcnRole, idp2.id)
 
         then:
         response2.status == SC_NO_CONTENT
