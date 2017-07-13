@@ -1429,6 +1429,17 @@ rsTenantType: *
 rsAssignment: GLOBAL
 rsWeight: 500
 
+dn: rsId=bfa826160e644c4fa48fd2da3f039153,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:domain-admin-change
+description: Role to allow changing the domain's user-admin
+rsType: STANDARD
+rsTenantType: *
+rsAssignment: GLOBAL
+rsWeight: 500
+
 dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicati
  ons,o=rackspace,dc=rackspace,dc=com
 objectClass: rsContainer
@@ -5032,6 +5043,13 @@ dn: roleRsId=fb551ebee1a811e6a9f3a3d7b19d04b2,cn=ROLES,rsId=173189,ou=users,o=ra
 objectClass: top
 objectClass: tenantRole
 roleRsId: fb551ebee1a811e6a9f3a3d7b19d04b2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=bfa826160e644c4fa48fd2da3f039153,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: top
+objectClass: tenantRole
+roleRsId: bfa826160e644c4fa48fd2da3f039153
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
 dn: cn=TOKENS,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=com

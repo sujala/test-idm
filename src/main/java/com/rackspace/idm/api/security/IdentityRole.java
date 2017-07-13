@@ -28,6 +28,7 @@ public enum IdentityRole {
     , IDENTITY_PROPERTY_ADMIN("identity:property-admin")
     , IDENTITY_INTERNAL("identity:internal")
     , RCN_ADMIN("rcn:admin")
+    , IDENTITY_DOMAIN_ADMIN_CHANGE("identity:domain-admin-change")
     ;
 
     @Getter

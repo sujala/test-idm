@@ -140,6 +140,13 @@
     </jaxb:bindings>
 
     <jaxb:bindings schemaLocation="RAX-AUTH.xsd" node="/xs:schema">
+        <jaxb:bindings schemaLocation="RAX-AUTH.xsd" node="/xs:schema">
+            <jaxb:bindings node="xs:complexType[@name='DomainAdministratorChange']">
+                <annox:annotate>
+                    <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="domainAdministratorChange"/>
+                </annox:annotate>
+            </jaxb:bindings>
+        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='ImpersonationRequest']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="impersonation"/>

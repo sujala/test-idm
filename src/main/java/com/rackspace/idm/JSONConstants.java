@@ -336,4 +336,6 @@ public final class JSONConstants {
 
     public static final String IDENTITY_PROPERTY = "identityProperty";
 
+    public static final String DOMAIN_ADMINISTRATOR_CHANGE = "domainAdministratorChange";
+    public static final String RAX_AUTH_DOMAIN_ADMINISTRATOR_CHANGE = "RAX-AUTH:" + DOMAIN_ADMINISTRATOR_CHANGE;
 }

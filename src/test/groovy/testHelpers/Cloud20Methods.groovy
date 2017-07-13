@@ -77,6 +77,7 @@ class Cloud20Methods {
     static def ENDPOINTS = "endpoints"
     static def ENDPOINT_TEMPLATES = "endpointTemplates"
     static def RULES = "rules"
+    static def DOMAIN_ADMINISTRATOR_CHANGE_PATH = "domainAdministratorChange"
 
     def init(){
         mediaType = new MediaTypeContext()
@@ -274,6 +275,11 @@ class Cloud20Methods {
             request = request.queryParam("enabled", "" + enabled)
         }
         request.header(X_AUTH_TOKEN, token).accept(mediaType).get(ClientResponse)
+    }
+
+    def changeDomainAdministrator(String token, String domainId, DomainAdministratorChange domainAdministratorChange, MediaType requestMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(DOMAIN_ADMINISTRATOR_CHANGE_PATH).type(requestMediaType).entity(domainAdministratorChange).header(X_AUTH_TOKEN, token).accept(acceptMediaType).put(ClientResponse)
     }
 
     def getUserById(String token, String userId, MediaType mediaType = APPLICATION_XML_TYPE) {
