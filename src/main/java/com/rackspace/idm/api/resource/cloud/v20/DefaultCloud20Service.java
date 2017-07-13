@@ -4882,6 +4882,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             assignRoleToUser(demoteUser, userDefaultRole);
             List<TenantRole> rolesDeletedFromDemotedUser = deleteUserClassificationAndRbacTenantRoles(demoteUserRoles);
 
+            // Send feed event changes for users
+            atomHopperClient.asyncPost(promoteUser, AtomHopperConstants.ROLE);
+            atomHopperClient.asyncPost(demoteUser, AtomHopperConstants.ROLE);
+
             if (logger.isInfoEnabled()) {
                 try {
                     String promotedRemovedRoleNames = "";

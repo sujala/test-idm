@@ -4,6 +4,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainAdministratorChange
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.RequestContextHolder
@@ -35,6 +37,7 @@ class DomainAdminChangeServiceTest extends Specification {
     @Shared ExceptionHandler exceptionHandler
     @Shared TenantService tenantService
     @Shared ApplicationService applicationService
+    @Shared AtomHopperClient atomHopperClient
 
     @Shared DefaultCloud20Service defaultCloud20Service
 
@@ -54,6 +57,7 @@ class DomainAdminChangeServiceTest extends Specification {
         identityUserService = Mock(IdentityUserService)
         tenantService = Mock(TenantService)
         applicationService = Mock(ApplicationService)
+        atomHopperClient = Mock(AtomHopperClient)
 
         defaultCloud20Service = new DefaultCloud20Service()
         defaultCloud20Service.authorizationService = authorizationService
@@ -62,6 +66,7 @@ class DomainAdminChangeServiceTest extends Specification {
         defaultCloud20Service.identityUserService = identityUserService
         defaultCloud20Service.tenantService = tenantService
         defaultCloud20Service.applicationService = applicationService
+        defaultCloud20Service.atomHopperClient = atomHopperClient
 
         // Common settings for the client role lookups. Based on convention for role names.
         authorizationService.getCachedIdentityRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
@@ -538,6 +543,10 @@ class DomainAdminChangeServiceTest extends Specification {
 
         and:
         response.status == HttpStatus.SC_NO_CONTENT
+
+        and: "atom hopper client called to send feed events"
+        1 * atomHopperClient.asyncPost(promoteUser, AtomHopperConstants.ROLE)
+        1 * atomHopperClient.asyncPost(demoteUser, AtomHopperConstants.ROLE)
     }
 
     def createTenantRole(String name, RoleTypeEnum roleType = STANDARD, Set<String> tenantIds = [] as Set) {
