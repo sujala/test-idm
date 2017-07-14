@@ -103,7 +103,10 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
 
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
-        list_resp = self.identity_admin_client.list_roles()
+        param = {
+            'limit': 200
+        }
+        list_resp = self.identity_admin_client.list_roles(option=param)
         self.assertEqual(list_resp.status_code, 200)
         if self.devops_client.get_feature_flag(
                 flag_name=self.feature_flag_role_properties):
@@ -125,7 +128,8 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
                 else:
                     self.assertNotIn(const.NS_TYPES, role)
                     self.assertIn(role[const.RAX_AUTH_ASSIGNMENT],
-                                  [const.BOTH, const.TENANT])
+                                  [const.BOTH, const.TENANT.upper(),
+                                   const.GLOBAL.upper()])
         else:
             self.assertSchema(response=list_resp,
                               json_schema=roles_json.list_roles)
