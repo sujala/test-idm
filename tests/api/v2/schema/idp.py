@@ -13,6 +13,26 @@ CERTIFICATE_ITEM = {
         const.PEM_ENCODED: {'type': 'string'}
     }}
 
+idp_item = {
+    'type': 'object',
+    'properties': {
+        const.DESCRIPTION: {'type': 'string'},
+        const.APPROVED_DOMAIN_Ids: {
+            'type': 'array',
+            'items': {'type': 'string'},
+            "maxItems": 1},
+        const.AUTHENTICATION_URL: {'type': 'string'},
+        const.ID: {'type': 'string'},
+        const.FEDERATION_TYPE: {
+            'type': 'string',
+            'enum': ['DOMAIN', const.BROKER]},
+        const.ISSUER: {'type': 'string'}},
+    'required': [
+        const.DESCRIPTION, const.APPROVED_DOMAIN_Ids,
+        const.AUTHENTICATION_URL, const.ID, const.FEDERATION_TYPE,
+        const.ISSUER, const.NAME]
+}
+
 identity_provider = {
     'type': 'object',
     'properties': {
@@ -40,4 +60,11 @@ identity_provider = {
                 const.ISSUER, const.PUBLIC_CERTIFICATES, const.NAME]
         }},
     'required': [const.NS_IDENTITY_PROVIDER],
+    'additionalProperties': False}
+
+list_idps = {
+    'type': 'object', 'properties':
+    {const.NS_IDENTITY_PROVIDERS:
+        {'type': 'array', 'items': idp_item}},
+    'required': [const.NS_IDENTITY_PROVIDERS],
     'additionalProperties': False}
