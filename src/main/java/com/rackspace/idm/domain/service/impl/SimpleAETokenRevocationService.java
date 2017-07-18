@@ -13,7 +13,6 @@ import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
 import com.rackspace.idm.domain.service.AETokenRevocationService;
 import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.UUIDTokenRevocationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.StringUtils;
@@ -43,9 +42,6 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
 
     @Autowired
     private AETokenService aeTokenService;
-
-    @Autowired(required = false)
-    private UUIDTokenRevocationService uuidTokenRevocationService;
 
     @Autowired
     private IdentityConfig identityConfig;
@@ -152,10 +148,6 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     public void revokeTokensForEndUser(EndUser user, List<AuthenticatedByMethodGroup> authenticatedByMethodGroups) {
         TokenRevocationRecord trr = tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), authenticatedByMethodGroups);
         sendUserTrrFeedEventIfNecessary(user, trr);
-
-        if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
-            uuidTokenRevocationService.revokeTokensForEndUser(user, authenticatedByMethodGroups);
-        }
     }
 
     @Override
@@ -168,10 +160,6 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     public void revokeAllTokensForEndUser(EndUser user) {
         TokenRevocationRecord trr = tokenRevocationRecordPersistenceStrategy.addUserTrrRecord(user.getId(), Arrays.asList(AuthenticatedByMethodGroup.ALL));
         sendUserTrrFeedEventIfNecessary(user, trr);
-
-        if (identityConfig.getFeatureAeTokenCleanupUuidOnRevokes()) {
-            uuidTokenRevocationService.revokeAllTokensForEndUser(user);
-        }
     }
 
     @Override

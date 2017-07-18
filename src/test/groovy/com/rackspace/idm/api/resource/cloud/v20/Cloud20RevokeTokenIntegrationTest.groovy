@@ -1,13 +1,12 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.service.IdentityUserService
-import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.TokenRevocationService
 import org.springframework.beans.factory.annotation.Autowired
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
@@ -108,53 +107,70 @@ class Cloud20RevokeTokenIntegrationTest extends RootIntegrationTest {
         tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
     }
 
-    def "Revoke user's tokens by id when set to AE will also revoke all UUID" () {
+    def "Revoke user's tokens by id when set to UUID/AE" () {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, true)
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.UUID.name())
         def identityAdmin = utils.createIdentityAdmin()
-        def uuidToken = utils.getToken(identityAdmin.username)
-
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.AE.name())
-        def aeToken = utils.getToken(identityAdmin.username)
         def serviceAdminToken = utils.getServiceAdminToken()
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
 
-        when: "revoke all tokens by userid"
+        when: "revoke ae token by userid"
+        def token = utils.getToken(identityAdmin.username)
         tokenRevocationService.revokeAllTokensForEndUser(identityAdmin.id)
 
         then:
-        cloud20.validateToken(serviceAdminToken, aeToken).status == SC_NOT_FOUND
-        cloud20.validateToken(serviceAdminToken, uuidToken).status == SC_NOT_FOUND
+        cloud20.validateToken(serviceAdminToken, token).status == SC_NOT_FOUND
 
         cleanup:
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, false)
         utils.deleteUsers(identityAdmin)
+
+        where:
+        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
     }
 
-    def "Revoke user's tokens by user when set to AE will also revoke all UUID" () {
+    def "Revoke provisioned user's tokens by user when set to UUID/AE" () {
         given:
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, true)
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.UUID.name())
         def identityAdmin = utils.createIdentityAdmin()
-        def uuidToken = utils.getToken(identityAdmin.username)
-
-        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, TokenFormat.AE.name())
-        def aeToken = utils.getToken(identityAdmin.username)
         def serviceAdminToken = utils.getServiceAdminToken()
-
         def user = identityUserService.getProvisionedUserById(identityAdmin.id)
 
-        when: "revoke all tokens by user"
+        when: "revoke uuid token by userid"
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
+        def token = utils.getToken(identityAdmin.username)
         tokenRevocationService.revokeAllTokensForEndUser(user)
 
         then:
-        cloud20.validateToken(serviceAdminToken, aeToken).status == SC_NOT_FOUND
-        cloud20.validateToken(serviceAdminToken, uuidToken).status == SC_NOT_FOUND
+        cloud20.validateToken(serviceAdminToken, token).status == SC_NOT_FOUND
 
         cleanup:
-        staticIdmConfiguration.setProperty(IdentityConfig.FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, false)
         utils.deleteUsers(identityAdmin)
+
+        where:
+        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
     }
+
+
+    def "Revoke user token with authenticatedByMethodGroups when set to UUID/AE" () {
+        given:
+        def identityAdmin = utils.createIdentityAdmin()
+        def serviceAdminToken = utils.getServiceAdminToken()
+        def user = identityUserService.getProvisionedUserById(identityAdmin.id)
+        List<AuthenticatedByMethodGroup> authenticatedByMethodGroups =  Arrays.asList(AuthenticatedByMethodGroup.ALL)
+        staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
+
+        when:
+        def token = utils.getToken(user.username)
+        tokenRevocationService.revokeTokensForEndUser(user.id, authenticatedByMethodGroups)
+
+        then:
+        cloud20.validateToken(serviceAdminToken, token).status == SC_NOT_FOUND
+
+        cleanup:
+        utils.deleteUser(identityAdmin)
+
+        where:
+        tokenFormat << [TokenFormat.UUID, TokenFormat.AE]
+    }
+
 
     def "Revoke AE token using v1.1" () {
         given:

@@ -79,8 +79,6 @@ public class IdentityConfig {
     public static final String IDENTITY_DEFAULT_USER_ROLE_NAME_PROP = "cloudAuth.userRole";
     public static final String IDENTITY_PROVISIONED_TOKEN_FORMAT = "feature.provisioned.defaultTokenFormat";
     public static final TokenFormat IDENTITY_PROVISIONED_TOKEN_SQL_OVERRIDE = TokenFormat.AE;
-    private static final String FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME = "feature.aetoken.cleanup.uuid.on.revokes";
-    private static final boolean FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_SQL_OVERRIDE = false;
     public static final String PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME = "reloadable.properties.ttl.seconds";
     public static final String GROUP_DOMAINID_DEFAULT = "group.domainId.default";
     public static final String TENANT_DOMAINID_DEFAULT = "tenant.domainId.default";
@@ -550,7 +548,6 @@ public class IdentityConfig {
         defaults.put(EMAIL_PORT, PORT_25);
         defaults.put(EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, true);
         defaults.put(IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID");
-        defaults.put(FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME, true);
         defaults.put(PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME, PROPERTY_RELOADABLE_PROPERTY_TTL_DEFAULT_VALUE);
         defaults.put(IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, "UUID");
         defaults.put(KEYCZAR_DN_CONFIG, "ou=keystore,o=configuration,dc=rackspace,dc=com");
@@ -1179,14 +1176,6 @@ public class IdentityConfig {
                 return IDENTITY_PROVISIONED_TOKEN_SQL_OVERRIDE;
             }
             return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_PROVISIONED_TOKEN_FORMAT));
-        }
-
-        @IdmProp(key = FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME)
-        public boolean getFeatureAeTokenCleanupUuidOnRevokes() {
-            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                return FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_SQL_OVERRIDE;
-            }
-            return getBooleanSafely(staticConfiguration, FEATURE_AETOKEN_CLEANUP_UUID_ON_REVOKES_PROP_NAME);
         }
 
         @IdmProp(key = KEYCZAR_DN_CONFIG)
@@ -2095,11 +2084,6 @@ public class IdentityConfig {
     @Deprecated
     public TokenFormat getIdentityProvisionedTokenFormat() {
         return getStaticConfig().getIdentityProvisionedTokenFormat();
-    }
-
-    @Deprecated
-    public boolean getFeatureAeTokenCleanupUuidOnRevokes() {
-        return getStaticConfig().getFeatureAeTokenCleanupUuidOnRevokes();
     }
 
     @Deprecated
