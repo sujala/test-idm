@@ -89,7 +89,9 @@ import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
+
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
@@ -1244,7 +1246,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponseBytes) {
+    public ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponseBytes, boolean applyRcnRoles) {
         //determine API version
         List<String> identityVersionHeaderVals = httpHeaders.getRequestHeader(GlobalConstants.HEADER_IDENTITY_API_VERSION);
         if (CollectionUtils.isEmpty(identityVersionHeaderVals)) {
@@ -1258,7 +1260,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (GlobalConstants.FEDERATION_API_V1_0.equalsIgnoreCase(apiVersion)) {
                 samlAuthResponse = federatedIdentityService.processSamlResponse(samlResponse);
             } else if (GlobalConstants.FEDERATION_API_V2_0.equalsIgnoreCase(apiVersion)) {
-                samlAuthResponse = federatedIdentityService.processV2SamlResponse(samlResponse);
+                samlAuthResponse = federatedIdentityService.processV2SamlResponse(samlResponse, applyRcnRoles);
             } else {
                 exceptionHandler.badRequestExceptionResponse(String.format("Unsupported %s version", GlobalConstants.HEADER_IDENTITY_API_VERSION));
             }

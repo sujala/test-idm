@@ -20,8 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.naming.ServiceUnavailableException;
-
 import static com.rackspace.idm.ErrorCodes.*;
 
 /**
@@ -56,7 +54,7 @@ public class FederatedAuthHandlerV2 {
      * @param rawSamlResponse
      * @return
      */
-    public SamlAuthResponse authenticate(Response rawSamlResponse) {
+    public SamlAuthResponse authenticate(Response rawSamlResponse, boolean applyRcnRoles) {
         // Perform high level validation common to all fed auth requests
         FederatedAuthRequest federatedAuthRequest = new FederatedAuthRequest(rawSamlResponse);
 
@@ -108,7 +106,7 @@ public class FederatedAuthHandlerV2 {
         IdentityProviderFederationTypeEnum originFederationType = originIdp.getFederationTypeAsEnum();
         if (IdentityProviderFederationTypeEnum.DOMAIN == originFederationType) {
             FederatedDomainAuthRequest federatedDomainAuthRequest = new FederatedDomainAuthRequest(federatedAuthRequest);
-            samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(federatedDomainAuthRequest, originIdp);
+            samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(federatedDomainAuthRequest, originIdp, applyRcnRoles);
         } else if (IdentityProviderFederationTypeEnum.RACKER == originFederationType) {
             FederatedRackerAuthRequest federatedRackerAuthRequest = new FederatedRackerAuthRequest(federatedAuthRequest);
             samlAuthResponse = federatedRackerRequestHandler.processAuthRequestForProvider(federatedRackerAuthRequest, originIdp);

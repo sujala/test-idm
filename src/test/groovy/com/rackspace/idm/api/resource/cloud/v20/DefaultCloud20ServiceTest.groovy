@@ -3524,27 +3524,27 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def headers = Mock(HttpHeaders)
 
         when: "Do not set API header"
-        service.authenticateFederated(headers, new byte[0])
+        service.authenticateFederated(headers, new byte[0], false)
 
         then: "Sent to v1.0"
         1 * defaultFederatedIdentityService.processSamlResponse(_)
-        0 * defaultFederatedIdentityService.processV2SamlResponse(_)
+        0 * defaultFederatedIdentityService.processV2SamlResponse(_, _)
 
         when: "Set 1.0 API header"
         headers.getRequestHeader(GlobalConstants.HEADER_IDENTITY_API_VERSION) >> [GlobalConstants.FEDERATION_API_V1_0]
-        service.authenticateFederated(headers, new byte[0])
+        service.authenticateFederated(headers, new byte[0], false)
 
         then: "Sent to v1.0"
         1 * defaultFederatedIdentityService.processSamlResponse(_)
-        0 * defaultFederatedIdentityService.processV2SamlResponse(_)
+        0 * defaultFederatedIdentityService.processV2SamlResponse(_, _)
 
         when: "Set 2.0 API header"
         headers.getRequestHeader(GlobalConstants.HEADER_IDENTITY_API_VERSION) >> [GlobalConstants.FEDERATION_API_V2_0]
-        service.authenticateFederated(headers, new byte[0])
+        service.authenticateFederated(headers, new byte[0], false)
 
         then: "Sent to v2.0"
         0 * defaultFederatedIdentityService.processSamlResponse(_)
-        1 * defaultFederatedIdentityService.processV2SamlResponse(_)
+        1 * defaultFederatedIdentityService.processV2SamlResponse(_, _)
     }
 
     def "Update identity provider with approvedDomainIds"() {

@@ -22,7 +22,7 @@ public interface Cloud20Service {
 
     ResponseBuilder authenticate(HttpHeaders httpHeaders, AuthenticationRequest authenticationRequest);
 
-    ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponse);
+    ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponse, boolean applyRcnRoles);
 
     ResponseBuilder upgradeUserToCloud(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User upgradeUser);
 

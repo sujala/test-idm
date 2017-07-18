@@ -5,7 +5,6 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
-import com.rackspace.idm.domain.decorator.SamlResponseDecorator;
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.domain.entity.SamlAuthResponse;
 import com.rackspace.idm.domain.entity.SamlLogoutResponse;
@@ -70,9 +69,9 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
    }
 
     @Override
-    public SamlAuthResponse processV2SamlResponse(Response response) throws ServiceUnavailableException {
+    public SamlAuthResponse processV2SamlResponse(Response response, boolean applyRcnRoles) throws ServiceUnavailableException {
         try {
-            return federatedAuthHandlerV2.authenticate(response);
+            return federatedAuthHandlerV2.authenticate(response, applyRcnRoles);
         } catch (UnsupportedOperationException e) {
             //TODO This catch is just a temporary block until CID-585/CID-618 are implemented
             throw new ServiceUnavailableException(e.getMessage());

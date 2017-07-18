@@ -28,7 +28,7 @@ public interface FederatedIdentityService {
      * @param samlResponse
      * @return
      */
-    SamlAuthResponse processV2SamlResponse(Response samlResponse)  throws ServiceUnavailableException;
+    SamlAuthResponse processV2SamlResponse(Response samlResponse, boolean applyRcnRoles)  throws ServiceUnavailableException;
 
     /**
      * Logs out/terminates the associated federated user, which removes any persistent state for that user and revokes any tokens

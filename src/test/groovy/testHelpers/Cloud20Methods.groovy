@@ -427,9 +427,11 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SAML_TOKENS).accept(accept).type(contentType).entity(request).post(ClientResponse)
     }
 
-    def federatedAuthenticate(request, String version = null, accept = APPLICATION_XML) {
+    def federatedAuthenticate(request, applyRcnRoles = false, String version = null, accept = APPLICATION_XML) {
         initOnUse()
-        WebResource.Builder builder = resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SAML).path(AUTH).accept(accept).type(APPLICATION_XML).entity(request)
+        def queryParams = new MultivaluedMapImpl()
+        queryParams.add("apply_rcn_roles", applyRcnRoles)
+        WebResource.Builder builder = resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SAML).path(AUTH).queryParams(queryParams).accept(accept).type(APPLICATION_XML).entity(request)
         if (StringUtils.isNotEmpty(version)) {
             builder = builder.header(GlobalConstants.HEADER_IDENTITY_API_VERSION, version)
         }
@@ -437,7 +439,7 @@ class Cloud20Methods {
     }
 
     def federatedAuthenticateV2(request, accept = APPLICATION_XML) {
-        federatedAuthenticate(request, GlobalConstants.FEDERATION_API_V2_0, accept)
+        federatedAuthenticate(request, false, GlobalConstants.FEDERATION_API_V2_0, accept)
     }
 
     def federatedLogout(request, accept = APPLICATION_XML) {
