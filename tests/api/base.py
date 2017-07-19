@@ -1,5 +1,7 @@
 import jsonschema
+import logging
 from lxml import etree
+import os
 from StringIO import StringIO
 from strgen import StringGenerator
 from itertools import combinations
@@ -258,4 +260,27 @@ def skip_if_no_service_admin_available(func):
             import unittest
             raise unittest.SkipTest('Service Admin user is not available')
         return func(*args, **kwargs)
+    return wrapper
+
+
+def create_logger():
+    teardown_log_file = os.environ['CAFE_TEST_LOG_PATH'] + '/tearDown.log'
+    handler = logging.FileHandler(teardown_log_file)
+    tearDown_logger = logging.getLogger('tearDown')
+    tearDown_logger.setLevel(logging.WARNING)
+    tearDown_logger.addHandler(handler)
+    return tearDown_logger
+
+logger = create_logger()
+
+
+def log_tearDown_error(tearDown_method):
+
+    def wrapper(*args, **kwargs):
+        try:
+            tearDown_method(*args, **kwargs)
+        except AssertionError as e:
+            # log the error
+            msg = '{0}, {1}'.format(args, e)
+            logger.warning(msg)
     return wrapper
