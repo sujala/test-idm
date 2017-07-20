@@ -29,12 +29,12 @@ class TestIDPMetadata(federation.TestBaseFederation):
             const.CONTENT_TYPE] = 'application/xml'
 
         cls.domain_ids = []
-        cls.idp_ids = []
 
         cls.domain_ids.append(cls.domain_id)
 
     def setUp(self):
         super(TestIDPMetadata, self).setUp()
+        self.idp_ids = []
 
     def add_idp_w_metadata(self, cert_path):
         # Add IDP with metadata, Validate the response code & body.
@@ -126,12 +126,11 @@ class TestIDPMetadata(federation.TestBaseFederation):
         resp = self.user_admin_client.update_idp_metadata(
             idp_id=idp_id, request_object=idp_request_object)
 
-        # Get IDP - Fails with 403 https://jira.rax.io/browse/CID-943
-        # resp = self.user_admin_client.get_idp(idp_id=idp_id)
-        # self.assertEqual(resp.status_code, 200)
-        # self.assertSchema(
-        #     response=resp,
-        #     json_schema=idp_json.identity_provider)
+        resp = self.user_admin_client.get_idp(idp_id=idp_id)
+        self.assertEqual(resp.status_code, 200)
+        self.assertSchema(
+            response=resp,
+            json_schema=idp_json.identity_provider)
 
         # V1 Federation - Auth as fed user in the registered domain
         subject = self.generate_random_string(
@@ -152,11 +151,22 @@ class TestIDPMetadata(federation.TestBaseFederation):
             idp_id=idp_id, request_object=idp_request_object)
         self.assertEqual(resp.status_code, 403)
 
+    def test_list_idp(self):
+        '''Test to List IDP.'''
+        (pem_encoded_cert, cert_path, _, key_path,
+         f_print) = create_self_signed_cert()
+
+        self.add_idp_w_metadata(cert_path=cert_path)
+
+        resp = self.user_admin_client.list_idp()
+        self.assertEqual(resp.status_code, 200)
+        self.assertSchema(response=resp, json_schema=idp_json.list_idps)
+
     def tearDown(self):
         super(TestIDPMetadata, self).tearDown()
         for idp_id in self.idp_ids:
-            # Fails with HTTP 403 - https://jira.rax.io/browse/CID-943
-            self.user_admin_client.delete_idp(idp_id=idp_id)
+            resp = self.user_admin_client.delete_idp(idp_id=idp_id)
+            self.assertEqual(resp.status_code, 204)
 
     @classmethod
     def tearDownClass(cls):
