@@ -71,7 +71,7 @@ public class FederatedDomainRequestHandler {
     @Autowired
     private AuthenticationContext authenticationContext;
 
-    public SamlAuthResponse processAuthRequestForProvider(FederatedDomainAuthRequest authRequest, IdentityProvider originIdentityProvider) {
+    public SamlAuthResponse processAuthRequestForProvider(FederatedDomainAuthRequest authRequest, IdentityProvider originIdentityProvider, boolean applyRcnRoles) {
         // Just a few sanity checks
         Validate.notNull(authRequest, "request must not be null");
         Validate.notNull(originIdentityProvider, "Origin IDP must not be null");
@@ -107,7 +107,12 @@ public class FederatedDomainRequestHandler {
 
         UserScopeAccess token = createToken(federatedUser, authRequest);
 
-        ServiceCatalogInfo serviceCatalogInfo = scopeAccessService.getServiceCatalogInfo(federatedUser);
+        ServiceCatalogInfo serviceCatalogInfo;
+        if (applyRcnRoles) {
+            serviceCatalogInfo = scopeAccessService.getServiceCatalogInfoApplyRcnRoles(federatedUser);
+        } else {
+            serviceCatalogInfo = scopeAccessService.getServiceCatalogInfo(federatedUser);
+        }
         List<TenantRole> tenantRoles = serviceCatalogInfo.getUserTenantRoles();
 
         // Verify Terminator use case and blank out catalog if necessary

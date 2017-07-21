@@ -1,11 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
-import com.rackspace.idm.ErrorCodes
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.security.AuthenticationContext
@@ -45,7 +40,6 @@ import java.security.cert.X509Certificate
 
 import static com.rackspace.idm.Constants.*
 import static com.rackspace.idm.ErrorCodes.*
-
 /**
  * Tests the various functionality for federating against Cloud Accounts
  */
@@ -141,7 +135,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
 
         when:
-        def samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        def samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         then:
         samlAuthResponse.user != null
@@ -196,6 +190,31 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         }
     }
 
+    @Unroll
+    def "Fed request with 'apply_rcn_roles' = #applyRcnRoles"() {
+        given:
+        FederatedDomainAuthGenerationRequest req = createValidFedRequest()
+        def samlResponse = sharedRequestGenerator.createSignedSAMLResponse(req)
+
+        FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
+
+        when: "'apply_rcn_roles=false'"
+        def samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, applyRcnRoles)
+        List<TenantRole> userRoles = samlAuthResponse.userRoles
+        def defaultRole = userRoles.find {it.name == IdentityUserTypeEnum.DEFAULT_USER.getRoleName()}
+
+        then: "Default global role"
+        defaultRole != null
+        if (applyRcnRoles) {
+            assert !defaultRole.tenantIds.isEmpty()
+        } else {
+            assert defaultRole.tenantIds.isEmpty()
+        }
+
+        where:
+        applyRcnRoles << [true, false]
+    }
+
     def "Valid: Fed request w/ IDP requested roles"() {
         given:
         FederatedDomainAuthGenerationRequest req = createValidFedRequest().with {
@@ -207,7 +226,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
 
         when:
-        def samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        def samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         then:
         List<TenantRole> userRoles = samlAuthResponse.userRoles
@@ -225,7 +244,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthGenerationRequest req = createValidFedRequest()
         def samlResponse = sharedRequestGenerator.createSignedSAMLResponse(req)
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
-        def samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        def samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         // Expire this user
         FederatedUser originalUser = (FederatedUser) samlAuthResponse.user
@@ -236,7 +255,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         when:
         samlResponse = sharedRequestGenerator.createSignedSAMLResponse(req)
         request = new FederatedDomainAuthRequest(samlResponse)
-        samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        samlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         then:
         samlAuthResponse.user != null
@@ -264,13 +283,13 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest request2 = new FederatedDomainAuthRequest(samlResponse2)
 
         when: "Request first fed user"
-        def samlAuthResponse1 = federatedDomainRequestHandler.processAuthRequestForProvider(request1, sharedOriginIdpEntity)
+        def samlAuthResponse1 = federatedDomainRequestHandler.processAuthRequestForProvider(request1, sharedOriginIdpEntity, false)
 
         then: "Created successfully"
         samlAuthResponse1.user != null
 
         when: "Request second fed user"
-        federatedDomainRequestHandler.processAuthRequestForProvider(request2, sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(request2, sharedOriginIdpEntity, false)
 
         then: "Fails due to max exceeded"
         def ex = thrown(ForbiddenException)
@@ -278,7 +297,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
 
         when: "Raise limit and try again"
         reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, 2)
-        def samlAuthResponse2 = federatedDomainRequestHandler.processAuthRequestForProvider(request2, sharedOriginIdpEntity)
+        def samlAuthResponse2 = federatedDomainRequestHandler.processAuthRequestForProvider(request2, sharedOriginIdpEntity, false)
 
         then: "Created successfully"
         samlAuthResponse2.user != null
@@ -293,7 +312,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         req.username = req.username + "3"
         def samlResponse3 = sharedRequestGenerator.createSignedSAMLResponse(req)
         FederatedDomainAuthRequest request3 = new FederatedDomainAuthRequest(samlResponse3)
-        def samlAuthResponse3 = federatedDomainRequestHandler.processAuthRequestForProvider(request3, sharedOriginIdpEntity)
+        def samlAuthResponse3 = federatedDomainRequestHandler.processAuthRequestForProvider(request3, sharedOriginIdpEntity, false)
 
         then: "User is created"
         samlAuthResponse3.user != null
@@ -324,7 +343,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest updatedRequest = new FederatedDomainAuthRequest(samlResponse2)
 
         when: "Request initial"
-        def origSamlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(origRequest, sharedOriginIdpEntity)
+        def origSamlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(origRequest, sharedOriginIdpEntity, false)
 
         then: "Created successfully"
         origSamlAuthResponse.user != null
@@ -332,7 +351,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         origSamlAuthResponse.userRoles.find {it.name == ROLE_RBAC2_NAME} == null
 
         when: "Request updated user"
-        def updatedSamlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(updatedRequest, sharedOriginIdpEntity)
+        def updatedSamlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(updatedRequest, sharedOriginIdpEntity, false)
 
         then: "User info is updated"
         updatedSamlAuthResponse.user.id == origSamlAuthResponse.user.id
@@ -356,7 +375,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
 
         when:
-        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -389,7 +408,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
 
         when:
-        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -409,7 +428,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         def samlResponse = sharedRequestGenerator.createSignedSAMLResponse(req)
 
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
-        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -423,7 +442,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         samlResponse = sharedRequestGenerator.createSignedSAMLResponse(req)
 
         request = new FederatedDomainAuthRequest(samlResponse)
-        def response = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        def response = federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         then:
         response != null
@@ -455,7 +474,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthGenerationRequest req = createValidFedRequest()
         def samlResponse = generator.createSignedSAMLResponse(req)
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
-        federatedDomainRequestHandler.processAuthRequestForProvider(request, originIdp)
+        federatedDomainRequestHandler.processAuthRequestForProvider(request, originIdp, false)
 
         then: "Get a Forbidden error"
         def ex = thrown(ForbiddenException)
@@ -468,7 +487,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         }
         samlResponse = generator.createSignedSAMLResponse(req)
         request = new FederatedDomainAuthRequest(samlResponse)
-        federatedDomainRequestHandler.processAuthRequestForProvider(request, originIdp)
+        federatedDomainRequestHandler.processAuthRequestForProvider(request, originIdp, false)
 
         then: "Get a Forbidden error"
         def ex2 = thrown(ForbiddenException)
@@ -487,7 +506,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         }
         samlResponse = generator.createSignedSAMLResponse(req)
         request = new FederatedDomainAuthRequest(samlResponse)
-        federatedDomainRequestHandler.processAuthRequestForProvider(request, originIdp)
+        federatedDomainRequestHandler.processAuthRequestForProvider(request, originIdp, false)
 
         then: "Get a Forbidden error"
         def ex3 = thrown(ForbiddenException)
@@ -518,7 +537,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
 
         when:
-        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -542,7 +561,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
 
         when:
-        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -580,7 +599,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
 
         when:
-        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         then:
         def ex = thrown(ForbiddenException)
@@ -614,7 +633,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest request = new FederatedDomainAuthRequest(samlResponse)
 
         when:
-        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(request, sharedOriginIdpEntity, false)
 
         then:
         def ex = thrown(ForbiddenException)
@@ -645,13 +664,13 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest requestTwo = new FederatedDomainAuthRequest(samlResponse2)
 
         when: "Make initial request"
-        def response = federatedDomainRequestHandler.processAuthRequestForProvider(requestOne, sharedOriginIdpEntity)
+        def response = federatedDomainRequestHandler.processAuthRequestForProvider(requestOne, sharedOriginIdpEntity, false)
 
         then: "Is successful"
         response.token != null
 
         when: "Make second request"
-        response = federatedDomainRequestHandler.processAuthRequestForProvider(requestTwo, sharedOriginIdpEntity)
+        response = federatedDomainRequestHandler.processAuthRequestForProvider(requestTwo, sharedOriginIdpEntity, false)
 
         then: "Fails"
         def ex = thrown(DuplicateUsernameException)
@@ -676,7 +695,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
         FederatedDomainAuthRequest origRequest = createFedDomainAuthRequest(req1)
 
         when: "Request initial"
-        def origSamlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(origRequest, sharedOriginIdpEntity)
+        def origSamlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(origRequest, sharedOriginIdpEntity, false)
 
         then: "Global roles added successfully"
         origSamlAuthResponse.userRoles.find {it.name == ROLE_RBAC1_NAME} != null
@@ -690,7 +709,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
             it.roleNames = [ROLE_RBAC1_NAME + "/" + sharedUserAdminCloudTenant.name] as Set
             it
         }
-        def updatedSamlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updatedReq), sharedOriginIdpEntity)
+        def updatedSamlAuthResponse = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updatedReq), sharedOriginIdpEntity, false)
 
         then: "roles updated"
         updatedSamlAuthResponse.userRoles.find {it.name == ROLE_RBAC1_NAME} != null
@@ -705,7 +724,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
             , ROLE_RBAC2_NAME + "/" + sharedUserAdminCloudTenant.name] as Set
             it
         }
-        def updatedSamlAuthResponse2 = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updateReq2), sharedOriginIdpEntity)
+        def updatedSamlAuthResponse2 = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updateReq2), sharedOriginIdpEntity, false)
 
         then: "roles updated"
         updatedSamlAuthResponse2.userRoles.find {it.name == ROLE_RBAC1_NAME} != null
@@ -721,7 +740,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
                             , ROLE_RBAC2_NAME] as Set
             it
         }
-        def updatedSamlAuthResponse3 = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updateReq3), sharedOriginIdpEntity)
+        def updatedSamlAuthResponse3 = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updateReq3), sharedOriginIdpEntity, false)
 
         then: "roles updated"
         updatedSamlAuthResponse3.userRoles.find {it.name == ROLE_RBAC1_NAME} != null
@@ -736,7 +755,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
             it.roleNames = [] as Set
             it
         }
-        def updatedSamlAuthResponse4 = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updateReq4), sharedOriginIdpEntity)
+        def updatedSamlAuthResponse4 = federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(updateReq4), sharedOriginIdpEntity, false)
 
         then: "roles updated"
         updatedSamlAuthResponse4.userRoles.find {it.name == ROLE_RBAC1_NAME} == null
@@ -777,7 +796,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
                             , ROLE_RBAC1_NAME + "/" + sharedUserAdminCloudTenant.name] as Set
             it
         }
-        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req3), sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req3), sharedOriginIdpEntity, false)
         ex.errorCode == ERROR_CODE_FEDERATION2_INVALID_ROLE_ASSIGNMENT
 
         then:
@@ -791,7 +810,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
                             , "missingrole234"] as Set
             it
         }
-        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req4), sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req4), sharedOriginIdpEntity, false)
 
         then:
         BadRequestException ex4 = thrown()
@@ -807,7 +826,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
             it.roleNames = [ROLE_RBAC1_NAME + "/" + RandomStringUtils.randomAlphabetic(15)] as Set
             it
         }
-        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req1), sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req1), sharedOriginIdpEntity, false)
 
         then: "rejected"
         BadRequestException ex = thrown()
@@ -833,7 +852,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
             it.originIssuer = idp.issuer
             it
         }
-        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req1), idpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req1), idpEntity, false)
 
         then:
         BadRequestException ex = thrown()
@@ -858,7 +877,7 @@ class FederatedDomainRequestHandlerCloudAccountIntegrationTest extends RootInteg
             it.roleNames = [createdRole.name + "/" + sharedUserAdminCloudTenant.name] as Set
             it
         }
-        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req1), sharedOriginIdpEntity)
+        federatedDomainRequestHandler.processAuthRequestForProvider(createFedDomainAuthRequest(req1), sharedOriginIdpEntity, false)
 
         then: "rejected"
         BadRequestException ex = thrown()

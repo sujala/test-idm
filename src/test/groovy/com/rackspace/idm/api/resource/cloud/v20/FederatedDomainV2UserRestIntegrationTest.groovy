@@ -247,6 +247,40 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         }
     }
 
+    @Unroll
+    def "Federated v2 Authentication with 'apply_rcn_roles=#applyRcnRoles'"() {
+        given:
+        def fedRequest = createFedRequest().with {
+            it.roleNames = [ROLE_RBAC1_NAME, ROLE_RBAC2_NAME] as Set
+            it
+        }
+
+        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+
+        when:
+        def authClientResponse = cloud20.federatedAuthenticate(
+                sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse),
+                applyRcnRoles,
+                GlobalConstants.FEDERATION_API_V2_0)
+        AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
+
+        then: "Assert default role"
+        authClientResponse.status == HttpServletResponse.SC_OK
+        if (applyRcnRoles) {
+            assert authResponse.user.roles.role.findAll{it.tenantId == null}.size() == 0
+        } else {
+            assert authResponse.user.roles.role.find{it.name == IdentityUserTypeEnum.DEFAULT_USER.roleName}.tenantId == null
+            assert authResponse.user.roles.role.find{it.name == ROLE_RBAC1_NAME}.tenantId == null
+            assert authResponse.user.roles.role.find{it.name == ROLE_RBAC2_NAME}.tenantId == null
+        }
+
+        cleanup:
+        try { deleteFederatedUserQuietly(fedRequest.username) } catch (Exception ex) {}
+
+        where:
+        applyRcnRoles << [true, false]
+    }
+
     def "New fed user created correctly when valid tenant assigned roles provided"() {
         given:
         User userAdminEntity = userService.getUserById(sharedUserAdmin.id)

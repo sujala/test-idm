@@ -107,7 +107,8 @@ class FederatedRackerV2UserRestIntegrationTest extends RootIntegrationTest {
     /**
      * This test case assumes an existing Racker existing by default within the docker eDir environment
      */
-    def "Valid Racker auth with group in eDir"() {
+    @Unroll
+    def "Valid Racker auth with group in eDir, apply_rcn_roles = #applyRcnRoles"() {
         given:
         def username = RACKER_IMPERSONATE
         def fedRequest = createFedRequest(username)
@@ -115,12 +116,18 @@ class FederatedRackerV2UserRestIntegrationTest extends RootIntegrationTest {
         def samlResponse = sharedRackerAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
 
         when:
-        def authClientResponse = cloud20.federatedAuthenticateV2(sharedRackerAuthRequestGenerator.convertResponseToString(samlResponse))
+        def authClientResponse = cloud20.federatedAuthenticate(
+                sharedRackerAuthRequestGenerator.convertResponseToString(samlResponse),
+                applyRcnRoles,
+                GlobalConstants.FEDERATION_API_V2_0)
 
         then: "Response contains appropriate content"
         authClientResponse.status == HttpServletResponse.SC_OK
         AuthenticateResponse authResponse = authClientResponse.getEntity(AuthenticateResponse).value
         verifyAuthenticateResult(fedRequest, authResponse, fedAndPasswordGroup, [identityConfig.getStaticConfig().getRackerImpersonateRoleName()])
+
+        where:
+        applyRcnRoles << [true, false]
     }
 
     def "Error: BadRequest against non existent user"() {

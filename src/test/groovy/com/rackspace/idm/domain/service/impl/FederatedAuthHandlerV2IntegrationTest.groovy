@@ -87,25 +87,29 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         federatedAuthHandlerV2.federatedDomainRequestHandler = Mock(FederatedDomainRequestHandler)
         federatedAuthHandlerV2.federatedRackerRequestHandler = Mock(FederatedRackerRequestHandler)
 
-        federatedAuthHandlerV2.federatedDomainRequestHandler.processAuthRequestForProvider(_, _) >> new SamlAuthResponse(fUser, null, null, null)
-        federatedAuthHandlerV2.federatedDomainRequestHandler.processAuthRequestForProvider(_, _) >> new SamlAuthResponse(fRacker, null, null, null)
+        federatedAuthHandlerV2.federatedDomainRequestHandler.processAuthRequestForProvider(_, _, _) >> new SamlAuthResponse(fUser, null, null, null)
+        federatedAuthHandlerV2.federatedDomainRequestHandler.processAuthRequestForProvider(_, _, _) >> new SamlAuthResponse(fRacker, null, null, null)
     }
 
     /**
      * Tests the golden case where all values are provided appropriately, IDP exists in correct state in LDAP, etc
      * @return
      */
-    def "Valid Request"() {
+    @Unroll
+    def "Valid Request: 'apply_rcn_roles=#applyRcnRoles'"() {
         given:
         FederatedDomainAuthRequestGenerator generator = new FederatedDomainAuthRequestGenerator(sharedBrokerIdpCredential, sharedOriginIdpCredential)
         FederatedDomainAuthGenerationRequest req = createValidFedRequest()
         def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
-        def samlAuthResponse = federatedAuthHandlerV2.authenticate(samlResponse)
+        def samlAuthResponse = federatedAuthHandlerV2.authenticate(samlResponse, applyRcnRoles)
 
         then:
         samlAuthResponse.user == fUser
+
+        where:
+        applyRcnRoles << [false, true]
     }
 
     def "Error when missing response issuer"() {
@@ -114,7 +118,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         Response samlResponse = responseBuilder.buildObject()
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -132,7 +136,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         samlResponse.setSignature(null)
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -151,7 +155,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         samlResponse.getAssertions().remove(samlResponse.getAssertions().get(0))
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -169,7 +173,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         samlResponse.getAssertions().get(0).setIssuer(null)
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -187,7 +191,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         samlResponse.getAssertions().get(1).setSignature(null)
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -215,7 +219,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         samlResponse.getAssertions().remove(samlResponse.getAssertions().get(1))
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -233,7 +237,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(ForbiddenException)
@@ -253,7 +257,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         samlResponse.getAssertions().get(0).setIssuer(generator.createIssuer(sharedOriginIdp.getIssuer()))
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -270,7 +274,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -290,7 +294,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(ForbiddenException)
@@ -311,7 +315,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -329,7 +333,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         def ex = thrown(BadRequestException)
@@ -349,7 +353,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         thrown(BadRequestException)
@@ -369,7 +373,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         def samlResponse = generator.createSignedSAMLResponse(req)
 
         when:
-        federatedAuthHandlerV2.authenticate(samlResponse)
+        federatedAuthHandlerV2.authenticate(samlResponse, false)
 
         then:
         thrown(BadRequestException)
@@ -390,7 +394,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         when:
         def thrownException = null
         try {
-            federatedAuthHandlerV2.authenticate(samlResponse)
+            federatedAuthHandlerV2.authenticate(samlResponse, false)
         } catch (Exception e) {
             thrownException = e
         }
@@ -422,7 +426,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         when:
         def thrownException = null
         try {
-            federatedAuthHandlerV2.authenticate(samlResponse)
+            federatedAuthHandlerV2.authenticate(samlResponse, false)
         } catch (Exception e) {
             thrownException = e
         }
@@ -453,7 +457,7 @@ class FederatedAuthHandlerV2IntegrationTest extends RootIntegrationTest {
         when:
         def thrownException = null
         try {
-            federatedAuthHandlerV2.authenticate(samlResponse)
+            federatedAuthHandlerV2.authenticate(samlResponse, false)
         } catch (Exception e) {
             thrownException = e
         }

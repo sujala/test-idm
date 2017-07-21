@@ -692,7 +692,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         def userAdminEntity = userService.getUserById(userAdmin.id)
 
         when:
-        def samlResponse = cloud20.federatedAuthenticate(samlAssertion, GlobalConstants.FEDERATION_API_V1_0, accept)
+        def samlResponse = cloud20.federatedAuthenticate(samlAssertion, false, GlobalConstants.FEDERATION_API_V1_0, accept)
 
         then: "Response contains appropriate content"
         samlResponse.status == HttpServletResponse.SC_OK

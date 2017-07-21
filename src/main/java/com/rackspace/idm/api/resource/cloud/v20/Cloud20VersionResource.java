@@ -17,7 +17,6 @@ import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.endpointassignment.api.resource.EndpointAssignmentRuleResource;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.io.IOUtils;
 import org.openstack.docs.common.api.v1.VersionChoice;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.UserForCreate;
@@ -36,7 +35,6 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 
 /**
@@ -179,7 +177,7 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/saml-tokens")
     @Consumes({MediaType.APPLICATION_XML})
     public Response authenticateSamlResponse(@Context HttpHeaders httpHeaders, String samlResponse)  {
-        return federationSamlAuthenticationRawXML(httpHeaders, samlResponse);
+        return federationSamlAuthenticationRawXML(httpHeaders, samlResponse, false);
     }
 
     @Deprecated
@@ -187,7 +185,7 @@ public class Cloud20VersionResource {
     @Path("RAX-AUTH/saml-tokens")
     @Consumes({MediaType.APPLICATION_FORM_URLENCODED})
     public Response authenticateSamlResponseFormEncoded(@Context HttpHeaders httpHeaders, @FormParam("SAMLResponse") String samlResponse)  {
-        return federationSamlAuthenticationFormEncoded(httpHeaders, samlResponse);
+        return federationSamlAuthenticationFormEncoded(httpHeaders, samlResponse, false);
     }
 
     /**
@@ -202,14 +200,16 @@ public class Cloud20VersionResource {
     @POST
     @Path("RAX-AUTH/federation/saml/auth")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    public Response federationSamlAuthenticationFormEncoded(@Context HttpHeaders httpHeaders, @FormParam("SAMLResponse") String samlResponse)  {
+    public Response federationSamlAuthenticationFormEncoded(@Context HttpHeaders httpHeaders,
+                                                            @FormParam("SAMLResponse") String samlResponse,
+                                                            @QueryParam("apply_rcn_roles") boolean applyRcnRoles)  {
         Response response;
         if (org.apache.commons.lang.StringUtils.isBlank(samlResponse)) {
             response = exceptionHandler.exceptionResponse(new BadRequestException("Missing SAMLResponse field")).build();
         } else {
             try {
                 byte[] samlResponseBytes = Base64.decodeBase64(samlResponse);
-                response = cloud20Service.authenticateFederated(httpHeaders, samlResponseBytes).build();
+                response = cloud20Service.authenticateFederated(httpHeaders, samlResponseBytes, applyRcnRoles).build();
             } catch (Exception ex) {
                 response = exceptionHandler.exceptionResponse(ex).build();
             }
@@ -230,14 +230,16 @@ public class Cloud20VersionResource {
     @POST
     @Path("RAX-AUTH/federation/saml/auth")
     @Consumes({MediaType.APPLICATION_XML})
-    public Response federationSamlAuthenticationRawXML(@Context HttpHeaders httpHeaders, String samlResponse)  {
+    public Response federationSamlAuthenticationRawXML(@Context HttpHeaders httpHeaders,
+                                                       String samlResponse,
+                                                       @QueryParam("apply_rcn_roles") boolean applyRcnRoles)  {
         Response response;
         if (org.apache.commons.lang.StringUtils.isBlank(samlResponse)) {
             response = exceptionHandler.exceptionResponse(new BadRequestException("Must provide SAMLResponse XML in body")).build();
         } else {
             try {
                 byte[] samlResponseBytes = org.apache.commons.codec.binary.StringUtils.getBytesUtf8(samlResponse);
-                response = cloud20Service.authenticateFederated(httpHeaders, samlResponseBytes).build();
+                response = cloud20Service.authenticateFederated(httpHeaders, samlResponseBytes, applyRcnRoles).build();
             } catch (Exception ex) {
                 response = exceptionHandler.exceptionResponse(ex).build();
             }
