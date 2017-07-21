@@ -99,7 +99,12 @@ public class LdapOTPDeviceRepository extends LdapGenericRepository<OTPDevice> im
     public void deleteAllOTPDevicesFromParent(UniqueId parent) {
         try {
             final String container = getContainerDN(parent);
-            deleteEntryAndSubtree(container, Audit.deleteOTP(container));
+            final Filter filter = new LdapSearchBuilder()
+                    .addEqualAttribute(ATTR_COMMON_NAME, CONTAINER_OTP_DEVICES).build();
+            Object otpDevicesContainer = getObject(filter, parent.getUniqueId());
+            if (otpDevicesContainer != null) {
+                deleteEntryAndSubtree(container, Audit.deleteOTP(container));
+            }
         } catch (IllegalStateException e) {
             LOGGER.warn("Unable to remove OTP devices", e);
         }
