@@ -1089,3 +1089,22 @@ class DevopsProp(base.AutoMarshallingModel):
 
     def _obj_to_xml(self):
         raise Exception("Not implemented yet")
+
+
+class DomainAdministratorChange(base.AutoMarshallingModel):
+    def __init__(self, promote_user_id, demote_user_id):
+        self.promote_user_id = promote_user_id
+        self.demote_user_id = demote_user_id
+
+    def _obj_to_json(self):
+        domain_admin_change_request = {
+            const.DOMAIN_ADMIN_CHANGE: {
+                const.PROMOTE_USER_ID: self.promote_user_id,
+                const.DEMOTE_USER_ID: self.demote_user_id
+            }
+        }
+
+        return json.dumps(domain_admin_change_request)
+
+    def _obj_to_xml(self):
+        raise Exception("Not implemented yet")
