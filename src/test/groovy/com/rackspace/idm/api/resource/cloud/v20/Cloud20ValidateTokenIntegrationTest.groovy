@@ -661,7 +661,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
                 it.contactId = contactId
                 it
             }
-            cloud20.updateUser(utils.getIdentityAdminToken(), user.id, userForUpdate)
+            cloud20.updateUser(utils.getServiceAdminToken(), user.id, userForUpdate)
         }
 
         then: "Self validate tokens"

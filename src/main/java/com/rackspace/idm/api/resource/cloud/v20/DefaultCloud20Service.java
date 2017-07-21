@@ -732,52 +732,29 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             boolean isUpdatingSelf = caller.getId().equals(userId);
-            boolean callerIsIdentityAdmin = authorizationService.authorizeCloudIdentityAdmin(scopeAccessByAccessToken);
-            boolean callerIsServiceAdmin = authorizationService.authorizeCloudServiceAdmin(scopeAccessByAccessToken);
-            boolean callerIsUserAdmin = authorizationService.authorizeCloudUserAdmin(scopeAccessByAccessToken);
-            boolean callerHasUserManageRole = authorizationService.authorizeUserManageRole(scopeAccessByAccessToken);
-            boolean callerIsSubUser = authorizationService.authorizeCloudUser(scopeAccessByAccessToken);
+            IdentityUserTypeEnum callerType = authorizationService.getIdentityTypeRoleAsEnum(caller);
 
             // Just identity admins and service admins can update 'tokenFormat', but only when ae tokens are enabled
-            if (!(callerIsIdentityAdmin || callerIsServiceAdmin) || !identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
+            if (!(IdentityUserTypeEnum.SERVICE_ADMIN == callerType || IdentityUserTypeEnum.IDENTITY_ADMIN == callerType) ||
+                    !identityConfig.getReloadableConfig().getFeatureAETokensDecrypt()) {
                 user.setTokenFormat(null);
             }
 
             String domainId = user.getDomainId();
-            if(StringUtils.isNotBlank(domainId)){
+            if(StringUtils.isNotBlank(domainId)) {
                 Domain domain = domainService.getDomain(domainId);
-                if(domain == null){
+                if(domain == null) {
                     String errMsg = String.format("Domain %s does not exist.", domainId);
                     throw new BadRequestException(errMsg);
                 }
             }
 
-
-            if (!callerHasUserManageRole && authorizationService.authorizeCloudUser(scopeAccessByAccessToken)) {
-                if (!caller.getId().equals(retrievedUser.getId())) {
-                    throw new ForbiddenException(NOT_AUTHORIZED);
-                }
+            if (!isUpdatingSelf) {
+                precedenceValidator.verifyCallerPrecedenceOverUser(caller, retrievedUser);
             }
 
-            //identity admins can not update service admin accounts
-            if (callerIsIdentityAdmin && authorizationService.hasServiceAdminRole(retrievedUser)) {
-                throw new ForbiddenException(ERROR_CANNOT_UPDATE_USER_WITH_HIGHER_ACCESS);
-            }
-
-            //sub users who are not user-managers can only update their own accounts.
-            if (callerIsSubUser && !callerHasUserManageRole && !isUpdatingSelf) {
+            if (callerType.isDomainBasedAccessLevel() && !StringUtils.equals(caller.getDomainId(), retrievedUser.getDomainId())) {
                 throw new ForbiddenException(NOT_AUTHORIZED);
-            }
-
-            //user admins and user managers can only update accounts within their domain (this prevents userAdmins/managers from
-            //updating service/identity admins)
-            if (callerIsUserAdmin || callerHasUserManageRole) {
-                authorizationService.verifyDomain(caller, retrievedUser);
-            }
-
-            if((callerHasUserManageRole && authorizationService.hasUserManageRole(retrievedUser) && !isUpdatingSelf) ||
-                    (callerHasUserManageRole && authorizationService.hasUserAdminRole(retrievedUser))) {
-                throw new ForbiddenException(UPDATE_USER_CANNOT_UPDATE_HIGHER_LEVEL_USER_ERROR_MESSAGE);
             }
 
             if (StringUtils.isNotBlank(user.getUsername()) &&
