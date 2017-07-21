@@ -491,7 +491,6 @@ class DefaultAuthorizationServiceTest extends RootServiceTest {
         applicationService.getClientRoleByClientIdAndRoleName(_, _) >> entityFactory.createClientRole()
         roleService.getAllIdentityRoles() >> [TEST_ROLE, entityFactory.createClientRole(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName())]
 
-        staticConfig.implicitRoleSupportEnabled() >> true
         staticConfig.getImplicitRolesForRole(TEST_ROLE.name) >> Sets.newHashSet(IdentityRole.GET_USER_ROLES_GLOBAL);
 
         service.retrieveAccessControlRoles()

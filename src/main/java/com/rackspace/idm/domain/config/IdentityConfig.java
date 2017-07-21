@@ -168,7 +168,6 @@ public class IdentityConfig {
     public static final String LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_PROP = "local.multifactor.bypass.num.iterations";
     public static final int LOCAL_MULTIFACTOR_BYPASS_NUM_ITERATION_DEFAULT = 10000;
 
-    public static final String FEATURE_ENABLE_IMPLICIT_ROLE_PROP="feature.enable.implicit.roles";
     public static final String IMPLICIT_ROLE_PROP_PREFIX = "implicit.roles";
     public static final String IMPLICIT_ROLE_OVERRIDE_PROP_REG = IMPLICIT_ROLE_PROP_PREFIX + ".%s";
 
@@ -283,9 +282,6 @@ public class IdentityConfig {
     public static final String SESSION_ID_LIFETIME_PROP = "multifactor.sessionid.lifetime";
     public static final Integer SESSION_ID_LIFETIME_DEFAULT = 5;
 
-    public static final String FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_PROP = "feature.delete.identity.role.prevention.enabled";
-    public static final boolean FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_DEFAULT = true;
-
     public static final String FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP = "feature.prevent.racker.impersonate.api.key.access";
     public static final boolean FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_DEFAULT = false;
 
@@ -311,9 +307,6 @@ public class IdentityConfig {
 
     public static final String MAX_CA_DIRECTORY_PAGE_SIZE_PROP = "max.ca.directory.page.size";
     public static final int MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT = 1000;
-
-    public static final String LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP = "feature.list.global.roles.for.user.precedence.restriction.enabled.prop";
-    public static final boolean LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_DEFAULT = true;
 
     public static final String FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP = "feature.restrict.user.manager.list.users.usage";
     public static final boolean FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_DEFAULT = true;
@@ -562,7 +555,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_DEFAULT);
         defaults.put(FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_DEFAULT);
         defaults.put(FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP, false);
-        defaults.put(FEATURE_ENABLE_IMPLICIT_ROLE_PROP, false);
         defaults.put(FEATURE_AE_TOKENS_ENCRYPT, true);
         defaults.put(FEATURE_AE_TOKENS_DECRYPT, true);
         defaults.put(RELOADABLE_DOCS_CACHE_TIMEOUT_PROP_NAME, 60);
@@ -630,7 +622,6 @@ public class IdentityConfig {
         defaults.put(MULTIFACTOR_ENCRYPTION_KEY_LOCATION_PROP_NAME, MULTIFACTOR_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(EMAIL_FROM_EMAIL_ADDRESS, EMAIL_FROM_EMAIL_ADDRESS_DEFAULT);
 
-        defaults.put(FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_PROP, FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_DEFAULT);
         defaults.put(PURGE_TRRS_MAX_DELAY_PROP, PURGE_TRRS_MAX_DELAY_DEFAULT);
 
         defaults.put(PURGE_TRRS_MAX_LIMIT_PROP, PURGE_TRRS_MAX_LIMIT_DEFAULT);
@@ -640,7 +631,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_REUSE_JAXB_CONTEXT, FEATURE_REUSE_JAXB_CONTEXT_DEFAULT);
 
         defaults.put(MAX_CA_DIRECTORY_PAGE_SIZE_PROP, MAX_CA_DIRECTORY_PAGE_SIZE_DEFAULT);
-        defaults.put(LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP, LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_DEFAULT);
 
         defaults.put(FEEDS_MAX_CONNECTIONS_PROP, FEEDS_MAX_CONNECTIONS_DEFAULT);
         defaults.put(FEEDS_MAX_CONNECTIONS_PER_ROUTE_PROP, FEEDS_MAX_CONNECTIONS_PER_ROUTE_DEFAULT);
@@ -1214,18 +1204,11 @@ public class IdentityConfig {
             return getBooleanSafely(staticConfiguration, FEATURE_BASE_URL_RESPECT_ENABLED_FLAG);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_IMPLICIT_ROLE_PROP)
-        public boolean isImplicitRoleSupportEnabled() {
-            return getBooleanSafely(staticConfiguration, FEATURE_ENABLE_IMPLICIT_ROLE_PROP);
-        }
-
         public Set<IdentityRole> getImplicitRolesForRole(String roleName) {
             Set<IdentityRole> result = Collections.EMPTY_SET;
 
             String[] implicitRolesNames = null;
-            if (isImplicitRoleSupportEnabled()) {
-                implicitRolesNames = staticConfiguration.getStringArray(String.format(IMPLICIT_ROLE_OVERRIDE_PROP_REG, roleName));
-            }
+            implicitRolesNames = staticConfiguration.getStringArray(String.format(IMPLICIT_ROLE_OVERRIDE_PROP_REG, roleName));
 
             if (implicitRolesNames != null && implicitRolesNames.length > 0) {
                 result = new HashSet<IdentityRole>();
@@ -1787,11 +1770,6 @@ public class IdentityConfig {
             return getIntSafely(reloadableConfiguration, SESSION_ID_LIFETIME_PROP);
         }
 
-        @IdmProp(key = FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_PROP, versionAdded = "3.4.0", description = "Whether or not to prevent a user from being able to delete the identity access role from another user. The user is still able to delete the identity:user-manage if this feature is enabled.")
-        public boolean isDeleteIdentityAccessRolePreventionEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_DELETE_IDENTITY_ROLE_PREVENTION_ENABLED_PROP);
-        }
-
         @IdmProp(key = FEATURE_AE_TOKENS_ENCRYPT, versionAdded = "3.4.0", description = "Whether or not new AE Tokens can be issued. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0")
         public boolean getFeatureAETokensEncrypt() {
             if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
@@ -1842,12 +1820,6 @@ public class IdentityConfig {
                 "the CA directory side. It should also be noted that this property will also impact other services through the API. For example, the API call used for deleting TRRs will limit how many TRRs can be deleted in a single request based upon this configuration.")
         public int getMaxDirectoryPageSize() {
             return getIntSafely(reloadableConfiguration, MAX_CA_DIRECTORY_PAGE_SIZE_PROP);
-        }
-
-        @IdmProp(key = LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP, versionAdded = "3.5.0", description = "Whether or not to apply the usual precedence restriction to service and identity admins for the 'List global roles for user' API call." +
-                "When enabled, this will prevent identity admins from listing roles for service admins and other identity admins. Service admins will also be prevented from listing roles for other service admins.")
-        public boolean listGlobalRolesForUserPrecedenceRestrictionEnabled() {
-            return getBooleanSafely(reloadableConfiguration, LIST_GLOBAL_ROLES_FOR_USER_PRECEDENCE_RESTRICTION_ENABLED_PROP);
         }
 
         @IdmProp(key = FEEDS_SOCKET_TIMEOUT_MS_PROP, versionAdded = "3.5.0"
