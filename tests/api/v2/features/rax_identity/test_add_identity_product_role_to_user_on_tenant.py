@@ -36,6 +36,11 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         cls.domain_ids = []
         cls.domain_ids.append(cls.domain_id)
 
+        if cls.test_config.run_service_admin_tests:
+            cls.weight50_role_id = cls.create_identity_product_role(
+                client=cls.service_admin_client)
+        cls.weight500_role_id = cls.create_identity_product_role()
+
     def create_tenant_type(self, name):
         request_object = requests.TenantType(name, 'description')
         self.service_admin_client.add_tenant_type(tenant_type=request_object)
@@ -43,7 +48,6 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
 
     def setUp(self):
         super(TestAddIdentityProdRoleToUserOnTenant, self).setUp()
-        self.role_ids = []
         self.user_ids = []
         self.tenant_ids = []
         self.tenant_type_ids = []
@@ -72,16 +76,16 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         self.tenant_ids.append(tenant_id)
         return tenant_id, resp
 
-    def create_role(self, client=None):
+    @classmethod
+    def create_identity_product_role(cls, client=None):
         if not client:
-            client = self.identity_admin_client
-        role_name = self.generate_random_string(
+            client = cls.identity_admin_client
+        role_name = cls.generate_random_string(
             pattern=const.IDENTITY_PRODUCT_ROLE_NAME_PATTERN)
         role_object = factory.get_add_role_request_object(role_name=role_name)
         resp = client.add_role(request_object=role_object)
-        self.assertEqual(resp.status_code, 201)
+        assert resp.status_code == 201, 'identity product role creation failed'
         role_id = resp.json()[const.ROLE][const.ID]
-        self.role_ids.append(role_id)
         return role_id
 
     def get_role_by_name(self, role_name):
@@ -145,13 +149,10 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         # create tenant
         tenant_id, tenant_resp = self.create_tenant()
 
-        # create identity product role
-        role_id = self.create_role()
-
         # add role to user on tenant
         add_resp = client.add_role_to_user_for_tenant(
-            tenant_id=tenant_id, user_id=user_id, role_id=role_id
-        )
+            tenant_id=tenant_id, user_id=user_id,
+            role_id=self.weight500_role_id)
         self.assertEqual(add_resp.status_code, 200)
 
         # verify role added
@@ -159,19 +160,21 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
                                                     password=password)
         auth_resp = client.get_auth_token(request_object=req_obj)
         self.assertEqual(auth_resp.status_code, 200)
-        self.assertIn(role_id, str(auth_resp.json()[const.ACCESS][const.USER][
-            const.ROLES]))
+        self.assertIn(
+            self.weight500_role_id, str(auth_resp.json()[const.ACCESS][
+                                            const.USER][const.ROLES]))
 
         # delete role from tenant
         del_resp = client.delete_role_from_user_for_tenant(
-            tenant_id=tenant_id, user_id=user_id, role_id=role_id
-        )
+            tenant_id=tenant_id, user_id=user_id,
+            role_id=self.weight500_role_id)
         self.assertEqual(del_resp.status_code, 204)
 
         # verify role is removed
         auth_resp = client.get_auth_token(request_object=req_obj)
         self.assertEqual(auth_resp.status_code, 200)
-        self.assertNotIn(role_id, str(auth_resp.json()[const.ACCESS][
+        self.assertNotIn(
+            self.weight500_role_id, str(auth_resp.json()[const.ACCESS][
                                           const.USER][const.ROLES]))
 
     @ddt.data('identity-admin', 'user-admin', 'user-default', 'user-manager')
@@ -191,25 +194,25 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         """
         if not self.test_config.run_service_admin_tests:
             self.skipTest('Skipping Service Admin Tests per config value')
-        if user is 'identity-admin':
+        if user == 'identity-admin':
             user_id = self.identity_admin_client.default_headers[
                 const.X_USER_ID]
             user_name = self.identity_config.identity_admin_user_name
             password = self.identity_config.identity_admin_password
-        elif user is 'user-default':
+        elif user == 'user-default':
             # create sub user
             user_id, user_resp = self.create_user(
                 parent_client=self.user_admin_client)
             user_name = user_resp.json()[const.USER][const.USERNAME]
             password = user_resp.json()[const.USER][const.NS_PASSWORD]
-        elif user is 'user-manager':
+        elif user == 'user-manager':
             # create sub user
             user_id, user_resp = self.create_user(
                 parent_client=self.user_admin_client)
             user_name = user_resp.json()[const.USER][const.USERNAME]
             password = user_resp.json()[const.USER][const.NS_PASSWORD]
             self.user_admin_client.add_role_to_user(
-                role_id=const.USER_MANAGER_ROLE_ID)
+                user_id=user_id, role_id=const.USER_MANAGER_ROLE_ID)
         else:
             user_id, user_resp = self.create_user(
                 parent_client=self.identity_admin_client)
@@ -219,12 +222,9 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         # create tenant
         tenant_id, tenant_resp = self.create_tenant()
 
-        # create identity product role
-        role_id = self.create_role(client=self.service_admin_client)
-
         # add role to user on tenant
         add_resp = self.service_admin_client.add_role_to_user_for_tenant(
-            tenant_id=tenant_id, user_id=user_id, role_id=role_id
+            tenant_id=tenant_id, user_id=user_id, role_id=self.weight50_role_id
         )
         self.assertEqual(add_resp.status_code, 200)
 
@@ -234,12 +234,13 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         auth_resp = self.identity_admin_client.get_auth_token(
             request_object=req_obj)
         self.assertEqual(auth_resp.status_code, 200)
-        self.assertIn(role_id, str(auth_resp.json()[const.ACCESS][const.USER][
-            const.ROLES]))
+        self.assertIn(self.weight50_role_id,
+                      str(auth_resp.json()[const.ACCESS][const.USER][
+                              const.ROLES]))
 
-        # delete role from tenant
+        # delete role from user for tenant
         del_resp = self.service_admin_client.delete_role_from_user_for_tenant(
-            tenant_id=tenant_id, user_id=user_id, role_id=role_id
+            tenant_id=tenant_id, user_id=user_id, role_id=self.weight50_role_id
         )
         self.assertEqual(del_resp.status_code, 204)
 
@@ -247,8 +248,9 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         auth_resp = self.identity_admin_client.get_auth_token(
             request_object=req_obj)
         self.assertEqual(auth_resp.status_code, 200)
-        self.assertNotIn(role_id, str(auth_resp.json()[const.ACCESS][
-                                          const.USER][const.ROLES]))
+        self.assertNotIn(self.weight50_role_id,
+                         str(auth_resp.json()[const.ACCESS][const.USER][
+                                 const.ROLES]))
 
     @ddt.data('identity-admin', 'user-admin', 'user-default', 'user-manager')
     def test_add_identity_tenant_access_role(self, user):
@@ -353,12 +355,24 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             self.identity_admin_client.delete_user(user_id=id_)
         for id_ in self.tenant_ids:
             self.identity_admin_client.delete_tenant(tenant_id=id_)
-        for id_ in self.role_ids:
-            self.identity_admin_client.delete_role(role_id=id_)
         for id_ in self.domain_ids:
             self.identity_admin_client.delete_domain(domain_id=id_)
         for name in self.tenant_type_ids:
             self.service_admin_client.delete_tenant_type(name=name)
+
+        @classmethod
+        def tearDownClass(cls):
+
+            # Cleaning up the identity product roles added in setupClass. It is
+            # currently returning 403 due to CID-999.
+            # if self.test_config.run_service_admin_tests:
+            #     delete_resp = self.service_admin_client.delete_role(
+            #         role_id=self.weight50_role_id)
+            #     self.assertEqual(delete_resp.status_code, 204)
+            # delete_resp = self.service_admin_client.delete_role(
+            #     role_id=self.weight500_role_id)
+            # self.assertEqual(delete_resp.status_code, 204)
+            super(TestAddIdentityProdRoleToUserOnTenant, cls).tearDownClass()
 
     @classmethod
     def tearDownClass(cls):
