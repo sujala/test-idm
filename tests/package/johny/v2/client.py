@@ -396,7 +396,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                     resp_json[const.USER][const.MULTI_FACTOR_ENABLED] = False
 
                 domainId_key = (
-                    '{' + const.XMLNS_RAX_AUTH + '}' + const.DOMAINID)
+                    '{' + const.XMLNS_RAX_AUTH + '}' + const.DOMAIN_ID)
                 resp_json[const.USER][const.DOMAIN] = root.attrib[
                     domainId_key]
                 return resp_json
@@ -437,7 +437,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 resp_json[const.USER][const.ID] = root.attrib[const.ID]
 
                 domainId_key = (
-                    '{' + const.XMLNS_RAX_AUTH + '}' + const.DOMAINID)
+                    '{' + const.XMLNS_RAX_AUTH + '}' + const.DOMAIN_ID)
                 resp_json[const.USER][const.DOMAIN] = root.attrib[
                     domainId_key]
 
@@ -642,7 +642,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                     resp_json[const.USER][const.MULTI_FACTOR_ENABLED] = False
 
                 domainId_key = '{' + const.XMLNS_RAX_AUTH + '}' + (
-                    const.DOMAINID
+                    const.DOMAIN_ID
                 )
                 resp_json[const.USER][const.RAX_AUTH_DOMAIN_ID] = (
                     root.attrib[domainId_key])
@@ -688,7 +688,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                         child.attrib[const.ID])
 
                     domainId_key = '{' + const.XMLNS_RAX_AUTH + '}' + (
-                        const.DOMAINID)
+                        const.DOMAIN_ID)
                     resp_json[const.USERS][const.USER][
                         const.RAX_AUTH_DOMAIN_ID] = child.attrib[domainId_key]
 

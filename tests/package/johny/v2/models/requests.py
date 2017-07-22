@@ -178,7 +178,7 @@ class UserAdd(base.AutoMarshallingModel):
         add_user_request = {
             const.USER: {const.USERNAME: self.user_name}}
         if self.domain_id:
-            add_user_request[const.USER][const.DOMAINID] = self.domain_id
+            add_user_request[const.USER][const.DOMAIN_ID] = self.domain_id
         if self.contact_id:
             add_user_request[const.USER][const.CONTACTID] = self.contact_id
         if self.default_region:
@@ -226,7 +226,7 @@ class UserAdd(base.AutoMarshallingModel):
             add_user_request.set(const.EMAIL, self.email)
         if self.domain_id:
             add_user_request.attrib[
-                etree.QName(const.XMLNS_RAX_AUTH, const.DOMAINID)] = (
+                etree.QName(const.XMLNS_RAX_AUTH, const.DOMAIN_ID)] = (
                 self.domain_id)
         if self.contact_id:
             add_user_request.set(const.CONTACTID, self.contact_id)
@@ -298,7 +298,7 @@ class UserUpdate(base.AutoMarshallingModel):
         if self.user_name:
             update_user_request[const.USER][const.USERNAME] = self.user_name
         if self.domain_id:
-            update_user_request[const.USER][const.DOMAINID] = self.domain_id
+            update_user_request[const.USER][const.DOMAIN_ID] = self.domain_id
         if self.contact_id:
             update_user_request[const.USER][const.CONTACTID] = self.contact_id
         if self.default_region:
