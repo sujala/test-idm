@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource
+package com.rackspace.idm.api.resource.cloud.devops
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionResponse

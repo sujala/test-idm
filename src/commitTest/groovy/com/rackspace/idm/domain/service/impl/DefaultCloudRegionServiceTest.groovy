@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud.v20
+package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.domain.dao.impl.LdapRegionRepository
 import com.rackspace.idm.domain.entity.Region

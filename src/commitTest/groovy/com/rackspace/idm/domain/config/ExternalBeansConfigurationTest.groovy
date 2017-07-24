@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
 
-@ContextConfiguration(locations = "classpath:app-config.xml")
+@ContextConfiguration(classes = [ExternalBeansConfiguration.class])
 class ExternalBeansConfigurationTest extends Specification {
 
     @Autowired

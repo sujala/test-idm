@@ -10,6 +10,7 @@ import com.rackspace.docs.event.identity.user.ResourceTypes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.impl.DefaultTenantService;
 import com.rackspace.idm.exception.IdmException;
 import org.apache.commons.io.IOUtils;
@@ -73,7 +74,7 @@ public class AtomHopperClient {
     private IdentityUserService identityUserService;
 
     @Autowired
-    private DefaultTenantService defaultTenantService;
+    private TenantService defaultTenantService;
 
     @Autowired
     private AtomHopperHelper atomHopperHelper;

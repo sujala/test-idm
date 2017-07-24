@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.mapper
+package com.rackspace.idm.domain.sql.mapper.impl
 
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
 import com.rackspace.idm.domain.entity.LdapTokenRevocationRecord

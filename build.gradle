@@ -220,7 +220,7 @@ dependencies {
         exclude(group: 'junit')
         exclude(group: "com.twitter")
     }
-    testCompile(group: 'org.spockframework', name: 'spock-spring', version:'0.7-groovy-1.8') {
+    testCompile(group: 'org.spockframework', name: 'spock-spring', version:'1.1-groovy-2.4') {
         exclude(group: 'junit')
         exclude(group: 'org.hamcrest')
     }
@@ -276,7 +276,8 @@ dependencies {
     compile 'com.newrelic.agent.java:newrelic-api:3.29.0'
 
     // Add all source for main (unit/commit) tests to nonCommitTest path to allow to share common utils
-    nonCommitTestCompile sourceSets.commitTest.output
+    commitTestCompile sourceSets.test.output
+    nonCommitTestCompile sourceSets.test.output
 }
 
 task copyConfig(type: Copy) {
