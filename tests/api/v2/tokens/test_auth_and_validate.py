@@ -71,7 +71,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
                 'username': username,
                 'password': create_user_with_tenant_resp.password}
 
-    @attr(type='smoke')
+    @attr(type='smoke_alpha')
     def test_validate_useradmin_token_from_userpass_auth(self):
         token = self.acct_info['token']
         resp = self.identity_admin_client.validate_token(token)
@@ -80,7 +80,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
             self.assertSchema(response=resp,
                               json_schema=tokens_json.validate_token)
 
-    @attr(type='smoke')
+    @attr(type='smoke_alpha')
     def test_list_groups_of_useradmin(self):
         user_id = self.acct_info['user_id']
         resp = self.identity_admin_client.list_groups(user_id=user_id)
@@ -109,7 +109,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
         access_resp = responses.Access(resp.json())
         self.assertIsNotNone(access_resp.access.token.id)
 
-    @attr(type='smoke')
+    @attr(type='smoke_alpha')
     def test_validate_token_from_auth_tenant_user_pass(self):
         tenant_name = self.acct_info['tenant_name']
         username = self.acct_info['username']
@@ -135,7 +135,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
             self.assertSchema(response=resp,
                               json_schema=tokens_json.validate_token)
 
-    @attr(type='smoke')
+    @attr(type='smoke_alpha')
     def test_validate_token_from_auth_tenant_user_api_key(self):
         tenant_name = self.acct_info['tenant_name']
         username = self.acct_info['username']

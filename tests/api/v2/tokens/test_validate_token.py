@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
+from nose.plugins.attrib import attr
 from random import randrange
 
 from tests.api.v2 import base
@@ -30,6 +31,7 @@ class TestValidateToken(base.TestBaseV2):
     def setUp(self):
         super(TestValidateToken, self).setUp()
 
+    @attr(type='smoke_alpha')
     def test_validate_token_reports_contact_id(self):
         """Check for contact id in validate token response
         """

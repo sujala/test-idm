@@ -76,18 +76,18 @@ class TestBaseV2(base.TestBase):
                         additional_input_data=None, token=None):
         """Return a client object
         the object will be added few default headers for later use such as
-        x-auth-token, x-user-id, x-domain, x-tenant-id
+        x-auth-token, x-user-id, x-domain-id, x-tenant-id
         :param parent_client: client object of the parent user. The parent user
         type can be identity_admin or user_admin. If no parent_client is given,
         uses the service_admin (or) identity_admin level user's client
-        depending on wherther run_service_admin_tests in the config file is
+        depending on whether run_service_admin_tests in the config file is
         True or False respectively.
         :param request_object: is a create user request object which give users
         flexibility to build object outside to create user as they desire
         :param additional_input_data: any additional input need to add to user
         eg. {'domain_id': '123456', 'is_user_manager': True}
         :param token: a token user passing in to generate client in this case
-        regardless additionl_input_data
+        regardless additional_input_data
         """
         id_client = client.IdentityAPIClient(
             url=cls.url,
@@ -133,8 +133,8 @@ class TestBaseV2(base.TestBase):
             if const.TENANT_ID in user_resp.json()[const.USER]:
                 id_client.default_headers[const.TENANT_ID] = (
                     user_resp.json()[const.USER][const.TENANT_ID])
-            if const.DOMAINID in str(user_resp.json()[const.USER]):
-                id_client.default_headers[const.DOMAINID] = (
+            if const.DOMAIN_ID in str(user_resp.json()[const.USER]):
+                id_client.default_headers[const.X_DOMAIN_ID] = (
                     user_resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID])
 
             req_obj = requests.AuthenticateWithPassword(
@@ -195,7 +195,7 @@ class TestBaseV2(base.TestBase):
         :param parent_client: client object of the parent user. The parent user
         type can be identity_admin or user_admin. If no parent_client is given,
         uses the service_admin (or) identity_admin level user's client
-        depending on wherther run_service_admin_tests in the config file is
+        depending on whether run_service_admin_tests in the config file is
         True or False respectively.
         """
         if not parent_client:

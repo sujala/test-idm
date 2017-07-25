@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*
 import ddt
+from nose.plugins.attrib import attr
+
 from tests.api.utils import func_helper, header_validation
 from tests.api.v2 import base
 from tests.api.v2.models import responses
@@ -70,11 +72,13 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         user_id = resp.json()[const.USER][const.ID]
         self.user_ids.append(user_id)
+        resp_domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
+        self.domain_ids.append(resp_domain_id)
         user_resp = responses.User(resp_json=resp.json())
         return {'username': user_resp.user_name,
                 'password': user_resp.password,
                 'user_id': user_resp.id,
-                'domain_id': domain_id}
+                'domain_id': resp_domain_id}
 
     def create_tenant(self, domain_id=None):
         tenant_name = self.generate_random_string(
@@ -91,7 +95,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         if not client:
             client = self.identity_admin_client
         role_name = self.generate_random_string(
-            pattern=const.IDENTITY_PRODUCT_ROLE_NAME_PATTERN)
+            pattern=const.ROLE_NAME_PATTERN)
         role_object = factory.get_add_role_request_object(role_name=role_name)
         resp = client.add_role(request_object=role_object)
         self.assertEqual(resp.status_code, 201)
@@ -140,6 +144,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
     @ddt.data(['user_password', False], ['user_password', True],
               ['user_apikey', False])
     @ddt.unpack
+    @attr(type='smoke_alpha')
     def test_auth_not_specify_tenant(self, auth_type, use_mfa):
         """
         Create user with one call logic
@@ -237,6 +242,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
               ('user_password', 'tenant_name', False),
               ('user_apikey', 'tenant_name', False))
     @ddt.unpack
+    @attr(type='smoke_alpha')
     def test_auth_with_nast_tenant(self, auth_type, with_tenant, use_mfa):
         username = self.one_call_user_info['username']
         password = self.one_call_user_info['password']
@@ -266,6 +272,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
               ('user_password', 'tenant_name', False),
               ('user_apikey', 'tenant_name', False))
     @ddt.unpack
+    @attr(type='smoke_alpha')
     def test_auth_with_other_tenant(self, auth_type, with_tenant, use_mfa):
         """
         User with multi tenants
@@ -428,6 +435,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
             header_validation.validate_username_header_not_present))
 
     @ddt.data(True, False)
+    @attr(type='smoke_alpha')
     def test_auth_w_user_no_tenant(self, use_mfa):
         username = self.user_info['username']
         password = self.user_info['password']
@@ -506,18 +514,31 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         self.assertHeaders(final_auth_resp, (
             header_validation.validate_username_header_not_present))
 
+    @base.base.log_tearDown_error
     def tearDown(self):
         # Delete all resources created in the tests
         for id_ in self.user_ids:
-            self.identity_admin_client.delete_user(user_id=id_)
+            resp = self.identity_admin_client.delete_user(user_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(id_))
         for id_ in self.tenant_ids:
-            self.identity_admin_client.delete_tenant(tenant_id=id_)
+            resp = self.identity_admin_client.delete_tenant(tenant_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Tenant with ID {0} failed to delete'.format(id_))
         for id_ in self.domain_ids:
             domain_object = requests.Domain(
                 domain_name=id_, enabled=False)
             self.identity_admin_client.update_domain(
                 domain_id=id_, request_object=domain_object)
-            self.identity_admin_client.delete_domain(domain_id=id_)
+            resp = self.identity_admin_client.delete_domain(domain_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Domain with ID {0} failed to delete'.format(id_))
         for id_ in self.role_ids:
-            self.identity_admin_client.delete_role(role_id=id_)
+            resp = self.identity_admin_client.delete_role(role_id=id_)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Role with ID {0} failed to delete'.format(id_))
         super(TestAuthResponseHeaders, self).tearDown()

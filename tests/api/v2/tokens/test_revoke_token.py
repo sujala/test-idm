@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
+from nose.plugins.attrib import attr
 from random import randrange
 
 from tests.api.v2 import base
@@ -32,6 +33,7 @@ class TestRevokeToken(base.TestBaseV2):
     def setUp(self):
         super(TestRevokeToken, self).setUp()
         self.user_ids = []
+        self.domain_ids = []
 
     def create_user(self):
         """create a new
@@ -45,8 +47,11 @@ class TestRevokeToken(base.TestBaseV2):
         self.user_ids.append(user_id)
         username = user_resp.json()[const.USER][const.USERNAME]
         password = user_resp.json()[const.USER][const.NS_PASSWORD]
+        domain_id = user_resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
+        self.domain_ids.append(domain_id)
         return username, password
 
+    @attr(type='smoke_alpha')
     def test_revoke_own_token(self):
         """A user can revoke their own authentication token by submitting the
         DELETE request without specifying the tokenId parameter.
@@ -63,18 +68,18 @@ class TestRevokeToken(base.TestBaseV2):
         revoke_resp = self.user_admin_client.revoke_token()
         self.assertEqual(revoke_resp.status_code, 204)
 
-        # validate token after revoke with it own token
+        # validate token after revoke with its own token
         uac = self.user_admin_client
         val_resp = self.user_admin_client.validate_token(
             token_id=uac.default_headers[const.X_AUTH_TOKEN])
         self.assertEqual(val_resp.status_code, 401)
 
-        # validate token after revoke with it identity admin
-        uac = self.user_admin_client
+        # validate token using identity admin client, after revoke
         val_resp = self.identity_admin_client.validate_token(
             token_id=uac.default_headers[const.X_AUTH_TOKEN])
         self.assertEqual(val_resp.status_code, 404)
 
+    @attr(type='smoke_alpha')
     def test_revoke_user_token(self):
         """
         Identity and User administrators can revoke the token for another
@@ -101,15 +106,24 @@ class TestRevokeToken(base.TestBaseV2):
             token_id=user_token_id)
         self.assertEqual(revoke_resp.status_code, 204)
 
-        # validate after token be revoken
+        # validate after token be revoked
         val_resp = self.identity_admin_client.validate_token(
             token_id=user_token_id)
         self.assertEqual(val_resp.status_code, 404)
 
+    @base.base.log_tearDown_error
     def tearDown(self):
-        # Delete users
+        # Delete users & domains
         for _id in self.user_ids:
-            self.identity_admin_client.delete_user(user_id=_id)
+            resp = self.identity_admin_client.delete_user(user_id=_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='User with ID {0} failed to delete'.format(_id))
+        for _id in self.domain_ids:
+            resp = self.identity_admin_client.delete_domain(domain_id=_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Domain with ID {0} failed to delete'.format(_id))
         super(TestRevokeToken, self).tearDown()
 
     @classmethod
