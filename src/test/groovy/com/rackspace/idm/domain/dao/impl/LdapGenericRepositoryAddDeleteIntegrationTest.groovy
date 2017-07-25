@@ -10,6 +10,7 @@ import com.unboundid.ldap.sdk.controls.SubtreeDeleteRequestControl
 import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.NotImplementedException
+import org.apache.commons.lang.StringUtils
 import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
@@ -93,7 +94,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         con.getEntry(app.getUniqueId()) != null
 
         cleanup:
-        deleteDirect(expectedDn) //delete this in case the ldap entry is not set correctly
+        deleteDirectDn(expectedDn) //delete this in case the ldap entry is not set correctly
         deleteDirect(app) //delete this in case the uniqueId is NOT the expected one
     }
 
@@ -109,7 +110,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         thrown(NotImplementedException)
 
         cleanup: "Just in case object was actually created"
-        deleteDirect(expectedDn) //delete this in case the ldap entry is not set correctly
+        deleteDirectDn(expectedDn) //delete this in case the ldap entry is not set correctly
         deleteDirect(app) //delete this in case the uniqueId is NOT the expected one
     }
 
@@ -135,7 +136,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         thrown(DuplicateException)
 
         cleanup:
-        deleteDirect(expectedDn) //delete this in case the ldap entry is not set correctly
+        deleteDirectDn(expectedDn) //delete this in case the ldap entry is not set correctly
         deleteDirect(app) //delete this in case the uniqueId is NOT the expected one
     }
 
@@ -168,7 +169,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         con.getEntry(app.getUniqueId()) != null
 
         cleanup:
-        deleteDirect(expectedDn) //delete this in case the ldap entry is not set correctly
+        deleteDirectDn(expectedDn) //delete this in case the ldap entry is not set correctly
         deleteDirect(app) //delete this in case the uniqueId is NOT the expected one
     }
 
@@ -186,7 +187,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
         thrown(DuplicateException)
 
         cleanup:
-        deleteDirect(expectedDn) //delete this in case the ldap entry is not set correctly
+        deleteDirectDn(expectedDn) //delete this in case the ldap entry is not set correctly
         deleteDirect(app) //delete this in case the uniqueId is NOT the expected one
     }
 
@@ -398,7 +399,7 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
      */
     def deleteDirect(Application app) {
         if (app != null) {
-            deleteDirect(app.getUniqueId())
+            deleteDirectDn(app.getUniqueId())
         }
     }
 
@@ -408,9 +409,11 @@ class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
      * @param dn - dn of object to be deleted
      * @return
      */
-    def deleteDirect(String dn) {
-        DeleteRequest deleteRequest = new DeleteRequest(dn);
-        deleteRequest.addControl(new SubtreeDeleteRequestControl(true));
-        con.delete(deleteRequest);
+    def deleteDirectDn(String dn) {
+        if (StringUtils.isNotBlank(dn)) {
+            DeleteRequest deleteRequest = new DeleteRequest(dn);
+            deleteRequest.addControl(new SubtreeDeleteRequestControl(true));
+            con.delete(deleteRequest);
+        }
     }
 }

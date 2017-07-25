@@ -6,15 +6,18 @@ apply plugin: 'org.akhikhl.gretty'
 apply plugin: 'idea'
 apply plugin: 'nexus'
 apply plugin: 'jacoco'
+apply plugin: "org.unbroken-dome.test-sets"
 
 buildscript {
     repositories {
         maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/central" }
+        maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/thirdparty"}
     }
 
     dependencies {
         classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.3'
         classpath 'org.akhikhl.gretty:gretty:1.4.1'
+        classpath 'org.unbroken-dome.gradle-plugins:gradle-testsets-plugin:1.4.2'
     }
 }
 
@@ -32,6 +35,7 @@ targetCompatibility = 1.8
 
 def srcJava = 'src/main/java'
 def generatedSrc = 'build/generated-src/jaxb/'
+def rawTestResults = "$buildDir/test-results"
 
 configurations {
     appRevision
@@ -54,6 +58,11 @@ repositories {
 def resourceDirs = [
         'VAGRANT'
 ]
+
+testSets {
+    commitTest
+    nonCommitTest { extendsFrom commitTest }
+}
 
 dependencies {
     wadl "com.lunatech.jax-doclets:doclets:0.8.1"
@@ -265,6 +274,9 @@ dependencies {
     }
 
     compile 'com.newrelic.agent.java:newrelic-api:3.29.0'
+
+    // Add all source for main (unit/commit) tests to nonCommitTest path to allow to share common utils
+    nonCommitTestCompile sourceSets.commitTest.output
 }
 
 task copyConfig(type: Copy) {
@@ -273,7 +285,7 @@ task copyConfig(type: Copy) {
 }
 
 task copyBuildInfo << {
-    ['src/test/resources', 'src/main/resources'].each { dest ->
+    ['src/commitTest/resources', 'src/nonCommitTest/resources', 'src/test/resources', 'src/main/resources'].each { dest ->
         copy {
             from 'src/main/config/build_info.properties'
             into dest
@@ -288,6 +300,8 @@ task copyBuildInfo << {
 task deleteBuildInfo(type: Delete) {
     delete 'src/main/resources/build_info.properties'
     delete 'src/test/resources/build_info.properties'
+    delete 'src/commitTest/resources/build_info.properties'
+    delete 'src/nonCommitTest/resources/build_info.properties'
 }
 
 task copyBaseConfig << {
@@ -354,34 +368,15 @@ idea {
 
 jacoco {
     toolVersion = "0.7.5.201505241946"
-    reportsDir = file("$buildDir/customJacocoReportDir")
+
+    // this seems to be completely ignored
+    reportsDir = file("$buildDir/reports/jacoco")
 }
 
 task applicationCodeCoverageReport(type:JacocoReport){
     executionData "coverage/target/jacoco.exec" 
     classDirectories = files("coverage/target/classes")
     sourceDirectories = files("src")
-}
-
-test {
-    // set heap size for the test JVM(s)
-    minHeapSize = "256m"
-    maxHeapSize = "1024m"
-
-    // set JVM arguments for the test JVM(s)
-    jvmArgs '-XX:MaxPermSize=1024m'
-    systemProperties['idm.properties.location']  = System.getProperty('idm.properties.location', 'build/config/VAGRANT')
-    systemProperties['jersey.test.port']  = System.getProperty('jersey.test.port', '9998')
-    systemProperties['spring.profiles.active'] = System.getProperty('spring.profiles.active', 'LDAP')
-
-    jacoco {
-        append = false
-        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
-        classDumpFile = file("$buildDir/jacoco/classpathdumps")
-    }
-
-    // show standard out and standard error of the test JVM(s) on the console. Useful for debugging tests that fail via gradle build only
-    //testLogging.showStandardStreams = true
 }
 
 gretty {
@@ -509,6 +504,7 @@ war.dependsOn copyBuildInfo
 clean.dependsOn deleteBuildInfo
 
 compileJava.dependsOn jaxb
+test.dependsOn jaxb
 
 project.afterEvaluate {
     tasks.appRun.dependsOn copyBaseConfig
@@ -538,6 +534,7 @@ war {
 task echo << {
     println "source main sets=$sourceSets.main.java.srcDirs"
     println "source test sets=$sourceSets.test.java.srcDirs"
+    println "source test sets=$sourceSets.test.groovy.srcDirs"
 }
 
 jacocoTestReport {
@@ -564,3 +561,101 @@ task('dependenciesList') <<  {
     selectedDeps.unique().sort().each { println it}
 }
 
+// Write test reports in distinct locations
+tasks.withType(Test) {
+    reports.html.destination = file("${reporting.baseDir}/${name}")
+
+    reports.junitXml.enabled = true
+    reports.junitXml.destination = file("${rawTestResults}/${name}")
+
+    check.dependsOn it
+    processResources.dependsOn copyBaseConfig
+    processResources.dependsOn copyBuildInfo
+
+    if (it.name != "commitTest") {
+        mustRunAfter commitTest
+    }
+
+    // set heap size for the test JVM(s)
+    minHeapSize = "256m"
+    maxHeapSize = "1024m"
+
+    // set JVM arguments for the test JVM(s)
+    jvmArgs '-XX:MaxPermSize=1024m'
+    systemProperties['idm.properties.location']  = System.getProperty('idm.properties.location', 'build/config/VAGRANT')
+    systemProperties['jersey.test.port']  = System.getProperty('jersey.test.port', '9998')
+    systemProperties['spring.profiles.active'] = System.getProperty('spring.profiles.active', 'LDAP')
+
+    jacoco {
+        append = false
+        destinationFile = file("$buildDir/jacoco/${name}/jacocoTest.exec")
+        classDumpFile = file("$buildDir/jacoco/${name}/classpathdumps")
+    }
+
+    testLogging {
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                println "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            }
+        }
+    }
+
+    // show standard out and standard error of the test JVM(s) on the console. Useful for debugging tests that fail via gradle build only
+    //testLogging.showStandardStreams = true
+
+}
+
+task nonCommitCodeCoverage(type:JacocoReport) {
+    executionData file("$buildDir/jacoco/nonCommitTest/jacocoTest.exec")
+    sourceSets sourceSets.main
+
+    reports {
+        html.enabled true
+        html.destination "${buildDir}/reports/coverage/nonCommitTest/report.html"
+        xml.enabled false
+        csv.enabled false
+    }
+}
+
+task commitCodeCoverage(type:JacocoReport) {
+    executionData file("$buildDir/jacoco/commitTest/jacocoTest.exec")
+    sourceSets sourceSets.main
+
+    reports {
+        html.enabled true
+        html.destination "${buildDir}/reports/coverage/commitTest/report.html"
+        xml.enabled false
+        csv.enabled false
+    }
+}
+task codeCoverage(type:JacocoReport) {
+    executionData fileTree("$buildDir").include("/jacoco/**/*.exec")
+    sourceSets sourceSets.main
+
+    group = "Reporting"
+    reports {
+        html.enabled true
+        html.destination "${buildDir}/reports/coverage/combined/report.html"
+        xml.enabled false
+        csv.enabled false
+    }
+}
+
+commitCodeCoverage.dependsOn commitTest
+nonCommitCodeCoverage.dependsOn nonCommitTest
+codeCoverage.dependsOn commitCodeCoverage
+codeCoverage.dependsOn nonCommitCodeCoverage
+
+task debugme << {
+    sourceSets.each {
+        println "********************* sourceSet.name = "+it.name+"*********************"
+        println "####output.classesDir#### = "+it.output.classesDir
+        println ""
+        println "####output.resourcesDir#### = "+it.output.resourcesDir
+        println ""
+        println "####compileClasspath#### = "+it.compileClasspath.asPath
+        println ""
+        println "####runtimeClasspath#### = "+it.runtimeClasspath.asPath
+        println "***********************************************************************"
+    }
+}
