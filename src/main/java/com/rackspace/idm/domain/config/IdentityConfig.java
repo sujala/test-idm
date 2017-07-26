@@ -360,6 +360,8 @@ public class IdentityConfig {
     public static final String FEATURE_ALLOW_USERNAME_UPDATE_PROP = "feature.allow.username.updates";
     public static final boolean FEATURE_ALLOW_USERNAME_UPDATE_DEFAULT = false;
 
+    public static final String FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP = "feature.allow.delete.role.assigned.to.user";
+    public static final boolean FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_DEFAULT = true;
 
     /**
      * Required static prop
@@ -679,6 +681,7 @@ public class IdentityConfig {
         defaults.put(PASSWORD_HISTORY_MAX_PROP, PASSWORD_HISTORY_MAX_DEFAULT);
 
         defaults.put(IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT);
+        defaults.put(FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_DEFAULT);
 
         return defaults;
     }
@@ -1952,6 +1955,12 @@ public class IdentityConfig {
         public boolean getEnableExternalUserIdpManagement() {
             return getBooleanSafely(reloadableConfiguration, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP);
         }
+
+        @IdmProp(key = FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, versionAdded = "3.15.0", description = "Flag to allow deletion of role assigned to a user")
+        public boolean getDeleteRoleAssignedToUser() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP);
+        }
+
     }
 
     public class RepositoryConfig {

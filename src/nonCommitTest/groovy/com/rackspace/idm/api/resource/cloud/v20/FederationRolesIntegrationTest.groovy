@@ -119,8 +119,8 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
-        utils.deleteRole(propagatingRole)
         deleteFederatedUser(username)
+        utils.deleteRole(propagatingRole)
     }
 
     def "add non-propagating role to user-admin does not add the role to the federated sub-user"() {
@@ -147,8 +147,8 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsersQuietly(users)
-        utils.deleteRoleQuietly(nonPRole)
         deleteFederatedUser(username)
+        utils.deleteRoleQuietly(nonPRole)
     }
 
     def "new federated users get global propagating roles"() {
@@ -182,8 +182,8 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
-        utils.deleteRole(propagatingRole)
         deleteFederatedUser(username)
+        utils.deleteRole(propagatingRole)
     }
 
     def "new federated users get tenant based propagating roles"() {
@@ -217,8 +217,8 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
-        utils.deleteRole(propagatingRole)
         deleteFederatedUser(username)
+        utils.deleteRole(propagatingRole)
     }
 
     def "new federated users do not get non-propagating roles"() {
@@ -355,8 +355,8 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
-        utils.deleteRole(propagatingRole)
         deleteFederatedUser(username)
+        utils.deleteRole(propagatingRole)
     }
 
     def "trying to pass a saml assertion for a domain with more than one user admin returns 500 if 'domain.restricted.to.one.user.admin.enabled' == true"() {
@@ -449,6 +449,39 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users)
     }
+
+
+    def "caller cannot delete a role assigned to federated user"() {
+        given:
+        def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
+            it.roleType = RoleTypeEnum.PROPAGATE
+            it
+        }
+        def serviceAdminToken = utils.getServiceAdminToken()
+        def responsePropagateRole = cloud20.createRole(utils.getServiceAdminToken(), role)
+        def propagatingRole = responsePropagateRole.getEntity(Role).value
+        def domainId = utils.createDomain()
+        def username = testUtils.getRandomUUID("samlUser")
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
+        utils.addRoleToUserOnTenantId(userAdmin, domainId, propagatingRole.id)
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+        assert samlResponse.user.roles.role.id.contains(propagatingRole.id)
+
+        when:
+        def response = cloud20.deleteRole(serviceAdminToken, propagatingRole.id)
+
+        then:
+        response.status == 403
+
+        cleanup:
+        utils.deleteUsers(users)
+        deleteFederatedUser(username)
+        utils.deleteRole(propagatingRole)
+    }
+
 
     def void assertFederatedUserHasGlobalRole(FederatedUser user, role) {
         TenantRole roleOnUser = tenantRoleDao.getTenantRoleForUser(user, role.id)

@@ -437,8 +437,8 @@ class TenantPropagatingRoleIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
-        utils.deleteRole(role)
         utils.deleteTenant(tenant)
+        utils.deleteRole(role)
     }
 
     //Helper Methods

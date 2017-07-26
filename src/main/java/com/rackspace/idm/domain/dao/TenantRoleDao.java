@@ -18,7 +18,7 @@ public interface TenantRoleDao {
     void deleteTenantRole(TenantRole tenantRole);
     void deleteTenantRole(TenantRole tenantRole, String tenantId);
     List<String> getIdsForUsersWithTenantRole(String roleId, int maxResult);
-
+    List<String> getUserNamesForFederatedUsersWithTenantRole(String roleId, int maxResult);
     Iterable<TenantRole> getTenantRoleForUser(EndUser user, List<ClientRole> clientRoles);
     String getUserIdForParent(TenantRole tenantRole);
 }

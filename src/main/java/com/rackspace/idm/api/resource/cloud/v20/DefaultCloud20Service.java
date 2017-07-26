@@ -93,6 +93,9 @@ import java.util.*;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
+import static com.rackspace.idm.domain.service.impl.DefaultUserService.LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE;
+import static com.rackspace.idm.domain.service.impl.DefaultUserService.LIST_USERS_BY_ROLE_LIMIT_NAME;
+
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
@@ -1992,8 +1995,16 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             ClientRole role = checkAndGetClientRole(roleId);
+            int sizeLimit = config.getInt(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
+
+            if(identityConfig.getReloadableConfig().getDeleteRoleAssignedToUser()) {
+                if (tenantService.getIdsForUsersWithTenantRole(roleId, sizeLimit).size() > 0 || tenantService.getUserNamesForFederatedUsersWithTenantRole(roleId, sizeLimit).size() > 0) {
+                    throw new ForbiddenException("Deleting the role associated with one or more users is not allowed");
+                }
+            }
+
             if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-                throw new ForbiddenException("role cannot be deleted");
+                throw new ForbiddenException("Role prefixed with 'identity:' cannot be deleted");
             }
 
             User caller = userService.getUserByAuthToken(authToken);

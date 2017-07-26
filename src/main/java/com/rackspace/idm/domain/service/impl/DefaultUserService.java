@@ -56,12 +56,13 @@ public class DefaultUserService implements UserService {
 
     public static final String ERROR_MSG_TOKEN_NOT_FOUND = "Token not found.";
 
+    public static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
+    public static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
+
     static final String MOSSO_BASE_URL_TYPE = "MOSSO";
     static final String NAST_BASE_URL_TYPE = "NAST";
-    static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
     static final String ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG = "add.expired.tokens.user.create";
     static final boolean ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG_DEFAULT_VALUE = false;
-    static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Logger deleteUserLogger = LoggerFactory.getLogger(GlobalConstants.DELETE_USER_LOG_NAME);

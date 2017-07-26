@@ -108,7 +108,9 @@ public interface TenantService {
 
     Iterable<TenantRole> getTenantRolesForUserById(EndUser user, List<ClientRole> clientRolesForFilter);
     List<String> getIdsForUsersWithTenantRole(String roleId, int sizeLimit);
-	void setTenantDao(TenantDao tenantDao);
+    List<String> getUserNamesForFederatedUsersWithTenantRole(String roleId, int sizeLimit);
+
+    void setTenantDao(TenantDao tenantDao);
     void setTenantRoleDao(TenantRoleDao tenantRoleDao);
 
     Iterable<TenantRole> getTenantRolesForClientRole(ClientRole role);
