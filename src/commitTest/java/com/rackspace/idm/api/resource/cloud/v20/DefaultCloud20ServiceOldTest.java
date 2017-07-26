@@ -22,6 +22,7 @@ import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.opensaml.core.config.InitializationService;
 import org.openstack.docs.common.api.v1.Extension;
 import org.openstack.docs.common.api.v1.Extensions;
 import org.openstack.docs.identity.api.ext.os_ksadm.v1.Service;
@@ -118,6 +119,8 @@ public class DefaultCloud20ServiceOldTest {
 
     @Before
     public void setUp() throws Exception {
+        InitializationService.initialize();
+
         defaultCloud20Service = new DefaultCloud20Service();
 
         //mocks
