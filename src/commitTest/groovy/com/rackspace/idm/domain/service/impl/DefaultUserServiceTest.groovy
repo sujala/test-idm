@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl
 
+import com.rackspace.idm.Constants
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -225,8 +226,8 @@ class DefaultUserServiceTest extends RootServiceTest {
         cloudRegionService.getDefaultRegion(_) >> createRegionEntity("DFW", "cloud", true)
         propertiesService.getValue(DefaultUserService.ENCRYPTION_VERSION_ID) >> encryptionVersion
         config.getInt("maxNumberOfUsersInDomain") >> 100
-        config.getList("v1defaultMosso") >> MOSSO_V1_DEF
-        config.getList("v1defaultNast") >> NAST_V1_DEF
+        config.getList("v1defaultMosso") >> Constants.MOSSO_V1_DEF
+        config.getList("v1defaultNast") >> Constants.NAST_V1_DEF
         userDao.getUsersByDomain(domainId) >> [].asList()
         userDao.nextUserId >> "nextId"
         mockRoleService.getRoleByName(_) >> entityFactory.createClientRole("role")

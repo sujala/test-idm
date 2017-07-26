@@ -1,20 +1,28 @@
 package com.rackspace.idm.domain.config
 
+import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter
 import com.rackspace.idm.domain.security.TokenFormat
+import com.rackspace.idm.domain.service.IdentityPropertyService
+import com.rackspace.test.SingleTestConfiguration
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.apache.commons.configuration.reloading.FileChangedReloadingStrategy
 import org.junit.Rule
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 import testHelpers.SingletonConfiguration
 import testHelpers.SingletonReloadableConfiguration
+import testHelpers.SingletonTestFileConfiguration
 import testHelpers.junit.ConditionalIgnoreRule
 import testHelpers.junit.IgnoreByRepositoryProfile
 
-@ContextConfiguration(locations = "classpath:app-config.xml")
+@ContextConfiguration(classes=[SingletonTestFileConfiguration.class
+        , IdentityConfig.class
+        , MockServiceProvider.class])
 class IdentityConfigIntegrationTest  extends Specification {
 
     @Autowired
@@ -205,4 +213,19 @@ class IdentityConfigIntegrationTest  extends Specification {
         config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp() == IdentityConfig.IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE
     }
 
+    @SingleTestConfiguration
+    static class MockServiceProvider {
+        @Bean
+        public IdentityPropertyValueConverter identityPropertyValueConverter () {
+            return  Mockito.mock(IdentityPropertyValueConverter.class);
+        }
+        @Bean
+        public IdentityPropertyService identityPropertyService () {
+            return  Mockito.mock(IdentityPropertyService.class);
+        }
+        @Bean
+        public RepositoryProfileResolver repositoryProfileResolver () {
+            return  Mockito.mock(RepositoryProfileResolver.class);
+        }
+    }
 }

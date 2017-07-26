@@ -1,4 +1,4 @@
-package com.rackspace.idm.api.resource.cloud.v20
+package com.rackspace.idm.api.converter.cloudv20
 
 import com.rackspace.idm.api.converter.cloudv20.RegionConverterCloudV20
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories

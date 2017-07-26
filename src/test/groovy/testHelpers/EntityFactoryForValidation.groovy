@@ -1,6 +1,5 @@
 package testHelpers
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DefaultRegionServices
 import com.rackspace.idm.validation.entity.AuthenticationRequestForValidation
 import com.rackspace.idm.validation.entity.BaseUrlForValidation
 import com.rackspace.idm.validation.entity.BaseUrlRefForValidation
@@ -13,7 +12,6 @@ import com.rackspace.idm.validation.entity.GroupForValidation
 import com.rackspace.idm.validation.entity.ImpersonationRequestForValidation
 import com.rackspace.idm.validation.entity.JAXBElementCredentialTypeForValidation
 import com.rackspace.idm.validation.entity.QuestionForValidation
-import com.rackspace.idm.validation.entity.QuestonForValidationTest
 import com.rackspace.idm.validation.entity.RegionForValidation
 import com.rackspace.idm.validation.entity.RoleForValidation
 import com.rackspace.idm.validation.entity.SecretQAForValidation
@@ -23,8 +21,6 @@ import com.rackspace.idm.validation.entity.TenantForValidation
 import com.rackspace.idm.validation.entity.TokenForAuthenticationRequestForValidation
 import com.rackspace.idm.validation.entity.UserForValidation
 import com.rackspace.idm.validation.entity.VersionForServiceForValidation
-import com.rackspacecloud.docs.auth.api.v1.BaseURL
-import com.rackspacecloud.docs.auth.api.v1.BaseURLRef
 import spock.lang.Specification
 
 /**

@@ -14,7 +14,6 @@ import testHelpers.RootServiceTest
  * To change this template use File | Settings | File Templates.
  */
 
-@ContextConfiguration(locations = "classpath:app-config.xml")
 class PaginatorContextTest extends RootServiceTest {
 
     @Shared def sharedRandomness = UUID.randomUUID()

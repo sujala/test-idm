@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
 
-@ContextConfiguration(locations = ["classpath:app-config.xml"])
+@ContextConfiguration(classes = [PropertyFileConfiguration.class])
 class PropertyFileBeansConfigurationTest extends Specification {
 
     @Autowired

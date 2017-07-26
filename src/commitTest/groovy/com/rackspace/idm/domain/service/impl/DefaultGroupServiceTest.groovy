@@ -53,7 +53,7 @@ class DefaultGroupServiceTest extends RootServiceTest {
     }
 
     def setupMocks(){
-        config = Mock()
+        config = Mock(Configuration)
 
         service.config = config
     }

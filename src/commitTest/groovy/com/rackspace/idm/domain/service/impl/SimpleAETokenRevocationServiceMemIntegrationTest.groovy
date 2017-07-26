@@ -1,26 +1,41 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperHelper
+import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.dao.impl.MemoryTokenRevocationRecordPersistenceStrategy
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
+import com.rackspace.idm.domain.service.IdentityPropertyService
 import com.rackspace.idm.domain.service.IdentityUserService
+import com.rackspace.idm.domain.service.ScopeAccessService
+import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.UserService
+import com.rackspace.test.SingleTestConfiguration
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.context.annotation.Bean
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.mock.DetachedMockFactory
 import testHelpers.EntityFactory
+import testHelpers.SingletonTestFileConfiguration
 
 /**
  * Integration tests from the revocation down using Memory storage. Token retrieval is mocked.
  */
-@ContextConfiguration(locations = ["classpath:app-config.xml"
-, "classpath:com/rackspace/idm/domain/service/impl/SimpleAETokenRevocationServiceMemIntegrationTest-context.xml"])
+@ContextConfiguration(classes=[MockServiceProvider.class
+        , SimpleAETokenRevocationService.class
+        , SingletonTestFileConfiguration.class
+        , IdentityConfig.class
+])
 class SimpleAETokenRevocationServiceMemIntegrationTest extends Specification {
 
     @Autowired
@@ -160,5 +175,68 @@ class SimpleAETokenRevocationServiceMemIntegrationTest extends Specification {
         then: "password token is expired"
         revocationService.isTokenRevoked(token)
         revocationService.isTokenRevoked(sa)
+    }
+
+    /**
+     * Need to mock the autowired dependencies of any concrete class that is Mocked
+     */
+    @SingleTestConfiguration
+    static class MockServiceProvider {
+        def mockFactory = new DetachedMockFactory()
+
+        @Bean
+        public IdentityPropertyValueConverter identityPropertyValueConverter () {
+            return  mockFactory.Mock(IdentityPropertyValueConverter.class);
+        }
+        @Bean
+        public IdentityPropertyService identityPropertyService () {
+            return  mockFactory.Mock(IdentityPropertyService.class);
+        }
+        @Bean
+        public RepositoryProfileResolver repositoryProfileResolver() {
+            return  mockFactory.Mock(RepositoryProfileResolver.class);
+        }
+        @Bean
+        public AETokenService aeTokenService() {
+            return  mockFactory.Mock(AETokenService.class);
+        }
+        @Bean
+        public ScopeAccessService scopeAccessService() {
+            return  mockFactory.Mock(ScopeAccessService.class);
+        }
+        @Bean
+        public AtomHopperClient atomHopperClient() {
+            return  mockFactory.Mock(AtomHopperClient.class);
+        }
+        @Bean
+        public UserService userService() {
+            return  mockFactory.Mock(UserService.class);
+        }
+        @Bean
+        public IdentityUserService identityUserService() {
+            return  mockFactory.Mock(IdentityUserService.class);
+        }
+        @Bean
+        public AtomHopperHelper atomHopperHelper() {
+            return  mockFactory.Mock(AtomHopperHelper.class);
+        }
+        @Bean
+        public TenantService tenantService() {
+            return  mockFactory.Mock(TenantService.class);
+        }
+        @Bean
+        public TokenFormatSelector tokenFormatSelector() {
+            return  mockFactory.Mock(TokenFormatSelector.class)
+        }
+
+        @Bean
+        public UserDao userDao() {
+            return mockFactory.Mock(UserDao.class);
+        }
+
+        @Bean
+        MemoryTokenRevocationRecordPersistenceStrategy tokenRevocationRecordPersistenceStrategy() {
+            return new MemoryTokenRevocationRecordPersistenceStrategy()
+        }
     }
 }
