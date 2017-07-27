@@ -254,6 +254,14 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
         throw new NotImplementedException();
     }
 
+    public int getCountOfTenantRolesByRoleIdForProvisionedUsers(String roleId) {
+        throw new NotImplementedException();
+    }
+
+    public int getCountOfTenantRolesByRoleIdForFederatedUsers(String roleId) {
+        throw new NotImplementedException();
+    }
+
     @Override
     public Iterable<TenantRole> getTenantRoleForUser(EndUser user, List<ClientRole> clientRoles) {
         //TODO: update to work with federated user roles

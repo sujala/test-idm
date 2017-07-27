@@ -110,6 +110,9 @@ public interface TenantService {
     List<String> getIdsForUsersWithTenantRole(String roleId, int sizeLimit);
     List<String> getUserNamesForFederatedUsersWithTenantRole(String roleId, int sizeLimit);
 
+    int getCountOfTenantRolesByRoleIdForProvisionedUsers(String roleId);
+    int getCountOfTenantRolesByRoleIdForFederatedUsers(String roleId);
+
     void setTenantDao(TenantDao tenantDao);
     void setTenantRoleDao(TenantRoleDao tenantRoleDao);
 

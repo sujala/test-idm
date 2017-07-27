@@ -1987,12 +1987,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (roleId == null) {
                 throw new BadRequestException("roleId cannot be null");
             }
-
             ClientRole role = checkAndGetClientRole(roleId);
-            int sizeLimit = identityConfig.getStaticConfig().getUsersByRoleLimit();
 
             if(identityConfig.getReloadableConfig().getDeleteRoleAssignedToUser()) {
-                if (tenantService.getIdsForUsersWithTenantRole(roleId, sizeLimit).size() > 0 || tenantService.getUserNamesForFederatedUsersWithTenantRole(roleId, sizeLimit).size() > 0) {
+                if (tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(roleId) > 0 || tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(roleId) > 0) {
                     throw new ForbiddenException("Deleting the role associated with one or more users is not allowed");
                 }
             }

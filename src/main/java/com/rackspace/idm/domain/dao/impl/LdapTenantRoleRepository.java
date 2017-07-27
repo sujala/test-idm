@@ -136,6 +136,14 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return uniqueIds;
     }
 
+    public int getCountOfTenantRolesByRoleIdForProvisionedUsers(String roleId) {
+        return countObjects(searchFilterGetTenantRolesByRoleId(roleId), getBaseDn());
+    }
+
+    public int getCountOfTenantRolesByRoleIdForFederatedUsers(String roleId) {
+        return countObjects(searchFilterGetTenantRolesByRoleId(roleId), getExternalIdpBaseDn());
+    }
+
     private void addOrUpdateTenantRole(String uniqueId, TenantRole tenantRole) {
         TenantRole currentTenantRole = getObject(searchFilterGetTenantRolesByRoleId(tenantRole.getRoleRsId()), uniqueId, SearchScope.SUB);
         if (currentTenantRole != null) {

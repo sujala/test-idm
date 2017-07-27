@@ -1405,7 +1405,7 @@ public class IdentityConfig {
             return getStringSafely(staticConfiguration, NAST_TENANT_PREFIX_PROP);
         }
 
-        @IdmProp(key = LIST_USERS_BY_ROLE_LIMIT_NAME, versionAdded = "1.0.14.8", description = "Retrieve the limit for users list by role")
+        @IdmProp(key = LIST_USERS_BY_ROLE_LIMIT_NAME, versionAdded = "1.0.14.8", description = "The limit to the number of users allowed to be assigned a role before the v2 list users with role API call will return an error.")
         public int getUsersByRoleLimit() {
             return getIntSafely(staticConfiguration, LIST_USERS_BY_ROLE_LIMIT_NAME);
         }
