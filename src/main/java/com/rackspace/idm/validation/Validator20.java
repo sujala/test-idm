@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.idm.ErrorCodes;
+import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -99,6 +100,7 @@ public class Validator20 {
     public static final int MAX_GROUP_NAME = MAX_LENGTH_64;
     public static final int MAX_GROUP_DESC = 1000;
     public static final int MAX_USERNAME = 100;
+    public static final int MAX_APIKEY = 100;
 
     public static final int MAX_ROLE_NAME = MAX_LENGTH_255;
     public static final int MAX_ROLE_DESC = MAX_LENGTH_255;
@@ -225,6 +227,7 @@ public class Validator20 {
             logger.warn(errMsg);
             throw new BadRequestException(errMsg);
         }
+        validateStringMaxLength(JSONConstants.API_KEY, apiKeyCredentials.getApiKey(), MAX_APIKEY);
     }
 
     public void validateImpersonationRequestForRacker(ImpersonationRequest impersonationRequest) {
