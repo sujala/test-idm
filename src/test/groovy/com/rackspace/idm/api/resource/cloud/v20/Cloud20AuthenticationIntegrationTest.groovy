@@ -1,22 +1,19 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
+import com.rackspace.api.common.fault.v1.BadRequestFault
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.OTPDevice
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.User
-import org.apache.http.HttpStatus
 import org.apache.commons.lang.RandomStringUtils
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Tenants
-import org.openstack.docs.identity.api.v2.UnauthorizedFault
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
-
-import java.util.regex.Pattern
 
 class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
@@ -519,6 +516,25 @@ class Cloud20AuthenticationIntegrationTest extends RootIntegrationTest{
 
         then: "domainId is returned"
         response.user.domainId == domainId
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+    }
+
+    def "v2.0 Authenticate with apiKey length greater than 100 characters"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        utils.addApiKeyToUser(userAdmin)
+
+        when: "auth w/ api key"
+        def response = cloud20.authenticateApiKey(userAdmin.username, testUtils.getRandomUUIDOfLength("apiKey", 101))
+
+        then: "Assert BadRequest"
+        // Ensures that aspect validation occurs before apiKey code validation.
+        IdmAssert.assertRackspaceCommonFaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, "credentialType.apiKey: size must be between 0 and 100")
 
         cleanup:
         utils.deleteUsers(users)
