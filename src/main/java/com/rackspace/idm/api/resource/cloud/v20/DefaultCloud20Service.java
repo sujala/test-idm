@@ -1275,7 +1275,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     private ResponseBuilder buildFedLogoutResponseBuilder(LogoutResponse logoutResponse, int status) throws MarshallingException {
-        Element element = marshaller.marshall(logoutResponse);;
+        Element element = marshaller.marshall(logoutResponse);
         return Response.status(status).entity(new GenericEntity<DOMSource>(new DOMSource(element), DOMSource.class));
     }
 
@@ -1297,6 +1297,10 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ServiceUnavailableException(FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE);
             }
             newProvider.setPolicy(defaultPolicy.getBytes(StandardCharsets.UTF_8));
+
+            if (newProvider.getEnabled() == null) {
+                newProvider.setEnabled(true);
+            }
 
             federatedIdentityService.addIdentityProvider(newProvider);
             atomHopperClient.asyncPostIdpEvent(newProvider, EventType.CREATE);
@@ -1346,6 +1350,8 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ServiceUnavailableException(FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE);
             }
             newProvider.setPolicy(defaultPolicy.getBytes(StandardCharsets.UTF_8));
+
+            newProvider.setEnabled(true);
 
             federatedIdentityService.addIdentityProvider(newProvider);
             atomHopperClient.asyncPostIdpEvent(newProvider, EventType.CREATE);
@@ -1406,6 +1412,14 @@ public class DefaultCloud20Service implements Cloud20Service {
                 existingProvider.setAuthenticationUrl(provider.getAuthenticationUrl());
             }
 
+            boolean revokeAllIdpTokens = false;
+            if (provider.isEnabled() != null && IdentityProviderFederationTypeEnum.DOMAIN == existingProvider.getFederationTypeAsEnum()) {
+                if (existingProvider.getEnabled() != null && existingProvider.getEnabled() && !provider.isEnabled()) {
+                    revokeAllIdpTokens = true;
+                }
+                existingProvider.setEnabled(provider.isEnabled());
+            }
+
             List<String> existingProviderApprovedDomainIds = existingProvider.getApprovedDomainIds() != null ? existingProvider.getApprovedDomainIds() : Collections.EMPTY_LIST ;
 
             List<String> suppliedProviderApprovedDomainIds = null;
@@ -1420,6 +1434,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             federatedIdentityService.updateIdentityProvider(existingProvider); //update
+            if (revokeAllIdpTokens) {
+                tokenRevocationService.revokeAllTokensForIdentityProvider(existingProvider.getProviderId());
+            }
             atomHopperClient.asyncPostIdpEvent(existingProvider, EventType.UPDATE);
 
             if (isIdentityProviderManager || isRcnAdmin) {

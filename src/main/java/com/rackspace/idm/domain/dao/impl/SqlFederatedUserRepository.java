@@ -96,6 +96,11 @@ public class SqlFederatedUserRepository implements FederatedUserDao {
     }
 
     @Override
+    public Iterable<FederatedUser> getFederatedUsersByIdentityProviderId(String identityProviderId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public int getFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId) {
         return federatedUserRepository.countByDomainIdAndFederatedIdpId(domainId, identityProviderId);
     }

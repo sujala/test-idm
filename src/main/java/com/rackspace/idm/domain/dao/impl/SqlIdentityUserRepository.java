@@ -56,6 +56,11 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
     }
 
     @Override
+    public Iterable<FederatedUser> getFederatedUsersByIdentityProviderId(String idpId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Iterable<FederatedUser> getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(List<String> approvedDomainIds, String idpId) {
         return fedUserDao.getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(approvedDomainIds, idpId);
     }

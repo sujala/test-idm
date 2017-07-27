@@ -73,13 +73,12 @@ public interface IdentityUserService {
     FederatedUser getFederatedUserById(String userId);
 
     /**
-     * Returns all federated users that are contained within the given identity provider and have the given domain ID.
+     * Returns all federated users that are contained within the given identity provider.
      *
-     * @param domainId
-     * @param idpName
+     * @param idpId
      * @return
      */
-    Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName);
+    Iterable<FederatedUser> getFederatedUsersByIdentityProviderId(String idpId);
 
     /**
      * Retrieve all federated users that do not belong to the approved domains in the identity provider

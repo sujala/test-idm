@@ -138,6 +138,7 @@ public abstract class LdapRepository {
     public static final String ATTR_PWD_ACCOUNT_LOCKOUT_TIME = "dxPwdFailedTime";
     public static final String ATTR_RACKER_ID = "rackerId";
     public static final String ATTR_RACKSPACE_API_KEY = "rsApiKey";
+    public static final String ATTR_IDENTITY_PROVIDER_ID = "rsIdentityProviderId";
 
     /**
      * @deprecated
@@ -271,7 +272,7 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_IDENTITY_PROVIDER_ATTRIBUTES = {ATTR_OU, ATTR_NAME, ATTR_URI, ATTR_DESCRIPTION,
                                                                          ATTR_USER_CERTIFICATES, ATTR_TARGET_USER_SOURCE,
                                                                          ATTR_APPROVED_DOMAIN_GROUP, ATTR_APPROVED_DOMAIN_IDS,
-                                                                         ATTR_AUTHENTICATION_URL, ATTR_IDP_POLICY };
+                                                                         ATTR_AUTHENTICATION_URL, ATTR_IDP_POLICY, ATTR_ENABLED };
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
     //LDAP Change Event

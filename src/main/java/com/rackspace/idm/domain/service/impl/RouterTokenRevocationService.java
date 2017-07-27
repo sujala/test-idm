@@ -108,6 +108,12 @@ public class RouterTokenRevocationService implements TokenRevocationService {
     }
 
     @Override
+    public void revokeAllTokensForIdentityProvider(String identityProviderId) {
+        // We are not checking the route b/c UUID tokens are no longer supported
+        aeTokenRevocationService.revokeAllTokensForIdentityProvider(identityProviderId);
+    }
+
+    @Override
     public boolean isTokenRevoked(String token) {
         return getRouteForExistingScopeAccess(token).isTokenRevoked(token);
     }

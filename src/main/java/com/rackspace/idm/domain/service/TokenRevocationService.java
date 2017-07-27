@@ -160,6 +160,17 @@ public interface TokenRevocationService {
     void revokeAllTokensForEndUser(EndUser user);
 
     /**
+     * Revoke all tokens for the specified IdentityProvider.
+     * <p>
+     *     A cloud feeds event must be sent, as appropriate, to represent the tokens being revoked.
+     *     Note: there is currently no support within cloud feeds to revoke tokens by IDP. This means that
+     *     an event for each user must be sent to revoke all tokens for that user.
+     * </p>
+     * @param identityProviderId
+     */
+    void revokeAllTokensForIdentityProvider(String identityProviderId);
+
+    /**
      * Whether the specified token has been revoked.
      *
      * @param token

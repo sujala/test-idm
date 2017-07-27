@@ -74,6 +74,10 @@ public class FederatedAuthHandlerV1 {
             throw new ForbiddenException("v1 Authentication is not supported for this IDP", ErrorCodes.ERROR_CODE_FEDERATION_INVALID_PROVIDER);
         }
 
+        if (provider.getEnabled() != null && !provider.getEnabled() && IdentityProviderFederationTypeEnum.DOMAIN == federationType) {
+            throw new ForbiddenException("Unable to authenticate to disabled identity providers.");
+        }
+
         //sig valid. Now validate format of the request. Don't need to use results, just perform the validation
         decoratedSamlResponse.checkAndGetUsername();
         decoratedSamlResponse.checkAndGetSubjectConfirmationNotOnOrAfterDate();

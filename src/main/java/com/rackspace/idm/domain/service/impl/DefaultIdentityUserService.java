@@ -119,8 +119,8 @@ public class DefaultIdentityUserService implements IdentityUserService {
     }
 
     @Override
-    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderName(String domainId, String idpName) {
-        return identityUserRepository.getFederatedUsersByDomainIdAndIdentityProviderId(domainId, idpName);
+    public Iterable<FederatedUser> getFederatedUsersByIdentityProviderId(String idpId) {
+        return identityUserRepository.getFederatedUsersByIdentityProviderId(idpId);
     }
 
     @Override

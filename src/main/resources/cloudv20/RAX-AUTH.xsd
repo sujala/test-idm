@@ -1025,6 +1025,15 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
+        <attribute name="enabled" type="xsd:boolean" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Whether the Identity Provider is enabled or disabled.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
     </complexType>
 
     <complexType name="IdentityProviders">

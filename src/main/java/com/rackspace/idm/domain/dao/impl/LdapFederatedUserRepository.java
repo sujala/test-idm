@@ -55,8 +55,13 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
     }
 
     @Override
-    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String identityProviderName) {
-        return (Iterable) getObjects(searchFilterGetUsersByDomainId(domainId), getBaseDnWithIdpId(identityProviderName));
+    public Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String identityProviderId) {
+        return (Iterable) getObjects(searchFilterGetUsersByDomainId(domainId), getBaseDnWithIdpId(identityProviderId));
+    }
+
+    @Override
+    public Iterable<FederatedUser> getFederatedUsersByIdentityProviderId(String identityProviderId) {
+        return (Iterable) getObjects(searchFilterGetFederatedUser(), getBaseDnWithIdpId(identityProviderId));
     }
 
     @Override
@@ -113,6 +118,11 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
             LOGGER.error("Error retrieving expired federated user", e);
             return null;
         }
+    }
+
+    private Filter searchFilterGetFederatedUser() {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, getLdapEntityClass()).build();
     }
 
     private Filter searchFilterGetUserById(String id) {
