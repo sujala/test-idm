@@ -185,9 +185,8 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Authentication should not fail when a role assigned exists under application without an openStackType, feature.global.endpoints.for.all.roles.enabled = #flag"() {
+    def "Authentication should not fail when a role assigned exists under application without an openStackType"() {
         given: "A new user"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED, flag)
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
@@ -219,66 +218,6 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
         utils.deleteRole(roleEntity)
         utils.deleteService(v1Factory.createService(application.clientId, application.clientId))
-
-        where:
-        flag  | _
-        true  | _
-        false | _
-    }
-
-    @Unroll
-    def "Authentication response should not have global endpoints for application without an openStackType, feature.global.endpoints.for.all.roles.enabled = #flag"() {
-        given: "A new user"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED, flag)
-        def domainId = utils.createDomain()
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-
-        when: "Creating a new application and role"
-        def clientId = testUtils.getRandomUUID()
-        def application = new Application(clientId, clientId).with {
-            it.description = "description"
-            it.enabled = true
-            return it
-        }
-        applicationDao.addApplication(application)
-        def roleName = testUtils.getRandomUUID()
-        def role = v2Factory.createRole(roleName, clientId)
-        def roleResponse = cloud20.createRole(utils.identityAdminToken, role)
-        def roleEntity = roleResponse.getEntity(Role).value
-
-        then: "Assert created role"
-        roleResponse.status == HttpStatus.CREATED.value()
-
-        when: "Add new MOSSO global endpoint and update to global"
-        def endpointTemplateId = testUtils.getRandomIntegerString()
-        def publicUrl = "http://publicUrl.com"
-        def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, null, publicUrl, null, true, null, clientId, "MOSSO")
-        cloud20.addEndpointTemplate(utils.identityAdminToken, endpointTemplate)
-        endpointTemplate.enabled = true
-        endpointTemplate.global = true
-        def updateEndpointTemplateResponse = cloud20.updateEndpointTemplate(utils.serviceAdminToken, endpointTemplateId, endpointTemplate)
-
-        then: "Assert updated global endpoint"
-        updateEndpointTemplateResponse.status == HttpStatus.OK.value()
-
-        when: "Adding role to user"
-        cloud20.addRoleToUserOnTenant(utils.identityAdminToken, domainId, userAdmin.id, roleEntity.id)
-        def auth = utils.authenticate(userAdmin)
-
-        then: "Assert service not in service catalog"
-        assert auth.serviceCatalog.service.find({it.name == clientId}) == null
-
-        cleanup:
-        utils.deleteUsers(users)
-        utils.deleteRole(roleEntity)
-        utils.deleteService(v1Factory.createService(application.clientId, application.clientId))
-        utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
-
-        where:
-        flag  | _
-        true  | _
-        false | _
     }
 
     def "Authentication returns tenant ID in header"() {

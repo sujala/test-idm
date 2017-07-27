@@ -140,13 +140,10 @@ public class IdentityConfig {
     private static final String MISSING_REQUIRED_PROPERTY_ERROR_LOG_MESSAGE = "Configuration Property '%s' is invalid";
     private static final String MISSING_REQUIRED_PROPERTY_ERROR_RESPONSE_MESSAGE = "This service is currently unavailable in Identity.";
     public static final String EXPOSE_V11_ADD_BASE_URL_PROP = "feature.v11.add.base.url.exposed";
-    public static final String FEATURE_BASE_URL_RESPECT_ENABLED_FLAG = "feature.base.url.respect.enabled.flag";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP = "feature.endpoint.template.type.use.config.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_MOSSO_MAPPING_PROP = "feature.endpoint.template.type.mosso.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_TYPE_NAST_MAPPING_PROP = "feature.endpoint.template.type.nast.mapping";
     public static final String FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP = "feature.endpoint.template.disable.name.type";
-    public static final String FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED = "feature.global.endpoints.for.all.roles.enabled";
-    public static final boolean FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED_DEFAULT = false;
     public static final boolean FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_DEFAULT = false;
     public static final String OTP_ISSUER = "feature.otp.issuer";
     public static final String OTP_ENTROPY = "feature.otp.entropy";
@@ -545,7 +542,6 @@ public class IdentityConfig {
         defaults.put(IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, "UUID");
         defaults.put(KEYCZAR_DN_CONFIG, "ou=keystore,o=configuration,dc=rackspace,dc=com");
         defaults.put(EXPOSE_V11_ADD_BASE_URL_PROP, true);
-        defaults.put(FEATURE_BASE_URL_RESPECT_ENABLED_FLAG, false);
         defaults.put(FEATURE_ENDPOINT_TEMPLATE_TYPE_USE_MAPPING_PROP, false);
         defaults.put(OTP_ISSUER, "Rackspace");
         defaults.put(OTP_ENTROPY, 25);
@@ -647,8 +643,6 @@ public class IdentityConfig {
         defaults.put(LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP, LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_PROP, LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT);
-
-        defaults.put(FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED, FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED_DEFAULT);
 
         defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_DEFAULT);
         defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_DEFAULT);
@@ -1186,11 +1180,6 @@ public class IdentityConfig {
         @IdmProp(key = EXPOSE_V11_ADD_BASE_URL_PROP)
         public boolean getV11AddBaseUrlExposed() {
             return getBooleanSafely(staticConfiguration, EXPOSE_V11_ADD_BASE_URL_PROP);
-        }
-
-        @IdmProp(key = FEATURE_BASE_URL_RESPECT_ENABLED_FLAG)
-        public boolean getBaseUlrRespectEnabledFlag() {
-            return getBooleanSafely(staticConfiguration, FEATURE_BASE_URL_RESPECT_ENABLED_FLAG);
         }
 
         public Set<IdentityRole> getImplicitRolesForRole(String roleName) {
@@ -1837,11 +1826,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_PROP);
         }
 
-        @IdmProp(key = FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED, versionAdded = "3.7.0", description = "Whether or not a user will receive global endpoints associated will all roles the user has on any given tenant.")
-        public boolean getFeatureGlobalEndpointsForAllRoles() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_GLOBAL_ENDPOINTS_FOR_ALL_ROLES_ENABLED);
-        }
-
         @IdmProp(key = FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, versionAdded = "3.7.0", description = "When true, if a user-manager calls the 'list users' service without a filter other user managers within the domain will not be returned.")
         public boolean restrictUserManagersFromListingOtherUserManagers() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP);
@@ -2071,11 +2055,6 @@ public class IdentityConfig {
     @Deprecated
     public boolean getV11AddBaseUrlExposed() {
         return getStaticConfig().getV11AddBaseUrlExposed();
-    }
-
-    @Deprecated
-    public boolean getBaseUlrRespectEnabledFlag() {
-        return getStaticConfig().getBaseUlrRespectEnabledFlag();
     }
 
     public String getConfigRoot() {
