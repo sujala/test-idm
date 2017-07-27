@@ -20,12 +20,12 @@ class TestValidateToken(base.TestBaseV2):
         Create users needed for the tests and generate clients for those users.
         """
         super(TestValidateToken, cls).setUpClass()
-        cls.DOMAIN_ID_TEST = cls.generate_random_string(const.DOMAIN_PATTERN)
+        domain_id = cls.generate_random_string(const.DOMAIN_PATTERN)
         cls.contact_id = randrange(start=const.CONTACT_ID_MIN,
                                    stop=const.CONTACT_ID_MAX)
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': cls.DOMAIN_ID_TEST,
+            additional_input_data={'domain_id': domain_id,
                                    'contact_id': cls.contact_id})
 
     def setUp(self):
