@@ -10,8 +10,13 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.config.IdmProperty
 import com.rackspace.idm.domain.config.IdmPropertyList
+import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
 import com.rackspace.idm.domain.entity.PasswordPolicy
+import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.service.ApplicationService
+import com.rackspace.idm.domain.service.TenantService
+import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.util.OTPHelper
 import com.rackspace.idm.util.SamlUnmarshaller
 import com.sun.jersey.api.client.ClientResponse
@@ -69,6 +74,18 @@ class Cloud20Utils {
 
     @Autowired
     DevOpsMethods devOpsMethods
+
+    @Autowired
+    UserService userService
+
+    @Autowired
+    TenantService tenantService
+
+    @Autowired
+    ApplicationService applicationService
+
+    @Autowired
+    TenantRoleDao tenantRoleDao
 
     @Shared
     def serviceAdminToken
@@ -343,6 +360,24 @@ class Cloud20Utils {
         getToken(IDENTITY_ADMIN_USERNAME, IDENTITY_ADMIN_PASSWORD)
     }
 
+    def createServiceAdmin() {
+        def serviceAdmin = this.createIdentityAdmin()
+        def serviceAdminEntity = userService.getUser(serviceAdmin.username)
+        tenantRoleDao.deleteTenantRoleForUser(serviceAdminEntity, tenantService.getTenantRoleForUserById(serviceAdminEntity, Constants.IDENTITY_ADMIN_ROLE_ID))
+        def serviceAdminClientRole = applicationService.getClientRoleById(Constants.SERVICE_ADMIN_ROLE_ID)
+        TenantRole role = new TenantRole()
+        role.setClientId(serviceAdminClientRole.getClientId())
+        role.setName(serviceAdminClientRole.getName())
+        role.setRoleRsId(serviceAdminClientRole.getId())
+        tenantService.addTenantRoleToUser(serviceAdminEntity, role)
+        return serviceAdmin
+    }
+
+    def deleteServiceAdmin(serviceAdmin) {
+        def serviceAdminEntity = userService.getUserById(serviceAdmin.id)
+        userService.deleteUser(serviceAdminEntity)
+    }
+
     def createIdentityAdmin() {
         def serviceAdminToken = getServiceAdminToken()
         return createUser(serviceAdminToken, testUtils.getRandomUUID("identityAdmin"))
@@ -423,6 +458,10 @@ class Cloud20Utils {
         def userAdmin = createUser(identityAdminToken, testUtils.getRandomUUID("userAdmin"), domainId)
 
         return [userAdmin, [identityAdmin, userAdmin].asList()]
+    }
+
+    def createUserAdminWithoutIdentityAdmin(domainId=testUtils.getRandomIntegerString()) {
+        return createUser(this.getIdentityAdminToken(), testUtils.getRandomUUID("userAdmin"), domainId)
     }
 
     /**

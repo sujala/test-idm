@@ -2270,6 +2270,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.checkAndGetUserById(_) >> updateUser
         userService.getUserByScopeAccess(_) >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
 
         when:
         service.updateUser(headers, authToken, "2", user)
@@ -2524,6 +2525,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.getUserByScopeAccess(_) >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
         service.userConverterCloudV20.fromUser(_) >> updatedUser
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
 
         when:
         service.updateUser(headers, authToken, "2", user)
@@ -2555,6 +2557,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         userService.getUserByScopeAccess(_) >> entityFactory.createUser()
         userService.isUsernameUnique(_) >> true
         service.userConverterCloudV20.fromUser(_) >> updatedUser
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
 
         when:
         service.updateUser(headers, authToken, "2", user)
@@ -2606,6 +2609,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def caller = entityFactory.createUser()
         caller.id = "2"
         userService.getUserByScopeAccess(_) >> caller
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.SERVICE_ADMIN
 
         when:
         def result = service.updateUser(headers, authToken, "2", user)
@@ -2658,6 +2662,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         caller.id = userId
         userService.getUserByScopeAccess(_) >> caller
         authorizationService.authorizeCloudUser(_) >> true
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.DEFAULT_USER
+        precedenceValidator.verifyCallerPrecedenceOverUser(_, _) >> {
+            throw new ForbiddenException()
+        }
 
         when:
         def response = service.updateUser(headers, authToken, "${updateUserId}", user).build()
@@ -3243,8 +3251,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         result.build().status == 401
     }
 
-    @Unroll("User with user-manage role can update different user with roles updatingServiceAdmin=#updatingServiceAdmin;updatingIdentityAdmin=#updatingIdentityAdmin;updatingUserAdmin=#updatingUserAdmin;updatingManagedUser=#updatingManagedUser;updatingCloudUser=#updatingCloudUser")
-    def "User with user-manage role can update different user with roles"() {
+    @Unroll
+    def "User with user-manage role can update different user with role: #userType"() {
         given:
         allowUserAccess()
 
@@ -3265,40 +3273,22 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         userService.getUserByScopeAccess(_) >> caller
         userService.checkAndGetUserById(_) >> retrievedUser
-
-        //mock caller roles
-        authorizationService.authorizeCloudIdentityAdmin(_) >> false
-        authorizationService.authorizeCloudUserAdmin(_) >> false
-        authorizationService.authorizeUserManageRole(_) >> true
-        authorizationService.authorizeCloudUser(_) >> false
-
-        //mock user being updated roles
-        authorizationService.hasServiceAdminRole(_) >> updatingServiceAdmin
-        authorizationService.hasIdentityAdminRole(_) >> updatingIdentityAdmin
-        authorizationService.hasUserAdminRole(_) >> updatingUserAdmin
-        authorizationService.hasUserManageRole(_) >> updatingManagedUser
-        authorizationService.hasDefaultUserRole(_) >> updatingCloudUser
+        def expectedStatus = IdentityUserTypeEnum.DEFAULT_USER == userType ? 200 : 403
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_MANAGER
+        if (IdentityUserTypeEnum.DEFAULT_USER != userType) {
+            1 * precedenceValidator.verifyCallerPrecedenceOverUser(caller, retrievedUser) >> {
+                throw new ForbiddenException()
+            }
+        }
 
         when:
         def result = service.updateUser(headers, authToken, "1", user)
 
         then:
-        //Despise this hack here, but code expects the authorization service to throw this to verify user managers/admins can not update service/identity admins.
-        //verifyDomain is tested in separate tests so just simulating what verifyDomain would do in this particular case.
-        if (updatingServiceAdmin || updatingIdentityAdmin) {
-            1 * authorizationService.verifyDomain(_,_) >> {throw new ForbiddenException()}
-        }
-
         result.status == expectedStatus
 
-        //Application logic assumption is that only ONE of the following roles service/identity/useradmin/usermanage
         where:
-        updatingServiceAdmin | updatingIdentityAdmin | updatingUserAdmin | updatingManagedUser | updatingCloudUser | expectedStatus
-        true                 | false                 | false             | false               | false             | 403
-        false                | true                  | false             | false               | false             | 403
-        false                | false                 | true              | false               | false             | 403
-        false                | false                 | false             | true                | true              | 403
-        false                | false                 | false             | false               | true              | 200
+        userType << IdentityUserTypeEnum.values()
     }
 
     def "Add user-manage role to user with identity admin role gives 401" () {

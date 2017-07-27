@@ -308,19 +308,60 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE | _
     }
 
+    def "test update user service authorization"() {
+        given:
+        def serviceAdmin1 = utils.createServiceAdmin()
+        def serviceAdmin2 = utils.createServiceAdmin()
+        def identityAdmin1 = utils.createIdentityAdmin()
+        def identityAdmin2 = utils.createIdentityAdmin()
+        def domainId = utils.createDomain()
+        def userAdmin1 = utils.createUserAdminWithoutIdentityAdmin(domainId)
+        def userAdmin2 = utils.createUserAdminWithoutIdentityAdmin()
+        def userUpdates = new UserForCreate().with {
+            it.displayName = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+
+        when: "service admin tries to update other service admin"
+        def response = cloud20.updateUser(utils.getToken(serviceAdmin2.username), serviceAdmin1.id, userUpdates)
+
+        then: "not authorized"
+        response.status == 403
+
+        when: "identity admin tries to update other identity admin"
+        response = cloud20.updateUser(utils.getToken(identityAdmin2.username), identityAdmin1.id, userUpdates)
+
+        then: "not authorized"
+        response.status == 403
+
+        when: "user admin tries to update other user admin in different domain"
+        response = cloud20.updateUser(utils.getToken(userAdmin2.username), userAdmin1.id, userUpdates)
+
+        then: "not authorized"
+        response.status == 403
+
+        when: "user admin tries to update other user admin in same domain"
+        def userAdmin2Entity = userService.getUserById(userAdmin2.id).with {
+            it.domainId = domainId
+            it
+        }
+        userService.updateUser(userAdmin2Entity)
+        response = cloud20.updateUser(utils.getToken(userAdmin2.username), userAdmin1.id, userUpdates)
+
+        then: "not authorized"
+        response.status == 403
+
+        cleanup:
+        utils.deleteUsers(identityAdmin1, identityAdmin2, userAdmin1, userAdmin2)
+        utils.deleteServiceAdmin(serviceAdmin1)
+        utils.deleteServiceAdmin(serviceAdmin2)
+    }
+
     @Unroll
     def "test service admin username can be updated: featureEnabled = #featureEnabled"() {
         given:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_USERNAME_UPDATE_PROP, featureEnabled)
-        def serviceAdmin = utils.createIdentityAdmin()
-        def serviceAdminEntity = userService.getUser(serviceAdmin.username)
-        tenantRoleDao.deleteTenantRoleForUser(serviceAdminEntity, tenantService.getTenantRoleForUserById(serviceAdminEntity, Constants.IDENTITY_ADMIN_ROLE_ID))
-        def serviceAdminClientRole = applicationService.getClientRoleById(Constants.SERVICE_ADMIN_ROLE_ID)
-        TenantRole role = new TenantRole()
-        role.setClientId(serviceAdminClientRole.getClientId())
-        role.setName(serviceAdminClientRole.getName())
-        role.setRoleRsId(serviceAdminClientRole.getId())
-        tenantService.addTenantRoleToUser(serviceAdminEntity, role)
+        def serviceAdmin = utils.createServiceAdmin()
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
@@ -343,14 +384,14 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getServiceAdminToken(), serviceAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, false, DefaultCloud20Service.NOT_AUTHORIZED)
 
         when: "update w/ identity admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
         response = cloud20.updateUser(utils.getIdentityAdminToken(), serviceAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultCloud20Service.ERROR_CANNOT_UPDATE_USER_WITH_HIGHER_ACCESS)
+        assertUsernameUpdated(response, userUpdates, false, DefaultCloud20Service.NOT_AUTHORIZED)
 
         when: "update w/ user admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
@@ -377,7 +418,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
-        userService.deleteUser(serviceAdminEntity)
+        utils.deleteServiceAdmin(serviceAdmin)
 
         where:
         featureEnabled << [true, false]
@@ -417,7 +458,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getIdentityAdminToken(), identityAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, featureEnabled)
+        assertUsernameUpdated(response, userUpdates, false, DefaultCloud20Service.NOT_AUTHORIZED)
 
         when: "update w/ user admin token"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
@@ -503,7 +544,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userManagerSameDomain.username), userAdmin.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultCloud20Service.UPDATE_USER_CANNOT_UPDATE_HIGHER_LEVEL_USER_ERROR_MESSAGE)
+        assertUsernameUpdated(response, userUpdates, false, DefaultCloud20Service.NOT_AUTHORIZED)
 
         when: "update w/ user manager token from different domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
@@ -601,7 +642,7 @@ class UpdateUserIntegrationTest extends RootIntegrationTest {
         response = cloud20.updateUser(utils.getToken(userManagerSameDomain.username), userManager.id, userUpdates)
 
         then:
-        assertUsernameUpdated(response, userUpdates, false, DefaultCloud20Service.UPDATE_USER_CANNOT_UPDATE_HIGHER_LEVEL_USER_ERROR_MESSAGE)
+        assertUsernameUpdated(response, userUpdates, false, DefaultCloud20Service.NOT_AUTHORIZED)
 
         when: "update w/ user manager token from different domain"
         userUpdates.username = RandomStringUtils.randomAlphabetic(8)
