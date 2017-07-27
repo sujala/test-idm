@@ -1216,15 +1216,8 @@ public class DefaultUserService implements UserService {
 
     @Override
     public boolean userDisabledByTenants(EndUser user) {
-        if(identityConfig.getReloadableConfig().getFeatureUserDisabledByTenantsEnabled()) {
-            IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(user);
-            if(userType != null && !userType.hasAtLeastIdentityAdminAccessLevel() && tenantService.allTenantsDisabledForUser(user)) {
-                return true;
-            }
-            return false;
-        } else {
-            return false;
-        }
+        IdentityUserTypeEnum userType = authorizationService.getIdentityTypeRoleAsEnum(user);
+        return userType != null && !userType.hasAtLeastIdentityAdminAccessLevel() && tenantService.allTenantsDisabledForUser(user);
     }
 
     @Override

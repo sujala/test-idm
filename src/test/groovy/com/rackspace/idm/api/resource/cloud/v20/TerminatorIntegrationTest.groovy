@@ -2,7 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.RepositoryProfileResolver
 import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -42,9 +41,8 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
     private static final Logger LOG = Logger.getLogger(TerminatorIntegrationTest.class)
 
     @Unroll
-    def "test terminator for provisioned users when all tenants on user are disabled: userType = #tokenType, featureEnabled = #featureEnabled"() {
+    def "test terminator for provisioned users when all tenants on user are disabled: userType = #tokenType"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, featureEnabled)
         def domain = utils.createDomain()
         def endpointTemplateId = testUtils.getRandomInteger().toString()
         def endpointTemplate = v1Factory.createEndpointTemplate(endpointTemplateId, "object-store", testUtils.getRandomUUID("http://public/"), "cloudFiles", true, "ORD")
@@ -100,7 +98,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         def v10Response = cloud10.authenticate(username, apiKey)
 
         then: "403 is returned for user admin and below"
-        if(featureEnabled && restricted) {
+        if(restricted) {
             assert v10Response.status == 403
             assert v10Response.getEntity(String) == GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE
         } else {
@@ -112,7 +110,7 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         def v11Response = cloud11.authenticate(cred)
 
         then: "403 is returned for user admin and below"
-        if(featureEnabled && restricted) {
+        if(restricted) {
             assert v11Response.status == 403
             assert v11Response.getEntity(ForbiddenFault).message == GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE
         } else {
@@ -125,32 +123,20 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         then: "no service catalog is returned for user admin and below"
         v20Response.status == 200
         def v20ResponseData = v20Response.getEntity(AuthenticateResponse).value
-        if(featureEnabled && restricted) {
+        if(restricted) {
             assert v20ResponseData.serviceCatalog.service.endpoint.flatten().size() == 0
         } else {
             assert v20ResponseData.serviceCatalog.service.endpoint.flatten().size() != 0
         }
 
         and: "the mosso tenant is in the token scope"
-        if(featureEnabled && restricted) {
+        if(restricted) {
             assert v20ResponseData.token.tenant.id == mossoTenantId
         }
 
-        when: "list endpoints for token, feature disabled"
-        def token = v20ResponseData.token.id
-        def listEndpointsForTokenFeatureEnabled = false
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, listEndpointsForTokenFeatureEnabled)
-        def listEndpointsForTokenResponse = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), token)
-
-        then: "NOT empty if user is restricted by terminator and feature flag is disabled"
-        listEndpointsForTokenResponse.status == 200
-        def listEndpointsData = listEndpointsForTokenResponse.getEntity(EndpointList).value
-        assert listEndpointsData.endpoint.size() > 0
-
         when: "list endpoints for token, feature enabled"
-        listEndpointsForTokenFeatureEnabled = true
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, listEndpointsForTokenFeatureEnabled)
-        listEndpointsForTokenResponse = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), token)
+        def token = v20ResponseData.token.id
+        def listEndpointsForTokenResponse = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), token)
 
         then: "empty if user is restricted by terminator and feature flag is enabled"
         listEndpointsForTokenResponse.status == 200
@@ -167,20 +153,19 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         utils.deleteTenant(tenant)
         utils.deleteDomain(domain)
         utils.disableAndDeleteEndpointTemplate(endpointTemplateId)
-        reloadableConfiguration.reset()
 
         where:
-        tokenType                           | restricted | featureEnabled
-        IdentityUserTypeEnum.SERVICE_ADMIN  | false      | true
-        IdentityUserTypeEnum.IDENTITY_ADMIN | false      | true
-        IdentityUserTypeEnum.USER_ADMIN     | true       | true
-        IdentityUserTypeEnum.USER_MANAGER   | true       | true
-        IdentityUserTypeEnum.DEFAULT_USER   | true       | true
-        IdentityUserTypeEnum.SERVICE_ADMIN  | false      | false
-        IdentityUserTypeEnum.IDENTITY_ADMIN | false      | false
-        IdentityUserTypeEnum.USER_ADMIN     | true       | false
-        IdentityUserTypeEnum.USER_MANAGER   | true       | false
-        IdentityUserTypeEnum.DEFAULT_USER   | true       | false
+        tokenType                           | restricted
+        IdentityUserTypeEnum.SERVICE_ADMIN  | false
+        IdentityUserTypeEnum.IDENTITY_ADMIN | false
+        IdentityUserTypeEnum.USER_ADMIN     | true
+        IdentityUserTypeEnum.USER_MANAGER   | true
+        IdentityUserTypeEnum.DEFAULT_USER   | true
+        IdentityUserTypeEnum.SERVICE_ADMIN  | false
+        IdentityUserTypeEnum.IDENTITY_ADMIN | false
+        IdentityUserTypeEnum.USER_ADMIN     | true
+        IdentityUserTypeEnum.USER_MANAGER   | true
+        IdentityUserTypeEnum.DEFAULT_USER   | true
     }
 
     @Unroll
@@ -260,7 +245,6 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
 
         when: "enable the feature to filter the endpoints and list endpoints for token"
         def token = authData.token.id
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, true)
         def listEndpointsForTokenResponse = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), token)
 
         then: "there are endpoints in the response"
@@ -275,7 +259,6 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         try { utils.deleteTenant(tenant2) } catch (Exception e) {}
         try { utils.deleteDomain(domain) } catch (Exception e) {}
         try { utils.disableAndDeleteEndpointTemplate(endpointTemplateId) } catch (Exception e) {}
-        reloadableConfiguration.reset()
 
         where:
         tokenType | restricted
@@ -344,7 +327,6 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
 
         when: "enable the feature to filter the endpoints and list endpoints for token"
         def token = authData.token.id
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, true)
         def listEndpointsForTokenResponse = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), token)
 
         then: "there are NO endpoints in the response"
@@ -355,7 +337,6 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(identityAdmin, defaultUser, userManage, userAdmin)
         utils.deleteDomain(domain)
-        reloadableConfiguration.reset()
 
         where:
         tokenType                           | _
@@ -366,11 +347,8 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         IdentityUserTypeEnum.DEFAULT_USER   | _
     }
 
-    @Unroll
-    def "test terminator for federated users when all tenants on user are disabled, authFeatureEnabled = #authFeatureEnabled, endpoinstFeatureEnabled = #endpointsFeatureEnabled"() {
+    def "test terminator for federated users when all tenants on user are disabled"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, authFeatureEnabled)
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_ENDPOINTS_FOR_TOKEN_FILTERED_FOR_TERMINATOR_PROP, endpointsFeatureEnabled)
         def domainId = utils.createDomain()
         def mossoTenantId = domainId
         def nastTenantId = utils.getNastTenant(domainId)
@@ -389,16 +367,8 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         def responseData = samlResponse.getEntity(AuthenticateResponse).value
         def samlToken = responseData.token.id
         def listEndpointsData = cloud20.listEndpointsForToken(utils.getServiceAdminToken(), samlToken).getEntity(EndpointList).value
-        if(authFeatureEnabled) {
-            assert responseData.serviceCatalog.service.endpoint.flatten().size() == 0
-        } else {
-            assert responseData.serviceCatalog.service.endpoint.flatten().size() > 0
-        }
-        if(endpointsFeatureEnabled) {
-            assert listEndpointsData.endpoint.size() == 0
-        } else {
-            assert listEndpointsData.endpoint.size() > 0
-        }
+        assert responseData.serviceCatalog.service.endpoint.flatten().size() == 0
+        assert listEndpointsData.endpoint.size() == 0
 
         when: "enable one of the tenants and auth again"
         utils.updateTenant(mossoTenantId, true)
@@ -414,20 +384,10 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUsers(users)
         deleteFederatedUserQuietly(username)
-        reloadableConfiguration.reset()
-
-        where:
-        authFeatureEnabled | endpointsFeatureEnabled
-        true               | true
-        false              | false
-        true               | false
-        false              | true
     }
 
-    @Unroll
-    def "trying to call v1.1 admin auth call for domain with user admin with all tenants disabled returns error, featureEnabled = #featureEnabled"() {
+    def "trying to call v1.1 admin auth call for domain with user admin with all tenants disabled returns error"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USER_DISABLED_BY_TENANTS_ENABLED_PROP, featureEnabled)
         def domain = utils.createDomain()
         def mossoTenantId = domain
         def nastTenantId = utils.getNastTenant(domain)
@@ -441,43 +401,25 @@ class TerminatorIntegrationTest extends RootIntegrationTest {
         def authResponse = cloud11.adminAuthenticate(v1Factory.createPasswordCredentials(userAdmin.username, Constants.DEFAULT_PASSWORD))
 
         then:
-        if(featureEnabled) {
-            assert authResponse.status == 403
-            assert authResponse.getEntity(ForbiddenFault).message == GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE
-        } else {
-            assert authResponse.status == 200
-        }
+        assert authResponse.status == 403
+        assert authResponse.getEntity(ForbiddenFault).message == GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE
 
         when: "auth with mosso creds"
         authResponse = cloud11.adminAuthenticate(v1Factory.createMossoCredentials(Integer.valueOf(mossoTenantId), userAdminEntity.apiKey))
 
         then:
-        if(featureEnabled) {
-            assert authResponse.status == 403
-            assert authResponse.getEntity(ForbiddenFault).message == GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE
-        } else {
-            assert authResponse.status == 200
-        }
+        assert authResponse.status == 403
+        assert authResponse.getEntity(ForbiddenFault).message == GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE
 
         when: "auth with nast creds"
         authResponse = cloud11.adminAuthenticate(v1Factory.createNastCredentials(nastTenantId, userAdminEntity.apiKey))
 
         then:
-        if(featureEnabled) {
-            assert authResponse.status == 403
-            assert authResponse.getEntity(ForbiddenFault).message == GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE
-        } else {
-            assert authResponse.status == 200
-        }
+        assert authResponse.status == 403
+        assert authResponse.getEntity(ForbiddenFault).message == GlobalConstants.ALL_TENANTS_DISABLED_ERROR_MESSAGE
 
         cleanup:
         utils.deleteUsers(users)
-        reloadableConfiguration.reset()
-
-        where:
-        featureEnabled | _
-        true           | _
-        false          | _
     }
 
     def addRoleToUserOnTenant(role, tenant, username) {

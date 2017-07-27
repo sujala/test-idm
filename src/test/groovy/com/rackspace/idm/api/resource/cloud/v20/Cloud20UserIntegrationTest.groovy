@@ -16,13 +16,6 @@ import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
 
-/**
- * Created with IntelliJ IDEA
- * User: jorge
- * Date: 11/19/13
- * Time: 5:01 PM
- * To change this template use File | Settings | File Templates.
- */
 class Cloud20UserIntegrationTest extends RootIntegrationTest{
 
     @Shared def identityAdmin, userAdmin, userManage, defaultUser, users

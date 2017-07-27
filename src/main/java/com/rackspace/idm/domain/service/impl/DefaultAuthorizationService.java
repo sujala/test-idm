@@ -782,14 +782,12 @@ public class DefaultAuthorizationService implements AuthorizationService {
 
     @Override
     public boolean restrictUserAuthentication(ServiceCatalogInfo serviceCatalogInfo) {
-        return identityConfig.getReloadableConfig().getFeatureUserDisabledByTenantsEnabled() &&
-                restrictEndpointsForTerminator(serviceCatalogInfo);
+        return restrictEndpointsForTerminator(serviceCatalogInfo);
     }
 
     @Override
     public boolean restrictTokenEndpoints(ServiceCatalogInfo serviceCatalogInfo) {
-        return identityConfig.getReloadableConfig().getFeatureListEndpointsForTokenFilteredForTerminator() &&
-                restrictEndpointsForTerminator(serviceCatalogInfo);
+        return restrictEndpointsForTerminator(serviceCatalogInfo);
     }
 
     @Override
