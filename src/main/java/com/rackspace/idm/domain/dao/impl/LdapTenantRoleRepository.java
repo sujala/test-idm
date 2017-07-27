@@ -92,53 +92,48 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
 
     @Override
     public List<String> getIdsForUsersWithTenantRole(String roleId, int maxResult) {
-        List<String> userIds = new ArrayList<String>();
-
         List<TenantRole> roles = null;
         try {
             roles = getUnpagedUnsortedObjects(searchFilterGetTenantRolesByRoleId(roleId), getBaseDn(), SearchScope.SUB, maxResult);
         } catch (LDAPSearchException ldapEx) {
             if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
-                logger.debug("Aborting loading users with role. Result size of {} will exceed limit of {}", userIds.size(), maxResult);
+                logger.debug("Aborting loading users with role. Result size will exceed limit of {}", maxResult);
                 throw new BadRequestException("Result size exceeded. Results limited to " + maxResult + " users.");
             } else {
                 throw new IllegalStateException(ldapEx);
             }
         }
-        //get the userIds
-        for (TenantRole tenantRole : roles) {
-            try {
-                userIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
-            } catch (LDAPException e) {
-                throw new IllegalStateException();
-            }
-        }
-        return userIds;
+        return getUserUniqueIdsForRoles(roles);
     }
 
     public List<String> getUserNamesForFederatedUsersWithTenantRole(String roleId, int maxResult) {
-        List<String> userNames = new ArrayList<String>();
-
         List<TenantRole> roles = null;
         try {
             roles = getUnpagedUnsortedObjects(searchFilterGetTenantRolesByRoleId(roleId), getExternalIdpBaseDn(), SearchScope.SUB, maxResult);
         } catch (LDAPSearchException ldapEx) {
             if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
-                logger.debug("Aborting loading federated users with role. Result size of {} will exceed limit of {}", userNames.size(), maxResult);
+                logger.debug("Aborting loading federated users with role. Result size will exceed limit of {}", maxResult);
                 throw new BadRequestException("Result size exceeded. Results limited to " + maxResult + " users.");
             } else {
                 throw new IllegalStateException(ldapEx);
             }
         }
-        //get the userNames
-        for (TenantRole tenantRole : roles) {
-            try {
-                userNames.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
-            } catch (LDAPException e) {
-                throw new IllegalStateException();
+        return getUserUniqueIdsForRoles(roles);
+    }
+
+    private List<String> getUserUniqueIdsForRoles(List<TenantRole> roles) {
+        List<String> uniqueIds = new ArrayList<String>();
+
+        if(roles != null && !roles.isEmpty() ) {
+            for (TenantRole tenantRole : roles) {
+                try {
+                    uniqueIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
+                } catch (LDAPException e) {
+                    throw new IllegalStateException();
+                }
             }
         }
-        return userNames;
+        return uniqueIds;
     }
 
     private void addOrUpdateTenantRole(String uniqueId, TenantRole tenantRole) {

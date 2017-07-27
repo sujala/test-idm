@@ -90,12 +90,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
-
-import static com.rackspace.idm.domain.service.impl.DefaultUserService.LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE;
-import static com.rackspace.idm.domain.service.impl.DefaultUserService.LIST_USERS_BY_ROLE_LIMIT_NAME;
-
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
@@ -1995,7 +1989,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             ClientRole role = checkAndGetClientRole(roleId);
-            int sizeLimit = config.getInt(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
+            int sizeLimit = identityConfig.getStaticConfig().getUsersByRoleLimit();
 
             if(identityConfig.getReloadableConfig().getDeleteRoleAssignedToUser()) {
                 if (tenantService.getIdsForUsersWithTenantRole(roleId, sizeLimit).size() > 0 || tenantService.getUserNamesForFederatedUsersWithTenantRole(roleId, sizeLimit).size() > 0) {

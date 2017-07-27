@@ -451,7 +451,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
     }
 
 
-    def "caller cannot delete a role assigned to federated user"() {
+    def "caller cannot delete a role assigned to dedicated user"() {
         given:
         def role = v2Factory.createRole(testUtils.getRandomUUID("role")).with {
             it.roleType = RoleTypeEnum.PROPAGATE

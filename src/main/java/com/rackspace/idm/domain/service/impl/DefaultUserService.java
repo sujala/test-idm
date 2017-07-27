@@ -56,9 +56,6 @@ public class DefaultUserService implements UserService {
 
     public static final String ERROR_MSG_TOKEN_NOT_FOUND = "Token not found.";
 
-    public static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
-    public static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
-
     static final String MOSSO_BASE_URL_TYPE = "MOSSO";
     static final String NAST_BASE_URL_TYPE = "NAST";
     static final String ADD_EXPIRED_TOKENS_ON_USER_CREATE_FEATURE_FLAG = "add.expired.tokens.user.create";
@@ -730,8 +727,7 @@ public class DefaultUserService implements UserService {
     public PaginatorContext<User> getUsersWithRole(String roleId, int offset, int limit) {
         logger.debug("Getting All Users with role {}", roleId);
 
-        int sizeLimit = config.getInt(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
-        List<String> userIds = tenantService.getIdsForUsersWithTenantRole(roleId, sizeLimit);
+        List<String> userIds = tenantService.getIdsForUsersWithTenantRole(roleId, identityConfig.getStaticConfig().getUsersByRoleLimit());
 
         List<User> users = new ArrayList<User>();
         for (User user : this.userDao.getUsers(userIds)) {

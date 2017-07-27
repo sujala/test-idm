@@ -523,4 +523,29 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         assert returnedSessionInactivityTimeout == expectedSessionInactivityTimeout
     }
 
+
+    def "caller cannot delete a role assigned to federated user"() {
+        given:
+        def role = utils.createRole(utils.createService())
+        def fedRequest = createFedRequest().with {
+            it.roleNames = [role.name] as List
+            it
+        }
+        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+
+        when:
+        def response = cloud20.deleteRole(sharedServiceAdminToken, role.id)
+
+        then:
+        response.status == 403
+
+        cleanup:
+        try {
+            deleteFederatedUserQuietly(fedRequest.username)
+            utils.deleteRole(role.id)
+        } catch (Exception ex) {
+            // Eat
+        }
+    }
 }

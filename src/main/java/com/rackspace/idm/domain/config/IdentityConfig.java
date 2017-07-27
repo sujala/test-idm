@@ -363,6 +363,9 @@ public class IdentityConfig {
     public static final String FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP = "feature.allow.delete.role.assigned.to.user";
     public static final boolean FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_DEFAULT = true;
 
+    public static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
+    public static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
+
     /**
      * Required static prop
      */
@@ -682,6 +685,7 @@ public class IdentityConfig {
 
         defaults.put(IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT);
         defaults.put(FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_DEFAULT);
+        defaults.put(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
 
         return defaults;
     }
@@ -1400,6 +1404,11 @@ public class IdentityConfig {
         public String getNastTenantPrefix() {
             return getStringSafely(staticConfiguration, NAST_TENANT_PREFIX_PROP);
         }
+
+        @IdmProp(key = LIST_USERS_BY_ROLE_LIMIT_NAME, versionAdded = "1.0.14.8", description = "Retrieve the limit for users list by role")
+        public int getUsersByRoleLimit() {
+            return getIntSafely(staticConfiguration, LIST_USERS_BY_ROLE_LIMIT_NAME);
+        }
     }
 
     /**
@@ -1956,11 +1965,10 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP);
         }
 
-        @IdmProp(key = FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, versionAdded = "3.15.0", description = "Flag to allow deletion of role assigned to a user")
+        @IdmProp(key = FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, versionAdded = "3.15.0", description = "Whether or not to allow deletion of role assigned to a user")
         public boolean getDeleteRoleAssignedToUser() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP);
         }
-
     }
 
     public class RepositoryConfig {
