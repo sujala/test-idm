@@ -5,11 +5,13 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
@@ -103,8 +105,8 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
         roles.role.size() == 1
 
         cleanup:
-        utils.deleteRole(role)
         utils.deleteTenant(tenantB)
+        utils.deleteRole(role)
     }
 
     def "delete role for user on tenant that is only assigned to one tenant deletes the role from the user"() {
@@ -159,8 +161,8 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
         subUserRoles.role.id.contains(role.id)
 
         cleanup:
-        utils.deleteRole(role)
         utils.deleteTenant(tenantB)
+        utils.deleteRole(role)
     }
 
     def "delete role on tenant from user admin deletes role from tenant on sub-users if one tenant assigned to role"() {
@@ -213,8 +215,9 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
         userRolesOnTenant.role.id.contains(role.id)
 
         cleanup:
-        utils.deleteRole(role)
+        utils.deleteTenant(tenantA)
         utils.deleteTenant(tenantB)
+        utils.deleteRole(role)
     }
 
     @Unroll
@@ -312,5 +315,25 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
         utils.deleteRole(roleEntity)
+    }
+
+    def "delete a role assigned to provisioned user"() {
+        given:
+        def role = utils.createRole(service)
+        def tenantA = tenant
+        cloud20.addRoleToUserOnTenant(serviceAdminToken, tenantA.id, defaultUser.id, role.id)
+
+        when: "caller cannot delete a role assigned to provisioned user"
+        def response = cloud20.deleteRole(serviceAdminToken, role.id)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Deleting the role associated with one or more users is not allowed")
+
+        when: "delete role which is not assigned to any user"
+        utils.deleteTenant(tenantA)
+        def response1 = cloud20.deleteRole(serviceAdminToken, role.id)
+
+        then:
+        response1.status == 204
     }
 }

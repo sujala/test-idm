@@ -1368,6 +1368,16 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public int getCountOfTenantRolesByRoleIdForProvisionedUsers(String roleId) {
+        return tenantRoleDao.getCountOfTenantRolesByRoleIdForProvisionedUsers(roleId);
+    }
+
+    @Override
+    public int getCountOfTenantRolesByRoleIdForFederatedUsers(String roleId) {
+        return tenantRoleDao.getCountOfTenantRolesByRoleIdForFederatedUsers(roleId);
+    }
+
+    @Override
     public void addUserIdToTenantRole(TenantRole tenantRole) {
         String userId = tenantRoleDao.getUserIdForParent(tenantRole);
         if (userId != null) {

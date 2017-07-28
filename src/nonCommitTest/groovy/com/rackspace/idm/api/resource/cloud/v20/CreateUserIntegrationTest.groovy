@@ -1004,8 +1004,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         cleanup:
         cloud20.deleteUser(utils.getServiceAdminToken(), defaultUser.id)
         utils.deleteUsers(users)
-        utils.deleteRole(role)
         utils.deleteTenant(tenant)
+        utils.deleteRole(role)
     }
 
     def "service admins cannot create identity admins with roles"() {
@@ -1620,8 +1620,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
         utils.deleteUser(utils.getUserByName(userAdminToCreate.username))
         utils.deleteDomain(domainId)
-        utils.deleteRole(role)
         utils.deleteTenant(tenantName)
+        utils.deleteRole(role)
 
         where:
         [tenantType, featureEnabled] << [[Constants.TENANT_TYPE_CLOUD,
@@ -1669,9 +1669,9 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(utils.getUserByName(defaultUserToCreate.username))
         utils.deleteUser(userAdmin)
         utils.deleteDomain(domainId)
-        utils.deleteRole(role)
         utils.deleteTenant(tenantName)
         utils.deleteTenantType(tenantTypeName)
+        utils.deleteRole(role)
     }
 
     @Unroll
@@ -1712,8 +1712,8 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         reloadableConfiguration.reset()
         utils.deleteUser(utils.getUserByName(userAdminToCreate.username))
         utils.deleteDomain(domainId)
-        utils.deleteRole(role)
         utils.deleteTenant(tenantName)
+        utils.deleteRole(role)
 
         where:
         featureEnabled << [true, false]
@@ -1759,9 +1759,9 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(utils.getUserByName(defaultUserToCreate.username))
         utils.deleteUser(userAdmin)
         utils.deleteDomain(domainId)
-        utils.deleteRole(role)
         utils.deleteTenant(tenantName)
         utils.deleteTenantType(tenantTypeName)
+        utils.deleteRole(role)
 
         where:
         featureEnabled << [true, false]

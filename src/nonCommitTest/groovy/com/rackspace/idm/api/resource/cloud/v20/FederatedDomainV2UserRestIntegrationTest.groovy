@@ -32,6 +32,7 @@ import org.joda.time.DateTime
 import org.opensaml.security.credential.Credential
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.Tenants
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
@@ -523,4 +524,29 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         assert returnedSessionInactivityTimeout == expectedSessionInactivityTimeout
     }
 
+
+    def "caller cannot delete a role assigned to federated user"() {
+        given:
+        def role = utils.createRole(utils.createService())
+        def fedRequest = createFedRequest().with {
+            it.roleNames = [role.name] as List
+            it
+        }
+        def samlResponse = sharedFederatedDomainAuthRequestGenerator.createSignedSAMLResponse(fedRequest)
+        cloud20.federatedAuthenticateV2(sharedFederatedDomainAuthRequestGenerator.convertResponseToString(samlResponse))
+
+        when:
+        def response = cloud20.deleteRole(sharedServiceAdminToken, role.id)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Deleting the role associated with one or more users is not allowed")
+
+        cleanup:
+        try {
+            deleteFederatedUserQuietly(fedRequest.username)
+            utils.deleteRole(role.id)
+        } catch (Exception ex) {
+            // Eat
+        }
+    }
 }

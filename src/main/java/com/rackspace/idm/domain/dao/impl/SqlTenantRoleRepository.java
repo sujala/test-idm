@@ -14,6 +14,7 @@ import com.rackspace.idm.domain.sql.mapper.impl.TenantRoleMapper;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -246,6 +247,14 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
         }
 
         return getUserIds(page);
+    }
+
+    public int getCountOfTenantRolesByRoleIdForProvisionedUsers(String roleId) {
+        throw new NotImplementedException();
+    }
+
+    public int getCountOfTenantRolesByRoleIdForFederatedUsers(String roleId) {
+        throw new NotImplementedException();
     }
 
     @Override

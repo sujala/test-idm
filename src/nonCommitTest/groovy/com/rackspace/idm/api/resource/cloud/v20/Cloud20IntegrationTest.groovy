@@ -1600,8 +1600,8 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def domains = []
         def users = []
         def role = utils.createRole()
-        staticIdmConfiguration.setProperty(DefaultUserService.LIST_USERS_BY_ROLE_LIMIT_NAME, 2)
-        def userSizeLimit = config.getInt(DefaultUserService.LIST_USERS_BY_ROLE_LIMIT_NAME)
+        staticIdmConfiguration.setProperty(IdentityConfig.LIST_USERS_BY_ROLE_LIMIT_NAME, 2)
+        def userSizeLimit = config.getInt(IdentityConfig.LIST_USERS_BY_ROLE_LIMIT_NAME)
         def identityAdmin = utils.createIdentityAdmin()
         def identityAdminToken = utils.getToken(identityAdmin.username, DEFAULT_PASSWORD)
         for(i in 0..userSizeLimit) {

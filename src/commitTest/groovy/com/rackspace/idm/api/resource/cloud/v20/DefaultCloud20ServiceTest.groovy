@@ -1020,8 +1020,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "deleteRole verifies callers precedence over role to be deleted"() {
         given:
+        reloadableConfig.getDeleteRoleAssignedToUser() >> true
+        tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(_) >> 0
+        tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(_) >> 0
         allowUserAccess()
-
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
 
         when:
@@ -1035,7 +1037,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "deleteRole deletes role"() {
         given:
         allowUserAccess()
-
+        reloadableConfig.getDeleteRoleAssignedToUser() >> false
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
 
         when:
@@ -1048,6 +1050,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "deleteRole handles exceptions"() {
         given:
+        reloadableConfig.getDeleteRoleAssignedToUser() >> false
         def scopeAccessMock = Mock(ScopeAccess)
         def role = entityFactory.createClientRole("identity:role").with {
             it.id = "unique"
@@ -1070,6 +1073,31 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response2.status == 403
         response3.status == 400
         response4.status == 403
+    }
+
+    def "deleteRole handles exceptions when role is assigned to a provisioned/federated user"() {
+
+        given:
+        reloadableConfig.getDeleteRoleAssignedToUser() >> true
+        allowUserAccess()
+        applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
+
+        when:
+        tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(_) >> 2
+        tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(_) >> 0
+        def response1 = service.deleteRole(headers, authToken, roleId).build()
+
+        then:
+        response1.status == 403
+
+        when:
+        tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(_) >> 0
+        tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(_) >> 2
+        def response2 = service.deleteRole(headers, authToken, roleId).build()
+
+        then:
+        response2.status == 403
+
     }
 
     def "addRolesToUserOnTenant verifies user-admin level access"() {

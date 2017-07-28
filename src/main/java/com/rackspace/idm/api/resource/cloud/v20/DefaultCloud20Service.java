@@ -90,9 +90,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
-
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
@@ -1990,10 +1987,16 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (roleId == null) {
                 throw new BadRequestException("roleId cannot be null");
             }
-
             ClientRole role = checkAndGetClientRole(roleId);
+
+            if(identityConfig.getReloadableConfig().getDeleteRoleAssignedToUser()) {
+                if (tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(roleId) > 0 || tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(roleId) > 0) {
+                    throw new ForbiddenException("Deleting the role associated with one or more users is not allowed");
+                }
+            }
+
             if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-                throw new ForbiddenException("role cannot be deleted");
+                throw new ForbiddenException("Role prefixed with 'identity:' cannot be deleted");
             }
 
             User caller = userService.getUserByAuthToken(authToken);
