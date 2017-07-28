@@ -28,10 +28,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return BASE_DN;
     }
 
-    public String getExternalIdpBaseDn() {
-        return EXTERNAL_PROVIDERS_BASE_DN;
-    }
-
     public String getLdapEntityClass(){
         return OBJECTCLASS_TENANT_ROLE;
     }
@@ -121,7 +117,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     public int getCountOfTenantRolesByRoleIdForFederatedUsers(String roleId) {
-        return countObjects(searchFilterGetTenantRolesByRoleId(roleId), getExternalIdpBaseDn());
+        return countObjects(searchFilterGetTenantRolesByRoleId(roleId), EXTERNAL_PROVIDERS_BASE_DN);
     }
 
     private void addOrUpdateTenantRole(String uniqueId, TenantRole tenantRole) {
