@@ -1021,8 +1021,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "deleteRole verifies callers precedence over role to be deleted"() {
         given:
         reloadableConfig.getDeleteRoleAssignedToUser() >> true
-        tenantService.getIdsForUsersWithTenantRole(_,_) >> [].asList()
-        tenantService.getUserNamesForFederatedUsersWithTenantRole(_,_) >> [].asList()
+        tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(_) >> 0
+        tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(_) >> 0
         allowUserAccess()
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
 
@@ -1083,16 +1083,16 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         applicationService.getClientRoleById(_) >> entityFactory.createClientRole()
 
         when:
-        tenantService.getIdsForUsersWithTenantRole(_,_) >> ["12", "34"].asList()
-        tenantService.getUserNamesForFederatedUsersWithTenantRole(_,_) >> [].asList()
+        tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(_) >> 2
+        tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(_) >> 0
         def response1 = service.deleteRole(headers, authToken, roleId).build()
 
         then:
         response1.status == 403
 
         when:
-        tenantService.getIdsForUsersWithTenantRole(_,_) >> [].asList()
-        tenantService.getUserNamesForFederatedUsersWithTenantRole(_,_) >> ["test123", "test456"].asList()
+        tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(_) >> 0
+        tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(_) >> 2
         def response2 = service.deleteRole(headers, authToken, roleId).build()
 
         then:

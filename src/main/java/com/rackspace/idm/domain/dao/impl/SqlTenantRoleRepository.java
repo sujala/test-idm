@@ -249,11 +249,6 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
         return getUserIds(page);
     }
 
-    @Override
-    public List<String> getUserNamesForFederatedUsersWithTenantRole(String roleId, int maxResult) {
-        throw new NotImplementedException();
-    }
-
     public int getCountOfTenantRolesByRoleIdForProvisionedUsers(String roleId) {
         throw new NotImplementedException();
     }

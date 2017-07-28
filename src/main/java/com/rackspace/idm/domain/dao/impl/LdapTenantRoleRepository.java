@@ -92,48 +92,28 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
 
     @Override
     public List<String> getIdsForUsersWithTenantRole(String roleId, int maxResult) {
+        List<String> userIds = new ArrayList<String>();
+
         List<TenantRole> roles = null;
         try {
             roles = getUnpagedUnsortedObjects(searchFilterGetTenantRolesByRoleId(roleId), getBaseDn(), SearchScope.SUB, maxResult);
         } catch (LDAPSearchException ldapEx) {
             if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
-                logger.debug("Aborting loading users with role. Result size will exceed limit of {}", maxResult);
+                logger.debug("Aborting loading users with role. Result size of {} will exceed limit of {}", userIds.size(), maxResult);
                 throw new BadRequestException("Result size exceeded. Results limited to " + maxResult + " users.");
             } else {
                 throw new IllegalStateException(ldapEx);
             }
         }
-        return getUserUniqueIdsForRoles(roles);
-    }
-
-    public List<String> getUserNamesForFederatedUsersWithTenantRole(String roleId, int maxResult) {
-        List<TenantRole> roles = null;
-        try {
-            roles = getUnpagedUnsortedObjects(searchFilterGetTenantRolesByRoleId(roleId), getExternalIdpBaseDn(), SearchScope.SUB, maxResult);
-        } catch (LDAPSearchException ldapEx) {
-            if (ldapEx.getResultCode() == ResultCode.SIZE_LIMIT_EXCEEDED) {
-                logger.debug("Aborting loading federated users with role. Result size will exceed limit of {}", maxResult);
-                throw new BadRequestException("Result size exceeded. Results limited to " + maxResult + " users.");
-            } else {
-                throw new IllegalStateException(ldapEx);
+        //get the userIds
+        for (TenantRole tenantRole : roles) {
+            try {
+                userIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
+            } catch (LDAPException e) {
+                throw new IllegalStateException();
             }
         }
-        return getUserUniqueIdsForRoles(roles);
-    }
-
-    private List<String> getUserUniqueIdsForRoles(List<TenantRole> roles) {
-        List<String> uniqueIds = new ArrayList<String>();
-
-        if(roles != null && !roles.isEmpty() ) {
-            for (TenantRole tenantRole : roles) {
-                try {
-                    uniqueIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
-                } catch (LDAPException e) {
-                    throw new IllegalStateException();
-                }
-            }
-        }
-        return uniqueIds;
+        return userIds;
     }
 
     public int getCountOfTenantRolesByRoleIdForProvisionedUsers(String roleId) {
@@ -177,7 +157,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         if (userDN != null) {
             List<RDN> userRDNs = new ArrayList<RDN>(Arrays.asList(userDN.getRDNs()));
             for (RDN rdn : userRDNs) {
-                if (rdn.hasAttribute("rsId") || rdn.hasAttribute("uid")) {
+                if (rdn.hasAttribute("rsId")) {
                     String rdnString = rdn.toString();
                     return rdnString.substring(rdnString.indexOf('=') + 1);
                 }
@@ -193,7 +173,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         List<RDN> remainder = new ArrayList<RDN>(rdns);
         remainder.removeAll(parentRDNs);
         RDN rdn = remainder.get(0);
-        if (rdn.hasAttribute("rsId") || rdn.hasAttribute("rackerId") || rdn.hasAttribute("clientId") || rdn.hasAttribute("uid")) {
+        if (rdn.hasAttribute("rsId") || rdn.hasAttribute("rackerId") || rdn.hasAttribute("clientId")) {
             return dn;
         } else if (parentDN.getParent() == null) {
             return null;
