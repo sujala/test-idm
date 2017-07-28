@@ -17,11 +17,14 @@ import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
 import org.apache.commons.collections.CollectionUtils
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
 
@@ -474,7 +477,7 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
         def response = cloud20.deleteRole(serviceAdminToken, propagatingRole.id)
 
         then:
-        response.status == 403
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Deleting the role associated with one or more users is not allowed")
 
         cleanup:
         utils.deleteUsers(users)

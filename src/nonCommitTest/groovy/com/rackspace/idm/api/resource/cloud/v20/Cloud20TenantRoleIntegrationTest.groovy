@@ -5,11 +5,13 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.IdentityFault
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
 import spock.lang.Shared
 import spock.lang.Unroll
+import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
 class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
@@ -325,7 +327,7 @@ class Cloud20TenantRoleIntegrationTest extends RootIntegrationTest {
         def response = cloud20.deleteRole(serviceAdminToken, role.id)
 
         then:
-        response.status == 403
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Deleting the role associated with one or more users is not allowed")
 
         when: "delete role which is not assigned to any user"
         utils.deleteTenant(tenantA)
