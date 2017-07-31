@@ -120,6 +120,11 @@ class TestRevokeToken(base.TestBaseV2):
                 resp.status_code, 204,
                 msg='User with ID {0} failed to delete'.format(_id))
         for _id in self.domain_ids:
+            # Disable domain prior to delete.
+            disable_domain_req = requests.Domain(enabled=False)
+            self.identity_admin_client.update_domain(
+                domain_id=_id, request_object=disable_domain_req)
+
             resp = self.identity_admin_client.delete_domain(domain_id=_id)
             self.assertEqual(
                 resp.status_code, 204,

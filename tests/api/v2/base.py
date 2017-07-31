@@ -208,6 +208,10 @@ class TestBaseV2(base.TestBase):
             resp = parent_client.delete_user(user_id=user_id)
         if const.X_DOMAIN_ID in client.default_headers:
             domain_id = client.default_headers[const.X_DOMAIN_ID]
+            # Disable domain before delete
+            disable_domain_req = requests.Domain(enabled=False)
+            parent_client.update_domain(
+                domain_id=domain_id, request_object=disable_domain_req)
             parent_client.delete_domain(domain_id=domain_id)
         if const.X_TENANT_ID in client.default_headers:
             tenant_id = client.default_headers[const.X_TENANT_ID]

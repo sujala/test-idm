@@ -40,7 +40,7 @@ class AuthAndValidateTokens(base.TestBaseV2):
         # Create a userAdmin with tenantId
         username = self.generate_random_string(
             pattern=const.USER_ADMIN_PATTERN)
-        self.domain_id = self.generate_random_string(
+        domain_id = self.generate_random_string(
             pattern=const.NUMERIC_DOMAIN_ID_PATTERN)
         input_data = {'email': const.EMAIL_RANDOM,
                       'secret_qa': {
@@ -48,13 +48,15 @@ class AuthAndValidateTokens(base.TestBaseV2):
                               pattern=const.LOWER_CASE_LETTERS),
                           const.SECRET_ANSWER: self.generate_random_string(
                               pattern=const.UPPER_CASE_LETTERS)},
-                      'domain_id': self.domain_id}
+                      'domain_id': domain_id}
         req_obj = requests.UserAdd(user_name=username, **input_data)
 
         resp = self.identity_admin_client.add_user(request_object=req_obj)
         self.assertEqual(resp.status_code, 201)
         create_user_with_tenant_resp = responses.User(resp.json())
         self.user_ids.append(create_user_with_tenant_resp.id)
+        self.domain_id = domain_id
+
         password = resp.json()[const.USER][const.NS_PASSWORD]
 
         # Get user's tenant ID
@@ -193,11 +195,18 @@ class AuthAndValidateTokens(base.TestBaseV2):
                     msg='Tenant with ID {0} failed to delete'.format(
                         tenant_id))
 
-        resp = self.identity_admin_client.delete_domain(
-            domain_id=self.domain_id)
-        self.assertEqual(
-            resp.status_code, 204,
-            msg='Domain with ID {0} failed to delete'.format(self.domain_id))
+        if hasattr(self, 'domain_id'):
+            # Disable Domain before delete.
+            disable_domain_req = requests.Domain(enabled=False)
+            resp = self.identity_admin_client.update_domain(
+                domain_id=self.domain_id, request_object=disable_domain_req)
+
+            resp = self.identity_admin_client.delete_domain(
+                domain_id=self.domain_id)
+            self.assertEqual(
+                resp.status_code, 204,
+                msg='Domain with ID {0} failed to delete'.format(
+                    self.domain_id))
 
     @classmethod
     def tearDownClass(cls):
