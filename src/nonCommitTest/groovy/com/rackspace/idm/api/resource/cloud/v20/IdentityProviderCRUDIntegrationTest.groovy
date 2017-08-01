@@ -297,8 +297,20 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then:
         response.status == 200
 
-        cleanup:
+        when: "validate the token returned prior to disabling the IDP, after re-enabling the IDP"
+        validateResponse = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserToken)
+
+        then:
+        validateResponse.status == 404
+
+        when: "validate the token returned prior to disabling the IDP, after deleting the IDP"
         utils.deleteIdentityProviderQuietly(utils.getServiceAdminToken(), idp.id)
+        validateResponse = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserToken)
+
+        then:
+        validateResponse.status == 404
+
+        cleanup:
         utils.deleteUserQuietly(userAdmin)
 
         where:
@@ -358,7 +370,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def impersonationResponse2 = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
 
         then:
-        impersonationResponse.status == 200
+        impersonationResponse2.status == 200
         def impersonationToken2 = impersonationResponse2.getEntity(ImpersonationResponse).token.id
 
         when: "validate the impersonation token"
@@ -367,8 +379,14 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then:
         validateResponse.status == 200
 
-        cleanup:
+        when: "impersonate the federated user again, after IDP is deleted"
         utils.deleteIdentityProviderQuietly(utils.getServiceAdminToken(), idp.id)
+        def impersonationResponse3 = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
+
+        then:
+        impersonationResponse3.status == 404
+
+        cleanup:
         utils.deleteUserQuietly(userAdmin)
     }
 
