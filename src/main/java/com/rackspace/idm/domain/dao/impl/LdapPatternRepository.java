@@ -5,13 +5,6 @@ import com.rackspace.idm.domain.dao.PatternDao;
 import com.rackspace.idm.domain.entity.Pattern;
 import com.unboundid.ldap.sdk.Filter;
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge
- * Date: 10/29/12
- * Time: 1:18 PM
- * To change this template use File | Settings | File Templates.
- */
 @LDAPComponent
 public class LdapPatternRepository extends LdapGenericRepository<Pattern> implements PatternDao {
 
@@ -21,6 +14,11 @@ public class LdapPatternRepository extends LdapGenericRepository<Pattern> implem
 
     public String getLdapEntityClass(){
         return OBJECTCLASS_PATTERN;
+    }
+
+    @Override
+    protected boolean useUuidForRsId() {
+        return true;
     }
 
     public String getNextId() {

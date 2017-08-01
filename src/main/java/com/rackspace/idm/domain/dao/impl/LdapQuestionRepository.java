@@ -1,19 +1,17 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.LDAPComponent;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.QuestionDao;
 import com.rackspace.idm.domain.entity.Question;
 import com.unboundid.ldap.sdk.Filter;
+import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * Created by IntelliJ IDEA.
- * User: jorge
- * Date: 10/29/12
- * Time: 1:18 PM
- * To change this template use File | Settings | File Templates.
- */
 @LDAPComponent
 public class LdapQuestionRepository extends LdapGenericRepository<Question> implements QuestionDao {
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     public String getBaseDn(){
         return QUESTION_BASE_DN;
@@ -21,6 +19,11 @@ public class LdapQuestionRepository extends LdapGenericRepository<Question> impl
 
     public String getLdapEntityClass(){
         return OBJECTCLASS_QUESTION;
+    }
+
+    @Override
+    protected boolean useUuidForRsId() {
+        return identityConfig.getReloadableConfig().getRsIdUuidQuestionsEnabled();
     }
 
     public String getNextId() {
