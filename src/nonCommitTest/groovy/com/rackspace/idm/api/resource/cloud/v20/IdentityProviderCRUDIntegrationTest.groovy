@@ -2488,6 +2488,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then:
         response.status == SC_OK
         listIdps.identityProvider.size() == 1
+        listIdps.identityProvider.id[0] == idp.id
 
         when: "List IDPs with query params"
         response = cloud20.listIdentityProviders(userAdmin2Token, idp.name, idp.issuer, domainId2)
