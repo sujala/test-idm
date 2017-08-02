@@ -243,6 +243,11 @@ class TestUserAccessEvents(base.TestBaseV2):
         resp = self.identity_admin_client.update_mfa(user_id=user_id,
                                                      request_object=update_obj)
         self.assertEqual(resp.status_code, 204)
+        # This is to avoid session id getting revoked which can happen
+        # if it was generated the same second MFA was enabled. This can
+        # removed once we will have sub-second precision(CID-615).
+        time.sleep(1)
+
         # authenticate with pwd & mfa enabled (1st mfa auth step)
         auth_obj = requests.AuthenticateWithPassword(user_name=user_name,
                                                      password=password)
