@@ -1,18 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
-import com.rackspace.idm.domain.service.EndpointService
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum
-import com.rackspace.idm.domain.service.ScopeAccessService
-import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.domain.service.*
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import groovy.json.JsonSlurper
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.BooleanUtils
+import org.apache.http.HttpStatus
 import org.apache.log4j.Logger
 import org.codehaus.groovy.runtime.typehandling.GroovyCastException
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -25,9 +21,6 @@ import spock.lang.Unroll
 import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
-
-import static com.rackspace.idm.Constants.*
-
 /**
  * Testing the v2.0/users endpoint
  */
@@ -110,6 +103,7 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         retrievedFedUser.groups == null
         retrievedFedUser.secretQA == null
         retrievedFedUser.federatedIdp == Constants.DEFAULT_IDP_URI
+        retrievedFedUser.created != null
 
         cleanup:
             deleteFederatedUserQuietly(samlUser)
@@ -140,9 +134,44 @@ class GetUserByXIntegrationTest extends RootConcurrentIntegrationTest {
         retrievedFedUser.groups == null
         retrievedFedUser.secretQA == null
         retrievedFedUser.federatedIdp == null
+        retrievedFedUser.created != null
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Test get user by name/id return created attribute: Accept: #accept"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        when: "Get user by name"
+        def response = cloud20.getUserByName(utils.identityAdminToken, userAdmin.username, accept)
+        def byNameEntity = getEntity(response, User)
+
+        then: "Assert created date"
+        response.status == HttpStatus.SC_OK
+        byNameEntity.created != null
+
+        when: "Get user by id"
+        response = cloud20.getUserById(utils.identityAdminToken, userAdmin.id, accept)
+        def byIdEntity = getEntity(response, User)
+
+        then: "Assert created date"
+        response.status == HttpStatus.SC_OK
+        byIdEntity.created != null
+
+        then: "Assert created dates match"
+        byNameEntity.created == byIdEntity.created
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+
+        where:
+        accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
     def User getUserById(String userId, MediaType mediaType) {
