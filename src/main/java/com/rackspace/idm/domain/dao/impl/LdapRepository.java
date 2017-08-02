@@ -472,7 +472,7 @@ public abstract class LdapRepository {
     protected static final String NEXT_PATTERN_ID = "nextPatternId";
 
     protected boolean useUuidForRsId() {
-        return config.getBoolean("rsid.uuid.enabled", false);
+        return false;
     }
 
     protected String getUuid() {

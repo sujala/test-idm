@@ -1,6 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group
+import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Groups
+import com.rackspace.idm.domain.config.IdentityConfig
+import org.apache.http.HttpStatus
+import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
 class Cloud20GroupIntegrationTest extends RootIntegrationTest {
@@ -104,6 +108,49 @@ class Cloud20GroupIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteGroup(group)
+    }
+
+    @Unroll
+    def "Test feature flag 'rsid.uuid.groups.enabled' = #flag"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.RSID_UUID_GROUPS_ENABLED_PROP, flag)
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        Group group = v2Factory.createGroup(testUtils.getRandomUUID()).with{
+            it.description = "Description"
+            it
+        }
+
+        when: "Create group"
+        def response = cloud20.createGroup(utils.getServiceAdminToken(), group)
+        def groupEntity = response.getEntity(Group).value
+
+        then: "Assert group id"
+        response.status == HttpStatus.SC_CREATED
+        if (flag) {
+            // 32 length UUID without dashes
+            testUtils.assertStringPattern("[a-zA-Z0-9]{32}", groupEntity.id)
+        } else {
+            testUtils.assertStringPattern("\\d+", groupEntity.id)
+        }
+
+        when: "Add group to user"
+        utils.addUserToGroup(groupEntity, userAdmin)
+        def groupsResponse = cloud20.listGroupsForUser(utils.getServiceAdminToken(), userAdmin.id)
+        Groups groupsEntity = groupsResponse.getEntity(Groups).value
+
+        then: "Assert group correctly added to user"
+        groupsEntity.group.find{it.id == groupEntity.id} != null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        utils.deleteGroup(groupEntity)
+        reloadableConfiguration.reset()
+
+        where:
+        flag << [true, false]
     }
 
 }

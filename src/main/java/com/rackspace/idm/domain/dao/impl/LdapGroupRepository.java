@@ -1,19 +1,17 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.LDAPComponent;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.entity.Group;
 import com.unboundid.ldap.sdk.Filter;
+import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * Created by IntelliJ IDEA.
- * User: matt.colton
- * Date: 1/31/12
- * Time: 2:33 PM
- * To change this template use File | Settings | File Templates.
- */
 @LDAPComponent
 public class LdapGroupRepository extends LdapGenericRepository<Group> implements GroupDao {
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     public String getBaseDn() {
         return GROUP_BASE_DN;
@@ -62,6 +60,11 @@ public class LdapGroupRepository extends LdapGenericRepository<Group> implements
     @Override
     public Iterable<Group> getGroups() {
         return getObjects(searchFilterGetGroups());
+    }
+
+    @Override
+    protected boolean useUuidForRsId() {
+        return identityConfig.getReloadableConfig().getRsIdUuidGroupsEnabled();
     }
 
     @Override

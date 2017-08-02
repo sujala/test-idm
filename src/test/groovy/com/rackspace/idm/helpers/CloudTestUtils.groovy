@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
 import javax.ws.rs.core.MediaType
 import java.nio.charset.StandardCharsets
+import java.util.regex.Pattern
 
 @Component
 class CloudTestUtils {
@@ -105,6 +106,11 @@ class CloudTestUtils {
                 .withPath(Constants.TEST_MOCK_FEEDS_PATH)
                 .withHeaders(new Header(Constants.X_AUTH_TOKEN, ".*"),
                     new Header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_ATOM_XML))
+    }
+
+    def void assertStringPattern(String pattern, String value) {
+        Pattern stringPattern = Pattern.compile(pattern)
+        assert stringPattern.matcher(value).matches()
     }
 
     def HttpRequest createUpdateUserFeedsRequest(user, eventType) {

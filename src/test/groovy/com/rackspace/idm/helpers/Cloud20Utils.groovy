@@ -1281,6 +1281,11 @@ class Cloud20Utils {
         response.getEntity(IdentityProperty)
     }
 
+    def deleteQuestion(question, String token = getIdentityAdminToken()) {
+        def response = methods.deleteQuestion(token, question.id)
+        assert response.status == SC_NO_CONTENT
+    }
+
     def deleteIdentityProperty(propId, token = getIdentityAdminToken()) {
         def response = devOpsMethods.deleteIdentityProperty(token, propId)
     }

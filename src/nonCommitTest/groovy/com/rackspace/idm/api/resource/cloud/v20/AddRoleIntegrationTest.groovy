@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.ApplicationService
@@ -547,6 +548,46 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         requestContentType              | acceptContentType
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Test feature flag 'rsid.uuid.roles.enabled' = #flag"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.RSID_UUID_ROLES_ENABLED_PROP, flag)
+        Role role = v2Factory.createRole(testUtils.getRandomUUID())
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        when: "Create role"
+        def response = cloud20.createRole(utils.getServiceAdminToken(), role)
+        def roleEntity = response.getEntity(Role).value
+
+        then: "Assert role id"
+        response.status == HttpStatus.SC_CREATED
+        if (flag) {
+            // 32 length UUID without dashes
+            testUtils.assertStringPattern("[a-zA-Z0-9]{32}", roleEntity.id)
+        } else {
+            testUtils.assertStringPattern("\\d+", roleEntity.id)
+        }
+
+        when: "Add role to user and validate token"
+        utils.addRoleToUser(userAdmin, roleEntity.id)
+        def tokenId = utils.getToken(userAdmin.username)
+        def validateResponse = utils.validateToken(tokenId)
+
+        then: "Assert role correctly added to user"
+        validateResponse.user.roles.role.find {it.id == roleEntity.id} != null
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        deleteRoleQuietly(role)
+        reloadableConfiguration.reset()
+
+        where:
+        flag << [true, false]
     }
 
     def deleteUserQuietly(user) {

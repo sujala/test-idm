@@ -366,6 +366,15 @@ public class IdentityConfig {
     public static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
     public static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
 
+    public static final String RSID_UUID_ROLES_ENABLED_PROP = "rsid.uuid.roles.enabled";
+    public static final boolean RSID_UUID_ROLES_ENABLED_DEFAULT = true;
+
+    public static final String RSID_UUID_GROUPS_ENABLED_PROP = "rsid.uuid.groups.enabled";
+    public static final boolean RSID_UUID_GROUPS_ENABLED_DEFAULT = true;
+
+    public static final String RSID_UUID_QUESTIONS_ENABLED_PROP = "rsid.uuid.questions.enabled";
+    public static final boolean RSID_UUID_QUESTIONS_ENABLED_DEFAULT = true;
+
     /**
      * Required static prop
      */
@@ -686,6 +695,10 @@ public class IdentityConfig {
         defaults.put(IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT);
         defaults.put(FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_DEFAULT);
         defaults.put(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
+
+        defaults.put(RSID_UUID_ROLES_ENABLED_PROP, RSID_UUID_ROLES_ENABLED_DEFAULT);
+        defaults.put(RSID_UUID_GROUPS_ENABLED_PROP, RSID_UUID_GROUPS_ENABLED_DEFAULT);
+        defaults.put(RSID_UUID_QUESTIONS_ENABLED_PROP, RSID_UUID_QUESTIONS_ENABLED_DEFAULT);
 
         return defaults;
     }
@@ -1968,6 +1981,21 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, versionAdded = "3.15.0", description = "Whether or not to allow deletion of role assigned to a user")
         public boolean getDeleteRoleAssignedToUser() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP);
+        }
+
+        @IdmProp(key = RSID_UUID_ROLES_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for role's rsId on creation.")
+        public boolean getRsIdUuidRolesEnabled() {
+            return getBooleanSafely(reloadableConfiguration, RSID_UUID_ROLES_ENABLED_PROP);
+        }
+
+        @IdmProp(key = RSID_UUID_GROUPS_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for group's rsId on creation.")
+        public boolean getRsIdUuidGroupsEnabled() {
+            return getBooleanSafely(reloadableConfiguration, RSID_UUID_GROUPS_ENABLED_PROP);
+        }
+
+        @IdmProp(key = RSID_UUID_QUESTIONS_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for question's rsId on creation.")
+        public boolean getRsIdUuidQuestionsEnabled() {
+            return getBooleanSafely(reloadableConfiguration, RSID_UUID_QUESTIONS_ENABLED_PROP);
         }
     }
 

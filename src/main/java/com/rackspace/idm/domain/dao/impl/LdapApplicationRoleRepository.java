@@ -17,14 +17,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: jacob
- * Date: 11/12/12
- * Time: 5:03 PM
- * To change this template use File | Settings | File Templates.
- */
-
 @LDAPComponent
 public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientRole> implements ApplicationRoleDao {
 
@@ -35,6 +27,11 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     private IdentityConfig identityConfig;
 
     public static final ImmutableList<Integer> roleQueryWeights = ImmutableList.copyOf(Arrays.asList(0, 50, 100, 500, 750, 900, 1000, 2000, 2500));
+
+    @Override
+    protected boolean useUuidForRsId() {
+        return identityConfig.getReloadableConfig().getRsIdUuidRolesEnabled();
+    }
 
     @Override
     public String getNextRoleId() {

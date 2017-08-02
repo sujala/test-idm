@@ -17,7 +17,6 @@ import com.rackspace.idm.domain.entity.ScopeAccess
 import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TokenRevocationService
-import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.util.JSONReaderForRoles
 import com.rackspace.idm.validation.Validator20
 import com.unboundid.ldap.sdk.Modification
@@ -45,8 +44,6 @@ import testHelpers.junit.IgnoreByRepositoryProfile
 
 import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
-
-import static org.apache.http.HttpStatus.*
 
 class Cloud20IntegrationTest extends RootIntegrationTest {
     Logger LOG = Logger.getLogger(Cloud20IntegrationTest.class)
@@ -1694,6 +1691,55 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
 
         getQuestionResponse.status == 200
         questions != null
+    }
+
+    @Unroll
+    def "Test feature flag 'rsid.uuid.questions.enabled' = #flag"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.RSID_UUID_QUESTIONS_ENABLED_PROP, flag)
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        Question question = v1Factory.createQuestion(null, "question")
+
+        when: "Create and get question"
+        def response = cloud20.createQuestion(utils.getServiceAdminToken(), question)
+        def getResponse = cloud20.getQuestionFromLocation(utils.getServiceAdminToken(), response.location)
+        def questionEntity = getResponse.getEntity(Question)
+
+        then: "Assert question id"
+        response.status == HttpStatus.SC_CREATED
+        if (flag) {
+            // 32 length UUID without dashes
+            testUtils.assertStringPattern("[a-zA-Z0-9]{32}", questionEntity.id)
+        } else {
+            testUtils.assertStringPattern("\\d+", questionEntity.id)
+        }
+
+        when: "Add secretQA to user"
+        def answer = testUtils.getRandomUUID("Answer")
+        def secretQA = v1Factory.createSecretQA(questionEntity.id, answer)
+        response = cloud20.createSecretQA(utils.getServiceAdminToken(), userAdmin.id, secretQA)
+
+        then:
+        response.status == HttpStatus.SC_OK
+
+        when: "Get secretQA for user"
+        response = cloud20.getSecretQA(utils.getServiceAdminToken(), userAdmin.id)
+        def secretQAEntity = response.getEntity(SecretQA)
+
+        then: "Assert correct answer"
+        response.status == HttpStatus.SC_OK
+        secretQAEntity.answer == answer
+
+        cleanup:
+        utils.deleteQuestion(questionEntity)
+        utils.deleteUsers(users)
+        utils.deleteDomain(domainId)
+        reloadableConfiguration.reset()
+
+        where:
+        flag << [true, false]
     }
 
     def "invalid operations on question returns 'not found'"() {
