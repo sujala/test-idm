@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.security.TokenFormatSelector;
 import com.rackspace.idm.domain.security.UnmarshallTokenException;
 import com.rackspace.idm.domain.service.AETokenRevocationService;
 import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.TokenRevocationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
 import org.apache.commons.lang.StringUtils;
@@ -163,6 +164,22 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
     }
 
     @Override
+    public void revokeAllTokensForIdentityProvider(String identityProviderId) {
+        TokenRevocationRecord trr = tokenRevocationRecordPersistenceStrategy.addIdentityProviderTrrRecord(identityProviderId);
+        Iterable<FederatedUser> users = identityUserService.getFederatedUsersByIdentityProviderId(identityProviderId);
+        for (FederatedUser user : users) {
+            // We need to create a user TRR here instead of the IDP TRR.
+            // This is due to cloud feeds and repose not currently supporting IDP TRRS
+            // Also note that we are not setting an auth-by here b/c the IDP can specify the auth-by in the saml response and we want to revoke all of the tokens
+            LdapTokenRevocationRecord userTrr = new LdapTokenRevocationRecord();
+            userTrr.setId(trr.getId());
+            userTrr.setTargetIssuedToId(user.getId());
+            userTrr.setTargetCreatedBefore(trr.getTargetCreatedBefore());
+            sendUserTrrFeedEvent(user, userTrr);
+        }
+    }
+
+    @Override
     public boolean isTokenRevoked(String tokenStr) {
         ScopeAccess token = aeTokenService.unmarshallToken(tokenStr);
         return isTokenRevoked(token);
@@ -241,7 +258,7 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
         }
     }
 
-    private void sendUserTrrFeedEvent(User user, TokenRevocationRecord trr) {
+    private void sendUserTrrFeedEvent(BaseUser user, TokenRevocationRecord trr) {
         if (user != null) {
             LOG.warn("Sending User TRR event to atom hopper.");
             atomHopperClient.asyncPostUserTrr(user, trr);

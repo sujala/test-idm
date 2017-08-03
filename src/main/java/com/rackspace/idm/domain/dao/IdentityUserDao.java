@@ -49,6 +49,14 @@ public interface IdentityUserDao {
     Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String idpId);
 
     /**
+     * Search for federated users within the specified identity provider id
+     *
+     * @param idpId
+     * @return
+     */
+    Iterable<FederatedUser> getFederatedUsersByIdentityProviderId(String idpId);
+
+    /**
      * Search for federated users not in approvedDomainIds for identity provider
      *
      * @param approvedDomainIds

@@ -32,6 +32,11 @@ public interface TokenRevocationRecordPersistenceStrategy<T extends TokenRevocat
     T addUserTrrRecord(String targetUserId, List<AuthenticatedByMethodGroup> authenticatedBy);
 
     /**
+     * Add an IDP TRR to revoke all tokens previously issued to federated users for the given IDP.
+     */
+    T addIdentityProviderTrrRecord(String identityProviderId);
+
+    /**
      * Retrieve the specified record, or null, if not found.
      *
      * @param id

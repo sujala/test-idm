@@ -884,7 +884,7 @@ class Cloud20Utils {
         }
     }
 
-    def User getUserByIdReturnUser(String id, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){
+    User getUserByIdReturnUser(String id, String token=getServiceAdminToken(), MediaType mediaType = APPLICATION_XML_TYPE){
         def response = methods.getUserById(token, id, mediaType)
         assert (response.status == SC_OK)
         def entity = response.getEntity(User)

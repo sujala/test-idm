@@ -64,6 +64,11 @@ public class SqlTokenRevocationRecordRepository implements TokenRevocationRecord
     }
 
     @Override
+    public TokenRevocationRecord addIdentityProviderTrrRecord(String identityProviderId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public TokenRevocationRecord getTokenRevocationRecord(String id) {
         return tokenRevocationRecordRepository.findOne(id);
     }

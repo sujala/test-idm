@@ -40,6 +40,11 @@ public class MemoryTokenRevocationRecordPersistenceStrategy implements TokenRevo
     }
 
     @Override
+    public TokenRevocationRecord addIdentityProviderTrrRecord(String identityProviderId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public synchronized TokenRevocationRecord getTokenRevocationRecord(String id) {
         return trrIdToTRRMap.get(id);
     }

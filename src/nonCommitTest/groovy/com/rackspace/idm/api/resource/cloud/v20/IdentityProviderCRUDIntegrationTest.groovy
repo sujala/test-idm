@@ -4,9 +4,11 @@ import com.rackspace.docs.core.event.EventType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
+import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.dao.TenantDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.FederatedUser
@@ -20,8 +22,9 @@ import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import groovy.xml.XmlUtil
 import org.apache.commons.io.IOUtils
-import org.apache.commons.lang.RandomStringUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
+import org.joda.time.DateTime
 import org.mockserver.verify.VerificationTimes
 import org.opensaml.saml.saml2.metadata.EntityDescriptor
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor
@@ -38,6 +41,8 @@ import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
 import testHelpers.saml.SamlProducer
+import testHelpers.saml.v2.FederatedDomainAuthGenerationRequest
+import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 
 import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
@@ -65,6 +70,9 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
     @Autowired
     UserService userService
 
+    @Autowired
+    IdentityProviderDao identityProviderDao
+
     @Unroll
     def "CRUD a DOMAIN IDP with approvedDomainGroup, but no certs - request: #requestContentType"() {
         given:
@@ -79,6 +87,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         then: "created successfully"
         response.status == SC_CREATED
+        creationResultIdp.enabled
         creationResultIdp.approvedDomainGroup == domainGroupIdp.approvedDomainGroup
         creationResultIdp.approvedDomainIds == null
         creationResultIdp.description == domainGroupIdp.description
@@ -180,6 +189,325 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         requestContentType | _
         MediaType.APPLICATION_XML_TYPE | _
         MediaType.APPLICATION_JSON_TYPE | _
+    }
+
+    @Unroll
+    def "disabling an IDP revokes all tokens for users within the IDP - #creationType"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
+        def idpCredential = SamlCredentialUtils.generateX509Credential()
+        def samlProducer = new SamlProducer(idpCredential)
+        def pubCertPemString = SamlCredentialUtils.getCertificateAsPEMString(idpCredential.entityCertificate)
+        def issuer = UUID.randomUUID().toString()
+        def idpUrl = UUID.randomUUID().toString()
+        IdentityProvider idp
+        if (creationType == IdpCreationType.METADATA) {
+            String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, idpUrl, [pubCertPemString])
+            idp = cloud20.createIdentityProviderWithMetadata(utils.getToken(userAdmin.username), metadata).getEntity(IdentityProvider)
+        } else {
+            def pubCerts = v2Factory.createPublicCertificate(pubCertPemString)
+            def publicCertificates = v2Factory.createPublicCertificates(pubCerts)
+
+            def idpData = v2Factory.createIdentityProvider(issuer, "blah", idpUrl, IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL, null).with {
+                it.publicCertificates = publicCertificates
+                it
+            }
+            idp = cloud20.createIdentityProvider(utils.getServiceAdminToken(), idpData).getEntity(IdentityProvider)
+        }
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, RandomStringUtils.randomAlphanumeric(8), 1000, domainId, null, "${RandomStringUtils.randomAlphanumeric(8)}@example.com", samlProducer)
+        def federationResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+        def federatedUser = utils.getUserById(federationResponse.user.id)
+        def federatedUserToken = federationResponse.token.id
+        def idpEntity = identityProviderDao.getIdentityProviderByName(idp.name)
+        def brokerCredential = SamlCredentialUtils.generateX509Credential()
+        def brokerIdp = cloud20.createIdentityProviderWithCred(utils.getServiceAdminToken(), IdentityProviderFederationTypeEnum.BROKER, brokerCredential).getEntity(IdentityProvider)
+        def v2authRequestGenerator = new FederatedDomainAuthRequestGenerator(brokerCredential, idpCredential)
+
+        when: "disable the IDP"
+        resetCloudFeedsMock()
+        def idpRequest = new IdentityProvider().with {
+            it.enabled = false
+            it
+        }
+        def response = cloud20.updateIdentityProvider(utils.getServiceAdminToken(), idp.id, idpRequest)
+
+        then: "the IDP is disabled"
+        response.status == 200
+        def updatedIdp = response.getEntity(IdentityProvider)
+        !updatedIdp.enabled
+
+        and: "an update event was sent for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntity, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "and the user TRR event was sent"
+        cloudFeedsMock.verify(
+                testUtils.createUserTrrFeedsRequest(federatedUser),
+                VerificationTimes.exactly(1)
+        )
+
+        when: "get the IDP"
+        def getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), idp.id)
+
+        then: "still disabled"
+        !getIdp.enabled
+
+        when: "validate the token returned prior to disabling the IDP"
+        def validateResponse = cloud20.validateToken(utils.getServiceAdminToken(), federatedUserToken)
+
+        then:
+        validateResponse.status == 404
+
+        when: "try to auth against the IDP using v1 fed auth"
+        response = cloud20.samlAuthenticate(samlAssertion)
+
+        then:
+        response.status == 403
+
+        when: "try to auth against the IDP using v2 fed auth"
+        def v2AuthRequest = new FederatedDomainAuthGenerationRequest().with {
+            it.domainId = domainId
+            it.validitySeconds = 1000
+            it.brokerIssuer = brokerIdp.issuer
+            it.originIssuer = idp.issuer
+            it.email = "${RandomStringUtils.randomAlphanumeric(8)}@example.com"
+            it.responseIssueInstant = new DateTime()
+            it.authContextRefClass =  SAMLConstants.PASSWORD_PROTECTED_AUTHCONTEXT_REF_CLASS
+            it.username = federatedUser.username
+            it.roleNames = [] as Set
+            it
+        }
+        def samlResponse = v2authRequestGenerator.createSignedSAMLResponse(v2AuthRequest)
+        response = cloud20.federatedAuthenticateV2(v2authRequestGenerator.convertResponseToString(samlResponse))
+
+        then:
+        response.status == 403
+
+        when: "enable the IDP and auth again"
+        idpRequest = new IdentityProvider().with {
+            it.enabled = true
+            it
+        }
+        cloud20.updateIdentityProvider(utils.getServiceAdminToken(), idp.id, idpRequest)
+        response = cloud20.samlAuthenticate(samlAssertion)
+
+        then:
+        response.status == 200
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(utils.getServiceAdminToken(), idp.id)
+        utils.deleteUserQuietly(userAdmin)
+
+        where:
+        creationType << IdpCreationType.values()
+    }
+
+    def "impersonating a federated user is allowed for disabled IDPs"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
+        def idpCredential = SamlCredentialUtils.generateX509Credential()
+        def samlProducer = new SamlProducer(idpCredential)
+        IdentityProvider idp = cloud20.createIdentityProviderWithCred(utils.getServiceAdminToken(), IdentityProviderFederationTypeEnum.DOMAIN, idpCredential).getEntity(IdentityProvider)
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, RandomStringUtils.randomAlphanumeric(8), 1000, domainId, null, "${RandomStringUtils.randomAlphanumeric(8)}@example.com", samlProducer)
+        def response = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
+        def federatedUser = utils.getUserById(response.user.id)
+
+        when: "impersonate the federated user"
+        def impersonationResponse = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
+
+        then:
+        impersonationResponse.status == 200
+        def impersonationToken = impersonationResponse.getEntity(ImpersonationResponse).token.id
+
+        when: "disable the IDP"
+        resetCloudFeedsMock()
+        def idpRequest = new IdentityProvider().with {
+            it.enabled = false
+            it
+        }
+        response = cloud20.updateIdentityProvider(utils.getServiceAdminToken(), idp.id, idpRequest)
+
+        then: "the IDP is disabled"
+        response.status == 200
+        def updatedIdp = response.getEntity(IdentityProvider)
+        !updatedIdp.enabled
+
+        and: "and the user TRR event was sent"
+        cloudFeedsMock.verify(
+                testUtils.createUserTrrFeedsRequest(federatedUser),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "and no token TRR event was sent"
+        cloudFeedsMock.verify(
+                testUtils.createTokenFeedsRequest(impersonationToken),
+                VerificationTimes.exactly(0)
+        )
+
+        when: "validate the impersonation token w/ the IDP disabled"
+        def validateResponse = cloud20.validateToken(impersonationToken, impersonationToken)
+
+        then:
+        validateResponse.status == 200
+
+        when: "impersonate the federated user again"
+        def impersonationResponse2 = cloud20.impersonate(utils.getIdentityAdminToken(), federatedUser)
+
+        then:
+        impersonationResponse.status == 200
+        def impersonationToken2 = impersonationResponse2.getEntity(ImpersonationResponse).token.id
+
+        when: "validate the impersonation token"
+        validateResponse = cloud20.validateToken(impersonationToken2, impersonationToken2)
+
+        then:
+        validateResponse.status == 200
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(utils.getServiceAdminToken(), idp.id)
+        utils.deleteUserQuietly(userAdmin)
+    }
+
+    @Unroll
+    def "cannot disable a #idpType IDP"() {
+        given:
+        def cred = SamlCredentialUtils.generateX509Credential()
+        def idp = cloud20.createIdentityProviderWithCred(utils.getServiceAdminToken(), idpType, cred).getEntity(IdentityProvider)
+
+        when:
+        def idpRequest = new IdentityProvider().with {
+            it.enabled = false
+            it
+        }
+        def response = cloud20.updateIdentityProvider(utils.getServiceAdminToken(), idp.id, idpRequest)
+
+        then:
+        response.status == 200
+        def updatedIdp = response.getEntity(IdentityProvider)
+        updatedIdp.enabled
+
+        when: "get the IDP"
+        def getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), idp.id)
+
+        then: "still enabled"
+        getIdp.enabled
+
+        where:
+        idpType << [IdentityProviderFederationTypeEnum.RACKER, IdentityProviderFederationTypeEnum.BROKER]
+    }
+
+    def "IDPs with a null enabled attribute still behave as if they were enabled"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
+        def cred = SamlCredentialUtils.generateX509Credential()
+        def idpEntityData = new com.rackspace.idm.domain.entity.IdentityProvider().with {
+            it.name = RandomStringUtils.randomAlphanumeric(8)
+            it.enabled = null
+            it.approvedDomainGroup = ApprovedDomainGroupEnum.GLOBAL.name()
+            it.authenticationUrl = "http://${RandomStringUtils.randomAlphanumeric(8)}.com"
+            it.uri = "http://${RandomStringUtils.randomAlphanumeric(8)}.com"
+            it.federationType = IdentityProviderFederationTypeEnum.DOMAIN
+            it.approvedDomainIds = [domainId] as List
+            it.description = RandomStringUtils.randomAlphanumeric(16)
+            it.providerId = RandomStringUtils.randomAlphanumeric(36)
+            it.addUserCertificate(cred.entityCertificate)
+            it
+        }
+        identityProviderDao.addIdentityProvider(idpEntityData)
+        def samlProducer = new SamlProducer(cred)
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idpEntityData.uri, RandomStringUtils.randomAlphanumeric(8), 1000, domainId, null, "${RandomStringUtils.randomAlphanumeric(8)}@example.com", samlProducer)
+
+
+        when: "get the IDP"
+        def getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), idpEntityData.providerId)
+
+        then:
+        getIdp.enabled
+
+        when: "try to authenticate to the IDP"
+        def federationResponse = cloud20.samlAuthenticate(samlAssertion)
+
+        then:
+        federationResponse.status == 200
+        def fedAuthResponseData = federationResponse.getEntity(AuthenticateResponse).value
+        def federatedToken = fedAuthResponseData.token.id
+        def federatedUser = utils.getUserById(fedAuthResponseData.user.id)
+
+        when: "disable the IDP"
+        resetCloudFeedsMock()
+        def idpRequest = new IdentityProvider().with {
+            it.enabled = false
+            it
+        }
+        def response = cloud20.updateIdentityProvider(utils.getServiceAdminToken(), getIdp.id, idpRequest)
+
+        then: "the IDP is disabled"
+        response.status == 200
+        def updatedIdp = response.getEntity(IdentityProvider)
+        !updatedIdp.enabled
+
+        and: "an update event was sent for the IDP"
+        cloudFeedsMock.verify(
+                testUtils.createIdpFeedsRequest(idpEntityData, EventType.UPDATE),
+                VerificationTimes.exactly(1)
+        )
+
+        and: "and the user TRR event was sent"
+        cloudFeedsMock.verify(
+                testUtils.createUserTrrFeedsRequest(federatedUser),
+                VerificationTimes.exactly(1)
+        )
+
+        when: "get the IDP"
+        getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), getIdp.id)
+
+        then: "still disabled"
+        !getIdp.enabled
+
+        when: "validate the token returned prior to disabling the IDP"
+        def validateResponse = cloud20.validateToken(utils.getServiceAdminToken(), federatedToken)
+
+        then:
+        validateResponse.status == 404
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(utils.getServiceAdminToken(), idpEntityData.providerId)
+        utils.deleteUserQuietly(userAdmin)
+    }
+
+    @Unroll
+    def "can create an IDP with enabled == #enabledValue"() {
+        given:
+        def idpData = v2Factory.createIdentityProvider(UUID.randomUUID().toString(), "blah", UUID.randomUUID().toString(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.name(), null).with {
+            it.publicCertificates = publicCertificates
+            it.enabled = enabledValue
+            it
+        }
+
+        when: "create the IDP"
+        def response = cloud20.createIdentityProvider(utils.getServiceAdminToken(), idpData)
+
+        then:
+        response.status == 201
+        def idp = response.getEntity(IdentityProvider)
+        idp.enabled == (enabledValue == null ? true : enabledValue)
+
+        when: "get the IDP"
+        def getIdp = utils.getIdentityProvider(utils.getServiceAdminToken(), idp.id)
+
+        then:
+        getIdp.enabled == (enabledValue == null ? true : enabledValue)
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(utils.getServiceAdminToken(), idp.id)
+
+        where:
+        enabledValue << [true, false, null]
     }
 
     @Unroll
@@ -3770,6 +4098,19 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         updateIdpResponse.status == SC_OK
         updateResultIdp.name == name
 
+        when: "User-admin try to update IdP's enabled attr whose approvedDomainId matches their own domain & is the only approved domain."
+        resetCloudFeedsMock()
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.enabled = !updateResultIdp.enabled
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, creationResultIdp.id, updateDomainGroupIdp, requestContentType, requestContentType)
+        updateResultIdp = updateIdpResponse.getEntity(IdentityProvider)
+
+        then:
+        updateIdpResponse.status == SC_OK
+        updateResultIdp.enabled == updateDomainGroupIdp.enabled
+
         when: "User-manage try to update IdP's name whose approvedDomainId matches their own domain & is the only approved domain."
         resetCloudFeedsMock()
         name = RandomStringUtils.randomAlphanumeric(10)
@@ -3783,6 +4124,19 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "Expect a 200 w/ updated name in response"
         updateIdpResponse.status == SC_OK
         updateResultIdp.name == name
+
+        when: "User-manage try to update IdP's enabled attr whose approvedDomainId matches their own domain & is the only approved domain."
+        resetCloudFeedsMock()
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.enabled = !updateResultIdp.enabled
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, creationResultIdp.id, updateDomainGroupIdp, requestContentType, requestContentType)
+        updateResultIdp = updateIdpResponse.getEntity(IdentityProvider)
+
+        then:
+        updateIdpResponse.status == SC_OK
+        updateResultIdp.enabled == updateDomainGroupIdp.enabled
 
         when: "User-admin try to update IdP's approvedDomainId whose approvedDomainId doesn't match their own domain."
         resetCloudFeedsMock()
@@ -4001,6 +4355,19 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "Expect a 200 w/ updated name in response"
         updateIdpResponse.status == SC_OK
         updateResultIdp.name == name
+
+        when: "rcn:admin try to update IdP's enabled attr whose approvedDomainId matches their own domain & is the only approved domain."
+        resetCloudFeedsMock()
+        updateDomainGroupIdp = new IdentityProvider().with {
+            it.enabled = !updateResultIdp.enabled
+            it
+        }
+        updateIdpResponse = cloud20.updateIdentityProvider(defaultUserToken, creationResultIdp.id, updateDomainGroupIdp, requestContentType, requestContentType)
+        updateResultIdp = updateIdpResponse.getEntity(IdentityProvider)
+
+        then: "Expect a 200 w/ updated name in response"
+        updateIdpResponse.status == SC_OK
+        updateResultIdp.enabled == updateDomainGroupIdp.enabled
 
         when: "rcn:admin try to update IdP's approvedDomainId whose approvedDomainId doesn't match their own domain."
         resetCloudFeedsMock()

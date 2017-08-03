@@ -33,6 +33,12 @@ public interface FederatedUserDao extends FederatedBaseUserDao<FederatedUser> {
      */
     Iterable<FederatedUser> getFederatedUsersByDomainIdAndIdentityProviderId(String domainId, String identityProviderId);
 
+    /**
+     * Retrieve all federated users that belong to the specified identity provider
+     * @param identityProviderId
+     * @return
+     */
+    Iterable<FederatedUser> getFederatedUsersByIdentityProviderId(String identityProviderId);
 
     /**
      * Count federated users that belong to the specified domain and identity provider

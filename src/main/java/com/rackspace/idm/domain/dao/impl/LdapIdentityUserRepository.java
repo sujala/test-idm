@@ -59,6 +59,11 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
+    public Iterable<FederatedUser> getFederatedUsersByIdentityProviderId(String idpId) {
+        return fedUserDao.getFederatedUsersByIdentityProviderId(idpId);
+    }
+
+    @Override
     public Iterable<FederatedUser> getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(List<String> approvedDomainIds, String idpId) {
         return fedUserDao.getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(approvedDomainIds, idpId);
     }

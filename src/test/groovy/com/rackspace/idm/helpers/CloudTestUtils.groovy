@@ -3,6 +3,7 @@ package com.rackspace.idm.helpers
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.resource.cloud.v20.DefaultMultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
+import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.util.OTPHelper
 import com.unboundid.util.Base32
 import org.apache.commons.lang.StringUtils
@@ -87,20 +88,28 @@ class CloudTestUtils {
         return getStringLenghtInBytes(s) / 1024
     }
 
-    def String getFeedsXPathForUser(user, eventType) {
+    String getFeedsXPathForUser(user, eventType) {
         return "//event[@id and @resourceName='$user.username' and @type='$eventType']/product[@displayName='$user.username' and @resourceType='USER' and @serviceCode='CloudIdentity']"
     }
 
-    def String getFeedsXPathForUserTRR(user, AuthenticatedByMethodGroup authenticatedByMethodGroup) {
+    String getFeedsXPathForUserTRR(user, AuthenticatedByMethodGroup authenticatedByMethodGroup) {
         def authBy = StringUtils.join(authenticatedByMethodGroup.getAuthenticatedByMethodsAsValues(), " ")
         return "//event[@id and @resourceId='$user.id' and @type='DELETE']/product[@resourceType='TRR_USER' and @serviceCode='CloudIdentity']/tokenAuthenticatedBy[@values='$authBy']"
     }
 
-    def String getFeedsXPathForIdp(idp, eventType) {
+    String getFeedsXPathForUserTRR(user) {
+        return "//event[@id and @resourceId='$user.id' and @type='DELETE']/product[@resourceType='TRR_USER' and @serviceCode='CloudIdentity']"
+    }
+
+    String getFeedsXPathForTokenTRR(String token) {
+        return "//event[@id and @resourceId='$token' and @type='DELETE']/product[@resourceType='TOKEN' and @serviceCode='CloudIdentity']"
+    }
+
+    String getFeedsXPathForIdp(idp, eventType) {
         return "//event[@id and @resourceId='$idp.providerId' and @type='$eventType']/product[@resourceType='IDP' and @serviceCode='CloudIdentity' and @issuer='$idp.uri']"
     }
 
-    def HttpRequest createFeedsRequest() {
+    HttpRequest createFeedsRequest() {
         return new HttpRequest()
                 .withMethod(Constants.POST)
                 .withPath(Constants.TEST_MOCK_FEEDS_PATH)
@@ -108,21 +117,29 @@ class CloudTestUtils {
                     new Header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_ATOM_XML))
     }
 
-    def void assertStringPattern(String pattern, String value) {
+    void assertStringPattern(String pattern, String value) {
         Pattern stringPattern = Pattern.compile(pattern)
         assert stringPattern.matcher(value).matches()
     }
 
-    def HttpRequest createUpdateUserFeedsRequest(user, eventType) {
+    HttpRequest createUpdateUserFeedsRequest(user, eventType) {
         return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForUser(user, eventType)))
     }
 
-    def HttpRequest createUserTrrFeedsRequest(user, AuthenticatedByMethodGroup authenticatedByMethodGroup) {
-        return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForUserTRR(user, authenticatedByMethodGroup)))
+    HttpRequest createUserTrrFeedsRequest(user, AuthenticatedByMethodGroup authenticatedByMethodGroup = null) {
+        if (authenticatedByMethodGroup) {
+            return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForUserTRR(user, authenticatedByMethodGroup)))
+        } else {
+            return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForUserTRR(user)))
+        }
     }
 
-    def HttpRequest createIdpFeedsRequest(idp, eventType) {
+    HttpRequest createIdpFeedsRequest(IdentityProvider idp, eventType) {
         return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForIdp(idp, eventType)))
+    }
+
+    HttpRequest createTokenFeedsRequest(String token) {
+        return createFeedsRequest().withBody(new XPathBody(getFeedsXPathForTokenTRR(token)))
     }
 
 }

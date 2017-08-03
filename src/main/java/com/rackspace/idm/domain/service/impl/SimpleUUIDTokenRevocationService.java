@@ -191,6 +191,11 @@ public class SimpleUUIDTokenRevocationService implements UUIDTokenRevocationServ
     }
 
     @Override
+    public void revokeAllTokensForIdentityProvider(String identityProviderId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public boolean isTokenRevoked(String token) {
         ScopeAccess sa = scopeAccessDao.getScopeAccessByAccessToken(token);
         return isTokenRevoked(sa);

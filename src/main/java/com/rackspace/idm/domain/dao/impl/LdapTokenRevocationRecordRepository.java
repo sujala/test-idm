@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TokenRevocationRecordPersistenceStrategy;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.domain.security.TokenDNCalculator;
 import com.rackspace.idm.exception.IdmException;
 import com.rackspace.idm.exception.SizeLimitExceededException;
 import com.unboundid.ldap.sdk.*;
@@ -104,6 +105,20 @@ public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<L
     }
 
     @Override
+    public LdapTokenRevocationRecord addIdentityProviderTrrRecord(String identityProviderId) {
+        LdapTokenRevocationRecord trr = new LdapTokenRevocationRecord();
+        trr.setId(getNextId());
+        trr.setIdentityProviderId(identityProviderId);
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.MILLISECOND, 0);
+        trr.setTargetCreatedBefore(cal.getTime());
+
+        addObject(trr);
+
+        return trr;
+    }
+
+    @Override
     public LdapTokenRevocationRecord getTokenRevocationRecord(String id) {
         return getObject(searchByIdFilter(id));
     }
@@ -143,10 +158,22 @@ public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<L
         List<Filter> filters = new ArrayList<Filter>();
         filters.add(searchForRevocationByToken(accessToken));
 
-        //add user token TRR search if is user token
+        // Add user token TRR search if is user token
         if (accessToken instanceof BaseUserToken) {
             filters.add(searchForRevocationByUserWithWildcardTokenFilter(((BaseUserToken)accessToken).getIssuedToUserId(), accessToken.getAuthenticatedBy(), accessToken.getCreateTimestamp()));
         }
+
+        // Add Identity Provider TRR search if this is a federated user token
+
+        if (accessToken instanceof UserScopeAccess
+                && (accessToken.getAuthenticatedBy() == null
+                || !CollectionUtils.containsAny(accessToken.getAuthenticatedBy(), AuthenticatedByMethodGroup.IMPERSONATION.getAuthenticatedByMethodsAsValues()))) {
+            String identityProviderId = TokenDNCalculator.parseIdentityProviderIdFromFederatedTokenDN(((UserScopeAccess)accessToken).getUniqueId());
+            if (identityProviderId != null) {
+                filters.add(searchForRevocationByIdentityProvider(identityProviderId, accessToken.getCreateTimestamp()));
+            }
+        }
+
         return Filter.createORFilter(filters);
     }
 
@@ -159,6 +186,13 @@ public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<L
     private Filter searchForRevocationByToken(Token accessToken) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ACCESS_TOKEN, accessToken.getAccessTokenString())
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TOKEN_REVOCATION_RECORD).build();
+    }
+
+    private Filter searchForRevocationByIdentityProvider(String identityProviderId, Date tokenExpiration) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_IDENTITY_PROVIDER_ID, identityProviderId)
+                .addGreaterOrEqualAttribute(ATTR_ACCESS_TOKEN_EXP, StaticUtils.encodeGeneralizedTime(tokenExpiration))
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TOKEN_REVOCATION_RECORD).build();
     }
 

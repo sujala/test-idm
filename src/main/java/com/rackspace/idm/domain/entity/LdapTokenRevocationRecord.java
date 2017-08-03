@@ -49,6 +49,11 @@ public class LdapTokenRevocationRecord implements Auditable, UniqueId, TokenRevo
     @LDAPField(attribute = LdapRepository.ATTR_ACCESS_TOKEN_EXP, objectClass=LdapRepository.OBJECTCLASS_TOKEN_REVOCATION_RECORD, inRDN=false, filterUsage=FilterUsage.ALWAYS_ALLOWED, requiredForEncode=false)
     private Date targetCreatedBefore;
 
+    @Setter
+    @Getter
+    @LDAPField(attribute = LdapRepository.ATTR_IDENTITY_PROVIDER_ID, objectClass=LdapRepository.OBJECTCLASS_TOKEN_REVOCATION_RECORD)
+    private String identityProviderId;
+
     /*
      * Internal aspect. Don't set this directly from code. Only allow UnboundId to set directly when loading from LDAP
      */
