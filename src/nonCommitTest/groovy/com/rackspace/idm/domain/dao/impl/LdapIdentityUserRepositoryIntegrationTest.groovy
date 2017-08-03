@@ -122,8 +122,10 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         User user = entityFactory.createUser().with {
             it.readOnlyEntry = null
             it.uniqueId = null
+            it.passwordHistory = new ArrayList<>(Arrays.asList("newPassword1", "test124"))
             it
         }
+        def User retrievedUser = entityFactory.createUser()
         provisionedUserDao.addUser(user)
         String expectedDn =  getExpectedProvisionedUserDn(user)
 
@@ -132,12 +134,15 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
 
         then: "we get the provisioned user back"
         verifyProvisionedUser(user, retrievedEndUser, expectedDn)
+        ((User) retrievedEndUser).getPasswordHistory() == null
 
         when: "search for provisioned user"
-        User retrievedProvisionedUser = identityUserDao.getProvisionedUserById(user.id)
+        User retrievedProvisionedUser = identityUserDao.getProvisionedUserByIdWithPwdHis(user.id)
+        List<String> pwdHist = retrievedProvisionedUser.getPasswordHistory()
 
         then: "we get the provisioned user back"
         verifyProvisionedUser(user, retrievedProvisionedUser, expectedDn)
+        pwdHist.size() == 2
 
         when: "search for provisioned user via federated user search"
         User retrievedFederatedUser = identityUserDao.getFederatedUserById(user.id)

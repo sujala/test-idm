@@ -54,7 +54,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     public String[] getSearchAttributes(){
-        return ATTR_USER_SEARCH_ATTRIBUTES;
+        return ATTR_USER_SEARCH_ATTRIBUTES_NO_PWD_HIS;
     }
 
     public String getSortAttribute() {

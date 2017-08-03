@@ -22,6 +22,16 @@ public interface IdentityUserDao {
      */
     User getProvisionedUserById(String userId);
 
+
+    /**
+     * Search for a provisioned user with the specified userId with password history
+     *
+     * @param userId
+     * @return
+     */
+    User getProvisionedUserByIdWithPwdHis(String userId);
+
+
     /**
      * Search for a federated user with the specified userId
      *

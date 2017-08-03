@@ -200,4 +200,9 @@ public class SqlIdentityUserRepository implements IdentityUserDao {
     public int getUnexpiredFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId) {
         throw new UnsupportedOperationException("Not Implemented");
     }
+
+    @Override
+    public User getProvisionedUserByIdWithPwdHis(String userId) {
+        throw new NotImplementedException("Not Implemented");
+    }
 }

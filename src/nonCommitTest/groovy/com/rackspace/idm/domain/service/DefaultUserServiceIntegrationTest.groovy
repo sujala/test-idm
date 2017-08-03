@@ -2,6 +2,8 @@ package com.rackspace.idm.domain.service
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.service.impl.DefaultIdentityUserService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.util.CryptHelper
 import org.openstack.docs.identity.api.v2.User
@@ -15,7 +17,13 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
     DefaultUserService userService
 
     @Autowired
+    DefaultIdentityUserService identityUserService
+
+    @Autowired
     CryptHelper cryptHelper
+
+    @Autowired
+    UserDao userDao
 
     def cleanup() {
         reloadableConfiguration.reset()
@@ -47,7 +55,7 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
         }
 
         when: "get password history for newly created user"
-        def userEntity = userService.getUserById(user.id)
+        def userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
         List<String> pwdHistory = userEntity.getPasswordHistory()
 
         then: "history contains initial password"
@@ -56,7 +64,7 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
 
         when: "User changes password"
         userService.updateUser(userUpdate1)
-        userEntity = userService.getUserById(user.id)
+        userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
         pwdHistory = userEntity.getPasswordHistory()
 
         then: "2 passwords in history with first being the oldest"
@@ -66,7 +74,7 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
 
         when: "User changes password"
         userService.updateUser(userUpdate2)
-        userEntity = userService.getUserById(user.id)
+        userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
         pwdHistory = userEntity.getPasswordHistory()
 
         then: "3 passwords in history with first being the oldest"
@@ -77,7 +85,7 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
 
         when: "User changes password to same thing"
         userService.updateUser(userUpdate2)
-        userEntity = userService.getUserById(user.id)
+        userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
         pwdHistory = userEntity.getPasswordHistory()
 
         then: "4 passwords in history with last 2 being the same password, but with different hashes"
@@ -112,7 +120,7 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
             userUpdate.password = newPasswordPrefix + i
             userService.updateUser(userUpdate)
         }
-        def userEntity = userService.getUserById(user.id)
+        def userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
         List<String> pwdHistory = userEntity.getPasswordHistory()
 
         then: "history is full and original password not included"
@@ -148,7 +156,7 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
         }
 
         when: "get password history for newly created user"
-        def userEntity = userService.getUserById(user.id)
+        def userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
         List<String> pwdHistory = userEntity.getPasswordHistory()
 
         then: "history contains initial password"
@@ -158,11 +166,32 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
         when: "Disable history and change password"
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, false)
         userService.updateUser(userUpdate)
-        userEntity = userService.getUserById(user.id)
+        userEntity = identityUserService.getProvisionedUserByIdWithPwdHis(user.id)
         pwdHistory = userEntity.getPasswordHistory()
 
         then: "history remains at 1 w/ original password"
         pwdHistory.size() == 1
         cryptHelper.verifyLegacySHA(Constants.DEFAULT_PASSWORD, pwdHistory.get(0))
+    }
+
+    def "getUserById loading without password history"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_HISTORY_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_PASSWORD_POLICY_EXPIRATION_PROP, false)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, true)
+
+        User user = utils.createGenericUserAdmin()
+        com.rackspace.idm.domain.entity.User userUpdate = new com.rackspace.idm.domain.entity.User().with {
+            it.id = user.id
+            it.username = user.username
+            it.password = "newPassword1"
+            it
+        }
+
+        when:
+        def userEntity = userDao.getUserById(user.id)
+
+        then:
+        userEntity.getPasswordHistory() == null
     }
 }
