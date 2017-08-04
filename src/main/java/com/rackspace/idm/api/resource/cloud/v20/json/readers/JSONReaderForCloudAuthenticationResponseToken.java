@@ -53,6 +53,17 @@ public class JSONReaderForCloudAuthenticationResponseToken {
                         token.setExpires(DatatypeFactory.newInstance().newXMLGregorianCalendar(expDateTime.toGregorianCalendar()));
                     }
 
+                    Object issuedAt = tokenJson.get(JSONConstants.RAX_AUTH_ISSUED_AT);
+
+                    if(issuedAt != null){
+                        DateTime issuedAtDateTime = new DateTime(issuedAt.toString());
+                        //we have to manually set the timezone here after parsing the exp string
+                        //this is because DateTime will correctly parse the timezone but the resulting object
+                        //will have the timezone of the default timezone of the JVM
+                        issuedAtDateTime = issuedAtDateTime.toDateTime(DateTimeZone.UTC);
+                        token.setIssuedAt(DatatypeFactory.newInstance().newXMLGregorianCalendar(issuedAtDateTime.toGregorianCalendar()));
+                    }
+
                     if (tokenAuthenticatedByArray != null) {
                         AuthenticatedBy authBy = new AuthenticatedBy();
                         for (Object authByVal : tokenAuthenticatedByArray) {
