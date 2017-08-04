@@ -215,7 +215,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
             }
             idp = cloud20.createIdentityProvider(utils.getServiceAdminToken(), idpData).getEntity(IdentityProvider)
         }
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, RandomStringUtils.randomAlphanumeric(8), 1000, domainId, null, "${RandomStringUtils.randomAlphanumeric(8)}@example.com", samlProducer)
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(idp.issuer, RandomStringUtils.randomAscii(25), 1000, domainId, null, "${RandomStringUtils.randomAlphanumeric(8)}@example.com", samlProducer)
         def federationResponse = cloud20.samlAuthenticate(samlAssertion).getEntity(AuthenticateResponse).value
         def federatedUser = utils.getUserById(federationResponse.user.id)
         def federatedUserToken = federationResponse.token.id
