@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+import copy
+
 from tests.api.v2.federation import federation
 from tests.api.v2.schema import idp as idp_json
 
@@ -53,8 +55,12 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         self.assertEqual(resp.status_code, 201)
         idp_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.idp_ids.append(idp_id)
+
+        updated_idp_schema = copy.deepcopy(idp_json.identity_provider)
+        updated_idp_schema[const.PROPERTIES][const.NS_IDENTITY_PROVIDER][
+            const.REQUIRED] += [const.PUBLIC_CERTIFICATES]
         self.assertSchema(response=resp,
-                          json_schema=idp_json.identity_provider)
+                          json_schema=updated_idp_schema)
         return idp_id
 
     def test_impersonate_fed_user(self):

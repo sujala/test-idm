@@ -943,7 +943,8 @@ class IDP(base.AutoMarshallingModel):
     def __init__(self, idp_id=None, idp_name=None, issuer=None,
                  description=None, federation_type=None,
                  authentication_url=None, public_certificates=None,
-                 approved_domain_group=None, approved_domain_ids=None):
+                 approved_domain_group=None, approved_domain_ids=None,
+                 enabled=None):
         self.idp_id = idp_id
         self.idp_name = idp_name
         self.issuer = issuer
@@ -953,6 +954,7 @@ class IDP(base.AutoMarshallingModel):
         self.public_certificates = public_certificates
         self.approved_domain_group = approved_domain_group
         self.approved_domain_ids = approved_domain_ids
+        self.enabled = enabled
 
     def _obj_to_json(self):
         # So we don't have a bunch of 80 col issues.
@@ -991,6 +993,8 @@ class IDP(base.AutoMarshallingModel):
             idpr = create_idp_request[IDP]
             for dom_id in self.approved_domain_ids:
                 idpr[const.APPROVED_DOMAIN_Ids].append(dom_id)
+        if self.enabled is not None:
+            create_idp_request[IDP][const.ENABLED] = self.enabled
 
         return json.dumps(create_idp_request)
 

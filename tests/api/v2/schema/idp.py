@@ -53,11 +53,13 @@ identity_provider = {
                 const.PUBLIC_CERTIFICATES: {
                     'type': 'array',
                     'items': CERTIFICATE_ITEM},
-                const.NAME: {'type': 'string'}},
+                const.NAME: {'type': 'string'},
+                const.ENABLED: {'type': 'boolean'}
+            },
             'required': [
                 const.DESCRIPTION, const.APPROVED_DOMAIN_Ids,
                 const.AUTHENTICATION_URL, const.ID, const.FEDERATION_TYPE,
-                const.ISSUER, const.PUBLIC_CERTIFICATES, const.NAME]
+                const.ISSUER, const.NAME, const.ENABLED]
         }},
     'required': [const.NS_IDENTITY_PROVIDER],
     'additionalProperties': False}
