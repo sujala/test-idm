@@ -33,6 +33,17 @@ public interface IdentityUserService {
      */
     User getProvisionedUserById(String userId);
 
+
+    /**
+     * Search for a provisioned user with the specified userId with password history.
+     * Returns null if no provisioned user matches the userId.
+     *
+     * @param userId
+     * @return
+     */
+    User getProvisionedUserByIdWithPwdHis(String userId);
+
+
     /**
      * Search for a federated user with the specified username within the specified idp. Returns null if no user was found.
      *

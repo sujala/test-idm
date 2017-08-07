@@ -631,7 +631,7 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         then:
         1 * scopeAccessService.expireAllTokensForUser(_)
-        userDao.getUserById(_) >> currentUser
+        identityUserService.getProvisionedUserByIdWithPwdHis(_) >> currentUser
         scopeAccessService.getScopeAccessListByUserId(_) >> [].asList()
     }
 

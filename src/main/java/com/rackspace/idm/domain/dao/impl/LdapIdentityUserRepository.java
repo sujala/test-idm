@@ -36,6 +36,11 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Autowired
     private GroupDao groupDao;
 
+    @Override
+    public String[] getSearchAttributes() {
+        return ATTR_PROV_FED_USER_SEARCH_ATTRIBUTES_NO_PWD_HIS;
+    }
+
     public User getProvisionedUserById(String userId) {
         return searchForUserById(userId, PROVISIONED_USER_CLASS_FILTERS, User.class);
     }
@@ -51,6 +56,11 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Override
     public EndUser getEndUserById(String userId) {
         return searchForUserById(userId, ENDUSER_CLASS_FILTERS, EndUser.class);
+    }
+
+    @Override
+    public User getProvisionedUserByIdWithPwdHis(String userId) {
+        return searchForUserByIdWithPwdHis(userId, PROVISIONED_USER_CLASS_FILTERS, User.class);
     }
 
     @Override
@@ -126,6 +136,10 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
 
     private <T extends BaseUser> T searchForUserById(String userId, List<Filter> userClassFilterList, Class<T> clazz) {
         return (T) getObject(searchFilterGetUserById(userId, userClassFilterList), SearchScope.SUB);
+    }
+
+    private <T extends BaseUser> T searchForUserByIdWithPwdHis(String userId, List<Filter> userClassFilterList, Class<T> clazz) {
+        return (T) getObject(searchFilterGetUserById(userId, userClassFilterList), USERS_BASE_DN, SearchScope.SUB, LdapRepository.ATTR_USER_SEARCH_ATTRIBUTES);
     }
 
     private <T extends EndUser> T searchForUserByUsername(String username, List<Filter> userClassFilterList, Class<T> clazz, String baseDn) {

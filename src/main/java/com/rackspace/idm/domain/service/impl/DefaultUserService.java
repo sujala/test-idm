@@ -819,7 +819,15 @@ public class DefaultUserService implements UserService {
             validator.isEmailValid(user.getEmail());
         }
         // Expire all User tokens if we are updating the password field
-        User currentUser = userDao.getUserById(user.getId());
+        User currentUser = null;
+        boolean passwordChange = checkForPasswordUpdate(user);
+        if (passwordChange) {
+            //load user with password history
+            currentUser = identityUserService.getProvisionedUserByIdWithPwdHis(user.getId());
+        } else {
+            //load user without password history
+            currentUser = userDao.getUserById(user.getId());
+        }
         boolean userIsBeingDisabled= checkIfUserIsBeingDisabled(currentUser, user);
 
         /*
@@ -840,7 +848,6 @@ public class DefaultUserService implements UserService {
         user.setEncryptionVersion(currentUser.getEncryptionVersion());
         user.setSalt(currentUser.getSalt());
 
-        boolean passwordChange = checkForPasswordUpdate(user);
         if (passwordChange) {
             performPasswordUpdateLogic(user, currentUser);
         }

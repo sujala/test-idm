@@ -80,6 +80,12 @@ public class DefaultIdentityUserService implements IdentityUserService {
         return identityUserRepository.getProvisionedUserById(userId);
     }
 
+
+    @Override
+    public User getProvisionedUserByIdWithPwdHis(String userId) {
+        return identityUserRepository.getProvisionedUserByIdWithPwdHis(userId);
+    }
+
     public FederatedUser getFederatedUserByUsernameAndIdentityProviderId(String username, String providerId) {
         return identityUserRepository.getFederatedUserByUsernameAndIdpId(username, providerId);
     }

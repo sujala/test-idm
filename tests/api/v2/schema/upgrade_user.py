@@ -14,6 +14,7 @@ upgrade_user_to_cloud = {
                 const.ROLES: {'type': 'array'},
                 const.NS_GROUPS: {'type': 'array'},
                 const.RAX_AUTH_MULTI_FACTOR_ENABLED: {'type': 'boolean'},
+                const.CREATED: {'type': 'string', 'format': 'dateTime'},
                 const.NS_SECRETQA: {'type': 'object', 'properties': {
                     const.SECRET_QUESTION: {'type': 'string'},
                     const.SECRET_ANSWER: {'type': 'string'},
@@ -25,7 +26,8 @@ upgrade_user_to_cloud = {
             'required': [const.RAX_AUTH_DOMAIN_ID, const.ID, const.ENABLED,
                          const.USERNAME, const.EMAIL,
                          const.RAX_AUTH_MULTI_FACTOR_ENABLED,
-                         const.RAX_AUTH_DEFAULT_REGION],
+                         const.RAX_AUTH_DEFAULT_REGION,
+                         const.CREATED],
             'additionalProperties': False}},
     'required': [const.USER],
     'additionalProperties': False}
