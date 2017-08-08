@@ -71,6 +71,7 @@ class TestUpdateIDP(base.TestBaseV2):
         self.provider_ids = []
         self.provider_id, self.provider_name = self.add_idp_user()
         self.domains = []
+        self.clients = []
         self.users = []
 
     @classmethod
@@ -123,7 +124,8 @@ class TestUpdateIDP(base.TestBaseV2):
         """Test update with valid name randomly generate name with
         alphanumeric, '.', and '-' characters in range from 1 to 255
         """
-        idp_name = self.generate_random_string(pattern='[a-zA-Z0-9.\-]{:255}')
+        idp_name = self.generate_random_string(
+            pattern='[a-zA-Z0-9.\-]{1:255}')
         idp_obj = requests.IDP(idp_name=idp_name)
         resp = self.idp_ia_client.update_idp(idp_id=self.provider_id,
                                              request_object=idp_obj)
@@ -424,7 +426,7 @@ class TestUpdateIDP(base.TestBaseV2):
         request_object = factory.get_domain_request_object({})
         dom_resp = self.idp_ia_client.add_domain(request_object)
         domain_id = dom_resp.json()[const.RAX_AUTH_DOMAIN][const.ID]
-        self.domains.append(domain_id)
+
         request_object = factory.get_add_idp_request_object(
             federation_type='DOMAIN', approved_domain_ids=[domain_id])
         resp = self.idp_ia_client.create_idp(request_object)
@@ -442,6 +444,7 @@ class TestUpdateIDP(base.TestBaseV2):
             domainid=domain_id)
         user_client = self.generate_client(parent_client=self.idp_ia_client,
                                            request_object=request_object)
+        self.clients.append(user_client)
         user_id = user_client.default_headers[const.X_USER_ID]
 
         new_idp_name = self.generate_random_string(
@@ -478,6 +481,8 @@ class TestUpdateIDP(base.TestBaseV2):
         # Delete all providers created in the tests
         for id_ in self.provider_ids:
             self.idp_ia_client.delete_idp(idp_id=id_)
+        for id_ in self.users:
+            self.identity_admin_client.delete_user(user_id=id_)
         for id_ in self.domains:
             req_obj = requests.Domain(domain_name=id_, domain_id=id_,
                                       enabled=False)
@@ -485,8 +490,8 @@ class TestUpdateIDP(base.TestBaseV2):
                 domain_id=str(id_), request_object=req_obj)
             self.idp_ia_client.delete_domain(
                 domain_id=id_)
-        for id_ in self.users:
-            self.identity_admin_client.delete_user(id_)
+        for client_ in self.clients:
+            self.delete_client(client=client_)
         super(TestUpdateIDP, self).tearDown()
 
     @classmethod
