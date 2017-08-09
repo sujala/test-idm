@@ -7,6 +7,7 @@ from tests.api.utils import saml_helper, log_search
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.v2 import base
 from tests.api.v2.models import factory
+from tests.api.v2.schema import idp as idp_json
 
 from tests.package.johny import constants as const
 from tests.package.johny.v2 import client
@@ -70,6 +71,7 @@ class TestUpdateIDP(base.TestBaseV2):
         self.provider_ids = []
         self.provider_id, self.provider_name = self.add_idp_user()
         self.domains = []
+        self.users = []
 
     @classmethod
     def correct_default_policy(cls):
@@ -220,6 +222,12 @@ class TestUpdateIDP(base.TestBaseV2):
             issuer=issuer, public_certificates=[pem_encoded_cert])
         resp = self.idp_ia_client.create_idp(request_object)
         self.assertEquals(resp.status_code, 201)
+
+        updated_idp_schema = copy.deepcopy(idp_json.identity_provider)
+        updated_idp_schema[const.PROPERTIES][const.NS_IDENTITY_PROVIDER][
+            const.REQUIRED] += [const.PUBLIC_CERTIFICATES]
+        self.assertSchema(response=resp, json_schema=updated_idp_schema)
+
         provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
         self.provider_ids.append(provider_id)
 
@@ -229,6 +237,7 @@ class TestUpdateIDP(base.TestBaseV2):
 
         request_object = factory.get_add_user_one_call_request_object()
         user_resp = self.idp_ia_client.add_user(request_object)
+        self.users.append(user_resp.json()[const.USER][const.ID])
         return user_resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
 
     def update_approved_domain_ids_for_idp(
@@ -264,6 +273,58 @@ class TestUpdateIDP(base.TestBaseV2):
         self.assertEqual(validate_post_update.status_code, 200)
 
         # Now, try to auth after idp is updated
+        fed_auth = self.fed_user_call(
+            test_data=test_data, domain_id=domain_id, private_key=key_path,
+            public_key=cert_path, issuer=issuer)
+        self.assertEqual(fed_auth.status_code, 200)
+
+    @ddt.file_data('data_update_idp_fed_user.json')
+    def test_enable_disable_idp(self, test_data):
+
+        domain_id = self.create_one_user_and_get_domain()
+        self.domains.append(domain_id)
+
+        issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
+        provider_id, cert_path, key_path = self.create_idp_with_certs(
+            domain_id=domain_id, issuer=issuer)
+
+        # Get fed auth token
+        fed_auth = self.fed_user_call(
+            test_data=test_data, domain_id=domain_id, private_key=key_path,
+            public_key=cert_path, issuer=issuer)
+        self.assertEqual(fed_auth.status_code, 200)
+        fed_token, _, _ = self.parse_auth_response(fed_auth)
+
+        # Disable IDP
+        update_req = requests.IDP(enabled=False)
+        update_resp = self.idp_ia_client.update_idp(idp_id=provider_id,
+                                                    request_object=update_req)
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(update_resp.json()[const.NS_IDENTITY_PROVIDER][
+                             const.ENABLED], False)
+        self.assertSchema(response=update_resp,
+                          json_schema=idp_json.identity_provider)
+
+        # Validate fed auth token
+        resp = self.identity_admin_client.validate_token(fed_token)
+        self.assertEqual(resp.status_code, 404)
+
+        # Verify fed auth call fails when IdP is disabled
+        fed_auth = self.fed_user_call(
+            test_data=test_data, domain_id=domain_id, private_key=key_path,
+            public_key=cert_path, issuer=issuer)
+        self.assertEqual(fed_auth.status_code, 403)
+
+        # Re-enable IDP
+        update_req = requests.IDP(enabled=True)
+        update_resp = self.idp_ia_client.update_idp(idp_id=provider_id,
+                                                    request_object=update_req)
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(update_resp.json()[const.NS_IDENTITY_PROVIDER][
+                             const.ENABLED], True)
+        self.assertSchema(response=update_resp,
+                          json_schema=idp_json.identity_provider)
+
         fed_auth = self.fed_user_call(
             test_data=test_data, domain_id=domain_id, private_key=key_path,
             public_key=cert_path, issuer=issuer)
@@ -424,6 +485,8 @@ class TestUpdateIDP(base.TestBaseV2):
                 domain_id=str(id_), request_object=req_obj)
             self.idp_ia_client.delete_domain(
                 domain_id=id_)
+        for id_ in self.users:
+            self.identity_admin_client.delete_user(id_)
         super(TestUpdateIDP, self).tearDown()
 
     @classmethod
