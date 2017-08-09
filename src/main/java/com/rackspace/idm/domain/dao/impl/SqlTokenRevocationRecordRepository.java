@@ -52,7 +52,6 @@ public class SqlTokenRevocationRecordRepository implements TokenRevocationRecord
         sqlTrr.setTargetIssuedToId(targetUserId);
         sqlTrr.setTargetAuthenticatedByMethodGroups(authenticatedByMethodGroups);
         Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MILLISECOND, 0);
         sqlTrr.setTargetCreatedBefore(cal.getTime());
         sqlTrr.setCreateTimestamp(cal.getTime());
 

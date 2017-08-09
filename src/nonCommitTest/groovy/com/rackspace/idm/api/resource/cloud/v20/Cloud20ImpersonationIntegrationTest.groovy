@@ -1449,8 +1449,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         //make sure all tokens are expired (they should be, but verify just the same)
         scopeAccessService.expireAllTokensForUserById(defaultUser.id)
 
-        sleep(1000)
-
         //authenticate normally, to make sure the token is created per usual process
         def defaultUserToken = utils.getToken(defaultUser.username)
 

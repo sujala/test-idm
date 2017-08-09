@@ -177,10 +177,6 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         if use_mfa:
             secret = func_helper.setup_mfa_for_user(
                 user_id=user_id, client=self.identity_admin_client)
-            # This is to avoid session id getting revoked which can happen
-            # if it was generated the same second MFA was enabled. This can
-            # removed once we will have sub-second precision(CID-615).
-            time.sleep(2)
 
         if auth_type == 'user_password':
             kwargs = dict([('user_name', username),
