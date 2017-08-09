@@ -64,7 +64,7 @@ public class LdapGroupRepository extends LdapGenericRepository<Group> implements
 
     @Override
     protected boolean useUuidForRsId() {
-        return identityConfig.getReloadableConfig().getRsIdUuidGroupsEnabled();
+        return identityConfig.getReloadableConfig().getUseUuidIdsForNewGroupsEnabled();
     }
 
     @Override

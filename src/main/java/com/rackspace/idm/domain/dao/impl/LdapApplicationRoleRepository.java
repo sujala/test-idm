@@ -30,7 +30,7 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
 
     @Override
     protected boolean useUuidForRsId() {
-        return identityConfig.getReloadableConfig().getRsIdUuidRolesEnabled();
+        return identityConfig.getReloadableConfig().getUseUuidIdsForNewRolesEnabled();
     }
 
     @Override

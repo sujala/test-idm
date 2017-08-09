@@ -1696,7 +1696,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Test feature flag 'rsid.uuid.questions.enabled' = #flag"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.RSID_UUID_QUESTIONS_ENABLED_PROP, flag)
+        reloadableConfiguration.setProperty(IdentityConfig.USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP, flag)
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)

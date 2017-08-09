@@ -366,14 +366,14 @@ public class IdentityConfig {
     public static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
     public static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
 
-    public static final String RSID_UUID_ROLES_ENABLED_PROP = "rsid.uuid.roles.enabled";
-    public static final boolean RSID_UUID_ROLES_ENABLED_DEFAULT = true;
+    public static final String USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP = "use.uuid.ids.for.new.roles.enabled";
+    public static final boolean USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_DEFAULT = true;
 
-    public static final String RSID_UUID_GROUPS_ENABLED_PROP = "rsid.uuid.groups.enabled";
-    public static final boolean RSID_UUID_GROUPS_ENABLED_DEFAULT = true;
+    public static final String USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_PROP = "use.uuid.ids.for.new.groups.enabled";
+    public static final boolean USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_DEFAULT = true;
 
-    public static final String RSID_UUID_QUESTIONS_ENABLED_PROP = "rsid.uuid.questions.enabled";
-    public static final boolean RSID_UUID_QUESTIONS_ENABLED_DEFAULT = true;
+    public static final String USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP = "use.uuid.ids.for.new.question.enabled";
+    public static final boolean USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_DEFAULT = true;
 
     /**
      * Required static prop
@@ -696,9 +696,9 @@ public class IdentityConfig {
         defaults.put(FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_DEFAULT);
         defaults.put(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
 
-        defaults.put(RSID_UUID_ROLES_ENABLED_PROP, RSID_UUID_ROLES_ENABLED_DEFAULT);
-        defaults.put(RSID_UUID_GROUPS_ENABLED_PROP, RSID_UUID_GROUPS_ENABLED_DEFAULT);
-        defaults.put(RSID_UUID_QUESTIONS_ENABLED_PROP, RSID_UUID_QUESTIONS_ENABLED_DEFAULT);
+        defaults.put(USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_DEFAULT);
+        defaults.put(USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_DEFAULT);
+        defaults.put(USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_DEFAULT);
 
         return defaults;
     }
@@ -1983,19 +1983,19 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP);
         }
 
-        @IdmProp(key = RSID_UUID_ROLES_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for role's rsId on creation.")
-        public boolean getRsIdUuidRolesEnabled() {
-            return getBooleanSafely(reloadableConfiguration, RSID_UUID_ROLES_ENABLED_PROP);
+        @IdmProp(key = USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for role's rsId on creation.")
+        public boolean getUseUuidIdsForNewRolesEnabled() {
+            return getBooleanSafely(reloadableConfiguration, USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP);
         }
 
-        @IdmProp(key = RSID_UUID_GROUPS_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for group's rsId on creation.")
-        public boolean getRsIdUuidGroupsEnabled() {
-            return getBooleanSafely(reloadableConfiguration, RSID_UUID_GROUPS_ENABLED_PROP);
+        @IdmProp(key = USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for group's rsId on creation.")
+        public boolean getUseUuidIdsForNewGroupsEnabled() {
+            return getBooleanSafely(reloadableConfiguration, USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_PROP);
         }
 
-        @IdmProp(key = RSID_UUID_QUESTIONS_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for question's rsId on creation.")
-        public boolean getRsIdUuidQuestionsEnabled() {
-            return getBooleanSafely(reloadableConfiguration, RSID_UUID_QUESTIONS_ENABLED_PROP);
+        @IdmProp(key = USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for question's rsId on creation.")
+        public boolean getUseUuidIdsForNewQuestionEnabled() {
+            return getBooleanSafely(reloadableConfiguration, USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP);
         }
     }
 
