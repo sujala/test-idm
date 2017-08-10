@@ -20,7 +20,8 @@ config_list = {
                         "type": "string"
                     },
                     const.VALUE: {
-                        "type": ["boolean", "array", "number", "string"]
+                        "type": ["boolean", "array", "number", "string",
+                                 "null"]
                     },
                     const.VERSION_ADDED: {
                         "type": "string"

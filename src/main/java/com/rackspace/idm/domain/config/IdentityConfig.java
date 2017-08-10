@@ -483,6 +483,12 @@ public class IdentityConfig {
     private static final String LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP = "ldap.server.pool.allow.concurrent.socketfactory.use";
     private static final boolean LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT = false;
 
+    private static final String FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP = "feature.edir.use.authenticated.connections";
+    private static final boolean FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_DEFAULT = false;
+
+    private static final String EDIR_BIND_DN = "edir.bind.dn";
+    private static final String EDIR_BIND_PASSWORD = "edir.bind.password";
+
     public static final String FEEDS_DEAMON_EVICTION_ENABLED_PROP = "feeds.daemon.eviction.enabled";
     public static final boolean FEEDS_DEAMON_ENABLED_DEFAULT = false;
 
@@ -648,6 +654,7 @@ public class IdentityConfig {
         defaults.put(LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_PROP, LDAP_SERVER_POOL_HEALTH_CHECK_INTERVAL_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_PROP, LDAP_SERVER_POOL_CHECK_CONNECTION_AGE_ON_RELEASE_DEFAULT);
         defaults.put(LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_DEFAULT);
+        defaults.put(FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP, FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_DEFAULT);
 
         defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE_DEFAULT);
         defaults.put(FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_PROP, FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE_DEFAULT);
@@ -1395,6 +1402,21 @@ public class IdentityConfig {
         @IdmProp(key = LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP, versionAdded = "3.6.0", description = " Indicates whether to allow a socket factory instance to be used to create multiple sockets concurrently.")
         public boolean getLDAPServerPoolAllowConcurrentSocketFactoryUse() {
             return getBooleanSafely(staticConfiguration, LDAP_SERVER_POOL_ALLOW_CONCURRENT_SOCKETFACTORY_USE_PROP);
+        }
+
+        @IdmProp(key = FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP, versionAdded = "3.15.0", description = "Indicates whether to use authenticated connections to eDir.")
+        public boolean shouldEdirConnectionPoolUseAuthenticatedConnections() {
+            return getBooleanSafely(staticConfiguration, FEATURE_EDIR_USE_AUTHENTICATED_CONNECTIONS_PROP);
+        }
+
+        @IdmProp(key = EDIR_BIND_DN, versionAdded = "3.15.0", description = "The bind DN for eDir authenticated connections.")
+        public String getEdirBindDn() {
+            return getStringSafely(staticConfiguration, EDIR_BIND_DN);
+        }
+
+        // Intentionally did not include an @IdmProp annotation here. That would cause this property to be exposed in the Identity props API in plain text
+        public String getEdirBindPassword() {
+            return getStringSafely(staticConfiguration, EDIR_BIND_PASSWORD);
         }
 
         @IdmProp(key = FEEDS_DEAMON_EVICTION_ENABLED_PROP, versionAdded = "3.11.0", description = "Specifies whether to enable feeds deamon to evict expired connections from connection pool.")
