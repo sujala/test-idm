@@ -115,7 +115,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         header_validation.validate_header_tenant_id(value=tenant_id)(auth_resp)
 
     def call_second_step_of_mfa(self, first_auth_resp, secret, tenant_id=None,
-                                negative=False):
+                                with_tenant=None, negative=False):
 
         self.assertEqual(first_auth_resp.status_code, 401)
         auth_header = first_auth_resp.headers[const.WWW_AUTHENTICATE]
@@ -133,9 +133,13 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         if negative:
             code += 'a'
 
-        mfa_resp = self.identity_admin_client.auth_with_mfa_cred(
-            session_id=session_id, pass_code=code, tenant_id=tenant_id
-        )
+        kwargs = {'session_id': session_id, 'pass_code': code}
+        if with_tenant == 'tenant_id':
+            kwargs['tenant_id'] = tenant_id
+        elif with_tenant == 'tenant_name':
+            kwargs['tenant_name'] = tenant_id
+        mfa_resp = self.identity_admin_client.auth_with_mfa_cred(**kwargs)
+
         if negative:
             self.assertEqual(mfa_resp.status_code, 401)
         else:
@@ -176,7 +180,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
             # This is to avoid session id getting revoked which can happen
             # if it was generated the same second MFA was enabled. This can
             # removed once we will have sub-second precision(CID-615).
-            time.sleep(1)
+            time.sleep(2)
 
         if auth_type == 'user_password':
             kwargs = dict([('user_name', username),
@@ -196,14 +200,15 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         return auth_resp, secret
 
     def validate_auth_headers(self, use_mfa, auth_resp, secret=None,
-                              tenant_id=None):
+                              with_tenant=None, tenant_id=None):
 
         if use_mfa:
             self.assertHeaders(
                 auth_resp, (
                     header_validation.validate_tenant_id_header_not_present))
             final_auth_resp = self.call_second_step_of_mfa(
-                first_auth_resp=auth_resp, secret=secret, tenant_id=tenant_id)
+                first_auth_resp=auth_resp, secret=secret,
+                with_tenant=with_tenant, tenant_id=tenant_id)
         else:
             final_auth_resp = auth_resp
 
@@ -238,7 +243,8 @@ class TestAuthResponseHeaders(base.TestBaseV2):
             with_tenant=with_tenant, tenant_id=tenant_id)
 
         self.validate_auth_headers(use_mfa=use_mfa, auth_resp=auth_resp,
-                                   secret=secret, tenant_id=tenant_id)
+                                   with_tenant=with_tenant, secret=secret,
+                                   tenant_id=tenant_id)
 
     @ddt.data(('user_password', 'tenant_id', True),
               ('user_password', 'tenant_id', False),
@@ -268,7 +274,8 @@ class TestAuthResponseHeaders(base.TestBaseV2):
             with_tenant=with_tenant, tenant_id=tenant_id)
 
         self.validate_auth_headers(use_mfa=use_mfa, auth_resp=auth_resp,
-                                   secret=secret, tenant_id=tenant_id)
+                                   with_tenant=with_tenant, secret=secret,
+                                   tenant_id=tenant_id)
 
     @ddt.data(('user_password', 'tenant_id', True),
               ('user_password', 'tenant_id', False),
@@ -306,7 +313,8 @@ class TestAuthResponseHeaders(base.TestBaseV2):
             with_tenant=with_tenant, tenant_id=tenant_id)
 
         self.validate_auth_headers(use_mfa=use_mfa, auth_resp=auth_resp,
-                                   secret=secret, tenant_id=tenant_id)
+                                   secret=secret, with_tenant=with_tenant,
+                                   tenant_id=tenant_id)
 
     @ddt.data(['tenant_id', False],
               ['tenant_name', False],
@@ -325,7 +333,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
             # This is to avoid session id getting revoked which can happen
             # if it was generated the same second MFA was enabled. This can
             # removed once we will have sub-second precision(CID-615).
-            time.sleep(1)
+            time.sleep(2)
 
         # auth
         auth_obj = requests.AuthenticateWithPassword(user_name=username,
@@ -338,7 +346,8 @@ class TestAuthResponseHeaders(base.TestBaseV2):
                 auth_resp, (
                     header_validation.validate_tenant_id_header_not_present))
             auth_resp = self.call_second_step_of_mfa(
-                first_auth_resp=auth_resp, secret=secret, tenant_id=tenant_id)
+                first_auth_resp=auth_resp, secret=secret,
+                with_tenant=with_tenant, tenant_id=tenant_id)
 
         self.assertEqual(auth_resp.status_code, 200)
 
@@ -499,7 +508,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
             # This is to avoid session id getting revoked which can happen
             # if it was generated the same second MFA was enabled. This can
             # removed once we will have sub-second precision(CID-615).
-            time.sleep(1)
+            time.sleep(2)
 
             kwargs['password'] = password
             auth_obj = requests.AuthenticateWithPassword(**kwargs)
@@ -511,7 +520,7 @@ class TestAuthResponseHeaders(base.TestBaseV2):
                     header_validation.validate_tenant_id_header_not_present))
             final_auth_resp = self.call_second_step_of_mfa(
                 first_auth_resp=auth_resp, secret=secret,
-                tenant_id=tenant_id, negative=True)
+                with_tenant=with_tenant, tenant_id=tenant_id, negative=True)
         else:
             kwargs['password'] = invalid_pwd
             auth_obj = requests.AuthenticateWithPassword(**kwargs)
