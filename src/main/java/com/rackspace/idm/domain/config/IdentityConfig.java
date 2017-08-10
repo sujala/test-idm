@@ -363,6 +363,9 @@ public class IdentityConfig {
     public static final String FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP = "feature.allow.delete.role.assigned.to.user";
     public static final boolean FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_DEFAULT = true;
 
+    public static final String FEATURE_CACHE_ROLES_WITH_GUAVA_CACHE = "feature.cache.roles.with.guava.cache";
+    public static final boolean FEATURE_CACHE_ROLES_WITH_GUAVA_CACHE_DEFAULT = true;
+
     public static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
     public static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
 
@@ -694,6 +697,8 @@ public class IdentityConfig {
 
         defaults.put(IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT);
         defaults.put(FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_DEFAULT);
+        defaults.put(FEATURE_CACHE_ROLES_WITH_GUAVA_CACHE, FEATURE_CACHE_ROLES_WITH_GUAVA_CACHE_DEFAULT);
+
         defaults.put(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
 
         defaults.put(RSID_UUID_ROLES_ENABLED_PROP, RSID_UUID_ROLES_ENABLED_DEFAULT);
@@ -1996,6 +2001,11 @@ public class IdentityConfig {
         @IdmProp(key = RSID_UUID_QUESTIONS_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for question's rsId on creation.")
         public boolean getRsIdUuidQuestionsEnabled() {
             return getBooleanSafely(reloadableConfiguration, RSID_UUID_QUESTIONS_ENABLED_PROP);
+        }
+
+        @IdmProp(key = FEATURE_CACHE_ROLES_WITH_GUAVA_CACHE, versionAdded = "3.15.0", description = "Whether or not to allow caching role with spring guava cache")
+        public boolean getCacheRoleWithGuavaCacheFlag() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_CACHE_ROLES_WITH_GUAVA_CACHE);
         }
     }
 

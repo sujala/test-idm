@@ -228,4 +228,39 @@ class DefaultApplicationServiceTest extends RootServiceTest {
         scopeAccessService.getClientIdForParent(_) >> null
         thrown(NotFoundException)
     }
+
+    def "testing getCachedClientRoleById returning ImmutableClientRole"() {
+        given:
+        def clientRole = entityFactory.createClientRole().with {
+            it.id = "id"
+            return it
+        }
+        applicationRoleDao.getClientRole(_) >> clientRole
+
+        when:
+        def result = service.getCachedClientRoleById("id")
+
+        then:
+        1 * applicationRoleDao.getClientRole(_) >> clientRole
+        result != null
+        result.getId() == clientRole.id
+    }
+
+    def "testing getCachedClientRoleByName returning ImmutableClientRole"() {
+        given:
+        def clientRole = entityFactory.createClientRole().with {
+            it.id = "id"
+            it.name = "test"
+            return it
+        }
+        applicationRoleDao.getRoleByName(_) >> clientRole
+
+        when:
+        def result = service.getCachedClientRoleByName("test")
+
+        then:
+        1 * applicationRoleDao.getRoleByName(_) >> clientRole
+        result != null
+        result.getName() == clientRole.name
+    }
 }

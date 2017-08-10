@@ -551,10 +551,13 @@ public class DefaultTenantService implements TenantService {
         ImmutableClientRole autoAssignedRole = null;
 
         if (identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()) {
-            autoAssignedRole = authorizationService
-                    .getCachedIdentityRoleByName(identityConfig.getReloadableConfig()
-                            .getAutomaticallyAssignUserRoleOnDomainTenantsRoleName());
-
+            if(identityConfig.getReloadableConfig().getCacheRoleWithGuavaCacheFlag()) {
+                autoAssignedRole = this.applicationService.getCachedClientRoleByName(identityConfig.getReloadableConfig()
+                        .getAutomaticallyAssignUserRoleOnDomainTenantsRoleName());
+            } else {
+                autoAssignedRole = authorizationService.getCachedIdentityRoleByName(identityConfig.getReloadableConfig()
+                        .getAutomaticallyAssignUserRoleOnDomainTenantsRoleName());
+            }
             if (autoAssignedRole == null) {
                 logger.warn(String.format("The auto-assign role '%s' is invalid. Not found in identity role cache.", autoAssignedRole.getName()));
             } else if (BooleanUtils.isTrue(autoAssignedRole.getPropagate())) {
@@ -884,7 +887,12 @@ public class DefaultTenantService implements TenantService {
 
     @Override
     public TenantRole getEphemeralRackerTenantRole() {
-        ImmutableClientRole rackerClientRole = authorizationService.getCachedIdentityRoleById(identityConfig.getStaticConfig().getRackerRoleId());
+        ImmutableClientRole rackerClientRole = null;
+        if (identityConfig.getReloadableConfig().getCacheRoleWithGuavaCacheFlag()) {
+            rackerClientRole = applicationService.getCachedClientRoleById(identityConfig.getStaticConfig().getRackerRoleId());
+        } else {
+            rackerClientRole = authorizationService.getCachedIdentityRoleById(identityConfig.getStaticConfig().getRackerRoleId());
+        }
         TenantRole rackerTenantRole = new TenantRole();
         rackerTenantRole.setRoleRsId(rackerClientRole.getId());
         rackerTenantRole.setClientId(rackerClientRole.getClientId());

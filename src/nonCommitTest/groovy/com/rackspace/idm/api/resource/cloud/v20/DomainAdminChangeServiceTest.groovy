@@ -10,6 +10,7 @@ import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.RequestContextHolder
 import com.rackspace.idm.api.security.SecurityContext
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.*
 import com.rackspace.idm.exception.*
@@ -20,6 +21,8 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 import testHelpers.IdmAssert
+import testHelpers.RootIntegrationTest
+import testHelpers.SingletonReloadableConfiguration
 
 import javax.ws.rs.core.Response
 
@@ -38,8 +41,10 @@ class DomainAdminChangeServiceTest extends Specification {
     @Shared TenantService tenantService
     @Shared ApplicationService applicationService
     @Shared AtomHopperClient atomHopperClient
-
     @Shared DefaultCloud20Service defaultCloud20Service
+
+    @Shared def identityConfig
+    @Shared def reloadableConfig
 
     def setupSpec() {
         InitializationService.initialize()
@@ -68,9 +73,17 @@ class DomainAdminChangeServiceTest extends Specification {
         defaultCloud20Service.applicationService = applicationService
         defaultCloud20Service.atomHopperClient = atomHopperClient
 
+        identityConfig = Mock(IdentityConfig)
+        reloadableConfig = Mock(IdentityConfig.ReloadableConfig)
+        identityConfig.getReloadableConfig() >> reloadableConfig
+        defaultCloud20Service.identityConfig = identityConfig
+
         // Common settings for the client role lookups. Based on convention for role names.
         authorizationService.getCachedIdentityRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
         authorizationService.getCachedIdentityRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
+
+        applicationService.getCachedClientRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
+        applicationService.getCachedClientRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
         applicationService.getCachedClientRoleById(_) >> {String id -> createImmutableClientRole(id, id.endsWith("RBAC") ? RoleLevelEnum.LEVEL_1000.levelAsInt : RoleLevelEnum.LEVEL_500.levelAsInt)}
     }
 
@@ -478,6 +491,7 @@ class DomainAdminChangeServiceTest extends Specification {
 
     def "Positive Test: Promoting user-manage to user-admin. No RBAC deletions"() {
         given:
+        reloadableConfig.getCacheRoleWithGuavaCacheFlag() >> flag
         def callerToken = "atoken"
         def promoteUser = createUser("promoteUser")
         def demoteUser = createUser("demoteUser")
@@ -495,7 +509,7 @@ class DomainAdminChangeServiceTest extends Specification {
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
         when:
-        Response response = defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest).build()
+        def response = defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest).build()
 
         then: "Promote users roles are properly modified"
         1 * tenantService.addTenantRoleToUser(promoteUser, {it.name == USER_ADMIN.roleName})
@@ -506,10 +520,14 @@ class DomainAdminChangeServiceTest extends Specification {
         1 * tenantService.deleteTenantRole({it.name == USER_ADMIN.roleName})
 
         response.status == HttpStatus.SC_NO_CONTENT
+
+        where:
+        flag << [true, false]
     }
 
     def "Positive Test: Promoting user-manage to user-admin. Deletes RBAC and user-classification roles from promote and demote users"() {
         given:
+        reloadableConfig.getCacheRoleWithGuavaCacheFlag() >> flag
         def callerToken = "atoken"
         def promoteUser = createUser("promoteUser")
         def demoteUser = createUser("demoteUser")
@@ -526,7 +544,7 @@ class DomainAdminChangeServiceTest extends Specification {
         identityUserService.checkAndGetEndUserById("demoteUser") >> demoteUser
 
         when:
-        Response response = defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest).build()
+        def response = defaultCloud20Service.modifyDomainAdministrator(callerToken, "domainx", changeRequest).build()
 
         then: "Promote users roles are properly modified"
         1 * tenantService.addTenantRoleToUser(promoteUser, {it.name == USER_ADMIN.roleName})
@@ -547,6 +565,9 @@ class DomainAdminChangeServiceTest extends Specification {
         and: "atom hopper client called to send feed events"
         1 * atomHopperClient.asyncPost(promoteUser, AtomHopperConstants.ROLE)
         1 * atomHopperClient.asyncPost(demoteUser, AtomHopperConstants.ROLE)
+
+        where:
+        flag << [true, false]
     }
 
     def createTenantRole(String name, RoleTypeEnum roleType = STANDARD, Set<String> tenantIds = [] as Set) {

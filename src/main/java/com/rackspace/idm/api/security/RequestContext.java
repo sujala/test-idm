@@ -1,5 +1,6 @@
 package com.rackspace.idm.api.security;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotFoundException;
@@ -41,6 +42,13 @@ public class RequestContext {
 
     @Autowired
     private AuthorizationService authorizationService;
+
+    @Autowired
+    private ApplicationService applicationService;
+
+    @Autowired
+    private IdentityConfig identityConfig;
+
     /**
      * Stores information about the user making the request
      */
@@ -137,7 +145,13 @@ public class RequestContext {
             //get all the tenant roles for the user, and limit down to "identity" ones
             List<TenantRole> userTenantRoles = IteratorUtils.toList(tenantService.getTenantRolesForUserNoDetail(effectiveCaller).iterator());
             for (TenantRole userTenantRole : userTenantRoles) {
-                ImmutableClientRole identityRole = authorizationService.getCachedIdentityRoleById(userTenantRole.getRoleRsId());
+                ImmutableClientRole identityRole = null;
+
+                if(identityConfig.getReloadableConfig().getCacheRoleWithGuavaCacheFlag()) {
+                    identityRole = applicationService.getCachedClientRoleById(userTenantRole.getRoleRsId());
+                } else {
+                    identityRole = authorizationService.getCachedIdentityRoleById(userTenantRole.getRoleRsId());
+                }
                 if (identityRole != null) {
                     //role on user is an "identity" role so add to list of effective identity roles
                     userTenantRole.setName(identityRole.getName());
