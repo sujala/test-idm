@@ -44,7 +44,6 @@ class TestTenantLevelRolesForFederation(base.TestBaseV2):
     def setUp(self):
         super(TestTenantLevelRolesForFederation, self).setUp()
         self.provider_ids = []
-        self.domains = []
         self.roles = []
         self.users = []
 
@@ -57,9 +56,6 @@ class TestTenantLevelRolesForFederation(base.TestBaseV2):
         self.user_admin_client.serialize_format = const.XML
         self.user_admin_client.default_headers[
             const.CONTENT_TYPE] = 'application/xml'
-        self.users.append(self.user_admin_client.default_headers[
-                              const.X_USER_ID])
-        self.domains.append(self.domain_id)
 
     def update_mapping_policy(self, idp_id):
 
@@ -204,13 +200,7 @@ class TestTenantLevelRolesForFederation(base.TestBaseV2):
             self.identity_admin_client.delete_user(user_id=user_id)
         for role_id in self.roles:
             self.identity_admin_client.delete_role(role_id=role_id)
-        for id_ in self.domains:
-            req_obj = requests.Domain(domain_name=id_, domain_id=id_,
-                                      enabled=False)
-            self.identity_admin_client.update_domain(
-                domain_id=str(id_), request_object=req_obj)
-            self.identity_admin_client.delete_domain(
-                domain_id=id_)
+        self.delete_client(self.user_admin_client)
         super(TestTenantLevelRolesForFederation, self).tearDown()
 
     @classmethod

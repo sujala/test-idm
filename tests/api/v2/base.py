@@ -130,9 +130,6 @@ class TestBaseV2(base.TestBase):
 
             username = user_resp.json()[const.USER][const.USERNAME]
             password = user_resp.json()[const.USER][const.NS_PASSWORD]
-            if const.TENANT_ID in user_resp.json()[const.USER]:
-                id_client.default_headers[const.TENANT_ID] = (
-                    user_resp.json()[const.USER][const.TENANT_ID])
             if const.DOMAIN_ID in str(user_resp.json()[const.USER]):
                 id_client.default_headers[const.X_DOMAIN_ID] = (
                     user_resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID])
@@ -189,6 +186,7 @@ class TestBaseV2(base.TestBase):
         return id_client
 
     @classmethod
+    @base.log_tearDown_error
     def delete_client(cls, client, parent_client=None):
         """Return delete client object
         Clean up all resources create if generated client added user.
@@ -197,6 +195,7 @@ class TestBaseV2(base.TestBase):
         uses the service_admin (or) identity_admin level user's client
         depending on whether run_service_admin_tests in the config file is
         True or False respectively.
+        :param client: client whose resources are to be deleted
         """
         if not parent_client:
             if cls.test_config.run_service_admin_tests:
@@ -206,17 +205,36 @@ class TestBaseV2(base.TestBase):
         if const.X_USER_ID in client.default_headers:
             user_id = client.default_headers[const.X_USER_ID]
             resp = parent_client.delete_user(user_id=user_id)
+            assert resp.status_code == 204, (
+                'User with ID {0} failed to delete'.format(
+                    user_id))
         if const.X_DOMAIN_ID in client.default_headers:
             domain_id = client.default_headers[const.X_DOMAIN_ID]
+
+            # Deleting the tenants
+            list_resp = cls.identity_admin_client.list_tenants_in_domain(
+                domain_id=domain_id)
+
+            if list_resp.status_code == 200:
+                tenants = list_resp.json()[const.TENANTS]
+
+                tenant_ids = [item[const.ID] for item in tenants]
+                for tenant_id in tenant_ids:
+                    resp = cls.identity_admin_client.delete_tenant(
+                        tenant_id=tenant_id)
+                    assert resp.status_code == 204, (
+                        'Tenant with ID {0} failed to delete'.format(
+                            tenant_id))
+
             # Disable domain before delete
             disable_domain_req = requests.Domain(enabled=False)
             parent_client.update_domain(
                 domain_id=domain_id, request_object=disable_domain_req)
-            parent_client.delete_domain(domain_id=domain_id)
-        if const.X_TENANT_ID in client.default_headers:
-            tenant_id = client.default_headers[const.X_TENANT_ID]
-            parent_client.delete_tenant(tenant_id=tenant_id)
-        return resp
+            resp = parent_client.delete_domain(
+                domain_id=domain_id)
+            assert resp.status_code == 204, (
+                'Domain with ID {0} failed to delete'.format(
+                    domain_id))
 
     @classmethod
     def tearDownClass(cls):
