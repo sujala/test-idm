@@ -2,22 +2,9 @@ package com.rackspace.idm.api.resource.cloud.devops
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionRequest
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenRevocationRecordDeletionResponse
-import com.rackspace.idm.Constants
-import com.rackspace.idm.api.resource.cloud.devops.DefaultDevOpsService
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.dao.impl.LdapRepository
-import com.rackspace.idm.domain.dao.impl.LdapTokenRevocationRecordRepository
-import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
-import com.rackspace.idm.domain.entity.LdapTokenRevocationRecord
-import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.exception.BadRequestException
-import com.unboundid.ldap.sdk.Filter
-import org.apache.http.HttpStatus
-import org.joda.time.DateTime
-import org.openstack.docs.identity.api.v2.ForbiddenFault
-import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
-import testHelpers.IdmAssert
 import testHelpers.RootServiceTest
 
 /**
