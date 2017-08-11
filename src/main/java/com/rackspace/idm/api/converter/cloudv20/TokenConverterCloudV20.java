@@ -41,18 +41,12 @@ public class TokenConverterCloudV20 {
         Token token = objFactories.getOpenStackIdentityV2Factory().createToken();
 
         if (scopeAccess != null) {
-            GregorianCalendar gc = new GregorianCalendar();
-            gc.setTime(scopeAccess.getAccessTokenExp());
-
-            XMLGregorianCalendar expiresDate = null;
-            try {
-                expiresDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(gc);
-            } catch (DatatypeConfigurationException e) {
-                logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
-            }
+            XMLGregorianCalendar expiresDate = getXmlGregorianCalendar(scopeAccess.getAccessTokenExp());
+            XMLGregorianCalendar issuedDate = getXmlGregorianCalendar(scopeAccess.getCreateTimestamp());
 
             token.setId(scopeAccess.getAccessTokenString());
             token.setExpires(expiresDate);
+            token.setIssuedAt(issuedDate);
             if (StringUtils.isNotBlank(tokenTenantId)) {
                 TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
                 tenantForAuthenticateResponse.setId(tokenTenantId);
@@ -71,6 +65,19 @@ public class TokenConverterCloudV20 {
         }
 
         return token;
+    }
+
+    private XMLGregorianCalendar getXmlGregorianCalendar(Date date) {
+        GregorianCalendar gc = new GregorianCalendar();
+        gc.setTime(date);
+
+        XMLGregorianCalendar expiresDate = null;
+        try {
+            expiresDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(gc);
+        } catch (DatatypeConfigurationException e) {
+            logger.info("failed to create XMLGregorianCalendar: " + e.getMessage());
+        }
+        return expiresDate;
     }
 
     public Token toToken(ScopeAccess scopeAccess, List<TenantRole> roles) {

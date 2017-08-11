@@ -21,6 +21,8 @@ import com.rackspacecloud.docs.auth.api.v1.BaseURLList
 import com.rackspacecloud.docs.auth.api.v1.BaseURLRefList
 import com.rackspacecloud.docs.auth.api.v1.GroupsList
 import org.apache.commons.io.IOUtils
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
@@ -1546,6 +1548,42 @@ class JSONReaderWriterTest extends RootServiceTest {
         otherArray[0].get(PUBLIC_URL) == "publicUrl"
         otherArray[0].get(INTERNAL_URL) == "internalUrl"
         otherArray[0].get(ADMIN_URL) == "adminUrl"
+    }
+
+    def "can write issued_at using json"() {
+        when:
+        def response = v2Factory.createAuthenticateResponse()
+        DateTime issuedAtDateTime = new DateTime();
+        response.getToken().setIssuedAt(DatatypeFactory.newInstance().newXMLGregorianCalendar(issuedAtDateTime.toGregorianCalendar()));
+
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthenticateResponse.writeTo(response, AuthenticateResponse.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+
+        then:
+        JSONParser parser = new JSONParser();
+        JSONObject authResponse = (JSONObject) parser.parse(json);
+        JSONObject access = (JSONObject)authResponse.get(JSONConstants.ACCESS)
+        JSONObject token = (JSONObject)access.get(JSONConstants.TOKEN)
+        String issuedAt = (String) token.get(JSONConstants.RAX_AUTH_ISSUED_AT)
+        issuedAt == issuedAtDateTime.toString()
+    }
+
+    def "can write null issued_at using json"() {
+        when:
+        def response = v2Factory.createAuthenticateResponse()
+        response.getToken().setIssuedAt(null);
+
+        ByteArrayOutputStream arrayOutputStream = new ByteArrayOutputStream()
+        writerForAuthenticateResponse.writeTo(response, AuthenticateResponse.class, null, null, null, null, arrayOutputStream)
+        def json = arrayOutputStream.toString()
+
+        then:
+        JSONParser parser = new JSONParser();
+        JSONObject authResponse = (JSONObject) parser.parse(json);
+        JSONObject access = (JSONObject)authResponse.get(JSONConstants.ACCESS)
+        JSONObject token = (JSONObject)access.get(JSONConstants.TOKEN)
+        !token.containsKey(JSONConstants.RAX_AUTH_ISSUED_AT)
     }
 
     def getSecretQA(String id, String question, String answer) {

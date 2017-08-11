@@ -62,6 +62,7 @@
         </sequence>
         <attribute name="id" type="xsd:string" use="required"/>
         <attribute name="expires" type="xsd:dateTime" use="required"/>
+        <attribute ref="RAX-AUTH:issued_at" use="optional"/>
 
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
