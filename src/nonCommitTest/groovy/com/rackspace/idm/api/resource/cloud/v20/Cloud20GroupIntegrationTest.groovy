@@ -113,7 +113,7 @@ class Cloud20GroupIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Test feature flag 'rsid.uuid.groups.enabled' = #flag"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.RSID_UUID_GROUPS_ENABLED_PROP, flag)
+        reloadableConfiguration.setProperty(IdentityConfig.USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_PROP, flag)
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)

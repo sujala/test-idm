@@ -23,7 +23,7 @@ public class LdapQuestionRepository extends LdapGenericRepository<Question> impl
 
     @Override
     protected boolean useUuidForRsId() {
-        return identityConfig.getReloadableConfig().getRsIdUuidQuestionsEnabled();
+        return identityConfig.getReloadableConfig().getUseUuidIdsForNewQuestionEnabled();
     }
 
     public String getNextId() {
