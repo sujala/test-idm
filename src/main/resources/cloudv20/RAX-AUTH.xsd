@@ -41,6 +41,7 @@
     <attribute name="assignmentType" type="RAX-AUTH:EndpointTemplateAssignmentTypeEnum" />
     <attribute name="assignment" type="RAX-AUTH:RoleAssignmentEnum" />
     <attribute name="roleType" type="RAX-AUTH:RoleTypeEnum" />
+    <attribute name="issued_at" type="xsd:dateTime" />
 
     <attribute name="sessionInactivityTimeout" type="xsd:duration">
         <annotation>

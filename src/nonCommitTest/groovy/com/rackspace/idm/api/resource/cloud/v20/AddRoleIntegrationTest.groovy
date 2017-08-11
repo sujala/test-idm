@@ -553,7 +553,7 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Test feature flag 'rsid.uuid.roles.enabled' = #flag"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.RSID_UUID_ROLES_ENABLED_PROP, flag)
+        reloadableConfiguration.setProperty(IdentityConfig.USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP, flag)
         Role role = v2Factory.createRole(testUtils.getRandomUUID())
         def domainId = utils.createDomain()
         def userAdmin, users

@@ -194,6 +194,9 @@ public final class JsonWriterHelper {
         JSONObject tokenInner = new JSONObject();
         tokenInner.put(JSONConstants.ID, token.getId());
         tokenInner.put(JSONConstants.EXPIRES, token.getExpires().toString());
+        if (token.getIssuedAt() != null) {
+            tokenInner.put(JSONConstants.RAX_AUTH_ISSUED_AT, token.getIssuedAt().toString());
+        }
 
         if (token.getTenant() != null) {
             JSONObject tenantInner = new JSONObject();

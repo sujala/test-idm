@@ -521,6 +521,19 @@ class DomainAdminChangeServiceTest extends Specification {
 
         response.status == HttpStatus.SC_NO_CONTENT
 
+        and: "verify if cached role name is retrieved from applicationService/authorizationService"
+        if (flag) {
+            1 * applicationService.getCachedClientRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
+            1 * applicationService.getCachedClientRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
+            0 * authorizationService.getCachedIdentityRoleByName(_)
+            0 * authorizationService.getCachedIdentityRoleByName(_)
+        } else {
+            1 * authorizationService.getCachedIdentityRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
+            1 * authorizationService.getCachedIdentityRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
+            0 * applicationService.getCachedClientRoleByName(_)
+            0 * applicationService.getCachedClientRoleByName(_)
+        }
+
         where:
         flag << [true, false]
     }
@@ -565,6 +578,19 @@ class DomainAdminChangeServiceTest extends Specification {
         and: "atom hopper client called to send feed events"
         1 * atomHopperClient.asyncPost(promoteUser, AtomHopperConstants.ROLE)
         1 * atomHopperClient.asyncPost(demoteUser, AtomHopperConstants.ROLE)
+
+        and: "verify if cached role name is retrieved from applicationService/authorizationService"
+        if (flag) {
+            1 * applicationService.getCachedClientRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
+            1 * applicationService.getCachedClientRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
+            0 * authorizationService.getCachedIdentityRoleByName(_)
+            0 * authorizationService.getCachedIdentityRoleByName(_)
+        } else {
+            1 * authorizationService.getCachedIdentityRoleByName(USER_ADMIN.roleName) >> createImmutableClientRole(USER_ADMIN.roleName, USER_ADMIN.levelAsInt)
+            1 * authorizationService.getCachedIdentityRoleByName(DEFAULT_USER.roleName) >> createImmutableClientRole(DEFAULT_USER.roleName, DEFAULT_USER.levelAsInt)
+            0 * applicationService.getCachedClientRoleByName(_)
+            0 * applicationService.getCachedClientRoleByName(_)
+        }
 
         where:
         flag << [true, false]
