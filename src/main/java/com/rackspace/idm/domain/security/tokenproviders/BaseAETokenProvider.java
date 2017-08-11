@@ -58,7 +58,6 @@ public abstract class BaseAETokenProvider implements TokenProvider {
 
         //set the creation timestamp
         Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MILLISECOND, 0);
         token.setCreateTimestamp(cal.getTime());
 
         byte[] dataBytes = packProtectedTokenData(user, token);

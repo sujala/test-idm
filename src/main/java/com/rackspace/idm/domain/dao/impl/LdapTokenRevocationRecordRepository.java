@@ -96,7 +96,6 @@ public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<L
         trr.setTargetIssuedToId(targetUserId);
         trr.setTargetAuthenticatedByMethodGroups(authenticatedByMethodGroups);
         Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MILLISECOND, 0);
         trr.setTargetCreatedBefore(cal.getTime());
 
         addObject(trr);
@@ -110,7 +109,6 @@ public class LdapTokenRevocationRecordRepository extends LdapGenericRepository<L
         trr.setId(getNextId());
         trr.setIdentityProviderId(identityProviderId);
         Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MILLISECOND, 0);
         trr.setTargetCreatedBefore(cal.getTime());
 
         addObject(trr);
