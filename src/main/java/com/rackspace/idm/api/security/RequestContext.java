@@ -147,7 +147,7 @@ public class RequestContext {
             for (TenantRole userTenantRole : userTenantRoles) {
                 ImmutableClientRole identityRole = null;
 
-                if(identityConfig.getReloadableConfig().getCacheRoleWithGuavaCacheFlag()) {
+                if(identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
                     identityRole = applicationService.getCachedClientRoleById(userTenantRole.getRoleRsId());
                 } else {
                     identityRole = authorizationService.getCachedIdentityRoleById(userTenantRole.getRoleRsId());

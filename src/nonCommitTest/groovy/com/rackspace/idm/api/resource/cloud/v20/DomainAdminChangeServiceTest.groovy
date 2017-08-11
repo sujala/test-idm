@@ -491,7 +491,7 @@ class DomainAdminChangeServiceTest extends Specification {
 
     def "Positive Test: Promoting user-manage to user-admin. No RBAC deletions"() {
         given:
-        reloadableConfig.getCacheRoleWithGuavaCacheFlag() >> flag
+        reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> flag
         def callerToken = "atoken"
         def promoteUser = createUser("promoteUser")
         def demoteUser = createUser("demoteUser")
@@ -527,7 +527,7 @@ class DomainAdminChangeServiceTest extends Specification {
 
     def "Positive Test: Promoting user-manage to user-admin. Deletes RBAC and user-classification roles from promote and demote users"() {
         given:
-        reloadableConfig.getCacheRoleWithGuavaCacheFlag() >> flag
+        reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> flag
         def callerToken = "atoken"
         def promoteUser = createUser("promoteUser")
         def demoteUser = createUser("demoteUser")

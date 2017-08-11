@@ -2,7 +2,6 @@ package com.rackspace.idm.domain.service.impl;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types;
 import com.rackspace.idm.GlobalConstants;
@@ -551,7 +550,7 @@ public class DefaultTenantService implements TenantService {
         ImmutableClientRole autoAssignedRole = null;
 
         if (identityConfig.getReloadableConfig().isAutomaticallyAssignUserRoleOnDomainTenantsEnabled()) {
-            if(identityConfig.getReloadableConfig().getCacheRoleWithGuavaCacheFlag()) {
+            if(identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
                 autoAssignedRole = this.applicationService.getCachedClientRoleByName(identityConfig.getReloadableConfig()
                         .getAutomaticallyAssignUserRoleOnDomainTenantsRoleName());
             } else {
@@ -888,7 +887,7 @@ public class DefaultTenantService implements TenantService {
     @Override
     public TenantRole getEphemeralRackerTenantRole() {
         ImmutableClientRole rackerClientRole = null;
-        if (identityConfig.getReloadableConfig().getCacheRoleWithGuavaCacheFlag()) {
+        if (identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
             rackerClientRole = applicationService.getCachedClientRoleById(identityConfig.getStaticConfig().getRackerRoleId());
         } else {
             rackerClientRole = authorizationService.getCachedIdentityRoleById(identityConfig.getStaticConfig().getRackerRoleId());

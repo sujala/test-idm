@@ -4854,7 +4854,7 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             ClientRole userAdminRole = null;
             ClientRole userDefaultRole = null;
-            if(identityConfig.getReloadableConfig().getCacheRoleWithGuavaCacheFlag()) {
+            if(identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
                 userAdminRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()).asClientRole();
                 userDefaultRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()).asClientRole();
             } else {

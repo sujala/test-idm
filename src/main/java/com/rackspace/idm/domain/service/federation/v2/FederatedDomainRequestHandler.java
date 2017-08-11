@@ -499,7 +499,7 @@ public class FederatedDomainRequestHandler {
 
         // Add in default role which is added to all federated users
         ImmutableClientRole roleObj = null;
-        if(identityConfig.getReloadableConfig().getCacheRoleWithGuavaCacheFlag()) {
+        if(identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
             roleObj = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName());
         } else {
             roleObj = authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName());
