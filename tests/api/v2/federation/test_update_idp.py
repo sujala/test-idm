@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*
 import copy
 import ddt
-import time
 
 from tests.api.utils import saml_helper, log_search
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -249,7 +248,6 @@ class TestUpdateIDP(base.TestBaseV2):
         resp = self.idp_ia_client.update_idp(idp_id=provider_id,
                                              request_object=update_idp_obj)
         self.assertEqual(resp.status_code, 200)
-        time.sleep(1)
 
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_approved_domain_ids_with_spaces(self, test_data):

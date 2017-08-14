@@ -33,6 +33,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.role_ids = []
         self.service_ids = []
         self.user_ids = []
+        self.domain_ids = []
 
     def create_service(self):
         request_object = factory.get_add_service_object()
@@ -50,6 +51,8 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.assertEqual(resp.status_code, 201)
         user_id = resp.json()[const.USER][const.ID]
         self.user_ids.append(user_id)
+        domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
+        self.domain_ids.append(domain_id)
         return user_id
 
     def create_role(self):
@@ -210,6 +213,16 @@ class TestRoleApiCalls(base.TestBaseV2):
         for user in new_user_ids:
             self.assertIn(user, str(resp.json()[const.USERS]))
 
+    def test_delete_identity_classification_role(self):
+
+        user_id = self.create_admin_user()
+        delete_role_resp = self.identity_admin_client.delete_role_from_user(
+            user_id=user_id, role_id=const.USER_ADMIN_ROLE_ID)
+        self.assertEqual(delete_role_resp.status_code, 403)
+        self.assertEqual(
+            delete_role_resp.json()[const.FORBIDDEN][const.MESSAGE],
+            "Cannot delete identity user-type roles from a user.")
+
     def tearDown(self):
         for id_ in self.role_ids:
             self.identity_admin_client.delete_role(role_id=id_)
@@ -217,4 +230,10 @@ class TestRoleApiCalls(base.TestBaseV2):
             self.service_admin_client.delete_service(service_id=id_)
         for id_ in self.user_ids:
             self.identity_admin_client.delete_user(user_id=id_)
+        for id_ in self.domain_ids:
+            disable_domain_req = requests.Domain(enabled=False)
+            self.identity_admin_client.update_domain(
+                domain_id=id_, request_object=disable_domain_req)
+
+            self.identity_admin_client.delete_domain(domain_id=id_)
         super(TestRoleApiCalls, self).tearDown()
