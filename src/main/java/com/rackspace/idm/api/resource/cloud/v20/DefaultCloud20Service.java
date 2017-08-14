@@ -4852,9 +4852,15 @@ public class DefaultCloud20Service implements Cloud20Service {
             logger.info(String.format("Domain admin change for domain '%s'. Promoting user '%s' to user-admin and demoting user '%s'"
                     , promoteUser.getDomainId(), domainAdministratorChange.getPromoteUserId(), domainAdministratorChange.getDemoteUserId()));
 
-            ClientRole userAdminRole = authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()).asClientRole();
-            ClientRole userDefaultRole = authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()).asClientRole();
-
+            ClientRole userAdminRole = null;
+            ClientRole userDefaultRole = null;
+            if(identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
+                userAdminRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()).asClientRole();
+                userDefaultRole = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()).asClientRole();
+            } else {
+                userAdminRole = authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.USER_ADMIN.getRoleName()).asClientRole();
+                userDefaultRole = authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName()).asClientRole();
+            }
             /*
              Modify the user to promote by first adding the user-admin role and then iterating through user's other roles
               and removing any roles assignable by user-admin and user classification roles

@@ -48,12 +48,23 @@ public interface ApplicationService {
     ClientRole getClientRoleById(String id);
 
     /**
-     * Return the cached, immutable, version of the client role.
+     * Return the cached, immutable, version of the client role by id.
      *
      * @param id
      * @return
      */
     ImmutableClientRole getCachedClientRoleById(String id);
+
+    /**
+     * Return the cached, immutable, version of the client role by name.
+     *
+     * @param name
+     * @return
+     */
+
+
+    ImmutableClientRole getCachedClientRoleByName(String name);
+
 
     /**
      * Load the specified ClientRoles by name and maxWeight. The role is returned if the specified weight

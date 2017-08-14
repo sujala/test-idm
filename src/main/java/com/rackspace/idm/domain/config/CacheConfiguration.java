@@ -17,7 +17,8 @@ import java.util.concurrent.TimeUnit;
 @EnableCaching
 public class CacheConfiguration {
 
-    public final static String CLIENT_ROLE_CACHE= "clientRoleCache";
+    public final static String CLIENT_ROLE_CACHE_BY_ID = "clientRoleCacheById";
+    public final static String CLIENT_ROLE_CACHE_BY_NAME = "clientRoleCacheByName";
 
     @Autowired
     IdentityConfig identityConfig;
@@ -25,7 +26,7 @@ public class CacheConfiguration {
     @Bean
     public CacheManager cacheManager() {
         SimpleCacheManager cacheManager = new SimpleCacheManager();
-        cacheManager.setCaches(Arrays.asList(getClientRoleCache(CLIENT_ROLE_CACHE)));
+        cacheManager.setCaches(Arrays.asList(getClientRoleCache(CLIENT_ROLE_CACHE_BY_ID), getClientRoleCache(CLIENT_ROLE_CACHE_BY_NAME)));
         return cacheManager;
     }
 

@@ -2,15 +2,20 @@ package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
+import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Tenant
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
+
+import static com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum.STANDARD
+import static com.rackspace.idm.domain.service.IdentityUserTypeEnum.USER_ADMIN
 
 class DefaultTenantServiceTest extends RootServiceTest {
     @Shared DefaultTenantService service
@@ -31,6 +36,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockTenantDao(service)
         mockTenantRoleDao(service)
         mockApplicationService(service)
+        mockAuthorizationService(service)
         mockUserService(service)
         mockEndpointService(service)
         mockScopeAccessService(service)
@@ -669,6 +675,98 @@ class DefaultTenantServiceTest extends RootServiceTest {
         "MossoCloudFS_12345"| ["cloud"] as Set    | ["cloud","managed_hosting","files"] as Set  | ["cloud"] as Set
         "hybrid:123"        | ["files"] as Set    | ["cloud", "files"] as Set          | ["files"] as Set
         "asdf:12345"        | ["files"] as Set    | ["cloud","asdf","files"] as Set    | ["files"] as Set
+    }
+
+    def "test getEphemeralRackerTenantRole with retrieving cached role by id from applicationService/authorizationService"() {
+        given:
+        def roleId = "roleId"
+
+        reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> flag
+        identityConfig.getStaticConfig() >> staticConfig
+        staticConfig.getRackerRoleId() >> roleId
+
+        applicationService.getCachedClientRoleById(roleId) >>  createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+        authorizationService.getCachedIdentityRoleById(roleId) >>  createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+
+        when:
+        def tenantRole = service.getEphemeralRackerTenantRole()
+
+        then:
+        tenantRole.getRoleRsId() != null
+        tenantRole.getRoleRsId() == roleId
+
+        if (flag) {
+            1 * applicationService.getCachedClientRoleById(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+            0 * authorizationService.getCachedIdentityRoleById(_)
+        } else {
+            1 * authorizationService.getCachedIdentityRoleById(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+            0 * applicationService.getCachedClientRoleById(_)
+        }
+
+        where:
+        flag << [true, false]
+    }
+
+
+    def "test getTenantRolesForUserPerformant with retrieving cached role by name from applicationService/authorizationService"() {
+        given:
+        def domainId = "testDomainId"
+        def roleId = "roleId"
+
+        def domain = entityFactory.createDomain(domainId)
+        def tenant = entityFactory.createTenant()
+        def tenantIds = ["12", "21", "321"] as String[]
+        def user = entityFactory.createUser("test1","userId", domainId, "region")
+
+        domain.setTenantIds(tenantIds)
+        tenant.setDomainId(domainId)
+
+        domainService.getDomain(user.getDomainId()) >> domain
+
+        def tenantRole1 = entityFactory.createTenantRole()
+        def tenantRole2 = entityFactory.createTenantRole()
+        List<TenantRole> tenantRoles = Arrays.asList(tenantRole1, tenantRole2)
+        Iterable<TenantRole> tenantRoleIterable = (Iterable<TenantRole>)tenantRoles
+
+        tenantRoleDao.getTenantRolesForUser(user) >> tenantRoleIterable
+
+        reloadableConfig.isAutomaticallyAssignUserRoleOnDomainTenantsEnabled() >> true
+        reloadableConfig.getCacheRolesWithoutApplicationRestartFlag() >> flag
+        reloadableConfig.getAutomaticallyAssignUserRoleOnDomainTenantsRoleName() >> roleId
+
+        applicationService.getCachedClientRoleByName(roleId) >>  createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+        authorizationService.getCachedIdentityRoleByName(roleId) >>  createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+        applicationService.getCachedClientRoleById(_) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+
+        when:
+        def tenantRoleList = service.getTenantRolesForUserPerformant(user)
+
+        then:
+        !tenantRoleList.isEmpty()
+        tenantRoleList.size() == 3
+
+        if (flag) {
+            1 * applicationService.getCachedClientRoleById(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+            1 * applicationService.getCachedClientRoleByName(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+            0 * authorizationService.getCachedIdentityRoleByName(_)
+        } else {
+            1 * applicationService.getCachedClientRoleById(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+            1 * authorizationService.getCachedIdentityRoleByName(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
+            0 * applicationService.getCachedClientRoleByName(_)
+        }
+
+        where:
+        flag << [true, false]
+    }
+
+    def createImmutableClientRole(String name, int weight = 1000) {
+        return new ImmutableClientRole(new ClientRole().with {
+            it.name = name
+            it.id = name
+            it.roleType = STANDARD
+            it.rsWeight = weight
+            it
+        })
     }
 
     def mockFederatedUserDao(service) {

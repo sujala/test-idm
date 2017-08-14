@@ -294,16 +294,31 @@ public class DefaultApplicationService implements ApplicationService {
     }
 
     @Override
-    @Cacheable(value = CacheConfiguration.CLIENT_ROLE_CACHE, unless="#result == null")
+    @Cacheable(value = CacheConfiguration.CLIENT_ROLE_CACHE_BY_ID, unless="#result == null")
     public ImmutableClientRole getCachedClientRoleById(String roleId) {
         logger.trace("ClientRole cache miss. Retrieving client role with id {}", roleId);
         ClientRole role = this.applicationRoleDao.getClientRole(roleId);
-        if (role != null) {
-            logger.trace("Retrieved Client Role {} for cache", roleId);
-        } else {
-            logger.trace("Client Role {} not found. Will not populate null result in cache", roleId);
-        }
+        logCaching(role, roleId);
+
         return role != null ? new ImmutableClientRole(role) : null;
+    }
+
+    @Override
+    @Cacheable(value = CacheConfiguration.CLIENT_ROLE_CACHE_BY_NAME, unless="#result == null")
+    public ImmutableClientRole getCachedClientRoleByName(String name) {
+        logger.trace("ClientRole cache miss. Retrieving client role with name {}", name);
+        ClientRole role = this.applicationRoleDao.getRoleByName(name);
+        logCaching(role, name);
+
+        return role != null ? new ImmutableClientRole(role) : null;
+    }
+
+    private void logCaching(ClientRole role, String value) {
+        if (role != null) {
+            logger.trace("Retrieved Client Role {} for cache", value);
+        } else {
+            logger.trace("Client Role {} not found. Will not populate null result in cache", value);
+        }
     }
 
     @Override

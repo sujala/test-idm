@@ -66,6 +66,9 @@ public class FederatedDomainRequestHandler {
     private AuthorizationService authorizationService;
 
     @Autowired
+    private ApplicationService applicationService;
+
+    @Autowired
     private ScopeAccessService scopeAccessService;
 
     @Autowired
@@ -495,7 +498,12 @@ public class FederatedDomainRequestHandler {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
 
         // Add in default role which is added to all federated users
-        ImmutableClientRole roleObj = authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName());
+        ImmutableClientRole roleObj = null;
+        if(identityConfig.getReloadableConfig().getCacheRolesWithoutApplicationRestartFlag()) {
+            roleObj = applicationService.getCachedClientRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName());
+        } else {
+            roleObj = authorizationService.getCachedIdentityRoleByName(IdentityUserTypeEnum.DEFAULT_USER.getRoleName());
+        }
         TenantRole tenantRole = new TenantRole();
         tenantRole.setRoleRsId(roleObj.getId());
         tenantRole.setClientId(roleObj.getClientId());

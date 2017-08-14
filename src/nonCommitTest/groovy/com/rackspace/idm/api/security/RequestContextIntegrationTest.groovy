@@ -117,6 +117,7 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
 
     def "can load effective caller roles from request context when token set on security context"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART, flag)
         utils.createUserAdmin()
         def users
         def userAdmin
@@ -164,10 +165,16 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
+        reloadableConfiguration.reset()
+
+        where:
+        flag << [true, false]
     }
 
     def "can load repose-standard roles as implicit roles"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART, flag)
+
         utils.createUserAdmin()
         def users
         def userAdmin
@@ -198,6 +205,10 @@ class RequestContextIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteUsers(users)
+        reloadableConfiguration.reset()
+
+        where:
+        flag << [true, false]
     }
 
     def createSecurityContext(ScopeAccess callerToken, ScopeAccess effectiveCallerToken) {
