@@ -107,7 +107,7 @@ CONTACT_ID_MAX = 99999999
 CONTENT_TYPE_VALUE = ACCEPT_ENCODING_VALUE = 'application/{0}'
 DOMAIN_API_TEST = 'api-test'
 DOMAIN_PATTERN = '[a-z]{8}'
-DESC_PATTERN = '[a-zA-Z ,.]{:200}'
+DESC_PATTERN = '[a-zA-Z ,.]{10:200}'
 DOMAIN_TEST = 'meow'
 EMAIL_RANDOM = 'randome@rackspace.com'
 FED_USER_PATTERN = 'fed[\-]user[\d\w]{12}'
