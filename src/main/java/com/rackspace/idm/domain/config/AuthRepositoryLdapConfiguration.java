@@ -13,47 +13,27 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 
+import javax.net.ssl.SSLSocketFactory;
 import java.security.GeneralSecurityException;
 
-/**
- * @author john.eo <br/>
- *         Automatic Spring configuration for LDAP to be consumed by Spring.
- */
+
 @org.springframework.context.annotation.Configuration
 public class AuthRepositoryLdapConfiguration {
     private static final int DEFAULT_SERVER_PORT = 636;
     private static final int SERVER_POOL_SIZE_INIT = 1;
     private static final int SERVER_POOL_SIZE_MAX = 100;
     private static final String CONNECT_ERROR_STRING = "Could not connect/bind to the LDAP server instance. Make sure that the LDAP server is available and that the bind credential is correct.";
-    private static final String LDAP_CONFIG_ERROR_STRING = "Could not configure the LDAP data source. Make sure that the configuration file exists and is readable.";
 
     @Autowired
     private Configuration config;
+
+    @Autowired
+    private IdentityConfig identityConfig;
+
+    @Autowired
+    private EdirConnectionFactory edirConnectionFactory;
+
     private final Logger logger = LoggerFactory.getLogger(AuthRepositoryLdapConfiguration.class);
-
-    public AuthRepositoryLdapConfiguration() {
-        this(false);
-    }
-
-    /**
-     * Use for testing.
-     * 
-     * @param isTestMode
-     *            Set to <b>true</b> if test LDAP config is to be used.
-     */
-    public AuthRepositoryLdapConfiguration(boolean isTestMode) {
-        if (!isTestMode) {
-            return;
-        }
-
-        // Unit-test mode setup
-        try {
-            config = new PropertiesConfiguration("auth.repository.properties");
-        } catch (ConfigurationException e) {
-            logger.error("Could not load LDAP config file.", e);
-            throw new IllegalStateException(LDAP_CONFIG_ERROR_STRING, e);
-        }
-    }
 
     @Bean(destroyMethod = "close", name = "connectionToAuth")
     public LDAPConnectionPool connection() {
@@ -76,17 +56,26 @@ public class AuthRepositoryLdapConfiguration {
                 "LDAP Config [address={}, port={}, connection_pool_init={}, connection_pool_max={}",
                 params);
 
-        LDAPConnectionPool connPool = null;
+        LDAPConnectionPool connPool;
         try {
             boolean isSSL = config.getBoolean("auth.ldap.useSSL");
-            LDAPConnection conn = null;
+            LDAPConnection conn;
             if (isSSL) {
-                SSLUtil sslUtil = new SSLUtil(new TrustAllTrustManager());
-                conn = new LDAPConnection(sslUtil.createSSLSocketFactory(), host, port);
+                SSLSocketFactory socketFactory = new SSLUtil(new TrustAllTrustManager()).createSSLSocketFactory();
+                if (identityConfig.getStaticConfig().shouldEdirConnectionPoolUseAuthenticatedConnections()) {
+                    String bindDn = identityConfig.getStaticConfig().getEdirBindDn();
+                    String bindPw = identityConfig.getStaticConfig().getEdirBindPassword();
+                    conn = edirConnectionFactory.createAuthenticatedEncryptedConnection(socketFactory, host, port, bindDn, bindPw);
+                } else {
+                    conn = edirConnectionFactory.createAnonymousEnryptedConnection(socketFactory, host, port);
+                }
             } else {
-                conn = new LDAPConnection(host, port);
+                if (identityConfig.getStaticConfig().shouldEdirConnectionPoolUseAuthenticatedConnections()){
+                    throw new IllegalStateException("Cannot use authenticated connections to eDir without the use of TLS/SSL.");
+                }
+                conn = edirConnectionFactory.createAnonymousUnenryptedConnection(host, port);
             }
-            connPool = new LDAPConnectionPool(conn, initPoolSize, maxPoolSize);
+            connPool = edirConnectionFactory.createConnectionPool(conn, initPoolSize, maxPoolSize);
         } catch (LDAPException e) {
             logger.error(CONNECT_ERROR_STRING, e);
             throw new IllegalStateException(CONNECT_ERROR_STRING, e);

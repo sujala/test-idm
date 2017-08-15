@@ -45,6 +45,21 @@ class IdentityPropertyIntegrationTest extends RootIntegrationTest {
         data[JsonWriterForIdmProperty.JSON_PROP_PROPERTIES].find{it.name == "reloadable.docs.cache.timeout"}[JsonWriterForIdmProperty.JSON_PROP_VALUE] == 10
     }
 
+    def "test get eDir props"() {
+        when:
+        def response = devops.getIdmProps(utils.getIdentityAdminToken())
+
+        then: "success"
+        response.status == 200
+        def data = new JsonSlurper().parseText(response.getEntity(String))
+
+        and: "eDir bind DN visible"
+        data[JsonWriterForIdmProperty.JSON_PROP_PROPERTIES].find{it.name == IdentityConfig.EDIR_BIND_DN} != null
+
+        and: "eDir password is not visible"
+        data[JsonWriterForIdmProperty.JSON_PROP_PROPERTIES].find{it.name == IdentityConfig.EDIR_BIND_PASSWORD} == null
+    }
+
     @Unroll
     def "get idm props can be called by user with #role role"() {
         given:
