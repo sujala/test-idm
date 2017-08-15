@@ -4,15 +4,11 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty;
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.JsonValidator;
+import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.io.StringReader;
 
 @Component
 public class IdentityPropertyJsonValueTypeValidator implements IdentityPropertyValueTypeValidator {
@@ -25,6 +21,9 @@ public class IdentityPropertyJsonValueTypeValidator implements IdentityPropertyV
 
     @Autowired
     private JsonValidator jsonValidator;
+
+    @Autowired
+    private Validator20 validator20;
 
     @Override
     public boolean supports(IdentityPropertyValueType valueType) {
@@ -40,7 +39,7 @@ public class IdentityPropertyJsonValueTypeValidator implements IdentityPropertyV
             throw new BadRequestException(VALUE_REQUIRED_MSG);
         }
 
-        if (!jsonValidator.jsonStringDoesNotExceedSize(identityProperty.getValue(), JSON_VALUE_MAX_LENGTH_KB)) {
+        if (!validator20.stringDoesNotExceedSize(identityProperty.getValue(), JSON_VALUE_MAX_LENGTH_KB)) {
             throw new BadRequestException(VALUE_LENGTH_EXCEEDED_MSG);
         }
 

@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -240,6 +241,9 @@ public class IdentityConfig {
 
     public static final String IDP_POLICY_MAX_KILOBYTE_SIZE_PROP = "identity.provider.policy.max.kilobyte.size";
     public static final int IDP_POLICY_MAX_KILOBYTE_SIZE_DEFAULT = 2;
+
+    public static final String MAPPING_POLICY_ACCEPT_FORMATS_PROP = "mapping.policy.accept.formats";
+    public static final List<String> MAPPING_POLICY_ACCEPT_FORMATS_DEFAULT = Arrays.asList(MediaType.APPLICATION_JSON, GlobalConstants.TEXT_YAML);
 
     public static final String FEDERATED_DELTA_EXPIRATION_SECONDS_PROP = "federated.deltaExpiration.seconds";
     public static final int FEDERATED_DELTA_EXPIRATION_SECONDS_DEFAULT = 43200;
@@ -711,6 +715,8 @@ public class IdentityConfig {
         defaults.put(USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_DEFAULT);
         defaults.put(USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_GROUPS_ENABLED_DEFAULT);
         defaults.put(USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_DEFAULT);
+
+        defaults.put(MAPPING_POLICY_ACCEPT_FORMATS_PROP, MAPPING_POLICY_ACCEPT_FORMATS_DEFAULT);
 
         return defaults;
     }
@@ -2028,6 +2034,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART, versionAdded = "3.15.0", description = "Whether or not to allow caching client roles retrieved by id/name instead of loading them into memory at application startup.")
         public boolean getCacheRolesWithoutApplicationRestartFlag() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART);
+        }
+
+        @IdmProp(key = MAPPING_POLICY_ACCEPT_FORMATS_PROP, versionAdded = "3.15.0", description = "Specify the acceptable media types for mapping policies")
+        public Set getMappingPolicyAcceptFormats() {
+            return getSetSafely(reloadableConfiguration, MAPPING_POLICY_ACCEPT_FORMATS_PROP);
         }
     }
 

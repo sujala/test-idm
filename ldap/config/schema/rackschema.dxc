@@ -1126,6 +1126,14 @@ schema set attribute (1.3.6.1.4.1.20988.2.1.143) = {
     description = "The Identity Provider ID"
 };
 
+schema set attribute (1.3.6.1.4.1.20988.2.1.144) = {
+    name = rsIdpPolicyFormat
+    ldap-names = rsIdpPolicyFormat
+    equality = caseIgnoreMatch
+    syntax = directoryString
+    description = "The Identity Provider policy format"
+};
+
 schema set object-class (1.3.6.1.4.1.20988.2.2.1) = {
     name = rsPerson
     ldap-names = rsPerson
@@ -1663,6 +1671,7 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.35) = {
         rsApprovedDomainIds,
         rsAuthenticationUrl,
         rsIdpPolicy,
+        rsIdpPolicyFormat,
         rsIdpMetadata,
         enabled
 };

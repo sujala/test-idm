@@ -173,6 +173,7 @@ public abstract class LdapRepository {
     public static final String ATTR_GLOBAL = "rsGlobal";
     public static final String ATTR_OPENSTACK_TYPE = "openstackType";
     public static final String ATTR_IDP_POLICY = "rsIdpPolicy";
+    public static final String ATTR_IDP_POLICY_FORMAT = "rsIdpPolicyFormat";
     public static final String ATTR_IDP_METADATA = "rsIdpMetadata";
     public static final String ATTR_IMPERSONATING_USERNAME = "impersonatingUsername";
     public static final String ATTR_IMPERSONATING_RS_ID = "rsImpersonatingRsId";
@@ -284,7 +285,8 @@ public abstract class LdapRepository {
     protected static final String[] ATTR_IDENTITY_PROVIDER_ATTRIBUTES = {ATTR_OU, ATTR_NAME, ATTR_URI, ATTR_DESCRIPTION,
                                                                          ATTR_USER_CERTIFICATES, ATTR_TARGET_USER_SOURCE,
                                                                          ATTR_APPROVED_DOMAIN_GROUP, ATTR_APPROVED_DOMAIN_IDS,
-                                                                         ATTR_AUTHENTICATION_URL, ATTR_IDP_POLICY, ATTR_ENABLED };
+                                                                         ATTR_AUTHENTICATION_URL, ATTR_IDP_POLICY, ATTR_ENABLED,
+                                                                         ATTR_IDP_POLICY_FORMAT};
     public static final String LDAP_SEARCH_ERROR = "LDAP Search error - {}";
 
     //LDAP Change Event
