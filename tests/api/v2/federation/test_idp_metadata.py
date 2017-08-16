@@ -3,6 +3,7 @@ import copy
 
 from tests.api.v2.federation import federation
 from tests.api.v2.schema import idp as idp_json
+from tests.api.v2.schema import users as user_json
 
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.utils import saml_helper
@@ -107,6 +108,19 @@ class TestIDPMetadata(federation.TestBaseFederation):
             saml=assertion, content_type='xml',
             base64_url_encode=False, new_url=False)
         self.assertEqual(resp.status_code, 200)
+        fed_user_id = resp.json()[const.ACCESS][const.USER][const.ID]
+        get_resp = self.identity_admin_client.get_user(fed_user_id)
+
+        updated_get_user_schema = copy.deepcopy(user_json.get_user)
+        updated_get_user_schema[const.PROPERTIES][
+            const.USER][const.REQUIRED] += [const.FEDERATED_IDP]
+
+        # Currently, MFA-enabled attribute is not returned for fed users
+        updated_get_user_schema[const.PROPERTIES][
+            const.USER][const.REQUIRED].remove(
+            const.RAX_AUTH_MULTI_FACTOR_ENABLED)
+        self.assertSchema(response=get_resp,
+                          json_schema=updated_get_user_schema)
 
     def test_update_idp_cert_w_metadata(self):
         '''
