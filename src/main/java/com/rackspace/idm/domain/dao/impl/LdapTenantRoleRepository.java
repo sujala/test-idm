@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 @LDAPComponent
@@ -209,6 +210,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return null;
     }
 
+    @Override
+    public Iterable<TenantRole> getTenantRolesForUserWithId(User user, Collection<String> roleIds) {
+        return getObjects(searchFilterGetTenantRoleByRoleIds(roleIds), user.getUniqueId());
+    }
+
     private TenantRole getTenantRole(String dn, String roleId) {
         return getObject(searchFilterGetTenantRoleByRoleId(roleId), dn, SearchScope.SUB);
     }
@@ -232,6 +238,20 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE)
                 .addEqualAttribute(ATTR_ROLE_RS_ID, roleId).build();
+    }
+
+    private Filter searchFilterGetTenantRoleByRoleIds(Collection<String> roleIds) {
+        LdapSearchBuilder sb = new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT_ROLE);
+
+        List<Filter> orComponents = new ArrayList<Filter>();
+        for (String roleId : roleIds) {
+            orComponents.add(Filter.createEqualityFilter(ATTR_ROLE_RS_ID, roleId));
+        }
+
+        sb.addOrAttributes(orComponents);
+
+        return sb.build();
     }
 
     private Filter searchFilterGetTenantRolesByTenantId(String tenantId) {

@@ -132,6 +132,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String USERNAME_CANNOT_BE_UPDATED_ERROR_MESSAGE = "A user's username cannot be updated.";
     public static final String ERROR_CANNOT_UPDATE_USER_WITH_HIGHER_ACCESS = "Cannot update user with same or higher access level";
 
+    public static final String ERROR_SWITCH_RCN_ON_DOMAIN_CONTAINING_RCN_TENANT ="The domain cannot contain an RCN tenant. Remove the RCN tenant from the domain first.";
+    public static final String ERROR_SWITCH_RCN_ON_DOMAIN_MISSING_RCN = "Destination RCN required.";
+
     public static final String METADATA_NOT_FOUND_ERROR_MESSAGE = "No metadata found for identity provider '%s'.";
 
     @Autowired
@@ -4903,6 +4906,61 @@ public class DefaultCloud20Service implements Cloud20Service {
 
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public ResponseBuilder switchDomainRcn(String authToken, String domainId, DomainRcnSwitch rcnSwitch) {
+        try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.DOMAIN_RCN_SWITCH.getRoleName());
+            requestContextHolder.getRequestContext().getEffectiveCaller();
+
+            String destinationRcn = StringUtils.strip(rcnSwitch.getDestinationRcn());
+
+            if (StringUtils.isBlank(destinationRcn)) {
+                throw new BadRequestException(ERROR_SWITCH_RCN_ON_DOMAIN_MISSING_RCN);
+            }
+
+            validator20.validateDomainRcn(destinationRcn);
+
+            Domain domain = domainService.checkAndGetDomain(domainId);
+
+            if (tenantService.countTenantsWithTypeInDomain(GlobalConstants.TENANT_TYPE_RCN, domainId) > 0) {
+                throw new BadRequestException(ERROR_SWITCH_RCN_ON_DOMAIN_CONTAINING_RCN_TENANT);
+            }
+
+            // Note: only loading provisioned users at this time. Federated users are currently not able to get RCN roles.
+            Iterable<User> users = domainService.getUsersByDomainId(domain.getDomainId());
+
+            Iterable<ClientRole> rcnClientRoles = applicationService.getClientRolesByRoleType(RoleTypeEnum.RCN);
+            Collection<String> rcnRoleIds = CollectionUtils.collect(rcnClientRoles, new Transformer<ClientRole, String>() {
+                @Override
+                public String transform(ClientRole clientRole) {
+                    return clientRole.getId();
+                }
+            });
+
+            // For each user, list all RCN roles assigned to the user and delete them
+            for (User user : users) {
+                Iterable<TenantRole> rcnTenantRoles = tenantService.getTenantRolesForUserWithId(user, rcnRoleIds);
+
+                if (rcnTenantRoles != null && rcnTenantRoles.iterator().hasNext()) {
+                    for (TenantRole rcnTenantRole : rcnTenantRoles) {
+                        tenantService.deleteTenantRole(rcnTenantRole);
+                    }
+
+                    atomHopperClient.asyncPost(user, AtomHopperConstants.ROLE);
+                }
+
+            }
+
+            domain.setRackspaceCustomerNumber(destinationRcn);
+            domainService.updateDomain(domain);
+
+            return Response.noContent();
+        } catch (Exception e) {
+            return exceptionHandler.exceptionResponse(e);
         }
     }
 

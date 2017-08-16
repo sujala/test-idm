@@ -263,6 +263,15 @@ class Cloud20Utils {
         assert (response.status == SC_OK)
     }
 
+    def domainRcnSwitch(domainId, rcn, String token=getServiceAdminToken()) {
+        def rcnSwitchData = new DomainRcnSwitch().with {
+            it.destinationRcn = rcn
+            it
+        }
+        def response = methods.domainRcnSwitch(token, domainId, rcnSwitchData)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
     def disableDomain(domainId) {
         def domainToUpdate = v1Factory.createDomain().with {
             it.id = domainId
@@ -709,8 +718,8 @@ class Cloud20Utils {
         response.getEntity(Tenant).value
     }
 
-    def createTenantWithType(name=testUtils.getRandomUUID("tenant"), type=null) {
-        def tenant = factory.createTenant(name, name, type)
+    def createTenantWithTypes(name=testUtils.getRandomUUID("tenant"), Collection<String> tenantTypes = null) {
+        def tenant = factory.createTenant(name, name, tenantTypes)
         def response = methods.addTenant(getServiceAdminToken(), tenant)
         assert (response.status == SC_CREATED)
         response.getEntity(Tenant).value
@@ -1132,6 +1141,11 @@ class Cloud20Utils {
 
     def addTenantToDomain(String domainId, String tenantId) {
         def response = methods.addTenantToDomain(getServiceAdminToken(), domainId, tenantId)
+        assert (response.status == SC_NO_CONTENT)
+    }
+
+    def deleteTenantFromDomain(String domainId, String tenantId) {
+        def response = methods.deleteTenantFromDomain(getServiceAdminToken(), domainId, tenantId)
         assert (response.status == SC_NO_CONTENT)
     }
 

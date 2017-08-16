@@ -1028,6 +1028,20 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public Iterable<TenantRole> getTenantRolesForUserWithId(User user, Collection<String> roleIds) {
+        return tenantRoleDao.getTenantRolesForUserWithId(user, roleIds);
+    }
+
+    @Override
+    public int countTenantsWithTypeInDomain(String tenantType, String domainId) {
+        if (StringUtils.isBlank(tenantType) || StringUtils.isBlank(domainId)) {
+            throw new IllegalArgumentException("A valid tenant type and domain ID must be provided.");
+        }
+
+        return tenantDao.countTenantsWithTypeInDomain(tenantType, domainId);
+    }
+
+    @Override
     public List<TenantRole> getTenantRolesForUserApplyRcnRoles(BaseUser user) {
         return getEffectiveTenantRolesForUserApplyRcnRoles(user);
     }

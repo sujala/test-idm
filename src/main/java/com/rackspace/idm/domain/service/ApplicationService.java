@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.entity.*;
 
@@ -42,6 +43,8 @@ public interface ApplicationService {
     void updateClientRole(ClientRole role);
     
     Iterable<ClientRole> getClientRolesByClientId(String clientId);
+
+    Iterable<ClientRole> getClientRolesByRoleType(RoleTypeEnum roleType);
 
     ClientRole getClientRoleByClientIdAndRoleName(String clientId, String roleName);
     

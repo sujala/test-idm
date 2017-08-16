@@ -651,6 +651,15 @@ public class Cloud20VersionResource {
         return cloud20Service.modifyDomainAdministrator(authToken, domainId, domainAdministratorChange).build();
     }
 
+    @PUT
+    @Path("RAX-AUTH/domains/{domainId}/rcn-switch")
+    public Response switchRcnOnDomain(
+            @PathParam("domainId") String domainId,
+            @HeaderParam(X_AUTH_TOKEN) String authToken,
+            DomainRcnSwitch rcnSwitch) throws IOException, JAXBException {
+        return cloud20Service.switchDomainRcn(authToken, domainId, rcnSwitch).build();
+    }
+
     @GET
     @Path("RAX-AUTH/domains/{domainId}/endpoints")
     public Response getEndpointsByDomain(

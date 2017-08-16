@@ -105,6 +105,8 @@ public class Validator20 {
     public static final int MAX_ROLE_NAME = MAX_LENGTH_255;
     public static final int MAX_ROLE_DESC = MAX_LENGTH_255;
 
+    public static final int MAX_RCN_LENGTH = MAX_LENGTH_32;
+
     public static final int MAX_IDENTITY_PROVIDER_NAME = Constants.MAX_255;
     public static final int MAX_IDENTITY_PROVIDER_ISSUER = Constants.MAX_255;
     public static final int MAX_IDENTITY_PROVIDER_AUTH_URL = Constants.MAX_255;
@@ -628,7 +630,11 @@ public class Validator20 {
             throw new BadRequestException("Domain Id does not match.");
         }
         validateDomainSessionInactivityTimeout(domain);
-        validateStringMaxLength("rackspaceCustomerNumber", domain.getRackspaceCustomerNumber(), MAX_LENGTH_32);
+        validateDomainRcn(domain.getRackspaceCustomerNumber());
+    }
+
+    public void validateDomainRcn(String rcn) {
+        validateStringMaxLength("rackspaceCustomerNumber", rcn, MAX_RCN_LENGTH);
     }
 
     private void validateDomainSessionInactivityTimeout(com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain domain) {

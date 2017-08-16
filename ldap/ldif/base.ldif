@@ -1343,6 +1343,9 @@ dn: rsId=c5f683e2b554ee8b28b9a8b612954c4,cn=CLIENT ROLES,clientId=bde1268ebabeea
 objectClass: clientRole
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 cn: rcn:admin
+rsType: RCN
+rsAssignment: GLOBAL
+rsTenantType: *
 description: Can manage entities under RCN
 rsWeight: 500
 
@@ -1439,6 +1442,16 @@ rsType: STANDARD
 rsTenantType: *
 rsAssignment: GLOBAL
 rsWeight: 500
+
+dn: rsId=1f83e03681cc11e7a7e037b1affb8d28,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:domain-rcn-switch
+description: Role to allow moving a domain to a different RCN
+rsType: STANDARD
+rsAssignment: GLOBAL
+rsWeight: 50
 
 dn: cn=ROLES,clientId=bde1268ebabeeabb70a0e702a4626977c331d5c4,ou=applicati
  ons,o=rackspace,dc=rackspace,dc=com
@@ -5023,6 +5036,13 @@ dn: roleRsId=c637d7153b7c41bf9153d46107dadcc7,cn=ROLES,rsId=173190,ou=users,o=ra
 objectClass: top
 objectClass: tenantRole
 roleRsId: c637d7153b7c41bf9153d46107dadcc7
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+
+dn: roleRsId=1f83e03681cc11e7a7e037b1affb8d28,cn=ROLES,rsId=173190,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: top
+objectClass: tenantRole
+roleRsId: 1f83e03681cc11e7a7e037b1affb8d28
 clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 
 dn: roleRsId=67f155a58ae841d28a745a99200a583a,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co

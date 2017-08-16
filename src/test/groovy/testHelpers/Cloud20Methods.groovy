@@ -78,6 +78,7 @@ class Cloud20Methods {
     static def ENDPOINT_TEMPLATES = "endpointTemplates"
     static def RULES = "rules"
     static def DOMAIN_ADMINISTRATOR_CHANGE_PATH = "domainAdministratorChange"
+    static def RCN_SWITCH_PATH = "rcn-switch"
 
     def init(){
         mediaType = new MediaTypeContext()
@@ -280,6 +281,11 @@ class Cloud20Methods {
     def changeDomainAdministrator(String token, String domainId, DomainAdministratorChange domainAdministratorChange, MediaType requestMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(DOMAIN_ADMINISTRATOR_CHANGE_PATH).type(requestMediaType).entity(domainAdministratorChange).header(X_AUTH_TOKEN, token).accept(acceptMediaType).put(ClientResponse)
+    }
+
+    def domainRcnSwitch(String token, String domainId, DomainRcnSwitch rcnSwitch, MediaType requestType = MediaType.APPLICATION_XML_TYPE, MediaType acceptType = MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(RCN_SWITCH_PATH).type(requestType).entity(rcnSwitch).header(X_AUTH_TOKEN, token).accept(acceptType).put(ClientResponse)
     }
 
     def getUserById(String token, String userId, MediaType mediaType = APPLICATION_XML_TYPE) {
@@ -957,6 +963,11 @@ class Cloud20Methods {
     def addTenantToDomain(String token, String domainId, String tenantId) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).put(ClientResponse)
+    }
+
+    def deleteTenantFromDomain(String token, String domainId, String tenantId) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(TENANTS).path(tenantId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
     }
 
     def getDomainTenants(String token, String domainId, boolean enabled = true, accept = APPLICATION_XML_TYPE) {

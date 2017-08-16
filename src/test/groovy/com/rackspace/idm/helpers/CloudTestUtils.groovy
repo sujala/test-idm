@@ -89,7 +89,7 @@ class CloudTestUtils {
     }
 
     String getFeedsXPathForUser(user, eventType) {
-        return "//event[@id and @resourceName='$user.username' and @type='$eventType']/product[@displayName='$user.username' and @resourceType='USER' and @serviceCode='CloudIdentity']"
+        return "//event[@id and @resourceName='${user?.username}' and @type='$eventType']/product[@displayName='${user?.username}' and @resourceType='USER' and @serviceCode='CloudIdentity']"
     }
 
     String getFeedsXPathForUserTRR(user, AuthenticatedByMethodGroup authenticatedByMethodGroup) {

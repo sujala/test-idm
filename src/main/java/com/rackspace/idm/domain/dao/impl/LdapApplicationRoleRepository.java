@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.google.common.collect.ImmutableList;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -11,6 +12,7 @@ import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchScope;
 import org.apache.commons.configuration.Configuration;
+import org.apache.commons.lang.Validate;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -82,6 +84,12 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
     @Override
     public Iterable<ClientRole> getClientRolesForApplication(Application application) {
         return getObjects(searchFilter_byApplicationId(application.getClientId()));
+    }
+
+    @Override
+    public Iterable<ClientRole> getClientRolesWithRoleType(RoleTypeEnum roleTypeEnum) {
+        Validate.notNull(roleTypeEnum);
+        return getObjects(searchFilterRolesWithRoleType(roleTypeEnum.name()));
     }
 
     @Override
@@ -179,6 +187,13 @@ public class LdapApplicationRoleRepository extends LdapGenericRepository<ClientR
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
                 .addEqualAttribute(ATTR_CLIENT_ID, applicationId).build();
     }
+
+    private Filter searchFilterRolesWithRoleType(String roleType) {
+        return new LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)
+                .addEqualAttribute(ATTR_RS_TYPE, roleType).build();
+    }
+
     private Filter searchFilter_byRoleId(String roleId) {
        return new LdapSearchBuilder()
                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_CLIENT_ROLE)

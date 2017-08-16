@@ -2,6 +2,7 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.*;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface TenantRoleDao {
@@ -22,4 +23,5 @@ public interface TenantRoleDao {
     int getCountOfTenantRolesByRoleIdForFederatedUsers(String roleId);
     Iterable<TenantRole> getTenantRoleForUser(EndUser user, List<ClientRole> clientRoles);
     String getUserIdForParent(TenantRole tenantRole);
+    Iterable<TenantRole> getTenantRolesForUserWithId(User user, Collection<String> roleIds);
 }

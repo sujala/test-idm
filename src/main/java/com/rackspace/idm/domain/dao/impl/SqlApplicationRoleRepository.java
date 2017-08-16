@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.ApplicationRoleDao;
@@ -86,6 +87,11 @@ public class SqlApplicationRoleRepository implements ApplicationRoleDao {
     @Override
     public Iterable<ClientRole> getClientRolesForApplication(Application application) {
         return mapper.fromSQL(repository.findByRaxClientId(application.getClientId()));
+    }
+
+    @Override
+    public Iterable<ClientRole> getClientRolesWithRoleType(RoleTypeEnum roleTypeEnum) {
+        throw new NotImplementedException();
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.dao.TenantDao;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface TenantService {
@@ -60,6 +61,25 @@ public interface TenantService {
     List<TenantRole> getEffectiveTenantRolesForUserOnTenant(EndUser user, Tenant tenant);
     List<TenantRole> getEffectiveTenantRolesForUserOnTenantApplyRcnRoles(EndUser user, Tenant tenant);
     List<TenantRole> getTenantRolesForUser(BaseUser user);
+
+    /**
+     * Retrieves the tenant roles assigned to the given user with an ID contained within the
+     * roleIds collection
+     *
+     * @param user
+     * @param roleIds
+     * @return
+     */
+    Iterable<TenantRole> getTenantRolesForUserWithId(User user, Collection<String> roleIds);
+
+    /**
+     * Retrieves the count of tenants of the given type within the specified domain.
+     *
+     * @param tenantType
+     * @param domainId
+     * @return
+     */
+    int countTenantsWithTypeInDomain(String tenantType, String domainId);
 
     /**
      * Retrieves tenant roles assigned to the user fully populated based on information in associated client roles. The
