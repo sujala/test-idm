@@ -76,6 +76,11 @@ class TestAddUser(base.TestBaseV2):
         self.assertHeaders(
             resp, *self.header_validation_functions_HTTP_201)
 
+        get_resp = self.identity_admin_client.get_user(
+            resp.json()[const.USER][const.ID])
+
+        self.assertSchema(response=get_resp, json_schema=users_json.get_user)
+
     @ddt.file_data('data_add_user_w_mfa_attrs.json')
     def test_add_user_admin_user_w_mfa_attrs(self, test_data):
         '''Add user_admin type users

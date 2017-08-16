@@ -54,10 +54,14 @@ get_user = {
                 const.RAX_AUTH_DEFAULT_REGION: {
                     'type': 'string',
                     'enum': const.DC_LIST},
-                const.ID: {'type': 'string'}},
+                const.ID: {'type': 'string'},
+                const.RAX_AUTH_MULTI_FACTOR_ENABLED: {'type': 'boolean'},
+                const.CREATED: {'type': 'string', 'format': 'dateTime'},
+                const.FEDERATED_IDP: {'type': 'string'}},
             'required': [const.USERNAME, const.EMAIL, const.ENABLED,
                          const.RAX_AUTH_DEFAULT_REGION,
-                         const.RAX_AUTH_DOMAIN_ID],
+                         const.RAX_AUTH_DOMAIN_ID, const.CREATED,
+                         const.RAX_AUTH_MULTI_FACTOR_ENABLED],
             'additionalProperties': False}},
     'required': [const.USER],
     'additionalProperties': False
