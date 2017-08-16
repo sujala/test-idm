@@ -68,6 +68,10 @@ public class TokenConverterCloudV20 {
     }
 
     private XMLGregorianCalendar getXmlGregorianCalendar(Date date) {
+        if (date == null) {
+            return null;
+        }
+
         GregorianCalendar gc = new GregorianCalendar();
         gc.setTime(date);
 
