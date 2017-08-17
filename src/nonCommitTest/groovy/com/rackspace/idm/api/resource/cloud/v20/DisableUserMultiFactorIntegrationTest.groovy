@@ -59,7 +59,8 @@ class DisableUserMultiFactorIntegrationTest extends RootConcurrentIntegrationTes
         def mfaAuthResponse = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "1234")
 
         then:
-        mfaAuthResponse.status == 403
+        // When MFA session id is generated the AE tokens way(restricted token), it will be revoked when user is disabled
+        mfaAuthResponse.status == 401
 
         cleanup:
         deleteUserQuietly(user)
