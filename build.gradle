@@ -8,6 +8,11 @@ apply plugin: 'nexus'
 apply plugin: 'jacoco'
 apply plugin: "org.unbroken-dome.test-sets"
 
+testSets {
+    commitTest
+    nonCommitTest
+}
+
 buildscript {
     repositories {
         maven { url "http://d-build1.iad2.corp.rackspace.com:8100/nexus/content/repositories/central" }
@@ -59,10 +64,6 @@ def resourceDirs = [
         'VAGRANT'
 ]
 
-testSets {
-    commitTest
-    nonCommitTest { extendsFrom commitTest }
-}
 
 dependencies {
     wadl "com.lunatech.jax-doclets:doclets:0.8.1"
