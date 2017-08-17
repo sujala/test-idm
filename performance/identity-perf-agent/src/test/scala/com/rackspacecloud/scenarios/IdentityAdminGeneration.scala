@@ -22,11 +22,11 @@ object IdentityAdminGeneration {
   }
  
   val admin_results = new PrintWriter(new File(DATA_LOCATION + "data/identity/admin_users_tokens.dat"))
-  admin_results.append("token_id,user_name,apikey,password,ipaddress\n")
+  admin_results.append("admin_token,user_name,apikey,password,ipaddress\n")
   
   val v20_admin_generate_tokens = exec(TokensAdminGeneration.v20_admin_gen_tokens).exec {session => admin_results.write(
-       session("token_id").as[String] + "," + 
-       session("user_name").as[String] + "," + 
+       session("token_id").as[String] + "," +
+       session("user_name").as[String] + "," +
        session("apikey").as[String] + "," +
        session("password").as[String] + "," +
        session("ipaddress").as[String] +
