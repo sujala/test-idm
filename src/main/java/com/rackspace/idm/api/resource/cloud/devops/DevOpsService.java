@@ -137,4 +137,14 @@ public interface DevOpsService {
      */
     Response.ResponseBuilder deleteIdmProperty(String authToken, String idmPropertyId);
 
+    /**
+     * Allows an authorized caller to analyze a token to return information about it including all information included
+     * within the token and information on any Token Revocation Record (TRR) that causes the token to be revoked. Caller
+     * must have the 'identity:analyze-token' role
+     *
+     * @param authToken
+     * @param subjectToken
+     * @return
+     */
+    Response.ResponseBuilder analyzeToken(String authToken, String subjectToken);
 }

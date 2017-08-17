@@ -15,6 +15,9 @@ import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.config.*;
+import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.security.AETokenService;
+import com.rackspace.idm.domain.security.UnmarshallTokenException;
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
@@ -61,6 +64,12 @@ public class DefaultDevOpsService implements DevOpsService {
     UserService userService;
 
     @Autowired
+    private DomainService domainService;
+
+    @Autowired
+    IdentityUserService identityUserService;
+
+    @Autowired
     private Configuration globalConfig;
 
     @Autowired
@@ -92,6 +101,12 @@ public class DefaultDevOpsService implements DevOpsService {
 
     @Autowired
     private JsonWriterForIdmProperty jsonWriterForIdmProperty;
+
+    @Autowired
+    private AETokenService aeTokenService;
+
+    @Autowired
+    private AETokenRevocationService aeTokenRevocationService;
 
     @Autowired
     private JAXBObjectFactories objFactories;
@@ -408,6 +423,52 @@ public class DefaultDevOpsService implements DevOpsService {
             return Response.status(Response.Status.NO_CONTENT);
         } catch (Exception ex) {
             logger.error("Error deleting Identity property", ex);
+            return exceptionHandler.exceptionResponse(ex);
+        }
+    }
+
+    @Override
+    public Response.ResponseBuilder analyzeToken(String authToken, String subjectToken) {
+        try {
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_ANALYZE_TOKEN.getRoleName());
+
+            if (StringUtils.isEmpty(subjectToken)) {
+                throw new BadRequestException("Must provide an X-Subject-Token header with the token to analyze");
+            }
+
+            String tokenAnalysis = null;
+            try {
+                // Unmarshall token without checking for revocation. Just want to crack the token
+                ScopeAccess saSubjectToken = aeTokenService.unmarshallToken(subjectToken);
+
+                List<LdapTokenRevocationRecord> trrs = Collections.emptyList();
+                BaseUser user = null;
+                BaseUser impersonatedUser = null;
+                Domain userDomain = null;
+                Domain impersonatedUserDomain = null;
+
+                if (saSubjectToken != null) {
+                    // Find any TRRs that would revoke this token
+                    trrs = aeTokenRevocationService.findTokenRevocationRecordsMatchingToken(saSubjectToken);
+
+                    // Get user associated with token
+                    user = userService.getUserByScopeAccess(saSubjectToken, false);
+                    userDomain = domainService.getDomain(user.getDomainId());
+
+                    if (saSubjectToken instanceof ImpersonatedScopeAccess){
+                        impersonatedUser = identityUserService.getEndUserById(((ImpersonatedScopeAccess) saSubjectToken).getRsImpersonatingRsId());
+                        impersonatedUserDomain = domainService.getDomain(impersonatedUser.getDomainId());
+                    }
+                }
+                tokenAnalysis = TokenAnalysis.fromEntities(saSubjectToken, user, impersonatedUser, userDomain, impersonatedUserDomain, trrs).toJson();
+            } catch (UnmarshallTokenException e) {
+                tokenAnalysis = TokenAnalysis.fromException(e).toJson();
+                logger.debug("Unable to unmarshall the token: " + tokenAnalysis);
+            }
+            return Response.ok(tokenAnalysis);
+        } catch (Exception ex) {
+            logger.error("Error analyzing token", ex);
             return exceptionHandler.exceptionResponse(ex);
         }
     }

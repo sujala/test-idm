@@ -2,6 +2,7 @@ package testHelpers
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone
+import com.rackspace.idm.api.resource.DevOpsResource
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import org.apache.commons.lang.StringUtils
@@ -76,4 +77,8 @@ class DevOpsMethods {
         resource.path("devops/users").path(userId).path("multi-factor").accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).header("X-Auth-Token", token).delete(ClientResponse)
     }
 
+    def analyzeToken(String authToken, String subjectToken) {
+        initOnUse()
+        resource.path("devops/tokens/analyze").accept(MediaType.APPLICATION_JSON_TYPE).header(DevOpsResource.X_AUTH_TOKEN, authToken).header(DevOpsResource.X_SUBJECT_TOKEN, subjectToken).get(ClientResponse)
+    }
 }
