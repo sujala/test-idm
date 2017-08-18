@@ -115,11 +115,11 @@ class TestRCNAccountManagement(base.TestBaseV2):
         return role_id, resp
 
     def create_endpoint_template(self, service_id):
-        request_objest = factory.get_add_endpoint_template_object(
+        request_object = factory.get_add_endpoint_template_object(
             service_id=service_id
         )
         resp = self.identity_admin_client.add_endpoint_template(
-            request_object=request_objest
+            request_object=request_object
         )
         self.assertEqual(resp.status_code, 201)
         template_id = resp.json()[const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
@@ -187,7 +187,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
         )
         self.assertEqual(add_resp2.status_code, 200)
 
-        # add end point template
+        # add endpoint template
         template_id, temp_resp = self.create_endpoint_template(
             service_id=self.service_id)
         template_name = temp_resp.json()[const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
@@ -223,10 +223,6 @@ class TestRCNAccountManagement(base.TestBaseV2):
             Compute Role (ROLE_ID1) comes before identity role (ROLE_ID2)
             new global endpoint in service catalog
         """
-
-        self.skipTest('Skipping testing generic global endpoints as' +
-                      ' feature is disabled')
-
         # get identity role
         role_id2 = self.get_role_by_name(role_name=self.ROLE_NAME3)
 
@@ -258,7 +254,7 @@ class TestRCNAccountManagement(base.TestBaseV2):
         )
         self.assertEqual(add_resp2.status_code, 200)
 
-        # add end point template
+        # add endpoint template
         template_id, temp_resp = self.create_endpoint_template(
             service_id=self.service_id)
         template_name = temp_resp.json()[const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
@@ -288,6 +284,9 @@ class TestRCNAccountManagement(base.TestBaseV2):
         endpoints = [item for item in endpoints_list
                      if item[const.ENDPOINTS][0][const.TENANT_ID] == tenant_id]
         self.assertEqual(len(endpoints), 1)
+        self.assertEqual(endpoints[0][const.ENDPOINTS][0][
+                             const.PUBLIC_URL], urljoin(public_url,
+                                                        tenant_id))
 
     def test_assign_global_endpoints_for_all_roles_on_mosso_tenant(self):
         """3.7.0 features assign global endpoints for all roles on tenant
@@ -328,8 +327,11 @@ class TestRCNAccountManagement(base.TestBaseV2):
         )
         self.assertEqual(add_resp.status_code, 200)
 
-        # add end point template
-        template_id, _ = self.create_endpoint_template(service_id=service_id)
+        # add endpoint template
+        template_id, temp_resp = self.create_endpoint_template(
+            service_id=service_id)
+        public_url = temp_resp.json()[const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
+            const.PUBLIC_URL]
 
         # update endpoint template
         self.update_endpoint_template(template_id=template_id)
@@ -341,13 +343,17 @@ class TestRCNAccountManagement(base.TestBaseV2):
 
         endpoints_list = auth_resp.json()[const.ACCESS][
             const.SERVICE_CATALOG]
-        # verify endpoint with new service name in the endpionts list
+        # verify endpoint with new service name is in the endpoints list
         self.assertIn(service_name, str(endpoints_list))
         endpoints = [item for item in endpoints_list
                      if item[const.NAME] == service_name]
         self.assertEqual(endpoints[0][const.ENDPOINTS][0][const.TENANT_ID],
                          tenant_id)
-        # verify endpoint exist endpoint compute endpoint in tenant
+        self.assertEqual(endpoints[0][const.ENDPOINTS][0][
+                             const.PUBLIC_URL], urljoin(public_url,
+                                                        tenant_id))
+
+        # verify endpoint for the compute role exists in the endpoints list
         self.assertIn('cloudServers', str(endpoints_list))
         endpoints = [item for item in endpoints_list
                      if item[const.NAME] == 'cloudServers']
