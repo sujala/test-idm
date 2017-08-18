@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.dao;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.ClientRole;
 import com.rackspace.idm.domain.entity.PaginatorContext;
@@ -25,6 +26,7 @@ public interface ApplicationRoleDao {
     ClientRole getRoleByName(String roleName);
 
     Iterable<ClientRole> getClientRolesForApplication(Application application);
+    Iterable<ClientRole> getClientRolesWithRoleType(RoleTypeEnum roleTypeEnum);
 
     PaginatorContext<ClientRole> getAvailableClientRolesByName(String roleName, int maxWeightAvailable, int offset, int limit);
     PaginatorContext<ClientRole> getAvailableClientRolesPaged(int offset, int limit, int maxWeightAvailable);

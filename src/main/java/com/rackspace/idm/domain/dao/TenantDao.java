@@ -30,4 +30,6 @@ public interface TenantDao {
     int getTenantCount();
 
     int countTenantsByTenantType(String tenantType);
+
+    int countTenantsWithTypeInDomain(String tenantType, String domainId);
 }

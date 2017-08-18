@@ -290,4 +290,6 @@ public interface Cloud20Service {
     ResponseBuilder changeUserPassword(HttpHeaders httpHeaders, ChangePasswordCredentials changePasswordCredentials);
 
     ResponseBuilder modifyDomainAdministrator(String authToken, String domainId, DomainAdministratorChange accountAdministratorChange);
+
+    ResponseBuilder switchDomainRcn(String authToken, String domainId, DomainRcnSwitch rcnSwitch);
 }

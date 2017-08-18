@@ -77,6 +77,11 @@ public class LdapTenantRepository extends LdapGenericRepository<Tenant> implemen
         return countObjects(searchFilterGetTenantByTenantType(tenantType));
     }
 
+    @Override
+    public int countTenantsWithTypeInDomain(String tenantType, String domainId) {
+        return countObjects(searchFilterGetTenantsByTenantTypeAndDomainId(tenantType, domainId));
+    }
+
     private Filter searchFilterGetTenantById(String tenantId) {
         return new LdapRepository.LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, tenantId)
@@ -105,4 +110,12 @@ public class LdapTenantRepository extends LdapGenericRepository<Tenant> implemen
                 .addEqualAttribute(ATTR_TYPE, tenantType)
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT).build();
     }
+
+    private Filter searchFilterGetTenantsByTenantTypeAndDomainId(String tenantType, String domainId) {
+        return new LdapRepository.LdapSearchBuilder()
+                .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_TENANT)
+                .addEqualAttribute(ATTR_TYPE, tenantType)
+                .addEqualAttribute(ATTR_DOMAIN_ID, domainId).build();
+    }
+
 }

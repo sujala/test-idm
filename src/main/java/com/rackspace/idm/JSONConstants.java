@@ -339,4 +339,7 @@ public final class JSONConstants {
 
     public static final String DOMAIN_ADMINISTRATOR_CHANGE = "domainAdministratorChange";
     public static final String RAX_AUTH_DOMAIN_ADMINISTRATOR_CHANGE = "RAX-AUTH:" + DOMAIN_ADMINISTRATOR_CHANGE;
+
+    public static final String DOMAIN_RCN_SWITCH = "domainRcnSwitch";
+    public static final String RAX_AUTH_DOMAIN_RCN_SWITCH = "RAX-AUTH:" + DOMAIN_RCN_SWITCH;
 }

@@ -100,6 +100,7 @@ public final class GlobalConstants {
     public static final String FILES_DEFAULT_ROLE = "object-store:default";
     public static final String MANAGED_HOSTING_DEFAULT_ROLE = "dedicated:default";
 
+    public static final String  TENANT_TYPE_RCN = "rcn";
     public static final String  TENANT_TYPE_CLOUD = "cloud";
     public static final String  TENANT_TYPE_FILES = "files";
     public static final String  TENANT_TYPE_MANAGED_HOSTING = "managed_hosting";

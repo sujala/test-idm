@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service.impl;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.config.CacheConfiguration;
 import com.rackspace.idm.domain.dao.ApplicationDao;
@@ -247,6 +248,17 @@ public class DefaultApplicationService implements ApplicationService {
             throw new NotFoundException(String.format("Client with id %s does not exit", clientId));
         }
         return this.applicationRoleDao.getClientRolesForApplication(application);
+    }
+
+    @Override
+    public Iterable<ClientRole> getClientRolesByRoleType(RoleTypeEnum roleType) {
+        if (roleType == null) {
+            throw new IllegalArgumentException("Role type required.");
+        }
+
+        logger.debug("Getting Client Roles with role type: {}", roleType);
+
+        return this.applicationRoleDao.getClientRolesWithRoleType(roleType);
     }
 
     @Override

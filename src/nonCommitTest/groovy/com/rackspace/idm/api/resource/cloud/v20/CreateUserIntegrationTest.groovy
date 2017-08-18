@@ -1729,7 +1729,7 @@ class CreateUserIntegrationTest extends RootIntegrationTest {
         def tenantName = "${tenantTypeName}:${RandomStringUtils.randomAlphabetic(8)}"
 
         utils.createTenantType(tenantTypeName)
-        utils.createTenantWithType(tenantName, [Constants.TENANT_TYPE_CLOUD])
+        utils.createTenantWithTypes(tenantName, [Constants.TENANT_TYPE_CLOUD])
 
         def role = utils.createRole()
         def tenantRole = v2Factory.createRole(role.name).with {

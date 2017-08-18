@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -282,6 +283,11 @@ public class SqlTenantRoleRepository implements TenantRoleDao {
     @Deprecated
     public String getUserIdForParent(TenantRole tenantRole) {
         return tenantRole.getUserId();
+    }
+
+    @Override
+    public Iterable<TenantRole> getTenantRolesForUserWithId(User user, Collection<String> roleIds) {
+        throw new NotImplementedException();
     }
 
     private List<String> getUserIds(Page<SqlTenantRole> sqlTenantRoles) {

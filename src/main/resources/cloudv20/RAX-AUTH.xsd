@@ -1155,4 +1155,8 @@
         <attribute name="demoteUserId" type="xsd:string" use="optional" />
     </complexType>
 
+    <complexType name="DomainRcnSwitch">
+        <attribute name="destinationRcn" type="xsd:string" use="required" />
+    </complexType>
+
 </schema>
