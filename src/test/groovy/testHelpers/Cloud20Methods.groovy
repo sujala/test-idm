@@ -78,7 +78,7 @@ class Cloud20Methods {
     static def ENDPOINT_TEMPLATES = "endpointTemplates"
     static def RULES = "rules"
     static def DOMAIN_ADMINISTRATOR_CHANGE_PATH = "domainAdministratorChange"
-    static def RCN_SWITCH_PATH = "rcn-switch"
+    static def RCN_PATH = "rcn"
 
     def init(){
         mediaType = new MediaTypeContext()
@@ -283,9 +283,9 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(DOMAIN_ADMINISTRATOR_CHANGE_PATH).type(requestMediaType).entity(domainAdministratorChange).header(X_AUTH_TOKEN, token).accept(acceptMediaType).put(ClientResponse)
     }
 
-    def domainRcnSwitch(String token, String domainId, DomainRcnSwitch rcnSwitch, MediaType requestType = MediaType.APPLICATION_XML_TYPE, MediaType acceptType = MediaType.APPLICATION_XML_TYPE) {
+    def domainRcnSwitch(String token, String domainId, String destinationRcn) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(RCN_SWITCH_PATH).type(requestType).entity(rcnSwitch).header(X_AUTH_TOKEN, token).accept(acceptType).put(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(RCN_PATH).path(destinationRcn).header(X_AUTH_TOKEN, token).put(ClientResponse)
     }
 
     def getUserById(String token, String userId, MediaType mediaType = APPLICATION_XML_TYPE) {

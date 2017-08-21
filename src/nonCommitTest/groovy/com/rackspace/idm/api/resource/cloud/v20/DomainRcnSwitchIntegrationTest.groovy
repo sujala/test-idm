@@ -1,7 +1,6 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.core.event.EventType
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainRcnSwitch
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
@@ -9,26 +8,18 @@ import com.rackspace.idm.validation.Validator20
 import org.apache.commons.lang3.RandomStringUtils
 import org.mockserver.verify.VerificationTimes
 import org.openstack.docs.identity.api.v2.BadRequestFault
-import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 
-import javax.ws.rs.core.MediaType
-
 class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
 
-    @Unroll
-    def "test switch domain RCN happy path - request = #requestType"() {
+    def "test switch domain RCN happy path"() {
         given:
         def domainId = utils.createDomain()
         def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
         def originRcn = testUtils.getRandomRCN()
         utils.domainRcnSwitch(domainId, originRcn)
         def destinationRcn = testUtils.getRandomRCN()
-        def rcnSwitchRequest = new DomainRcnSwitch().with {
-            it.destinationRcn = destinationRcn
-            it
-        }
         utils.addRoleToUser(userAdmin, Constants.RCN_ADMIN_ROLE_ID)
         def defaultUserWithRcnRole = utils.createUser(utils.getToken(userAdmin.username))
         utils.addRoleToUser(defaultUserWithRcnRole, Constants.RCN_CLOUD_ROLE_ID)
@@ -36,7 +27,7 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
 
         when: "switch the domain RCN"
         resetCloudFeedsMock()
-        def response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, rcnSwitchRequest, requestType)
+        def response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, destinationRcn)
 
         then: "success"
         response.status == 204
@@ -86,20 +77,45 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(defaultUserWithoutRcnRole)
         utils.deleteUser(userAdmin)
         utils.deleteDomain(domainId)
+    }
 
-        where:
-        requestType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    def "test switch RCN to current RCN is a no-op"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
+        def originRcn = testUtils.getRandomRCN()
+        utils.domainRcnSwitch(domainId, originRcn)
+        def destinationRcn = originRcn
+        utils.addRoleToUser(userAdmin, Constants.RCN_ADMIN_ROLE_ID)
+
+        when: "switch the domain RCN to the current RCN"
+        resetCloudFeedsMock()
+        def response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, destinationRcn)
+
+        then: "success"
+        response.status == 204
+
+        and: "domain was updated"
+        def updatedDomain = utils.getDomain(domainId)
+        updatedDomain.rackspaceCustomerNumber == destinationRcn
+
+        and: "user admin did NOT have the rcn:admin role removed"
+        utils.listUserGlobalRoles(utils.getServiceAdminToken(), userAdmin.id).role.find { role -> role.name == Constants.RCN_ADMIN_ROLE_NAME} != null
+
+        and: "user update feed event was NOT posted"
+        cloudFeedsMock.verify(
+                testUtils.createUpdateUserFeedsRequest(userAdmin, EventType.UPDATE),
+                VerificationTimes.exactly(0)
+        )
+
+        cleanup:
+        utils.deleteUser(userAdmin)
+        utils.deleteDomain(domainId)
     }
 
     def "switch domain RCN call returns a 404 when the domain does not exist"() {
-        given:
-        def rcnSwitchRequest = new DomainRcnSwitch().with {
-            it.destinationRcn = testUtils.getRandomRCN()
-            it
-        }
-
         when:
-        def response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), "doesNotExist", rcnSwitchRequest)
+        def response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), "doesNotExist", testUtils.getRandomRCN())
 
         then:
         response.status == 404
@@ -112,16 +128,12 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
         def originRcn = testUtils.getRandomRCN()
         utils.domainRcnSwitch(domainId, originRcn)
         def destinationRcn = testUtils.getRandomRCN()
-        def rcnSwitchRequest = new DomainRcnSwitch().with {
-            it.destinationRcn = destinationRcn
-            it
-        }
         def rcnTenant = utils.createTenantWithTypes(RandomStringUtils.randomAlphanumeric(8), [GlobalConstants.TENANT_TYPE_RCN])
         utils.addTenantToDomain(domainId, rcnTenant.id)
 
         when: "switch the domain RCN"
         resetCloudFeedsMock()
-        def response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, rcnSwitchRequest)
+        def response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, destinationRcn)
 
         then: "error"
         IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, 400, DefaultCloud20Service.ERROR_SWITCH_RCN_ON_DOMAIN_CONTAINING_RCN_TENANT)
@@ -134,7 +146,7 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
 
         when: "delete the RCN tenant from the domain and switch the domain RCN"
         utils.deleteTenantFromDomain(domainId, rcnTenant.id)
-        response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, rcnSwitchRequest)
+        response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, destinationRcn)
 
         then: "success"
         response.status == 204
@@ -153,14 +165,10 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
         utils.domainRcnSwitch(domainId, originRcn)
         utils.disableDomain(domainId)
         def destinationRcn = testUtils.getRandomRCN()
-        def rcnSwitchRequest = new DomainRcnSwitch().with {
-            it.destinationRcn = destinationRcn
-            it
-        }
 
         when: "switch the domain RCN"
         resetCloudFeedsMock()
-        def response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, rcnSwitchRequest)
+        def response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, destinationRcn)
 
         then: "success"
         response.status == 204
@@ -183,21 +191,17 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
         def originRcn = testUtils.getRandomRCN()
         utils.domainRcnSwitch(domainId, originRcn)
         def destinationRcn = testUtils.getRandomRCN()
-        def rcnSwitchRequest = new DomainRcnSwitch().with {
-            it.destinationRcn = destinationRcn
-            it
-        }
         def identityAdmin = utils.createIdentityAdmin()
 
         when: "switch the domain RCN"
-        def response = cloud20.domainRcnSwitch(utils.getToken(identityAdmin.username), domainId, rcnSwitchRequest)
+        def response = cloud20.domainRcnSwitch(utils.getToken(identityAdmin.username), domainId, destinationRcn)
 
         then: "error"
         response.status == 403
 
         when: "add the required role to the user and try again"
         utils.addRoleToUser(identityAdmin, Constants.IDENTITY_SWITCH_DOMAIN_RCN_ROLE_ID)
-        response = cloud20.domainRcnSwitch(utils.getToken(identityAdmin.username), domainId, rcnSwitchRequest)
+        response = cloud20.domainRcnSwitch(utils.getToken(identityAdmin.username), domainId, destinationRcn)
 
         then:
         response.status == 204
@@ -214,32 +218,10 @@ class DomainRcnSwitchIntegrationTest extends RootIntegrationTest {
         def userAdmin = utils.createUserAdminWithoutIdentityAdmin(domainId)
         def originRcn = testUtils.getRandomRCN()
         utils.domainRcnSwitch(domainId, originRcn)
-        def rcnSwitchRequest = new DomainRcnSwitch()
 
         when:
-        rcnSwitchRequest.destinationRcn = ""
-        def response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, rcnSwitchRequest)
-
-        then:
-        response.status == 400
-
-        when:
-        rcnSwitchRequest.destinationRcn = "  "
-        response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, rcnSwitchRequest)
-
-        then:
-        response.status == 400
-
-        when:
-        rcnSwitchRequest.destinationRcn = null
-        response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, rcnSwitchRequest)
-
-        then:
-        response.status == 400
-
-        when:
-        rcnSwitchRequest.destinationRcn = RandomStringUtils.randomAlphanumeric(Validator20.MAX_RCN_LENGTH + 1)
-        response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, rcnSwitchRequest)
+        def destinationRcn = RandomStringUtils.randomAlphanumeric(Validator20.MAX_RCN_LENGTH + 1)
+        def response = cloud20.domainRcnSwitch(utils.getServiceAdminToken(), domainId, destinationRcn)
 
         then:
         response.status == 400

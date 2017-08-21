@@ -147,13 +147,6 @@
                 </annox:annotate>
             </jaxb:bindings>
         </jaxb:bindings>
-        <jaxb:bindings schemaLocation="RAX-AUTH.xsd" node="/xs:schema">
-            <jaxb:bindings node="xs:complexType[@name='DomainRcnSwitch']">
-                <annox:annotate>
-                    <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="domainRcnSwitch"/>
-                </annox:annotate>
-            </jaxb:bindings>
-        </jaxb:bindings>
         <jaxb:bindings node="xs:complexType[@name='ImpersonationRequest']">
             <annox:annotate>
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="impersonation"/>
