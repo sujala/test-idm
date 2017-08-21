@@ -74,12 +74,13 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     @Unroll
     def "Validate user token: accept = #accept, request = #request" () {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_ISSUED_AT_IN_RESPONSE_PROP, issuedAt)
         def expirationTimeInSeconds = 86400
         def marginOfErrorInSeconds = 1000
         def response = utils.authenticateUser(Constants.IDENTITY_ADMIN_USERNAME, Constants.IDENTITY_ADMIN_PASSWORD)
         utils.revokeToken(response.token.id)
-        response = utils.authenticateUser(Constants.IDENTITY_ADMIN_USERNAME, Constants.IDENTITY_ADMIN_PASSWORD)
-        def token = response.token.id
+        def authenticateResponse = utils.authenticateUser(Constants.IDENTITY_ADMIN_USERNAME, Constants.IDENTITY_ADMIN_PASSWORD)
+        def token = authenticateResponse.token.id
 
         when: "do not provide token"
         def validateResponse = cloud20.validateToken("", token)
@@ -97,18 +98,23 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         validateResponse != null
         validateResponse.token.authenticatedBy.credential.contains("PASSWORD")
 
-        def created = tokenService.unmarshallToken(token).createTimestamp
-        validateResponse.token.issuedAt.toGregorianCalendar().getTime() == created
+        validateIssuedAt(token, authenticateResponse, issuedAt)
+        validateIssuedAt(token, validateResponse, issuedAt)
 
         // Validates the expiration time for "User"
         def deltaInSeconds = (validateResponse.token.expires.toGregorianCalendar().timeInMillis - System.currentTimeMillis()) / 1000
         deltaInSeconds < expirationTimeInSeconds + marginOfErrorInSeconds
         deltaInSeconds > expirationTimeInSeconds - marginOfErrorInSeconds
 
+        cleanup:
+        reloadableConfiguration.reset()
+
         where:
-        accept                          | request
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        accept                          | request                           | issuedAt
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true
     }
 
     def "User with validate-token-global role can validate user tokens" () {
@@ -161,9 +167,11 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
     @Unroll
     def "Validate racker token: accept = #accept, request = #request" () {
         when:
-        def response = utils.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD)
-        def token = response.token.id
-        response = cloud20.validateToken(utils.getServiceAdminToken(), token, accept)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_ISSUED_AT_IN_RESPONSE_PROP, issuedAt)
+        def authenticateResponse = utils.authenticateRacker(Constants.RACKER, Constants.RACKER_PASSWORD)
+        def token = authenticateResponse.token.id
+
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), token, accept)
         assert (response.status == SC_OK)
 
         AuthenticateResponse validateResponse = getEntity(response, AuthenticateResponse)
@@ -174,29 +182,41 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         validateResponse.user.id == Constants.RACKER
         validateResponse.user.name == Constants.RACKER
 
-        def created = tokenService.unmarshallToken(token).createTimestamp
-        validateResponse.token.issuedAt.toGregorianCalendar().getTime() == created
+        validateIssuedAt(token, authenticateResponse, issuedAt)
+        validateIssuedAt(token, validateResponse, issuedAt)
 
         cleanup:
         reloadableConfiguration.reset()
 
         where:
-        accept                          | request
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        accept                          | request                           | issuedAt
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true
+    }
+
+    private void validateIssuedAt(token, validateResponse, issuedAt) {
+        def created = tokenService.unmarshallToken(token).createTimestamp
+        if (issuedAt) {
+            validateResponse.token.issuedAt.toGregorianCalendar().getTime() == created
+        } else {
+            validateResponse.token.issuedAt == null
+        }
     }
 
     @Unroll
     def "Validate Impersonated user's token: accept = #accept, request = #request" () {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_ISSUED_AT_IN_RESPONSE_PROP, issuedAt)
         def domainId = utils.createDomain()
         (defaultUser, users) = utils.createDefaultUser(domainId)
 
         when:
-        def response = utils.impersonateWithToken(utils.getIdentityAdminToken(), defaultUser)
-        def token = response.token.id
+        def impersonateResponse = utils.impersonateWithToken(utils.getIdentityAdminToken(), defaultUser)
+        def token = impersonateResponse.token.id
 
-        response = cloud20.validateToken(utils.getServiceAdminToken(), token, accept)
+        def response = cloud20.validateToken(utils.getServiceAdminToken(), token, accept)
         assert (response.status == SC_OK)
 
         AuthenticateResponse validateResponse = getEntity(response, AuthenticateResponse)
@@ -204,17 +224,20 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         then:
         token != null
 
-        def created = tokenService.unmarshallToken(token).createTimestamp
-        validateResponse.token.issuedAt.toGregorianCalendar().getTime() == created
+        validateIssuedAt(token, impersonateResponse, issuedAt)
+        validateIssuedAt(token, validateResponse, issuedAt)
 
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
+        reloadableConfiguration.reset()
 
         where:
-        accept                          | request
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE
+        accept                          | request                           | issuedAt
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false
+        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true
+        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true
     }
 
     def "Validate Impersonated user's token using a racker" () {
