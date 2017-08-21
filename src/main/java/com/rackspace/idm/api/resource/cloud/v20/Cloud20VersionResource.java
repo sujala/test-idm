@@ -4,16 +4,14 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.docs.identity.api.ext.rax_ksgrp.v1.Group;
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials;
 import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.XMLReader;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ExceptionHandler;
-import com.rackspace.idm.exception.IdmException;
-import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.exception.*;
 import com.rackspace.idm.modules.endpointassignment.api.resource.EndpointAssignmentRuleResource;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.Configuration;
@@ -36,6 +34,7 @@ import javax.xml.bind.Unmarshaller;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Set;
 
 /**
  * Cloud Auth 2.0 API Versions
@@ -80,6 +79,8 @@ public class Cloud20VersionResource {
     private static final String JAXBCONTEXT_VERSION_CHOICE_CONTEXT_PATH = "org.openstack.docs.common.api.v1:org.w3._2005.atom";
     private static final String SERVICE_NOT_FOUND_ERROR_MESSAGE = "Service Not Found";
     private static final JAXBContext JAXBCONTEXT_VERSION_CHOICE;
+
+    public static final String FEDERATION_IDP_MAPPING_POLICY_FORMAT_ERROR_MESSAGE = "Acceptable media types for IDP mapping policy are: %s";
 
     static {
         try {
@@ -422,7 +423,7 @@ public class Cloud20VersionResource {
 
     @PUT
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/mapping")
-    @Consumes(MediaType.APPLICATION_JSON)
+    @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, GlobalConstants.TEXT_YAML})
     public Response updateIdentityProviderPolicy(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
@@ -431,12 +432,17 @@ public class Cloud20VersionResource {
         if (!identityConfig.getReloadableConfig().isIdentityProviderManagementSupported()) {
             throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
         }
+        Set acceptableMediaTypes = identityConfig.getReloadableConfig().getMappingPolicyAcceptFormats();
+        if (!acceptableMediaTypes.contains(httpHeaders.getMediaType().toString().toLowerCase())) {
+            String errMsg = String.format(FEDERATION_IDP_MAPPING_POLICY_FORMAT_ERROR_MESSAGE, acceptableMediaTypes);
+            throw new UnsupportedMediaTypeException(errMsg);
+        }
         return cloud20Service.updateIdentityProviderPolicy(httpHeaders, authToken, identityProviderId, policy).build();
     }
 
     @GET
     @Path("RAX-AUTH/federation/identity-providers/{identityProviderId}/mapping")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, GlobalConstants.TEXT_YAML})
     public Response getIdentityProviderPolicy(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,

@@ -24,6 +24,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.hibernate.validator.constraints.impl.EmailValidator;
 import org.joda.time.DateTime;
 import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate;
@@ -35,7 +36,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -601,14 +604,14 @@ public class Validator20 {
         }
     }
 
-    public void validateIdpPolicy(String policy) {
+    public void validateIdpPolicy(String policy, MediaType mediaType) {
         // Ensure policy does not exceed max size allowed
-        if (!jsonValidator.jsonStringDoesNotExceedSize(policy, identityConfig.getReloadableConfig().getIdpPolicyMaxSize())) {
+        if (!stringDoesNotExceedSize(policy, identityConfig.getReloadableConfig().getIdpPolicyMaxSize())) {
             throw new BadRequestException(getIdpPolicyMaxSizeExceededErrorMessage());
         }
 
-        // Ensure policy contains valid json
-        if (!jsonValidator.isValidJson(policy)) {
+        // Ensure JSON policy contains valid format
+        if(mediaType.equals(MediaType.APPLICATION_JSON_TYPE) && !jsonValidator.isValidJson(policy)) {
             throw new BadRequestException(FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE);
         }
     }
@@ -893,5 +896,25 @@ public class Validator20 {
             String errMsg = String.format(ERROR_TENANT_TYPE_DESCRIPTION_MUST_BE_CORRECT_SIZE);
             throw new BadRequestException(errMsg);
         }
+    }
+
+    /**
+     * Validates that the provided string is shorter than the provided size in kilobytes
+     *
+     * @param value
+     * @param sizeInKilobytes
+     * @throws IllegalArgumentException if string is null sizeInKilobytes is negative
+     * @return
+     */
+    public boolean stringDoesNotExceedSize(String value, long sizeInKilobytes) {
+        Validate.isTrue(value != null);
+        Validate.isTrue(sizeInKilobytes >= 0);
+
+        byte [] jsonBytes = value.getBytes(StandardCharsets.UTF_8);
+        if(jsonBytes.length > sizeInKilobytes * 1024) {
+            return false;
+        }
+
+        return true;
     }
 }

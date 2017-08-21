@@ -3607,6 +3607,22 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * identityUserService.getFederatedUsersNotInApprovedDomainIdsByIdentityProviderId(_, _)
     }
 
+    def "Update identityProvider's mapping policy with YAML mediaType" () {
+        def mockFederatedIdentityService = Mock(FederatedIdentityService)
+        service.federatedIdentityService = mockFederatedIdentityService
+        headers.getMediaType() >> GlobalConstants.TEXT_YAML_TYPE
+
+        IdentityProvider identityProvider = new IdentityProvider()
+
+        when:
+        def response = service.updateIdentityProviderPolicy(headers, authToken, "id", '--- policy: name')
+
+        then:
+        1 * mockFederatedIdentityService.checkAndGetIdentityProvider(_) >> identityProvider
+        1 * mockFederatedIdentityService.updateIdentityProvider(_)
+        response.build().status == HttpStatus.SC_NO_CONTENT
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)

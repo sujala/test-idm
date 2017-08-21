@@ -1,7 +1,8 @@
 package com.rackspace.idm;
 
-import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum;
+
+import javax.ws.rs.core.MediaType;
 
 /**
  * Add globally-used constants here.
@@ -108,4 +109,7 @@ public final class GlobalConstants {
     public static final String  MANAGED_HOSTING_TENANT_PREFIX = "hybrid:";
 
     public static final String RAX_STATUS_RESTRICTED_GROUP_NAME = "rax_status_restricted";
+
+    public static final String TEXT_YAML = "text/yaml";
+    public static final MediaType TEXT_YAML_TYPE = new MediaType("text", "yaml");
 }

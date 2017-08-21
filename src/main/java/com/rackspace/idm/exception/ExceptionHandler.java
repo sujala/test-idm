@@ -1,9 +1,7 @@
 package com.rackspace.idm.exception;
 
-import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.http.protocol.HTTP;
 import org.openstack.docs.identity.api.v2.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

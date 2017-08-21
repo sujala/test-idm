@@ -90,6 +90,9 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
+import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
+
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
 
@@ -110,6 +113,7 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String FEDERATION_IDP_FILTER_TENANT_NO_DOMAIN_ERROR_MESSAGE = "The provided tenant is not associated with a domain";
     public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE = "Unable to load and parse the default IDP policy.";
     public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE = "The default IDP policy is not properly configured.";
+    public static final String FEDERATION_IDP_POLICY_TYPE_NOT_FOUND_ERROR_MESSAGE = "No %s mapping policy found for IDP with ID %s.";
     public static final String FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE = "IDP creation is currently unavailable due to missing default for IDP policy.";
     public static final String FEDERATION_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP_MESSAGE = "IDP certificates cannot be updated outside of providing a new IDP metadata xml.";
 
@@ -1300,6 +1304,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ServiceUnavailableException(FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE);
             }
             newProvider.setPolicy(defaultPolicy.getBytes(StandardCharsets.UTF_8));
+            newProvider.setPolicyFormat(IdpPolicyFormatEnum.JSON.name());
 
             if (newProvider.getEnabled() == null) {
                 newProvider.setEnabled(true);
@@ -1353,6 +1358,7 @@ public class DefaultCloud20Service implements Cloud20Service {
                 throw new ServiceUnavailableException(FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE);
             }
             newProvider.setPolicy(defaultPolicy.getBytes(StandardCharsets.UTF_8));
+            newProvider.setPolicyFormat(IdpPolicyFormatEnum.JSON.name());
 
             newProvider.setEnabled(true);
 
@@ -1910,18 +1916,24 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateIdentityProviderPolicy(HttpHeaders httpHeaders, String authToken, String identityProviderId, String policy) {
         try {
+
             //verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
 
             //verify user has appropriate role
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
 
-            validator20.validateIdpPolicy(policy);
+            validator20.validateIdpPolicy(policy, httpHeaders.getMediaType());
 
             com.rackspace.idm.domain.entity.IdentityProvider identityProvider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
 
             byte [] policyByteArray = policy.getBytes(StandardCharsets.UTF_8);
             identityProvider.setPolicy(policyByteArray);
+            IdpPolicyFormatEnum idpPolicyFormatEnum = IdpPolicyFormatEnum.fromValue(httpHeaders.getMediaType().toString());
+            // Note: This should never be null since the acceptable content-type at resource are JSON, XML, and YAML.
+            if (idpPolicyFormatEnum != null) {
+                identityProvider.setPolicyFormat(idpPolicyFormatEnum.name());
+            }
 
             federatedIdentityService.updateIdentityProvider(identityProvider);
             atomHopperClient.asyncPostIdpEvent(identityProvider, EventType.UPDATE);
@@ -1952,17 +1964,29 @@ public class DefaultCloud20Service implements Cloud20Service {
                 //TODO: write a test case for this as part of https://jira.rax.io/browse/CID-612
                 body = identityConfig.getRepositoryConfig().getIdentityProviderDefaultPolicy();
                 try {
-                    validator20.validateIdpPolicy(body);
+                    validator20.validateIdpPolicy(body, MediaType.APPLICATION_JSON_TYPE);
                 } catch (Exception e) {
                     logger.error(FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE, e);
                     throw new UnrecoverableIdmException(FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE);
                 }
             } else {
+                Set<String> idpPolicyFormats = IdpPolicyFormatEnum.fromMediaTypes(httpHeaders.getAcceptableMediaTypes());
+                if (!idpPolicyFormats.contains(identityProvider.getPolicyFormat())) {
+                    String errMsg = String.format(FEDERATION_IDP_POLICY_TYPE_NOT_FOUND_ERROR_MESSAGE,
+                                                  idpPolicyFormats, identityProviderId);
+                    logger.warn(errMsg);
+                    throw new NotFoundException(errMsg);
+                }
                 body = new String(identityProvider.getPolicy());
             }
 
             return Response.ok(body);
         } catch (Exception ex) {
+            if(httpHeaders.getAcceptableMediaTypes().contains(GlobalConstants.TEXT_YAML_TYPE)) {
+                // Force exceptions to Content-Type 'application/json' for Accept 'text/yaml'
+                return exceptionHandler.exceptionResponse(ex).type(MediaType.APPLICATION_JSON_TYPE);
+            }
+
             return exceptionHandler.exceptionResponse(ex);
         }
     }

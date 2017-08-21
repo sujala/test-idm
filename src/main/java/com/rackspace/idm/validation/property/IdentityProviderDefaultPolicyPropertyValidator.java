@@ -6,6 +6,8 @@ import com.rackspace.idm.validation.Validator20;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.ws.rs.core.MediaType;
+
 @Component
 public class IdentityProviderDefaultPolicyPropertyValidator implements TargetedIdentityPropertyValidator {
 
@@ -23,7 +25,8 @@ public class IdentityProviderDefaultPolicyPropertyValidator implements TargetedI
             return;
         }
 
-        validator20.validateIdpPolicy(identityProperty.getValue());
+        // Default Policy is stored in JSON; Note: This will need to change once JSON support is removed in favor of YAML.
+        validator20.validateIdpPolicy(identityProperty.getValue(), MediaType.APPLICATION_JSON_TYPE);
     }
 
 }
