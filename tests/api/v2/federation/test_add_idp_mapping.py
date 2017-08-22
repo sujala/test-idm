@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*
 import ddt
+import json
+import os
 
+from tests.api.utils import data_file_iterator
 from tests.api.v2 import base
 from tests.api.v2.models import factory
 
@@ -92,27 +95,36 @@ class TestAddMappingIDP(base.TestBaseV2):
                           request_object.idp_name)
         return provider_id
 
+    def get_valid_mapping_policy(self):
+        mapping = {}
+        full_path = os.path.realpath(__file__)
+        with open("{}/data_update_idp_mapping_policy.json".format(
+                os.path.dirname(full_path)), "r") as policy:
+            mapping = json.load(policy)['valid']
+        return mapping
+
     # verify must have role manager for put, read only for get
-    def test_add_mapping_manager_role(self):
+    @ddt.file_data('data_update_idp_mapping_policy.json')
+    def test_add_mapping_manager_role(self, mapping):
         provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME])
 
         resp_put_manager = self.idp_ia_clients[
             "None"].add_idp_mapping(
                 idp_id=provider_id,
-                request_data={})
+                request_data=mapping)
         self.assertEquals(resp_put_manager.status_code, 403)
 
         resp_put_manager = self.idp_ia_clients[
             const.PROVIDER_RO_ROLE_NAME].add_idp_mapping(
                 idp_id=provider_id,
-                request_data={})
+                request_data=mapping)
         self.assertEquals(resp_put_manager.status_code, 403)
 
         resp_put_manager = self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
                 idp_id=provider_id,
-                request_data={})
+                request_data=mapping)
         self.assertEquals(resp_put_manager.status_code, 204)
 
         resp_get_none = self.idp_ia_clients[
@@ -130,8 +142,7 @@ class TestAddMappingIDP(base.TestBaseV2):
                 idp_id=provider_id)
         self.assertEquals(resp_get_manager.status_code, 200)
 
-    # Try none, empty {} [] for set
-    @ddt.data({}, [], {"test": "test"})
+    @ddt.file_data('data_update_idp_valid_mapping_policy.json')
     def test_add_mapping_valid_json(self, mapping):
         provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME])
@@ -148,15 +159,116 @@ class TestAddMappingIDP(base.TestBaseV2):
         self.assertEquals(resp_get_ro.status_code, 200)
         self.assertEquals(resp_get_ro.json(), mapping)
 
+    @data_file_iterator.data_file_provider((
+            "yaml/default_mapping_invalid_policy.yaml",
+    ))
+    def test_add_mapping_invalid_yaml(self, mapping):
+        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME])
+
+        current_resp_policy = self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+            idp_id=provider_id)
+
+        resp_put_manager = self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
+            idp_id=provider_id,
+            request_data=mapping,
+            content_type="yaml")
+        # This is currently a bug with repose.
+        # Invalid YAML is blocked; however, Repose returns 200 OK
+        # instead of 400 Bad Request.
+        self.assertEquals(resp_put_manager.status_code, 200)
+
+        resp_get_ro = self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+            idp_id=provider_id, headers={
+                const.CONTENT_TYPE: const.YAML_CONTENT_TYPE_VALUE,
+                const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
+            })
+        self.assertEquals(resp_get_ro.status_code, 404)
+        self.assertEquals(resp_get_ro.json()["itemNotFound"]["message"],
+                          "No [YAML] mapping policy found for IDP with "
+                          "ID {}.".format(provider_id))
+
+        resp_get_ro = self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+            idp_id=provider_id)
+        self.assertEquals(resp_get_ro.status_code, 200)
+        self.assertNotEquals(resp_get_ro.text, mapping)
+        self.assertEquals(resp_get_ro.json(), current_resp_policy.json())
+
+    @data_file_iterator.data_file_provider((
+            "yaml/default_mapping_policy.yaml",
+            "yaml/blacklist_mapping_policy.yaml",
+            "yaml/name_and_roles_regex_mapping_policy.yaml",
+            "yaml/quoted_attrs_mapping_policy.yaml",
+            "yaml/roles_with_spaces_mapping_policy.yaml",
+    ))
+    def test_add_mapping_valid_yaml(self, mapping):
+        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME])
+
+        resp_put_manager = self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
+            idp_id=provider_id,
+            request_data=mapping,
+            content_type="yaml")
+        self.assertEquals(resp_put_manager.status_code, 204)
+
+        resp_get_ro = self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+            idp_id=provider_id, headers={
+                const.CONTENT_TYPE: const.YAML_CONTENT_TYPE_VALUE,
+                const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
+            })
+        self.assertEquals(resp_get_ro.status_code, 200)
+        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+                          const.YAML_CONTENT_TYPE_VALUE)
+        self.assertEquals(resp_get_ro.text, mapping)
+
+        resp_get_ro = self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+            idp_id=provider_id)
+        self.assertEquals(resp_get_ro.status_code, 404)
+        self.assertEquals(resp_get_ro.json()["itemNotFound"]["message"],
+                          "No [JSON] mapping policy found for IDP with "
+                          "ID {}.".format(provider_id))
+
+    # Try none, empty {} [] for set
+    @ddt.data({}, [], {"test": "test"})
+    def test_add_mapping_invalid_json(self, mapping):
+        """We now fail invalid policies - CID-1000
+        """
+        provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME])
+        current_resp_policy = self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+            idp_id=provider_id)
+
+        resp_put_manager = self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
+            idp_id=provider_id,
+            request_data=mapping)
+        self.assertEquals(resp_put_manager.status_code, 400)
+
+        resp_get_ro = self.idp_ia_clients[
+            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
+            idp_id=provider_id)
+        self.assertEquals(resp_get_ro.status_code, 200)
+        self.assertNotEquals(resp_get_ro.json(), mapping)
+        self.assertEquals(resp_get_ro.json(), current_resp_policy.json())
+
     # idp missing causes 404
-    def test_add_mapping_missing_idp(self):
+    @ddt.file_data('data_update_idp_mapping_policy.json')
+    def test_add_mapping_missing_idp(self, mapping):
         provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME])
         idp_id = "xxx{0}xxx".format(provider_id)
         resp_put_manager = self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
                 idp_id=idp_id,
-                request_data={})
+                request_data=mapping)
         self.assertEquals(resp_put_manager.status_code, 404)
         self.assertEquals(resp_put_manager.json()[const.ITEM_NOT_FOUND][
             const.MESSAGE], "Identity Provider with id/name: '{0}' was"
@@ -204,7 +316,7 @@ class TestAddMappingIDP(base.TestBaseV2):
         self.idp_ia_clients["bad_accept_type"].default_headers[
             const.ACCEPT] = (const.ACCEPT_ENCODING_VALUE.format(
                 accept_type))
-        mapping = {"testkey": "testvalue"}
+        mapping = self.get_valid_mapping_policy()
         resp_put_manager = self.idp_ia_clients[
             "bad_accept_type"].add_idp_mapping(
                 idp_id=provider_id,
@@ -226,12 +338,16 @@ class TestAddMappingIDP(base.TestBaseV2):
         max_size_in_kilo = const.MAX_SIZE_IN_KILOBYTES
         provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME])
+        mapping = self.get_valid_mapping_policy()
+        mapping[
+            'mapping']['rules'][0][
+            'remote'][0]['path'] = self.generate_random_string(
+            const.IDP_MAPPING_PATTERN.format(
+                mapping_size=5000))
         resp_put_manager = self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
                 idp_id=provider_id,
-                request_data={"test": self.generate_random_string(
-                    const.IDP_MAPPING_PATTERN.format(
-                        mapping_size=5000))})
+                request_data=mapping)
         self.assertEquals(resp_put_manager.status_code, 400)
         self.assertEquals(resp_put_manager.json()[const.BAD_REQUEST][
             const.MESSAGE], u"Max size exceed. Policy file must be less tha"

@@ -2,7 +2,7 @@
 import copy
 import ddt
 
-from tests.api.utils import saml_helper, log_search
+from tests.api.utils import saml_helper, log_search, data_file_iterator
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.v2 import base
 from tests.api.v2.models import factory
@@ -132,6 +132,94 @@ class TestUpdateIDP(base.TestBaseV2):
         self.assertEqual(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
                          idp_name)
 
+    @data_file_iterator.data_file_provider((
+            "yaml/blacklist_mapping_policy.yaml",
+    ))
+    def test_add_mapping_blacklisted_yaml(self, mapping):
+        domain_id = self.create_one_user_and_get_domain()
+        self.domains.append(domain_id)
+
+        issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
+        provider_id, cert_path, key_path = self.create_idp_with_certs(
+            domain_id=domain_id, issuer=issuer)
+
+        resp_put_manager = self.idp_ia_client.add_idp_mapping(
+            idp_id=provider_id,
+            request_data=mapping,
+            content_type="yaml")
+        self.assertEquals(resp_put_manager.status_code, 204)
+
+        resp_get_ro = self.idp_ia_client.get_idp_mapping(
+            idp_id=provider_id, headers={
+                const.CONTENT_TYPE: const.YAML_CONTENT_TYPE_VALUE,
+                const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
+            })
+        self.assertEquals(resp_get_ro.status_code, 200)
+        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+                          const.YAML_CONTENT_TYPE_VALUE)
+        self.assertEquals(resp_get_ro.text, mapping)
+
+        test_data = {
+            "fed_input": {
+                "base64_url_encode": True,
+                "new_url": True,
+                "content_type": "x-www-form-urlencoded",
+                "fed_api": "v2",
+                "roles": [
+                    "lbaas:admin"
+                ]
+            }
+        }
+
+        fed_auth = self.fed_user_call(
+            test_data=test_data, domain_id=domain_id, private_key=key_path,
+            public_key=cert_path, issuer=issuer)
+        self.assertEqual(fed_auth.status_code, 400)
+        self.assertEqual(fed_auth.json()['badRequest']['message'],
+                         "Error code: 'FED2-016'; Invalid role 'lbaas:admin'")
+
+    @data_file_iterator.data_file_provider((
+            "yaml/default_mapping_policy.yaml",
+    ))
+    def test_add_mapping_valid_yaml(self, mapping):
+        domain_id = self.create_one_user_and_get_domain()
+        self.domains.append(domain_id)
+
+        issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
+        provider_id, cert_path, key_path = self.create_idp_with_certs(
+            domain_id=domain_id, issuer=issuer)
+
+        resp_put_manager = self.idp_ia_client.add_idp_mapping(
+            idp_id=provider_id,
+            request_data=mapping,
+            content_type="yaml")
+        self.assertEquals(resp_put_manager.status_code, 204)
+
+        resp_get_ro = self.idp_ia_client.get_idp_mapping(
+            idp_id=provider_id, headers={
+                const.CONTENT_TYPE: const.YAML_CONTENT_TYPE_VALUE,
+                const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
+            })
+        self.assertEquals(resp_get_ro.status_code, 200)
+        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+                          const.YAML_CONTENT_TYPE_VALUE)
+        self.assertEquals(resp_get_ro.text, mapping)
+
+        test_data = {
+            "fed_input": {
+                "base64_url_encode": True,
+                "new_url": True,
+                "content_type": "x-www-form-urlencoded",
+                "fed_api": "v2"
+            }
+        }
+
+        fed_auth = self.fed_user_call(
+            test_data=test_data, domain_id=domain_id, private_key=key_path,
+            public_key=cert_path, issuer=issuer)
+        self.assertEqual(fed_auth.status_code, 200)
+        fed_token, _, _ = self.parse_auth_response(fed_auth)
+
     @ddt.data("?test", "test*", "*", "$test#", "test@cid")
     def test_update_idp_name_with_invalid_characters(self, idp_name):
         """Update idp name with a invalid name"""
@@ -193,12 +281,16 @@ class TestUpdateIDP(base.TestBaseV2):
         new_url = fed_input_data['new_url']
         content_type = fed_input_data['content_type']
 
+        roles = None
+        if 'roles' in fed_input_data:
+            roles = fed_input_data['roles']
+
         if fed_input_data['fed_api'] == 'v2':
             cert = saml_helper.create_saml_assertion_v2(
                 domain=domain_id, username=subject, issuer=issuer,
                 email=self.test_email, private_key_path=private_key,
                 public_key_path=public_key, response_flavor='v2DomainOrigin',
-                output_format='formEncode')
+                output_format='formEncode', roles=roles)
             # Currently, the jar is returning a line from log file,
             # hence this split
             cert = cert.split('\n')[1]

@@ -42,7 +42,6 @@ class TestBase(fixtures.BaseTestFixture):
                                           const.DEVOPS_URL)
         cls.default_header_validations = [
             header_validation.validate_header_vary,
-            header_validation.validate_header_server,
             header_validation.validate_header_content_type,
             header_validation.validate_header_not_present]
 

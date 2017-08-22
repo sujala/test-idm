@@ -1462,22 +1462,41 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
-    def add_idp_mapping(self, idp_id, request_data, requestslib_kwargs=None):
+    def add_idp_mapping(self, idp_id, request_data, content_type="json",
+                        requestslib_kwargs=None):
         """Return response object from the add certificate api call
+        """
+        url = self.url + const.IDP_MAPPING_CR_URL.format(idp_id=idp_id)
+        headers = {}
+        if not requestslib_kwargs:
+            requestslib_kwargs = {}
+        if content_type == "yaml":
+            requestslib_kwargs["data"] = request_data
+            headers[const.CONTENT_TYPE] = const.YAML_CONTENT_TYPE_VALUE
+        else:
+            requestslib_kwargs["json"] = request_data
+        # Note that there is always a default mapping, so no POST
+        resp = self.request(method='PUT', url=url, headers=headers,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def get_idp_mapping(self, idp_id, headers=None, requestslib_kwargs=None):
+        """Return response object from the get_idp api call
+        """
+        url = self.url + const.IDP_MAPPING_CR_URL.format(idp_id=idp_id)
+
+        resp = self.request(method='GET', url=url, headers=headers,
+                            requestslib_kwargs=requestslib_kwargs)
+        return resp
+
+    def update_idp_mapping(self, idp_id, request_data,
+                           requestslib_kwargs=None):
+        """Return response object from the get_idp api call
         """
         url = self.url + const.IDP_MAPPING_CR_URL.format(idp_id=idp_id)
         if not requestslib_kwargs:
             requestslib_kwargs = {}
         requestslib_kwargs["json"] = request_data
-        # Note that there is always a default mapping, so no POST
-        resp = self.request(method='PUT', url=url,
-                            requestslib_kwargs=requestslib_kwargs)
-        return resp
-
-    def get_idp_mapping(self, idp_id, requestslib_kwargs=None):
-        """Return response object from the get_idp api call
-        """
-        url = self.url + const.IDP_MAPPING_CR_URL.format(idp_id=idp_id)
 
         resp = self.request(method='GET', url=url,
                             requestslib_kwargs=requestslib_kwargs)
