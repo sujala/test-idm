@@ -385,7 +385,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         resp_put_manager = self.idp_ia_clients[
             "bad_content_type"].add_idp_mapping(
                 idp_id=provider_id,
-                request_data={})
+                request_data={},
+                content_type=None)
         self.assertEquals(resp_put_manager.status_code, 400)
 
     @ddt.data("text", "x-www-form-urlencoded")
@@ -401,7 +402,8 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         resp_put_manager = self.idp_ia_clients[
             "bad_content_type"].add_idp_mapping(
                 idp_id=provider_id,
-                request_data={})
+                request_data={},
+                content_type=None)
         self.assertEquals(resp_put_manager.status_code, 415)
 
     @ddt.data("xml", "xhtml_xml", "x-www-form-urlencoded")

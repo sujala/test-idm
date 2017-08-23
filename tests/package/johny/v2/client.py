@@ -1473,8 +1473,11 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         if content_type == const.YAML:
             requestslib_kwargs["data"] = request_data
             headers[const.CONTENT_TYPE] = const.YAML_CONTENT_TYPE_VALUE
-        else:
+        elif content_type == const.JSON:
             requestslib_kwargs["json"] = request_data
+            headers[const.CONTENT_TYPE] = const.CONTENT_TYPE_VALUE.format(
+                const.JSON)
+
         # Note that there is always a default mapping, so no POST
         resp = self.request(method='PUT', url=url, headers=headers,
                             requestslib_kwargs=requestslib_kwargs)

@@ -1820,7 +1820,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProvider(providerId);
 
             if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList((
-                            IdentityUserTypeEnum.USER_ADMIN.getRoleName()),
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName()),
                     IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
                     IdentityRole.RCN_ADMIN.getRoleName()))) {
 
@@ -1916,27 +1916,43 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder updateIdentityProviderPolicy(HttpHeaders httpHeaders, String authToken, String identityProviderId, String policy) {
         try {
-
             //verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             //verify user has appropriate role
-            authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()));
+
+            verifyUserIsNotInDefaultDomain(caller);
+            verifyUserIsNotInRaxRestrictedGroup(caller);
+
+            com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
+
+            if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList((
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName()),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()))) {
+
+                verifyDomainUserHasAccessToIdentityProviderMetadata(existingProvider, caller);
+            }
 
             validator20.validateIdpPolicy(policy, httpHeaders.getMediaType());
 
-            com.rackspace.idm.domain.entity.IdentityProvider identityProvider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
 
             byte [] policyByteArray = policy.getBytes(StandardCharsets.UTF_8);
-            identityProvider.setPolicy(policyByteArray);
+            existingProvider.setPolicy(policyByteArray);
             IdpPolicyFormatEnum idpPolicyFormatEnum = IdpPolicyFormatEnum.fromValue(httpHeaders.getMediaType().toString());
             // Note: This should never be null since the acceptable content-type at resource are JSON, XML, and YAML.
             if (idpPolicyFormatEnum != null) {
-                identityProvider.setPolicyFormat(idpPolicyFormatEnum.name());
+                existingProvider.setPolicyFormat(idpPolicyFormatEnum.name());
             }
 
-            federatedIdentityService.updateIdentityProvider(identityProvider);
-            atomHopperClient.asyncPostIdpEvent(identityProvider, EventType.UPDATE);
+            federatedIdentityService.updateIdentityProvider(existingProvider);
+            atomHopperClient.asyncPostIdpEvent(existingProvider, EventType.UPDATE);
 
             return Response.noContent();
         } catch (Exception ex) {
@@ -1949,17 +1965,32 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             //verify token exists and valid
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             //verify user has appropriate role
-            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(
-                    Arrays.asList(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
-                                  IdentityRole.IDENTITY_PROVIDER_READ_ONLY.getRoleName()));
+            authorizationService.verifyEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList(
+                    IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName(),
+                    IdentityRole.IDENTITY_PROVIDER_READ_ONLY.getRoleName(),
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName(),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()));
 
-            com.rackspace.idm.domain.entity.IdentityProvider identityProvider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
+            verifyUserIsNotInDefaultDomain(caller);
+            verifyUserIsNotInRaxRestrictedGroup(caller);
+
+            com.rackspace.idm.domain.entity.IdentityProvider existingProvider = federatedIdentityService.checkAndGetIdentityProvider(identityProviderId);
+
+            if (authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(Arrays.asList((
+                    IdentityUserTypeEnum.USER_ADMIN.getRoleName()),
+                    IdentityUserTypeEnum.USER_MANAGER.getRoleName(),
+                    IdentityRole.RCN_ADMIN.getRoleName()))) {
+
+                verifyDomainUserHasAccessToIdentityProviderMetadata(existingProvider, caller);
+            }
 
             // Return the default IDP policy if identity provider does not have a policy
             String body;
-            if (identityProvider.getPolicy() == null) {
+            if (existingProvider.getPolicy() == null) {
                 //TODO: load this from the directory as part of https://jira.rax.io/browse/CID-612
                 //TODO: write a test case for this as part of https://jira.rax.io/browse/CID-612
                 body = identityConfig.getRepositoryConfig().getIdentityProviderDefaultPolicy();
@@ -1971,13 +2002,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             } else {
                 Set<String> idpPolicyFormats = IdpPolicyFormatEnum.fromMediaTypes(httpHeaders.getAcceptableMediaTypes());
-                if (!idpPolicyFormats.contains(identityProvider.getPolicyFormat())) {
+                if (!idpPolicyFormats.contains(existingProvider.getPolicyFormat())) {
                     String errMsg = String.format(FEDERATION_IDP_POLICY_TYPE_NOT_FOUND_ERROR_MESSAGE,
                                                   idpPolicyFormats, identityProviderId);
                     logger.warn(errMsg);
                     throw new NotFoundException(errMsg);
                 }
-                body = new String(identityProvider.getPolicy());
+                body = new String(existingProvider.getPolicy());
             }
 
             return Response.ok(body);
