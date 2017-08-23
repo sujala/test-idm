@@ -35,6 +35,9 @@ public class TokenConverterCloudV20 {
     @Autowired
     private AuthorizationService authorizationService;
 
+    @Autowired
+    private IdentityConfig config;
+
     private Logger logger = LoggerFactory.getLogger(TokenConverterCloudV20.class);
 
     private Token toTokenInternal(ScopeAccess scopeAccess, String tokenTenantId) {
@@ -42,11 +45,14 @@ public class TokenConverterCloudV20 {
 
         if (scopeAccess != null) {
             XMLGregorianCalendar expiresDate = getXmlGregorianCalendar(scopeAccess.getAccessTokenExp());
-            XMLGregorianCalendar issuedDate = getXmlGregorianCalendar(scopeAccess.getCreateTimestamp());
+
+            if (config.getReloadableConfig().getEnableIssuedAtInResponse()) {
+                XMLGregorianCalendar issuedDate = getXmlGregorianCalendar(scopeAccess.getCreateTimestamp());
+                token.setIssuedAt(issuedDate);
+            }
 
             token.setId(scopeAccess.getAccessTokenString());
             token.setExpires(expiresDate);
-            token.setIssuedAt(issuedDate);
             if (StringUtils.isNotBlank(tokenTenantId)) {
                 TenantForAuthenticateResponse tenantForAuthenticateResponse = new TenantForAuthenticateResponse();
                 tenantForAuthenticateResponse.setId(tokenTenantId);
