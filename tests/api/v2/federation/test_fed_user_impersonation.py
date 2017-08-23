@@ -93,10 +93,10 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
 
         # Impersonate with racker client
         # See https://jira.rax.io/browse/CID-953
-        # racker_client = self.generate_racker_client()
-        # resp = racker_client.impersonate_user(
-        #     request_data=impersonation_request_obj)
-        # self.assertEqual(resp.status_code, 200)
+        racker_client = self.generate_racker_client()
+        resp = racker_client.impersonate_user(
+            request_data=impersonation_request_obj)
+        self.assertEqual(resp.status_code, 200)
 
         # Impersonate with identity admin client
         resp = self.identity_admin_client.impersonate_user(
