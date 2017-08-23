@@ -4934,13 +4934,11 @@ public class DefaultCloud20Service implements Cloud20Service {
     }
 
     @Override
-    public ResponseBuilder switchDomainRcn(String authToken, String domainId, DomainRcnSwitch rcnSwitch) {
+    public ResponseBuilder switchDomainRcn(String authToken, String domainId, String destinationRcn) {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             authorizationService.verifyEffectiveCallerHasRoleByName(IdentityRole.DOMAIN_RCN_SWITCH.getRoleName());
             requestContextHolder.getRequestContext().getEffectiveCaller();
-
-            String destinationRcn = StringUtils.strip(rcnSwitch.getDestinationRcn());
 
             if (StringUtils.isBlank(destinationRcn)) {
                 throw new BadRequestException(ERROR_SWITCH_RCN_ON_DOMAIN_MISSING_RCN);
@@ -4949,6 +4947,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             validator20.validateDomainRcn(destinationRcn);
 
             Domain domain = domainService.checkAndGetDomain(domainId);
+
+            if (destinationRcn.equals(domain.getRackspaceCustomerNumber())) {
+                return Response.noContent();
+            }
 
             if (tenantService.countTenantsWithTypeInDomain(GlobalConstants.TENANT_TYPE_RCN, domainId) > 0) {
                 throw new BadRequestException(ERROR_SWITCH_RCN_ON_DOMAIN_CONTAINING_RCN_TENANT);

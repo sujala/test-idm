@@ -1,6 +1,5 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.DomainRcnSwitch
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
@@ -80,10 +79,6 @@ class DomainRcnSwitchCommitTests extends Specification {
         def domainId = RandomStringUtils.randomAlphanumeric(8)
         def token = RandomStringUtils.randomAlphanumeric(8)
         def destinationRcn = RandomStringUtils.randomAlphanumeric(8)
-        def rcnSwitch = new DomainRcnSwitch().with {
-            it.destinationRcn = destinationRcn
-            it
-        }
         def domain = new Domain().with {
             it.domainId = domainId
             it
@@ -105,7 +100,7 @@ class DomainRcnSwitchCommitTests extends Specification {
         }
 
         when:
-        cloud20Service.switchDomainRcn(token, domainId, rcnSwitch)
+        cloud20Service.switchDomainRcn(token, domainId, destinationRcn)
 
         then: "verified that a valid token for a user with the rcn switch role is provided"
         1 * securityContext.getAndVerifyEffectiveCallerToken(token)
@@ -142,11 +137,10 @@ class DomainRcnSwitchCommitTests extends Specification {
         given:
         def domainId = RandomStringUtils.randomAlphanumeric(8)
         def token = RandomStringUtils.randomAlphanumeric(8)
-        def rcnSwitch = new DomainRcnSwitch()
 
         when:
-        rcnSwitch.destinationRcn = ""
-        cloud20Service.switchDomainRcn(token, domainId, rcnSwitch)
+        def destinationRcn = ""
+        cloud20Service.switchDomainRcn(token, domainId, destinationRcn)
 
         then:
         exceptionHandler.exceptionResponse(*_) >> { arguments ->
@@ -155,8 +149,8 @@ class DomainRcnSwitchCommitTests extends Specification {
         }
 
         when:
-        rcnSwitch.destinationRcn = "       "
-        cloud20Service.switchDomainRcn(token, domainId, rcnSwitch)
+        destinationRcn = "       "
+        cloud20Service.switchDomainRcn(token, domainId, destinationRcn)
 
         then:
         exceptionHandler.exceptionResponse(*_) >> { arguments ->
@@ -165,8 +159,8 @@ class DomainRcnSwitchCommitTests extends Specification {
         }
 
         when:
-        rcnSwitch.destinationRcn = null
-        cloud20Service.switchDomainRcn(token, domainId, rcnSwitch)
+        destinationRcn = null
+        cloud20Service.switchDomainRcn(token, domainId, destinationRcn)
 
         then:
         exceptionHandler.exceptionResponse(*_) >> { arguments ->
@@ -180,14 +174,14 @@ class DomainRcnSwitchCommitTests extends Specification {
         def domainId = RandomStringUtils.randomAlphanumeric(8)
         def token = RandomStringUtils.randomAlphanumeric(8)
         def destinationRcn = RandomStringUtils.randomAlphanumeric(8)
-        def rcnSwitch = new DomainRcnSwitch().with {
-            it.destinationRcn = destinationRcn
+        domainService.checkAndGetDomain(domainId) >> new Domain().with {
+            it.rackspaceCustomerNumber = RandomStringUtils.randomAlphanumeric(8)
             it
         }
 
         when:
         tenantService.countTenantsWithTypeInDomain(GlobalConstants.TENANT_TYPE_RCN, domainId) >> 1
-        cloud20Service.switchDomainRcn(token, domainId, rcnSwitch)
+        cloud20Service.switchDomainRcn(token, domainId, destinationRcn)
 
         then:
         1 * exceptionHandler.exceptionResponse(*_) >> { arguments ->

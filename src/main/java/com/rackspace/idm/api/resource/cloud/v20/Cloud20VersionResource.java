@@ -658,12 +658,12 @@ public class Cloud20VersionResource {
     }
 
     @PUT
-    @Path("RAX-AUTH/domains/{domainId}/rcn-switch")
+    @Path("RAX-AUTH/domains/{domainId}/rcn/{destinationRcn}")
     public Response switchRcnOnDomain(
             @PathParam("domainId") String domainId,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
-            DomainRcnSwitch rcnSwitch) throws IOException, JAXBException {
-        return cloud20Service.switchDomainRcn(authToken, domainId, rcnSwitch).build();
+            @PathParam("destinationRcn") String destinationRcn) throws IOException, JAXBException {
+        return cloud20Service.switchDomainRcn(authToken, domainId, destinationRcn).build();
     }
 
     @GET

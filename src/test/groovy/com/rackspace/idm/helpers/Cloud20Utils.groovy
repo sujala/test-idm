@@ -264,11 +264,7 @@ class Cloud20Utils {
     }
 
     def domainRcnSwitch(domainId, rcn, String token=getServiceAdminToken()) {
-        def rcnSwitchData = new DomainRcnSwitch().with {
-            it.destinationRcn = rcn
-            it
-        }
-        def response = methods.domainRcnSwitch(token, domainId, rcnSwitchData)
+        def response = methods.domainRcnSwitch(token, domainId, rcn)
         assert (response.status == SC_NO_CONTENT)
     }
 

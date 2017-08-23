@@ -291,5 +291,5 @@ public interface Cloud20Service {
 
     ResponseBuilder modifyDomainAdministrator(String authToken, String domainId, DomainAdministratorChange accountAdministratorChange);
 
-    ResponseBuilder switchDomainRcn(String authToken, String domainId, DomainRcnSwitch rcnSwitch);
+    ResponseBuilder switchDomainRcn(String authToken, String domainId, String destinationRcn);
 }
