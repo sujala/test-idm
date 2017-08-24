@@ -1,0 +1,18 @@
+---
+mapping:
+  rules:
+    - remote:
+      - name: roles
+        multiValue: true
+        blacklist:
+          - object-store:default
+          - nova:admin
+      local:
+        user:
+          domain: "{D}"
+          name: "{D}"
+          email: "{D}"
+          roles: "{0}"
+          expire: "{D}"
+  version: RAX-1
+  description: " \n  This is an example of a blacklist...note that because we didn't mention\n  user, domain - then default values will be used for those.\n"

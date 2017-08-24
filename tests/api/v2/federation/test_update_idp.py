@@ -2,9 +2,8 @@
 import copy
 import ddt
 
-from tests.api.utils import saml_helper, log_search
-from tests.api.utils.create_cert import create_self_signed_cert
-from tests.api.v2 import base
+from tests.api.utils import log_search
+from tests.api.v2.federation import federation
 from tests.api.v2.models import factory
 from tests.api.v2.schema import idp as idp_json
 
@@ -14,7 +13,7 @@ from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt
-class TestUpdateIDP(base.TestBaseV2):
+class TestUpdateIDP(federation.TestBaseFederation):
     """
     Test update IDP
     1. Allow users to update an IDP name
@@ -62,7 +61,6 @@ class TestUpdateIDP(base.TestBaseV2):
             cls.service_admin_client.add_role_to_user(
                 user_id=identity_admin_id, role_id=mapping_rules_role_id)
 
-        cls.test_email = 'random@rackspace.com'
         cls.correct_default_policy()
 
     def setUp(self):
@@ -182,65 +180,6 @@ class TestUpdateIDP(base.TestBaseV2):
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                          error_msg)
 
-    def fed_user_call(self, test_data, domain_id, private_key,
-                      public_key, issuer):
-
-        # Check what happens with the fed users under that domain
-        subject = self.generate_random_string(
-            pattern='fed[\-]user[\-][\d\w]{12}')
-        fed_input_data = test_data['fed_input']
-        base64_url_encode = fed_input_data['base64_url_encode']
-        new_url = fed_input_data['new_url']
-        content_type = fed_input_data['content_type']
-
-        if fed_input_data['fed_api'] == 'v2':
-            cert = saml_helper.create_saml_assertion_v2(
-                domain=domain_id, username=subject, issuer=issuer,
-                email=self.test_email, private_key_path=private_key,
-                public_key_path=public_key, response_flavor='v2DomainOrigin',
-                output_format='formEncode')
-            # Currently, the jar is returning a line from log file,
-            # hence this split
-            cert = cert.split('\n')[1]
-        else:
-            cert = saml_helper.create_saml_assertion(
-                domain=domain_id, subject=subject, issuer=issuer,
-                email=self.test_email, base64_url_encode=base64_url_encode,
-                private_key_path=private_key,
-                public_key_path=public_key)
-
-        auth = self.identity_admin_client.auth_with_saml(
-            saml=cert, content_type=content_type,
-            base64_url_encode=base64_url_encode, new_url=new_url)
-        return auth
-
-    def create_idp_with_certs(self, domain_id, issuer):
-
-        (pem_encoded_cert, cert_path, _, key_path,
-         f_print) = create_self_signed_cert()
-        request_object = factory.get_add_idp_request_object(
-            federation_type='DOMAIN', approved_domain_ids=[domain_id],
-            issuer=issuer, public_certificates=[pem_encoded_cert])
-        resp = self.idp_ia_client.create_idp(request_object)
-        self.assertEquals(resp.status_code, 201)
-
-        updated_idp_schema = copy.deepcopy(idp_json.identity_provider)
-        updated_idp_schema[const.PROPERTIES][const.NS_IDENTITY_PROVIDER][
-            const.REQUIRED] += [const.PUBLIC_CERTIFICATES]
-        self.assertSchema(response=resp, json_schema=updated_idp_schema)
-
-        provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
-        self.provider_ids.append(provider_id)
-
-        return provider_id, cert_path, key_path
-
-    def create_one_user_and_get_domain(self):
-
-        request_object = factory.get_add_user_one_call_request_object()
-        user_resp = self.idp_ia_client.add_user(request_object)
-        self.users.append(user_resp.json()[const.USER][const.ID])
-        return user_resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
-
     def update_approved_domain_ids_for_idp(
             self, provider_id, new_list_of_domains):
 
@@ -252,7 +191,7 @@ class TestUpdateIDP(base.TestBaseV2):
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_approved_domain_ids_with_spaces(self, test_data):
 
-        domain_id = self.create_one_user_and_get_domain()
+        domain_id = self.create_one_user_and_get_domain(users=self.users)
         self.domains.append(domain_id)
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
@@ -281,7 +220,7 @@ class TestUpdateIDP(base.TestBaseV2):
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_enable_disable_idp(self, test_data):
 
-        domain_id = self.create_one_user_and_get_domain()
+        domain_id = self.create_one_user_and_get_domain(users=self.users)
         self.domains.append(domain_id)
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
@@ -330,13 +269,6 @@ class TestUpdateIDP(base.TestBaseV2):
             public_key=cert_path, issuer=issuer)
         self.assertEqual(fed_auth.status_code, 200)
 
-    def parse_auth_response(self, response):
-
-        fed_token = response.json()[const.ACCESS][const.TOKEN][const.ID]
-        fed_user_id = response.json()[const.ACCESS][const.USER][const.ID]
-        fed_username = response.json()[const.ACCESS][const.USER][const.NAME]
-        return fed_token, fed_user_id, fed_username
-
     def verify_delete_fed_user_logs(self, fed_username, issuer, domain_id):
 
         # Verify if delete logs has entry for fed user being deleted
@@ -368,7 +300,7 @@ class TestUpdateIDP(base.TestBaseV2):
     @ddt.file_data('data_update_idp_fed_user.json')
     def test_update_idp_verify_delete_logs_and_re_auth(self, test_data):
 
-        domain_id = self.create_one_user_and_get_domain()
+        domain_id = self.create_one_user_and_get_domain(users=self.users)
         self.domains.append(domain_id)
 
         issuer = self.generate_random_string(pattern='issuer[\-][\d\w]{12}')
@@ -383,7 +315,7 @@ class TestUpdateIDP(base.TestBaseV2):
             fed_auth)
 
         # update the approved domains list with the new domain
-        domain_id_2 = self.create_one_user_and_get_domain()
+        domain_id_2 = self.create_one_user_and_get_domain(users=self.users)
         self.domains.append(domain_id_2)
         self.update_approved_domain_ids_for_idp(
             provider_id=provider_id, new_list_of_domains=[domain_id_2])
