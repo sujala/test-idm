@@ -127,7 +127,6 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         resp_get_ro = self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
             idp_id=provider_id, headers={
-                const.CONTENT_TYPE: const.YAML_CONTENT_TYPE_VALUE,
                 const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
             })
         self.assertEquals(resp_get_ro.status_code, 200)
@@ -180,7 +179,6 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         resp_get_ro = self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
             idp_id=provider_id, headers={
-                const.CONTENT_TYPE: const.YAML_CONTENT_TYPE_VALUE,
                 const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
             })
         self.assertEquals(resp_get_ro.status_code, 200)
@@ -285,7 +283,6 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         resp_get_ro = self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
             idp_id=provider_id, headers={
-                const.CONTENT_TYPE: const.YAML_CONTENT_TYPE_VALUE,
                 const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
             })
         self.assertEquals(resp_get_ro.status_code, 404)
@@ -321,7 +318,6 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         resp_get_ro = self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
             idp_id=provider_id, headers={
-                const.CONTENT_TYPE: const.YAML_CONTENT_TYPE_VALUE,
                 const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
             })
         self.assertEquals(resp_get_ro.status_code, 200)

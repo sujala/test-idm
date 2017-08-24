@@ -1462,7 +1462,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
-    def add_idp_mapping(self, idp_id, request_data, content_type="json",
+    def add_idp_mapping(self, idp_id, request_data, content_type=const.JSON,
                         requestslib_kwargs=None):
         """Return response object from the add certificate api call
         """
