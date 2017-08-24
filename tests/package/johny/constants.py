@@ -324,6 +324,7 @@ VERSION_LIST = 'versionList'
 XML = 'xml'
 XMLNS = 'xmlns'
 JSON = 'json'
+YAML = 'yaml'
 OS_KSADM_PASSWORD = 'OS-KSADM:password'
 SECRETQA = 'secretQA'
 

@@ -1470,7 +1470,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         headers = {}
         if not requestslib_kwargs:
             requestslib_kwargs = {}
-        if content_type == "yaml":
+        if content_type == const.YAML:
             requestslib_kwargs["data"] = request_data
             headers[const.CONTENT_TYPE] = const.YAML_CONTENT_TYPE_VALUE
         else:
@@ -1486,19 +1486,6 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + const.IDP_MAPPING_CR_URL.format(idp_id=idp_id)
 
         resp = self.request(method='GET', url=url, headers=headers,
-                            requestslib_kwargs=requestslib_kwargs)
-        return resp
-
-    def update_idp_mapping(self, idp_id, request_data,
-                           requestslib_kwargs=None):
-        """Return response object from the get_idp api call
-        """
-        url = self.url + const.IDP_MAPPING_CR_URL.format(idp_id=idp_id)
-        if not requestslib_kwargs:
-            requestslib_kwargs = {}
-        requestslib_kwargs["json"] = request_data
-
-        resp = self.request(method='GET', url=url,
                             requestslib_kwargs=requestslib_kwargs)
         return resp
 
