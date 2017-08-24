@@ -1606,3 +1606,11 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + const.ADMIN_CHANGE_URL.format(domain_id=domain_id)
         return self.request('PUT', url, request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
+
+    def move_domain_to_rcn(self, domain_id, rcn, requestslib_kwargs=None):
+        """
+        PUT /v2.0/RAX-AUTH/domains/{domain_id}/rcn/{rcn}
+        """
+        url = self.url + const.MOVE_DOMAIN_TO_RCN_URL.format(
+            domain_id=domain_id, rcn=rcn)
+        return self.request('PUT', url, requestslib_kwargs=requestslib_kwargs)
