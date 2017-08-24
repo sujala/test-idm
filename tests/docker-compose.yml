@@ -36,6 +36,7 @@ services:
         volumes:
             - ../build/libs:/opt/idm/artifacts
             - ../src/main/config/VAGRANT:/etc/idm/config
+            - ../src/test/resources/keys:/etc/idm/config/keys
 
     repose:
         image: docker.ciidentity.com/repose
