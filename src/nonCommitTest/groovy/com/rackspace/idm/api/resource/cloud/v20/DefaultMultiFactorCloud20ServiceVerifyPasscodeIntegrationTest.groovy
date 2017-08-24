@@ -12,13 +12,14 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForCloudAuthenticationResponseToken
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter
-import com.rackspace.idm.api.resource.cloud.v20.multifactor.SessionId
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.security.DefaultAETokenService
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.security.TokenFormatSelector
+import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.RootConcurrentIntegrationTest
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
@@ -76,6 +77,12 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
     @Autowired
     IdentityConfig identityConfig
 
+    @Autowired
+    DefaultAETokenService tokenService
+
+    @Autowired
+    IdentityUserService identityUserService
+
     org.openstack.docs.identity.api.v2.User userAdmin
     String userAdminToken
     com.rackspace.docs.identity.api.ext.rax_auth.v1.MobilePhone responsePhone
@@ -108,16 +115,17 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         String wwwHeader = response.getHeaders().getFirst(DefaultMultiFactorCloud20Service.HEADER_WWW_AUTHENTICATE)
         String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
         //verify the provided sessionid can be decrypted
-        SessionId plaintextSessionId = encryptedSessionIdReaderWriter.readEncoded(encryptedSessionId)
+        def decryptedSessionId = tokenService.unmarshallToken(encryptedSessionId)
+        DateTime createdDatetime = new DateTime(decryptedSessionId.createTimestamp)
+        DateTime expiryDatetime = new DateTime(decryptedSessionId.accessTokenExp)
         def expectedFactor = factorType == FactorTypeEnum.OTP ? AuthenticatedByMethodEnum.OTPPASSCODE.getValue() : AuthenticatedByMethodEnum.PASSCODE.getValue()
 
         then: "sessionId can be decrypted"
         response.getStatus() == HttpStatus.SC_UNAUTHORIZED
         encryptedSessionId != null
-        //verify the provided sessionid can be decrypted and contains appropriate info
-        plaintextSessionId.userId == userAdmin.id
-        plaintextSessionId.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
-        Minutes.minutesBetween(plaintextSessionId.getCreatedDate(), plaintextSessionId.getExpirationDate()).getMinutes() ==  identityConfig.getReloadableConfig().getMfaSessionIdLifetime()
+        decryptedSessionId.userRsId == userAdmin.id
+        decryptedSessionId.authenticatedBy.contains(GlobalConstants.AUTHENTICATED_BY_PASSWORD)
+        Math.abs(Minutes.minutesBetween(createdDatetime, expiryDatetime).getMinutes() - identityConfig.getReloadableConfig().getMfaSessionIdLifetime()) <= 1
 
         and: "auth header shows appropriate value"
         utils.extractFactorFromWwwAuthenticateHeader(wwwHeader) == expectedFactor
@@ -408,12 +416,13 @@ class DefaultMultiFactorCloud20ServiceVerifyPasscodeIntegrationTest extends Root
         String encryptedSessionId = utils.extractSessionIdFromWwwAuthenticateHeader(wwwHeader)
 
         //create an expired sessionId
-        SessionId sessionId = encryptedSessionIdReaderWriter.readEncoded(encryptedSessionId)
-        sessionId.expirationDate = new DateTime().minusMinutes(5)
-        encryptedSessionId = encryptedSessionIdReaderWriter.writeEncoded(sessionId)
+        def decryptedSessionId = tokenService.unmarshallToken(encryptedSessionId)
+        decryptedSessionId.accessTokenExp = new Date() - 1
+        def user = identityUserService.getEndUserById(userAdmin.getId())
+        def reEncryptedSessionId = tokenService.marshallTokenForUser(user, decryptedSessionId)
 
         when:
-        def response = cloud20.authenticateMFAWithSessionIdAndPasscode(encryptedSessionId, "1234", requestContentMediaType, acceptMediaType)
+        def response = cloud20.authenticateMFAWithSessionIdAndPasscode(reEncryptedSessionId, "1234", requestContentMediaType, acceptMediaType)
 
         then:
         assertOpenStackV2FaultResponse(response, UnauthorizedFault, HttpStatus.SC_UNAUTHORIZED, DefaultMultiFactorCloud20Service.INVALID_CREDENTIALS_SESSIONID_EXPIRED_ERROR_MSG)
