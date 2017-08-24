@@ -28,7 +28,8 @@ public class DevOpsResource {
     @Autowired
     private IdentityConfig identityConfig;
 
-    private static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
+    public static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
+    public static final String X_SUBJECT_TOKEN = "X-SUBJECT-TOKEN";
 
     @PUT
     @Path("cloud/users/encrypt")
@@ -141,4 +142,12 @@ public class DevOpsResource {
         throw new NotFoundException("Service Not Found");
     }
 
+    @GET
+    @Path("/tokens/analyze")
+    @Produces({MediaType.APPLICATION_JSON})
+    public Response analyzeToken(@HeaderParam(X_AUTH_TOKEN) String authToken,
+                                 @HeaderParam(X_SUBJECT_TOKEN) String subjectToken,
+                                @QueryParam("tokenId") String tokenId) {
+        return devOpsService.analyzeToken(authToken, subjectToken).build();
+    }
 }

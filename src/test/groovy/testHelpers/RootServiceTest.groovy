@@ -31,8 +31,10 @@ import com.rackspace.idm.domain.config.IdentityConfig.ReloadableConfig
 import com.rackspace.idm.domain.config.IdentityConfig.StaticConfig
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.RackerDao
+import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator
+import com.rackspace.idm.domain.service.AETokenRevocationService
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.PropertiesService
 import com.rackspace.idm.domain.service.RoleService
@@ -207,6 +209,8 @@ class RootServiceTest extends Specification {
     @Shared TokenRevocationService tokenRevocationService
     @Shared CacheableKeyCzarCrypterLocator cacheableKeyCzarCrypterLocator
     @Shared DefaultAuthenticateResponseService authenticateResponseService
+    @Shared AETokenService aeTokenService
+    @Shared AETokenRevocationService aeTokenRevocationService
 
     // Dao's
     @Shared ApplicationDao applicationDao
@@ -559,6 +563,16 @@ class RootServiceTest extends Specification {
     def mockDefaultTokenService(service) {
         defaultTokenService = Mock()
         service.defaultTokenService = defaultTokenService
+    }
+
+    def mockAeTokenService(service) {
+        aeTokenService = Mock()
+        service.aeTokenService = aeTokenService
+    }
+
+    def mockAeTokenRevocationService(service) {
+        aeTokenRevocationService = Mock()
+        service.aeTokenRevocationService = aeTokenRevocationService
     }
 
     def mockDefaultSecretQAService(service) {

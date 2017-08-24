@@ -1439,9 +1439,19 @@ clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 cn: identity:domain-admin-change
 description: Role to allow changing the domain's user-admin
 rsType: STANDARD
-rsTenantType: *
 rsAssignment: GLOBAL
-rsWeight: 500
+rsWeight: 50
+
+
+dn: rsId=2b4d276b677d47dd85d254168ed452d2,cn=CLIENT ROLES,clientId=bde1268ebab
+ eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
+objectClass: clientRole
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
+cn: identity:analyze-token
+description: Allows user to analyze tokens
+rsType: STANDARD
+rsAssignment: GLOBAL
+rsWeight: 50
 
 dn: rsId=1f83e03681cc11e7a7e037b1affb8d28,cn=CLIENT ROLES,clientId=bde1268ebab
  eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
@@ -4969,6 +4979,13 @@ objectClass: tenantRole
 roleRsId: 5
 clientId: 6047d506862b81d6d99273b4853adfe81e0478c1
 tenantRsId: 983452
+userRsId: 173189
+
+dn: roleRsId=2b4d276b677d47dd85d254168ed452d2,cn=ROLES,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=co
+ m
+objectClass: tenantRole
+roleRsId: 2b4d276b677d47dd85d254168ed452d2
+clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 userRsId: 173189
 
 dn: cn=TOKENS,rsId=173189,ou=users,o=rackspace,dc=rackspace,dc=com

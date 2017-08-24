@@ -64,6 +64,8 @@ class Constants {
     static def IDENTITY_SWITCH_DOMAIN_RCN_ROLE_ID="1f83e03681cc11e7a7e037b1affb8d28"
     static def IDENTITY_SWITCH_DOMAIN_RCN_ROLE_NAME="identity:domain-rcn-switch"
 
+    static def IDENTITY_ANALYZE_TOKEN_ROLE_ID = "2b4d276b677d47dd85d254168ed452d2"
+
     static def DEFAULT_GROUP = "Default"
     static def RAX_STATUS_RESTRICTED_GROUP_NAME = "rax_status_restricted"
     static def RAX_STATUS_RESTRICTED_GROUP_ID = "1"

@@ -16,8 +16,10 @@ import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.domain.service.TokenRevocationService;
 import com.rackspace.idm.domain.service.UserService;
 import com.rackspace.idm.exception.NotFoundException;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
+import org.opensaml.soap.wssecurity.impl.IterationUnmarshaller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -26,10 +28,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.Assert;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Simple in the sense that it goes against a single backend persistence mechanism for ae token revocation.
@@ -193,6 +192,20 @@ public class SimpleAETokenRevocationService implements AETokenRevocationService 
             throw new UnsupportedOperationException(String.format("Revocation service does not support revoking tokens of type '%s'", token.getClass().getSimpleName()));
         }
         return tokenRevocationRecordPersistenceStrategy.doesActiveTokenRevocationRecordExistMatchingToken(token);
+    }
+
+    @Override
+    public List<LdapTokenRevocationRecord> findTokenRevocationRecordsMatchingToken(Token token) {
+        if (token == null) {
+            return Collections.emptyList();
+        }
+
+        if (!supportsRevokingFor(token)) {
+            throw new UnsupportedOperationException(String.format("Revocation service does not support tokens of type '%s'", token.getClass().getSimpleName()));
+        }
+        Iterable<LdapTokenRevocationRecord> trrs = tokenRevocationRecordPersistenceStrategy.getActiveTokenRevocationRecordsMatchingToken(token);
+
+        return IteratorUtils.toList(trrs.iterator());
     }
 
     @Override

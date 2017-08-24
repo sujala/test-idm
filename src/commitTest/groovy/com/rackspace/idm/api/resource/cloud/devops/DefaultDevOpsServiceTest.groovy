@@ -1,5 +1,10 @@
 package com.rackspace.idm.api.resource.cloud.devops
 
+import com.rackspace.idm.api.security.RequestContext
+import com.rackspace.idm.api.security.RequestContextHolder
+import com.rackspace.idm.api.security.SecurityContext
+import com.rackspace.idm.domain.entity.ScopeAccess
+import org.opensaml.core.config.InitializationService
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -43,10 +48,34 @@ class DefaultDevOpsServiceTest extends RootServiceTest{
         1 * cacheableKeyCzarCrypterLocator.resetCache()
     }
 
+    def "verify analyze token"() {
+        given:
+        setupMocks()
+        allowUserAccess()
+
+        when:
+
+        def scopeAccess = createScopeAccess().with {
+            it.clientId = "clientId"
+            return it
+        }
+
+        aeTokenService.unmarshallToken(_) >> scopeAccess
+        service.analyzeToken("admintoken", "tokenUnderSubject")
+
+        then:
+        1 * authorizationService.verifyEffectiveCallerHasRoleByName(_)
+        1 * securityContext.getAndVerifyEffectiveCallerToken(_)
+        1 * aeTokenService.unmarshallToken(_)
+    }
+
     def setupMocks() {
         mockAuthorizationService(service)
         mockUserService(service)
         mockScopeAccessService(service)
         mockCacheableKeyCzarCrypterLocator(service)
+        mockRequestContextHolder(service)
+        mockAeTokenService(service)
+        mockAeTokenRevocationService(service)
     }
 }
