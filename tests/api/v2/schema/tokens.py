@@ -59,3 +59,90 @@ auth = copy.deepcopy(validate_token)
 auth['properties'][const.ACCESS]['properties'][const.SERVICE_CATALOG] = {
     'type': 'array'}
 auth['properties'][const.ACCESS]['required'] += [const.SERVICE_CATALOG]
+
+analyze_token_item = {
+    const.TOKEN: {'type': 'string'},
+    const.EXPIRATION: {'type': 'string'},
+    const.CREATION: {'type': 'string'},
+    const.TYPE: {
+        'type': 'string',
+        'enum': ['USER', const.IMPERSONATION, const.RACKER]},
+    const.AUTHENTICATED_BY: {
+        'type': 'array',
+        'items': {'type': 'string', 'enum': const.AUTH_BY_LIST}}
+}
+
+analyze_token_user_item = {
+    const.ID: {'type': 'string'},
+    const.USERNAME: {'type': 'string'},
+    const.DOMAIN: {'type': 'string'},
+    const.ENABLED: {'type': 'boolean'},
+    const.DOMAIN_ENABLED: {'type': 'boolean'},
+    const.TYPE: {
+        'type': 'string',
+        'enum': [const.PROVISIONED_USER, const.RACKER, const.FEDERATED_USER]}
+}
+
+trr_item = {
+    'type': 'object',
+    'properties': {
+        const.ID: {'type': 'string'},
+        const.TOKEN_AUTH_BY_GROUPS: {'type': 'string'},
+        const.TOKEN_CREATED_BEFORE: {'type': 'string'},
+        const.TOKEN: {'type': 'string'}
+    }
+}
+
+analyze_token = {
+    'type': 'object',
+    'properties': {
+        const.TOKEN_ANALYSIS: {
+            'type': 'object',
+            'properties': {
+                const.TOKEN_VALID: {'type': 'boolean'},
+                const.TOKEN_EXPIRED: {'type': 'boolean'},
+                const.TOKEN_REVOKED: {'type': 'boolean'},
+                const.TOKEN: {'type': 'object',
+                              'properties': analyze_token_item},
+                const.USER: {'type': 'object',
+                             'properties': analyze_token_user_item},
+                const.TOKEN_DECRYPTABLE: {'type': 'boolean'},
+                const.TRRS: {
+                    'type': 'array',
+                    'items': trr_item,
+                    'minItems': 0}},
+            'required': [
+                const.TOKEN_VALID, const.TOKEN_EXPIRED, const.TOKEN_REVOKED,
+                const.TOKEN_DECRYPTABLE]}
+    },
+    'required': [const.TOKEN_ANALYSIS]
+}
+
+analyze_valid_token = copy.deepcopy(analyze_token)
+analyze_valid_token[
+    'properties'][const.TOKEN_ANALYSIS]['required'].extend(
+    [const.TOKEN, const.USER])
+
+impersonated_user_item = {
+    const.ID: {'type': 'string'},
+    const.USERNAME: {'type': 'string'},
+    const.DOMAIN: {'type': 'string'},
+    const.ENABLED: {'type': 'boolean'},
+    const.DOMAIN_ENABLED: {'type': 'boolean'},
+    const.FEDERATED_IDP: {'type': 'string'},
+    const.TYPE: {'type': 'string', 'enum': [const.FEDERATED_USER]}
+}
+
+analyze_token_fed_user_impersonation = copy.deepcopy(analyze_token)
+analyze_token_fed_user_impersonation[
+    'properties'][const.TOKEN_ANALYSIS][const.IMPERSONATED_USER] = \
+    impersonated_user_item
+analyze_token_fed_user_impersonation[
+    'properties'][const.TOKEN_ANALYSIS]['required'].extend(
+    [const.IMPERSONATED_USER, const.TOKEN, const.USER])
+
+
+analyze_token_revoked = copy.deepcopy(analyze_token)
+analyze_token_revoked[
+    'properties'][const.TOKEN_ANALYSIS]['required'].extend(
+    [const.TOKEN, const.USER, const.TRRS])
