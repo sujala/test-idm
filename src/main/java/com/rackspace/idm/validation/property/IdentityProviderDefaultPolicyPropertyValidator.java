@@ -2,11 +2,11 @@ package com.rackspace.idm.validation.property;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty;
 import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.domain.service.IdpPolicyFormatEnum;
+import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.validation.Validator20;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import javax.ws.rs.core.MediaType;
 
 @Component
 public class IdentityProviderDefaultPolicyPropertyValidator implements TargetedIdentityPropertyValidator {
@@ -25,8 +25,12 @@ public class IdentityProviderDefaultPolicyPropertyValidator implements TargetedI
             return;
         }
 
-        // Default Policy is stored in JSON; Note: This will need to change once JSON support is removed in favor of YAML.
-        validator20.validateIdpPolicy(identityProperty.getValue(), MediaType.APPLICATION_JSON_TYPE);
+        IdpPolicyFormatEnum idpPolicyFormatEnum;
+        try {
+            idpPolicyFormatEnum = IdpPolicyFormatEnum.valueOf(identityProperty.getValueType().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid valueType for default mapping policy");
+        }
+        validator20.validateIdpPolicy(identityProperty.getValue(), idpPolicyFormatEnum);
     }
-
 }

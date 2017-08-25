@@ -31,6 +31,7 @@ import com.rackspace.idm.domain.entity.Application;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.Domains;
+import com.rackspace.idm.domain.entity.IdentityProperty;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
@@ -42,6 +43,7 @@ import com.rackspace.idm.validation.Cloud20CreateUserValidator;
 import com.rackspace.idm.validation.PrecedenceValidator;
 import com.rackspace.idm.validation.Validator;
 import com.rackspace.idm.validation.Validator20;
+import com.rackspace.idm.validation.property.IdentityProviderDefaultPolicyPropertyValidator;
 import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -72,7 +74,6 @@ import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import javax.naming.ServiceUnavailableException;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -89,9 +90,6 @@ import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-
-import com.rackspace.docs.identity.api.ext.rax_ksqa.v1.SecretQA;
-import org.openstack.docs.identity.api.ext.os_kscatalog.v1.ObjectFactory;
 
 @Component
 public class DefaultCloud20Service implements Cloud20Service {
@@ -111,8 +109,6 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String FEDERATION_IDP_TYPE_ERROR_MESSAGE = "%s is currently the only supported IDP type allowed for filtering.";
     public static final String FEDERATION_IDP_FILTER_CONFLICT_ERROR_MESSAGE = "The provided IDP filters cannot be used together.";
     public static final String FEDERATION_IDP_FILTER_TENANT_NO_DOMAIN_ERROR_MESSAGE = "The provided tenant is not associated with a domain";
-    public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE = "Unable to load and parse the default IDP policy.";
-    public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE = "The default IDP policy is not properly configured.";
     public static final String FEDERATION_IDP_POLICY_TYPE_NOT_FOUND_ERROR_MESSAGE = "No %s mapping policy found for IDP with ID %s.";
     public static final String FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE = "IDP creation is currently unavailable due to missing default for IDP policy.";
     public static final String FEDERATION_IDP_CANNOT_MANUALLY_UPDATE_CERTS_ON_METADATA_IDP_MESSAGE = "IDP certificates cannot be updated outside of providing a new IDP metadata xml.";
@@ -316,6 +312,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     TenantTypeConverterCloudV20 tenantTypeConverter;
+
+    @Autowired
+    IdentityProviderDefaultPolicyPropertyValidator defaultPolicyPropertyValidator;
 
     @Autowired
     private Paginator<com.rackspace.idm.domain.entity.TenantType> tenantTypePaginator;
@@ -1299,12 +1298,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             com.rackspace.idm.domain.entity.IdentityProvider newProvider = identityProviderConverterCloudV20.fromIdentityProvider(provider);
 
-            String defaultPolicy = identityConfig.getRepositoryConfig().getIdentityProviderDefaultPolicy();
-            if (defaultPolicy == null) {
-                throw new ServiceUnavailableException(FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE);
-            }
-            newProvider.setPolicy(defaultPolicy.getBytes(StandardCharsets.UTF_8));
-            newProvider.setPolicyFormat(IdpPolicyFormatEnum.JSON.name());
+            IdentityProperty defaultPolicyProperty = federatedIdentityService.checkAndGetDefaultMappingPolicyProperty();
+            newProvider.setPolicy(defaultPolicyProperty.getValue());
+            newProvider.setPolicyFormat(defaultPolicyProperty.getValueType().toUpperCase());
 
             if (newProvider.getEnabled() == null) {
                 newProvider.setEnabled(true);
@@ -1353,12 +1349,9 @@ public class DefaultCloud20Service implements Cloud20Service {
             com.rackspace.idm.domain.entity.IdentityProvider newProvider =
                     identityProviderConverterCloudV20.fromIdentityProvider(identityProvider);
 
-            String defaultPolicy = identityConfig.getRepositoryConfig().getIdentityProviderDefaultPolicy();
-            if (defaultPolicy == null) {
-                throw new ServiceUnavailableException(FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE);
-            }
-            newProvider.setPolicy(defaultPolicy.getBytes(StandardCharsets.UTF_8));
-            newProvider.setPolicyFormat(IdpPolicyFormatEnum.JSON.name());
+            IdentityProperty defaultPolicyProperty = federatedIdentityService.checkAndGetDefaultMappingPolicyProperty();
+            newProvider.setPolicy(defaultPolicyProperty.getValue());
+            newProvider.setPolicyFormat(defaultPolicyProperty.getValueType().toUpperCase());
 
             newProvider.setEnabled(true);
 
@@ -1940,16 +1933,16 @@ public class DefaultCloud20Service implements Cloud20Service {
                 verifyDomainUserHasAccessToIdentityProviderMetadata(existingProvider, caller);
             }
 
-            validator20.validateIdpPolicy(policy, httpHeaders.getMediaType());
+            IdpPolicyFormatEnum type = IdpPolicyFormatEnum.fromValue(httpHeaders.getMediaType().toString());
 
-
-            byte [] policyByteArray = policy.getBytes(StandardCharsets.UTF_8);
-            existingProvider.setPolicy(policyByteArray);
-            IdpPolicyFormatEnum idpPolicyFormatEnum = IdpPolicyFormatEnum.fromValue(httpHeaders.getMediaType().toString());
-            // Note: This should never be null since the acceptable content-type at resource are JSON, XML, and YAML.
-            if (idpPolicyFormatEnum != null) {
-                existingProvider.setPolicyFormat(idpPolicyFormatEnum.name());
+            if (type == null) {
+                throw new UnsupportedMediaTypeException("Unsupported MediaType for policy");
             }
+
+            validator20.validateIdpPolicy(policy, type);
+
+            existingProvider.setPolicy(policy.getBytes(StandardCharsets.UTF_8));
+            existingProvider.setPolicyFormat(type.name());
 
             federatedIdentityService.updateIdentityProvider(existingProvider);
             atomHopperClient.asyncPostIdpEvent(existingProvider, EventType.UPDATE);
@@ -1990,28 +1983,26 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             // Return the default IDP policy if identity provider does not have a policy
             String body;
+            MediaType contentType;
             if (existingProvider.getPolicy() == null) {
-                //TODO: load this from the directory as part of https://jira.rax.io/browse/CID-612
-                //TODO: write a test case for this as part of https://jira.rax.io/browse/CID-612
-                body = identityConfig.getRepositoryConfig().getIdentityProviderDefaultPolicy();
-                try {
-                    validator20.validateIdpPolicy(body, MediaType.APPLICATION_JSON_TYPE);
-                } catch (Exception e) {
-                    logger.error(FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE, e);
-                    throw new UnrecoverableIdmException(FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE);
-                }
+                IdentityProperty defaultPolicyProperty = federatedIdentityService.checkAndGetDefaultMappingPolicyProperty();
+                body = new String(defaultPolicyProperty.getValue());
+                contentType = IdpPolicyFormatEnum.toMediaType(IdpPolicyFormatEnum.valueOf(defaultPolicyProperty.getValueType().toUpperCase()));
             } else {
-                Set<String> idpPolicyFormats = IdpPolicyFormatEnum.fromMediaTypes(httpHeaders.getAcceptableMediaTypes());
-                if (!idpPolicyFormats.contains(existingProvider.getPolicyFormat())) {
-                    String errMsg = String.format(FEDERATION_IDP_POLICY_TYPE_NOT_FOUND_ERROR_MESSAGE,
-                                                  idpPolicyFormats, identityProviderId);
-                    logger.warn(errMsg);
-                    throw new NotFoundException(errMsg);
-                }
                 body = new String(existingProvider.getPolicy());
+                // By default the policyFormat is set to JSON if not set on the IDP.
+                contentType = IdpPolicyFormatEnum.toMediaType(IdpPolicyFormatEnum.valueOf(existingProvider.getPolicyFormat()));
             }
 
-            return Response.ok(body);
+            Set<String> idpPolicyFormats = IdpPolicyFormatEnum.fromMediaTypes(httpHeaders.getAcceptableMediaTypes());
+            if (!httpHeaders.getAcceptableMediaTypes().contains(contentType)) {
+                String errMsg = String.format(FEDERATION_IDP_POLICY_TYPE_NOT_FOUND_ERROR_MESSAGE,
+                        idpPolicyFormats, identityProviderId);
+                logger.warn(errMsg);
+                throw new NotFoundException(errMsg);
+            }
+
+            return Response.ok(body).type(contentType);
         } catch (Exception ex) {
             if(httpHeaders.getAcceptableMediaTypes().contains(GlobalConstants.TEXT_YAML_TYPE)) {
                 // Force exceptions to Content-Type 'application/json' for Accept 'text/yaml'

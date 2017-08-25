@@ -4,7 +4,8 @@ public enum IdentityPropertyValueType {
     STRING("string"),
     BOOLEAN("boolean"),
     INT("int"),
-    JSON("json");
+    JSON("json"),
+    YAML("yaml");
 
     String typeName;
 

@@ -28,6 +28,15 @@ public enum IdpPolicyFormatEnum {
         return null;
     }
 
+    public static MediaType toMediaType(IdpPolicyFormatEnum idpPolicyFormatEnum) {
+        if (idpPolicyFormatEnum.equals(YAML)) {
+            return GlobalConstants.TEXT_YAML_TYPE;
+        } else if (idpPolicyFormatEnum.equals(XML)) {
+            return MediaType.APPLICATION_XML_TYPE;
+        }
+        return MediaType.APPLICATION_JSON_TYPE;
+    }
+
     public static Set<String> fromMediaTypes(List<MediaType> mediaTypes) {
         Set<String> idpPolicyFormatEnumList = new HashSet<>();
         for (MediaType mediaType : mediaTypes) {

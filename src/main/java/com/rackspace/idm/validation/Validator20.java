@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
@@ -604,14 +603,14 @@ public class Validator20 {
         }
     }
 
-    public void validateIdpPolicy(String policy, MediaType mediaType) {
+    public void validateIdpPolicy(String policy, IdpPolicyFormatEnum idpPolicyFormatEnum) {
         // Ensure policy does not exceed max size allowed
         if (!stringDoesNotExceedSize(policy, identityConfig.getReloadableConfig().getIdpPolicyMaxSize())) {
             throw new BadRequestException(getIdpPolicyMaxSizeExceededErrorMessage());
         }
 
         // Ensure JSON policy contains valid format
-        if(mediaType.equals(MediaType.APPLICATION_JSON_TYPE) && !jsonValidator.isValidJson(policy)) {
+        if(idpPolicyFormatEnum.equals(IdpPolicyFormatEnum.JSON) && !jsonValidator.isValidJson(policy)) {
             throw new BadRequestException(FEDERATION_IDP_POLICY_INVALID_JSON_ERROR_MESSAGE);
         }
     }

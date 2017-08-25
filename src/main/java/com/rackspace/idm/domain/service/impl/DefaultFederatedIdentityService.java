@@ -5,16 +5,20 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.IdentityProviderDao;
 import com.rackspace.idm.domain.decorator.LogoutRequestDecorator;
+import com.rackspace.idm.domain.entity.IdentityProperty;
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.domain.entity.SamlAuthResponse;
 import com.rackspace.idm.domain.entity.SamlLogoutResponse;
 import com.rackspace.idm.domain.service.FederatedIdentityService;
+import com.rackspace.idm.domain.service.IdpPolicyFormatEnum;
 import com.rackspace.idm.domain.service.federation.v2.FederatedAuthHandlerV2;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.exception.SignatureValidationException;
+import com.rackspace.idm.exception.UnrecoverableIdmException;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlSignatureValidator;
+import com.rackspace.idm.validation.Validator20;
 import org.joda.time.DateTime;
 import org.joda.time.Seconds;
 import org.opensaml.saml.saml2.core.LogoutRequest;
@@ -27,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.naming.ServiceUnavailableException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -59,9 +64,15 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
     @Autowired
     private IdentityConfig identityConfig;
 
+    @Autowired
+    private Validator20 validator20;
+
     public static final String ERROR_SERVICE_UNAVAILABLE = "Service Unavailable";
 
     public static final String IDENTITY_PROVIDER_NOT_FOUND_ERROR_MESSAGE = "Identity Provider with id/name: '%s' was not found.";
+    public static final String FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE = "IDP creation is currently unavailable due to missing default for IDP policy.";
+    public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE = "Unable to load and parse the default IDP policy.";
+    public static final String FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE = "The default IDP policy is not properly configured.";
 
     @Override
     public SamlAuthResponse processSamlResponse(Response response) throws ServiceUnavailableException {
@@ -245,6 +256,23 @@ public class DefaultFederatedIdentityService implements FederatedIdentityService
         } catch (NotFoundException e) {
             throw new NotFoundException(ErrorCodes.ERROR_MESSAGE_IDP_NOT_FOUND, ErrorCodes.ERROR_CODE_NOT_FOUND, e);
         }
+    }
+
+    @Override
+    public IdentityProperty checkAndGetDefaultMappingPolicyProperty() throws ServiceUnavailableException {
+        IdentityProperty defaultPolicyProperty = identityConfig.getRepositoryConfig().getIdentityProviderDefaultPolicy();
+        if (defaultPolicyProperty == null) {
+            throw new ServiceUnavailableException(FEDERATION_IDP_CREATION_NOT_AVAILABLE_MISSING_DEFAULT_POLICY_MESSAGE);
+        }
+        // Validate default mapping policy
+        try {
+            validator20.validateIdpPolicy(new String(defaultPolicyProperty.getValue(), StandardCharsets.UTF_8),
+                    IdpPolicyFormatEnum.valueOf(defaultPolicyProperty.getValueType().toUpperCase()));
+        } catch (Exception e) {
+            log.error(FEDERATION_IDP_DEFAULT_POLICY_INVALID_LOGGING_ERROR_MESSAGE, e);
+            throw new UnrecoverableIdmException(FEDERATION_IDP_DEFAULT_POLICY_INVALID_ERROR_MESSAGE);
+        }
+        return defaultPolicyProperty;
     }
 
     private void validateSignatureForProvider(Signature signature, IdentityProvider provider) {

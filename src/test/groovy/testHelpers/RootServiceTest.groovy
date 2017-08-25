@@ -3,109 +3,36 @@ package testHelpers
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.converter.cloudv11.AuthConverterCloudV11
 import com.rackspace.idm.api.converter.cloudv11.UserConverterCloudV11
-import com.rackspace.idm.api.converter.cloudv20.AuthConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.DomainConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.EndpointConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.MobilePhoneConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.OTPDeviceConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.QuestionConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.RegionConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.RoleConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.SecretQAConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.ServiceConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.TenantConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.TokenConverterCloudV20
-import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
+import com.rackspace.idm.api.converter.cloudv20.*
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.email.EmailClient
-import com.rackspace.idm.api.resource.cloud.v20.AuthenticateResponseService
-import com.rackspace.idm.api.resource.cloud.v20.DefaultAuthenticateResponseService
-import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
+import com.rackspace.idm.api.resource.cloud.v11.Cloud11Service
+import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service
+import com.rackspace.idm.api.resource.cloud.v20.*
+import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.api.security.AuthenticationContext
-import com.rackspace.idm.api.security.AuthorizationContext
 import com.rackspace.idm.api.security.DefaultRequestContextHolder
 import com.rackspace.idm.api.security.RequestContext
 import com.rackspace.idm.api.security.SecurityContext
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.config.IdentityConfig.ReloadableConfig
+import com.rackspace.idm.domain.config.IdentityConfig.RepositoryConfig
 import com.rackspace.idm.domain.config.IdentityConfig.StaticConfig
-import com.rackspace.idm.domain.dao.MobilePhoneDao
-import com.rackspace.idm.domain.dao.RackerDao
+import com.rackspace.idm.domain.dao.*
+import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.security.AETokenService
 import com.rackspace.idm.domain.security.TokenFormatSelector
 import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocator
-import com.rackspace.idm.domain.service.AETokenRevocationService
-import com.rackspace.idm.domain.service.IdentityUserService
-import com.rackspace.idm.domain.service.PropertiesService
-import com.rackspace.idm.domain.service.RoleService
-import com.rackspace.idm.domain.service.TokenRevocationService
-import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
+import com.rackspace.idm.domain.service.*
+import com.rackspace.idm.domain.service.impl.*
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.multifactor.service.MultiFactorService
-import com.rackspace.idm.util.CryptHelper
-import com.rackspace.idm.util.SamlUnmarshaller
-import com.rackspace.idm.validation.Validator
-import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
-import com.rackspace.idm.api.resource.cloud.v11.Cloud11Service
-import com.rackspace.idm.api.resource.cloud.v11.DefaultCloud11Service
-import com.rackspace.idm.api.resource.cloud.v20.AuthWithApiKeyCredentials
-import com.rackspace.idm.api.resource.cloud.v20.AuthWithPasswordCredentials
-import com.rackspace.idm.api.resource.cloud.v20.AuthWithToken
-import com.rackspace.idm.api.resource.cloud.v20.CloudGroupBuilder
-import com.rackspace.idm.api.resource.cloud.v20.CloudKsGroupBuilder
-import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
-import com.rackspace.idm.api.resource.cloud.v20.DefaultRegionService
-import com.rackspace.idm.api.resource.pagination.Paginator
-import com.rackspace.idm.domain.dao.ApplicationDao
-import com.rackspace.idm.domain.dao.ApplicationRoleDao
-import com.rackspace.idm.domain.dao.AuthDao
-import com.rackspace.idm.domain.dao.DomainDao
-import com.rackspace.idm.domain.dao.EndpointDao
-import com.rackspace.idm.domain.dao.ScopeAccessDao
-import com.rackspace.idm.domain.dao.TenantDao
-import com.rackspace.idm.domain.dao.TenantRoleDao
-import com.rackspace.idm.domain.dao.UserDao
-import com.rackspace.idm.domain.entity.ScopeAccess
-import com.rackspace.idm.domain.entity.ClientScopeAccess
-import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
-import com.rackspace.idm.domain.entity.Racker
-import com.rackspace.idm.domain.entity.RackerScopeAccess
-import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.entity.UserScopeAccess
-import com.rackspace.idm.domain.service.ApplicationService
-import com.rackspace.idm.domain.service.AuthenticationService
-import com.rackspace.idm.domain.service.AuthorizationService
-import com.rackspace.idm.domain.service.CloudRegionService
-import com.rackspace.idm.domain.service.DomainService
-import com.rackspace.idm.domain.service.EndpointService
-import com.rackspace.idm.domain.service.GroupService
-import com.rackspace.idm.domain.service.PasswordComplexityService
-import com.rackspace.idm.domain.service.QuestionService
-import com.rackspace.idm.domain.service.ScopeAccessService
-import com.rackspace.idm.domain.service.SecretQAService
-import com.rackspace.idm.domain.service.TenantService
-import com.rackspace.idm.domain.service.TokenService
-import com.rackspace.idm.domain.service.UserService
-import com.rackspace.idm.domain.service.impl.DefaultApplicationService
-import com.rackspace.idm.domain.service.impl.DefaultAuthenticationService
-import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
-import com.rackspace.idm.domain.service.impl.DefaultCloudRegionService
-import com.rackspace.idm.domain.service.impl.DefaultDomainService
-import com.rackspace.idm.domain.service.impl.DefaultEndpointService
-import com.rackspace.idm.domain.service.impl.DefaultGroupService
-import com.rackspace.idm.domain.service.impl.DefaultPasswordComplexityService
-import com.rackspace.idm.domain.service.impl.DefaultQuestionService
-import com.rackspace.idm.domain.service.impl.DefaultScopeAccessService
-import com.rackspace.idm.domain.service.impl.DefaultSecretQAService
-import com.rackspace.idm.domain.service.impl.DefaultTenantService
-import com.rackspace.idm.domain.service.impl.DefaultTokenService
-import com.rackspace.idm.domain.service.impl.DefaultUserService
 import com.rackspace.idm.util.AuthHeaderHelper
+import com.rackspace.idm.util.CryptHelper
 import com.rackspace.idm.util.RSAClient
-import com.rackspace.idm.validation.InputValidator
-import com.rackspace.idm.validation.ObjectConverter
-import com.rackspace.idm.validation.PrecedenceValidator
-import com.rackspace.idm.validation.Validator20
+import com.rackspace.idm.util.SamlUnmarshaller
+import com.rackspace.idm.validation.*
 import com.rackspace.idm.validation.entity.Constants
 import org.apache.commons.configuration.Configuration
 import org.joda.time.DateTime
@@ -118,7 +45,6 @@ import testHelpers.junit.ConditionalIgnoreRule
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.UriBuilder
 import javax.ws.rs.core.UriInfo
-
 /**
  * Created with IntelliJ IDEA.
  * User: jacob
@@ -133,6 +59,7 @@ class RootServiceTest extends Specification {
     @Shared IdentityConfig identityConfig
     @Shared StaticConfig staticConfig
     @Shared ReloadableConfig reloadableConfig
+    @Shared RepositoryConfig repositoryConfig
     @Shared AtomHopperClient atomHopperClient
     @Shared EmailClient emailClient
     @Shared RSAClient rsaClient
@@ -486,8 +413,10 @@ class RootServiceTest extends Specification {
         identityConfig = Mock()
         staticConfig = Mock()
         reloadableConfig = Mock()
+        repositoryConfig = Mock()
         identityConfig.getStaticConfig() >> staticConfig
         identityConfig.getReloadableConfig() >> reloadableConfig
+        identityConfig.getRepositoryConfig() >> repositoryConfig
         service.identityConfig = identityConfig
     }
     def mockMultiFactorService(service) {

@@ -490,6 +490,11 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(SERVICE_PATH_MAPPING).header(X_AUTH_TOKEN, token).accept(acceptMediaType.toString()).get(ClientResponse)
     }
 
+    def getIdentityProviderPolicyMultipleAcceptTypes(token, identityProviderId, MediaType... mediaTypes) {
+        initOnUse()
+        WebResource webResource = resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(SERVICE_PATH_MAPPING)
+        return webResource.header(X_AUTH_TOKEN, token).accept(mediaTypes).get(ClientResponse)    }
+
     def getIdentityProviderMetadata(token, identityProviderId, MediaType acceptMediaType = APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(FEDERATION).path(SERVICE_PATH_IDENTITY_PROVIDERS).path(identityProviderId).path(SERVICE_PATH_METADATA).header(X_AUTH_TOKEN, token).accept(acceptMediaType).get(ClientResponse)
