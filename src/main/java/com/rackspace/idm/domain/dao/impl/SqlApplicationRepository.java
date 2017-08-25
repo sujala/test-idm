@@ -3,6 +3,7 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.SQLComponent;
 import com.rackspace.idm.domain.dao.ApplicationDao;
 import com.rackspace.idm.domain.entity.Application;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.sql.dao.ServiceRepository;
 import com.rackspace.idm.domain.sql.entity.SqlService;
 import com.rackspace.idm.domain.sql.mapper.impl.ServiceMapper;
@@ -10,6 +11,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.List;
 
@@ -86,5 +88,10 @@ public class SqlApplicationRepository implements ApplicationDao {
     @Override
     public Iterable<Application> getOpenStackServices() {
         return getAllApplications();
+    }
+
+    @Override
+    public PaginatorContext<Application> getOpenStackServices(int offset, int limit) {
+        throw new NotImplementedException();
     }
 }

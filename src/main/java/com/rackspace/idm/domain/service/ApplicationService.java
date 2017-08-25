@@ -4,8 +4,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.api.security.ImmutableClientRole;
 import com.rackspace.idm.domain.entity.*;
 
-import java.util.List;
-
 public interface ApplicationService {
 
     void add(Application client);
@@ -86,6 +84,8 @@ public interface ApplicationService {
     PaginatorContext<ClientRole> getAvailableClientRolesPaged(String applicationId, int offset, int limit, int maxWeightAvailable);
 
     Iterable<Application> getOpenStackServices();
+
+    PaginatorContext<Application> getOpenStackServices(int offset, int limit);
 
     ClientRole getUserIdentityRole(EndUser user);
 }
