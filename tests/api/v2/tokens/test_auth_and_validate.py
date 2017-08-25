@@ -125,6 +125,10 @@ class AuthAndValidateTokens(base.TestBaseV2):
         resp = self.identity_admin_client.get_auth_token(
             request_object=request_object)
         self.assertEqual(resp.status_code, 200)
+
+        if self.test_config.deserialize_format == const.JSON:
+            self.assertSchema(response=resp,
+                              json_schema=tokens_json.auth)
         access_resp = responses.Access(resp.json())
 
         # get token from auth
@@ -157,6 +161,9 @@ class AuthAndValidateTokens(base.TestBaseV2):
         resp = self.identity_admin_client.get_auth_token(
             request_object=request_object)
         self.assertEqual(resp.status_code, 200)
+        if self.test_config.deserialize_format == const.JSON:
+            self.assertSchema(response=resp,
+                              json_schema=tokens_json.auth)
         access_resp = responses.Access(resp.json())
 
         # get token from auth

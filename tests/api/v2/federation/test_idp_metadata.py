@@ -3,6 +3,7 @@ import copy
 
 from tests.api.v2.federation import federation
 from tests.api.v2.schema import idp as idp_json
+from tests.api.v2.schema import tokens as tokens_json
 from tests.api.v2.schema import users as user_json
 
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -108,6 +109,10 @@ class TestIDPMetadata(federation.TestBaseFederation):
             saml=assertion, content_type='xml',
             base64_url_encode=False, new_url=False)
         self.assertEqual(resp.status_code, 200)
+        if self.test_config.deserialize_format == const.JSON:
+            self.assertSchema(response=resp,
+                              json_schema=tokens_json.auth)
+
         fed_user_id = resp.json()[const.ACCESS][const.USER][const.ID]
         get_resp = self.identity_admin_client.get_user(fed_user_id)
 
@@ -167,6 +172,9 @@ class TestIDPMetadata(federation.TestBaseFederation):
             saml=assertion, content_type='xml',
             base64_url_encode=False, new_url=False)
         self.assertEqual(resp.status_code, 200)
+        if self.test_config.deserialize_format == const.JSON:
+            self.assertSchema(response=resp,
+                              json_schema=tokens_json.auth)
 
         # Add Certificate endpoint is not supported when IDP has metadata
         resp = self.user_admin_client.add_certificate(
