@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.api.common.fault.v1.UnsupportedMediaTypeFault
 import com.rackspace.docs.core.event.EventType
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProperty
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProvider
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.IdentityProviderFederationTypeEnum
@@ -11,8 +12,10 @@ import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.IdentityPropertyValueType
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.FederatedIdentityService
 import com.rackspace.idm.domain.service.IdpPolicyFormatEnum
+import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.DefaultAuthorizationService
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
 import com.rackspace.idm.validation.Validator20
@@ -27,6 +30,7 @@ import org.springframework.http.HttpHeaders
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
+import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
 
@@ -42,6 +46,9 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     Validator20 validator20
+
+    @Autowired
+    UserService userService
 
     @Unroll
     def "Update and get IDP's policy; type = #type"() {
@@ -136,6 +143,150 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
         utils.deleteUser(idpManager)
         reloadableConfiguration.reset()
+    }
+
+    def "RBAC test for update/get mapping policy" () {
+        given:
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        when: "Create IDP using metadata"
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+        IdentityProvider idp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "Update IDP's mapping policy using userAdmin token"
+        def policy = '{"policy":{"name":"name"}}'
+        response = cloud20.updateIdentityProviderPolicy(userAdminToken, idp.id, policy)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "Get IDP's mapping policy using userAdmin token"
+        response = cloud20.getIdentityProviderPolicy(userAdminToken, idp.id)
+        String returnedPolicy = response.getEntity(String)
+
+        then:
+        response.status == SC_OK
+        returnedPolicy.replace("\n","") == policy
+
+        when: "Update IDP's mapping policy using userManager token"
+        policy = '{"policy":{"name":"name2"}}'
+        def userManageToken = utils.getToken(userManage.username)
+        response = cloud20.updateIdentityProviderPolicy(userManageToken, idp.id, policy)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "Get IDP's mapping policy using userManager token"
+        response = cloud20.getIdentityProviderPolicy(userManageToken, idp.id)
+        returnedPolicy = response.getEntity(String)
+
+        then:
+        response.status == SC_OK
+        returnedPolicy.replace("\n","") == policy
+
+        when: "Update IDP's mapping policy using defaulUser with 'identity:identity-provider-manager' role"
+        policy = '{"policy":{"name":"name3"}}'
+        utils.addRoleToUser(defaultUser, Constants.IDENTITY_PROVIDER_MANAGER_ROLE_ID)
+        def defaultUserToken = utils.getToken(defaultUser.username)
+        response = cloud20.updateIdentityProviderPolicy(defaultUserToken, idp.id, policy)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "Get IDP's mapping policy using defaulUser with 'identity:identity-provider-manager' role"
+        response = cloud20.getIdentityProviderPolicy(defaultUserToken, idp.id)
+        returnedPolicy = response.getEntity(String)
+        utils.deleteRoleOnUser(defaultUser, Constants.IDENTITY_PROVIDER_MANAGER_ROLE_ID)
+
+        then:
+        response.status == SC_OK
+        returnedPolicy.replace("\n","") == policy
+
+        when: "Get IDP's mapping policy using defaultUser with 'identity:identity-provider-read-only' role"
+        utils.addRoleToUser(defaultUser, Constants.IDENTITY_PROVIDER_READ_ONLY_ROLE_ID)
+        defaultUserToken = utils.getToken(defaultUser.username)
+        response = cloud20.getIdentityProviderPolicy(defaultUserToken, idp.id)
+        returnedPolicy = response.getEntity(String)
+
+        then:
+        response.status == SC_OK
+        returnedPolicy.replace("\n","") == policy
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+    }
+
+    def "Update/Get IDP's mapping policy using 'rcn:admin' role" () {
+        given:
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def domainId = utils.createDomain()
+        def domainId2 = utils.createDomain()
+        def userAdmin, users, userAdmin2, users2
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+        (userAdmin2, users2) = utils.createUserAdmin(domainId2)
+        // Add domains to same RCN
+        def updateDomainEntity = new Domain().with {
+            it.rackspaceCustomerNumber = testUtils.getRandomRCN()
+            it
+        }
+        utils.updateDomain(domainId, updateDomainEntity)
+        utils.updateDomain(domainId2, updateDomainEntity)
+
+        when: "Create IDP with metadata using userAdmin"
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def response = cloud20.createIdentityProviderWithMetadata(userAdminToken, metadata)
+        IdentityProvider idp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "Update IDP's mapping policy using userAdmin2 token"
+        def policy = '{"policy":{"name":"name"}}'
+        def userAdmin2Token = utils.getToken(userAdmin2.username)
+        response = cloud20.updateIdentityProviderPolicy(userAdmin2Token, idp.id, policy)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Get IDP's mapping policy using userAdmin2 token"
+        response = cloud20.getIdentityProviderPolicy(userAdmin2Token, idp.id)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Update IDP's mapping policy using userAdmin2 with 'rcn:admin' role"
+        utils.addRoleToUser(userAdmin2, Constants.RCN_ADMIN_ROLE_ID)
+        userAdmin2Token = utils.getToken(userAdmin2.username)
+        response = cloud20.updateIdentityProviderPolicy(userAdmin2Token, idp.id, policy)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "Get IDP's mapping policy using userAdmin2 with 'rcn:admin' role"
+        response = cloud20.getIdentityProviderPolicy(userAdmin2Token, idp.id)
+        String returnedPolicy = response.getEntity(String)
+
+        then:
+        response.status == SC_OK
+        returnedPolicy.replace("\n","") == policy
+
+        cleanup:
+        utils.deleteUsers(users)
+        utils.deleteUsers(users2)
+        utils.deleteDomain(domainId)
     }
 
     @Unroll
@@ -346,6 +497,94 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
 
         where:
         accept << [MediaType.APPLICATION_JSON_TYPE, GlobalConstants.TEXT_YAML_TYPE]
+    }
+
+    @Unroll
+    def "Assert users in rax restricted group are forbidden to update/get IDP's policy: regex = #regex"() {
+        given:
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def domainId = utils.createDomain()
+        def users = utils.createUsers(domainId)
+        def user = users.find {it.username =~ regex}
+        def userToken = utils.getToken(user.username)
+
+        when: "Create IDP using metadata"
+        def response = cloud20.createIdentityProviderWithMetadata(userToken, metadata)
+        IdentityProvider idp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "Updating IDP's policy"
+        def policy = '{"policy":{"name":"name"}}'
+        utils.addUserToGroupWithId(Constants.RAX_STATUS_RESTRICTED_GROUP_ID, users.find{ it.username =~ "userAdmin*"})
+        response = cloud20.updateIdentityProviderPolicy(userToken, idp.id, policy)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Get IDP's policy"
+        response = cloud20.updateIdentityProviderPolicy(userToken, idp.id, policy)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUsers(users.reverse())
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+
+        where:
+        regex << ["userAdmin*", "userManage*"]
+    }
+
+    @Unroll
+    def "Assert users in default domain are forbidden to update/get IDP's policy: regex = #regex"() {
+        given:
+        String issuer = testUtils.getRandomUUID("issuer")
+        String authenticationUrl = testUtils.getRandomUUID("authenticationUrl")
+        String metadata = new SamlFactory().generateMetadataXMLForIDP(issuer, authenticationUrl)
+        def domainId = utils.createDomain()
+        def users = utils.createUsers(domainId)
+        def user = users.find {it.username =~ regex}
+        def userToken = utils.getToken(user.username)
+
+        when: "Create IDP using metadata"
+        def response = cloud20.createIdentityProviderWithMetadata(userToken, metadata)
+        IdentityProvider idp = response.getEntity(IdentityProvider)
+
+        then:
+        response.status == SC_CREATED
+
+        when: "Updating IDP's policy"
+        def policy = '{"policy":{"name":"name"}}'
+        def userObject = new User().with {
+            it.id = user.id
+            it.domainId = identityConfig.getReloadableConfig().getGroupDefaultDomainId()
+            it
+        }
+        userService.updateUser(userObject)
+        userToken = utils.getToken(user.username)
+        response = cloud20.updateIdentityProviderPolicy(userToken, idp.id, policy)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        when: "Get IDP's policy"
+        response = cloud20.updateIdentityProviderPolicy(userToken, idp.id, policy)
+
+        then:
+        response.status == SC_FORBIDDEN
+
+        cleanup:
+        utils.deleteUsers(users.reverse())
+        utils.deleteDomain(domainId)
+        utils.deleteIdentityProvider(idp)
+
+        where:
+        regex << ["userAdmin*", "userManage*"]
     }
 
     @Unroll

@@ -71,7 +71,7 @@ class TestTenantLevelRolesForFederation(base.TestBaseV2):
                     }
                 }],
                 "version": "RAX-1"}}
-        update_idp_mapping_resp = self.idp_ua_client.add_idp_mapping(
+        update_idp_mapping_resp = self.user_admin_client.add_idp_mapping(
             idp_id=idp_id, request_data=updated_mapping_policy)
         assert update_idp_mapping_resp.status_code == 204
 

@@ -3611,6 +3611,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def mockFederatedIdentityService = Mock(FederatedIdentityService)
         service.federatedIdentityService = mockFederatedIdentityService
         headers.getMediaType() >> GlobalConstants.TEXT_YAML_TYPE
+        def user = new User().with {
+            it.domainId = "id"
+            it
+        }
 
         IdentityProvider identityProvider = new IdentityProvider()
 
@@ -3619,7 +3623,10 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
         then:
         1 * mockFederatedIdentityService.checkAndGetIdentityProvider(_) >> identityProvider
+        1 * requestContextHolder.getRequestContext().getEffectiveCaller() >> user
         1 * mockFederatedIdentityService.updateIdentityProvider(_)
+        1 * reloadableConfig.getGroupDefaultDomainId() >> "domainId"
+        1 * userService.getGroupsForUser(_) >> []
         response.build().status == HttpStatus.SC_NO_CONTENT
     }
 
