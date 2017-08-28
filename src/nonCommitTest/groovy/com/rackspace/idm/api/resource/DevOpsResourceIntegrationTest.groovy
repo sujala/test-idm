@@ -353,7 +353,7 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
 
         def user
         (user) = utils.createUserAdmin()
-        def impersonationToken = utils.getImpersonatedTokenWithToken(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), user)
+        def impersonationToken = utils.getImpersonatedTokenWithToken(analyzeAdminToken, user)
 
         when: "valid x-auth-token and valid subject token is passed"
         def response = devops.analyzeToken(analyzeAdminToken, impersonationToken)
@@ -377,10 +377,10 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         entity.impersonatedUser.enabled == user.enabled
         entity.impersonatedUser.domainEnabled == true
 
-        entity.user.username == "authQE"
-        entity.user.id == "173190"
+        entity.user.username == identityAdmin.username
+        entity.user.id == identityAdmin.id
         entity.user.type == "PROVISIONED_USER"
-        entity.user.domain == "15f080741fc24768bd235d696776afde"
+        entity.user.domain == identityAdmin.domainId
         entity.user.enabled == true
         entity.user.domainEnabled == true
 
@@ -484,7 +484,7 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         entity.trrs.size == 1
 
         when: "impersonating a federated user"
-        def impersonationToken = utils.getImpersonatedTokenWithToken(utils.getToken(Constants.SERVICE_ADMIN_USERNAME, Constants.SERVICE_ADMIN_PASSWORD), federatedUser)
+        def impersonationToken = utils.getImpersonatedTokenWithToken(analyzeAdminToken, federatedUser)
         response = devops.analyzeToken(analyzeAdminToken, impersonationToken)
         entity = new org.codehaus.jackson.map.ObjectMapper().readValue(response.getEntity(String), Map).tokenAnalysis
 
@@ -499,10 +499,10 @@ class DevOpsResourceIntegrationTest extends RootIntegrationTest {
         entity.impersonatedUser.domainEnabled == true
         entity.impersonatedUser.federatedIdp == federatedUser.federatedIdp
 
-        entity.user.username == "authQE"
-        entity.user.id == "173190"
+        entity.user.username == identityAdmin.username
+        entity.user.id == identityAdmin.id
         entity.user.type == "PROVISIONED_USER"
-        entity.user.domain == "15f080741fc24768bd235d696776afde"
+        entity.user.domain == identityAdmin.domainId
         entity.user.enabled == true
         entity.user.domainEnabled == true
 
