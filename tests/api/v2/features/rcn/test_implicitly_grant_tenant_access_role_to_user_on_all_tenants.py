@@ -28,7 +28,6 @@
     identity:tenant-access roles on all tenants within the user's domain
 """
 import collections
-import time
 
 from tests.api.v2 import base
 from tests.api.v2.models import factory, responses
@@ -968,7 +967,6 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
                                                   user_id=user_id)
 
         # # authenticate
-        time.sleep(1)
         mosso_tenant, nast_tenant, user_token = self.verify_auth_w_password(
             user_name=user_name, password=password)
 
