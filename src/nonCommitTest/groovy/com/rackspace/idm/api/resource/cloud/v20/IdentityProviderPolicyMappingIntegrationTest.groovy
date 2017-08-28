@@ -21,10 +21,7 @@ import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService
 import com.rackspace.idm.validation.Validator20
 import com.sun.jersey.api.client.ClientResponse
 import org.mockserver.verify.VerificationTimes
-import org.openstack.docs.identity.api.v2.BadRequestFault
-import org.openstack.docs.identity.api.v2.ForbiddenFault
-import org.openstack.docs.identity.api.v2.ItemNotFoundFault
-import org.openstack.docs.identity.api.v2.UnauthorizedFault
+import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import spock.lang.Unroll
@@ -587,7 +584,6 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         regex << ["userAdmin*", "userManage*"]
     }
 
-    @Unroll
     def "IDP with a null policy in the directory returns the default policy"() {
         given:
         def idpManager = utils.createIdentityProviderManager()
@@ -596,11 +592,11 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         def creationResultIdp = utils.createIdentityProvider(idpManagerToken, identityProvider)
         def idpEntity = identityProviderDao.getIdentityProviderById(creationResultIdp.id)
         idpEntity.setPolicy(null)
+        idpEntity.setPolicyFormat(null)
         identityProviderDao.updateIdentityProviderAsIs(idpEntity)
 
         when: "Get IDP's policy"
-        // Note: Json Default policy will be returned regardless of the Accept Type.
-        def response = cloud20.getIdentityProviderPolicy(idpManagerToken, creationResultIdp.id, accept)
+        def response = cloud20.getIdentityProviderPolicy(idpManagerToken, creationResultIdp.id)
 
         then: "Return 200"
         response.status == SC_OK
@@ -610,9 +606,28 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
         utils.deleteUser(idpManager)
+    }
 
-        where:
-        accept << [MediaType.APPLICATION_JSON_TYPE, GlobalConstants.TEXT_YAML_TYPE]
+    def "Invalid content types for IDP with a null policy"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def identityProvider = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def creationResultIdp = utils.createIdentityProvider(idpManagerToken, identityProvider)
+        def idpEntity = identityProviderDao.getIdentityProviderById(creationResultIdp.id)
+        idpEntity.setPolicy(null)
+        idpEntity.setPolicyFormat(null)
+        identityProviderDao.updateIdentityProviderAsIs(idpEntity)
+
+        when: "Get IDP's policy"
+        def response = cloud20.getIdentityProviderPolicyMultipleAcceptTypes(idpManagerToken, creationResultIdp.id, MediaType.APPLICATION_XML_TYPE, GlobalConstants.TEXT_YAML_TYPE)
+
+        then: "Return 404"
+        response.status == SC_NOT_FOUND
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, creationResultIdp.id)
+        utils.deleteUser(idpManager)
     }
 
     def "Get IDP's policy with read-only role"() {
@@ -747,6 +762,146 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteIdentityProvider(idp)
+    }
+
+    def "Verify content-type on get mapping policy for IDP"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def identityProvider = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def creationResultIdp = utils.createIdentityProvider(idpManagerToken, identityProvider)
+
+        when: "Get JSON default mapping policy"
+        def response = cloud20.getIdentityProviderPolicyMultipleAcceptTypes(idpManagerToken, creationResultIdp.id, MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE, GlobalConstants.TEXT_YAML_TYPE)
+
+        then:
+        response.status == SC_OK
+        response.headers[HttpHeaders.CONTENT_TYPE].size() == 1
+        response.headers[HttpHeaders.CONTENT_TYPE][0] == MediaType.APPLICATION_JSON
+
+        when: "Update mapping policy to YAML"
+        def policy = "--- name: policy"
+        response = cloud20.updateIdentityProviderPolicy(idpManagerToken, creationResultIdp.id, policy, GlobalConstants.TEXT_YAML_TYPE)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "Get YAML mapping policy"
+        response = cloud20.getIdentityProviderPolicyMultipleAcceptTypes(idpManagerToken, creationResultIdp.id, MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE, GlobalConstants.TEXT_YAML_TYPE)
+
+        then:
+        response.status == SC_OK
+        response.headers[HttpHeaders.CONTENT_TYPE].size() == 1
+        response.headers[HttpHeaders.CONTENT_TYPE][0] == GlobalConstants.TEXT_YAML
+
+        cleanup:
+        utils.deleteUser(idpManager)
+        utils.deleteIdentityProvider(creationResultIdp)
+    }
+
+    def "Test default mapping policy on get mapping policy for IDP"() {
+        given:
+        def defaultPolicyPropData = utils.getIdentityPropertyByName(IdentityConfig.FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP)
+        def defaultPolicyProp = new IdentityProperty().with {
+            it.name = defaultPolicyPropData.name
+            it.description = defaultPolicyPropData.description
+            it.value = defaultPolicyPropData.value
+            it.valueType = defaultPolicyPropData.valueType
+            it.idmVersion = defaultPolicyPropData.versionAdded
+            it.reloadable = defaultPolicyPropData.reloadable
+            it.searchable = true
+            it
+        }
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def identityProvider = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def creationResultIdp = utils.createIdentityProvider(idpManagerToken, identityProvider)
+
+        def idpEntity = identityProviderDao.getIdentityProviderById(creationResultIdp.id)
+        idpEntity.setPolicy(null)
+        idpEntity.setPolicyFormat(null)
+        identityProviderDao.updateIdentityProviderAsIs(idpEntity)
+
+        when: "Get JSON default mapping policy"
+        def response = cloud20.getIdentityProviderPolicyMultipleAcceptTypes(idpManagerToken, creationResultIdp.id, MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE, GlobalConstants.TEXT_YAML_TYPE)
+
+        then:
+        response.status == SC_OK
+        response.headers[HttpHeaders.CONTENT_TYPE].size() == 1
+        response.headers[HttpHeaders.CONTENT_TYPE][0] == MediaType.APPLICATION_JSON
+
+        when: "Update default mapping policy to YAML"
+        utils.deleteIdentityProperty(defaultPolicyPropData.id)
+        def propData = v2Factory.createIdentityProperty(IdentityConfig.FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP)
+        propData.description = defaultPolicyPropData.description
+        propData.valueType = IdentityPropertyValueType.YAML.typeName
+        propData.value = "--- policy: name: name"
+        propData.idmVersion = defaultPolicyPropData.versionAdded
+        propData.reloadable = defaultPolicyPropData.reloadable
+        propData.searchable = true
+        response = devops.createIdentityProperty(utils.getIdentityAdminToken(), propData)
+
+        then:
+        response.status == SC_CREATED
+        def property = response.getEntity(IdentityProperty)
+
+        when: "Get YAML default mapping policy"
+        response = cloud20.getIdentityProviderPolicyMultipleAcceptTypes(idpManagerToken, creationResultIdp.id, MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE, GlobalConstants.TEXT_YAML_TYPE)
+
+        then:
+        response.status == SC_OK
+        response.headers[HttpHeaders.CONTENT_TYPE].size() == 1
+        response.headers[HttpHeaders.CONTENT_TYPE][0] == GlobalConstants.TEXT_YAML
+
+        cleanup:
+        utils.deleteUser(idpManager)
+        utils.deleteIdentityProvider(creationResultIdp)
+        utils.deleteIdentityProperty(property.id)
+        devops.createIdentityProperty(utils.getIdentityAdminToken(), defaultPolicyProp)
+    }
+
+    def "Assert create IDP and get IDP mapping policy services are unavailable if default policy is missing"() {
+        given:
+        def defaultPolicyPropData = utils.getIdentityPropertyByName(IdentityConfig.FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP)
+        def defaultPolicyProp = new IdentityProperty().with {
+            it.name = defaultPolicyPropData.name
+            it.description = defaultPolicyPropData.description
+            it.value = defaultPolicyPropData.value
+            it.valueType = defaultPolicyPropData.valueType
+            it.idmVersion = defaultPolicyPropData.versionAdded
+            it.reloadable = defaultPolicyPropData.reloadable
+            it.searchable = true
+            it
+        }
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def identityProvider = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        def creationResultIdp = utils.createIdentityProvider(idpManagerToken, identityProvider)
+
+        def idpEntity = identityProviderDao.getIdentityProviderById(creationResultIdp.id)
+        idpEntity.setPolicy(null)
+        idpEntity.setPolicyFormat(null)
+        identityProviderDao.updateIdentityProviderAsIs(idpEntity)
+
+        utils.deleteIdentityProperty(defaultPolicyPropData.id)
+
+        when: "Get default mapping policy"
+        def response = cloud20.getIdentityProviderPolicyMultipleAcceptTypes(idpManagerToken, creationResultIdp.id, MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE, GlobalConstants.TEXT_YAML_TYPE)
+
+        then:
+        response.status == SC_SERVICE_UNAVAILABLE
+
+        when: "Create idp"
+        identityProvider = v2Factory.createIdentityProvider(getRandomUUID(), "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, ApprovedDomainGroupEnum.GLOBAL.storedVal, null)
+        response = cloud20.createIdentityProvider(idpManagerToken, identityProvider)
+
+        then:
+        response.status == SC_SERVICE_UNAVAILABLE
+
+        cleanup:
+        utils.deleteUser(idpManager)
+        utils.deleteIdentityProvider(creationResultIdp)
+        devops.createIdentityProperty(utils.getIdentityAdminToken(), defaultPolicyProp)
     }
 
 }

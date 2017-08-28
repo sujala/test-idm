@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.service;
 
+import com.rackspace.idm.domain.entity.IdentityProperty;
 import com.rackspace.idm.domain.entity.IdentityProvider;
 import com.rackspace.idm.domain.entity.SamlAuthResponse;
 import com.rackspace.idm.domain.entity.SamlLogoutResponse;
@@ -191,5 +192,12 @@ public interface FederatedIdentityService {
      * @param id
      */
     void deleteIdentityProviderById(String id);
+
+    /**
+     * Returns an IdentityProperty containing a valid default mapping policy.
+     * @return
+     * @throws ServiceUnavailableException
+     */
+    IdentityProperty checkAndGetDefaultMappingPolicyProperty() throws ServiceUnavailableException;
 
 }

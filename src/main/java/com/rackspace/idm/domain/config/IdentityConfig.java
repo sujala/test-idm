@@ -2053,9 +2053,8 @@ public class IdentityConfig {
 
     public class RepositoryConfig {
 
-        public String getIdentityProviderDefaultPolicy() {
-            IdentityProperty prop = identityPropertyService.getIdentityPropertyByName(FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP);
-            return (String) propertyValueConverter.convertPropertyValue(prop);
+        public IdentityProperty getIdentityProviderDefaultPolicy() {
+            return identityPropertyService.getIdentityPropertyByName(FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP);
         }
 
     }

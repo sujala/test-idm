@@ -3630,6 +3630,35 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         response.build().status == HttpStatus.SC_NO_CONTENT
     }
 
+    @Unroll
+    def "Test repository config for default policy can be changed: type = #type" () {
+        given:
+        def mockFederatedIdentityService = Mock(FederatedIdentityService)
+        service.federatedIdentityService = mockFederatedIdentityService
+        mockFederatedIdentityService.checkAndGetIdentityProvider(_) >> new IdentityProvider()
+        mockFederatedIdentityService.checkAndGetDefaultMappingPolicyProperty() >> new IdentityProperty().with {
+            it.value = policy
+            it.valueType = type
+            it
+        }
+        def caller = entityFactory.createUser()
+        requestContext.getEffectiveCaller() >> caller
+        reloadableConfig.getGroupDefaultDomainId() >> "1"
+        userService.getGroupsForUser(_) >> []
+        headers.getAcceptableMediaTypes() >> [MediaType.APPLICATION_JSON_TYPE, GlobalConstants.TEXT_YAML_TYPE]
+
+        when: "Getting default policy file"
+        def response = service.getIdentityProviderPolicy(headers, authToken, "id")
+
+        then:
+        response.build().status == HttpStatus.SC_OK
+
+        where:
+        policy                         | type
+        '{"policy": {"name":"name"}"}' | "JSON"
+        "--- policy: name: name"       | "YAML"
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)
