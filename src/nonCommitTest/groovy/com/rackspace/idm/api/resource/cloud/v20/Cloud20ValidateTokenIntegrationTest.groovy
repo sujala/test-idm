@@ -236,8 +236,8 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         accept                          | request                           | issuedAt
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | false
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | false
-        MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true
-        MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true
+        //MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_JSON_TYPE   | true
+        //MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_XML_TYPE    | true
     }
 
     def "Validate Impersonated user's token using a racker" () {
