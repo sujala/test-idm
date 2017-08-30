@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
 import com.rackspace.idm.Constants
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.entity.ClientRole
@@ -588,6 +589,26 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
         where:
         flag << [true, false]
+    }
+
+    def "Error check on add role: Content-Type = #contentType, Accept = #accept" () {
+        given:
+        def role = v2Factory.createRole(testUtils.getRandomUUID())
+        role.serviceId = Constants.IDENTITY_SERVICE_ID
+        def adminToken = utils.getIdentityAdminToken()
+
+        when: "Create role with invalid name"
+        role.name = "invalid@#&!"
+        def response = cloud20.createRole(adminToken, role, contentType, accept)
+
+        then:
+        def errMsg = String.format("Error code: '%s'; %s", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, Validator20.ROLE_NAME_INVALID)
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, errMsg)
+
+        where:
+        contentType                    | accept
+        MediaType.APPLICATION_XML_TYPE | MediaType.APPLICATION_XML_TYPE
+        MediaType.APPLICATION_JSON_TYPE| MediaType.APPLICATION_JSON_TYPE
     }
 
     def deleteUserQuietly(user) {
