@@ -257,6 +257,9 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
                 idp_id=provider_id)
         self.assertEquals(resp_get_ro.status_code, 200)
+        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+                          const.CONTENT_TYPE_VALUE.format(
+                              const.JSON))
         self.assertEquals(resp_get_ro.json(), mapping)
 
     @data_file_iterator.data_file_provider((
