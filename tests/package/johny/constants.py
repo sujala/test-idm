@@ -83,7 +83,6 @@ TENANTS_URL = '/tenants'
 TOKEN_URL = '/tokens'
 UNBOUNDID_CONFIG_URL = '/idm/devops/props'
 UPDATE_MFA_URL = '/users/{user_id}/RAX-AUTH/multi-factor'
-UPGRADE_USER_TO_CLOUD_URL = '/users/RAX-AUTH/upgradeUserToCloud'
 UPDATE_USER_URL = DELETE_USER_URL = GET_USER_URL = '/users/{user_id}'
 UPDATE_ENDPOINT_TEMPLATE_URL = GET_ENDPOINT_TEMPLATE_URL = (
     DELETE_ENDPOINT_TEMPLATE_URL) = (

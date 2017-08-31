@@ -113,7 +113,6 @@ public final class JSONConstants {
     public static final String USER = "user";
     public static final String USERS = "users";
     public static final String USERNAME = "username";
-    public static final String UPGRADE_USER_TO_CLOUD = "upgradeUserToCloud";
     public static final String USER_PASSWORD = "userPassword";
     public static final String PASSWORD_RESET = "passwordReset";
     public static final String UTF_8 = "UTF-8";

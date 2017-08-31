@@ -24,8 +24,6 @@ public interface Cloud20Service {
 
     ResponseBuilder authenticateFederated(HttpHeaders httpHeaders, byte[] samlResponse, boolean applyRcnRoles);
 
-    ResponseBuilder upgradeUserToCloud(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, User upgradeUser);
-
     Response.ResponseBuilder authenticateForForgotPassword(HttpHeaders httpHeaders, ForgotPasswordCredentials forgotPasswordCredentials);
 
     ResponseBuilder logoutFederatedUser(HttpHeaders httpHeaders, byte[] logoutRequest);

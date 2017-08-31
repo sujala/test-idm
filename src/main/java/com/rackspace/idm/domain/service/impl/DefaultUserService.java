@@ -13,14 +13,12 @@ import com.rackspace.idm.domain.dao.FederatedUserDao;
 import com.rackspace.idm.domain.dao.RackerDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.entity.Group;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
 import com.rackspace.idm.validation.Validator;
-import org.apache.commons.collections4.Closure;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -930,131 +928,6 @@ public class DefaultUserService implements UserService {
                 }
             }
         }
-    }
-
-    @Override
-    public User upgradeUserToCloud(User userUpgrade) {
-        logger.info("Upgrading User: {} to cloud account", userUpgrade.getId());
-
-        //retrieve the user being upgraded
-        final User user = identityUserService.getProvisionedUserById(userUpgrade.getId());
-        if (user == null) {
-            throw new ForbiddenException("User to upgrade not found.");
-        }
-        if (!authorizationService.hasUserAdminRole(user)) {
-            throw new ForbiddenException("Can only upgrade user admins");
-        }
-
-        /*
-         get user roles. We know, based on previous check that the user has the user-admin role. The user
-         must also have the upgrade eligibility role as the only other role on the user.
-        */
-        List<TenantRole> roles = tenantService.getTenantRolesForUser(user);
-        //load the required properties before any role validation in case one is missing
-        List<String> allowedRoles = new ArrayList<String>();
-        allowedRoles.add(identityConfig.getStaticConfig().getIdentityUserAdminRoleName());
-        allowedRoles.add(identityConfig.getReloadableConfig().getUpgradeUserEligibleRole());
-        if (roles.size() < 2) {
-            throw new ForbiddenException(String.format("Cannot upgrade a user without role %s.", identityConfig.getReloadableConfig().getUpgradeUserEligibleRole()));
-        }
-        for (TenantRole role : roles) {
-            if (!allowedRoles.contains(role.getName())) {
-                throw new ForbiddenException(String.format("Cannot upgrade user with role %s.", role.getName()));
-            }
-        }
-
-        /*
-         Validate that the user does not have any groups.
-         */
-        if (!CollectionUtils.isEmpty(user.getRsGroupId())) {
-            throw new ForbiddenException("Can only upgrade a user admin w/o any groups");
-        }
-
-        /*
-         Validate the domain for which user is currently associated has no tenants and is not one of the default domains
-        */
-        if (StringUtils.isBlank(user.getDomainId()) || user.getDomainId().equals(identityConfig.getReloadableConfig().getGroupDefaultDomainId())
-                || user.getDomainId().equals(identityConfig.getReloadableConfig().getTenantDefaultDomainId())) {
-            throw new ForbiddenException("Can only upgrade user admins associated with a non-default domain that has no tenants");
-        }
-
-        /*
-         Validate that the user's domain is a non-numeric domain
-        */
-        if (StringUtils.isNumeric(user.getDomainId())) {
-            throw new ForbiddenException("Can only upgrade user admins associated with a non-numeric domain");
-        }
-
-        /*
-         Validate that the user has no tenants
-        */
-        try {
-            tenantService.getTenantsByDomainId(user.getDomainId()).size();
-            throw new ForbiddenException("Can only upgrade user admins associated with a non-default domain that has no tenants");
-        } catch (NotFoundException ex) {
-            //eat. We don't want a domain with tenants. Should refactor the getTenantsByDomainId so doesn't throw an error,
-            //but lots of existing logic at this point...
-        }
-
-        /*
-         Validate the user's current domain only has the one user (the user-admin)
-        */
-        Iterable<User> users = getUsersWithDomain(user.getDomainId());
-        for (Iterator i = users.iterator(); i.hasNext();) {
-            User retrievedUser = (User) i.next();
-            //effectively, means user is the only one in domain
-            if (!user.getId().equals(retrievedUser.getId())) {
-                String errMsg = String.format("Can not upgrade users that are attached to a domain that has more than one user associated with it.");
-                throw new ForbiddenException(errMsg);
-            }
-        }
-
-        //get the original domain ID of the user so we can delete it once the user is upgraded
-        String domainId = user.getDomainId();
-
-        // update the user w/ info provided
-        user.setDomainId(userUpgrade.getDomainId());
-        user.setRegion(userUpgrade.getRegion());
-        configureNewUserAdmin(user, true);
-        user.getRoles().addAll(userUpgrade.getRoles()); //add roles
-        user.setRsGroupId(userUpgrade.getRsGroupId()); //add groups
-        user.setSecretQuestion(userUpgrade.getSecretQuestion());
-        user.setSecretAnswer(userUpgrade.getSecretAnswer());
-
-        //final verification before creating things
-        validator.validateUserForCloudUpgrade(user);
-        verifyUserTenantsDoNotExist(user); //only call AFTER user has all roles set (cause roles determine tenants user has access to)
-
-        //update user with appropriate values
-        user.setNastId(getNastTenantId(user.getDomainId()));
-        user.setMossoId(Integer.parseInt(user.getDomainId()));
-        setApiKeyIfNotProvided(user);
-        setRegionIfNotProvided(user);
-
-        //user ready to upgrade. Create the tenants and domain then update the user and assign roles
-        domainService.createNewDomain(user.getDomainId());
-        createDefaultDomainTenantsIfNecessary(user.getDomainId());
-        createTenantsIfNecessary(user);
-        userDao.updateUserAsIs(user);
-        assignUserRoles(user, false);
-
-        //remove any upgrade eligibilty roles from the user now that they have been upgraded.
-        final List<String> eligibilityRoleNames = new ArrayList<String>();
-        eligibilityRoleNames.add(identityConfig.getReloadableConfig().getUpgradeUserEligibleRole());
-        List<TenantRole> userGlobalRoles = this.tenantService.getGlobalRolesForUser(user);
-        CollectionUtils.forAllDo(userGlobalRoles, new Closure<TenantRole>() {
-            @Override
-            public void execute(TenantRole role) {
-                if (eligibilityRoleNames.contains(role.getName())) {
-                    tenantService.deleteTenantRoleForUser(user, role);
-                }
-            }
-        });
-
-        //the user is now upgrade, now delete the domain
-        domainService.deleteDomain(domainId);
-
-        return user;
     }
 
     /**
