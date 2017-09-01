@@ -22,18 +22,21 @@ class TestRevokeToken(base.TestBaseV2):
         Create users needed for the tests and generate clients for those users.
         """
         super(TestRevokeToken, cls).setUpClass()
-        cls.DOMAIN_ID_TEST = cls.generate_random_string(const.DOMAIN_PATTERN)
-        cls.contact_id = randrange(start=const.CONTACT_ID_MIN,
-                                   stop=const.CONTACT_ID_MAX)
-        cls.user_admin_client = cls.generate_client(
-            parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': cls.DOMAIN_ID_TEST,
-                                   'contact_id': cls.contact_id})
 
     def setUp(self):
         super(TestRevokeToken, self).setUp()
         self.user_ids = []
         self.domain_ids = []
+
+        domain_id = self.generate_random_string(const.DOMAIN_PATTERN)
+        contact_id = randrange(start=const.CONTACT_ID_MIN,
+                               stop=const.CONTACT_ID_MAX)
+        self.user_admin_client = self.generate_client(
+            parent_client=self.identity_admin_client,
+            additional_input_data={'domain_id': domain_id,
+                                   'contact_id': contact_id})
+
+        self.domain_ids.append(domain_id)
 
     def create_user(self):
         """create a new
@@ -78,6 +81,23 @@ class TestRevokeToken(base.TestBaseV2):
         val_resp = self.identity_admin_client.validate_token(
             token_id=uac.default_headers[const.X_AUTH_TOKEN])
         self.assertEqual(val_resp.status_code, 404)
+
+    def test_analyze_revoked_token(self):
+        user_token = self.user_admin_client.default_headers[const.X_AUTH_TOKEN]
+
+        # revoke token
+        revoke_resp = self.user_admin_client.revoke_token()
+        self.assertEqual(revoke_resp.status_code, 204)
+
+        # Analyze Revoked Token
+        # The identity_admin used should have the 'analyze-token' role inorder
+        # to use the analyze token endpoint.
+        self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
+            user_token
+        analyze_token_resp = self.identity_admin_client.analyze_token()
+        self.assertEqual(analyze_token_resp.status_code, 200)
+        self.assertSchema(response=analyze_token_resp,
+                          json_schema=tokens_json.analyze_token_revoked)
 
     @attr(type='smoke_alpha')
     def test_revoke_user_token(self):
@@ -129,11 +149,12 @@ class TestRevokeToken(base.TestBaseV2):
             self.assertEqual(
                 resp.status_code, 204,
                 msg='Domain with ID {0} failed to delete'.format(_id))
+
+        self.delete_client(
+            client=self.user_admin_client,
+            parent_client=self.identity_admin_client)
         super(TestRevokeToken, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):
-        # Delete all users created in the setUpClass
-        cls.delete_client(client=cls.user_admin_client,
-                          parent_client=cls.identity_admin_client)
         super(TestRevokeToken, cls).tearDownClass()

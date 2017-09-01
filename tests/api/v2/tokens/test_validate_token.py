@@ -44,6 +44,28 @@ class TestValidateToken(base.TestBaseV2):
         self.assertEqual(resp.json()[const.ACCESS][
             const.USER][const.RAX_AUTH_CONTACTID], str(self.contact_id))
 
+    def test_analyze_user_token(self):
+        user_token = self.user_admin_client.default_headers[const.X_AUTH_TOKEN]
+
+        # The identity_admin used should have the 'analyze-token' role inorder
+        # to use the analyze token endpoint.
+        self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
+            user_token
+        analyze_token_resp = self.identity_admin_client.analyze_token()
+        self.assertEqual(analyze_token_resp.status_code, 200)
+        self.assertSchema(response=analyze_token_resp,
+                          json_schema=tokens_json.analyze_valid_token)
+
+    def test_analyze_invalid_token(self):
+        # The identity_admin used should have the 'analyze-token' role inorder
+        # to use the analyze token endpoint.
+        self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
+            'apples_bananas'
+        analyze_token_resp = self.identity_admin_client.analyze_token()
+        self.assertEqual(analyze_token_resp.status_code, 200)
+        self.assertSchema(response=analyze_token_resp,
+                          json_schema=tokens_json.analyze_token)
+
     @classmethod
     def tearDownClass(cls):
         # Delete all users created in the setUpClass
