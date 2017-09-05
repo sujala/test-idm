@@ -124,24 +124,6 @@ public class DevOpsResource {
         return devOpsService.purgeObsoleteTrrs(authToken, request).build();
     }
 
-    @POST
-    @Path("/users/{userId}/multi-factor/setupsms")
-    public Response setupSmsMfa(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("userId") String userId, MobilePhone mobilePhone) {
-        if (identityConfig.getReloadableConfig().areMfaMigrationServicesEnabled()) {
-            return devOpsService.setupSmsMfaOnUser(authToken, userId, mobilePhone).build();
-        }
-        throw new NotFoundException("Service Not Found");
-    }
-
-    @DELETE
-    @Path("/users/{userId}/multi-factor")
-    public Response removeMfa(@HeaderParam(X_AUTH_TOKEN) String authToken, @PathParam("userId") String userId) {
-        if (identityConfig.getReloadableConfig().areMfaMigrationServicesEnabled()) {
-            return devOpsService.removeMfaFromUser(authToken, userId).build();
-        }
-        throw new NotFoundException("Service Not Found");
-    }
-
     @GET
     @Path("/tokens/analyze")
     @Produces({MediaType.APPLICATION_JSON})

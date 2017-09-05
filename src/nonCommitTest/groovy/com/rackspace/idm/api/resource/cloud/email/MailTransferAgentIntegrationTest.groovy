@@ -22,10 +22,6 @@ class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
     @Autowired
     MailTransferAgentClient mailTransferAgentClient;
 
-    def setupSpec() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, false)
-    }
-
     def cleanupSpec() {
         reloadableConfiguration.reset()
         staticIdmConfiguration.reset()
@@ -34,66 +30,6 @@ class MailTransferAgentIntegrationTest  extends RootIntegrationTest {
     def setup() {
         mailTransferAgentClient.setSession(Session.getInstance(mailTransferAgentClient.getSessionProperties()))
         clearEmailServerMessages()
-    }
-
-    def "Successfully send locked out email using legacy embedded framework"() {
-        logger.warn("WiserWrapper on port " + wiserWrapper.getPort())
-        logger.warn("javaMailSender on port " + javaMailSender.getPort())
-
-        given:
-        User user = new User()
-        user.username = "embedded.locked"
-        user.email = "embedded.locked@rackspace.com"
-
-        when:
-        def response = client.sendMultiFactorLockoutOutMessage(user)
-
-        then:
-        response == true
-
-        and:
-        wiserWrapper.wiserServer.getMessages().size() == 1
-        MimeMessage message = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage()
-        message.getContent().contains(user.username)
-        !message.getSubject().startsWith("(Velocity)")
-    }
-
-    def "Successfully send mfa enabled email using legacy embedded framework"() {
-        given:
-        User user = new User()
-        user.username = "embedded.enabled"
-        user.email = "embedded.enabled@rackspace.com"
-
-        when:
-        def response = client.sendMultiFactorEnabledMessage(user)
-
-        then:
-        response == true
-
-        and:
-        wiserWrapper.wiserServer.getMessages().size() == 1
-        MimeMessage message = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage()
-        message.getContent().contains(user.username)
-        !message.getSubject().startsWith("(Velocity)")
-    }
-
-    def "Successfully send mfa disabled email using legacy embedded framework"() {
-        given:
-        User user = new User()
-        user.username = "embedded.disabled"
-        user.email = "embedded.disabled@rackspace.com"
-
-        when:
-        def response = client.sendMultiFactorDisabledMessage(user)
-
-        then:
-        response == true
-
-        and:
-        wiserWrapper.wiserServer.getMessages().size() == 1
-        MimeMessage message = wiserWrapper.wiserServer.getMessages().get(0).getMimeMessage()
-        message.getContent().contains(user.username)
-        !message.getSubject().startsWith("(Velocity)")
     }
 
     def "Cannot send email to external account if send only to internal email feature enabled"() {

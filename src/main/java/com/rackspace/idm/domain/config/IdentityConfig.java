@@ -144,8 +144,6 @@ public class IdentityConfig {
     public static final boolean FEATURE_ENDPOINT_TEMPLATE_DISABLE_NAME_TYPE_DEFAULT = false;
     public static final String OTP_ISSUER = "feature.otp.issuer";
     public static final String OTP_ENTROPY = "feature.otp.entropy";
-    public static final String OTP_CREATE_ENABLED = "feature.otp.create.enabled.flag";
-    public static final boolean OTP_CREATE_ENABLED_DEFAULT = true;
 
     public static final String FEATURE_DOMAIN_RESTRICTED_ONE_USER_ADMIN_PROP = "domain.restricted.to.one.user.admin.enabled";
     public static final String MAX_OTP_DEVICE_PER_USER_PROP = "max.otp.device.per.user";
@@ -258,9 +256,6 @@ public class IdentityConfig {
 
     public static final String FEATURE_SUPPORT_V11_LEGACY_PROP = "feature.support.v11.legacy";
     public static final boolean FEATURE_SUPPORT_V11_LEGACY_DEFAULT = false;
-
-    public static final String FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP = "feature.use.velocity.for.mfa.emails";
-    public static final boolean FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_DEFAULT = false;
 
     public static final String FEATURE_LIST_GROUPS_FOR_SELF_PROP = "feature.list.groups.for.self";
     public static final boolean FEATURE_LIST_GROUPS_FOR_SELF_DEFAULT = false;
@@ -445,12 +440,6 @@ public class IdentityConfig {
     public static final String FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP = "feeds.on.use.eviction.validate.after.ms";
     public static final int FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_DEFAULT = 10000;
 
-    /* ************************
-    MFA MIGRATION PROPS
-     **************************/
-    public static final String FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP = "feature.enable.mfa.migration.services";
-    public static final Boolean FEATURE_ENABLE_MFA_MIGRATION_SERVICES_DEFAULT = true;
-
     /**
      * SQL debug property
      */
@@ -609,8 +598,6 @@ public class IdentityConfig {
         defaults.put(FEATURE_FEDERATION_DELETION_ROLE_PROP, FEATURE_FEDERATION_DELETION_ROLE_DEFAULT);
         defaults.put(FEATURE_FEDERATION_DELETION_TIMEOUT_PROP, FEATURE_FEDERATION_DELETION_TIMEOUT_DEFAULT);
         defaults.put(FEATURE_SUPPORT_V11_LEGACY_PROP, FEATURE_SUPPORT_V11_LEGACY_DEFAULT);
-        defaults.put(FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP, FEATURE_ENABLE_MFA_MIGRATION_SERVICES_DEFAULT);
-        defaults.put(OTP_CREATE_ENABLED, OTP_CREATE_ENABLED_DEFAULT);
 
         defaults.put(FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT);
         defaults.put(FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, FEATURE_FORGOT_PWD_ENABLED_DEFAULT);
@@ -620,7 +607,6 @@ public class IdentityConfig {
         defaults.put(EMAIL_HOST_USERNAME_PROP, EMAIL_HOST_USERNAME_DEFAULT);
         defaults.put(EMAIL_HOST_PASSWORD_PROP, EMAIL_HOST_PASSWORD_DEFAULT);
 
-        defaults.put(FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_DEFAULT);
         defaults.put(FEATURE_LIST_GROUPS_FOR_SELF_PROP, FEATURE_LIST_GROUPS_FOR_SELF_DEFAULT);
 
         defaults.put(FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP, FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_DEFAULT);
@@ -1486,11 +1472,6 @@ public class IdentityConfig {
             return getIntSafely(reloadableConfiguration, OTP_ENTROPY);
         }
 
-        @IdmProp(key = OTP_CREATE_ENABLED)
-        public boolean getOTPCreateEnabled() {
-            return getBooleanSafely(reloadableConfiguration, OTP_CREATE_ENABLED);
-        }
-
         @IdmProp(key = FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP, versionAdded = "2.15.0", description = "How long, in seconds, after which the last invalid MFA logic attempt will be ignored. This affects when an account will be automatically unlocked when using local locking")
         public int getFeatureMultifactorLoginFailureTtl() {
             return getIntSafely(reloadableConfiguration, FEATURE_MULTIFACTOR_LOCKING_LOGIN_FAILURE_TTL_PROP);
@@ -1721,11 +1702,6 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_V11_LEGACY_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP, versionAdded = "3.1.1", description = "Enable MFA SMS Migration services")
-        public boolean areMfaMigrationServicesEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_MFA_MIGRATION_SERVICES_PROP);
-        }
-
         @IdmProp(key = FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, versionAdded = "3.2.0", description = "Timeout for forgot password tokens")
         public int getForgotPasswordTokenLifetime() {
             return getIntSafely(reloadableConfiguration, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME);
@@ -1739,11 +1715,6 @@ public class IdentityConfig {
         @IdmProp(key = FORGOT_PWD_VALID_PORTALS_PROP_NAME, versionAdded = "3.2.0", description = "Comma delimited list of valid portal values for forgot password")
         public Set<String> getForgotPasswordValidPortals() {
             return getSetSafely(reloadableConfiguration, FORGOT_PWD_VALID_PORTALS_PROP_NAME);
-        }
-
-        @IdmProp(key = FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP, versionAdded = "3.2.0", description = "Whether or not to use velocity templates for mfa emails. Will fall back to original if any error is encountered.")
-        public boolean useVelocityForMfaEmail() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_USE_VELOCITY_FOR_MFA_EMAILS_PROP);
         }
 
         @IdmProp(key=EMAIL_SEND_TO_ONLY_RACKSPACE_ADDRESSES, description = "(Migrated from static w/ fallback to static if not found in reloadable). Flag that restricts outgoing emails to only rackspace.com emails. This will prevent any emails from being sent from staging.", versionAdded = "3.2.0")
