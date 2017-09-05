@@ -34,6 +34,21 @@ Dev Environment Setup
 
 [Setting up Global Auth on your laptop](https://one.rackspace.com/display/auth/Setting+up+Global+Auth+on+your+Laptop)
 
+Johny (integration) Tests
+-------------------------
+
+Pre-requisites: docker, python2.7, pip
+
+CD into `tests/` directory
+
+Get all operations: `make help`
+
+Run flake8: `make flake8`
+
+Run tests via tox: `make test`
+
+Run specific modules: `make API=api.v2.federation test_nose`
+
 Contributing
 ------------
 
