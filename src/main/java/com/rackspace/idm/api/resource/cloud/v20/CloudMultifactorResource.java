@@ -171,16 +171,11 @@ public class CloudMultifactorResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam("userId") String userId,
             OTPDevice otpDevice) {
-        if (config.getReloadableConfig().getOTPCreateEnabled()) {
-            return multiFactorCloud20Service.addOTPDeviceToUser(uriInfo, authToken, userId, otpDevice).build();
-        } else {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
+        return multiFactorCloud20Service.addOTPDeviceToUser(uriInfo, authToken, userId, otpDevice).build();
     }
 
     /**
      * The multifactor service to list otp devices for a given user.
-     *
      *
      * @param uriInfo
      * @param authToken

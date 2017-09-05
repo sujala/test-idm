@@ -71,30 +71,6 @@ public interface DevOpsService {
     Response.ResponseBuilder purgeObsoleteTrrs(String authToken, TokenRevocationRecordDeletionRequest request);
 
     /**
-     * Setup SMS MFA on the specified user. Must specify the phone number. Will link user to phone and mark the phone
-     * as verified. May optionally enable MFA for the user as well.
-     *
-     * Caller must have the role "identity:mfa-admin"
-     *
-     * @param authToken
-     * @param userId
-     * @param mobilePhone
-     * @return
-     */
-    Response.ResponseBuilder setupSmsMfaOnUser(String authToken, String userId, MobilePhone mobilePhone);
-
-    /**
-     * Remove SMS MFA from the specified user. Will error if user has OTP MFA enabled.
-     *
-     * Caller must have the role "identity:mfa-admin"
-     *
-     * @param authToken
-     * @param userId
-     * @return
-     */
-    Response.ResponseBuilder removeMfaFromUser(String authToken, String userId);
-
-    /**
      * Searches and returns all IdentityProperty entries found that match the identity property versions
      * and property name. The search by name and IDM version are case-insensitive. Both name and idmVersions
      * params are optional. If both are provided the property must match both name AND idmVersions. The idmVersions
