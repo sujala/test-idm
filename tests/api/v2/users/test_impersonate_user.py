@@ -2,6 +2,7 @@
 from tests.api.v2 import base
 from tests.api.v2.models import factory
 from tests.api.v2.models import responses
+from tests.api.v2.schema import tokens as tokens_json
 
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
@@ -43,6 +44,28 @@ class TestImpersonateUser(base.TestBaseV2):
         resp = self.identity_admin_client.validate_token(
             token_id=token_id)
         self.assertEqual(resp.status_code, 200)
+
+    def test_analyze_impersonation_token(self):
+        '''Test for analyze user impersonation token.'''
+        impersonation_request_obj = requests.ImpersonateUser(
+            user_name=self.user_name)
+
+        # Get Impersonation Token
+        resp = self.identity_admin_client.impersonate_user(
+            request_data=impersonation_request_obj)
+        self.assertEqual(resp.status_code, 200)
+
+        token_id = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+
+        # Analyze Token
+        # The identity_admin used should have the 'analyze-token' role inorder
+        # to use the analyze token endpoint, else will result in HTTP 403.
+        self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
+            token_id
+        analyze_token_resp = self.identity_admin_client.analyze_token()
+        self.assertEqual(analyze_token_resp.status_code, 200)
+        self.assertSchema(response=analyze_token_resp,
+                          json_schema=tokens_json.analyze_token)
 
     def tearDown(self):
         # Delete all users created in the tests

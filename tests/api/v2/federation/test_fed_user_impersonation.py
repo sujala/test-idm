@@ -3,6 +3,7 @@ import copy
 
 from tests.api.v2.federation import federation
 from tests.api.v2.schema import idp as idp_json
+from tests.api.v2.schema import tokens as tokens_json
 
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.utils import saml_helper
@@ -102,6 +103,78 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         resp = self.identity_admin_client.impersonate_user(
             request_data=impersonation_request_obj)
         self.assertEqual(resp.status_code, 200)
+
+    def test_analyze_fed_user_tokens(self):
+        (pem_encoded_cert, cert_path, _, key_path,
+         f_print) = create_self_signed_cert()
+
+        self.add_idp_w_metadata(cert_path=cert_path)
+
+        # V1 Federation - Auth as fed user in the registered domain
+        subject = self.generate_random_string(
+            pattern='fed[\-]user[\-][\d\w]{12}')
+        assertion = saml_helper.create_saml_assertion(
+            domain=self.domain_id, subject=subject, issuer=self.issuer,
+            email='meow@cats.com', base64_url_encode=False,
+            private_key_path=key_path,
+            public_key_path=cert_path,
+            seconds_to_expiration=300)
+        resp = self.identity_admin_client.auth_with_saml(
+            saml=assertion, content_type='xml',
+            base64_url_encode=False, new_url=False)
+        self.assertEqual(resp.status_code, 200)
+
+        # Analyze federated user token
+        token_id = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+
+        # Analyze Token
+        # The identity_admin used should have the 'analyze-token' role inorder
+        # to use the analyze token endpoint, else will result in HTTP 403.
+        self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
+            token_id
+        analyze_token_resp = self.identity_admin_client.analyze_token()
+        self.assertEqual(analyze_token_resp.status_code, 200)
+        self.assertSchema(
+            response=analyze_token_resp,
+            json_schema=tokens_json.analyze_token)
+
+        # Impersonate federated user
+        fed_user_name = resp.json()[const.ACCESS][const.USER][const.NAME]
+        impersonation_request_obj = requests.ImpersonateUser(
+            user_name=fed_user_name, idp=self.issuer)
+
+        # Impersonate with identity admin client
+        resp = self.identity_admin_client.impersonate_user(
+            request_data=impersonation_request_obj)
+        self.assertEqual(resp.status_code, 200)
+
+        token_id = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+
+        # Analyze Token
+        self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
+            token_id
+        analyze_token_resp = self.identity_admin_client.analyze_token()
+        self.assertEqual(analyze_token_resp.status_code, 200)
+        self.assertSchema(
+            response=analyze_token_resp,
+            json_schema=tokens_json.analyze_token_fed_user_impersonation)
+
+        # Impersonate with racker client
+        # See https://jira.rax.io/browse/CID-953
+        racker_client = self.generate_racker_client()
+        resp = racker_client.impersonate_user(
+            request_data=impersonation_request_obj)
+        self.assertEqual(resp.status_code, 200)
+        token_id = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+
+        # Analyze Token
+        self.identity_admin_client.default_headers[const.X_SUBJECT_TOKEN] = \
+            token_id
+        analyze_token_resp = self.identity_admin_client.analyze_token()
+        self.assertEqual(analyze_token_resp.status_code, 200)
+        self.assertSchema(
+            response=analyze_token_resp,
+            json_schema=tokens_json.analyze_token_fed_user_impersonation)
 
     def tearDown(self):
         super(TestFedUserImpersonation, self).tearDown()
