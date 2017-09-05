@@ -102,8 +102,6 @@ public interface UserService {
     
     void updateUser(User user) throws IOException, JAXBException;
 
-    User upgradeUserToCloud(User userCloudUpgrade);
-
     /**
      * Updates a user for multifactor. Assumes the passed in user was only modified for multifactor changes.
      *

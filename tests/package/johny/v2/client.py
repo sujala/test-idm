@@ -328,23 +328,6 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         params = {'roleName': role_name}
         return self.request('GET', url, params=params)
 
-    def upgrade_user_to_cloud(self, auth_token, request_object,
-                              requestslib_kwargs=None):
-        headers = {const.X_AUTH_TOKEN: auth_token,
-                   const.ACCEPT: const.CONTENT_TYPE_VALUE.format(const.JSON)}
-        """
-        Upgrade user
-        SEE: https://one.rackspace.com/pages/viewpage.action?title=
-        3.3.x+Demo&spaceKey=auth
-        e.g., groups = [{'name': 'ImAGroup'}]
-        roles = [{'name: 'ImARole'}]
-        """
-        url = self.url + const.UPGRADE_USER_TO_CLOUD_URL
-        return self.request('PUT', url=url,
-                            request_entity=request_object,
-                            requestslib_kwargs=requestslib_kwargs,
-                            headers=headers)
-
     def add_user(self, request_object, requestslib_kwargs=None):
         """Return response object from the add user api call
 

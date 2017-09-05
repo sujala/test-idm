@@ -67,10 +67,6 @@ public class IdentityConfig {
     public static final String FORGOT_PWD_VALID_PORTALS_PROP_NAME = "forgot.password.valid.portals";
     private static final List<String> FORGOT_PWD_VALID_PORTALS_DEFAULT = Collections.EMPTY_LIST;
 
-    public static final String FEATURE_UPGRADE_USER_TO_CLOUD_PROP_NAME = "feature.upgrade.user.to.cloud.enabled";
-    private static final boolean FEATURE_UPGRADE_USER_TO_CLOUD_DEFAULT = false;
-    public static final String UPGRADE_USER_ELIGIBLE_ROLE_PROP = "upgrade.user.to.cloud.eligible.role";
-
     private static final String CLOUD_AUTH_CLIENT_ID = "cloudAuth.clientId";
     public static final String IDENTITY_ACCESS_ROLE_NAMES_PROP = "cloudAuth.accessRoleNames";
     public static final String IDENTITY_IDENTITY_ADMIN_ROLE_NAME_PROP = "cloudAuth.adminRole";
@@ -605,7 +601,6 @@ public class IdentityConfig {
 
         defaults.put(FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_DEFAULT);
         defaults.put(FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, FEATURE_FORGOT_PWD_ENABLED_DEFAULT);
-        defaults.put(FEATURE_UPGRADE_USER_TO_CLOUD_PROP_NAME, FEATURE_UPGRADE_USER_TO_CLOUD_DEFAULT);
         defaults.put(FORGOT_PWD_VALID_PORTALS_PROP_NAME, FORGOT_PWD_VALID_PORTALS_DEFAULT);
         defaults.put(EMAIL_HOST, EMAIL_HOST_DEFAULT);
         defaults.put(EMAIL_PORT, EMAIL_PORT_DEFAULT);
@@ -1710,16 +1705,6 @@ public class IdentityConfig {
         @IdmProp(key = FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME, versionAdded = "3.2.0", description = "Timeout for forgot password tokens")
         public int getForgotPasswordTokenLifetime() {
             return getIntSafely(reloadableConfiguration, FORGOT_PWD_SCOPED_TOKEN_VALIDITY_LENGTH_SECONDS_PROP_NAME);
-        }
-
-        @IdmProp(key = FEATURE_UPGRADE_USER_TO_CLOUD_PROP_NAME, versionAdded = "3.3.0", description = "Whether or not the upgrade user to cloud service is enabled")
-        public boolean isUpgradeUserToCloudEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_UPGRADE_USER_TO_CLOUD_PROP_NAME);
-        }
-
-        @IdmProp(key = UPGRADE_USER_ELIGIBLE_ROLE_PROP, versionAdded = "3.3.0", description = "The role a user must have to be eligible to be upgraded")
-        public String getUpgradeUserEligibleRole() {
-            return getRequiredString(reloadableConfiguration, UPGRADE_USER_ELIGIBLE_ROLE_PROP);
         }
 
         @IdmProp(key = FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, versionAdded = "3.2.0", description = "Whether or not the forgot password flow is enabled")
