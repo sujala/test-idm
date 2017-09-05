@@ -72,6 +72,11 @@ public class LdapApplicationRepository extends LdapGenericRepository<Application
         return getObjects(searchFilterGetOpenstackServices());
     }
 
+    @Override
+    public PaginatorContext<Application> getOpenStackServices(int offset, int limit) {
+        return getObjectsPaged(searchFilterGetOpenstackServices(), offset, limit);
+    }
+
     private Filter searchFilterGetApplications() {
         return new LdapRepository.LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACEAPPLICATION).build();

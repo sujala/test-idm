@@ -136,7 +136,7 @@ public interface Cloud20Service {
 
 	ResponseBuilder deleteRole(HttpHeaders httpHeaders, String authToken, String roleId) ;
 
-	ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String name, Integer marker, Integer limit) ;
+	ResponseBuilder listServices(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String name, Integer marker, Integer limit) ;
 
 	ResponseBuilder addService(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, Service service);
 

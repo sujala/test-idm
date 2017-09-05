@@ -256,6 +256,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     private Paginator<ClientRole> applicationRolePaginator;
 
     @Autowired
+    private Paginator<Application> applicationPaginator;
+
+    @Autowired
     private PrecedenceValidator precedenceValidator;
 
     @Autowired
@@ -3038,12 +3041,13 @@ public class DefaultCloud20Service implements Cloud20Service {
     // KSADM Extension Role Methods
 
     @Override
-    public ResponseBuilder listServices(HttpHeaders httpHeaders, String authToken, String name, Integer marker, Integer limit) {
+    public ResponseBuilder listServices(HttpHeaders httpHeaders, UriInfo uriInfo, String authToken, String name, Integer marker, Integer limit) {
 
         try {
             authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
 
             Iterable<Application> clients;
+            String linkHeader = null;
 
             if (StringUtils.isNotBlank(name)) {
                 Application service;
@@ -3060,11 +3064,17 @@ public class DefaultCloud20Service implements Cloud20Service {
                     clients = Arrays.asList(service);
                 }
             } else {
-                clients = this.applicationService.getOpenStackServices();
+                PaginatorContext<Application> context = this.applicationService.getOpenStackServices(marker, limit);
+                linkHeader = applicationPaginator.createLinkHeader(uriInfo, context);
+                clients = context.getValueList();
             }
 
-            return Response.ok(
-                    jaxbObjectFactories.getOpenStackIdentityExtKsadmnV1Factory().createServices(serviceConverterCloudV20.toServiceList(clients)).getValue());
+            ResponseBuilder responseBuilder = Response.ok(jaxbObjectFactories.getOpenStackIdentityExtKsadmnV1Factory().createServices(serviceConverterCloudV20.toServiceList(clients)).getValue());
+            if (linkHeader != null) {
+                responseBuilder = responseBuilder.header(org.springframework.http.HttpHeaders.LINK, linkHeader);
+            }
+
+            return responseBuilder;
 
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);

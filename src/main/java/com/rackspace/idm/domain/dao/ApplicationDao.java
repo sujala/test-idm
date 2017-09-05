@@ -2,8 +2,6 @@ package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.*;
 
-import java.util.List;
-
 public interface ApplicationDao {
 
     void addApplication(Application client);
@@ -21,4 +19,6 @@ public interface ApplicationDao {
     void updateApplication(Application client);
     
     Iterable<Application> getOpenStackServices();
+
+    PaginatorContext<Application> getOpenStackServices(int offset, int limit);
 }

@@ -13,7 +13,6 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.util.HashHelper;
-import org.apache.commons.collections.IteratorUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -337,6 +336,12 @@ public class DefaultApplicationService implements ApplicationService {
     public Iterable<Application> getOpenStackServices() {
         logger.debug("Getting Open Stack Services");
         return this.applicationDao.getOpenStackServices();
+    }
+
+    @Override
+    public PaginatorContext<Application> getOpenStackServices(int offset, int limit) {
+        logger.debug("Getting OpenStack Services");
+        return this.applicationDao.getOpenStackServices(offset, limit);
     }
 
     @Override
