@@ -183,6 +183,12 @@
         </annotation>
     </element>
 
+    <element name="userGroup" type="RAX-AUTH:UserGroup" />
+    <element name="userGroups" type="RAX-AUTH:UserGroups" />
+    <element name="tenantRoleAssignment" type="RAX-AUTH:TenantRoleAssignment" />
+    <element name="tenantRoleAssignments" type="RAX-AUTH:TenantRoleAssignments" />
+    <element name="roleAssignments" type="RAX-AUTH:RoleAssignments" />
+
     <!-- Complex Types -->
     <complexType name="Types">
         <sequence>
@@ -1155,4 +1161,92 @@
         <attribute name="demoteUserId" type="xsd:string" use="optional" />
     </complexType>
 
+    <complexType name="UserGroup">
+        <attribute name="id" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        An ID uniquely identifying the domain.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute ref="RAX-AUTH:domainId" use="optional" />
+        <attribute name="name" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The name of the domain.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="description" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        A description of the group. Must be less than 255 characters.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+    </complexType>
+
+    <complexType name="UserGroups">
+        <sequence>
+            <element ref="RAX-AUTH:userGroup" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+    </complexType>
+
+    <complexType name="RoleAssignment" abstract="true">
+        <attribute name="roleId" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Id of the role to assign.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <attribute name="roleName" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        Name of the role. Ignored on assignment.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+
+    <complexType name="TenantRoleAssignment">
+        <complexContent>
+            <extension base="RAX-AUTH:RoleAssignment">
+                <attribute name="tenantIds" type="RAX-AUTH:StringList" use="optional">
+                    <annotation>
+                        <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                            <p>
+                                A delimited list of tenant Ids on which to assign the role.
+                            </p>
+                        </xsd:documentation>
+                    </annotation>
+                </attribute>
+            </extension>
+        </complexContent>
+    </complexType>
+
+    <complexType name="TenantRoleAssignments">
+        <sequence>
+            <element ref="RAX-AUTH:tenantRoleAssignment" minOccurs="0" maxOccurs="unbounded"/>
+        </sequence>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
+
+    <complexType name="RoleAssignments">
+        <sequence>
+            <element ref="RAX-AUTH:tenantRoleAssignments" minOccurs="0" maxOccurs="1"/>
+        </sequence>
+        <anyAttribute namespace="##other" processContents="lax"/>
+    </complexType>
 </schema>

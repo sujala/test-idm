@@ -1826,3 +1826,16 @@ schema set object-class (1.3.6.1.4.1.20988.2.2.43) = {
     may-contain
         description
 };
+
+schema set object-class (1.3.6.1.4.1.20988.2.2.44) = {
+    name = rsUserGroup
+    ldap-names = rsUserGroup
+    subclass-of groupofnames
+    kind = structural
+    must-contain
+        rsId
+    may-contain
+        rsDomainId,
+        cn,
+        description
+};

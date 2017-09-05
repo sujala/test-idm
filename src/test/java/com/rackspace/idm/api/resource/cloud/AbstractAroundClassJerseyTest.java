@@ -115,6 +115,15 @@ abstract public class AbstractAroundClassJerseyTest extends InMemoryLdapIntegrat
                     }
                 }
 
+                // Add in the endpoint assignment module json readers/writers
+                for (BeanDefinition bd : scanner.findCandidateComponents("com.rackspace.idm.modules.usergroups.api.resource.json")) {
+                    try {
+                        clientConfig.getClasses().add(Class.forName(bd.getBeanClassName()));
+                    } catch (ClassNotFoundException e) {
+                        // Eat any problems as this is just test setup and is the common pattern by which these are added.
+                    }
+                }
+
                 return new WebAppDescriptor.Builder()
                         .contextListenerClass(org.springframework.web.context.ContextLoaderListener.class)
                         .requestListenerClass(org.springframework.web.context.request.RequestContextListener.class)

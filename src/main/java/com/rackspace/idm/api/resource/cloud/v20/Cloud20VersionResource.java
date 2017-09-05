@@ -8,6 +8,7 @@ import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityProviderConverterCloudV20;
 import com.rackspace.idm.api.resource.cloud.XMLReader;
+import com.rackspace.idm.modules.usergroups.api.resource.CloudUserGroupResource;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.api.serviceprofile.CloudContractDescriptionBuilder;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -53,7 +54,7 @@ public class Cloud20VersionResource {
     @Autowired
     private CloudContractDescriptionBuilder cloudContractDescriptionBuilder;
 
-    private static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
+    public static final String X_AUTH_TOKEN = "X-AUTH-TOKEN";
 
     @Autowired
     private DefaultCloud20Service cloud20Service;
@@ -66,6 +67,9 @@ public class Cloud20VersionResource {
 
     @Autowired
     private EndpointAssignmentRuleResource endpointAssignmentRuleResource;
+
+    @Autowired
+    private CloudUserGroupResource userGroupResource;
 
     @Autowired
     private ExceptionHandler exceptionHandler;
@@ -81,6 +85,8 @@ public class Cloud20VersionResource {
     private static final JAXBContext JAXBCONTEXT_VERSION_CHOICE;
 
     public static final String FEDERATION_IDP_MAPPING_POLICY_FORMAT_ERROR_MESSAGE = "Acceptable media types for IDP mapping policy are: %s";
+
+    public static final String DOMAIN_ID_PATH_PARAM_NAME = "domainId";
 
     static {
         try {
@@ -1458,6 +1464,11 @@ public class Cloud20VersionResource {
     @Path("OS-KSCATALOG/endpointTemplates/RAX-AUTH/rules")
     public EndpointAssignmentRuleResource getEndpointAssignmentRuleResource() {
         return endpointAssignmentRuleResource;
+    }
+
+    @Path("RAX-AUTH/domains/{" + DOMAIN_ID_PATH_PARAM_NAME + "}/groups")
+    public CloudUserGroupResource getUserGroupResource() {
+        return userGroupResource;
     }
 
     protected int validateMarker(Integer offset) {

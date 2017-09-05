@@ -4113,6 +4113,11 @@ rsId: 1
 name: rax_status_restricted
 description: Terminator Rate Limit Group
 
+dn: ou=userGroups,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: userGroups
+
 dn: ou=policies,ou=cloud,o=rackspace,dc=rackspace,dc=com
 objectClass: organizationalUnit
 objectClass: top
