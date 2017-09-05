@@ -137,6 +137,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     public static final String METADATA_NOT_FOUND_ERROR_MESSAGE = "No metadata found for identity provider '%s'.";
 
+    public static final String PREFIXED_IDENTITY_ROLE_ERROR_MESSAGE = "Role prefixed with 'identity:' cannot be deleted";
+    public static final String IDENTITY_USER_TYPE_ROLE_ERROR_MESSAGE = "Identity user type roles cannot be deleted";
+
     @Autowired
     private AuthConverterCloudV20 authConverterCloudV20;
 
@@ -1965,13 +1968,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             ClientRole role = checkAndGetClientRole(roleId);
 
             if(identityConfig.getReloadableConfig().getDeleteRoleAssignedToUser()) {
+                if (IdentityUserTypeEnum.isIdentityUserTypeRoleName(role.getName())) {
+                    throw new ForbiddenException(IDENTITY_USER_TYPE_ROLE_ERROR_MESSAGE);
+                }
                 if (tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(roleId) > 0 || tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(roleId) > 0) {
                     throw new ForbiddenException("Deleting the role associated with one or more users is not allowed");
                 }
-            }
-
-            if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-                throw new ForbiddenException("Role prefixed with 'identity:' cannot be deleted");
+            } else if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
+                throw new ForbiddenException(PREFIXED_IDENTITY_ROLE_ERROR_MESSAGE);
             }
 
             User caller = userService.getUserByAuthToken(authToken);

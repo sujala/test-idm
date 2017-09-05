@@ -18,6 +18,7 @@ import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
@@ -605,10 +606,97 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         def errMsg = String.format("Error code: '%s'; %s", ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE, Validator20.ROLE_NAME_INVALID)
         IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, errMsg)
 
+        when: "Create role with name trailing with a ':'"
+        role.name = "identity:"
+        response = cloud20.createRole(adminToken, role, contentType, accept)
+
+        then:
+        response.status == HttpStatus.SC_BAD_REQUEST
+
+        when: "Delete identity user type role"
+        response = cloud20.deleteRole(adminToken, Constants.USER_MANAGE_ROLE_ID)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultCloud20Service.IDENTITY_USER_TYPE_ROLE_ERROR_MESSAGE)
+
         where:
         contentType                    | accept
         MediaType.APPLICATION_XML_TYPE | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE| MediaType.APPLICATION_JSON_TYPE
+    }
+
+    @Unroll
+    def "Correctly allow deleting 'identity:' prefixed roles base on 'feature.allow.delete.role.assigned.to.use=#flag'"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, flag)
+        def role = v2Factory.createRole(testUtils.getRandomUUID('identity:'))
+        role.serviceId = Constants.IDENTITY_SERVICE_ID
+        def adminToken = utils.getIdentityAdminToken()
+
+        when: "Create role"
+        def response = cloud20.createRole(adminToken, role)
+        def roleEntity = response.getEntity(Role).value
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when: "Delete role"
+        response = cloud20.deleteRole(adminToken, roleEntity.id)
+
+        then:
+        if (flag) {
+            response.status == HttpStatus.SC_NO_CONTENT
+        } else {
+            IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultCloud20Service.PREFIXED_IDENTITY_ROLE_ERROR_MESSAGE )
+        }
+
+        when: "Get role"
+        response = cloud20.getRole(adminToken, roleEntity.id)
+
+        then:
+        if (flag) {
+            response.status == HttpStatus.SC_NOT_FOUND
+        } else {
+            response.status == HttpStatus.SC_OK
+        }
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        flag << [true, false]
+    }
+
+    def "Assert role beginning with 'identity' are not considered 'identity:' prefixed role"() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, flag)
+        def role = v2Factory.createRole(testUtils.getRandomUUID('identity'))
+        role.serviceId = Constants.IDENTITY_SERVICE_ID
+        def adminToken = utils.getIdentityAdminToken()
+
+        when: "Create role"
+        def response = cloud20.createRole(adminToken, role)
+        def roleEntity = response.getEntity(Role).value
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when: "Delete role"
+        response = cloud20.deleteRole(adminToken, roleEntity.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "Get role"
+        response = cloud20.getRole(adminToken, roleEntity.id)
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        cleanup:
+        reloadableConfiguration.reset()
+
+        where:
+        flag << [true, false]
     }
 
     def deleteUserQuietly(user) {
