@@ -1102,12 +1102,13 @@ public class Cloud20VersionResource {
     @Path("OS-KSADM/services")
     public Response listServices(
             @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @QueryParam("name") String name,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit)
         {
-        return cloud20Service.listServices(httpHeaders, authToken, name, validateMarker(marker), validateLimit(limit)).build();
+        return cloud20Service.listServices(httpHeaders, uriInfo, authToken, name, validateMarker(marker), validateLimit(limit)).build();
     }
 
     @POST
