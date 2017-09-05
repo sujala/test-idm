@@ -12,6 +12,7 @@
 import ddt
 from nose.plugins.attrib import attr
 
+from tests.api.utils import func_helper
 from tests.api.v2 import base
 from tests.api.v2.models import responses
 from tests.api.v2.schema import tokens as tokens_json
@@ -40,8 +41,8 @@ class AuthAndValidateTokens(base.TestBaseV2):
         # Create a userAdmin with tenantId
         username = self.generate_random_string(
             pattern=const.USER_ADMIN_PATTERN)
-        domain_id = self.generate_random_string(
-            pattern=const.NUMERIC_DOMAIN_ID_PATTERN)
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
         input_data = {'email': const.EMAIL_RANDOM,
                       'secret_qa': {
                           const.SECRET_QUESTION: self.generate_random_string(
