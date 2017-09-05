@@ -67,16 +67,6 @@ class DevOpsMethods {
         resource.path("devops/token-revocation-record/deletion").accept(accept).type(type).header("X-Auth-Token", token).entity(request).post(ClientResponse)
     }
 
-    def migrateSmsMfaOnUser(token, String userId, MobilePhone phone, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
-        initOnUse()
-        resource.path("devops/users").path(userId).path("multi-factor/setupsms").accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).header("X-Auth-Token", token).entity(phone).post(ClientResponse)
-    }
-
-    def removeSmsMfaFromUser(token, String userId, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE) {
-        initOnUse()
-        resource.path("devops/users").path(userId).path("multi-factor").accept(acceptMediaType.toString()).type(requestContentMediaType.toString()).header("X-Auth-Token", token).delete(ClientResponse)
-    }
-
     def analyzeToken(String authToken, String subjectToken) {
         initOnUse()
         resource.path("devops/tokens/analyze").accept(MediaType.APPLICATION_JSON_TYPE).header(DevOpsResource.X_AUTH_TOKEN, authToken).header(DevOpsResource.X_SUBJECT_TOKEN, subjectToken).get(ClientResponse)

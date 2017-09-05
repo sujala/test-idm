@@ -1,36 +1,27 @@
 package com.rackspace.idm.api.resource.cloud.email;
 
 import com.rackspace.idm.domain.config.IdentityConfig;
-import com.rackspace.idm.domain.dao.ApiDocDao;
 import com.rackspace.idm.domain.entity.ScopeAccess;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.DocumentService;
-import com.rackspace.idm.exception.ForbiddenException;
 import lombok.Setter;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Minutes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.MailPreparationException;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
-import javax.mail.Message;
 import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 @Component
 public class MailTransferAgentClient implements EmailClient {
@@ -120,8 +111,7 @@ public class MailTransferAgentClient implements EmailClient {
 
     @Override
     public boolean sendMultiFactorLockoutOutMessage(User user) {
-        String body = lockedOutEmail.replace(USERNAME, user.getUsername());
-        return sendMfaEmail(user, lockedOutEmailSubject, body, LOCKED_OUT_ERROR_MSG, MFA_LOCKED_OUT_PREFIX);
+        return sendMfaEmail(user, LOCKED_OUT_ERROR_MSG, MFA_LOCKED_OUT_PREFIX);
     }
 
     @Override
@@ -132,8 +122,7 @@ public class MailTransferAgentClient implements EmailClient {
 
     @Override
     public boolean sendMultiFactorEnabledMessage(User user) {
-        String body = enabledEmail.replace(USERNAME, user.getUsername());
-        return sendMfaEmail(user, enabledEmailSubject, body, ENABLED_ERROR_MSG, MFA_ENABLED_PREFIX);
+        return sendMfaEmail(user, ENABLED_ERROR_MSG, MFA_ENABLED_PREFIX);
     }
 
     @Override
@@ -144,8 +133,7 @@ public class MailTransferAgentClient implements EmailClient {
 
     @Override
     public boolean sendMultiFactorDisabledMessage(User user) {
-        String body = disabledEmail.replace(USERNAME, user.getUsername());
-        return sendMfaEmail(user, disabledEmailSubject, body, DISABLED_ERROR_MSG, MFA_DISABLED_PREFIX);
+        return sendMfaEmail(user, DISABLED_ERROR_MSG, MFA_DISABLED_PREFIX);
     }
 
     @Override
@@ -193,56 +181,24 @@ public class MailTransferAgentClient implements EmailClient {
     /**
      *
      * @param user
-     * @param subject
-     * @param body
      * @param errorMsg
      * @return
      * @deprecated Should use new velocity mechanism and email service to send email
      */
     @Deprecated
-    private boolean sendMfaEmail(User user, String subject, String body, String errorMsg, String prefix) {
-        if (identityConfig.getReloadableConfig().useVelocityForMfaEmail()) {
-            //put everything in try block as failure sending email should not be considered failure.
-            try {
-                Map<String, Object> model = new HashMap<String, Object>();
-                model.put(EmailTemplateConstants.MFA_USER_NAME_PROP, user.getUsername());
+    private boolean sendMfaEmail(User user, String errorMsg, String prefix) {
+        //put everything in try block as failure sending email should not be considered failure.
+        try {
+            Map<String, Object> model = new HashMap<String, Object>();
+            model.put(EmailTemplateConstants.MFA_USER_NAME_PROP, user.getUsername());
 
-                //Calc the config. Could reject non-rackspace emails if so configured
-                EmailConfig emailConfig = emailConfigBuilder.buildEmailConfig(Arrays.asList(user.getEmail()), MFA_EMAIL_BASE_DIR, prefix);
-                emailService.sendTemplatedTextEmail(emailConfig, model);
-                return true;
-            } catch (Exception ex) {
-                logger.error(String.format(errorMsg, user.getUsername()), ex);
-                return false;
-            }
-        } else {
-            Session localSession = session;
-            boolean success = true;
-            try {
-                String to = user.getEmail();
-                Assert.notNull(to);
-                Assert.notNull(subject);
-                Assert.notNull(body);
-
-                if (identityConfig.getReloadableConfig().isSendToOnlyRackspaceAddressesEnabled()) {
-                    if (!to.toLowerCase().endsWith(RACKSPACE_EMAIL)) {
-                        throw new ForbiddenException(FORBIDDEN_MESSAGE);
-                    }
-                }
-
-                MimeMessage message = new MimeMessage(localSession);
-                message.setFrom(new InternetAddress(identityConfig.getReloadableConfig().getEmailFromAddress()));
-                message.addRecipient(Message.RecipientType.TO,
-                        new InternetAddress(to));
-                message.setSubject(subject);
-                message.setText(body);
-
-                Transport.send(message);
-            } catch (Exception ex) {
-                logger.error(String.format(errorMsg, user.getUsername()), ex);
-                success = false;
-            }
-            return success;
+            //Calc the config. Could reject non-rackspace emails if so configured
+            EmailConfig emailConfig = emailConfigBuilder.buildEmailConfig(Arrays.asList(user.getEmail()), MFA_EMAIL_BASE_DIR, prefix);
+            emailService.sendTemplatedTextEmail(emailConfig, model);
+            return true;
+        } catch (Exception ex) {
+            logger.error(String.format(errorMsg, user.getUsername()), ex);
+            return false;
         }
     }
 

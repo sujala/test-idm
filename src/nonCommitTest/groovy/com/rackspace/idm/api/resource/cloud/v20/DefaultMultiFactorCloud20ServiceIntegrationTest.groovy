@@ -201,30 +201,6 @@ class DefaultMultiFactorCloud20ServiceIntegrationTest extends RootIntegrationTes
         utils.deleteDomain(domainId)
     }
 
-    def "test OTP feature flag"() {
-        given:
-        def domainId = utils.createDomain()
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdmin(domainId)
-        def userAdminToken = utils.getToken(userAdmin.username)
-
-        getReloadableConfiguration().setProperty("feature.otp.create.enabled.flag", "false")
-
-        when:
-        def name = "test"
-        OTPDevice request = new OTPDevice()
-        request.setName(name)
-        def response = cloud20.addOTPDeviceToUser(userAdminToken, userAdmin.id, request)
-
-        then:
-        response.status == 404
-
-        cleanup:
-        utils.deleteUsers(users)
-        utils.deleteDomain(domainId)
-        getReloadableConfiguration().reset()
-    }
-
     @Unroll
     def "test get OTP device for user, accept = #accept"() {
         given:
