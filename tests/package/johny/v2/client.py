@@ -228,6 +228,15 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                                        const.DEVOPS_PROPS_URL)
         return self.request('GET', url)
 
+    def analyze_token(self):
+        """Analyze Tokens."""
+        parsed_url = urlparse(self.url)
+        url = "{0}://{1}{2}{3}".format(parsed_url.scheme,
+                                       parsed_url.netloc,
+                                       const.DEVOPS_URL,
+                                       const.ANALYZE_TOKEN_URL)
+        return self.request('GET', url)
+
     def create_otp_device(self, user_id, request_object,
                           requestslib_kwargs=None):
         """

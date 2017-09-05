@@ -62,8 +62,9 @@ public class Validator20 {
     public static final String ENDPOINT_TEMPLATE_REQUIRED_ATTR_ERROR_MSG = "'serviceId' and 'RAX-AUTH:assignmentType' are required attributes.";
     public static final String TOKEN_CLOUD_AUTH_EXPIRATION_SECONDS_PROP_NAME = "token.cloudAuthExpirationSeconds";
     public static final String ROLE_NAME_INVALID = "Invalid role name. Naming convention is <product prefix>:<role name> " +
-            "where both the prefix and role name must start with an alphanumeric character.  The rest of the prefix and " +
-            "role name can be comprised of alphanumeric characters, '-', and '_'.";
+            "for product roles and <role name> for global roles. Both the prefix and role name must start with " +
+            "an alphanumeric character. The rest of the prefix and role name can be comprised of alphanumeric " +
+            "characters, '-', and '_'.";
     public static final Pattern ROLE_NAME_REGEX = Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9_\\-]*(?:\\:[a-zA-Z0-9][a-zA-Z0-9_\\-]*)?$");
     public static final String INVALID_IDENTITY_PROVIDER_NAME_ERROR_MSG = "Identity provider name must consist of only alphanumeric, '.', and '-' characters.";
     public static final String DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG = "Identity provider with name %s already exist.";
