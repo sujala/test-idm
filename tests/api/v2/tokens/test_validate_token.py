@@ -3,6 +3,7 @@ import ddt
 from nose.plugins.attrib import attr
 from random import randrange
 
+from tests.api.utils import func_helper
 from tests.api.v2 import base
 from tests.api.v2.schema import tokens as tokens_json
 
@@ -20,7 +21,8 @@ class TestValidateToken(base.TestBaseV2):
         Create users needed for the tests and generate clients for those users.
         """
         super(TestValidateToken, cls).setUpClass()
-        domain_id = cls.generate_random_string(const.DOMAIN_PATTERN)
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=cls.identity_admin_client)
         cls.contact_id = randrange(start=const.CONTACT_ID_MIN,
                                    stop=const.CONTACT_ID_MAX)
         cls.user_admin_client = cls.generate_client(

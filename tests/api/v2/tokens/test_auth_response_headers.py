@@ -41,8 +41,8 @@ class TestAuthResponseHeaders(base.TestBaseV2):
     def create_user_one_call_logic(self):
         username = self.generate_random_string(
             pattern=const.USER_ADMIN_PATTERN)
-        domain_id = self.generate_random_string(
-            pattern=const.NUMERIC_DOMAIN_ID_PATTERN)
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client)
         add_user_obj = factory.get_add_user_request_object_pull(
             user_name=username, domain_id=domain_id)
         resp = self.identity_admin_client.add_user(
@@ -64,7 +64,8 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         """regular"""
         username = self.generate_random_string(
             pattern=const.USER_NAME_PATTERN)
-        domain_id = self.generate_random_string(pattern=const.NUMBERS_PATTERN)
+        domain_id = func_helper.generate_randomized_domain_id(
+            client=self.identity_admin_client, pattern=const.NUMBERS_PATTERN)
         request_object = requests.UserAdd(user_name=username,
                                           domain_id=domain_id)
         resp = self.identity_admin_client.add_user(
