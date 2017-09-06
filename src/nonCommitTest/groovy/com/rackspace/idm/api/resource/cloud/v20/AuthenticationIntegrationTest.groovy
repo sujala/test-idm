@@ -7,14 +7,12 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.RepositoryProfileResolver
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.*
 import com.rackspace.idm.domain.dao.impl.LdapFederatedUserRepository
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.service.IdentityUserService
-import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
+
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -29,7 +27,6 @@ import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
 import javax.xml.datatype.DatatypeFactory
 
-import static com.rackspace.idm.Constants.*
 import static org.mockito.Matchers.anyString
 import static org.mockito.Mockito.when;
 
@@ -55,9 +52,6 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     ApplicationRoleDao applicationRoleDao
-
-    @Autowired(required = false)
-    FederatedUserRepository sqlFederatedUserRepository
 
     @Autowired
     DomainDao domainDao
@@ -531,13 +525,8 @@ class AuthenticationIntegrationTest extends RootIntegrationTest {
     }
 
     def deleteFederatedUser(username) {
-        if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpId(username, Constants.DEFAULT_IDP_ID)
-            if(federatedUser != null) sqlFederatedUserRepository.delete(federatedUser)
-        } else {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
-            if(federatedUser != null) ldapFederatedUserRepository.deleteObject(federatedUser)
-        }
+        def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
+        if(federatedUser != null) ldapFederatedUserRepository.deleteObject(federatedUser)
     }
 
     def void expireToken(scopeAccessToExpire) {

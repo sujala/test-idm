@@ -87,18 +87,6 @@ public class LdapFederatedUserRepository extends LdapFederatedGenericRepository<
     }
 
     @Override
-    public Iterable<Group> getGroupsForFederatedUser(String userId) {
-        // Just need to be implemented in the SQL profile.
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Iterable<FederatedUser> getFederatedUsersByGroupId(String groupId) {
-        // Just need to be implemented in the SQL profile.
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public FederatedUser getUserById(String id) {
         return getObject(searchFilterGetUserById(id), SearchScope.SUB);
     }

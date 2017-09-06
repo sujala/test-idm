@@ -2,8 +2,7 @@ package com.rackspace.idm.domain.security
 
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.RepositoryProfileResolver
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.entity.AuthenticatedByMethodEnum
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
 import com.rackspace.idm.domain.entity.Racker
@@ -20,7 +19,6 @@ import com.rackspace.idm.domain.security.tokenproviders.keystone_keyczar.Keyston
 import com.rackspace.idm.domain.security.tokenproviders.keystone_keyczar.KeystoneAETokenProvider
 import com.rackspace.idm.domain.service.AETokenRevocationService
 import com.rackspace.idm.domain.service.IdentityUserService
-import com.rackspace.idm.domain.service.TokenRevocationService
 import com.rackspace.idm.domain.service.UserService
 import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.configuration.Configuration
@@ -39,7 +37,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
     @Shared IdentityConfig identityConfig
     @Shared Configuration staticConfig
     @Shared Configuration reloadableConfig
-    @Shared RepositoryProfileResolver repositoryProfileResolver
 
     //keyczar encryption stuff
     @Shared KeyCzarCrypterLocator crypterLocator
@@ -70,11 +67,6 @@ abstract class DefaultAETokenServiceBaseIntegrationTest extends Specification {
         staticConfig.setProperty(IdentityConfig.CACHED_AE_TOKEN_TTL_SECONDS_PROP, 60)
 
         reloadableConfig = new PropertiesConfiguration()
-
-        repositoryProfileResolver = new RepositoryProfileResolver()
-        Environment env = Mock(Environment)
-        env.getActiveProfiles() >> SpringRepositoryProfileEnum.SQL
-        repositoryProfileResolver.setEnvironment(env)
 
         identityConfig = new IdentityConfig()
         identityConfig.staticConfiguration = staticConfig

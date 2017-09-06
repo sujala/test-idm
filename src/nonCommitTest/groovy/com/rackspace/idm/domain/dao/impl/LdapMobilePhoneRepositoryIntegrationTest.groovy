@@ -1,10 +1,9 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.MobilePhone
-import com.rackspace.idm.multifactor.PhoneNumberGenerator
 import com.unboundid.ldap.sdk.LDAPInterface
 import com.unboundid.ldap.sdk.persist.LDAPPersister
 import org.junit.Rule
@@ -13,11 +12,7 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
-import testHelpers.V2Factory
-import testHelpers.junit.ConditionalIgnoreRule
-import testHelpers.junit.IgnoreByRepositoryProfile
 
-@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapMobilePhoneRepositoryIntegrationTest extends Specification {
 
@@ -28,9 +23,6 @@ class LdapMobilePhoneRepositoryIntegrationTest extends Specification {
 
     @Autowired
     LdapConnectionPools ldapConnectionPools
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     LDAPInterface con
     LDAPPersister<Application> applicationPersister

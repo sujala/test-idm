@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.dao.GroupDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.Group
@@ -15,8 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
-import testHelpers.junit.ConditionalIgnoreRule
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class UserRepositoryIntegrationTest extends Specification {
@@ -37,9 +35,6 @@ class UserRepositoryIntegrationTest extends Specification {
 
     @Shared def random
     @Shared def username
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     def setup() {
         def randomness = UUID.randomUUID()
@@ -82,7 +77,6 @@ class UserRepositoryIntegrationTest extends Specification {
         e.message == "no such object"
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "getNextId returns UUID"() {
         when:
         def success = false

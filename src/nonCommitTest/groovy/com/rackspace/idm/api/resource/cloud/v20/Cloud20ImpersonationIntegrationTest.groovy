@@ -5,7 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.entity.ImpersonatedScopeAccess
@@ -34,7 +34,6 @@ import org.springframework.beans.factory.annotation.Qualifier
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
-import testHelpers.junit.IgnoreByRepositoryProfile
 import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
@@ -117,7 +116,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonating a disabled user should be possible with token format: #tokenFormat"() {
         given:
         def localDefaultUser = utils.createUser(userAdminToken)
@@ -167,7 +165,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonate federated user as identity admin; tokenFormat = #tokenFormat, request=#requestContentType, accept=#acceptContentType"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, tokenFormat.name())
@@ -364,7 +361,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
      *
      */
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonating user with different token format than impersonator uses impersonator tokenFormat: #impersonatorFormat: #impersonatedFormat; #impersonatedFormat"() {
         given:
         def iAdmin = utils.createUser(specificationServiceAdminToken)
@@ -451,7 +447,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     /* *******************
     UUID only tests
     ************************* */
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "Allow to impersonate federated user"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -481,7 +476,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with existing user token lifetime later than impersonation request"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -515,7 +509,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with existing user token lifetime less than impersonation request"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -560,7 +553,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with only expired user tokens"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -601,7 +593,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonate user with no user tokens - uuid tokens"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -644,7 +635,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         disableUser << [false, true]
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID Only - impersonate federated user impersonates existing impersonated tokens if they are within the requested window"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -701,7 +691,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.reset()
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID Only - a federated user cannot get an impersonated token when authenticating with saml"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -741,7 +730,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.reset()
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID Only - authenticating as a federated user deletes expired federated tokens"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -802,7 +790,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.reset()
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - federated user impersonation - a new impersonation token is only created if one does not exist that expires on or after requested time"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -858,7 +845,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
      * even if the impersonatingUsername on the token matches the federated user's username. These tokens are tokens created before the
      * rsImpersonatingRsId attribute was added and should only be considered valid for provisioned users.
      */
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonating a federated user does not return impersonation tokens for provisioned users with the same username (even if the token does not have the rsImpersonatingRsId attribute)"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -919,7 +905,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.reset()
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID - impersonating a federated user only cleans up tokens for the federated user"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -1026,7 +1011,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         impersonationResponse.status == 404
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonating a provisioned user only cleans up tokens for the provisioned user"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -1158,7 +1142,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonate - impersonation request greater than max racker user token lifetime throws exception"() {
         given:
         def now = new DateTime()
@@ -1203,7 +1186,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         utils.deleteUsers(localDefaultUser)
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonated user gets new token with authBy set to impersonated if no 'impersonation' tokens exist for that user"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -1235,7 +1217,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
         staticIdmConfiguration.reset()
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "impersonation token re-uses existing 'impersonation' user token when possible"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -1363,7 +1344,6 @@ class Cloud20ImpersonationIntegrationTest extends RootConcurrentIntegrationTest 
     /**
      * Impersonation tokens whose linked user tokens are expired, should return a 404 on validation
      */
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "An impersonation token that links to an expired user token should return a 404"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")

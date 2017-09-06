@@ -12,8 +12,6 @@ import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.rackspace.idm.domain.entity.User
-import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
-import com.rackspace.idm.domain.sql.dao.UserRepository
 import com.rackspace.idm.helpers.CloudTestUtils
 import com.unboundid.ldap.sdk.LDAPInterface
 import com.unboundid.ldap.sdk.persist.LDAPPersister
@@ -62,12 +60,6 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
 
     private IdentityProvider commonIdentityProvider;
 
-    @Autowired(required = false)
-    FederatedUserRepository federatedUserRepositorySQL;
-
-    @Autowired(required = false)
-    UserRepository userRepositorySQL;
-
     def setupSpec() {
     }
 
@@ -111,9 +103,6 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
             federatedUserLdapHelper.deleteDirect(expectedDn) //delete this in case the ldap entry is not set correctly
             federatedUserLdapHelper.deleteDirect(retrievedEndUser)
             //delete this in case the uniqueId is NOT the expected one
-        }
-        if (federatedUserRepositorySQL != null) {
-            federatedUserRepositorySQL.delete(fedUser.id)
         }
     }
 
@@ -199,9 +188,6 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
             federatedUserLdapHelper.deleteDirect(expectedFederatedUserDn)
             provisionedUserLdapHelper.deleteDirect(expectedProvisionedUserDn)
         }
-        if (federatedUserRepositorySQL != null) {
-            federatedUserRepositorySQL.delete(fedUser.id)
-        }
         domainDao.deleteDomain(domainId)
     }
 
@@ -253,19 +239,9 @@ class LdapIdentityUserRepositoryIntegrationTest extends Specification {
         if (ldapConnectionPools != null) {
             provisionedUserLdapHelper.deleteDirect(provisionedDisabledUser)
         }
-        if (userRepositorySQL != null) {
-            userRepositorySQL.delete(provisionedDisabledUser.id)
-        }
         endUserList.each {
             if (ldapConnectionPools != null) {
                 federatedUserLdapHelper.deleteDirect(it)
-            }
-            if (federatedUserRepositorySQL != null) {
-                if (it instanceof FederatedUser) {
-                    federatedUserRepositorySQL.delete(it.id)
-                } else {
-                    userRepositorySQL.delete(it.id)
-                }
             }
         }
         groupDao.deleteGroup(group.groupId)

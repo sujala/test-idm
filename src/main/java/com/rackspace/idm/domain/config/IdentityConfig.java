@@ -75,7 +75,6 @@ public class IdentityConfig {
     public static final String IDENTITY_USER_MANAGE_ROLE_NAME_PROP = "cloudAuth.userManagedRole";
     public static final String IDENTITY_DEFAULT_USER_ROLE_NAME_PROP = "cloudAuth.userRole";
     public static final String IDENTITY_PROVISIONED_TOKEN_FORMAT = "feature.provisioned.defaultTokenFormat";
-    public static final TokenFormat IDENTITY_PROVISIONED_TOKEN_SQL_OVERRIDE = TokenFormat.AE;
     public static final String PROPERTY_RELOADABLE_PROPERTY_TTL_PROP_NAME = "reloadable.properties.ttl.seconds";
     public static final String GROUP_DOMAINID_DEFAULT = "group.domainId.default";
     public static final String TENANT_DOMAINID_DEFAULT = "tenant.domainId.default";
@@ -90,7 +89,6 @@ public class IdentityConfig {
      * override property {@link #IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG}
      */
     public static final String IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP = "feature.federated.provider.defaultTokenFormat";
-    public static final String IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_SQL_OVERRIDE = "feature.federated.provider.defaultTokenFormat";
 
     public static final String FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME = "feature.federated.domain.tokenLifetime.max";
     public static final int FEDERATED_DOMAIN_USER_MAX_TOKEN_LIFETIME_DEFAULT = 86400;
@@ -119,13 +117,10 @@ public class IdentityConfig {
      * is used.
      */
     public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX = "federated.provider.tokenFormat";
-    public static final TokenFormat IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE = TokenFormat.AE;
     public static final String IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG = IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_PREFIX + ".%s";
     private static final String KEYCZAR_DN_CONFIG = "feature.KeyCzarCrypterLocator.ldap.dn";
     public static final String FEATURE_AE_TOKENS_ENCRYPT = "feature.ae.tokens.encrypt";
-    public static final boolean FEATURE_AE_TOKENS_ENCRYPT_SQL_OVERRIDE = true;
     public static final String FEATURE_AE_TOKENS_DECRYPT = "feature.ae.tokens.decrypt";
-    public static final boolean FEATURE_AE_TOKENS_DECRYPT_SQL_OVERRIDE = true;
 
     //OPTIONAL PROPERTIES
     private static final boolean REQUIRED = true;
@@ -385,22 +380,6 @@ public class IdentityConfig {
     public static final String NAST_TENANT_PREFIX_PROP = "nast.tenant.prefix";
     public static final String NAST_TENANT_PREFIX_DEFAULT = "MossoCloudFS_";
 
-    /**
-     * SQL config properties
-     */
-    private static final String SQL_DRIVER_CLASS_NAME_PROP = "sql.driverClassName";
-    private static final String SQL_URL_PROP = "sql.url";
-    private static final String SQL_USERNAME_PROP = "sql.username";
-    private static final String SQL_PASSWORD_PROP = "sql.password";
-    private static final String SQL_INITIAL_SIZE_PROP = "sql.initialSize";
-    private static final int SQL_INITIAL_SIZE_DEFAULT = 2;
-    private static final String SQL_MAX_ACTIVE_PROP = "sql.maxActive";
-    private static final int SQL_MAX_ACTIVE_DEFAULT = 10;
-    private static final String SQL_MAX_IDLE_PROP = "sql.maxIdle";
-    private static final int SQL_MAX_IDLE_DEFAULT = 5;
-    private static final String SQL_MIN_IDLE_PROP = "sql.minIdle";
-    private static final int SQL_MIN_IDLE_DEFAULT = 3;
-
     /* ************************
     FEEDS Connection Props. Feed calls are asynchronous so a larger default timeout is acceptable
      ************************** */
@@ -439,12 +418,6 @@ public class IdentityConfig {
      */
     public static final String FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP = "feeds.on.use.eviction.validate.after.ms";
     public static final int FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_DEFAULT = 10000;
-
-    /**
-     * SQL debug property
-     */
-    private static final String SQL_SHOW_SQL_PROP = "sql.showSql";
-    private static final Boolean SQL_SHOW_DEFAULT = Boolean.FALSE;
 
     private static final String LDAP_SERVER_LIST_PROP = "ldap.serverList";
     private static final String LDAP_SERVER_USE_SSL_PROP = "ldap.server.useSSL";
@@ -512,9 +485,6 @@ public class IdentityConfig {
     @Autowired
     private Configuration reloadableConfiguration;
 
-    @Autowired
-    private RepositoryProfileResolver profileResolver;
-
     @Lazy
     @Autowired
     private IdentityPropertyService identityPropertyService;
@@ -571,11 +541,6 @@ public class IdentityConfig {
         defaults.put(SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
-        defaults.put(SQL_SHOW_SQL_PROP, SQL_SHOW_DEFAULT);
-        defaults.put(SQL_INITIAL_SIZE_PROP, SQL_INITIAL_SIZE_DEFAULT);
-        defaults.put(SQL_MAX_ACTIVE_PROP, SQL_MAX_ACTIVE_DEFAULT);
-        defaults.put(SQL_MAX_IDLE_PROP, SQL_MAX_IDLE_DEFAULT);
-        defaults.put(SQL_MIN_IDLE_PROP, SQL_MIN_IDLE_DEFAULT);
         defaults.put(FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_DEFAULT);
         defaults.put(FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP, FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_DEFAULT);
         defaults.put(FEATURE_CACHE_AE_TOKENS_PROP, FEATURE_CACHE_AE_TOKENS_DEFAULT);
@@ -752,8 +717,6 @@ public class IdentityConfig {
 
         verifyAndLogStaticProperty(EXPOSE_V11_ADD_BASE_URL_PROP, OPTIONAL);
 
-        verifyAndLogStaticProperty(SQL_DRIVER_CLASS_NAME_PROP, REQUIRED);
-        verifyAndLogStaticProperty(SQL_URL_PROP, REQUIRED);
 
         verifyAndLogStaticProperty(LDAP_SERVER_LIST_PROP, REQUIRED);
         verifyAndLogStaticProperty(LDAP_SERVER_USE_SSL_PROP, REQUIRED);
@@ -1014,11 +977,7 @@ public class IdentityConfig {
                 return tokenFormat;
             }
         }
-        if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            return TokenFormat.AE;
-        } else {
-            return TokenFormat.UUID;
-        }
+        return TokenFormat.UUID;
     }
 
     /**
@@ -1170,9 +1129,6 @@ public class IdentityConfig {
 
         @IdmProp(key = IDENTITY_PROVISIONED_TOKEN_FORMAT, description = "Defines the default token format for provisioned users tokens.", versionAdded = "2.12.0")
         public TokenFormat getIdentityProvisionedTokenFormat() {
-            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                return IDENTITY_PROVISIONED_TOKEN_SQL_OVERRIDE;
-            }
             return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_PROVISIONED_TOKEN_FORMAT));
         }
 
@@ -1263,51 +1219,6 @@ public class IdentityConfig {
         @IdmProp(key = RACKER_IMPERSONATE_ROLE_NAME_PROP, description = "The group name in EDir to determine whether racker has authorization to impersonate", versionAdded = "2.3.0")
         public String getRackerImpersonateRoleName() {
             return getStringSafely(staticConfiguration, RACKER_IMPERSONATE_ROLE_NAME_PROP);
-        }
-
-        @IdmProp(key = SQL_DRIVER_CLASS_NAME_PROP, versionAdded = "3.0.0")
-        public String getSqlDriverClassName() {
-            return getStringSafely(staticConfiguration, SQL_DRIVER_CLASS_NAME_PROP);
-        }
-
-        @IdmProp(key = SQL_URL_PROP, versionAdded = "3.0.0")
-        public String getSqlUrl() {
-            return getStringSafely(staticConfiguration, SQL_URL_PROP);
-        }
-
-        @IdmProp(key = SQL_USERNAME_PROP, versionAdded = "3.0.0")
-        public String getSqlUsername() {
-            return getStringSafely(staticConfiguration, SQL_USERNAME_PROP);
-        }
-
-        @IdmProp(key = SQL_PASSWORD_PROP, versionAdded = "3.0.0")
-        public String getSqlPassword() {
-            return getStringSafely(staticConfiguration, SQL_PASSWORD_PROP);
-        }
-
-        @IdmProp(key = SQL_SHOW_SQL_PROP, versionAdded = "3.0.0")
-        public Boolean getSqlShowSql() {
-            return getBooleanSafely(staticConfiguration, SQL_SHOW_SQL_PROP);
-        }
-
-        @IdmProp(key = SQL_INITIAL_SIZE_PROP, versionAdded = "3.0.0")
-        public int getSqlInitialSize() {
-            return getIntSafely(staticConfiguration, SQL_INITIAL_SIZE_PROP);
-        }
-
-        @IdmProp(key = SQL_MAX_ACTIVE_PROP, versionAdded = "3.0.0")
-        public int getSqlMaxActive() {
-            return getIntSafely(staticConfiguration, SQL_MAX_ACTIVE_PROP);
-        }
-
-        @IdmProp(key = SQL_MAX_IDLE_PROP, versionAdded = "3.0.0")
-        public int getSqlMaxIdle() {
-            return getIntSafely(staticConfiguration, SQL_MAX_IDLE_PROP);
-        }
-
-        @IdmProp(key = SQL_MIN_IDLE_PROP, versionAdded = "3.0.1")
-        public int getSqlMinIdle() {
-            return getIntSafely(staticConfiguration, SQL_MIN_IDLE_PROP);
         }
 
         /**
@@ -1517,26 +1428,20 @@ public class IdentityConfig {
         }
 
         public TokenFormat getIdentityFederationRequestTokenFormatForIdp(String idpLabeledUri) {
-            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                return IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE;
-            }
             return convertToTokenFormat(reloadableConfiguration.getString(String.format(IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_OVERRIDE_PROP_REG, idpLabeledUri), "${" + IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP + "}"));
         }
 
         @IdmProp(key = IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, description = "When an override property does not exist for a given federated provider, this determines the token format to use for that provide's federated users. AE | UUID", versionAdded = "2.13.0")
         public TokenFormat getIdentityFederatedUserDefaultTokenFormat() {
-            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                return IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE;
-            }
             return convertToTokenFormat(getStringSafely(reloadableConfiguration, IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP));
         }
 
-        @IdmProp(key = GROUP_DOMAINID_DEFAULT, description = "Default domain_id when creating a group in sql", versionAdded = "3.0.0")
+        @IdmProp(key = GROUP_DOMAINID_DEFAULT, description = "Default domain_id when creating a group", versionAdded = "3.0.0")
         public String getGroupDefaultDomainId() {
             return getStringSafely(reloadableConfiguration, GROUP_DOMAINID_DEFAULT);
         }
 
-        @IdmProp(key = TENANT_DOMAINID_DEFAULT, description = "Default domain_id when creating a tenant in sql", versionAdded = "3.0.0")
+        @IdmProp(key = TENANT_DOMAINID_DEFAULT, description = "Default domain_id when creating a tenant", versionAdded = "3.0.0")
         public String getTenantDefaultDomainId() {
             return getStringSafely(reloadableConfiguration, TENANT_DOMAINID_DEFAULT);
         }
@@ -1744,17 +1649,11 @@ public class IdentityConfig {
 
         @IdmProp(key = FEATURE_AE_TOKENS_ENCRYPT, versionAdded = "3.4.0", description = "Whether or not new AE Tokens can be issued. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0")
         public boolean getFeatureAETokensEncrypt() {
-            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                return FEATURE_AE_TOKENS_ENCRYPT_SQL_OVERRIDE;
-            }
             return getBooleanSafely(reloadableConfiguration, FEATURE_AE_TOKENS_ENCRYPT);
         }
 
         @IdmProp(key = FEATURE_AE_TOKENS_DECRYPT, versionAdded = "3.4.0", description = "Whether or not existing AE Tokens can be received. Was added as static prop in 2.12.0, but switched from to reloadable prop in version 3.4.0")
         public boolean getFeatureAETokensDecrypt() {
-            if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                return FEATURE_AE_TOKENS_DECRYPT_SQL_OVERRIDE;
-            }
             return getFeatureAETokensEncrypt() || reloadableConfiguration.getBoolean(FEATURE_AE_TOKENS_DECRYPT);
         }
 

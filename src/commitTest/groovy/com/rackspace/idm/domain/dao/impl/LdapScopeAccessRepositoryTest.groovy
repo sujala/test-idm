@@ -1,10 +1,8 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import org.junit.Rule
 import testHelpers.RootServiceTest
-import testHelpers.junit.ConditionalIgnoreRule
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,11 +11,7 @@ import testHelpers.junit.IgnoreByRepositoryProfile
  * Time: 11:35 AM
  * To change this template use File | Settings | File Templates.
  */
-@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 class LdapScopeAccessRepositoryTest extends RootServiceTest {
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     def setup () {
         scopeAccessDao = new LdapScopeAccessRepository();

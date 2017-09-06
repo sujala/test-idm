@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
-import testHelpers.junit.ConditionalIgnoreRule
 
 import javax.ws.rs.core.MediaType
 
@@ -60,9 +59,6 @@ class RootIntegrationTest extends Specification {
     @Shared SingletonMockUserManagement mockUserManagement = SingletonMockUserManagement.getInstance()
 
     @Shared ClientAndServer cloudFeedsMock;
-
-    @Rule
-    public ConditionalIgnoreRule conditionalIgnoreRule = new ConditionalIgnoreRule()
 
     def mediaTypeContext
 

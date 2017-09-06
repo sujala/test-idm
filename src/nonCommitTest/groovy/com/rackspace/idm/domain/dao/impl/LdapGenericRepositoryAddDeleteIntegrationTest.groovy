@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.exception.DuplicateException
 import com.unboundid.ldap.sdk.Attribute
@@ -17,8 +17,6 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
-import testHelpers.junit.ConditionalIgnoreRule
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 import static org.mockito.Mockito.mock
 import static org.mockito.Mockito.when
@@ -29,11 +27,7 @@ import static org.mockito.Mockito.when
  *
  */
 @ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/domain/dao/impl/LdapGenericRepositoryAddDeleteIntegrationTest-context.xml"])
-@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 class LdapGenericRepositoryAddDeleteIntegrationTest extends Specification {
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     /**
      * Random string generated for entire test class. Same for all feature methods.

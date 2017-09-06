@@ -40,7 +40,6 @@ import org.junit.Rule
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import spock.lang.Shared
 import spock.lang.Specification
-import testHelpers.junit.ConditionalIgnoreRule
 
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.UriBuilder
@@ -190,9 +189,6 @@ class RootServiceTest extends Specification {
     @Shared def defaultImpersonationExpirationSeconds = 3600 * defaultImpersonationHours
     @Shared def defaultCloudAuthExpirationSeconds = 3600 * defaultCloudAuthExpirationHours
     @Shared def defaultCloudAuthRackerExpirationSeconds = 3600 * defaultCloudAuthRackerExpirationHours
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     /*
         Mock Converters

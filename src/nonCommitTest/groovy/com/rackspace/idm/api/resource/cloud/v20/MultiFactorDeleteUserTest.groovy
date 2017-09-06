@@ -4,7 +4,7 @@ import com.rackspace.identity.multifactor.providers.UserManagement
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoPhone
 import com.rackspace.identity.multifactor.providers.duo.domain.DuoUser
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.dao.MobilePhoneDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.service.ScopeAccessService
@@ -15,7 +15,6 @@ import org.apache.commons.configuration.Configuration
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 /**
  * Tests to verify that when a user is deleted through the API,

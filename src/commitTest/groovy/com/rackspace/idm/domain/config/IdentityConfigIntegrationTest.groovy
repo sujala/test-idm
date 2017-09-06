@@ -17,8 +17,6 @@ import spock.lang.Unroll
 import testHelpers.SingletonConfiguration
 import testHelpers.SingletonReloadableConfiguration
 import testHelpers.SingletonTestFileConfiguration
-import testHelpers.junit.ConditionalIgnoreRule
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 @ContextConfiguration(classes=[SingletonTestFileConfiguration.class
         , IdentityConfig.class
@@ -28,14 +26,8 @@ class IdentityConfigIntegrationTest  extends Specification {
     @Autowired
     private IdentityConfig config;
 
-    @Autowired
-    private RepositoryProfileResolver profileResolver
-
     @Shared SingletonConfiguration staticIdmConfiguration = SingletonConfiguration.getInstance();
     @Shared SingletonReloadableConfiguration reloadableConfiguration = SingletonReloadableConfiguration.getInstance();
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     String testIpdLabeledUriAe = "http://www.test.com/ae"
     String testIpdLabeledUriUUID = "http://www.test.com/uuid"
@@ -154,11 +146,7 @@ class IdentityConfigIntegrationTest  extends Specification {
         format = config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(testIpdLabeledUriUUID)
 
         then: "get UUID token format back"
-        if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            assert format == TokenFormat.AE
-        } else {
-            assert format == TokenFormat.UUID
-        }
+        assert format == TokenFormat.UUID
 
         when: "override for that idp does not exist"
         reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEDERATED_TOKEN_FORMAT_DEFAULT_PROP, TokenFormat.UUID.name())
@@ -168,21 +156,8 @@ class IdentityConfigIntegrationTest  extends Specification {
         def formatDefAe = config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp(testIpdLabeledUriNone)
 
         then: "the default property is used"
-        if(profileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            assert formatDefUUID == TokenFormat.AE
-        } else {
-            formatDefUUID == TokenFormat.UUID
-        }
+        formatDefUUID == TokenFormat.UUID
         formatDefAe == TokenFormat.AE
-    }
-
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.LDAP)
-    def "force AE token use for SQL profile"() {
-        expect:
-        config.getReloadableConfig().getFeatureAETokensDecrypt() == IdentityConfig.FEATURE_AE_TOKENS_DECRYPT_SQL_OVERRIDE
-        config.getReloadableConfig().getFeatureAETokensEncrypt() == IdentityConfig.FEATURE_AE_TOKENS_ENCRYPT_SQL_OVERRIDE
-        config.getStaticConfig().getIdentityProvisionedTokenFormat() == IdentityConfig.IDENTITY_PROVISIONED_TOKEN_SQL_OVERRIDE
-        config.getReloadableConfig().getIdentityFederationRequestTokenFormatForIdp() == IdentityConfig.IDENTITY_FEDERATED_IDP_TOKEN_FORMAT_SQL_OVERRIDE
     }
 
     @SingleTestConfiguration
@@ -194,10 +169,6 @@ class IdentityConfigIntegrationTest  extends Specification {
         @Bean
         public IdentityPropertyService identityPropertyService () {
             return  Mockito.mock(IdentityPropertyService.class);
-        }
-        @Bean
-        public RepositoryProfileResolver repositoryProfileResolver () {
-            return  Mockito.mock(RepositoryProfileResolver.class);
         }
     }
 }

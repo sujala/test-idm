@@ -5,21 +5,15 @@ import org.apache.commons.configuration.Configuration;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import testHelpers.junit.java.ConditionalIgnoreRule;
-import testHelpers.junit.java.IgnoreByRepositoryProfile;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 public class LdapConfigurationTest {
     Configuration configuration;
     LdapConfiguration ldapConfiguration;
     IdentityConfig identityConfig;
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule();
 
     @Before
     public void setUp() throws Exception {

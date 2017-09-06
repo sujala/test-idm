@@ -1,19 +1,17 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Endpoint
 import org.openstack.docs.identity.api.v2.EndpointList
 import org.openstack.docs.identity.api.v2.ServiceCatalog
-import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 import javax.ws.rs.core.MediaType
 
@@ -99,7 +97,6 @@ class Cloud20EndpointIntegrationTest extends RootIntegrationTest {
         utils.disableAndDeleteEndpointTemplate(endpointTemplate.id.toString())
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "endpoints returned for disabled"() {
         given:
         // NOTE: This will fail with AE tokens. AE tokens are revoked when user is disabled.
