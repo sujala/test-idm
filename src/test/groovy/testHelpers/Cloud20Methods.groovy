@@ -1049,7 +1049,7 @@ class Cloud20Methods {
         resource.path(path20).path(OS_KSADM).path("services").header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).entity(service).post(ClientResponse)
     }
 
-    def listServices(String token, MediaType accept=APPLICATION_XML_TYPE, String marker = "0", String limit = "1000", String name = null) {
+    def listServices(String token, MediaType accept=APPLICATION_XML_TYPE, String name = null, String marker = "0", String limit = "1000") {
         initOnUse()
         WebResource webResource = resource.path(path20).path(OS_KSADM).path("services")
         def queryParams = new MultivaluedMapImpl()

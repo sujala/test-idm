@@ -87,9 +87,6 @@ class Cloud20Utils {
     @Autowired
     TenantRoleDao tenantRoleDao
 
-    @Shared
-    def serviceAdminToken
-
     @PostConstruct
     def init() {
         methods.init()
@@ -351,14 +348,17 @@ class Cloud20Utils {
 
 
     def getServiceAdminToken() {
-        if (serviceAdminToken == null) {
-            serviceAdminToken = getToken(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PASSWORD)
-        }
-        return serviceAdminToken
+        return getToken(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PASSWORD)
     }
 
+    /**
+     * Deprecated. Removing the caching of tokens because causing sporadic failures as we don't handle retries on
+     * failure.
+     *
+     * @return
+     */
     def resetServiceAdminToken() {
-        serviceAdminToken = getToken(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PASSWORD)
+        // No-Op
     }
 
     def getIdentityAdminToken() {

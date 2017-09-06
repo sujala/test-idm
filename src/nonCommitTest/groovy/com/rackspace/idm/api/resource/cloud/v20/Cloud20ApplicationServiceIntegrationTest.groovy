@@ -22,47 +22,47 @@ class Cloud20ApplicationServiceIntegrationTest extends RootIntegrationTest {
         def numberOfServices = applications.iterator().size()
 
         when: 'list services with limit=1'
-        def response = cloud20.listServices(utils.getServiceAdminToken(), contentType, '0', '1')
+        def response = cloud20.listServices(utils.getServiceAdminToken(), contentType, null, '0', '1')
         def serviceList = getEntity(response, ServiceList)
 
         then: 'verify response has only 1 service in the list'
         serviceList.service.size() == 1
 
         when: 'list services with limit=5'
-        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, '0', '5')
+        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, null, '0', '5')
         serviceList = getEntity(response, ServiceList)
 
         then: 'verify response has only 5 service in the list'
         serviceList.service.size() == 5
 
         when: 'list services with limit=0'
-        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, '0', '0')
+        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, null, '0', '0')
         serviceList = getEntity(response, ServiceList)
 
         then: 'verify response defaults to only 25 service in the list'
         serviceList.service.size() == 25
 
         when: 'list services with limit="null"'
-        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, '0', null)
+        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, null, '0', null)
 
         then: 'verify response defaults to only 25 service in the list'
         serviceList.service.size() == 25
 
         when: 'list services with limit=1000'
-        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, '0', '1000')
+        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, null, '0', '1000')
         serviceList = getEntity(response, ServiceList)
 
         then: 'verify response has all the existing services'
         serviceList.service.size() == numberOfServices
 
         when: 'list services with limit=""'
-        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, '0', '')
+        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, null, '0', '')
 
         then: 'returns bad request'
         response.status == 400
 
         when: 'list services with limit="badRequest"'
-        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, '0', 'badRequest')
+        response = cloud20.listServices(utils.getServiceAdminToken(), contentType, null, '0', 'badRequest')
 
         then: 'returns bad request'
         response.status == 400
