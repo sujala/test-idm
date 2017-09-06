@@ -760,25 +760,25 @@ public class Validator20 {
         return (X509Certificate) CertificateFactory.getInstance("X.509").generateCertificate(new ByteArrayInputStream(certBytes));
     }
 
-    private void throwBadRequestForEmptyAttribute(String attrName) {
+    public void throwBadRequestForEmptyAttribute(String attrName) {
         String errMsg = String.format(EMPTY_ATTR_MESSAGE, attrName);
         logger.debug(errMsg);
         throw new BadRequestException(errMsg);
     }
 
-    private void throwBadRequestForMissingAttr(String attrName) {
+    public void throwBadRequestForMissingAttr(String attrName) {
         String errMsg = String.format(REQUIRED_ATTR_MESSAGE, attrName);
         logger.debug(errMsg);
         throw new BadRequestException(errMsg);
     }
 
-    private void throwBadRequestForMissingAttrWithErrorCode(String attrName) {
+    public void throwBadRequestForMissingAttrWithErrorCode(String attrName) {
         String errMsg = String.format(REQUIRED_ATTR_MESSAGE, attrName);
         logger.debug(errMsg);
         throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE);
     }
 
-    private void throwBadRequestForProvidedAttrWithErrorCode(String attrName) {
+    public void throwBadRequestForProvidedAttrWithErrorCode(String attrName) {
         String errMsg = String.format(INVALID_ATTR_MESSAGE, attrName);
         logger.warn(errMsg);
         throw new BadRequestException(errMsg, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
@@ -790,26 +790,26 @@ public class Validator20 {
         }
     }
 
-    private void validateStringNotNullWithMaxLength(String propertyName, String value, int maxLength) {
+    public void validateStringNotNullWithMaxLength(String propertyName, String value, int maxLength) {
         if (StringUtils.isBlank(value)) {
             throwBadRequestForMissingAttrWithErrorCode(propertyName);
         }
         validateStringMaxLength(propertyName, value, maxLength);
     }
 
-    private void validateAttributeisNull(String propertyName, Object value) {
+    public void validateAttributeisNull(String propertyName, Object value) {
         if (value != null) {
             throwBadRequestForProvidedAttrWithErrorCode(propertyName);
         }
     }
 
-    private void validateAttributeForUpdate(String propertyName, String value) {
+    public void validateAttributeForUpdate(String propertyName, String value) {
         if (value != null && value.isEmpty()) {
             throwBadRequestForEmptyAttribute(propertyName);
         }
     }
 
-    private void validateStringMaxLength(String propertyName, String value, int maxLength) {
+    public void validateStringMaxLength(String propertyName, String value, int maxLength) {
         if (StringUtils.isNotBlank(value) && value.length() > maxLength) {
            throw new BadRequestException(generateLengthExceededMsg(propertyName, maxLength), ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED);
         }

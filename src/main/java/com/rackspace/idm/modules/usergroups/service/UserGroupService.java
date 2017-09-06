@@ -59,7 +59,7 @@ public interface UserGroupService {
     UserGroup checkAndGetGroupById(String groupId);
 
     /**
-     * Retrives the group with the specified groupId under the specified domain. If a group with the specified groupId
+     * Retrieves the group with the specified groupId under the specified domain. If a group with the specified groupId
      * exists, but lives in a different domain than the one specified, will return null.
      *
      * @param domainId
@@ -70,7 +70,7 @@ public interface UserGroupService {
     UserGroup getGroupByIdForDomain(String domainId, String groupId);
 
     /**
-     * Retrives the group with the specified groupId under the specified domain. If no such group exists, throws
+     * Retrieves the group with the specified groupId under the specified domain. If no such group exists, throws
      * NotFoundException.
      *
      * @param domainId
@@ -80,4 +80,14 @@ public interface UserGroupService {
      * @return
      */
     UserGroup checkAndGetGroupByIdForDomain(String domainId, String groupId);
+
+    /**
+     * Retrieves the group with the specified group name under the specified domain. If no such group exists, returns null
+     *
+     * @param domainId
+     * @param groupName
+     *
+     * @return
+     */
+    UserGroup getGroupByDomainIdAndName(String domainId, String groupName);
 }
