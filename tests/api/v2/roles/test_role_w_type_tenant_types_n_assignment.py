@@ -124,12 +124,13 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
                 if role[const.RAX_AUTH_ROLE_TYPE] == const.RCN:
                     self.assertIn(const.NS_TYPES, role)
                     self.assertEqual(role[const.RAX_AUTH_ASSIGNMENT],
-                                     const.GLOBAL.upper())
+                                     const.ROLE_ASSIGNMENT_TYPE_GLOBAL)
                 else:
                     self.assertNotIn(const.NS_TYPES, role)
                     self.assertIn(role[const.RAX_AUTH_ASSIGNMENT],
-                                  [const.BOTH, const.TENANT.upper(),
-                                   const.GLOBAL.upper()])
+                                  [const.ROLE_ASSIGNMENT_TYPE_BOTH,
+                                   const.ROLE_ASSIGNMENT_TYPE_TENANT,
+                                   const.ROLE_ASSIGNMENT_TYPE_GLOBAL])
         else:
             self.assertSchema(response=list_resp,
                               json_schema=roles_json.list_roles)

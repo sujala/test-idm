@@ -39,12 +39,12 @@ class TestAddUser(base.TestBaseV2):
             additional_input_data={
                 'domain_id': domain_id,
                 'user_name': sub_user_name})
+        cls.add_input = {'domain_id': const.DOMAIN_TEST}
+        cls.add_schema_fields = [const.NS_PASSWORD]
 
     def setUp(self):
         super(TestAddUser, self).setUp()
         self.user_ids = []
-        self.add_input = {'domain_id': const.DOMAIN_TEST}
-        self.add_schema_fields = [const.NS_PASSWORD]
 
     @ddt.file_data('data_add_user_admin_user.json')
     def test_add_user_admin_user(self, test_data):

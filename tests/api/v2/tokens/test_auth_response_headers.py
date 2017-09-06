@@ -36,8 +36,6 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         self.tenant_ids = []
         self.domain_ids = []
         self.role_ids = []
-        self.one_call_user_info = self.create_user_one_call_logic()
-        self.user_info = self.create_user()
 
     def create_user_one_call_logic(self):
         username = self.generate_random_string(
@@ -158,9 +156,10 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         - auth with usernane/password
         - tenant_id is default tenant
         """
-        username = self.one_call_user_info['username']
-        password = self.one_call_user_info['password']
-        user_id = self.one_call_user_info['user_id']
+        one_call_user_info = self.create_user_one_call_logic()
+        username = one_call_user_info['username']
+        password = one_call_user_info['password']
+        user_id = one_call_user_info['user_id']
         apikey = self.get_user_apikey(user_id=user_id)
 
         auth_resp, secret = self.make_auth_call(
@@ -232,11 +231,12 @@ class TestAuthResponseHeaders(base.TestBaseV2):
     @ddt.unpack
     def test_auth_with_mosso_tenant(self, auth_type, with_tenant, use_mfa):
 
-        username = self.one_call_user_info['username']
-        password = self.one_call_user_info['password']
-        user_id = self.one_call_user_info['user_id']
+        one_call_user_info = self.create_user_one_call_logic()
+        username = one_call_user_info['username']
+        password = one_call_user_info['password']
+        user_id = one_call_user_info['user_id']
         apikey = self.get_user_apikey(user_id=user_id)
-        tenant_id = self.one_call_user_info['tenant_id']
+        tenant_id = one_call_user_info['tenant_id']
 
         auth_resp, secret = self.make_auth_call(
             use_mfa=use_mfa, auth_type=auth_type, user_id=user_id,
@@ -256,11 +256,12 @@ class TestAuthResponseHeaders(base.TestBaseV2):
     @ddt.unpack
     @attr(type='smoke_alpha')
     def test_auth_with_nast_tenant(self, auth_type, with_tenant, use_mfa):
-        username = self.one_call_user_info['username']
-        password = self.one_call_user_info['password']
-        user_id = self.one_call_user_info['user_id']
+        one_call_user_info = self.create_user_one_call_logic()
+        username = one_call_user_info['username']
+        password = one_call_user_info['password']
+        user_id = one_call_user_info['user_id']
         apikey = self.get_user_apikey(user_id=user_id)
-        roles = self.one_call_user_info['roles']
+        roles = one_call_user_info['roles']
         tenant_id = ''
 
         # get nast tenant
@@ -291,9 +292,10 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         User with multi tenants
         Auth with other tenant not mosso or nast
         """
-        username = self.one_call_user_info['username']
-        password = self.one_call_user_info['password']
-        user_id = self.one_call_user_info['user_id']
+        one_call_user_info = self.create_user_one_call_logic()
+        username = one_call_user_info['username']
+        password = one_call_user_info['password']
+        user_id = one_call_user_info['user_id']
         apikey = self.get_user_apikey(user_id=user_id)
 
         # create tenant
@@ -323,10 +325,11 @@ class TestAuthResponseHeaders(base.TestBaseV2):
               ['tenant_name', True])
     @ddt.unpack
     def test_auth_w_tenant_and_token(self, with_tenant, use_mfa):
-        username = self.one_call_user_info['username']
-        password = self.one_call_user_info['password']
-        tenant_id = self.one_call_user_info['tenant_id']
-        user_id = self.one_call_user_info['user_id']
+        one_call_user_info = self.create_user_one_call_logic()
+        username = one_call_user_info['username']
+        password = one_call_user_info['password']
+        tenant_id = one_call_user_info['tenant_id']
+        user_id = one_call_user_info['user_id']
 
         if use_mfa:
             secret = func_helper.setup_mfa_for_user(
@@ -373,10 +376,11 @@ class TestAuthResponseHeaders(base.TestBaseV2):
     @ddt.unpack
     def test_auth_w_user_single_tenant_not_specify_tenant(self, auth_type,
                                                           use_mfa):
-        username = self.user_info['username']
-        password = self.user_info['password']
-        domain_id = self.user_info['domain_id']
-        user_id = self.user_info['user_id']
+        user_info = self.create_user()
+        username = user_info['username']
+        password = user_info['password']
+        domain_id = user_info['domain_id']
+        user_id = user_info['user_id']
         apikey = self.get_user_apikey(user_id=user_id)
 
         # create tenant
@@ -403,10 +407,11 @@ class TestAuthResponseHeaders(base.TestBaseV2):
     @ddt.unpack
     def test_auth_w_user_multi_tenants_not_specify_tenant(self, auth_type,
                                                           use_mfa):
-        username = self.user_info['username']
-        password = self.user_info['password']
-        domain_id = self.user_info['domain_id']
-        user_id = self.user_info['user_id']
+        user_info = self.create_user()
+        username = user_info['username']
+        password = user_info['password']
+        domain_id = user_info['domain_id']
+        user_id = user_info['user_id']
         apikey = self.get_user_apikey(user_id=user_id)
 
         # create tenant
@@ -457,9 +462,10 @@ class TestAuthResponseHeaders(base.TestBaseV2):
     @ddt.data(True, False)
     @attr(type='smoke_alpha')
     def test_auth_w_user_no_tenant(self, use_mfa):
-        username = self.user_info['username']
-        password = self.user_info['password']
-        user_id = self.user_info['user_id']
+        user_info = self.create_user()
+        username = user_info['username']
+        password = user_info['password']
+        user_id = user_info['user_id']
 
         auth_resp, secret = self.make_auth_call(
             use_mfa=use_mfa, user_id=user_id, username=username,
@@ -490,12 +496,13 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         """
         Verify X-Tenant-Id not included in headers when failed auth
         """
-        username = self.one_call_user_info['username']
-        password = self.one_call_user_info['password']
-        user_id = self.one_call_user_info['user_id']
+        one_call_user_info = self.create_user_one_call_logic()
+        username = one_call_user_info['username']
+        password = one_call_user_info['password']
+        user_id = one_call_user_info['user_id']
         invalid_pwd = self.generate_random_string(
             pattern=const.PASSWORD_PATTERN)
-        tenant_id = self.one_call_user_info['tenant_id']
+        tenant_id = one_call_user_info['tenant_id']
 
         # auth with tenant
         kwargs = {'user_name': username,

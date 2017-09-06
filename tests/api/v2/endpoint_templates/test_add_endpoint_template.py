@@ -34,6 +34,14 @@ class TestAddEndpointTemplate(base.TestBaseV2):
             "publicURL", "adminURL", "internalURL", "versionId",
             "versionInfo", "versionList", "global", "enabled", "default"]
 
+        self.updated_json_schema = copy.deepcopy(
+            endpoint_templates.add_endpoint_template)
+        self.updated_json_schema['properties'][
+            const.OS_KSCATALOG_ENDPOINT_TEMPLATE]['required'] = (
+            endpoint_templates.add_endpoint_template['properties'][
+                const.OS_KSCATALOG_ENDPOINT_TEMPLATE]['required'] +
+            self.additional_schema_fields)
+
     def setUp(self):
         super(TestAddEndpointTemplate, self).setUp()
         self.service_ids = []
@@ -87,23 +95,16 @@ class TestAddEndpointTemplate(base.TestBaseV2):
 
         self.template_ids.append(template_id)
 
-        updated_json_schema = copy.deepcopy(
-            endpoint_templates.add_endpoint_template)
-        updated_json_schema['properties'][
-            const.OS_KSCATALOG_ENDPOINT_TEMPLATE]['required'] = (
-            endpoint_templates.add_endpoint_template['properties'][
-                const.OS_KSCATALOG_ENDPOINT_TEMPLATE]['required'] +
-            self.additional_schema_fields)
         self.assertSchema(
             response=resp,
-            json_schema=updated_json_schema)
+            json_schema=self.updated_json_schema)
 
         # GET endpoint template
         resp = self.identity_admin_client.get_endpoint_template(
             template_id=template_id)
         self.assertSchema(
             response=resp,
-            json_schema=updated_json_schema)
+            json_schema=self.updated_json_schema)
 
         # List endpoint templates
         resp = self.identity_admin_client.list_endpoint_templates()
@@ -164,23 +165,16 @@ class TestAddEndpointTemplate(base.TestBaseV2):
 
         self.template_ids.append(template_id)
 
-        updated_json_schema = copy.deepcopy(
-            endpoint_templates.add_endpoint_template)
-        updated_json_schema['properties'][
-            const.OS_KSCATALOG_ENDPOINT_TEMPLATE]['required'] = (
-            endpoint_templates.add_endpoint_template['properties'][
-                const.OS_KSCATALOG_ENDPOINT_TEMPLATE]['required'] +
-            self.additional_schema_fields)
         self.assertSchema(
             response=resp,
-            json_schema=updated_json_schema)
+            json_schema=self.updated_json_schema)
 
         # GET endpoint template
         resp = self.identity_admin_client.get_endpoint_template(
             template_id=template_id)
         self.assertSchema(
             response=resp,
-            json_schema=updated_json_schema)
+            json_schema=self.updated_json_schema)
 
         # List endpoint templates
         resp = self.identity_admin_client.list_endpoint_templates()
@@ -253,23 +247,16 @@ class TestAddEndpointTemplate(base.TestBaseV2):
             const.ID]
         self.template_ids.append(template_id)
 
-        updated_json_schema = copy.deepcopy(
-            endpoint_templates.add_endpoint_template)
-        updated_json_schema['properties'][
-            const.OS_KSCATALOG_ENDPOINT_TEMPLATE]['required'] = (
-            endpoint_templates.add_endpoint_template['properties'][
-                const.OS_KSCATALOG_ENDPOINT_TEMPLATE]['required'] +
-            self.additional_schema_fields)
         self.assertSchema(
             response=resp,
-            json_schema=updated_json_schema)
+            json_schema=self.updated_json_schema)
 
         # GET endpoint template
         resp = self.identity_admin_client.get_endpoint_template(
             template_id=template_id)
         self.assertSchema(
             response=resp,
-            json_schema=updated_json_schema)
+            json_schema=self.updated_json_schema)
 
         # List endpoint templates
         resp = self.identity_admin_client.list_endpoint_templates()
@@ -328,16 +315,9 @@ class TestAddEndpointTemplate(base.TestBaseV2):
             const.ID]
         self.template_ids.append(template_id)
 
-        updated_json_schema = copy.deepcopy(
-            endpoint_templates.add_endpoint_template)
-        updated_json_schema['properties'][
-            const.OS_KSCATALOG_ENDPOINT_TEMPLATE]['required'] = (
-            endpoint_templates.add_endpoint_template['properties'][
-                const.OS_KSCATALOG_ENDPOINT_TEMPLATE]['required'] +
-            self.additional_schema_fields)
         self.assertSchema(
             response=resp,
-            json_schema=updated_json_schema)
+            json_schema=self.updated_json_schema)
 
         # GET endpoint template
         resp = self.identity_admin_client.get_endpoint_template(
@@ -345,7 +325,7 @@ class TestAddEndpointTemplate(base.TestBaseV2):
 
         self.assertSchema(
             response=resp,
-            json_schema=updated_json_schema)
+            json_schema=self.updated_json_schema)
 
         # List endpoint templates
         resp = self.identity_admin_client.list_endpoint_templates()

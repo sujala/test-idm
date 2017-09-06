@@ -66,7 +66,6 @@ class TestUpdateIDP(federation.TestBaseFederation):
     def setUp(self):
         super(TestUpdateIDP, self).setUp()
         self.provider_ids = []
-        self.provider_id, self.provider_name = self.add_idp_user()
         self.domains = []
         self.clients = []
         self.users = []
@@ -121,60 +120,24 @@ class TestUpdateIDP(federation.TestBaseFederation):
         """Test update with valid name randomly generate name with
         alphanumeric, '.', and '-' characters in range from 1 to 255
         """
+        provider_id, _ = self.add_idp_user()
         idp_name = self.generate_random_string(
             pattern='[a-zA-Z0-9.\-]{1:255}')
         idp_obj = requests.IDP(idp_name=idp_name)
-        resp = self.idp_ia_client.update_idp(idp_id=self.provider_id,
+        resp = self.idp_ia_client.update_idp(idp_id=provider_id,
                                              request_object=idp_obj)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()[const.NS_IDENTITY_PROVIDER][const.NAME],
                          idp_name)
 
-    @ddt.data("?test", "test*", "*", "$test#", "test@cid")
-    def test_update_idp_name_with_invalid_characters(self, idp_name):
-        """Update idp name with a invalid name"""
-        common_error_msg = (
-            "Error code: 'GEN-005'; Identity provider name"
-            " must consist of only alphanumeric, '.', and '-' characters.")
-        idp_obj = requests.IDP(idp_name=idp_name)
-        resp = self.idp_ia_client.update_idp(idp_id=self.provider_id,
-                                             request_object=idp_obj)
-        self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
-                         common_error_msg)
-
     def test_update_idp_name_with_empty_string(self):
         """Update with empty string"""
+        provider_id, _ = self.add_idp_user()
         error_msg = (
             "Error code: 'GEN-001'; 'name' is a required attribute")
         empty_str = " "
         idp_obj = requests.IDP(idp_name=empty_str)
-        resp = self.idp_ia_client.update_idp(idp_id=self.provider_id,
-                                             request_object=idp_obj)
-        self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
-                         error_msg)
-
-    def test_update_idp_name_with_exceed_max_length(self):
-        """Update name with exceed max length"""
-        error_msg = (
-            "Error code: 'GEN-002'; name length cannot exceed 255 characters")
-        larg_name = self.generate_random_string(pattern='[a-zA-Z0-9.\-]{256}')
-        idp_obj = requests.IDP(idp_name=larg_name)
-        resp = self.idp_ia_client.update_idp(idp_id=self.provider_id,
-                                             request_object=idp_obj)
-        self.assertEqual(resp.status_code, 400)
-        self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
-                         error_msg)
-
-    def test_update_idp_name_with_exist_name(self):
-        """Update with name already exist"""
-        _, new_provider_name = self.add_idp_user()
-        error_msg = ("Error code: 'FED_IDP-005';"
-                     " Identity provider with name {0} already "
-                     "exist.".format(new_provider_name))
-        idp_obj = requests.IDP(idp_name=new_provider_name)
-        resp = self.idp_ia_client.update_idp(idp_id=self.provider_id,
+        resp = self.idp_ia_client.update_idp(idp_id=provider_id,
                                              request_object=idp_obj)
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
