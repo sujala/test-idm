@@ -58,6 +58,11 @@ public class LdapUserGroupRepository extends LdapGenericRepository<UserGroup> im
     @Override
     public void updateGroup(UserGroup group) { updateObject(group); }
 
+    @Override
+    public int countGroupsInDomain(String domainId) {
+        return countObjects(searchByDomainId(domainId), getBaseDn());
+    }
+
     Filter searchByIdFilter(String id) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_ID, id)

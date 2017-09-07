@@ -109,7 +109,6 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_PASSWORD_HISTORY_MATCH = "AUTH-002";
     public static final String ERROR_CODE_CURRENT_PASSWORD_MATCH = "AUTH-003";
 
-
     public static String generateErrorCodeFormattedMessage(String errorCode, String message) {
         if (StringUtils.isNotBlank(errorCode)) {
             return String.format("Error code: '%s'; %s", errorCode, message);

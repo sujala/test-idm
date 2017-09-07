@@ -1,6 +1,7 @@
 package com.rackspace.idm.modules.usergroups.dao
 
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
+import com.rackspace.idm.domain.dao.impl.LdapGenericRepository
 import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.rackspace.idm.modules.usergroups.Constants
 import com.rackspace.idm.modules.usergroups.dao.LdapUserGroupRepository
@@ -92,8 +93,23 @@ class LdapUserGroupRepositoryTest extends RootServiceTest {
             assert filter.components.find {it.attributeName == LdapRepository.ATTR_NAME && it.assertionValue == groupName}
             assert filter.components.find {it.attributeName == LdapRepository.ATTR_DOMAIN_ID && it.assertionValue == domainId}
             assert filter.components.find {it.attributeName == LdapRepository.ATTR_OBJECT_CLASS && it.assertionValue == Constants.OBJECTCLASS_USER_GROUP}
+            null  // Just return null as we're testing filter creation not actual searching
+        }
+    }
 
-            null // Just return null as we're testing filter creation not actual searching
+    def "countGroupsInDomain: Creates appropriate filter"() {
+        def domainId = "domainId"
+
+        when:
+        dao.countGroupsInDomain(domainId)
+
+        then:
+        1 * ldapInterface.search(dao.getBaseDn(), SearchScope.SUB, _ as Filter, [LdapGenericRepository.ATTRIBUTE_DXENTRYCOUNT]) >> { args ->
+            Filter filter = args[2]
+            assert filter.components.size() == 2
+            assert filter.components.find {it.attributeName == LdapRepository.ATTR_DOMAIN_ID && it.assertionValue == domainId}
+            assert filter.components.find {it.attributeName == LdapRepository.ATTR_OBJECT_CLASS && it.assertionValue == Constants.OBJECTCLASS_USER_GROUP}
+            null // Just return null as unboundId could return that anyway
         }
     }
 }

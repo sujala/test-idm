@@ -36,6 +36,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
 
     public static final String USE_VLV_SSS_OPTIMIZATION_PROP_NAME = "feature.optimize.vlv.sss.usage.enabled";
     public static final boolean USE_VLV_SSS_OPTIMIZATION_DEFAULT_VALUE = false;
+    public static final String ATTRIBUTE_DXENTRYCOUNT = "dxentrycount";
 
     final private Class<T> entityType = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
@@ -304,11 +305,16 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
         String loggerMsg = String.format("Doing search to count %s", entityType.toString());
         getLogger().debug(loggerMsg);
 
-        SearchResult result = this.search(dn, scope, searchFilter, "dxentrycount");
+        SearchResult result = this.search(dn, scope, searchFilter, ATTRIBUTE_DXENTRYCOUNT);
 
         String entryCountString = "0";
-        if (result.getSearchEntries().size() > 0) {
-            entryCountString = result.getSearchEntries().get(0).getAttribute("dxentrycount").getValues()[0];
+        /*
+         Add null check logic. See https://rackspace.slack.com/archives/G6BFMR000/p1486162245003267 for discussion. Seems
+         in some cases when 0 should be returned, no results are returned at all which results in a NPE without the
+         check
+         */
+        if (result != null && result.getSearchEntries() != null && result.getSearchEntries().size() > 0) {
+            entryCountString = result.getSearchEntries().get(0).getAttribute(ATTRIBUTE_DXENTRYCOUNT).getValues()[0];
         }
         getLogger().debug("Found - {} entries", entryCountString);
 
