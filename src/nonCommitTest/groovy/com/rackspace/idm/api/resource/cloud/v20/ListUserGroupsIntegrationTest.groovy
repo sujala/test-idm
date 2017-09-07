@@ -1,20 +1,13 @@
 package com.rackspace.idm.api.resource.cloud.v20
-import com.rackspace.idm.JSONConstants
-import com.rackspace.idm.api.resource.cloud.v20.json.readers.JSONReaderForArrayEntity
+
 import com.rackspace.idm.api.security.IdentityRole
-import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.entity.UserScopeAccess
 import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.ScopeAccessService
-import org.openstack.docs.identity.api.v2.*
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import testHelpers.RootIntegrationTest
-
-import javax.ws.rs.core.MediaType
-import javax.ws.rs.core.MultivaluedMap
-import java.lang.annotation.Annotation
-import java.lang.reflect.Type
 
 class ListUserGroupsIntegrationTest extends RootIntegrationTest {
     @Autowired
@@ -40,15 +33,7 @@ class ListUserGroupsIntegrationTest extends RootIntegrationTest {
         then: "forbidden"
         uaResponse.status == org.apache.http.HttpStatus.SC_FORBIDDEN
 
-        when: "user admin tries to list groups for self (feature flag off)"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_GROUPS_FOR_SELF_PROP, false)
-        uaResponse = cloud20.listGroupsForUser(uaToken, userAdmin.id)
-
-        then: "forbidden"
-        uaResponse.status == org.apache.http.HttpStatus.SC_FORBIDDEN
-
-        when: "user admin tries to list groups for self (feature flag on)"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_LIST_GROUPS_FOR_SELF_PROP, true)
+        when: "user admin tries to list groups for self"
         uaResponse = cloud20.listGroupsForUser(uaToken, userAdmin.id)
 
         then: "success"

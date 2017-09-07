@@ -252,9 +252,6 @@ public class IdentityConfig {
     public static final String FEATURE_SUPPORT_V11_LEGACY_PROP = "feature.support.v11.legacy";
     public static final boolean FEATURE_SUPPORT_V11_LEGACY_DEFAULT = false;
 
-    public static final String FEATURE_LIST_GROUPS_FOR_SELF_PROP = "feature.list.groups.for.self";
-    public static final boolean FEATURE_LIST_GROUPS_FOR_SELF_DEFAULT = false;
-
     public static final String FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP = "feature.issue.restricted.token.session.ids";
     public static final boolean FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_DEFAULT = false;
 
@@ -571,8 +568,6 @@ public class IdentityConfig {
         defaults.put(EMAIL_PORT, EMAIL_PORT_DEFAULT);
         defaults.put(EMAIL_HOST_USERNAME_PROP, EMAIL_HOST_USERNAME_DEFAULT);
         defaults.put(EMAIL_HOST_PASSWORD_PROP, EMAIL_HOST_PASSWORD_DEFAULT);
-
-        defaults.put(FEATURE_LIST_GROUPS_FOR_SELF_PROP, FEATURE_LIST_GROUPS_FOR_SELF_DEFAULT);
 
         defaults.put(FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_PROP, FEATURE_PREVENT_RACKER_IMPERSONATE_API_KEY_ACCESS_DEFAULT);
 
@@ -1630,11 +1625,6 @@ public class IdentityConfig {
         @IdmProp(key = EMAIL_FROM_EMAIL_ADDRESS, description = "Return email address to use when sending emails to customers. Was added as a static property in version 2.5.0, but was migrated to be a reloadable in this version.", versionAdded = "3.2.0")
         public String getEmailFromAddress() {
             return getStringSafely(reloadableConfiguration, EMAIL_FROM_EMAIL_ADDRESS);
-        }
-
-        @IdmProp(key = FEATURE_LIST_GROUPS_FOR_SELF_PROP, versionAdded = "3.3.0", description = "Whether or not the feature to allow for a user to list groups for self is enabled")
-        public boolean isListGroupsForSelfEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_LIST_GROUPS_FOR_SELF_PROP);
         }
 
         @IdmProp(key = FEATURE_ISSUE_RESTRICTED_TOKEN_SESSION_IDS_PROP, versionAdded = "3.4.0", description = "Whether or not to issued restricted AE Tokens w/ a sessionid scope for MFA X-Session-Ids")

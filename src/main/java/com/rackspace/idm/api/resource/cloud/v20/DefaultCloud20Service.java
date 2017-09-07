@@ -4056,7 +4056,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         try {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
-            if (!caller.getId().equals(userId) || !identityConfig.getReloadableConfig().isListGroupsForSelfEnabled()) {
+            if (!caller.getId().equals(userId)) {
                 authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccessOrRole(IdentityUserTypeEnum.IDENTITY_ADMIN, IdentityRole.GET_USER_GROUPS_GLOBAL.getRoleName());
             }
 
