@@ -1869,7 +1869,7 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP);
         }
 
-        @IdmProp(key = FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, versionAdded = "3.15.0", description = "Whether or not to allow deletion of role assigned to a user")
+        @IdmProp(key = FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, versionAdded = "3.15.0", description = "When true, roles cannot be deleted if assigned to any user.")
         public boolean getDeleteRoleAssignedToUser() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP);
         }
