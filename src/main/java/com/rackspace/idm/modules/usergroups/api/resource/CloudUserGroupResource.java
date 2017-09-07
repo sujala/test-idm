@@ -32,10 +32,11 @@ public class CloudUserGroupResource {
     public Response addGroup(
             @Context HttpHeaders httpHeaders,
             @Context UriInfo uriInfo,
-            @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
+            @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
             UserGroup group) {
         group.setDomainId(domainId); //overwrite any domainId value specified in request w/ path param
+        group.setId(null);
         return userGroupCloudService.addGroup(uriInfo, authToken, group);
     }
 

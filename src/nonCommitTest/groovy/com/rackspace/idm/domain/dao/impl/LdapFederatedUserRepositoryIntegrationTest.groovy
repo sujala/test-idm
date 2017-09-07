@@ -2,7 +2,7 @@ package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.IdentityProviderDao
 import com.rackspace.idm.domain.entity.FederatedUser
@@ -14,15 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
-import testHelpers.junit.ConditionalIgnoreRule
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
-@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 class LdapFederatedUserRepositoryIntegrationTest extends Specification {
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     @Autowired
     FederatedUserDao ldapFederatedUserRepository

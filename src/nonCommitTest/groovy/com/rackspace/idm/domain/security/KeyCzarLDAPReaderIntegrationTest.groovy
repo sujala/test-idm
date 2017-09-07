@@ -8,7 +8,6 @@ import com.rackspace.idm.domain.dao.KeyCzarKeyVersionDao
 import com.rackspace.idm.domain.entity.LdapKeyMetadata
 import com.rackspace.idm.domain.security.encrypters.RepositoryKeyCzarCrypterLocator
 import com.rackspace.idm.domain.dao.KeyCzarAPINodeSignoffDao
-import com.rackspace.idm.domain.sql.dao.KeyCzarKeyMetadataRepository
 import org.joda.time.DateTime
 import org.keyczar.Crypter
 import org.keyczar.exceptions.KeyczarException
@@ -42,9 +41,6 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     KeyCzarKeyMetadataDao keyMetadataLdapGenericRepository
-
-    @Autowired(required = false)
-    KeyCzarKeyMetadataRepository sqlKeyMetadataRepository
 
     def "test get metadata cache info"() {
         given:
@@ -125,11 +121,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         when: "test encryption with v1 key"
         metadata.data = first_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
-        if (metadata instanceof LdapKeyMetadata) {
-            keyMetadataLdapGenericRepository.updateObject(metadata)
-        } else {
-            sqlKeyMetadataRepository.save(metadata)
-        }
+        keyMetadataLdapGenericRepository.updateObject(metadata)
         cacheableKeyCzarCrypterLocator.resetCache()
         info = cacheableKeyCzarCrypterLocator.getCacheInfo()
         crypter = cacheableKeyCzarCrypterLocator.getCrypter()
@@ -148,11 +140,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         when: "test encryption with v2 key"
         metadata.data = second_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
-        if (metadata instanceof LdapKeyMetadata) {
-            keyMetadataLdapGenericRepository.updateObject(metadata)
-        } else {
-            sqlKeyMetadataRepository.save(metadata)
-        }
+        keyMetadataLdapGenericRepository.updateObject(metadata)
         cacheableKeyCzarCrypterLocator.resetCache()
         info = cacheableKeyCzarCrypterLocator.getCacheInfo()
         crypter = cacheableKeyCzarCrypterLocator.getCrypter()
@@ -177,11 +165,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         when: "test decryption with v1 key (with v2)"
         metadata.data = two_keys_first_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
-        if (metadata instanceof LdapKeyMetadata) {
-            keyMetadataLdapGenericRepository.updateObject(metadata)
-        } else {
-            sqlKeyMetadataRepository.save(metadata)
-        }
+        keyMetadataLdapGenericRepository.updateObject(metadata)
         cacheableKeyCzarCrypterLocator.resetCache()
         info = cacheableKeyCzarCrypterLocator.getCacheInfo()
         crypter = cacheableKeyCzarCrypterLocator.getCrypter()
@@ -200,11 +184,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         when: "test decryption with v2 key (with v1)"
         metadata.data = two_keys_second_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
-        if (metadata instanceof LdapKeyMetadata) {
-            keyMetadataLdapGenericRepository.updateObject(metadata)
-        } else {
-            sqlKeyMetadataRepository.save(metadata)
-        }
+        keyMetadataLdapGenericRepository.updateObject(metadata)
         cacheableKeyCzarCrypterLocator.resetCache()
         info = cacheableKeyCzarCrypterLocator.getCacheInfo()
         crypter = cacheableKeyCzarCrypterLocator.getCrypter()
@@ -223,11 +203,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         cleanup:
         metadata.data = original
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
-        if (metadata instanceof LdapKeyMetadata) {
-            keyMetadataLdapGenericRepository.updateObject(metadata)
-        } else {
-            sqlKeyMetadataRepository.save(metadata)
-        }
+        keyMetadataLdapGenericRepository.updateObject(metadata)
     }
 
     def "failure to load new keys to cache leaves old keys in place"() {
@@ -240,11 +216,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         when: "test encryption with v1 key"
         metadata.data = first_primary
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
-        if (metadata instanceof LdapKeyMetadata) {
-            keyMetadataLdapGenericRepository.updateObject(metadata)
-        } else {
-            sqlKeyMetadataRepository.save(metadata)
-        }
+        keyMetadataLdapGenericRepository.updateObject(metadata)
         cacheableKeyCzarCrypterLocator.resetCache()
         originalCache = cacheableKeyCzarCrypterLocator.getCacheInfo()
 
@@ -266,11 +238,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
         metadata.data = bad_meta_purpose
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
-        if (metadata instanceof LdapKeyMetadata) {
-            keyMetadataLdapGenericRepository.updateObject(metadata)
-        } else {
-            sqlKeyMetadataRepository.save(metadata)
-        }
+        keyMetadataLdapGenericRepository.updateObject(metadata)
 
         //try to reload
         cacheableKeyCzarCrypterLocator.resetCache()
@@ -291,11 +259,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         cleanup:
         metadata.data = original
         metadata.created = new DateTime(metadata.created).plusMillis(1).toDate()
-        if (metadata instanceof LdapKeyMetadata) {
-            keyMetadataLdapGenericRepository.updateObject(metadata)
-        } else {
-            sqlKeyMetadataRepository.save(metadata)
-        }
+        keyMetadataLdapGenericRepository.updateObject(metadata)
         cacheableKeyCzarCrypterLocator.resetCache()
     }
 
@@ -321,11 +285,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
         assert signoffObj != null
         metaForUpdate.data = two_keys_first_primary
         metaForUpdate.created = new DateTime(metadata.created).plusMillis(1).toDate()
-        if (metadata instanceof LdapKeyMetadata) {
-            keyMetadataLdapGenericRepository.updateObject(metadata)
-        } else {
-            sqlKeyMetadataRepository.save(metadata)
-        }
+        keyMetadataLdapGenericRepository.updateObject(metadata)
 
         when:
         reloadableConfiguration.setProperty(IdentityConfig.FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, false)
@@ -336,11 +296,7 @@ class KeyCzarLDAPReaderIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         reloadableConfiguration.reset()
-        if (metadata instanceof LdapKeyMetadata) {
-            keyMetadataLdapGenericRepository.updateObject(metadata)
-        } else {
-            sqlKeyMetadataRepository.save(metadata)
-        }
+        keyMetadataLdapGenericRepository.updateObject(metadata)
     }
 
     def void verifyKeySignoff(metadata) {

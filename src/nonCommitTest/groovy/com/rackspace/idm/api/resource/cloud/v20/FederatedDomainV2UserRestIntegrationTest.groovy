@@ -8,8 +8,6 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.SAMLConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.RepositoryProfileResolver
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.*
@@ -20,7 +18,7 @@ import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.federation.v2.FederatedRoleAssignment
-import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
+
 import com.rackspace.idm.util.SamlUnmarshaller
 import groovy.json.JsonSlurper
 import org.apache.commons.lang.BooleanUtils
@@ -67,9 +65,6 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     UserService userService
-
-    @Autowired(required = false)
-    FederatedUserRepository sqlFederatedUserRepository
 
     @Autowired
     ConfigurableTokenFormatSelector configurableTokenFormatSelector
@@ -479,12 +474,7 @@ class FederatedDomainV2UserRestIntegrationTest extends RootIntegrationTest {
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
             if (federatedUser != null) {
-                if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                    federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpId(username, Constants.DEFAULT_IDP_ID)
-                    sqlFederatedUserRepository.delete(federatedUser)
-                } else {
-                    federatedUserRepository.deleteObject(federatedUser)
-                }
+                federatedUserRepository.deleteObject(federatedUser)
             }
         } catch (Exception e) {
             // Eat but log

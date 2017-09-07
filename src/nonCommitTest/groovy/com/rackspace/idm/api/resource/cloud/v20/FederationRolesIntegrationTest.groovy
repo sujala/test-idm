@@ -3,8 +3,6 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.RepositoryProfileResolver
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.TenantDao
@@ -15,7 +13,7 @@ import com.rackspace.idm.domain.entity.FederatedUser
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
-import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
+
 import org.apache.commons.collections.CollectionUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -28,7 +26,6 @@ import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
 import testHelpers.saml.SamlFactory
 
-import static com.rackspace.idm.Constants.DEFAULT_IDP_ID
 import static com.rackspace.idm.Constants.DEFAULT_IDP_URI
 
 @ContextConfiguration(locations = "classpath:app-config.xml")
@@ -58,9 +55,6 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
     @Autowired(required = false)
     LdapFederatedUserRepository ldapFederatedUserRepository
-
-    @Autowired(required = false)
-    FederatedUserRepository sqlFederatedUserRepository
 
     def "identity:default role is added to user as global role by default"() {
         given:
@@ -511,13 +505,8 @@ class FederationRolesIntegrationTest extends RootIntegrationTest {
 
 
     def deleteFederatedUser(username) {
-        if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpId(username, Constants.DEFAULT_IDP_ID)
-            if(federatedUser != null) sqlFederatedUserRepository.delete(federatedUser)
-        } else {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
-            if(federatedUser != null) ldapFederatedUserRepository.deleteObject(federatedUser)
-        }
+        def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
+        if(federatedUser != null) ldapFederatedUserRepository.deleteObject(federatedUser)
     }
 
 }

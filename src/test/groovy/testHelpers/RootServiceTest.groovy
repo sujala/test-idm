@@ -27,6 +27,7 @@ import com.rackspace.idm.domain.security.encrypters.CacheableKeyCzarCrypterLocat
 import com.rackspace.idm.domain.service.*
 import com.rackspace.idm.domain.service.impl.*
 import com.rackspace.idm.exception.ExceptionHandler
+import com.rackspace.idm.exception.IdmExceptionHandler
 import com.rackspace.idm.multifactor.service.MultiFactorService
 import com.rackspace.idm.util.AuthHeaderHelper
 import com.rackspace.idm.util.CryptHelper
@@ -40,7 +41,6 @@ import org.junit.Rule
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import spock.lang.Shared
 import spock.lang.Specification
-import testHelpers.junit.ConditionalIgnoreRule
 
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.UriBuilder
@@ -103,7 +103,14 @@ class RootServiceTest extends Specification {
     @Shared EndpointService endpointService
     @Shared AuthorizationService authorizationService
     @Shared UserService userService
+
+    /**
+     * New classes should use the IdmExceptionHandler interface rather than the concrete ExceptionHandler class
+     */
+    @Deprecated
     @Shared ExceptionHandler exceptionHandler
+
+    @Shared IdmExceptionHandler idmExceptionHandler
     @Shared AuthenticationService authenticationService
     @Shared GroupService groupService
     @Shared CloudRegionService cloudRegionService
@@ -190,9 +197,6 @@ class RootServiceTest extends Specification {
     @Shared def defaultImpersonationExpirationSeconds = 3600 * defaultImpersonationHours
     @Shared def defaultCloudAuthExpirationSeconds = 3600 * defaultCloudAuthExpirationHours
     @Shared def defaultCloudAuthRackerExpirationSeconds = 3600 * defaultCloudAuthRackerExpirationHours
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     /*
         Mock Converters
@@ -427,6 +431,11 @@ class RootServiceTest extends Specification {
     def mockExceptionHandler(service){
         exceptionHandler = Mock()
         service.exceptionHandler = exceptionHandler
+    }
+
+    def mockIdmExceptionHandler(service){
+        idmExceptionHandler = Mock()
+        service.idmExceptionHandler = idmExceptionHandler
     }
 
     def mockPhoneCoverterCloudV20(service) {

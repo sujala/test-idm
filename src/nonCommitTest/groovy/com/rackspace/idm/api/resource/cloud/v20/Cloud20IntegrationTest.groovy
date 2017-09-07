@@ -10,7 +10,7 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.ScopeAccess
@@ -40,7 +40,6 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
@@ -313,7 +312,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         cloud20.deleteEndpointTemplate(serviceAdminToken, endpointTemplateId)
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticating where total access tokens remains unchanged"() {
         when:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -330,7 +328,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.reset()
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticating where token is within refresh window adds new token"() {
         when:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -351,7 +348,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.reset()
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticating where token is valid returns existing token"() {
         when:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -365,7 +361,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.reset()
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticate with two valid tokens"() {
         when:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -382,7 +377,6 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.reset()
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "authenticating token in refresh window with 2 existing tokens deletes existing expired token"() {
         when:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")

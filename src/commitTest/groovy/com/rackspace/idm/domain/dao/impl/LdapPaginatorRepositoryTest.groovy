@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.dao.PaginatorDao
 import com.rackspace.idm.domain.entity.User
 import com.unboundid.asn1.ASN1OctetString
@@ -10,14 +10,8 @@ import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl
 import org.junit.Rule
 import spock.lang.Shared
 import testHelpers.RootServiceTest
-import testHelpers.junit.ConditionalIgnoreRule
-import testHelpers.junit.IgnoreByRepositoryProfile
 
-@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 class LdapPaginatorRepositoryTest extends RootServiceTest {
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     @Shared PaginatorDao paginator
 

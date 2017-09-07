@@ -4,8 +4,6 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.RepositoryProfileResolver
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.ApplicationRoleDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.dao.ScopeAccessDao
@@ -19,7 +17,7 @@ import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
-import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
+
 import com.sun.jersey.api.client.ClientResponse
 import groovy.json.JsonSlurper
 import org.apache.commons.lang.RandomStringUtils
@@ -33,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-import testHelpers.junit.IgnoreByRepositoryProfile
 import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
@@ -62,9 +59,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
 
     @Autowired(required = false)
     LdapFederatedUserRepository ldapFederatedUserRepository
-
-    @Autowired(required = false)
-    FederatedUserRepository sqlFederatedUserRepository
 
     @Autowired
     ApplicationRoleDao applicationRoleDao
@@ -354,7 +348,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         utils.deleteDomain(domainId)
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "Previously created impersonation tokens are no longer valid once the impersonated user's domain is disabled" () {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -451,7 +444,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
      *
      * @return
      */
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "trying to validate a UUID impersonation token with deleted provisioned user token returns 404"() {
         given:
         def domainId = utils.createDomain()
@@ -489,7 +481,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
      *
      * @return
      */
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "trying to validate a UUID impersonation token for deleted federated user token returns 404"() {
         given:
         def domainId = utils.createDomain()
@@ -532,7 +523,6 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         staticIdmConfiguration.reset()
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "UUID impersonation tokens created before a federated user's domain is disabled are no longer valid"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, "UUID")
@@ -929,11 +919,7 @@ class Cloud20ValidateTokenIntegrationTest extends RootIntegrationTest{
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
             if (federatedUser != null) {
-                if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                    sqlFederatedUserRepository.delete(federatedUser)
-                } else {
-                    ldapFederatedUserRepository.deleteObject(federatedUser)
-                }
+                ldapFederatedUserRepository.deleteObject(federatedUser)
             }
         } catch (Exception e) {
             //eat but log

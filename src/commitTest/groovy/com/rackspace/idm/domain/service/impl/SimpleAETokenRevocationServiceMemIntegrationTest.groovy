@@ -5,7 +5,7 @@ import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperClient
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperHelper
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.RepositoryProfileResolver
+
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.dao.impl.MemoryTokenRevocationRecordPersistenceStrategy
 import com.rackspace.idm.domain.security.AETokenService
@@ -191,10 +191,6 @@ class SimpleAETokenRevocationServiceMemIntegrationTest extends Specification {
         @Bean
         public IdentityPropertyService identityPropertyService () {
             return  mockFactory.Mock(IdentityPropertyService.class);
-        }
-        @Bean
-        public RepositoryProfileResolver repositoryProfileResolver() {
-            return  mockFactory.Mock(RepositoryProfileResolver.class);
         }
         @Bean
         public AETokenService aeTokenService() {

@@ -3,17 +3,78 @@ package com.rackspace.idm.modules.usergroups.api.resource;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup;
+
+import com.rackspace.idm.api.resource.IdmPathUtils;
+import com.rackspace.idm.api.security.IdentityRole;
+import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.domain.entity.BaseUser;
+import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.service.AuthorizationService;
+import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.IdmExceptionHandler;
+import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter;
+import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import org.apache.commons.lang.NotImplementedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 
 @Component
 public class DefaultUserGroupCloudService implements UserGroupCloudService {
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultUserGroupCloudService.class);
+
+    @Autowired
+    private RequestContextHolder requestContextHolder;
+
+    @Autowired
+    private UserGroupAuthorizationService userGroupAuthorizationService;
+
+    @Autowired
+    private DomainService domainService;
+
+    @Autowired
+    private UserGroupConverter userGroupConverter;
+
+    @Autowired
+    private UserGroupService userGroupService;
+
+    @Autowired
+    private IdmExceptionHandler idmExceptionHandler;
+
+    @Autowired
+    private IdmPathUtils idmPathUtils;
+
     @Override
     public Response addGroup(UriInfo uriInfo, String authToken, UserGroup group) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        try {
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(group.getDomainId());
+
+            // Convert to entity object
+            com.rackspace.idm.modules.usergroups.entity.UserGroup userGroupEntity = userGroupConverter.fromUserGroupWeb(group);
+
+            userGroupService.addGroup(userGroupEntity);
+
+            URI location = idmPathUtils.createLocationHeaderValue(uriInfo, userGroupEntity.getId());
+            Response.ResponseBuilder response = Response.created(location);
+            response.entity(userGroupConverter.toUserGroupWeb(userGroupEntity));
+            return response.build();
+        } catch (Exception ex) {
+            LOG.error(String.format("Error creating user group for domain %s", group.getDomainId()), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @Override

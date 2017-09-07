@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.idm.domain.entity.IdentityProvider
 import com.unboundid.ldap.sdk.DeleteRequest
@@ -15,13 +15,10 @@ import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
 import testHelpers.EntityFactory
-import testHelpers.junit.ConditionalIgnoreRule
-import testHelpers.junit.IgnoreByRepositoryProfile
 import testHelpers.saml.SamlCredentialUtils
 
 import java.security.cert.X509Certificate
 
-@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
     @Autowired
@@ -29,9 +26,6 @@ class LdapIdentityProviderRepositoryIntegrationTest extends Specification {
 
     @Autowired
     LdapConnectionPools ldapConnectionPools
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     // These attributes should be loaded in directory via ldif
     @Shared def IDP_ID = "dedicated";

@@ -64,9 +64,8 @@ class TestUpdateUser(base.TestBaseV2):
         super(TestUpdateUser, self).setUp()
         self.user_ids = []
         self.sub_user_ids = []
-        self.test_identity_adm_id = ""
-        self.test_user_admin_id = ""
-        self.test_sub_user_id = ""
+
+    def create_identity_admin(self):
 
         # create identity admin user to test
         ida_username = "iadm_" + self.generate_random_string()
@@ -75,8 +74,11 @@ class TestUpdateUser(base.TestBaseV2):
                                           domain_id=ida_domain_id)
         resp = self.service_admin_client.add_user(
             request_object=request_object)
-        self.test_identity_adm_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(resp.json()[const.USER][const.ID])
+        test_identity_adm_id = resp.json()[const.USER][const.ID]
+        self.user_ids.append(test_identity_adm_id)
+        return test_identity_adm_id
+
+    def create_user_admin(self):
 
         # create user admin to test
         user_name = self.generate_random_string()
@@ -85,16 +87,19 @@ class TestUpdateUser(base.TestBaseV2):
                                           domain_id=domain_id)
         resp = self.identity_admin_client.add_user(
             request_object=request_object)
-        self.test_user_admin_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(resp.json()[const.USER][const.ID])
+        test_user_admin_id = resp.json()[const.USER][const.ID]
+        self.user_ids.append(test_user_admin_id)
+        return test_user_admin_id
+
+    def create_default_user(self):
 
         # create sub user to test
         sub_username = "sub_" + self.generate_random_string()
-        request_object = requests.UserAdd(sub_username,
-                                          domain_id=domain_id)
+        request_object = requests.UserAdd(sub_username)
         resp = self.user_admin_client.add_user(request_object=request_object)
-        self.test_sub_user_id = resp.json()[const.USER][const.ID]
-        self.sub_user_ids.append(resp.json()[const.USER][const.ID])
+        test_sub_user_id = resp.json()[const.USER][const.ID]
+        self.sub_user_ids.append(test_sub_user_id)
+        return test_sub_user_id
 
     @ddt.file_data('data_update_user_info.json')
     def test_update_identity_admin_user_info(self, test_data):
@@ -104,7 +109,7 @@ class TestUpdateUser(base.TestBaseV2):
         input combinations. Each of these data combination is a separate test
         case.
         """
-        user_id = self.test_identity_adm_id
+        user_id = self.create_identity_admin()
         update_data = test_data['update_input']
         request_object = requests.UserUpdate(**update_data)
         resp = self.service_admin_client.update_user(
@@ -125,7 +130,7 @@ class TestUpdateUser(base.TestBaseV2):
         input combinations. Each of these data combination is a separate test
         case.
         """
-        user_id = self.test_user_admin_id
+        user_id = self.create_user_admin()
         update_data = test_data['update_input']
         request_object = requests.UserUpdate(**update_data)
         resp = self.identity_admin_client.update_user(
@@ -146,7 +151,7 @@ class TestUpdateUser(base.TestBaseV2):
         input combinations. Each of these data combination is a separate test
         case.
         """
-        user_id = self.test_sub_user_id
+        user_id = self.create_default_user()
         update_data = test_data['update_input']
         request_object = requests.UserUpdate(**update_data)
         resp = self.user_admin_client.update_user(
@@ -233,7 +238,7 @@ class TestUpdateUser(base.TestBaseV2):
         input combinations. Each of these data combination is a separate test
         case.
         """
-        user_id = self.test_identity_adm_id
+        user_id = self.create_identity_admin()
         update_data = test_data['update_input']
         data_list = self.generate_data_combinations(start=2,
                                                     data_dict=update_data)
@@ -274,7 +279,7 @@ class TestUpdateUser(base.TestBaseV2):
         input combinations. Each of these data combination is a separate test
         case.
         """
-        user_id = self.test_user_admin_id
+        user_id = self.create_user_admin()
         update_data = test_data['update_input']
         data_list = self.generate_data_combinations(start=2,
                                                     data_dict=update_data)
@@ -310,7 +315,7 @@ class TestUpdateUser(base.TestBaseV2):
         input combinations. Each of these data combination is a separate test
         case.
         """
-        user_id = self.test_sub_user_id
+        user_id = self.create_default_user()
         update_data = test_data['update_input']
         data_list = self.generate_data_combinations(start=2,
                                                     data_dict=update_data)
@@ -340,7 +345,7 @@ class TestUpdateUser(base.TestBaseV2):
         :param test_data:
         :return:
         """
-        user_id = self.test_identity_adm_id
+        user_id = self.create_identity_admin()
         update_data = test_data['update_input']
         request_object = requests.UserUpdate(**update_data)
         resp = self.service_admin_client.update_user(
@@ -355,7 +360,7 @@ class TestUpdateUser(base.TestBaseV2):
         :param test_data:
         :return:
         """
-        user_id = self.test_sub_user_id
+        user_id = self.create_user_admin()
         update_data = test_data['update_input']
         request_object = requests.UserUpdate(**update_data)
         resp = self.identity_admin_client.update_user(
@@ -370,7 +375,7 @@ class TestUpdateUser(base.TestBaseV2):
         :param test_data:
         :return:
         """
-        user_id = self.test_sub_user_id
+        user_id = self.create_default_user()
         update_data = test_data['update_input']
         request_object = requests.UserUpdate(**update_data)
         resp = self.user_admin_client.update_user(
@@ -385,15 +390,13 @@ class TestUpdateUser(base.TestBaseV2):
          identity admin can't be update using itself token or lower level token
         :return:
         """
-        user_id = self.test_identity_adm_id
+        user_id = self.create_identity_admin()
         request_object = requests.UserUpdate(
             email='test_update_email@rackspace.com')
-        # TODO: there's defect for this in CID-80 unblock when it's fixed
         if access_level == 'identity_admin_client':
             resp = self.identity_admin_client.update_user(
                 user_id=user_id, request_object=request_object
             )
-            resp.status_code = 403  # remove this when CID-80 is fixed
         elif access_level == 'user_admin_client':
             resp = self.user_admin_client.update_user(
                 user_id=user_id, request_object=request_object
@@ -412,7 +415,7 @@ class TestUpdateUser(base.TestBaseV2):
          defaul user token
         :return:
         """
-        user_id = self.test_user_admin_id
+        user_id = self.create_user_admin()
         request_object = requests.UserUpdate(
             email='test_update_email@rackspace.com')
         if access_level == 'user_admin_client':
@@ -428,10 +431,10 @@ class TestUpdateUser(base.TestBaseV2):
     def test_user_default_update_permission(self):
         """
         Test update user default without permission
-         user default can't be update using defaul user token
+         user default can't be updated using another default user's token
         :return:
         """
-        user_id = self.test_sub_user_id
+        user_id = self.create_default_user()
         request_object = requests.UserUpdate(
             email='test_update_email@rackspace.com')
         resp = self.user_client.update_user(

@@ -8,8 +8,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.RepositoryProfileResolver
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.decorator.SAMLAuthContext
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
@@ -24,7 +23,7 @@ import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.domain.service.impl.ProvisionedUserSourceFederationHandler
-import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
+
 import com.rackspace.idm.util.SamlUnmarshaller
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.codec.binary.StringUtils
@@ -47,7 +46,6 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
 import testHelpers.RootIntegrationTest
-import testHelpers.junit.IgnoreByRepositoryProfile
 import testHelpers.saml.SamlCredentialUtils
 import testHelpers.saml.SamlFactory
 import testHelpers.saml.SamlProducer
@@ -55,7 +53,6 @@ import testHelpers.saml.SamlProducer
 import javax.servlet.http.HttpServletResponse
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.Constants.*
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
@@ -75,9 +72,6 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     UserService userService
-
-    @Autowired(required = false)
-    FederatedUserRepository sqlFederatedUserRepository
 
     @Autowired
     ConfigurableTokenFormatSelector configurableTokenFormatSelector
@@ -540,7 +534,6 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         60            | 400
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "Token format based on property config"() {
         given:
         //ensure system will recognize AE tokens as AE tokens
@@ -1333,35 +1326,6 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(samlResponse, BadRequestFault, HttpServletResponse.SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_FEDERATION_INVALID_SIGNATURE)
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.LDAP)
-    def "test federated user with username of length of 100 and email of 255"() {
-        given:
-        def domainId = utils.createDomain()
-        def username = testUtils.getRandomUUIDOfLength("userAdminForSaml", 100)
-        def email = testUtils.getRandomUUIDOfLength("email", 255)
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def userAdmin, users
-        (userAdmin, users) = utils.createUserAdminWithTenants(domainId)
-        def adminToken = utils.getIdentityAdminToken()
-
-        //specify assertion with no roles
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null, email);
-
-        when: "authenticate the token"
-        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
-        def AuthenticateResponse authResponse = samlResponse.getEntity(AuthenticateResponse).value
-        def samlToken = authResponse.token.id
-        def validateResponse = cloud20.validateToken(adminToken, samlToken)
-
-        then: "response contains appropriate content"
-        samlResponse.status == HttpServletResponse.SC_OK
-        validateResponse.status == HttpServletResponse.SC_OK
-
-        cleanup:
-        deleteFederatedUserQuietly(username)
-        utils.deleteUsers(users)
-    }
-
     def "empty IssueInstant should give bad request"() {
         given:
         def domainId = utils.createDomain()
@@ -1880,12 +1844,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
             if (federatedUser != null) {
-                if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                    federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpId(username, Constants.DEFAULT_IDP_ID)
-                    sqlFederatedUserRepository.delete(federatedUser)
-                } else {
-                    federatedUserRepository.deleteObject(federatedUser)
-                }
+                federatedUserRepository.deleteObject(federatedUser)
             }
         } catch (Exception e) {
             //eat but log

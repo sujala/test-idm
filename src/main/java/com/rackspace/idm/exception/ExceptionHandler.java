@@ -20,13 +20,14 @@ import javax.ws.rs.core.Response;
  * To change this template use File | Settings | File Templates.
  */
 @Component
-public class ExceptionHandler {
+public class ExceptionHandler implements IdmExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionHandler.class);
 
     @Autowired
     private JAXBObjectFactories objFactories;
 
+    @Override
     public Response.ResponseBuilder badRequestExceptionResponse(String message) {
         BadRequestFault fault = objFactories.getOpenStackIdentityV2Factory().createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_BAD_REQUEST);
@@ -35,6 +36,7 @@ public class ExceptionHandler {
                 objFactories.getOpenStackIdentityV2Factory().createBadRequest(fault).getValue());
     }
 
+    @Override
     public Response.ResponseBuilder notAuthenticatedExceptionResponse(String message) {
         UnauthorizedFault fault = objFactories.getOpenStackIdentityV2Factory().createUnauthorizedFault();
         fault.setCode(HttpServletResponse.SC_UNAUTHORIZED);
@@ -43,6 +45,7 @@ public class ExceptionHandler {
                 objFactories.getOpenStackIdentityV2Factory().createUnauthorized(fault).getValue());
     }
 
+    @Override
     public Response.ResponseBuilder forbiddenExceptionResponse(String errMsg) {
         ForbiddenFault fault = objFactories.getOpenStackIdentityV2Factory().createForbiddenFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
@@ -51,6 +54,7 @@ public class ExceptionHandler {
                 objFactories.getOpenStackIdentityV2Factory().createForbidden(fault).getValue());
     }
 
+    @Override
     public Response.ResponseBuilder notFoundExceptionResponse(String message) {
         ItemNotFoundFault fault = objFactories.getOpenStackIdentityV2Factory().createItemNotFoundFault();
         fault.setCode(HttpServletResponse.SC_NOT_FOUND);
@@ -59,10 +63,12 @@ public class ExceptionHandler {
                 objFactories.getOpenStackIdentityV2Factory().createItemNotFound(fault).getValue());
     }
 
+    @Override
     public Response.ResponseBuilder notImplementedExceptionResponse() {
         return Response.status(HttpServletResponse.SC_NOT_IMPLEMENTED);
     }
 
+    @Override
     public Response.ResponseBuilder tenantConflictExceptionResponse(String message) {
         TenantConflictFault fault = objFactories.getOpenStackIdentityV2Factory().createTenantConflictFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
@@ -71,6 +77,7 @@ public class ExceptionHandler {
                 objFactories.getOpenStackIdentityV2Factory().createTenantConflict(fault).getValue());
     }
 
+    @Override
     public Response.ResponseBuilder userDisabledExceptionResponse(String message) {
         UserDisabledFault fault = objFactories.getOpenStackIdentityV2Factory().createUserDisabledFault();
         fault.setCode(HttpServletResponse.SC_FORBIDDEN);
@@ -79,6 +86,7 @@ public class ExceptionHandler {
                 objFactories.getOpenStackIdentityV2Factory().createUserDisabled(fault).getValue());
     }
 
+    @Override
     public Response.ResponseBuilder conflictExceptionResponse(String message) {
         BadRequestFault fault = objFactories.getOpenStackIdentityV2Factory().createBadRequestFault();
         fault.setCode(HttpServletResponse.SC_CONFLICT);
@@ -87,6 +95,7 @@ public class ExceptionHandler {
                 objFactories.getOpenStackIdentityV2Factory().createBadRequest(fault).getValue());
     }
 
+    @Override
     public Response.ResponseBuilder unrecoverableExceptionResponse(String message) {
         IdentityFault fault = objFactories.getOpenStackIdentityV2Factory().createIdentityFault();
         fault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -96,6 +105,7 @@ public class ExceptionHandler {
     }
 
 
+    @Override
     public Response.ResponseBuilder serviceExceptionResponse() {
         IdentityFault fault = objFactories.getOpenStackIdentityV2Factory().createIdentityFault();
         fault.setCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -103,6 +113,7 @@ public class ExceptionHandler {
                 objFactories.getOpenStackIdentityV2Factory().createIdentityFault(fault).getValue());
     }
 
+    @Override
     public Response.ResponseBuilder exceptionResponse(Exception ex) {
         if (ex instanceof BadRequestException || ex instanceof StalePasswordException) {
             return badRequestExceptionResponse(ex.getMessage());
@@ -130,6 +141,7 @@ public class ExceptionHandler {
         }
     }
 
+    @Override
     public Response.ResponseBuilder serviceUnavailableExceptionResponse(String message) {
         IdentityFault fault = objFactories.getOpenStackIdentityV2Factory().createIdentityFault();
         fault.setCode(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
@@ -139,6 +151,7 @@ public class ExceptionHandler {
                 objFactories.getOpenStackIdentityV2Factory().createIdentityFault(fault).getValue());
     }
 
+    @Override
     public int exceptionToHttpStatus(Exception ex) {
         //TODO: Refactor this cause shouldn't need to generate the whole response just to determine the status.
         Response.ResponseBuilder builder = exceptionResponse(ex);

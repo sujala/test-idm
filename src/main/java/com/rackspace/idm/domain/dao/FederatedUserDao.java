@@ -60,22 +60,6 @@ public interface FederatedUserDao extends FederatedBaseUserDao<FederatedUser> {
     int getUnexpiredFederatedUsersByDomainIdAndIdentityProviderIdCount(String domainId, String identityProviderId);
 
     /**
-     * Get the groups for that user.
-     *
-      * @param userId
-     * @return
-     */
-    Iterable<Group> getGroupsForFederatedUser(String userId);
-
-    /**
-     * Get federated users by group.
-     *
-     * @param groupId
-     * @return
-     */
-    Iterable<FederatedUser> getFederatedUsersByGroupId(String groupId);
-
-    /**
      * Delete federated user
      */
     void deleteUser(FederatedUser federatedUser);

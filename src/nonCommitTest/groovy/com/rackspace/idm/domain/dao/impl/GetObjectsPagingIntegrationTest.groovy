@@ -1,17 +1,13 @@
 package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
-import com.rackspace.idm.domain.dao.EndpointDao
 import com.rackspace.idm.domain.dao.TenantDao
-import com.rackspace.idm.domain.entity.Tenant
 import org.apache.commons.configuration.Configuration
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.annotation.DirtiesContext
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 /**
  * Created with IntelliJ IDEA
@@ -34,7 +30,6 @@ class GetObjectsPagingIntegrationTest extends RootIntegrationTest{
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "Get paged or unpaged as appropriate: useVlvAndSssControl = #useVlvAndSssControl" () {
         given:
         config.setProperty(LdapGenericRepository.USE_VLV_SSS_OPTIMIZATION_PROP_NAME, useVlvAndSssControl)

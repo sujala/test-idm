@@ -2,8 +2,6 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.RepositoryProfileResolver
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import groovy.json.JsonSlurper
 import org.apache.log4j.Logger
@@ -18,7 +16,6 @@ import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.Constants.*
 import static org.apache.http.HttpStatus.SC_FORBIDDEN
 import static org.apache.http.HttpStatus.SC_OK
 
@@ -875,12 +872,7 @@ class ListUsersIntegrationTest extends RootIntegrationTest {
         try {
             def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(username, Constants.DEFAULT_IDP_ID)
             if (federatedUser != null) {
-                if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                    federatedUser = federatedUserRepository.findOneByUsernameAndFederatedIdpName(username, Constants.DEFAULT_IDP_ID)
-                    federatedUserRepository.delete(federatedUser)
-                } else {
-                    federatedUserRepository.deleteObject(federatedUser)
-                }
+                federatedUserRepository.deleteObject(federatedUser)
             }
         } catch (Exception e) {
             //eat but log

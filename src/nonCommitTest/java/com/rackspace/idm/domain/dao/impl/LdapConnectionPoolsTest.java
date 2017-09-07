@@ -3,7 +3,6 @@ package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.config.LdapConfiguration;
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
 import org.junit.Before;
@@ -14,8 +13,6 @@ import org.apache.commons.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import testHelpers.junit.java.ConditionalIgnoreRule;
-import testHelpers.junit.java.IgnoreByRepositoryProfile;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
@@ -31,7 +28,6 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:app-config.xml")
-@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 public class LdapConnectionPoolsTest {
 
     @Autowired(required = false)
@@ -44,9 +40,6 @@ public class LdapConnectionPoolsTest {
 
     LDAPConnectionPool appConnectionPool;
     LDAPConnectionPool bindConnectionPool;
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule();
 
     @Before
     public void setUp() throws Exception {

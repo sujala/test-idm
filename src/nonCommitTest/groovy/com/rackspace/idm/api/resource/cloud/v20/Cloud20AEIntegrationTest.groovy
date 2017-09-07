@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.RepositoryProfileResolver
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.impl.LdapScopeAccessRepository
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
@@ -15,11 +13,9 @@ import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.Cloud20Methods
 import testHelpers.RootIntegrationTest
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.Constants.DEFAULT_PASSWORD
 import static org.apache.http.HttpStatus.SC_CREATED
 import static org.apache.http.HttpStatus.SC_OK
 
@@ -65,7 +61,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "update user - setting token format on user only allowed if ae tokens enabled. Testing with ae tokens enabled: #ae_enabled"() {
         given:
         //set default token format to opposite of what will be setting user to
@@ -101,7 +96,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "create user - setting token format on user creation only allowed if ae tokens enabled. Testing with ae tokens enabled: #ae_enabled"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, !ae_enabled ? "AE" : "UUID")
@@ -198,7 +192,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(defaultUser2, defaultUser, userManage, userAdmin, identityAdmin)
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "retrieve AE token for a user"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, null)
@@ -260,7 +253,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         staticIdmConfiguration.reset()
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "retrieve and update AE token for a user using JSON"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, null)
@@ -335,7 +327,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "validate AE token X-Auth-Token = #authTokenFormat validateToken = #validateTokenFormat getTokenVersion = #getTokenVersion"() {
         given:
         def domainId = utils.createDomain()
@@ -441,7 +432,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "auth and validate '#authTokenFormat' tokens to verify content"() {
         given:
         def response
@@ -565,7 +555,6 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         }
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "verify revoke UUID tokens when AE token config is set"() {
         given:
         staticIdmConfiguration.setProperty(IdentityConfig.IDENTITY_PROVISIONED_TOKEN_FORMAT, null)
@@ -620,22 +609,17 @@ class Cloud20AEIntegrationTest extends RootIntegrationTest {
         def authResponse = cloud20.authenticate(authRequestContent)
         def scopeAccessResponse = authResponse.getEntity(AuthenticateResponse).value
         def ldapTokens
-        if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.LDAP) {
-            ldapTokens = ldapScopeAccessRepository.getScopeAccessesByUserId(apiUser.id)
-        }
+        ldapTokens = ldapScopeAccessRepository.getScopeAccessesByUserId(apiUser.id)
 
         then:
         authResponse.status == 200
         compareTwoTokens(scopeAccess, scopeAccessResponse)
-        if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.LDAP) {
-            !ldapTokens.iterator().hasNext()
-        }
+        !ldapTokens.iterator().hasNext()
 
         cleanup:
         cloud20.deleteUser(utils.getServiceAdminToken(), createdUser.id)
     }
 
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "test global flag combinations"() {
         given:
         def domainId = utils.createDomain()

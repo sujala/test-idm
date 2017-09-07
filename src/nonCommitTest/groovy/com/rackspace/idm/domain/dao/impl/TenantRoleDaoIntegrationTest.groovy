@@ -2,8 +2,6 @@ package com.rackspace.idm.domain.dao.impl
 
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
-import com.rackspace.idm.domain.config.RepositoryProfileResolver
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
 import com.rackspace.idm.domain.dao.ApplicationDao
 import com.rackspace.idm.domain.dao.DomainDao
 import com.rackspace.idm.domain.dao.FederatedUserDao
@@ -12,7 +10,7 @@ import com.rackspace.idm.domain.dao.ScopeAccessDao
 import com.rackspace.idm.domain.dao.TenantRoleDao
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.entity.*
-import com.rackspace.idm.domain.sql.dao.FederatedUserRepository
+
 import com.rackspace.idm.exception.ClientConflictException
 import org.joda.time.DateTime
 import org.springframework.beans.factory.annotation.Autowired
@@ -43,9 +41,6 @@ class TenantRoleDaoIntegrationTest extends RootIntegrationTest {
     @Autowired
     IdentityProviderDao ldapIdentityProviderRepository
 
-    @Autowired(required = false)
-    FederatedUserRepository sqlFederatedUserRepository
-
     @Autowired
     DomainDao domainDao
 
@@ -61,9 +56,6 @@ class TenantRoleDaoIntegrationTest extends RootIntegrationTest {
     def setup() {
         sharedRandom = ("$sharedRandomness").replace('-',"")
 
-        if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            domainDao.addDomain(getDomain("$sharedRandom"))
-        }
         userRepository.addUser(getUser("$sharedRandom"))
         user = userRepository.getUserById("$sharedRandom")
 
@@ -81,13 +73,8 @@ class TenantRoleDaoIntegrationTest extends RootIntegrationTest {
     def cleanup() {
         userRepository.deleteUser(user)
         applicationRepository.deleteApplication(application)
-        if (RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-            def federatedUser = sqlFederatedUserRepository.findOneByUsernameAndFederatedIdpId(federatedUser.username, Constants.DEFAULT_IDP_ID)
-            if(federatedUser != null) sqlFederatedUserRepository.delete(federatedUser)
-        } else {
-            def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(federatedUser.username, Constants.DEFAULT_IDP_ID)
-            if(federatedUser != null) federatedUserRepository.deleteObject(federatedUser)
-        }
+        def federatedUser = federatedUserRepository.getUserByUsernameForIdentityProviderId(federatedUser.username, Constants.DEFAULT_IDP_ID)
+        if(federatedUser != null) federatedUserRepository.deleteObject(federatedUser)
     }
 
     def "tenant role crud for user"() {
@@ -248,9 +235,6 @@ class TenantRoleDaoIntegrationTest extends RootIntegrationTest {
             it.domainId = "domain$id"
             it.enabled = true
             it.name = "domain$id"
-            if(RepositoryProfileResolver.getActiveRepositoryProfile() == SpringRepositoryProfileEnum.SQL) {
-                it.uniqueId = "domain$id"
-            }
             it
         }
     }

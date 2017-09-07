@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory
 import spock.lang.Shared
 import testHelpers.ConcurrentStageTaskRunner
 import testHelpers.RootIntegrationTest
-import testHelpers.junit.ConditionalIgnoreRule
 
 /**
  */
@@ -47,10 +46,6 @@ abstract class RootConcurrentIntegrationTest extends RootIntegrationTest {
 
     @Shared
     def ConcurrentStageTaskRunner concurrentStageTaskRunner = new ConcurrentStageTaskRunner()
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
-
 
     /**
      * Like most other tests, this test class depends on a pre-existing service admin (authQE)

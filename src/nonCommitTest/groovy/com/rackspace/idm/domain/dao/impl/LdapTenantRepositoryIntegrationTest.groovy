@@ -1,15 +1,12 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.entity.Tenant
-import com.unboundid.ldap.sdk.ReadOnlyEntry
 import org.junit.Rule
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Shared
 import spock.lang.Specification
-import testHelpers.junit.ConditionalIgnoreRule
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,7 +15,6 @@ import testHelpers.junit.IgnoreByRepositoryProfile
  * Time: 2:27 PM
  * To change this template use File | Settings | File Templates.
  */
-@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 @ContextConfiguration(locations = "classpath:app-config.xml")
 class LdapTenantRepositoryIntegrationTest extends Specification {
     @Autowired
@@ -26,9 +22,6 @@ class LdapTenantRepositoryIntegrationTest extends Specification {
 
     @Shared
     def tenantId = UUID.randomUUID().toString()
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     def "tenant crud"() {
         given:

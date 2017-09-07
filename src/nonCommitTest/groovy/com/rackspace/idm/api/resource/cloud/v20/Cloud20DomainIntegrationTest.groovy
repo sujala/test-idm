@@ -7,7 +7,7 @@ import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.JSONConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.dao.UserDao
 import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.TenantService
@@ -24,7 +24,6 @@ import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.IdmAssert
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 import javax.ws.rs.core.HttpHeaders
 import testHelpers.RootIntegrationTest
@@ -34,7 +33,6 @@ import javax.ws.rs.core.UriInfo
 import javax.xml.datatype.DatatypeFactory
 import java.time.Duration
 
-import static com.rackspace.idm.Constants.*
 import static javax.servlet.http.HttpServletResponse.*
 import static org.mockito.Mockito.mock
 import static testHelpers.IdmAssert.assertOpenStackV2FaultResponse
@@ -433,13 +431,6 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         thrown(BadRequestException)
     }
 
-    /**
-     * Ignore for SQL because dual pointers are NOT maintained in MariaDB. Instead the TENANT pointer to the domain is
-     * what is maintained. The domain's pointers to tenants are ignored.
-     *
-     * @return
-     */
-    @IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
     def "Test 'domainService.removeTenantFromDomain(...)' and ''domainService.addTenantToDomain(...)' when pointers are off"() {
         given:
         def tenant = utils.createTenant() //will associate tenant to default domain

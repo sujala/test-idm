@@ -1,6 +1,6 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.domain.config.SpringRepositoryProfileEnum
+
 import com.rackspace.idm.domain.entity.Application
 import com.rackspace.test.SingleTestConfiguration
 import com.unboundid.ldap.sdk.Filter
@@ -15,8 +15,6 @@ import testHelpers.Cloud20Utils
 import testHelpers.ConcurrentStageTaskRunner
 import testHelpers.MultiStageTask
 import testHelpers.MultiStageTaskFactory
-import testHelpers.junit.ConditionalIgnoreRule
-import testHelpers.junit.IgnoreByRepositoryProfile
 
 /**
  * This test is used to test the update functions of the LdapGenericRepository/LdapRepository and the integration with the unboundid sdk. It uses the Application object as the
@@ -24,11 +22,7 @@ import testHelpers.junit.IgnoreByRepositoryProfile
  *
  */
 @ContextConfiguration(locations = ["classpath:app-config.xml", "classpath:com/rackspace/idm/domain/dao/impl/LdapGenericRepositoryUpdateIntegrationTest-context.xml"])
-@IgnoreByRepositoryProfile(profile = SpringRepositoryProfileEnum.SQL)
 class LdapGenericRepositoryUpdateIntegrationTest extends Specification {
-
-    @Rule
-    public ConditionalIgnoreRule role = new ConditionalIgnoreRule()
 
     /**
      * Wire in the generic repo
