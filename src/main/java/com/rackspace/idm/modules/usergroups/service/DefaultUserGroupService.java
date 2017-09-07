@@ -1,7 +1,10 @@
 package com.rackspace.idm.modules.usergroups.service;
 
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService;
 import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.validation.Validator20;
@@ -22,10 +25,13 @@ public class DefaultUserGroupService implements UserGroupService {
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
 
     @Autowired
-    UserGroupDao userGroupDao;
+    private UserGroupDao userGroupDao;
 
     @Autowired
-    Validator20 validator20;
+    private Validator20 validator20;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Override
     public UserGroup addGroup(UserGroup group) {
@@ -34,11 +40,17 @@ public class DefaultUserGroupService implements UserGroupService {
 
         Assert.isTrue(StringUtils.isNotBlank(group.getDomainId()));
 
-        //verify group requirements
+        // Verify group requirements
         validateUserGroupForCreateAndUpdate(group);
 
         if (getGroupByDomainIdAndName(group.getDomainId(), group.getName()) != null) {
             throw new DuplicateException("Group already exists with this name in this domain");
+        }
+
+        // Validate there is room to create this group in the domain
+        int numGroupsInDomain = userGroupDao.countGroupsInDomain(group.getDomainId());
+        if (numGroupsInDomain >= identityConfig.getReloadableConfig().getMaxUsersGroupsPerDomain()) {
+            throw new ForbiddenException(Constants.ERROR_CODE_USER_GROUPS_MAX_THRESHOLD_REACHED_MSG, Constants.ERROR_CODE_USER_GROUPS_MAX_THRESHOLD_REACHED);
         }
 
         userGroupDao.addGroup(group);

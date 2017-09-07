@@ -49,6 +49,14 @@ public interface UserGroupDao {
     Iterable<UserGroup> getGroupsForDomain(String domainId);
 
     /**
+     * Return a count of the number of user groups in a domain
+     *
+     * @param domainId
+     * @return
+     */
+    int countGroupsInDomain(String domainId);
+
+    /**
      * Return a group with the given domainId and name, or null if no such group exists.
      *
      * @param domainId

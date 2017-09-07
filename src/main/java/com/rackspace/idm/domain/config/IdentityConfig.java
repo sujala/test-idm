@@ -353,6 +353,9 @@ public class IdentityConfig {
     public static final String FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART = "feature.cache.roles.without.application.restart";
     public static final boolean FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART_DEFAULT = true;
 
+    public static final String FEATURE_MAX_USER_GROUPS_IN_DOMAIN_PROP = "user.groups.max.in.domain";
+    public static final int FEATURE_MAX_USER_GROUPS_IN_DOMAIN_DEFAULT = 20;
+
     public static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
     public static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
 
@@ -653,7 +656,7 @@ public class IdentityConfig {
         defaults.put(IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT);
         defaults.put(FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_DEFAULT);
         defaults.put(FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART, FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART_DEFAULT);
-
+        defaults.put(FEATURE_MAX_USER_GROUPS_IN_DOMAIN_PROP, FEATURE_MAX_USER_GROUPS_IN_DOMAIN_DEFAULT);
         defaults.put(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
 
         defaults.put(USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_DEFAULT);
@@ -1853,6 +1856,12 @@ public class IdentityConfig {
         @IdmProp(key = IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP, versionAdded = "3.13.0", description = "Maximum number of explicit IDPs per domain")
         public int getIdentityFederatedMaxIDPPerDomain() {
             return getIntSafely(reloadableConfiguration, IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP);
+        }
+
+
+        @IdmProp(key = FEATURE_MAX_USER_GROUPS_IN_DOMAIN_PROP, versionAdded = "3.16.0", description = "Maximum number of user groups that can be created per domain")
+        public int getMaxUsersGroupsPerDomain() {
+            return getIntSafely(reloadableConfiguration, FEATURE_MAX_USER_GROUPS_IN_DOMAIN_PROP);
         }
 
         @IdmProp(key = IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, versionAdded = "3.13.0", description = "Maximum number of explicit IDPs per domain")

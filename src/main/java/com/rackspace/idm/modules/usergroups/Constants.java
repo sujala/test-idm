@@ -7,4 +7,8 @@ public class Constants {
 
     public static final String USER_GROUP = "userGroup";
     public static final String RAX_AUTH_USER_GROUP = "RAX-AUTH:" + USER_GROUP;
+
+    public static final String ERROR_CODE_USER_GROUPS_MAX_THRESHOLD_REACHED = "UG-001";
+    public static final String ERROR_CODE_USER_GROUPS_MAX_THRESHOLD_REACHED_MSG = "The maximum number of groups has been reached for this domain.";
+
 }
