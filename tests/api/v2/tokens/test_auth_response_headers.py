@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 import ddt
+import time
 from nose.plugins.attrib import attr
 
 from tests.api.utils import func_helper, header_validation
@@ -177,6 +178,10 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         if use_mfa:
             secret = func_helper.setup_mfa_for_user(
                 user_id=user_id, client=self.identity_admin_client)
+            # Adding back the sleep even after having sub-second precision,
+            # because minor skew among the individual nodes can cause
+            # revocation of MFA session ID
+            time.sleep(2)
 
         if auth_type == 'user_password':
             kwargs = dict([('user_name', username),
@@ -326,6 +331,10 @@ class TestAuthResponseHeaders(base.TestBaseV2):
         if use_mfa:
             secret = func_helper.setup_mfa_for_user(
                 user_id=user_id, client=self.identity_admin_client)
+            # Adding back the sleep even after having sub-second precision,
+            # because minor skew among the individual nodes can cause
+            # revocation of MFA session ID
+            time.sleep(2)
 
         # auth
         auth_obj = requests.AuthenticateWithPassword(user_name=username,
@@ -497,6 +506,10 @@ class TestAuthResponseHeaders(base.TestBaseV2):
             # 2nd step fails.
             secret = func_helper.setup_mfa_for_user(
                 user_id=user_id, client=self.identity_admin_client)
+            # Adding back the sleep even after having sub-second precision,
+            # because minor skew among the individual nodes can cause
+            # revocation of MFA session ID
+            time.sleep(2)
 
             kwargs['password'] = password
             auth_obj = requests.AuthenticateWithPassword(**kwargs)

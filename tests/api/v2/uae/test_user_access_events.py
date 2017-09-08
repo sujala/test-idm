@@ -243,6 +243,10 @@ class TestUserAccessEvents(base.TestBaseV2):
         resp = self.identity_admin_client.update_mfa(user_id=user_id,
                                                      request_object=update_obj)
         self.assertEqual(resp.status_code, 204)
+        # Adding back the sleep even after having sub-second precision,
+        # because minor skew among the individual nodes can cause
+        # revocation of MFA session ID
+        time.sleep(2)
 
         # authenticate with pwd & mfa enabled (1st mfa auth step)
         auth_obj = requests.AuthenticateWithPassword(user_name=user_name,
