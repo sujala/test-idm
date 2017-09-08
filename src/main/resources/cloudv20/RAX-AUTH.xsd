@@ -185,8 +185,8 @@
 
     <element name="userGroup" type="RAX-AUTH:UserGroup" />
     <element name="userGroups" type="RAX-AUTH:UserGroups" />
-    <element name="tenantRoleAssignment" type="RAX-AUTH:TenantRoleAssignment" />
-    <element name="tenantRoleAssignments" type="RAX-AUTH:TenantRoleAssignments" />
+    <element name="tenantAssignment" type="RAX-AUTH:TenantAssignment" />
+    <element name="tenantAssignments" type="RAX-AUTH:TenantAssignments" />
     <element name="roleAssignments" type="RAX-AUTH:RoleAssignments" />
 
     <!-- Complex Types -->
@@ -1161,22 +1161,31 @@
         <attribute name="demoteUserId" type="xsd:string" use="optional" />
     </complexType>
 
+
     <complexType name="UserGroup">
         <attribute name="id" type="xsd:string" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
-                        An ID uniquely identifying the domain.
+                        An ID uniquely identifying the user group.
                     </p>
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute ref="RAX-AUTH:domainId" use="optional" />
+        <attribute name="domainId" type="xsd:string" use="optional">
+            <annotation>
+                <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
+                    <p>
+                        The id of the domain to which the user group belongs.
+                    </p>
+                </xsd:documentation>
+            </annotation>
+        </attribute>
         <attribute name="name" type="xsd:string" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
-                        The name of the domain.
+                        The name of the user group.
                     </p>
                 </xsd:documentation>
             </annotation>
@@ -1199,7 +1208,7 @@
     </complexType>
 
     <complexType name="RoleAssignment" abstract="true">
-        <attribute name="roleId" type="xsd:string" use="optional">
+        <attribute name="onRole" type="xsd:string" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
@@ -1208,11 +1217,12 @@
                 </xsd:documentation>
             </annotation>
         </attribute>
-        <attribute name="roleName" type="xsd:string" use="optional">
+        <attribute name="onRoleName" type="xsd:string" use="optional">
             <annotation>
                 <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                     <p>
-                        Name of the role. Ignored on assignment.
+                        Name of the role. Ignored on assignment. Returned in response to provide additional information
+                        on the assigned role.
                     </p>
                 </xsd:documentation>
             </annotation>
@@ -1220,14 +1230,15 @@
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
 
-    <complexType name="TenantRoleAssignment">
+    <complexType name="TenantAssignment">
         <complexContent>
             <extension base="RAX-AUTH:RoleAssignment">
-                <attribute name="tenantIds" type="RAX-AUTH:StringList" use="optional">
+                <attribute name="forTenants" type="RAX-AUTH:StringList" use="optional">
                     <annotation>
                         <xsd:documentation xml:lang="EN" xmlns="http://www.w3.org/1999/xhtml">
                             <p>
-                                A delimited list of tenant Ids on which to assign the role.
+                                A delimited list of tenant Ids on which the role is assigned. A '*' represents
+                                all tenants within the domain. If '*' is one item in a list of tenants, * is simply used.
                             </p>
                         </xsd:documentation>
                     </annotation>
@@ -1236,16 +1247,16 @@
         </complexContent>
     </complexType>
 
-    <complexType name="TenantRoleAssignments">
+    <complexType name="TenantAssignments">
         <sequence>
-            <element ref="RAX-AUTH:tenantRoleAssignment" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="RAX-AUTH:tenantAssignment" minOccurs="0" maxOccurs="unbounded"/>
         </sequence>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>
 
     <complexType name="RoleAssignments">
         <sequence>
-            <element ref="RAX-AUTH:tenantRoleAssignments" minOccurs="0" maxOccurs="1"/>
+            <element ref="RAX-AUTH:tenantAssignments" minOccurs="0" maxOccurs="1"/>
         </sequence>
         <anyAttribute namespace="##other" processContents="lax"/>
     </complexType>

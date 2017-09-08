@@ -2,7 +2,7 @@ package com.rackspace.idm.modules.usergroups.api.resource;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantRoleAssignment;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,9 +127,9 @@ public class CloudUserGroupResource {
             RoleAssignment roleAssignment) {
         // A null assignment (no request body) is shorthand for a domain (aka globally) assigned role. Convert to that.
         if (roleAssignment == null) {
-            roleAssignment = new TenantRoleAssignment();
+            roleAssignment = new TenantAssignment();
         }
-        roleAssignment.setRoleId(roleId); // Always set the roleId based on the path
+        roleAssignment.setOnRole(roleId); // Always set the roleId based on the path
         return userGroupCloudService.grantRoleToGroup(authToken, domainId, groupId, roleAssignment);
     }
 
