@@ -104,7 +104,6 @@ dependencies {
     }
 
     compile 'commons-dbcp:commons-dbcp:1.4'
-    compile 'mysql:mysql-connector-java:5.1.34'
     compile 'org.mariadb.jdbc:mariadb-java-client:1.2.0'
 
     compile group: 'joda-time', name: 'joda-time', version:'1.6'
@@ -339,12 +338,6 @@ task zipLdap(type: Zip) {
     from "ldap"
 }
 
-task zipSql(type: Zip) {
-    classifier = 'sql'
-    from "sql"
-    exclude "sql_dump.sh"
-}
-
 task zipEdirLdif(type: Zip) {
     classifier = 'edir-ldif'
     from "edir/ldif"
@@ -399,7 +392,6 @@ gretty {
 artifacts {
     archives zipConfig
     archives zipLdap
-    archives zipSql
     archives zipEdirLdif
     archives zipEdirConfig
     archives zipResources
@@ -502,7 +494,6 @@ zipConfig.dependsOn copyBaseConfig
 copyBaseConfig.dependsOn copyGeneratedSrc
 war.dependsOn zipConfig
 war.dependsOn zipLdap
-war.dependsOn zipSql
 war.dependsOn zipEdirLdif
 war.dependsOn zipEdirConfig
 war.dependsOn zipRepose
