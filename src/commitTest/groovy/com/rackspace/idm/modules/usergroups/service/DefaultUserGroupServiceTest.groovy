@@ -37,7 +37,7 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
 
         then:
         1 * validator20.validateStringNotNullWithMaxLength("name", group.name, 64)
-        1 * validator20.validateStringNotNullWithMaxLength("description", group.description, 255) >> { throw new BadRequestException() }
+        1 * validator20.validateStringMaxLength("description", group.description, 255) >> { throw new BadRequestException() }
         0 * dao.addGroup(_) // Not persisted
         thrown(BadRequestException)
     }

@@ -60,7 +60,7 @@ public class DefaultUserGroupService implements UserGroupService {
 
     public void validateUserGroupForCreateAndUpdate(UserGroup userGroup) {
         validator20.validateStringNotNullWithMaxLength("name", userGroup.getName(), MAX_LENGTH_64);
-        validator20.validateStringNotNullWithMaxLength("description", userGroup.getDescription(), MAX_LENGTH_255);
+        validator20.validateStringMaxLength("description", userGroup.getDescription(), MAX_LENGTH_255);
     }
 
     @Override
