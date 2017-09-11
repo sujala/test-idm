@@ -4,6 +4,7 @@ import json
 import os
 
 from tests.api.utils import data_file_iterator
+from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.v2.federation import federation
 from tests.api.v2.models import factory
 
@@ -78,9 +79,42 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             cls.idp_ia_clients[
                 role] = cls.create_identity_admin_with_role(role)
 
+        # user admin client
+        cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
+        cls.idp_user_admin_client = cls.generate_client(
+            parent_client=cls.idp_ia_clients["None"],
+            additional_input_data={'domain_id': cls.domain_id})
+        cls.idp_user_admin_client.serialize_format = 'xml'
+        cls.idp_user_admin_client.default_headers[
+            const.CONTENT_TYPE] = 'application/xml'
+
+        # user manage client
+        cls.idp_user_manage_client = cls.generate_client(
+            parent_client=cls.idp_user_admin_client,
+            additional_input_data={'domain_id': cls.domain_id,
+                                   'is_user_manager': True})
+        cls.idp_user_manage_client.serialize_format = 'xml'
+        cls.idp_user_manage_client.default_headers[
+            const.CONTENT_TYPE] = 'application/xml'
+
     def setUp(self):
         super(TestAddMappingIDP, self).setUp()
+        self.idp_id = None
         self.provider_ids = []
+
+    def create_and_validate_idp_mapping(
+            self, mapping, provider_id, api_client):
+        resp_put_manager = api_client.add_idp_mapping(
+            idp_id=provider_id,
+            request_data=mapping,
+            content_type=const.YAML)
+        self.assertEquals(resp_put_manager.status_code, 204)
+        resp_get_ro = api_client.get_idp_mapping(
+            idp_id=provider_id, headers={
+                const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
+            })
+
+        return resp_get_ro
 
     def add_idp(self, idp_ia_client):
         if not self.test_config.run_service_admin_tests:
@@ -103,8 +137,46 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             mapping = json.load(policy)['valid']
         return mapping
 
+    def validate_fed_user_auth_bad_request(
+            self, cert_path, domain_id, issuer, key_path, api_client):
+        test_data = {
+            "fed_input": {
+                "base64_url_encode": True,
+                "new_url": True,
+                "content_type": "x-www-form-urlencoded",
+                "fed_api": "v2",
+                "roles": [
+                    "lbaas:admin"
+                ]
+            }
+        }
+        fed_auth = self.fed_user_call(
+            test_data=test_data, domain_id=domain_id, private_key=key_path,
+            public_key=cert_path, issuer=issuer,
+            auth_client=api_client)
+        self.assertEqual(fed_auth.status_code, 400)
+        self.assertEqual(fed_auth.json()['badRequest']['message'],
+                         "Error code: 'FED2-016'; Invalid role 'lbaas:admin'")
+
+    def validate_fed_auth_success(
+            self, cert_path, domain_id, issuer, key_path, api_client):
+        test_data = {
+            "fed_input": {
+                "base64_url_encode": True,
+                "new_url": True,
+                "content_type": "x-www-form-urlencoded",
+                "fed_api": "v2"
+            }
+        }
+        fed_auth = self.fed_user_call(
+            test_data=test_data, domain_id=domain_id, private_key=key_path,
+            public_key=cert_path, issuer=issuer,
+            auth_client=api_client)
+        self.assertEqual(fed_auth.status_code, 200)
+        fed_token, _, _ = self.parse_auth_response(fed_auth)
+
     @data_file_iterator.data_file_provider((
-            "yaml/blacklist_mapping_policy.yaml",
+        "yaml/blacklist_mapping_policy.yaml",
     ))
     def test_add_mapping_blacklisted_yaml_with_auth(self, mapping):
         domain_id = self.create_one_user_and_get_domain(
@@ -117,46 +189,73 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             auth_client=self.idp_ia_clients[
                 const.PROVIDER_MANAGEMENT_ROLE_NAME])
 
-        resp_put_manager = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
-            idp_id=provider_id,
-            request_data=mapping,
-            content_type=const.YAML)
-        self.assertEquals(resp_put_manager.status_code, 204)
-
-        resp_get_ro = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
-            idp_id=provider_id, headers={
-                const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
-            })
+        resp_get_ro = self.create_and_validate_idp_mapping(
+            mapping, provider_id, api_client=self.idp_ia_clients[
+                const.PROVIDER_MANAGEMENT_ROLE_NAME])
         self.assertEquals(resp_get_ro.status_code, 200)
         self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
                           const.YAML_CONTENT_TYPE_VALUE)
         self.assertEquals(resp_get_ro.text, mapping)
 
-        test_data = {
-            "fed_input": {
-                "base64_url_encode": True,
-                "new_url": True,
-                "content_type": "x-www-form-urlencoded",
-                "fed_api": "v2",
-                "roles": [
-                    "lbaas:admin"
-                ]
-            }
-        }
-
-        fed_auth = self.fed_user_call(
-            test_data=test_data, domain_id=domain_id, private_key=key_path,
-            public_key=cert_path, issuer=issuer,
-            auth_client=self.idp_ia_clients[
+        self.validate_fed_user_auth_bad_request(
+            cert_path, domain_id, issuer, key_path,
+            self.idp_ia_clients[
                 const.PROVIDER_MANAGEMENT_ROLE_NAME])
-        self.assertEqual(fed_auth.status_code, 400)
-        self.assertEqual(fed_auth.json()['badRequest']['message'],
-                         "Error code: 'FED2-016'; Invalid role 'lbaas:admin'")
 
     @data_file_iterator.data_file_provider((
-            "yaml/default_mapping_policy.yaml",
+        "yaml/blacklist_mapping_policy.yaml",
+    ))
+    def test_add_mapping_blacklisted_yaml_with_auth_user_admin(self, mapping):
+        (pem_encoded_cert, cert_path, _, key_path,
+         f_print) = create_self_signed_cert()
+
+        self.idp_id = self.add_idp_with_metadata_return_id(
+            cert_path=cert_path, api_client=self.idp_user_admin_client)
+
+        resp_put_manager = self.idp_user_admin_client.add_idp_mapping(
+            idp_id=self.idp_id,
+            request_data=mapping,
+            content_type=const.YAML)
+        self.assertEquals(resp_put_manager.status_code, 204)
+
+        resp_get_ro = self.create_and_validate_idp_mapping(
+            mapping, self.idp_id, api_client=self.idp_user_admin_client
+        )
+
+        self.assertEquals(resp_get_ro.status_code, 200)
+        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+                          const.YAML_CONTENT_TYPE_VALUE)
+        self.assertEquals(resp_get_ro.text, mapping)
+
+        self.validate_fed_user_auth_bad_request(
+            cert_path, self.domain_id, self.issuer, key_path,
+            self.idp_user_admin_client)
+
+    @data_file_iterator.data_file_provider((
+        "yaml/blacklist_mapping_policy.yaml",
+    ))
+    def test_add_mapping_blacklisted_yaml_with_auth_user_manage(self, mapping):
+        (pem_encoded_cert, cert_path, _, key_path,
+         f_print) = create_self_signed_cert()
+
+        self.idp_id = self.add_idp_with_metadata_return_id(
+            cert_path=cert_path, api_client=self.idp_user_manage_client)
+
+        resp_get_ro = self.create_and_validate_idp_mapping(
+            mapping, self.idp_id, api_client=self.idp_user_manage_client
+        )
+
+        self.assertEquals(resp_get_ro.status_code, 200)
+        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+                          const.YAML_CONTENT_TYPE_VALUE)
+        self.assertEquals(resp_get_ro.text, mapping)
+
+        self.validate_fed_user_auth_bad_request(
+            cert_path, self.domain_id, self.issuer, key_path,
+            self.idp_user_manage_client)
+
+    @data_file_iterator.data_file_provider((
+        "yaml/default_mapping_policy.yaml",
     ))
     def test_add_mapping_valid_yaml_with_auth(self, mapping):
         domain_id = self.create_one_user_and_get_domain(
@@ -169,16 +268,33 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             auth_client=self.idp_ia_clients[
                 const.PROVIDER_MANAGEMENT_ROLE_NAME])
 
-        resp_put_manager = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
-            idp_id=provider_id,
+        self.create_and_validate_idp_mapping(
+            mapping, provider_id, api_client=self.idp_ia_clients[
+                const.PROVIDER_MANAGEMENT_ROLE_NAME])
+
+        self.validate_fed_auth_success(
+            cert_path, domain_id, issuer, key_path,
+            self.idp_ia_clients[
+                const.PROVIDER_MANAGEMENT_ROLE_NAME])
+
+    @data_file_iterator.data_file_provider((
+        "yaml/default_mapping_policy.yaml",
+    ))
+    def test_add_mapping_valid_yaml_with_auth_user_admin(self, mapping):
+        (pem_encoded_cert, cert_path, _, key_path,
+         f_print) = create_self_signed_cert()
+
+        self.idp_id = self.add_idp_with_metadata_return_id(
+            cert_path=cert_path, api_client=self.idp_user_admin_client)
+
+        resp_put_manager = self.idp_user_admin_client.add_idp_mapping(
+            idp_id=self.idp_id,
             request_data=mapping,
             content_type=const.YAML)
         self.assertEquals(resp_put_manager.status_code, 204)
 
-        resp_get_ro = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
-            idp_id=provider_id, headers={
+        resp_get_ro = self.idp_user_admin_client.get_idp_mapping(
+            idp_id=self.idp_id, headers={
                 const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
             })
         self.assertEquals(resp_get_ro.status_code, 200)
@@ -186,22 +302,38 @@ class TestAddMappingIDP(federation.TestBaseFederation):
                           const.YAML_CONTENT_TYPE_VALUE)
         self.assertEquals(resp_get_ro.text, mapping)
 
-        test_data = {
-            "fed_input": {
-                "base64_url_encode": True,
-                "new_url": True,
-                "content_type": "x-www-form-urlencoded",
-                "fed_api": "v2"
-            }
-        }
+        self.validate_fed_auth_success(
+            cert_path, self.domain_id, self.issuer, key_path,
+            self.idp_user_admin_client)
 
-        fed_auth = self.fed_user_call(
-            test_data=test_data, domain_id=domain_id, private_key=key_path,
-            public_key=cert_path, issuer=issuer,
-            auth_client=self.idp_ia_clients[
-                const.PROVIDER_MANAGEMENT_ROLE_NAME])
-        self.assertEqual(fed_auth.status_code, 200)
-        fed_token, _, _ = self.parse_auth_response(fed_auth)
+    @data_file_iterator.data_file_provider((
+        "yaml/default_mapping_policy.yaml",
+    ))
+    def test_add_mapping_valid_yaml_with_auth_user_manage(self, mapping):
+        (pem_encoded_cert, cert_path, _, key_path,
+         f_print) = create_self_signed_cert()
+
+        self.idp_id = self.add_idp_with_metadata_return_id(
+            cert_path=cert_path, api_client=self.idp_user_manage_client)
+
+        resp_put_manager = self.idp_user_manage_client.add_idp_mapping(
+            idp_id=self.idp_id,
+            request_data=mapping,
+            content_type=const.YAML)
+        self.assertEquals(resp_put_manager.status_code, 204)
+
+        resp_get_ro = self.idp_user_manage_client.get_idp_mapping(
+            idp_id=self.idp_id, headers={
+                const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
+            })
+        self.assertEquals(resp_get_ro.status_code, 200)
+        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
+                          const.YAML_CONTENT_TYPE_VALUE)
+        self.assertEquals(resp_get_ro.text, mapping)
+
+        self.validate_fed_auth_success(
+            cert_path, self.domain_id, self.issuer, key_path,
+            self.idp_user_manage_client)
 
     # verify must have role manager for put, read only for get
     @ddt.file_data('data_update_idp_mapping_policy.json')
@@ -263,7 +395,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.assertEquals(resp_get_ro.json(), mapping)
 
     @data_file_iterator.data_file_provider((
-            "yaml/default_mapping_invalid_policy.yaml",
+        "yaml/default_mapping_invalid_policy.yaml",
     ))
     def test_add_mapping_invalid_yaml(self, mapping):
         provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
@@ -301,32 +433,19 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         self.assertEquals(resp_get_ro.json(), current_resp_policy.json())
 
     @data_file_iterator.data_file_provider((
-            "yaml/default_mapping_policy.yaml",
-            "yaml/blacklist_mapping_policy.yaml",
-            "yaml/name_and_roles_regex_mapping_policy.yaml",
-            "yaml/quoted_attrs_mapping_policy.yaml",
-            "yaml/roles_with_spaces_mapping_policy.yaml",
+        "yaml/default_mapping_policy.yaml",
+        "yaml/blacklist_mapping_policy.yaml",
+        "yaml/name_and_roles_regex_mapping_policy.yaml",
+        "yaml/quoted_attrs_mapping_policy.yaml",
+        "yaml/roles_with_spaces_mapping_policy.yaml",
     ))
     def test_add_mapping_valid_yaml(self, mapping):
         provider_id = self.add_idp(idp_ia_client=self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME])
 
-        resp_put_manager = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].add_idp_mapping(
-            idp_id=provider_id,
-            request_data=mapping,
-            content_type=const.YAML)
-        self.assertEquals(resp_put_manager.status_code, 204)
-
-        resp_get_ro = self.idp_ia_clients[
-            const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
-            idp_id=provider_id, headers={
-                const.ACCEPT: const.YAML_ACCEPT_ENCODING_VALUE
-            })
-        self.assertEquals(resp_get_ro.status_code, 200)
-        self.assertEquals(resp_get_ro.headers[const.CONTENT_TYPE],
-                          const.YAML_CONTENT_TYPE_VALUE)
-        self.assertEquals(resp_get_ro.text, mapping)
+        self.create_and_validate_idp_mapping(
+            mapping, provider_id, api_client=self.idp_ia_clients[
+                const.PROVIDER_MANAGEMENT_ROLE_NAME])
 
         resp_get_ro = self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
@@ -462,6 +581,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
         for id_ in self.provider_ids:
             self.idp_ia_clients[
                 const.PROVIDER_MANAGEMENT_ROLE_NAME].delete_idp(idp_id=id_)
+        self.idp_user_admin_client.delete_idp(self.provider_ids)
 
         super(TestAddMappingIDP, self).tearDown()
 

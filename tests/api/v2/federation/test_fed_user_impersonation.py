@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*
-import copy
-
 from tests.api.v2.federation import federation
-from tests.api.v2.schema import idp as idp_json
 from tests.api.v2.schema import tokens as tokens_json
 
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -32,37 +29,11 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
             const.CONTENT_TYPE] = 'application/xml'
 
         cls.domain_ids = []
-        cls.idp_ids = []
 
         cls.domain_ids.append(cls.domain_id)
 
     def setUp(self):
         super(TestFedUserImpersonation, self).setUp()
-
-    def add_idp_w_metadata(self, cert_path):
-        # Add IDP with metadata, Validate the response code & body.
-        self.issuer = self.generate_random_string(
-            pattern='https://issuer[\d\w]{12}.com')
-        auth_url = self.generate_random_string(
-            pattern='auth[\-]url[\-][\d\w]{12}')
-
-        idp_metadata = saml_helper.create_metadata(
-            issuer=self.issuer, auth_url=auth_url,
-            public_key_path=cert_path)
-
-        idp_request_object = requests.IDPMetadata(metadata=idp_metadata)
-        resp = self.user_admin_client.create_idp(
-            request_object=idp_request_object)
-        self.assertEqual(resp.status_code, 201)
-        idp_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
-        self.idp_ids.append(idp_id)
-
-        updated_idp_schema = copy.deepcopy(idp_json.identity_provider)
-        updated_idp_schema[const.PROPERTIES][const.NS_IDENTITY_PROVIDER][
-            const.REQUIRED] += [const.PUBLIC_CERTIFICATES]
-        self.assertSchema(response=resp,
-                          json_schema=updated_idp_schema)
-        return idp_id
 
     def test_impersonate_fed_user(self):
         '''
@@ -71,7 +42,8 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()
 
-        resp = self.add_idp_w_metadata(cert_path=cert_path)
+        resp = self.add_idp_with_metadata_return_id(
+            cert_path=cert_path, api_client=self.user_admin_client)
 
         # V1 Federation - Auth as fed user in the registered domain
         subject = self.generate_random_string(
@@ -108,7 +80,8 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()
 
-        self.add_idp_w_metadata(cert_path=cert_path)
+        self.add_idp_with_metadata_return_id(
+            cert_path=cert_path, api_client=self.user_admin_client)
 
         # V1 Federation - Auth as fed user in the registered domain
         subject = self.generate_random_string(

@@ -32,6 +32,20 @@ class TestIDPMetadata(federation.TestBaseFederation):
         cls.user_admin_client.default_headers[
             const.CONTENT_TYPE] = 'application/xml'
 
+        # user manage client
+        cls.idp_user_manage_client = cls.generate_client(
+            parent_client=cls.user_admin_client,
+            additional_input_data={'domain_id': cls.domain_id,
+                                   'is_user_manager': True})
+
+        # user default client
+        cls.idp_user_default_client = cls.generate_client(
+            parent_client=cls.idp_user_manage_client,
+            additional_input_data={'domain_id': cls.domain_id})
+        cls.idp_user_default_client.serialize_format = 'xml'
+        cls.idp_user_default_client.default_headers[
+            const.CONTENT_TYPE] = 'application/xml'
+
         cls.domain_ids = []
 
         cls.domain_ids.append(cls.domain_id)
@@ -40,30 +54,6 @@ class TestIDPMetadata(federation.TestBaseFederation):
         super(TestIDPMetadata, self).setUp()
         self.idp_ids = []
 
-    def add_idp_w_metadata(self, cert_path):
-        # Add IDP with metadata, Validate the response code & body.
-        self.issuer = self.generate_random_string(
-            pattern='https://issuer[\d\w]{12}.com')
-        auth_url = self.generate_random_string(
-            pattern='auth[\-]url[\-][\d\w]{12}')
-
-        idp_metadata = saml_helper.create_metadata(
-            issuer=self.issuer, auth_url=auth_url,
-            public_key_path=cert_path)
-
-        idp_request_object = requests.IDPMetadata(metadata=idp_metadata)
-        resp = self.user_admin_client.create_idp(
-            request_object=idp_request_object)
-        self.assertEqual(resp.status_code, 201)
-        idp_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
-        self.idp_ids.append(idp_id)
-
-        updated_idp_schema = copy.deepcopy(idp_json.identity_provider)
-        updated_idp_schema[const.PROPERTIES][const.NS_IDENTITY_PROVIDER][
-            const.REQUIRED] += [const.PUBLIC_CERTIFICATES]
-        self.assertSchema(response=resp, json_schema=updated_idp_schema)
-        return idp_id
-
     def test_add_idp_auth_fed_user(self):
         '''
         Test to Add IDP with metadata & auth as a fed user for the domain.
@@ -71,7 +61,8 @@ class TestIDPMetadata(federation.TestBaseFederation):
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()
 
-        idp_id = self.add_idp_w_metadata(cert_path=cert_path)
+        idp_id = self.add_idp_with_metadata_return_id(
+            cert_path=cert_path, api_client=self.user_admin_client)
 
         # Get IDP Metadata - supports only XML response
         self.user_admin_client.default_headers[
@@ -134,7 +125,8 @@ class TestIDPMetadata(federation.TestBaseFederation):
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()
 
-        idp_id = self.add_idp_w_metadata(cert_path=cert_path)
+        idp_id = self.add_idp_with_metadata_return_id(
+            cert_path=cert_path, api_client=self.user_admin_client)
 
         # Update IDP certs by replacing metadata
         (pem_encoded_cert, cert_path, _, key_path,
@@ -186,11 +178,21 @@ class TestIDPMetadata(federation.TestBaseFederation):
         (pem_encoded_cert, cert_path, _, key_path,
          f_print) = create_self_signed_cert()
 
-        self.add_idp_w_metadata(cert_path=cert_path)
+        self.add_idp_with_metadata_return_id(
+            cert_path=cert_path, api_client=self.user_admin_client)
 
         resp = self.user_admin_client.list_idp()
         self.assertEqual(resp.status_code, 200)
         self.assertSchema(response=resp, json_schema=idp_json.list_idps)
+
+    def test_add_mapping_user_default(self):
+        (pem_encoded_cert, cert_path, _, key_path,
+         f_print) = create_self_signed_cert()
+
+        resp = self.add_idp_with_metadata(
+            cert_path=cert_path, api_client=self.idp_user_default_client)
+
+        self.assertEquals(resp.status_code, 403)
 
     def tearDown(self):
         super(TestIDPMetadata, self).tearDown()
