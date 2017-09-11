@@ -120,4 +120,19 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * dao.addGroup(group)
     }
 
+    def "deleteGroup: removes object via dao"() {
+        UserGroup group = new UserGroup().with {
+            it.domainId = "domainId"
+            it.name = "name"
+            it.description = "description"
+            it
+        }
+
+        when:
+        service.deleteGroup(group)
+
+        then:
+        1 * dao.deleteGroup(group)
+    }
+
 }
