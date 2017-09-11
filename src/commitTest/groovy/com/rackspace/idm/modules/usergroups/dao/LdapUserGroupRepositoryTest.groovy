@@ -4,13 +4,10 @@ import com.rackspace.idm.domain.dao.impl.LdapConnectionPools
 import com.rackspace.idm.domain.dao.impl.LdapGenericRepository
 import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.rackspace.idm.modules.usergroups.Constants
-import com.rackspace.idm.modules.usergroups.dao.LdapUserGroupRepository
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.unboundid.ldap.sdk.AddRequest
-import com.unboundid.ldap.sdk.DN
 import com.unboundid.ldap.sdk.Filter
 import com.unboundid.ldap.sdk.LDAPInterface
-import com.unboundid.ldap.sdk.SearchResultEntry
 import com.unboundid.ldap.sdk.SearchScope
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -80,11 +77,11 @@ class LdapUserGroupRepositoryTest extends RootServiceTest {
     }
 
     def "addGroup: Get Group by Id and name creates appropriate filter"() {
-        def domainId = "domainId"
         def groupName = "groupName"
+        def domainId = "domainId"
 
         when:
-        dao.getGroupByDomainIdAndName(domainId, groupName)
+        dao.getGroupByNameForDomain(groupName, domainId)
 
         then:
         1 * ldapInterface.searchForEntry(dao.getBaseDn(), SearchScope.ONE, _ as Filter, _) >> { args ->
@@ -110,6 +107,22 @@ class LdapUserGroupRepositoryTest extends RootServiceTest {
             assert filter.components.find {it.attributeName == LdapRepository.ATTR_DOMAIN_ID && it.assertionValue == domainId}
             assert filter.components.find {it.attributeName == LdapRepository.ATTR_OBJECT_CLASS && it.assertionValue == Constants.OBJECTCLASS_USER_GROUP}
             null // Just return null as unboundId could return that anyway
+        }
+    }
+
+    def "getGroupById: Get Group by id creates appropriate filter"() {
+        def groupId = "groupId"
+
+        when:
+        dao.getGroupById(groupId)
+
+        then:
+        1 * ldapInterface.searchForEntry(dao.getBaseDn(), SearchScope.ONE, _ as Filter, _) >> { args ->
+            Filter filter = args[2]
+            assert filter.components.size() == 2
+            assert filter.components.find {it.attributeName == LdapRepository.ATTR_ID && it.assertionValue == groupId}
+            assert filter.components.find {it.attributeName == LdapRepository.ATTR_OBJECT_CLASS && it.assertionValue == Constants.OBJECTCLASS_USER_GROUP}
+            null  // Just return null as we're testing filter creation not actual searching
         }
     }
 }

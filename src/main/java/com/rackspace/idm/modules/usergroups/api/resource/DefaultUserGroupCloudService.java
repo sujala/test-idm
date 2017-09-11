@@ -78,8 +78,23 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
     }
 
     @Override
-    public Response getGroupByDomainIdAndId(String authToken, String domainId, String groupId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+    public Response getGroupByIdForDomain(String authToken, String groupId, String domainId) {
+        try {
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId);
+
+            com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId);
+
+            Response.ResponseBuilder response = Response.ok(userGroupConverter.toUserGroupWeb(group));
+            return response.build();
+        } catch (Exception ex) {
+            LOG.error(String.format("Error retrieving user group for domain '%s' and groupid '%s'", domainId, groupId), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @Override

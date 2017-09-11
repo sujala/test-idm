@@ -46,10 +46,10 @@ public class LdapUserGroupRepository extends LdapGenericRepository<UserGroup> im
     }
 
     @Override
-    public UserGroup getGroupByDomainIdAndName(String domainId, String groupName) {
+    public UserGroup getGroupByNameForDomain(String groupName, String domainId) {
         Validate.notEmpty(domainId);
         Validate.notEmpty(groupName);
-        return getObject(searchByDomainIdAndNameFilter(domainId, groupName));
+        return getObject(searchByDomainIdAndNameFilter(groupName, domainId));
     }
 
     @Override
@@ -69,7 +69,7 @@ public class LdapUserGroupRepository extends LdapGenericRepository<UserGroup> im
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_USER_GROUP).build();
     }
 
-    Filter searchByDomainIdAndNameFilter(String domainId, String name) {
+    Filter searchByDomainIdAndNameFilter(String name, String domainId) {
         return new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_DOMAIN_ID, domainId)
                 .addEqualAttribute(ATTR_COMMON_NAME, name)

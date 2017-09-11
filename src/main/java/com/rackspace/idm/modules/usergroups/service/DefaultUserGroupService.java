@@ -4,6 +4,7 @@ import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
@@ -43,7 +44,7 @@ public class DefaultUserGroupService implements UserGroupService {
         // Verify group requirements
         validateUserGroupForCreateAndUpdate(group);
 
-        if (getGroupByDomainIdAndName(group.getDomainId(), group.getName()) != null) {
+        if (getGroupByNameForDomain(group.getName(), group.getDomainId()) != null) {
             throw new DuplicateException("Group already exists with this name in this domain");
         }
 
@@ -75,29 +76,55 @@ public class DefaultUserGroupService implements UserGroupService {
 
     @Override
     public UserGroup getGroupById(String groupId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        Validate.notEmpty(groupId);
+
+        return userGroupDao.getGroupById(groupId);
     }
 
     @Override
     public UserGroup checkAndGetGroupById(String groupId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        Validate.notEmpty(groupId);
+
+        UserGroup group = getGroupById(groupId);
+        if (group == null) {
+            throw new NotFoundException(String.format("Group '%s' not found", groupId));
+        }
+        return group;
     }
 
     @Override
-    public UserGroup getGroupByIdForDomain(String domainId, String groupId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+    public UserGroup getGroupByIdForDomain(String groupId, String domainId) {
+        Validate.notEmpty(domainId);
+        Validate.notEmpty(groupId);
+
+        UserGroup group = getGroupById(groupId);
+        if (group != null && !domainId.equalsIgnoreCase(group.getDomainId())) {
+            return null; // If group exists, but doesn't belong to domain, pretend it doesn't exist
+        }
+        return group;
     }
 
     @Override
     public UserGroup checkAndGetGroupByIdForDomain(String domainId, String groupId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        Validate.notEmpty(domainId);
+        Validate.notEmpty(groupId);
+
+        UserGroup group = getGroupByIdForDomain(domainId, groupId);
+        if (group == null) {
+            /*
+             While technically the group may exist, just not in the specified domain, want the error message to be
+             the same in both cases.
+             */
+            throw new NotFoundException(String.format("Group '%s' not found", groupId));
+        }
+        return group;
     }
 
     @Override
-    public UserGroup getGroupByDomainIdAndName(String domainId, String groupName) {
-        Validate.notEmpty(domainId);
+    public UserGroup getGroupByNameForDomain(String groupName, String domainId) {
         Validate.notEmpty(groupName);
+        Validate.notEmpty(domainId);
 
-        return userGroupDao.getGroupByDomainIdAndName(domainId, groupName);
+        return userGroupDao.getGroupByNameForDomain(groupName, domainId);
     }
 }

@@ -56,7 +56,7 @@ public class CloudUserGroupResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
             @PathParam("groupId") String groupId) {
-        return userGroupCloudService.getGroupByDomainIdAndId(authToken, domainId, groupId);
+        return userGroupCloudService.getGroupByIdForDomain(authToken, groupId, domainId);
     }
 
     @PUT

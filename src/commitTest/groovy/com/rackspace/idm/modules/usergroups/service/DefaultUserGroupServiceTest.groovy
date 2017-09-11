@@ -99,7 +99,7 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         service.addGroup(group)
 
         then:
-        1 * dao.getGroupByDomainIdAndName(group.domainId, group.name) >> new UserGroup()
+        1 * dao.getGroupByNameForDomain(group.name, group.domainId) >> new UserGroup()
         0 * dao.addGroup(_) // Not persisted
         thrown(DuplicateException)
     }

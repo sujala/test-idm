@@ -59,9 +59,9 @@ public interface UserGroupDao {
     /**
      * Return a group with the given domainId and name, or null if no such group exists.
      *
-     * @param domainId
      * @param groupName
+     * @param domainId
      * @return
      */
-    UserGroup getGroupByDomainIdAndName(String domainId, String groupName);
+    UserGroup getGroupByNameForDomain(String groupName, String domainId);
 }

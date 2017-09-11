@@ -73,7 +73,7 @@ class CloudUserGroupResourceTest extends Specification {
 
         then:
 
-        1 * userGroupCloudService.getGroupByDomainIdAndId(token, pathDomainId, groupId)
+        1 * userGroupCloudService.getGroupByIdForDomain(token, groupId, pathDomainId)
 
         where:
         domainId | groupId

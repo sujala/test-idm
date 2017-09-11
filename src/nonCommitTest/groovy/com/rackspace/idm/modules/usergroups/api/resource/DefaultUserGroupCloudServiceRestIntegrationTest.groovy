@@ -44,7 +44,7 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
     }
 
     @Unroll
-    def "add group; mediaType = #mediaType"() {
+    def "add/get group; mediaType = #mediaType"() {
         when:
         UserGroup group = new UserGroup().with {
             it.domainId = sharedUserAdmin.domainId
@@ -62,6 +62,19 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         created.id != null
         created.description == group.description
         created.name == group.name
+
+        when:
+        def getResponse = cloud20.getUserGroup(sharedIdentityAdminToken, created, mediaType)
+
+        then:
+        getResponse.status == HttpStatus.SC_OK
+        UserGroup retrievedEntity = getResponse.getEntity(UserGroup)
+
+        and:
+        retrievedEntity.domainId == group.domainId
+        retrievedEntity.id == created.id
+        retrievedEntity.description == group.description
+        retrievedEntity.name == group.name
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]

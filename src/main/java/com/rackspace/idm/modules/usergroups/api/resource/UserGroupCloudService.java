@@ -68,11 +68,11 @@ public interface UserGroupCloudService {
      * </ol>
      *
      * @param authToken
-     * @param domainId
      * @param groupId
+     * @param domainId
      * @return
      */
-    Response getGroupByDomainIdAndId(String authToken, String domainId, String groupId);
+    Response getGroupByIdForDomain(String authToken, String groupId, String domainId);
 
     /**
      * Update the name and/or description of the user group. Can not be used to switch a group's id or domain. An update of

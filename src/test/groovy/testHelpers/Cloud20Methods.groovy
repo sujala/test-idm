@@ -1145,7 +1145,7 @@ class Cloud20Methods {
 
     def getUserGroup(String token, UserGroup userGroup, MediaType media=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.getId()).accept(media).header(X_AUTH_TOKEN, token).entity(userGroup).post(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.getId()).accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def createIdentityProviderWithCred(String token, IdentityProviderFederationTypeEnum type, Credential cred) {

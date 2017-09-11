@@ -53,6 +53,7 @@ public interface UserGroupService {
      *
      * @param groupId
      * @throws com.rackspace.idm.exception.NotFoundException If the specified group doesn't exist
+     * @throws IllegalArgumentException If supplied groupId is null or empty string
      *
      * @return
      */
@@ -64,10 +65,11 @@ public interface UserGroupService {
      *
      * @param domainId
      * @param groupId
+     * @throws IllegalArgumentException If supplied domainId or groupId is null or empty string
      *
      * @return
      */
-    UserGroup getGroupByIdForDomain(String domainId, String groupId);
+    UserGroup getGroupByIdForDomain(String groupId, String domainId);
 
     /**
      * Retrieves the group with the specified groupId under the specified domain. If no such group exists, throws
@@ -77,17 +79,19 @@ public interface UserGroupService {
      * @param groupId
      *
      * @throws com.rackspace.idm.exception.NotFoundException If the specified group doesn't exist in the given domain
+     * @throws IllegalArgumentException If supplied domainId or groupId is null or empty string
      * @return
      */
-    UserGroup checkAndGetGroupByIdForDomain(String domainId, String groupId);
+    UserGroup checkAndGetGroupByIdForDomain(String groupId, String domainId);
 
     /**
      * Retrieves the group with the specified group name under the specified domain. If no such group exists, returns null
      *
      * @param domainId
      * @param groupName
+     * @throws IllegalArgumentException If supplied domainId or groupName is null or empty string
      *
      * @return
      */
-    UserGroup getGroupByDomainIdAndName(String domainId, String groupName);
+    UserGroup getGroupByNameForDomain(String groupName, String domainId);
 }

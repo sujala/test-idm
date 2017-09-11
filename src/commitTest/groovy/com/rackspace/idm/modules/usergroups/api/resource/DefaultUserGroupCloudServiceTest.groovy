@@ -114,5 +114,56 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
         response.metadata.get("Location")[0] == locationHeader
     }
 
+    /**
+     * Verifies service calls standard 3 authorization services for user group services and the required exception
+     * handler to deal with errors
+     */
+    def "getUserGroup: Calls appropriate authorization services and exception handler"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+        def groupid = "groupid"
+
+        when:
+        defaultUserGroupCloudService.getGroupByIdForDomain(token, groupid, domainId)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId) >> {throw new ForbiddenException()}
+        1 * idmExceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
+    }
+
+    def "getUserGroup: Converts entity and calls backend service"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+        def groupid = "groupid"
+
+        com.rackspace.idm.modules.usergroups.entity.UserGroup entityGroup = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.id = groupid
+            it.domainId = domainId
+            it.name = "name"
+            it.description = "description"
+            it
+        }
+
+        UserGroup outputWebGroup = new UserGroup()
+
+        when:
+        Response response = defaultUserGroupCloudService.getGroupByIdForDomain(token, groupid, domainId)
+
+        then:
+        1 * userGroupService.checkAndGetGroupByIdForDomain(groupid, domainId) >> entityGroup
+
+        // Converts the entity
+        1 * userGroupConverter.toUserGroupWeb(entityGroup) >> outputWebGroup
+
+        // Returns the same object from the conversion
+        response.entity == outputWebGroup // The response includes the output of the converter
+
+        // Creates a 200 response w/ header set to
+        response.status == HttpStatus.SC_OK
+    }
 
 }
