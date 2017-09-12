@@ -25,6 +25,8 @@ import static com.rackspace.idm.validation.Validator20.MAX_LENGTH_64;
 public class DefaultUserGroupService implements UserGroupService {
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
 
+    public static final String GROUP_NOT_FOUND_ERROR_MESSAGE = "Group '%s' not found";
+
     @Autowired
     private UserGroupDao userGroupDao;
 
@@ -71,7 +73,7 @@ public class DefaultUserGroupService implements UserGroupService {
 
     @Override
     public void deleteGroup(UserGroup group) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        userGroupDao.deleteGroup(group);
     }
 
     @Override
@@ -87,7 +89,7 @@ public class DefaultUserGroupService implements UserGroupService {
 
         UserGroup group = getGroupById(groupId);
         if (group == null) {
-            throw new NotFoundException(String.format("Group '%s' not found", groupId));
+            throw new NotFoundException(String.format(GROUP_NOT_FOUND_ERROR_MESSAGE, groupId));
         }
         return group;
     }
@@ -105,17 +107,17 @@ public class DefaultUserGroupService implements UserGroupService {
     }
 
     @Override
-    public UserGroup checkAndGetGroupByIdForDomain(String domainId, String groupId) {
-        Validate.notEmpty(domainId);
+    public UserGroup checkAndGetGroupByIdForDomain(String groupId, String domainId) {
         Validate.notEmpty(groupId);
+        Validate.notEmpty(domainId);
 
-        UserGroup group = getGroupByIdForDomain(domainId, groupId);
+        UserGroup group = getGroupByIdForDomain(groupId, domainId);
         if (group == null) {
             /*
              While technically the group may exist, just not in the specified domain, want the error message to be
              the same in both cases.
              */
-            throw new NotFoundException(String.format("Group '%s' not found", groupId));
+            throw new NotFoundException(String.format(GROUP_NOT_FOUND_ERROR_MESSAGE, groupId));
         }
         return group;
     }
