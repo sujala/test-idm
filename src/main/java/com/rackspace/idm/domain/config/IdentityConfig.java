@@ -469,8 +469,8 @@ public class IdentityConfig {
     public static final String FEEDS_CONNECTION_KEEP_ALIVE_MS_PROP = "feeds.connection.keep.alive.ms";
     public static final long FEEDS_CONNECTION_KEEP_ALIVE_MS_DEFAULT = 5000;
 
-    public static final String FEATURE_ENABLE_ISSUED_AT_IN_RESPONSE_PROP = "feature.enable.issued_at.in.response";
-    public static final boolean FEATURE_ENABLE_ISSUED_AT_IN_RESPONSE_DEFAULT = false;
+    public static final String FEATURE_ENABLE_ISSUED_IN_RESPONSE_PROP = "feature.enable.issued_at.in.response";
+    public static final boolean FEATURE_ENABLE_ISSUED_IN_RESPONSE_DEFAULT = true;
 
     /**
      * Identity Repository Properties
@@ -664,7 +664,7 @@ public class IdentityConfig {
         defaults.put(USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_DEFAULT);
 
         defaults.put(MAPPING_POLICY_ACCEPT_FORMATS_PROP, MAPPING_POLICY_ACCEPT_FORMATS_DEFAULT);
-        defaults.put(FEATURE_ENABLE_ISSUED_AT_IN_RESPONSE_PROP, FEATURE_ENABLE_ISSUED_AT_IN_RESPONSE_DEFAULT);
+        defaults.put(FEATURE_ENABLE_ISSUED_IN_RESPONSE_PROP, FEATURE_ENABLE_ISSUED_IN_RESPONSE_DEFAULT);
 
         return defaults;
     }
@@ -1899,9 +1899,9 @@ public class IdentityConfig {
             return getSetSafely(reloadableConfiguration, MAPPING_POLICY_ACCEPT_FORMATS_PROP);
         }
 
-        @IdmProp(key = FEATURE_ENABLE_ISSUED_AT_IN_RESPONSE_PROP, versionAdded = "3.15.0", description = "Specify if issued_at will be included in authenticate, impersonate and validate response.")
-        public boolean getEnableIssuedAtInResponse() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_ISSUED_AT_IN_RESPONSE_PROP);
+        @IdmProp(key = FEATURE_ENABLE_ISSUED_IN_RESPONSE_PROP, versionAdded = "3.15.0", description = "Specify if issued will be included in authenticate, impersonate and validate response.")
+        public boolean getEnableIssuedInResponse() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_ISSUED_IN_RESPONSE_PROP);
         }
     }
 

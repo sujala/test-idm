@@ -42,7 +42,7 @@ public final class JSONConstants {
     public static final String ENDPOINT_TEMPLATES = "endpointTemplates";
     public static final String ENDPOINTS = "endpoints";
     public static final String EXPIRES = "expires";
-    public static final String RAX_AUTH_ISSUED_AT = "RAX-AUTH:issued_at";
+    public static final String RAX_AUTH_ISSUED = "RAX-AUTH:issued";
     public static final String EXTENSION = "extension";
     public static final String EXTENSIONS = "extensions";
     public static final String GLOBAL = "global";

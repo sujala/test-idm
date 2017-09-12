@@ -32,13 +32,13 @@ public class TokenConverterCloudV20Test extends Specification {
             it.createTimestamp = null
             it
         }
-        reloadableConfig.getEnableIssuedAtInResponse() >> true
+        reloadableConfig.getEnableIssuedInResponse() >> true
 
         when:
         Token token = converter.toTokenInternal(scopeAccess, tenantId)
 
         then:
-        token.issuedAt == null
+        token.issued == null
     }
 
     def "toTokenInternal converts token with created date - feature enabled"() {
@@ -49,13 +49,13 @@ public class TokenConverterCloudV20Test extends Specification {
             it.createTimestamp = createTimestamp
             it
         }
-        reloadableConfig.getEnableIssuedAtInResponse() >> true
+        reloadableConfig.getEnableIssuedInResponse() >> true
 
         when:
         Token token = converter.toTokenInternal(scopeAccess, tenantId)
 
         then:
-        token.issuedAt.toGregorianCalendar().getTime() == createTimestamp
+        token.issued.toGregorianCalendar().getTime() == createTimestamp
     }
 
     def "toTokenInternal converts token with created date - feature disabled"() {
@@ -66,13 +66,13 @@ public class TokenConverterCloudV20Test extends Specification {
             it.createTimestamp = createTimestamp
             it
         }
-        reloadableConfig.getEnableIssuedAtInResponse() >> false
+        reloadableConfig.getEnableIssuedInResponse() >> false
 
         when:
         Token token = converter.toTokenInternal(scopeAccess, tenantId)
 
         then:
-        token.issuedAt == null
+        token.issued== null
     }
 
 }
