@@ -24,9 +24,9 @@ token_item = {
         const.RAX_AUTH_AUTHENTICATED_BY: {
             'type': 'array', 'items': {'type': 'string'}
         },
-        const.RAX_AUTH_ISSUED_AT: {'type': 'string', 'format': 'dateTime'}
+        const.RAX_AUTH_ISSUED: {'type': 'string', 'format': 'dateTime'}
     },
-    # Attribute for 'issued_at' to be added back once CID-1082 is implemented
+    # Attribute for 'issued' to be added back once CID-1082 is implemented
     'required': [const.ID, const.EXPIRES, const.RAX_AUTH_AUTHENTICATED_BY]
 }
 

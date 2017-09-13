@@ -5,14 +5,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup;
 
 import com.rackspace.idm.api.resource.IdmPathUtils;
-import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.Domain;
-import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.DomainService;
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.IdmExceptionHandler;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
@@ -23,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
@@ -92,7 +85,7 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
             Response.ResponseBuilder response = Response.ok(userGroupConverter.toUserGroupWeb(group));
             return response.build();
         } catch (Exception ex) {
-            LOG.error(String.format("Error retrieving user group for domain '%s' and groupid '%s'", domainId, groupId), ex);
+            LOG.error(String.format("Error retrieving user group for domain '%s' and groupId '%s'", domainId, groupId), ex);
             return idmExceptionHandler.exceptionResponse(ex).build();
         }
     }
@@ -104,7 +97,24 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
     @Override
     public Response deleteGroup(String authToken, String domainId, String groupId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        try {
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify userGroup exists for domain
+            com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId);
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(group.getDomainId());
+
+            userGroupService.deleteGroup(group);
+
+            return Response.noContent().build();
+        } catch (Exception ex) {
+            LOG.error(String.format("Error deleting user group for domain '%s' and groupId '%s'", domainId, groupId), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @Override

@@ -20,7 +20,7 @@ class V3ProvisionedUserTokenIntegrationTest extends DefaultAETokenServiceBaseInt
      ],
      "expires_at": "2015-09-09T03:52:43.976138Z",
      "extras": {},
-     "issued_at": "2015-09-09T03:37:43.976166Z",
+     "issued": "2015-09-09T03:37:43.976166Z",
      "methods": [
      "password"
      ],
@@ -1670,7 +1670,7 @@ class V3ProvisionedUserTokenIntegrationTest extends DefaultAETokenServiceBaseInt
      },
      "expires_at": "2015-10-09T19:07:18.000000Z",
      "extras": {},
-     "issued_at": "2015-10-09T18:52:18.000000Z",
+     "issued": "2015-10-09T18:52:18.000000Z",
      "methods": [
      "password"
      ],
@@ -1711,7 +1711,7 @@ class V3ProvisionedUserTokenIntegrationTest extends DefaultAETokenServiceBaseInt
      ],
      "expires_at": "2015-09-09T03:31:22.454996Z",
      "extras": {},
-     "issued_at": "2015-09-09T03:16:22.455025Z",
+     "issued": "2015-09-09T03:16:22.455025Z",
      "methods": [
      "password"
      ],

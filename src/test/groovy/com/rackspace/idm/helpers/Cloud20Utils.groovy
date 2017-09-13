@@ -35,7 +35,6 @@ import org.openstack.docs.identity.api.ext.os_kscatalog.v1.EndpointTemplate
 import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import spock.lang.Shared
 import testHelpers.Cloud20Methods
 import testHelpers.DevOpsMethods
 import testHelpers.V1Factory
@@ -1303,5 +1302,10 @@ class Cloud20Utils {
     IdmProperty getIdentityPropertyByName(String propName, token = getIdentityAdminToken()) {
         def getPropsResponse = devOpsMethods.getIdmProps(getIdentityAdminToken(), propName)
         getPropsResponse.getEntity(IdmPropertyList).properties.first()
+    }
+
+    def deleteUserGroup(UserGroup group, String token = getIdentityAdminToken()) {
+        def response = methods.deleteUserGroup(token, group)
+        assert response.status == SC_NO_CONTENT
     }
 }

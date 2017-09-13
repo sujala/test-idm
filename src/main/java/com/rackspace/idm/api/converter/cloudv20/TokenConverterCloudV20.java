@@ -46,9 +46,9 @@ public class TokenConverterCloudV20 {
         if (scopeAccess != null) {
             XMLGregorianCalendar expiresDate = getXmlGregorianCalendar(scopeAccess.getAccessTokenExp());
 
-            if (config.getReloadableConfig().getEnableIssuedAtInResponse()) {
+            if (config.getReloadableConfig().getEnableIssuedInResponse()) {
                 XMLGregorianCalendar issuedDate = getXmlGregorianCalendar(scopeAccess.getCreateTimestamp());
-                token.setIssuedAt(issuedDate);
+                token.setIssued(issuedDate);
             }
 
             token.setId(scopeAccess.getAccessTokenString());
