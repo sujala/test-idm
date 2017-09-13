@@ -360,20 +360,13 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
         for name in self.tenant_type_ids:
             self.service_admin_client.delete_tenant_type(name=name)
 
-        @classmethod
-        def tearDownClass(cls):
-
-            # Cleaning up the identity product roles added in setupClass. It is
-            # currently returning 403 due to CID-999.
-            # if self.test_config.run_service_admin_tests:
-            #     delete_resp = self.service_admin_client.delete_role(
-            #         role_id=self.weight50_role_id)
-            #     self.assertEqual(delete_resp.status_code, 204)
-            # delete_resp = self.service_admin_client.delete_role(
-            #     role_id=self.weight500_role_id)
-            # self.assertEqual(delete_resp.status_code, 204)
-            super(TestAddIdentityProdRoleToUserOnTenant, cls).tearDownClass()
-
     @classmethod
     def tearDownClass(cls):
         cls.delete_client(client=cls.user_admin_client)
+        # Cleaning up the identity product roles added in setupClass.
+        if cls.test_config.run_service_admin_tests:
+            cls.service_admin_client.delete_role(
+                role_id=cls.weight50_role_id)
+        cls.service_admin_client.delete_role(
+            role_id=cls.weight500_role_id)
+        super(TestAddIdentityProdRoleToUserOnTenant, cls).tearDownClass()

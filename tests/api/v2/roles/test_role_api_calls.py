@@ -213,7 +213,7 @@ class TestRoleApiCalls(base.TestBaseV2):
         for user in new_user_ids:
             self.assertIn(user, str(resp.json()[const.USERS]))
 
-    def test_delete_identity_classification_role(self):
+    def test_delete_identity_classification_role_from_user(self):
 
         user_id = self.create_admin_user()
         delete_role_resp = self.identity_admin_client.delete_role_from_user(
@@ -222,6 +222,15 @@ class TestRoleApiCalls(base.TestBaseV2):
         self.assertEqual(
             delete_role_resp.json()[const.FORBIDDEN][const.MESSAGE],
             "Cannot delete identity user-type roles from a user.")
+
+    def test_delete_identity_classification_role(self):
+
+        delete_role_resp = self.identity_admin_client.delete_role(
+            role_id=const.USER_DEFAULT_ROLE_ID)
+        self.assertEqual(delete_role_resp.status_code, 403)
+        self.assertEqual(
+            delete_role_resp.json()[const.FORBIDDEN][const.MESSAGE],
+            "Identity user type roles cannot be deleted")
 
     def tearDown(self):
         for id_ in self.role_ids:
