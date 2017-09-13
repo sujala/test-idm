@@ -428,7 +428,7 @@ class TestAdminsOfUser(base.TestBaseV2):
         base64_url_encode = fed_input_data['base64_url_encode']
         new_url = fed_input_data['new_url']
         content_type = fed_input_data['content_type']
-        fed_user_lifetime = 3
+        fed_user_lifetime = 1
 
         cert = saml_helper.create_saml_assertion(
             domain=domain_id, subject=subject, issuer=self.issuer,
