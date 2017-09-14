@@ -1160,6 +1160,16 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.id).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
+    def listUserGroups(String token, String domainId, String name=null, MediaType media=APPLICATION_XML_TYPE) {
+        initOnUse()
+        WebResource webResource = resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(domainId).path(SERVICE_PATH_USER_GROUPS)
+        def queryParams = new MultivaluedMapImpl()
+        if (name != null){
+            queryParams.add("name", name)
+        }
+        webResource.queryParams(queryParams).accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
     def createIdentityProviderWithCred(String token, IdentityProviderFederationTypeEnum type, Credential cred) {
         def pubCertPemString1 = SamlCredentialUtils.getCertificateAsPEMString(cred.entityCertificate)
         def pubCerts1 = v2Factory.createPublicCertificate(pubCertPemString1)

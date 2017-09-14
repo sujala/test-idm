@@ -1,7 +1,6 @@
 package com.rackspace.idm.modules.usergroups.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 
@@ -128,4 +127,14 @@ public interface UserGroupService {
      * @return the tenant roles saved
      */
     List<TenantRole> replaceRoleAssignmentsOnGroup(UserGroup userGroup, RoleAssignments roleAssignments);
+
+    /**
+     * Retrieves the groups under the specified domain. If no groups exists, returns empty list.
+     *
+     * @param domainId
+     * @throws IllegalArgumentException If supplied domainId is null or empty string
+     *
+     * @return
+     */
+    Iterable<UserGroup> getGroupsForDomain(String domainId);
 }

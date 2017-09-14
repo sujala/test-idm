@@ -318,6 +318,11 @@
                 <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="roleAssignments"/>
             </annox:annotate>
         </jaxb:bindings>
+        <jaxb:bindings node="xs:complexType[@name='UserGroups']">
+            <annox:annotate>
+                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="userGroups"/>
+            </annox:annotate>
+        </jaxb:bindings>
     </jaxb:bindings>
 
     <jaxb:bindings schemaLocation="RAX-KSGRP-groups.xsd" node="/xs:schema">
