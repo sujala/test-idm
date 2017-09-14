@@ -3356,13 +3356,6 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         then: "400"
         IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_MAX_LENGTH_EXCEEDED)
 
-        when: "IDP with name having special characters"
-        invalid.name = getRandomUUID("@")
-        response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
-
-        then: "400"
-        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE)
-
         when: "IDP with empty approvedDomainIds"
         ApprovedDomainIds approvedDomainIds = new ApprovedDomainIds()
         invalid.setApprovedDomainIds(approvedDomainIds)
@@ -3398,6 +3391,39 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         utils.deleteIdentityProviderQuietly(idpManagerToken, existingIdpEntity.id)
         utils.deleteIdentityProviderQuietly(idpManagerToken, domainGroupIdpEntity.id)
         utils.deleteUserQuietly(idpManager)
+    }
+
+    @Unroll
+    def "Update Identity Provider returns errors appropriately when idp name with special characters is requested - invalidName = #invalidName"() {
+        given:
+        def idpManager = utils.createIdentityProviderManager()
+        def idpManagerToken = utils.getToken(idpManager.username)
+        def domain = utils.createDomainEntity(UUID.randomUUID().toString())
+        def tenant = utils.createTenant()
+        utils.addTenantToDomain(domain.id, tenant.id)
+        def idpName = getRandomUUID("idp")
+        IdentityProvider idpToCreate = v2Factory.createIdentityProvider(idpName, "description", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domain.id]).with {
+            it.publicCertificates = publicCertificates
+            it
+        }
+        def idp = utils.createIdentityProvider(idpManagerToken, idpToCreate)
+
+        when: "update IDP with name having special characters"
+        IdentityProvider invalid = new IdentityProvider().with {
+            it.name = invalidName
+            it
+        }
+        def response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
+
+        then: "400"
+        IdmAssert.assertOpenStackV2FaultResponseWithErrorCode(response, BadRequestFault, SC_BAD_REQUEST, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE)
+
+        cleanup:
+        utils.deleteIdentityProviderQuietly(idpManagerToken, idp.id)
+        utils.deleteUserQuietly(idpManager)
+
+        where:
+        invalidName << ['?test', 'test*', '*', '$test#', 'cid@test']
     }
 
     def "Update Identity provider with duplicate approved domain Ids" () {

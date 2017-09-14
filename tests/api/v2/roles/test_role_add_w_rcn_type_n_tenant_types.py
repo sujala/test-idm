@@ -76,7 +76,7 @@ class TestRoleAddWTypeAndTenantTypes(base.TestBaseV2):
             if add_input['role_type'] == const.RCN:
                 self.assertEqual(role_resp.json()[const.ROLE][
                                      const.RAX_AUTH_ASSIGNMENT],
-                                 const.GLOBAL.upper())
+                                 const.ROLE_ASSIGNMENT_TYPE_GLOBAL)
                 self.assertIn(const.NS_TYPES, role_resp.json()[const.ROLE])
                 tenant_types = []
                 for type in role_resp.json()[const.ROLE][const.NS_TYPES]:

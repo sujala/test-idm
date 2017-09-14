@@ -30,14 +30,6 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
         self.role_ids = []
         self.tenant_ids = []
         self.create_role_respdata = {}
-        self.assign_both_type_role_id = self.create_role_with_assignment(
-            assignment='BOTH')
-        self.assign_global_type_role_id = self.create_role_with_assignment(
-            assignment='GLOBAL')
-        self.assign_tenant_type_role_id = self.create_role_with_assignment(
-            assignment='TENANT')
-        self.assign_default_type_role_id = self.create_role_with_assignment(
-            assignment='')
 
     def is_role_for_user(self, role_assign_type, user_id):
         resp = self.service_admin_client.list_roles_for_user(user_id)
@@ -99,70 +91,84 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
 
     def test_fail_adding_role_with_assignment_type_tenant_to_user(self):
         user_id, tenant_id = self.create_user()
+        assign_tenant_type_role_id = self.create_role_with_assignment(
+            assignment=const.ROLE_ASSIGNMENT_TYPE_TENANT)
         resp = self.service_admin_client.add_role_to_user(
-                  role_id=self.assign_tenant_type_role_id,
+                  role_id=assign_tenant_type_role_id,
                   user_id=user_id)
         self.assertEqual(resp.status_code, 403)
         self.assertFalse(
-            self.is_role_for_user_on_tenant('TENANT', user_id, tenant_id),
+            self.is_role_for_user_on_tenant(
+                const.ROLE_ASSIGNMENT_TYPE_TENANT, user_id, tenant_id),
             msg=("TENANTassign role type attempted give to user should not"
                  " appear in response to list roles on specific tenant"))
         self.assertFalse(
-            self.is_role_for_user('TENANT', user_id),
+            self.is_role_for_user(const.ROLE_ASSIGNMENT_TYPE_TENANT, user_id),
             msg=("TENANTassign role type attempted give to user should"
                  " not appear for listRoles on user"))
 
     def test_fail_adding_role_assignment_type_global_to_user_for_tenant(self):
         user_id, tenant_id = self.create_user()
+        assign_global_type_role_id = self.create_role_with_assignment(
+            assignment=const.ROLE_ASSIGNMENT_TYPE_GLOBAL)
         resp = self.service_admin_client.add_role_to_user_for_tenant(
                    tenant_id=tenant_id,
-                   role_id=self.assign_global_type_role_id,
+                   role_id=assign_global_type_role_id,
                    user_id=user_id)
         self.assertEqual(resp.status_code, 403)
         self.assertFalse(
-            self.is_role_for_user_on_tenant('GLOBAL', user_id, tenant_id),
+            self.is_role_for_user_on_tenant(
+                const.ROLE_ASSIGNMENT_TYPE_GLOBAL, user_id, tenant_id),
             msg=("GLOBALassign role type attempted give to user for tenant"
                  "should not appear in list roles for specific tenant"))
         self.assertFalse(
-            self.is_role_for_user('GLOBAL', user_id),
+            self.is_role_for_user(const.ROLE_ASSIGNMENT_TYPE_GLOBAL, user_id),
             msg=("GLOBALassign role type attempted give to user should"
                  " not appear in listRoles on user"))
 
     def test_add_role_with_assignment_type_global_to_user(self):
         user_id, tenant_id = self.create_user()
+        assign_global_type_role_id = self.create_role_with_assignment(
+            assignment=const.ROLE_ASSIGNMENT_TYPE_GLOBAL)
         resp = self.service_admin_client.add_role_to_user(
-                  role_id=self.assign_global_type_role_id,
+                  role_id=assign_global_type_role_id,
                   user_id=user_id)
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(
-            self.is_role_for_user_on_tenant('GLOBAL', user_id, tenant_id),
+            self.is_role_for_user_on_tenant(
+                const.ROLE_ASSIGNMENT_TYPE_GLOBAL, user_id, tenant_id),
             msg=("GLOBALassign role type given to user should not be"
                  " specific to tenant"))
         self.assertTrue(
-            self.is_role_for_user('GLOBAL', user_id),
+            self.is_role_for_user(const.ROLE_ASSIGNMENT_TYPE_GLOBAL, user_id),
             msg=("GLOBALassign role type given to user should appear for"
                  " listRoles on user"))
 
     def test_add_role_with_assignment_type_tenant_to_user_for_tenant(self):
         user_id, tenant_id = self.create_user()
+        assign_tenant_type_role_id = self.create_role_with_assignment(
+            assignment=const.ROLE_ASSIGNMENT_TYPE_TENANT)
         resp = self.service_admin_client.add_role_to_user_for_tenant(
                    tenant_id=tenant_id,
-                   role_id=self.assign_tenant_type_role_id,
+                   role_id=assign_tenant_type_role_id,
                    user_id=user_id)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(
-            self.is_role_for_user_on_tenant('TENANT', user_id, tenant_id),
+            self.is_role_for_user_on_tenant(
+                const.ROLE_ASSIGNMENT_TYPE_TENANT, user_id, tenant_id),
             msg=("TENANTassign role type, given to user for tenant,"
                  " should be on specific tenant"))
         self.assertFalse(
-            self.is_role_for_user('TENANT', user_id),
+            self.is_role_for_user(const.ROLE_ASSIGNMENT_TYPE_TENANT, user_id),
             msg=("TENANTassign role type, given to user for tenant,"
                  " should not be in listRoles on user"))
 
     def test_add_role_with_assignment_type_both_to_user(self):
         user_id, tenant_id = self.create_user()
+        assign_both_type_role_id = self.create_role_with_assignment(
+            assignment='BOTH')
         resp = self.service_admin_client.add_role_to_user(
-                  role_id=self.assign_both_type_role_id,
+                  role_id=assign_both_type_role_id,
                   user_id=user_id)
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(
@@ -176,9 +182,11 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
 
     def test_add_role_with_assignment_type_both_to_user_for_tenant(self):
         user_id, tenant_id = self.create_user()
+        assign_both_type_role_id = self.create_role_with_assignment(
+            assignment='BOTH')
         resp = self.service_admin_client.add_role_to_user_for_tenant(
                    tenant_id=tenant_id,
-                   role_id=self.assign_both_type_role_id,
+                   role_id=assign_both_type_role_id,
                    user_id=user_id)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(
@@ -192,8 +200,10 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
 
     def test_add_role_with_assignment_type_default_to_user(self):
         user_id, tenant_id = self.create_user()
+        assign_default_type_role_id = self.create_role_with_assignment(
+            assignment='')
         resp = self.service_admin_client.add_role_to_user(
-                  role_id=self.assign_default_type_role_id,
+                  role_id=assign_default_type_role_id,
                   user_id=user_id)
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(
@@ -207,9 +217,11 @@ class TestRoleAssignmentFeature(base.TestBaseV2):
 
     def test_add_role_with_assignment_type_default_to_user_for_tenant(self):
         user_id, tenant_id = self.create_user()
+        assign_default_type_role_id = self.create_role_with_assignment(
+            assignment='')
         resp = self.service_admin_client.add_role_to_user_for_tenant(
                    tenant_id=tenant_id,
-                   role_id=self.assign_default_type_role_id,
+                   role_id=assign_default_type_role_id,
                    user_id=user_id)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(
