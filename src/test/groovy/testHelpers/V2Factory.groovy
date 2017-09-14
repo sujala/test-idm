@@ -23,6 +23,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantTypeEndpointRule
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.VerificationCode
 import com.rackspace.docs.identity.api.ext.rax_kskey.v1.ApiKeyCredentials
 import com.rackspace.idm.Constants
@@ -780,6 +781,15 @@ class V2Factory {
     def createTenantType(name, description) {
         new TenantType().with {
             it.name = name
+            it.description = description
+            it
+        }
+    }
+
+    def createUserGroup(domainId = Cloud20Utils.createRandomString(), name = Cloud20Utils.createRandomString(), description = Cloud20Utils.createRandomString()) {
+        new UserGroup().with {
+            it.name = name
+            it.domainId = domainId
             it.description = description
             it
         }

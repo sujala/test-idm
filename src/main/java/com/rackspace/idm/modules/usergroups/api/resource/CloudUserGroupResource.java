@@ -11,8 +11,7 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 
-import static com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource.X_AUTH_TOKEN;
-import static com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource.DOMAIN_ID_PATH_PARAM_NAME;
+import static com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource.*;
 
 /**
  * The top level Resource defining the API endpoints for managing user groups. This really just serves as an forwarder/adapter
@@ -107,7 +106,7 @@ public class CloudUserGroupResource {
 
     @DELETE
     @Path("/{groupId}/users/{userId}")
-    public Response deleteUserFromGroup(
+    public Response removeUserFromGroup(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,

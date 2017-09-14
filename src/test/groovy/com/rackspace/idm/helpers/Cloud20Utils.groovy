@@ -46,6 +46,7 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
+import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
 
@@ -1307,5 +1308,22 @@ class Cloud20Utils {
     def deleteUserGroup(UserGroup group, String token = getIdentityAdminToken()) {
         def response = methods.deleteUserGroup(token, group)
         assert response.status == SC_NO_CONTENT
+    }
+
+    def createUserGroup(String domainId = testUtils.getRandomUUID(), String name = testUtils.getRandomUUID(), String token = getIdentityAdminToken()) {
+        def response = methods.createUserGroup(token, factory.createUserGroup(domainId, name))
+        assert response.status == SC_CREATED
+        return response.getEntity(UserGroup)
+    }
+
+    def createFederatedUser(String domainId, mediaType = APPLICATION_XML_TYPE) {
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def username = testUtils.getRandomUUID("samlUser")
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def samlResponse = methods.samlAuthenticate(samlAssertion, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        def samlAuthToken = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.token : samlAuthResponse.token
+        def user = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user : samlAuthResponse.user
+        return user
     }
 }

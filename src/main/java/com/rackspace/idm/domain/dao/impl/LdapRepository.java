@@ -118,6 +118,7 @@ public abstract class LdapRepository {
     public static final String ATTR_GIVEN_NAME = "rsGivenName";
     public static final String ATTR_GROUP_NAME = "name";
     public static final String ATTR_GROUP_ID = "rsGroupId";
+    public static final String ATTR_USER_GROUP_DNS = "rsUserGroupDNs";
     public static final String ATTR_INTERNAL_URL = "internalUrl";
     public static final String ATTR_LANG = "preferredLanguage";
     public static final String ATTR_LABELED_URI = "labeledUri";

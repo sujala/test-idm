@@ -12,6 +12,13 @@ import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.domain.entity.User;
+import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService;
+import com.rackspace.idm.exception.BadRequestException;
+import com.rackspace.idm.exception.DuplicateException;
+import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao;
@@ -20,6 +27,7 @@ import com.rackspace.idm.modules.usergroups.exception.FailedGrantRoleAssignments
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
+import com.unboundid.ldap.sdk.DN;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
@@ -48,6 +56,9 @@ public class DefaultUserGroupService implements UserGroupService {
 
     @Autowired
     private TenantService tenantService;
+
+    @Autowired
+    private IdentityUserService identityUserService;
 
     @Autowired
     private UserGroupDao userGroupDao;
@@ -368,4 +379,54 @@ public class DefaultUserGroupService implements UserGroupService {
 
         return userGroupDao.getGroupsForDomain(domainId);
     }
+
+    @Override
+    public void addUserToGroup(String userId, UserGroup group) {
+        Assert.notNull(userId);
+        Assert.notNull(group);
+
+        User targetUser = verifyAndGetUserForGroup(userId);
+
+        if (StringUtils.isBlank(targetUser.getDomainId())) {
+            throw new BadRequestException("User must belong to domain");
+        } else if (StringUtils.isBlank(group.getDomainId())) {
+            throw new BadRequestException("Group must belong to domain");
+        } else if (!targetUser.getDomainId().equalsIgnoreCase(group.getDomainId())) {
+            throw new BadRequestException("Can only add users to groups within same domain");
+        }
+
+        identityUserService.addGroupToUser(targetUser, group);
+    }
+
+    @Override
+    public void removeUserFromGroup(String userId, UserGroup group) {
+        Assert.notNull(userId);
+        Assert.notNull(group);
+
+        User targetUser = verifyAndGetUserForGroup(userId);
+
+        if (StringUtils.isBlank(targetUser.getDomainId())) {
+            throw new BadRequestException("User must belong to domain");
+        } else if (StringUtils.isBlank(group.getDomainId())) {
+            throw new BadRequestException("Group must belong to domain");
+        } else if (!targetUser.getDomainId().equalsIgnoreCase(group.getDomainId())) {
+            throw new BadRequestException("Can only add users to groups within same domain");
+        }
+
+        identityUserService.removeGroupFromUser(targetUser, group);
+    }
+
+    private User verifyAndGetUserForGroup(String userId) {
+        com.rackspace.idm.domain.entity.EndUser user = identityUserService.checkAndGetUserById(userId);
+
+        User targetUser = null;
+        if (user instanceof User) {
+            targetUser = (User) user;
+        } else {
+            throw new ForbiddenException("Can only modify groups on provisioned users via API.");
+        }
+
+        return targetUser;
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 
 import java.util.List;
 
@@ -217,6 +218,22 @@ public interface IdentityUserService {
      * @param baseUser
      */
     void deleteUser(BaseUser baseUser);
+
+    /**
+     * Add group to user
+     *
+     * @param baseUser
+     * @param group
+     */
+    void addGroupToUser(User baseUser, UserGroup group);
+
+     /**
+     * Remove group from user
+     *
+     * @param baseUser
+     * @param group
+     */
+    void removeGroupFromUser(User baseUser, UserGroup group);
 
     /**
      * Gets the count of federated and provisioned users within a given region (by name)

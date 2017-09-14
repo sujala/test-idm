@@ -167,12 +167,47 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
     @Override
     public Response addUserToGroup(String authToken, String domainId, String groupId, String userId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        try {
+            // Verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify userGroup exists for domain
+            com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId);
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(group.getDomainId());
+
+            userGroupService.addUserToGroup(userId, group);
+
+            return Response.noContent().build();
+        } catch (Exception ex) {
+            LOG.error(String.format("Error adding user '%s' to group '%s' on domain '%s'", userId, groupId, domainId), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
+
     }
 
     @Override
     public Response removeUserFromGroup(String authToken, String domainId, String groupId, String userId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        try {
+            // Verify token exists and valid
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify userGroup exists for domain
+            com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId);
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(group.getDomainId());
+
+            userGroupService.removeUserFromGroup(userId, group);
+
+            return Response.noContent().build();
+        } catch (Exception ex) {
+            LOG.error(String.format("Error removing user '%s' from group '%s' on domain '%s'", userId, groupId, domainId), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @Override

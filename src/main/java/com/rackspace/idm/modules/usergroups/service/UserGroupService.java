@@ -170,4 +170,8 @@ public interface UserGroupService {
      * @return
      */
     Iterable<UserGroup> getGroupsForDomain(String domainId);
+
+    void addUserToGroup(String userId, UserGroup group);
+
+    void removeUserFromGroup(String userId, UserGroup group);
 }

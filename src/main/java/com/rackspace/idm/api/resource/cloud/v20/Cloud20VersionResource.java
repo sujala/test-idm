@@ -87,6 +87,8 @@ public class Cloud20VersionResource {
     public static final String FEDERATION_IDP_MAPPING_POLICY_FORMAT_ERROR_MESSAGE = "Acceptable media types for IDP mapping policy are: %s";
 
     public static final String DOMAIN_ID_PATH_PARAM_NAME = "domainId";
+    public static final String GROUP_ID_PATH_PARAM_NAME = "groupId";
+    public static final String USER_ID_PATH_PARAM_NAME = "userId";
 
     static {
         try {

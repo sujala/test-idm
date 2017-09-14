@@ -8,11 +8,9 @@ import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.EncryptionService;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.util.CryptHelper;
-import com.unboundid.ldap.sdk.BindResult;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.ResultCode;
+import com.unboundid.ldap.sdk.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -101,6 +99,33 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         encryptionService.decryptUser(user);
     }
 
+    @Override
+    public void addGroupToUser(User baseUser, UserGroup group) {
+        DN groupDN = null;
+        try {
+            groupDN = new DN(group.getUniqueId());
+        } catch (LDAPException e) {
+            e.printStackTrace();
+        }
+        if (groupDN != null && !baseUser.getUserGroupDNs().contains(groupDN)) {
+            baseUser.getUserGroupDNs().add(groupDN);
+            updateUser(baseUser);
+        }
+    }
+
+    @Override
+    public void removeGroupFromUser(User baseUser, UserGroup group) {
+        DN groupDN = null;
+        try {
+            groupDN = new DN(group.getUniqueId());
+        } catch (LDAPException e) {
+            e.printStackTrace();
+        }
+        if (groupDN != null && baseUser.getUserGroupDNs().contains(groupDN)) {
+            baseUser.getUserGroupDNs().remove(groupDN);
+            updateUser(baseUser);
+        }
+    }
 
     @Override
     public String getNextId() {

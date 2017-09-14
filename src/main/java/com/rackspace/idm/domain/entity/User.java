@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.google.common.collect.ImmutableSet;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.FactorTypeEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TokenFormatEnum;
 import com.rackspace.idm.GlobalConstants;
@@ -8,6 +9,7 @@ import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.domain.dozer.converters.TokenFormatConverter;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
+import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.ReadOnlyEntry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
@@ -166,6 +168,13 @@ public class User implements EndUser {
     )
     private Set<String> rsGroupId;
 
+    @DeleteNullValues
+    @LDAPField(attribute=LdapRepository.ATTR_USER_GROUP_DNS,
+            objectClass=LdapRepository.OBJECTCLASS_RACKSPACEPERSON,
+            filterUsage=FilterUsage.CONDITIONALLY_ALLOWED
+    )
+    private Set<DN> userGroupDNs;
+
     @LDAPField(attribute = LdapRepository.ATTR_MULTIFACTOR_MOBILE_PHONE_RSID, objectClass = LdapRepository.OBJECTCLASS_RACKSPACEPERSON, inRDN = false, filterUsage = FilterUsage.ALWAYS_ALLOWED)
     private String multiFactorMobilePhoneRsId;
 
@@ -294,6 +303,22 @@ public class User implements EndUser {
         }
 
         return roles;
+    }
+
+    public Set<DN> getUserGroupDNs() {
+        if (userGroupDNs == null) {
+            userGroupDNs = new HashSet<DN>();
+        }
+        return userGroupDNs;
+    }
+
+    public ImmutableSet<String> getUserGroupIds() {
+        Set<String> ids = new HashSet<>();
+
+        for (DN dn : getUserGroupDNs()) {
+            ids.add(dn.getRDNString().split("=")[1]);
+        }
+        return ImmutableSet.copyOf(ids);
     }
 
     public String getUserMultiFactorEnforcementLevelIfNullWillReturnDefault() {
