@@ -70,11 +70,15 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
         resp = racker_client.impersonate_user(
             request_data=impersonation_request_obj)
         self.assertEqual(resp.status_code, 200)
+        self.assertSchema(response=resp,
+                          json_schema=tokens_json.impersonation_item)
 
         # Impersonate with identity admin client
         resp = self.identity_admin_client.impersonate_user(
             request_data=impersonation_request_obj)
         self.assertEqual(resp.status_code, 200)
+        self.assertSchema(response=resp,
+                          json_schema=tokens_json.impersonation_item)
 
     def test_analyze_fed_user_tokens(self):
         (pem_encoded_cert, cert_path, _, key_path,
