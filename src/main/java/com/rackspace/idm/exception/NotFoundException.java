@@ -16,4 +16,8 @@ public class NotFoundException extends IdmException {
     public NotFoundException(String message, String errorCode, Throwable cause) {
         super(message, errorCode, cause);
     }
+
+    public NotFoundException(String message, String errorCode) {
+        super(message, errorCode);
+    }
 }

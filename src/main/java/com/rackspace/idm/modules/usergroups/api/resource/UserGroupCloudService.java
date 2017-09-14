@@ -282,7 +282,7 @@ public interface UserGroupCloudService {
      * <ol>
      *     <li>401 - If the supplied token is not a valid token or expired</li>
      *     <li>403 - If the caller is not an Identity Admin</li>
-     *     <li>404 - If the domain or group does not exist, or the group exists in a different domain</li>
+     *     <li>404 - If the domain or group does not exist, the group exists in a different domain, or specified role does not exist</li>
      *     <li>400 - If the request does not meet validation requirements.</li>
      *     <li>403 - If the group exists in a different domain or a role can not be assigned to the user group</li>
      *     <li>500 - Catchall for any other exception thrown by implementation</li>

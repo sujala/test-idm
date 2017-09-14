@@ -168,10 +168,12 @@ class Constants {
      * A canned rbac (user manager assignable) role that is included in default ldif
      */
     public static final String ROLE_RBAC1_NAME = "rbacRole1"
+    public static final String ROLE_RBAC1_ID = "22776"
 
     /**
      * A canned rbac (user manager assignable) role that is included in default ldif
      */
     public static final String ROLE_RBAC2_NAME = "rbacRole2"
+    public static final String ROLE_RBAC2_ID = "122776"
 
 }

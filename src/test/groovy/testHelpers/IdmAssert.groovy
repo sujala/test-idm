@@ -1,5 +1,6 @@
 package testHelpers
 
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.exception.IdmException
 import com.sun.jersey.api.client.ClientResponse
 import org.apache.commons.lang.StringUtils
@@ -57,6 +58,20 @@ class IdmAssert {
         assert clientResponse.status == expectedStatus
         assert fault.message == expectedMessage
         assert fault.code == expectedStatus
+    }
+
+    /**
+     * Asserts the provided exception has the specified type, error code, and matches the specified message (pre-error code formatted).
+     *
+     * @param exception
+     * @param expectedIdmExceptionClazz
+     * @param expectedErrorCode
+     * @param expectedMessage
+     */
+    static def <T extends IdmException> void assertOpenStackV2FaultResponse(ClientResponse clientResponse, Class<T> expectedTypeClazz, int expectedStatus, String expectedErrorCode, String expectedMessage) {
+        // If error code is provided must generate the message
+        String finalMessage = StringUtils.isNotBlank(expectedErrorCode) ? ErrorCodes.generateErrorCodeFormattedMessage(expectedErrorCode, expectedMessage) : expectedMessage
+        assertOpenStackV2FaultResponseWithMessagePattern(clientResponse, expectedTypeClazz, expectedStatus, Pattern.compile(finalMessage, Pattern.LITERAL))
     }
 
     static def <T extends IdentityFault> void assertOpenStackV2FaultResponseWithMessagePattern(ClientResponse clientResponse, Class<T> expectedTypeClazz, int expectedStatus, Pattern expectedMessagePattern) {
