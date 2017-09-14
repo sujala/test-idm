@@ -74,6 +74,8 @@ class Cloud20Methods {
     static def SERVICE_PATH_PASSWORD_POLICY = "password-policy"
     static def SERVICE_PATH_CHANGE_PASSWORD = "change-pwd"
     static def SERVICE_PATH_USER_GROUPS ="groups"
+    static def SERVICE_PATH_ROLES ="roles"
+    static def SERVICE_PATH_USERS ="users"
 
     static def ENDPOINTS = "endpoints"
     static def ENDPOINT_TEMPLATES = "endpointTemplates"
@@ -1146,6 +1148,11 @@ class Cloud20Methods {
     def getUserGroup(String token, UserGroup userGroup, MediaType media=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.getId()).accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def grantRoleAssignmentsOnUserGroup(String token, UserGroup userGroup, RoleAssignments roleAssignments, MediaType requestType=MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.id).path(SERVICE_PATH_ROLES).type(requestType).header(X_AUTH_TOKEN, token).entity(roleAssignments).put(ClientResponse)
     }
 
     def deleteUserGroup(String token, UserGroup userGroup) {

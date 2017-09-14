@@ -135,7 +135,7 @@ public class CloudUserGroupResource {
 
     @PUT
     @Path("/{groupId}/roles")
-    public Response grantRoleToGroup(
+    public Response grantRolesToGroup(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,

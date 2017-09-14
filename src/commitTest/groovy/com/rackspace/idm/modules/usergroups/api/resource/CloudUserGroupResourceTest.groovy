@@ -1,5 +1,6 @@
 package com.rackspace.idm.modules.usergroups.api.resource
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -31,8 +32,8 @@ class CloudUserGroupResourceTest extends Specification {
         def token = "token"
 
         UserGroup webgroup = new UserGroup().with {
-            it.id = "id"
-            it.domainId = "domainId"
+            it.id = objId
+            it.domainId = objDomain
             it.name = "name"
             it.description = "description"
             it
@@ -65,15 +66,33 @@ class CloudUserGroupResourceTest extends Specification {
     @Unroll
     def "get group passes values as-is to service: domainId:'#domainId'; groupId:'#groupId'"() {
         def mockHttpHeaders = Mock(HttpHeaders)
-        def pathDomainId = "pathDomainId"
         def token = "token"
 
         when:
-        cloudUserGroupResource.getGroupById(mockHttpHeaders, token, pathDomainId, groupId)
+        cloudUserGroupResource.getGroupById(mockHttpHeaders, token, domainId, groupId)
 
         then:
 
-        1 * userGroupCloudService.getGroupByIdForDomain(token, groupId, pathDomainId)
+        1 * userGroupCloudService.getGroupByIdForDomain(token, groupId, domainId)
+
+        where:
+        domainId | groupId
+        null | null
+        "domain" | "groupId"
+    }
+
+    @Unroll
+    def "setRoleAssignments: get group passes values as-is to service: domainId:'#domainId'; groupId:'#groupId'"() {
+        def mockHttpHeaders = Mock(HttpHeaders)
+        def token = "token"
+        def roleAssignments = new RoleAssignments()
+
+        when:
+        cloudUserGroupResource.grantRolesToGroup(mockHttpHeaders, token, domainId, groupId, roleAssignments)
+
+        then:
+
+        1 * userGroupCloudService.grantRolesToGroup(token, domainId, groupId, roleAssignments)
 
         where:
         domainId | groupId

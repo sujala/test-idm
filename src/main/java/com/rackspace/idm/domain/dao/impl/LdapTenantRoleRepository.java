@@ -6,16 +6,14 @@ import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @LDAPComponent
 public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> implements TenantRoleDao {
@@ -192,6 +190,36 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     @Override
     public Iterable<TenantRole> getTenantRoleForUser(EndUser user, List<ClientRole> clientRoles) {
         return getObjects(orFilter(clientRoles), user.getUniqueId());
+    }
+
+    @Override
+    public void addRoleAssignmentOnGroup(UserGroup group, TenantRole tenantRole) {
+        addObject(getTenantRoleDn(group.getUniqueId()), tenantRole);
+    }
+
+    @Override
+    public void updateRoleAssignmentOnGroup(UserGroup group, TenantRole tenantRole) {
+        updateTenantRole(tenantRole);
+    }
+
+    @Override
+    public TenantRole getRoleAssignmentOnGroup(UserGroup group, String roleId) {
+        SearchResultEntry entry = getLdapContainer(group.getUniqueId(), CONTAINER_ROLES);
+        if (entry == null) {
+            return null;
+        } else {
+            return getTenantRole(entry.getDN(), roleId);
+        }
+    }
+
+    @Override
+    public Iterable<TenantRole> getRoleAssignmentsOnGroup(UserGroup group) {
+        SearchResultEntry entry = getLdapContainer(group.getUniqueId(), CONTAINER_ROLES);
+        if (entry == null) {
+            return Collections.emptyList();
+        } else {
+            return getObjects(searchFilterGetTenantRoles(), entry.getDN());
+        }
     }
 
     @Override

@@ -244,7 +244,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     public void doPostEncode(T object) {
     }
 
-    private SearchResultEntry getLdapContainer(String dn, String containerName) {
+    protected SearchResultEntry getLdapContainer(String dn, String containerName) {
         Filter filter = new LdapSearchBuilder()
                 .addEqualAttribute(ATTR_OBJECT_CLASS, OBJECTCLASS_RACKSPACE_CONTAINER)
                 .addEqualAttribute(ATTR_NAME, containerName).build();

@@ -1,6 +1,11 @@
 package com.rackspace.idm.modules.usergroups.service;
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
+import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
+
+import java.util.List;
 
 /**
  * Business service to manage user groups
@@ -94,4 +99,33 @@ public interface UserGroupService {
      * @return
      */
     UserGroup getGroupByNameForDomain(String groupName, String domainId);
+
+    /**
+     * Retrieves the current set of roles assigned to the group as TenantRoles (standard representation of assigned
+     * roles in Identity)
+     *
+     * @param userGroupId
+     * @return
+     */
+    List<TenantRole> getRoleAssignmentsOnGroup(String userGroupId);
+
+    /**
+     * Assign the specified roles to the group. Validation is performed on all roles prior to persisting any assignment
+     * to reduce the likelihood of failure. If any assignment is deemed invalid during the initial validation, none will
+     * be saved. If an error is encountered during saving, processing assignments will stop.
+     *
+     * @param userGroup
+     * @param roleAssignments
+     *
+     * @throws IllegalArgumentException if userGroup, userGroup.getUniqueId(), or tenantAssignments is null
+     * @throws com.rackspace.idm.exception.BadRequestException If same role is repeated multiple times or assignment contains
+     * invalid tenant set such as not specifying any, or containing '*' AND a set of tenants
+     * @throws com.rackspace.idm.exception.NotFoundException If role or tenant is not found
+     * @throws com.rackspace.idm.exception.ForbiddenException If role can not be assigned to the group as specified
+     *
+     * @throws com.rackspace.idm.modules.usergroups.exception.FailedGrantRoleAssignmentsException If error encountered
+     * persisting the assignments post-validation
+     * @return the tenant roles saved
+     */
+    List<TenantRole> replaceRoleAssignmentsOnGroup(UserGroup userGroup, RoleAssignments roleAssignments);
 }

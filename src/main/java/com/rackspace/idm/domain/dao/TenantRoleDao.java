@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 
 import java.util.Collection;
 import java.util.List;
@@ -24,4 +25,38 @@ public interface TenantRoleDao {
     Iterable<TenantRole> getTenantRoleForUser(EndUser user, List<ClientRole> clientRoles);
     String getUserIdForParent(TenantRole tenantRole);
     Iterable<TenantRole> getTenantRolesForUserWithId(User user, Collection<String> roleIds);
+
+
+    /**
+     * Assign the new tenant role to the group
+     *
+     * @param group
+     * @param tenantRole
+     */
+    void addRoleAssignmentOnGroup(UserGroup group, TenantRole tenantRole);
+
+    /**
+     * Update an existing tenant role assignment on a group
+     *
+     * @param group
+     * @param tenantRole
+     */
+    void updateRoleAssignmentOnGroup(UserGroup group, TenantRole tenantRole);
+
+    /**
+     * Retrieve the specified tenant role associated with the specified group. Returns null if doesn't exist.
+     *
+     * @param group
+     * @param roleId
+     * @return
+     */
+    TenantRole getRoleAssignmentOnGroup(UserGroup group, String roleId);
+
+    /**
+     * Retrieve the tenant roles associated with the specified group. Returns empty iterable if group has no assignments
+     *
+     * @param group
+     * @return
+     */
+    Iterable<TenantRole> getRoleAssignmentsOnGroup(UserGroup group);
 }
