@@ -176,7 +176,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         idp_obj = requests.IDP(idp_name=new_provider_name)
         resp = self.idp_ia_client.update_idp(idp_id=self.provider_id,
                                              request_object=idp_obj)
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                          error_msg)
 
