@@ -26,8 +26,8 @@ token_item = {
         },
         const.RAX_AUTH_ISSUED: {'type': 'string', 'format': 'dateTime'}
     },
-    # Attribute for 'issued' to be added back once CID-1082 is implemented
-    'required': [const.ID, const.EXPIRES, const.RAX_AUTH_AUTHENTICATED_BY]
+    'required': [const.ID, const.EXPIRES, const.RAX_AUTH_AUTHENTICATED_BY,
+                 const.RAX_AUTH_ISSUED]
 }
 
 user_item = {
@@ -146,3 +146,7 @@ analyze_token_revoked = copy.deepcopy(analyze_token)
 analyze_token_revoked[
     'properties'][const.TOKEN_ANALYSIS]['required'].extend(
     [const.TOKEN, const.USER, const.TRRS])
+
+impersonation_item = copy.deepcopy(validate_token)
+impersonation_item['properties'][const.ACCESS]['required'].remove('user')
+del impersonation_item['properties'][const.ACCESS]['properties']['user']

@@ -39,11 +39,15 @@ class TestImpersonateUser(base.TestBaseV2):
         self.assertEqual(resp.status_code, 200)
 
         token_id = resp.json()[const.ACCESS][const.TOKEN][const.ID]
+        self.assertSchema(response=resp,
+                          json_schema=tokens_json.impersonation_item)
 
         # Validate impersonation token
         resp = self.identity_admin_client.validate_token(
             token_id=token_id)
         self.assertEqual(resp.status_code, 200)
+        self.assertSchema(response=resp,
+                          json_schema=tokens_json.validate_token)
 
     def test_analyze_impersonation_token(self):
         '''Test for analyze user impersonation token.'''
