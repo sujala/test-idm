@@ -216,7 +216,7 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
         response.status == HttpStatus.SC_NO_CONTENT
     }
 
-    def "listUserGroups: Calls appropriate authorization services and exception handler"() {
+    def "listGroupsForDomain: Calls appropriate authorization services and exception handler"() {
         given:
         def domainId = "domainId"
         def token = "token"
@@ -232,7 +232,7 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
     }
 
     @Unroll
-    def "listUserGroups - calls backend service; name=#name"() {
+    def "listGroupsForDomain: calls backend service; name=#name"() {
         given:
         def domainId = "domainId"
         def token = "token"

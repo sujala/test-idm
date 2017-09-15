@@ -166,7 +166,7 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
     }
 
     @Unroll
-    def "List groups; mediaType = #mediaType"() {
+    def "List groups for domain; mediaType = #mediaType"() {
         when: "Create user group"
         UserGroup group = new UserGroup().with {
             it.domainId = sharedUserAdmin.domainId
@@ -179,16 +179,17 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         response.status == HttpStatus.SC_CREATED
         UserGroup created = response.getEntity(UserGroup)
 
-        when: "List user groups"
-        def getGroupsResponse = cloud20.listUserGroups(sharedIdentityAdminToken, sharedUserAdmin.domainId, null, mediaType)
+        when: "List user groups for domain"
+        def getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, null, mediaType)
         UserGroups groups = getGroupsResponse.getEntity(UserGroups)
 
         then:
         getGroupsResponse.status == HttpStatus.SC_OK
         groups.userGroup.size() > 0
+        groups.userGroup.find {it.name == created.name} != null
 
-        when: "List user groups with name query param"
-        getGroupsResponse = cloud20.listUserGroups(sharedIdentityAdminToken, sharedUserAdmin.domainId, group.name, mediaType)
+        when: "List user groups for domain with name query param"
+        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, group.name, mediaType)
         groups = getGroupsResponse.getEntity(UserGroups)
 
         then:
@@ -210,7 +211,7 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
     }
 
     @Unroll
-    def "Error check: list user groups; #mediaType"() {
+    def "Error check: list user groups for domain; #mediaType"() {
         given:
         UserGroup group = new UserGroup().with {
             it.domainId = sharedUserAdmin.domainId
@@ -230,28 +231,28 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         response.status == HttpStatus.SC_CREATED
 
         when: "Invalid domain"
-        def getGroupsResponse = cloud20.listUserGroups(sharedIdentityAdminToken, "invalid")
+        def getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, "invalid")
         String errMsg = String.format(DefaultDomainService.DOMAIN_NOT_FOUND_ERROR_MESSGAE, "invalid")
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(getGroupsResponse, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, errMsg)
 
         when: "Invalid name query param"
-        getGroupsResponse = cloud20.listUserGroups(sharedIdentityAdminToken, sharedUserAdmin.domainId, "invalid")
+        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, "invalid")
         UserGroups userGroups = getGroupsResponse.getEntity(UserGroups)
 
         then:
         userGroups.userGroup.size() == 0
 
         when: "Invalid auth token"
-        getGroupsResponse = cloud20.listUserGroups("invalid", created.domainId)
+        getGroupsResponse = cloud20.listUserGroupsForDomain("invalid", created.domainId)
         errMsg = "No valid token provided. Please use the 'X-Auth-Token' header with a valid token."
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(getGroupsResponse, UnauthorizedFault, HttpStatus.SC_UNAUTHORIZED, errMsg)
 
         when: "Unauthorized token"
-        getGroupsResponse = cloud20.listUserGroups(utils.getToken(defaultUser.username), created.domainId)
+        getGroupsResponse = cloud20.listUserGroupsForDomain(utils.getToken(defaultUser.username), created.domainId)
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(getGroupsResponse, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")

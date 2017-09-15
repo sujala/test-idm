@@ -135,7 +135,7 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * dao.deleteGroup(group)
     }
 
-    def "listGroups: gets objects via dao"() {
+    def "listGroupsForDomain: gets objects via dao"() {
         given:
         def domainId = "domainId"
 

@@ -1160,7 +1160,7 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.id).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def listUserGroups(String token, String domainId, String name=null, MediaType media=APPLICATION_XML_TYPE) {
+    def listUserGroupsForDomain(String token, String domainId, String name=null, MediaType media=APPLICATION_XML_TYPE) {
         initOnUse()
         WebResource webResource = resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(domainId).path(SERVICE_PATH_USER_GROUPS)
         def queryParams = new MultivaluedMapImpl()
