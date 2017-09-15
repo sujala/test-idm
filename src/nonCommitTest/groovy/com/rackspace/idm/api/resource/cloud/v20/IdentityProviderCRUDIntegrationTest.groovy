@@ -2747,7 +2747,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         } catch (Exception ex) {
             // Eat. We're just cleaning up
         }
-        
+
         where:
         name                 | includeDomain | idpType                                        | includeTenant | accept
         getRandomUUID("idp") | false         | null                                           | false         | MediaType.APPLICATION_XML_TYPE
@@ -3329,9 +3329,9 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         }
         def response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
 
-        then: "400"
+        then: "409"
         def errorMsg = String.format(Validator20.DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, existingIdpName)
-        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, String.format("Error code: '%s'; %s", ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS, errorMsg))
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_CONFLICT, String.format("Error code: '%s'; %s", ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS, errorMsg))
 
         when: "Cannot unset name for IDP"
         invalid.name = ""
