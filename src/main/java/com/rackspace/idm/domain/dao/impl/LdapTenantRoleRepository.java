@@ -1,11 +1,13 @@
 package com.rackspace.idm.domain.dao.impl;
 
 import com.rackspace.idm.annotation.LDAPComponent;
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.resource.pagination.DefaultPaginator;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.unboundid.ldap.sdk.*;
 import org.apache.commons.lang.StringUtils;
@@ -220,6 +222,20 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         } else {
             return getObjects(searchFilterGetTenantRoles(), entry.getDN());
         }
+    }
+
+    @Override
+    public PaginatorContext<TenantRole> getRoleAssignmentsOnGroup(UserGroup group, UserGroupRoleSearchParams searchParams) {
+        PaginationParams paginationParams = searchParams.getPaginationRequest();
+        SearchResultEntry entry = getLdapContainer(group.getUniqueId(), CONTAINER_ROLES);
+
+        PaginatorContext<TenantRole> context = new PaginatorContext<>();
+        if (entry == null) {
+            context.update(Collections.emptyList(), paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
+        } else {
+            context = getObjectsPaged(searchFilterGetTenantRoles(), entry.getDN(), SearchScope.SUB, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
+        }
+        return context;
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.ClientRole;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.Tenant;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ApplicationService;
@@ -11,6 +12,7 @@ import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService;
 import com.rackspace.idm.exception.*;
 import com.rackspace.idm.modules.usergroups.Constants;
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.exception.FailedGrantRoleAssignmentsException;
@@ -162,6 +164,15 @@ public class DefaultUserGroupService implements UserGroupService {
             return assignedRoles;
         }
         return assignedRoles;
+    }
+
+    @Override
+    public PaginatorContext<TenantRole> getRoleAssignmentsOnGroup(UserGroup userGroup, UserGroupRoleSearchParams userGroupRoleSearchParams) {
+        Validate.notNull(userGroup);
+        Validate.notNull(userGroupRoleSearchParams);
+        Validate.notNull(userGroupRoleSearchParams.getPaginationRequest());
+
+        return tenantRoleDao.getRoleAssignmentsOnGroup(userGroup, userGroupRoleSearchParams);
     }
 
     @Override

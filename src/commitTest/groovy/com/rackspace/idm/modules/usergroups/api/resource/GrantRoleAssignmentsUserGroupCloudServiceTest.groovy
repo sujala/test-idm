@@ -3,6 +3,8 @@ package com.rackspace.idm.modules.usergroups.api.resource
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.api.resource.IdmPathUtils
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
+import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.ForbiddenException
@@ -92,7 +94,15 @@ class GrantRoleAssignmentsUserGroupCloudServiceTest extends RootServiceTest {
         then:
         1 * userGroupService.checkAndGetGroupByIdForDomain(groupid, domainId) >> entityGroup
         1 * userGroupService.replaceRoleAssignmentsOnGroup(entityGroup, roleAssignments) >> [tenantRole]
-        1 * userGroupService.getRoleAssignmentsOnGroup(groupid) >> groupRoles
+        0 * userGroupService.getRoleAssignmentsOnGroup(groupid) >> groupRoles
+        1 * userGroupService.getRoleAssignmentsOnGroup(entityGroup, _) >> { args ->
+            UserGroupRoleSearchParams searchParams = args[1]
+            assert searchParams.paginationRequest.marker == 0
+            assert searchParams.paginationRequest.limit == 1000
+            def pc = new PaginatorContext<TenantRole>()
+            pc.update(groupRoles, 0, 1000)
+            pc
+        }
 
         // Converts the roles using converter
         1 * roleAssignmentConverter.toRoleAssignmentsWeb(groupRoles) >> outputWebRoleAssignments
