@@ -410,7 +410,7 @@ public interface UserGroupCloudService {
      * @param userGroupRoleSearchParams
      * @return
      */
-    Response getRolesOnGroup(String authToken, String domainId, String groupId, UserGroupRoleSearchParams userGroupRoleSearchParams);
+    Response listRoleAssignmentsOnGroup(UriInfo uriInfo, String authToken, String domainId, String groupId, UserGroupRoleSearchParams userGroupRoleSearchParams);
 
     /**
      * Retrieve the role assignment on the group for the specified role.

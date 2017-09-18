@@ -58,7 +58,6 @@ public class IdmPathUtils {
                 addComma(linkHeader);
                 linkHeader.append(makeLink(pathString, String.format(PAGE_FORMAT_STRING, offset + limit, limit), "next"));
             }
-
             return linkHeader.toString();
         } else {
             return null;
@@ -85,6 +84,4 @@ public class IdmPathUtils {
         link.append("<").append(path).append(query).append(">; rel=").append(rel);
         return link.toString();
     }
-
-
 }

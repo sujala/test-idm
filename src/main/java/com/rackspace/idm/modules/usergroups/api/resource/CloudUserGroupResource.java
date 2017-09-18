@@ -171,12 +171,13 @@ public class CloudUserGroupResource {
     @Path("/{groupId}/roles")
     public Response getRolesOnGroup(
             @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
             @PathParam("groupId") String groupId,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
-        return userGroupCloudService.getRolesOnGroup(authToken, domainId, groupId, new UserGroupRoleSearchParams(new PaginationParams(marker, limit)));
+        return userGroupCloudService.listRoleAssignmentsOnGroup(uriInfo, authToken, domainId, groupId, new UserGroupRoleSearchParams(new PaginationParams(marker, limit)));
     }
 
     @GET

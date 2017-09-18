@@ -4,10 +4,14 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup;
 
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.IdmPathUtils;
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
+import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.DomainService;
@@ -19,9 +23,11 @@ import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmen
 import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.core.Response;
@@ -177,10 +183,10 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
             userGroupService.replaceRoleAssignmentsOnGroup(group, roleAssignments);
 
-            // Retrieve all the assigned roles on the group
-            List<TenantRole> groupTenantRoles = userGroupService.getRoleAssignmentsOnGroup(groupId);
+            // Retrieve the first 1000 assigned roles on the group
+            PaginatorContext<TenantRole> tenantRolePage = userGroupService.getRoleAssignmentsOnGroup(group, new UserGroupRoleSearchParams(new PaginationParams(0, 1000)));
 
-            return Response.ok(roleAssignmentConverter.toRoleAssignmentsWeb(groupTenantRoles)).build();
+            return Response.ok(roleAssignmentConverter.toRoleAssignmentsWeb(tenantRolePage.getValueList())).build();
         } catch (Exception ex) {
             LOG.error(String.format("Error granting roles to user group for domain '%s' and groupid '%s'", domainId, groupId), ex);
             return idmExceptionHandler.exceptionResponse(ex).build();
@@ -198,8 +204,31 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
     }
 
     @Override
-    public Response getRolesOnGroup(String authToken, String domainId, String groupId, UserGroupRoleSearchParams userGroupRoleSearchParams) {
-        throw new NotImplementedException("This method has not yet been implemented");
+    public Response listRoleAssignmentsOnGroup(UriInfo uriInfo, String authToken, String domainId, String groupId, UserGroupRoleSearchParams userGroupRoleSearchParams) {
+        try {
+            Validate.notNull(userGroupRoleSearchParams);
+            Validate.notNull(userGroupRoleSearchParams.getPaginationRequest());
+
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId);
+
+            com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId);
+
+            PaginatorContext<TenantRole> tenantRolePage = userGroupService.getRoleAssignmentsOnGroup(group, userGroupRoleSearchParams);
+
+            String linkHeader = idmPathUtils.createLinkHeader(uriInfo, tenantRolePage);
+
+            return Response.status(200)
+                    .header(HttpHeaders.LINK, linkHeader)
+                    .entity(roleAssignmentConverter.toRoleAssignmentsWeb(tenantRolePage.getValueList())).build();
+        } catch (Exception ex) {
+            LOG.error(String.format("Error listing role assignments for user group for domain '%s' and groupid '%s'", domainId, groupId), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @Override

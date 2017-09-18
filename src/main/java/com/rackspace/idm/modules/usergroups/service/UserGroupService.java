@@ -2,7 +2,9 @@ package com.rackspace.idm.modules.usergroups.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
+import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 
 import java.util.List;
@@ -110,6 +112,16 @@ public interface UserGroupService {
     List<TenantRole> getRoleAssignmentsOnGroup(String userGroupId);
 
     /**
+     * Retrieve the set of roles assignments on the user group that match the specified criteria. If no roles match,
+     * a context will an empty list of results will be returned.
+     *
+     * @param userGroup
+     * @param userGroupRoleSearchParams
+     * @return
+     */
+    PaginatorContext<TenantRole> getRoleAssignmentsOnGroup(UserGroup userGroup, UserGroupRoleSearchParams userGroupRoleSearchParams);
+
+    /**
      * Assign the specified roles to the group. Validation is performed on all roles prior to persisting any assignment
      * to reduce the likelihood of failure. If any assignment is deemed invalid during the initial validation, none will
      * be saved. If an error is encountered during saving, processing assignments will stop.
@@ -128,4 +140,6 @@ public interface UserGroupService {
      * @return the tenant roles saved
      */
     List<TenantRole> replaceRoleAssignmentsOnGroup(UserGroup userGroup, RoleAssignments roleAssignments);
+
+
 }

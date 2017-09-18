@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 
 import java.util.Collection;
@@ -59,4 +60,12 @@ public interface TenantRoleDao {
      * @return
      */
     Iterable<TenantRole> getRoleAssignmentsOnGroup(UserGroup group);
+
+    /**
+     * Retrieve the tenant roles associated with the specified group in pagination form.
+     *
+     * @param group
+     * @return
+     */
+    PaginatorContext<TenantRole> getRoleAssignmentsOnGroup(UserGroup group, UserGroupRoleSearchParams searchParams);
 }

@@ -5,6 +5,7 @@ import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.PasswordPolicy
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
@@ -1148,6 +1149,17 @@ class Cloud20Methods {
     def getUserGroup(String token, UserGroup userGroup, MediaType media=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.getId()).accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def listRoleAssignmentsOnUserGroup(String token, UserGroup userGroup, UserGroupRoleSearchParams searchParams, MediaType requestType=MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        WebResource resource = resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS)
+                .path(userGroup.id).path(SERVICE_PATH_ROLES)
+
+        if (searchParams != null && searchParams.paginationRequest != null) {
+            resource = resource.queryParams(pageParams(String.valueOf(searchParams.getPaginationRequest().marker), String.valueOf(searchParams.getPaginationRequest().limit)))
+        }
+        resource.type(requestType).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
     def grantRoleAssignmentsOnUserGroup(String token, UserGroup userGroup, RoleAssignments roleAssignments, MediaType requestType=MediaType.APPLICATION_XML_TYPE) {
