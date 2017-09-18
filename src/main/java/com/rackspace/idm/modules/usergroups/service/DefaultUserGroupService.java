@@ -338,4 +338,10 @@ public class DefaultUserGroupService implements UserGroupService {
     private boolean isDomainAssignment(TenantAssignment tenantAssignment) {
         return tenantAssignment.getForTenants().contains(ALL_TENANT_IN_DOMAIN_WILDCARD);
     }
+
+    public Iterable<UserGroup> getGroupsForDomain(String domainId) {
+        Validate.notEmpty(domainId);
+
+        return userGroupDao.getGroupsForDomain(domainId);
+    }
 }

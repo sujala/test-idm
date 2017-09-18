@@ -6,6 +6,7 @@ import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter
 import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import org.apache.http.HttpStatus
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.Response
@@ -213,6 +214,57 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
         1 * userGroupService.deleteGroup(entityGroup)
 
         response.status == HttpStatus.SC_NO_CONTENT
+    }
+
+    def "listGroupsForDomain: Calls appropriate authorization services and exception handler"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+
+        when:
+        defaultUserGroupCloudService.listGroupsForDomain(token, domainId, new UserGroupSearchParams(null))
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId) >> {throw new ForbiddenException()}
+        1 * idmExceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
+    }
+
+    @Unroll
+    def "listGroupsForDomain: calls backend service; name=#name"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = "groupid"
+
+        com.rackspace.idm.modules.usergroups.entity.UserGroup entityGroup = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.id = groupId
+            it.domainId = domainId
+            it.name = "name"
+            it.description = "description"
+            it
+        }
+
+        List<com.rackspace.idm.modules.usergroups.entity.UserGroup> entityGroups = new ArrayList<>()
+        entityGroups.add(entityGroup)
+
+        when:
+        Response response = defaultUserGroupCloudService.listGroupsForDomain(token, domainId, new UserGroupSearchParams(name))
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId)
+        if (name == null) {
+            1 * userGroupService.getGroupsForDomain(domainId) >> entityGroups
+        } else {
+            1 * userGroupService.getGroupByNameForDomain(name, domainId) >> entityGroup
+        }
+        response.status == HttpStatus.SC_OK
+
+        where:
+        name << [null, "name"]
     }
 
 }

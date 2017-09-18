@@ -3,8 +3,6 @@ package com.rackspace.idm.modules.usergroups.api.resource;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup;
-
-import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.IdentityRole;
@@ -33,6 +31,7 @@ import org.springframework.stereotype.Component;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -137,7 +136,30 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
     @Override
     public Response listGroupsForDomain(String authToken, String domainId, UserGroupSearchParams searchCriteria) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        try {
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId);
+
+            List<com.rackspace.idm.modules.usergroups.entity.UserGroup> userGroups = new ArrayList<>();
+            if (searchCriteria.getName() != null) {
+                com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.getGroupByNameForDomain(searchCriteria.getName(), domainId);
+                if (group != null) {
+                    userGroups.add(group);
+                }
+            } else {
+                for (com.rackspace.idm.modules.usergroups.entity.UserGroup group : userGroupService.getGroupsForDomain(domainId)) {
+                    userGroups.add(group);
+                }
+            }
+
+            return Response.ok(userGroupConverter.toUserGroupsWeb(userGroups)).build();
+        } catch (Exception ex) {
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @Override

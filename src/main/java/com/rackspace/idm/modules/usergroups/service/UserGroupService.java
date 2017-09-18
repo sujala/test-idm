@@ -141,5 +141,14 @@ public interface UserGroupService {
      */
     List<TenantRole> replaceRoleAssignmentsOnGroup(UserGroup userGroup, RoleAssignments roleAssignments);
 
+    /**
+     * Retrieves the groups under the specified domain. If no groups exists, returns empty list.
+     *
+     * @param domainId
+     * @throws IllegalArgumentException If supplied domainId is null or empty string
+     *
+     * @return
+     */
+    Iterable<UserGroup> getGroupsForDomain(String domainId);
 
 }
