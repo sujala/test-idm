@@ -65,6 +65,40 @@ class TestBaseFederation(base.TestBaseV2):
         self.user_ids = []
         self.domain_ids = []
 
+    def add_idp_with_metadata(self, cert_path, api_client):
+        # Add IDP with metadata, Validate the response code & body.
+        self.issuer = self.generate_random_string(
+            pattern='https://issuer[\d\w]{12}.com')
+        auth_url = self.generate_random_string(
+            pattern='auth[\-]url[\-][\d\w]{12}')
+
+        idp_metadata = saml_helper.create_metadata(
+            issuer=self.issuer, auth_url=auth_url,
+            public_key_path=cert_path)
+
+        idp_request_object = requests.IDPMetadata(metadata=idp_metadata)
+        resp = api_client.create_idp(
+            request_object=idp_request_object)
+
+        return resp
+
+    def add_idp_with_metadata_return_id(self, cert_path, api_client):
+        # Add IDP with metadata, Validate the response code & body.
+        resp = self.add_idp_with_metadata(
+            cert_path=cert_path, api_client=api_client)
+
+        self.assertEqual(resp.status_code, 201)
+
+        idp_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
+        self.provider_ids.append(idp_id)
+
+        updated_idp_schema = copy.deepcopy(idp_json.identity_provider)
+        updated_idp_schema[const.PROPERTIES][const.NS_IDENTITY_PROVIDER][
+            const.REQUIRED] += [const.PUBLIC_CERTIFICATES]
+        self.assertSchema(response=resp,
+                          json_schema=updated_idp_schema)
+        return idp_id
+
     def create_idp_helper(self, dom_ids=None, fed_type=None, certs=None):
         dom_group = None
         if fed_type == const.BROKER:
