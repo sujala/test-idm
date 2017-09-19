@@ -1112,3 +1112,24 @@ class DomainAdministratorChange(base.AutoMarshallingModel):
 
     def _obj_to_xml(self):
         raise Exception("Not implemented yet")
+
+
+class domainUserGroup(base.AutoMarshallingModel):
+    def __init__(self, group_name, domain_id, description=None):
+        self.group_name = group_name
+        self.description = description
+        self.domain_id = domain_id
+
+    def _obj_to_json(self):
+        domain_user_group_request = {
+            const.RAX_AUTH_USER_GROUP: {
+                const.NAME: self.group_name,
+                const.DESCRIPTION: self.description,
+                const.DOMAIN_ID: self.domain_id
+            }
+        }
+
+        return json.dumps(domain_user_group_request)
+
+    def _obj_to_xml(self):
+        raise Exception("Not implemented yet")
