@@ -1,6 +1,7 @@
 package com.rackspace.idm.modules.usergroups.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.ClientRole;
@@ -176,6 +177,14 @@ public class DefaultUserGroupService implements UserGroupService {
     }
 
     @Override
+    public TenantRole getRoleAssignmentOnGroup(UserGroup userGroup, String roleId) {
+        Assert.notNull(userGroup);
+
+        TenantRole role = tenantRoleDao.getRoleAssignmentOnGroup(userGroup, roleId);
+        return role;
+    }
+
+    @Override
     public List<TenantRole> replaceRoleAssignmentsOnGroup(UserGroup userGroup, RoleAssignments roleAssignments) {
         Validate.notNull(userGroup);
         Validate.notNull(userGroup.getUniqueId());
@@ -186,6 +195,21 @@ public class DefaultUserGroupService implements UserGroupService {
         }
 
         return replaceTenantAssignmentsOnGroup(userGroup, roleAssignments.getTenantAssignments().getTenantAssignment());
+    }
+
+    @Override
+    public void revokeRoleAssignmentFromGroup(UserGroup userGroup, String roleId) {
+        Validate.notNull(userGroup);
+        Validate.notNull(userGroup.getUniqueId());
+        Validate.notEmpty(roleId);
+
+        TenantRole assignedRole = getRoleAssignmentOnGroup(userGroup, roleId);
+
+        if (assignedRole == null) {
+            throw new NotFoundException(String.format(ERROR_CODE_ROLE_REVOKE_NOT_FOUND_MSG_PATTERN, roleId), ErrorCodes.ERROR_CODE_NOT_FOUND);
+        }
+
+        tenantRoleDao.deleteTenantRole(assignedRole);
     }
 
     private List<TenantRole> replaceTenantAssignmentsOnGroup(UserGroup userGroup, List<TenantAssignment> tenantAssignments) {

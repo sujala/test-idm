@@ -187,8 +187,7 @@ public class CloudUserGroupResource {
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
             @PathParam("groupId") String groupId,
-            @PathParam("roleId") String roleId)
-    {
+            @PathParam("roleId") String roleId) {
         return userGroupCloudService.getRoleOnGroup(authToken, domainId, groupId, roleId);
     }
 }
