@@ -15,7 +15,7 @@ import time
 import xml.etree.ElementTree as ET
 
 from tests.api.v2 import base
-from tests.api.utils import log_search as log, func_helper
+from tests.api.utils import func_helper
 from tests.api.v2.models import factory
 
 from tests.package.johny import constants as const
@@ -28,7 +28,6 @@ class TestUserAccessEvents(base.TestBaseV2):
     @classmethod
     def setUpClass(cls):
         super(TestUserAccessEvents, cls).setUpClass()
-        cls.repose_container = cls.test_config.repose_container_name
         cls.search_uae_log = 'org.openrepose.herp.post.filter - '
         cls.cadf_host_xpath = './cadf:initiator/cadf:host'
         cls.au_username_xpath = (
@@ -39,8 +38,6 @@ class TestUserAccessEvents(base.TestBaseV2):
     def setUp(self):
         if not self.test_config.run_local_and_jenkins_only:
             self.skipTest('Skipping tests from staging and production')
-        log.clean_log(container_name=self.repose_container,
-                      path_to_logfile=const.PATH_TO_REPOSE_LOG)
         self.user_ids = []
         self.device_ids = []
 
@@ -173,42 +170,6 @@ class TestUserAccessEvents(base.TestBaseV2):
         if request_url:
             nodes = root_elem.findall(self.au_requesturl_xpath, ns)
             self.assertEqual(nodes[0].text, request_url)
-
-    def test_verify_uae_w_pwd_auth(self):
-        token_id, user_id, username = self.auth_with_pwd_cred()
-        req_url = self.url + const.TOKEN_URL
-        time.sleep(1)
-
-        # get events from log
-        search_str = self.search_uae_log
-        result = log.search_string(container_name=self.repose_container,
-                                   search_pattern=search_str,
-                                   path_to_logfile=const.PATH_TO_REPOSE_LOG)
-        time.sleep(1)
-        self.assertNotEqual(len(result), 0)
-        # verify event
-        for line in result.splitlines():
-            event = line[line.index(search_str) + len(search_str):len(line)]
-            self.verify_event(event, username=username, reason_code="200",
-                              request_url=req_url)
-
-    def test_verify_uae_w_apikey_auth(self):
-        token_id, user_id, username = self.auth_with_apikey_cred()
-        req_url = self.url + const.TOKEN_URL
-        time.sleep(1)
-
-        # get events from log
-        search_str = self.search_uae_log
-        result = log.search_string(container_name=self.repose_container,
-                                   search_pattern=search_str,
-                                   path_to_logfile=const.PATH_TO_REPOSE_LOG)
-        time.sleep(1)
-        self.assertNotEqual(len(result), 0)
-        # verify event
-        for line in result.splitlines():
-            event = line[line.index(search_str) + len(search_str):len(line)]
-            self.verify_event(event, username=username, reason_code="200",
-                              request_url=req_url)
 
     def test_verify_uae_w_mfa_auth(self):
         """
