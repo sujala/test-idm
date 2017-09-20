@@ -100,6 +100,21 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
     }
 
     @Unroll
+    def "Get User Group: Returns error when invalid groupId provided in url: id: #groupId"() {
+        def group = new UserGroup().with {
+            id = groupId
+            domainId = sharedUserAdmin.domainId
+            it
+        }
+
+        expect:
+        cloud20.getUserGroup(sharedIdentityAdminToken, group).status == HttpStatus.SC_NOT_FOUND
+
+        where:
+        groupId << ["null", RandomStringUtils.randomAlphanumeric(100)]
+    }
+
+    @Unroll
     def "Error check: delete user group; #mediaType"() {
         given:
         UserGroup group = new UserGroup().with {
