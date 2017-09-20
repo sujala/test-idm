@@ -3,13 +3,13 @@ package com.rackspace.idm.modules.usergroups.api.resource;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup;
-import com.rackspace.idm.GlobalConstants;
+import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.IdmPathUtils;
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
-import com.rackspace.idm.api.security.IdentityRole;
+import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.security.RequestContextHolder;
-import com.rackspace.idm.domain.entity.BaseUser;
-import com.rackspace.idm.domain.entity.Domain;
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.DomainService;
@@ -25,7 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -60,6 +62,15 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
     @Autowired
     private IdmPathUtils idmPathUtils;
+
+    @Autowired
+    private Paginator<EndUser> endUserPaginator;
+
+    @Autowired
+    private UserConverterCloudV20 userConverterCloudV20;
+
+    @Autowired
+    private JAXBObjectFactories objFactories;
 
     @Override
     public Response addGroup(UriInfo uriInfo, String authToken, UserGroup group) {
@@ -157,13 +168,39 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
             return Response.ok(userGroupConverter.toUserGroupsWeb(userGroups)).build();
         } catch (Exception ex) {
+            LOG.error(String.format("Error retrieving user groups for domain '%s'", domainId), ex);
             return idmExceptionHandler.exceptionResponse(ex).build();
         }
     }
 
     @Override
-    public Response getUsersInGroup(String authToken, String domainId, String groupId, UserSearchCriteria userSearchCriteria) {
-        throw new NotImplementedException("This method has not yet been implemented");
+    public Response getUsersInGroup(UriInfo uriInfo, String authToken, String domainId, String groupId, UserSearchCriteria userSearchCriteria) {
+        try {
+            Assert.notNull(userSearchCriteria);
+            Assert.notNull(userSearchCriteria.getPaginationRequest());
+
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId);
+
+            // Verify userGroup exists for domain
+            com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId);
+
+            PaginatorContext<EndUser> paginatorContext = userGroupService.getUsersInGroup(group, userSearchCriteria);
+
+            String linkHeader = endUserPaginator.createLinkHeader(uriInfo, paginatorContext);
+
+            return Response.status(HttpStatus.OK.value())
+                    .header(HttpHeaders.LINK, linkHeader)
+                    .entity(objFactories.getOpenStackIdentityV2Factory().createUsers(
+                            this.userConverterCloudV20.toUserList(paginatorContext.getValueList())).getValue()).build();
+        } catch (Exception ex) {
+            LOG.error(String.format("Error retrieving users in group '%s' for domain '%s'", groupId, domainId), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @Override

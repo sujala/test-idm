@@ -1,11 +1,14 @@
 package com.rackspace.idm.domain.service.impl
 
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.dao.IdentityUserDao
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.domain.service.TenantEndpointMeta
 import com.rackspace.idm.modules.endpointassignment.entity.TenantTypeRule
 import org.apache.commons.lang3.RandomStringUtils
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
+import com.rackspace.idm.domain.dao.IdentityUserDao
+import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
+import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import org.slf4j.Logger
 import spock.lang.Shared
 import spock.lang.Unroll
@@ -271,4 +274,15 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         featureEnabled << [true, false]
     }
 
+    def "Get users in user group"() {
+        given:
+        def group = new UserGroup()
+        UserSearchCriteria userSearchCriteria = new UserSearchCriteria(new PaginationParams())
+
+        when:
+        service.getEndUsersInUserGroup(group, userSearchCriteria)
+
+        then:
+        1 * identityUserRepository.getEndUsersInUserGroup(group, userSearchCriteria)
+    }
 }

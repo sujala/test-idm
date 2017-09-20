@@ -10,7 +10,6 @@ import testHelpers.RootServiceTest
 import javax.ws.rs.core.HttpHeaders
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriInfo
-
 /**
  * Simply verify the code calls the service appropriately
  */
@@ -197,4 +196,26 @@ class CloudUserGroupResourceTest extends RootServiceTest {
     }
 
 
+    def "getUsersInGroup: passes values as-is to service: domainId:'#domainId'; groupId:'#groupId'; marker: '#marker'; limit: '#limit'"() {
+        given:
+        def mockHttpHeaders = Mock(HttpHeaders)
+        def mockUriInfo = Mock(UriInfo)
+        def token = "token"
+
+        when:
+        cloudUserGroupResource.getUsersInGroup(mockHttpHeaders, mockUriInfo, token, domainId, groupId, marker, limit)
+
+        then:
+        1 * userGroupCloudService.getUsersInGroup(mockUriInfo, token, domainId, groupId, _ as UserSearchCriteria) >> { args ->
+            UserSearchCriteria searchCriteria = args[4]
+            assert searchCriteria.paginationRequest.marker == marker
+            assert searchCriteria.paginationRequest.limit == limit
+            return
+        }
+
+        where:
+        domainId | groupId   | marker | limit
+        null     | null      | null   | null
+        "domain" | "groupId" | 0      | 10
+    }
 }

@@ -1,16 +1,26 @@
 package com.rackspace.idm.modules.usergroups.api.resource
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
+import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.IdmPathUtils
+import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
+import com.rackspace.idm.api.resource.pagination.Paginator
+import com.rackspace.idm.domain.entity.EndUser
+import com.rackspace.idm.domain.entity.PaginatorContext
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter
 import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.ObjectFactory
+import org.openstack.docs.identity.api.v2.UserList
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriInfo
+import javax.xml.bind.JAXBElement
 
 class DefaultUserGroupCloudServiceTest extends RootServiceTest {
 
@@ -265,6 +275,69 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
 
         where:
         name << [null, "name"]
+    }
+
+    def "getUsersInGroup: Calls appropriate authorization services and exception handler"() {
+        given:
+        def mockUriInfo = Mock(UriInfo)
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = "groupid"
+
+        when:
+        defaultUserGroupCloudService.getUsersInGroup(mockUriInfo,  token, domainId, groupId, new UserSearchCriteria(new PaginationParams()))
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId) >> {throw new ForbiddenException()}
+        1 * idmExceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
+    }
+
+    def "getUsersInGroup: calls backend service"() {
+        given:
+        def mockUriInfo = Mock(UriInfo)
+        def endUserPaginator = Mock(Paginator)
+        defaultUserGroupCloudService.endUserPaginator = endUserPaginator
+        def objFactories = Mock(JAXBObjectFactories)
+        def openStackIdentityV2Factory = Mock(ObjectFactory)
+        objFactories.getOpenStackIdentityV2Factory() >> openStackIdentityV2Factory
+        defaultUserGroupCloudService.objFactories = objFactories
+        def userConverter = Mock(UserConverterCloudV20)
+        defaultUserGroupCloudService.userConverterCloudV20 = userConverter
+
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = "groupid"
+
+        com.rackspace.idm.modules.usergroups.entity.UserGroup entityGroup = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.id = groupId
+            it.domainId = domainId
+            it.name = "name"
+            it.description = "description"
+            it
+        }
+        UserSearchCriteria searchCriteria = new UserSearchCriteria(new PaginationParams())
+        User user = entityFactory.createUser("username", "id", domainId, "ORD")
+
+        when:
+        Response response = defaultUserGroupCloudService.getUsersInGroup(mockUriInfo, token, domainId, groupId, searchCriteria)
+
+        then:
+        1 * userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId) >> entityGroup
+        1 * userGroupService.getUsersInGroup(entityGroup, searchCriteria) >> { args ->
+            UserSearchCriteria searchParams = args[1]
+            assert searchParams.paginationRequest.effectiveMarker == 0
+            assert searchParams.paginationRequest.effectiveLimit == 1000
+            def pc = new PaginatorContext<EndUser>()
+            pc.update([user].asList(), 0, 1000)
+            pc
+        }
+        1 * endUserPaginator.createLinkHeader(_,_) >> "links"
+        1 * openStackIdentityV2Factory.createUsers(_) >> new JAXBElement<UserList>(ObjectFactory._Users_QNAME, UserList.class, null, [user].asList())
+        1 * userConverter.toUserList(_) >> new UserList()
+
+        response.status == HttpStatus.SC_OK
     }
 
 }

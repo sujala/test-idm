@@ -1,10 +1,11 @@
 package com.rackspace.idm.modules.usergroups.service;
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
+import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
+import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 
 import java.util.List;
@@ -198,4 +199,15 @@ public interface UserGroupService {
      * or user domain does not belong to the user group
      */
     void removeUserFromGroup(String userId, UserGroup group);
+
+    /**
+     * Retrieves the users associated with user group. If no users are found, a context with an
+     * empty list of results will be returned.
+     *
+     * @param group
+     * @throws IllegalAccessException If user group or user search criteria is null
+     * @return
+     */
+
+    PaginatorContext<EndUser> getUsersInGroup(UserGroup group, UserSearchCriteria userSearchCriteria);
 }

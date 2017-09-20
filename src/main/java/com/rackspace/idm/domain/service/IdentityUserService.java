@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.service;
 
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 
 import java.util.List;
@@ -234,6 +235,16 @@ public interface IdentityUserService {
       * @param baseUser
       */
     void removeUserGroupFromUser(UserGroup group, User baseUser);
+
+    /**
+     * Returns a page of federated and provisioned users associated with a user group. If no users
+     * are found, a context with an empty list of results will be returned.
+     *
+     * @param group
+     * @param userSearchCriteria
+     * @return
+     */
+    PaginatorContext<EndUser> getEndUsersInUserGroup(UserGroup group, UserSearchCriteria userSearchCriteria);
 
     /**
      * Gets the count of federated and provisioned users within a given region (by name)

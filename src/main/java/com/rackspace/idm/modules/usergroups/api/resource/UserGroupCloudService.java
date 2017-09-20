@@ -177,7 +177,7 @@ public interface UserGroupCloudService {
      * @param userSearchCriteria
      * @return
      */
-    Response getUsersInGroup(String authToken, String domainId, String groupId, UserSearchCriteria userSearchCriteria);
+    Response getUsersInGroup(UriInfo uriInfo,String authToken, String domainId, String groupId, UserSearchCriteria userSearchCriteria);
 
     /**
      * Add the specified user to the specified user group. If the user is already a member of the group, this results

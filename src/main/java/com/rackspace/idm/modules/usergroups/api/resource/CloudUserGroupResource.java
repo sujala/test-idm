@@ -90,12 +90,13 @@ public class CloudUserGroupResource {
     @Path("/{groupId}/users")
     public Response getUsersInGroup(
             @Context HttpHeaders httpHeaders,
+            @Context UriInfo uriInfo,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
             @PathParam("groupId") String groupId,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
-        return userGroupCloudService.getUsersInGroup(authToken, domainId, groupId, new UserSearchCriteria(new PaginationParams(marker, limit)));
+        return userGroupCloudService.getUsersInGroup(uriInfo, authToken, domainId, groupId, new UserSearchCriteria(new PaginationParams(marker, limit)));
     }
 
     @PUT

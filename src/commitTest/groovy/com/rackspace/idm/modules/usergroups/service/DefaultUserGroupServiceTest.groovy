@@ -1,9 +1,11 @@
 package com.rackspace.idm.modules.usergroups.service
 
+import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.modules.usergroups.Constants
+import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import spock.lang.Unroll
@@ -153,6 +155,19 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
 
         then:
         1 * dao.getGroupsForDomain(domainId)
+    }
+
+    def "getUsersInGroup: gets objects via dao"() {
+        given:
+        def group = new UserGroup()
+        def userSearchCriteria = new UserSearchCriteria(new PaginationParams())
+        mockIdentityUserService(service)
+
+        when:
+        service.getUsersInGroup(group, userSearchCriteria)
+
+        then:
+        1 * identityUserService.getEndUsersInUserGroup(group, userSearchCriteria)
     }
 
 }
