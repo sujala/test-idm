@@ -2,6 +2,8 @@
 import copy
 import ddt
 
+from tests.api.utils import log_search
+from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.v2.federation import federation
 from tests.api.v2.models import factory
 from tests.api.v2.schema import idp as idp_json
@@ -51,6 +53,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         cls.idp_ia_client.default_headers[const.X_USER_ID] = (
             identity_admin_id
         )
+
         if cls.test_config.run_service_admin_tests:
             option = {
                 const.PARAM_ROLE_NAME: const.PROVIDER_MANAGEMENT_ROLE_NAME
@@ -64,6 +67,33 @@ class TestUpdateIDP(federation.TestBaseFederation):
 
     def setUp(self):
         super(TestUpdateIDP, self).setUp()
+
+        # user admin client
+        self.domain_id = self.generate_random_string(pattern='[\d]{7}')
+
+        self.user_clients = {}
+        idp_user_admin_client = self.generate_client(
+            parent_client=self.idp_ia_client,
+            additional_input_data={'domain_id': self.domain_id})
+        idp_user_admin_client.serialize_format = 'xml'
+        idp_user_admin_client.default_headers[
+            const.CONTENT_TYPE] = 'application/xml'
+        idp_user_admin_client.default_headers[
+            const.ACCEPT] = 'application/json'
+        self.user_clients["user:admin"] = idp_user_admin_client
+
+        # user manage client
+        idp_user_manage_client = self.generate_client(
+            parent_client=idp_user_admin_client,
+            additional_input_data={'domain_id': self.domain_id,
+                                   'is_user_manager': True})
+        idp_user_manage_client.serialize_format = 'xml'
+        idp_user_manage_client.default_headers[
+            const.CONTENT_TYPE] = 'application/xml'
+        idp_user_admin_client.default_headers[
+            const.ACCEPT] = 'application/json'
+        self.user_clients["user:manage"] = idp_user_manage_client
+
         self.provider_ids = []
         self.domains = []
         self.clients = []
@@ -138,7 +168,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         idp_obj = requests.IDP(idp_name=empty_str)
         resp = self.idp_ia_client.update_idp(idp_id=provider_id,
                                              request_object=idp_obj)
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.status_code, 409)
         self.assertEqual(resp.json()[const.BAD_REQUEST][const.MESSAGE],
                          error_msg)
 
@@ -336,7 +366,7 @@ class TestUpdateIDP(federation.TestBaseFederation):
         # or Prod with the feature flag turned ON, we can update it to 200 or
         # as appropriate. We can keep it under if/else, but that will again
         # make a call to devops client to read the flag value. So,avoiding it.
-        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.status_code, 200)
 
         # add rcn:admin to the user created
         add_role_to_user_resp = self.idp_ia_client.add_role_to_user(
@@ -352,7 +382,61 @@ class TestUpdateIDP(federation.TestBaseFederation):
         # This may need to change once we test this in Staging/Prod w/ flag ON.
         # Because, currently, the user is user admin as well as rcn admin. It
         # should be changed to test w/ an existing RCN in Staging/Prod,
-        self.assertEqual(resp.status_code, 403)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_update_idp_by_user_clients(self):
+        request_object = factory.get_domain_request_object({})
+        dom_resp = self.idp_ia_client.add_domain(request_object)
+        domain_id = dom_resp.json()[const.RAX_AUTH_DOMAIN][const.ID]
+
+        request_object = factory.get_add_idp_request_object(
+            federation_type='DOMAIN', approved_domain_ids=[domain_id])
+        resp = self.idp_ia_client.create_idp(request_object)
+        self.assertEquals(resp.status_code, 201)
+        provider_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
+        self.provider_ids.append(provider_id)
+
+        request_object = factory.get_add_user_one_call_request_object(
+            domainid=domain_id)
+        user_client = self.generate_client(parent_client=self.idp_ia_client,
+                                           request_object=request_object)
+        self.clients.append(user_client)
+        self.assert_update_idp(provider_id, user_client)
+
+    @ddt.data("user:admin", "user:manage")
+    def test_update_idp_by_user_clients_metadata(self, client_key):
+        (pem_encoded_cert, cert_path, _, key_path,
+         f_print) = create_self_signed_cert()
+
+        client_instance = self.user_clients[client_key]
+
+        provider_id = self.add_idp_with_metadata_return_id(
+            cert_path=cert_path, api_client=client_instance)
+        self.provider_ids.append(provider_id)
+        self.clients.append(client_instance)
+        self.assert_update_idp(provider_id, client_instance)
+
+    def assert_update_idp(self, provider_id, client_instance):
+        new_idp_name = self.generate_random_string(
+            pattern=const.IDP_NAME_PATTERN)
+
+        # update idp with random name
+        update_idp_obj = requests.IDP(idp_name=new_idp_name)
+        client_instance.serialize_format = 'json'
+        client_instance.default_headers[
+            const.CONTENT_TYPE] = 'application/json'
+        resp = client_instance.update_idp(
+            idp_id=provider_id, request_object=update_idp_obj)
+        self.assertEqual(resp.status_code, 200)
+        get_name_resp = client_instance.get_idp(idp_id=resp.json()[
+            const.NS_IDENTITY_PROVIDER][const.ID])
+        get_name = get_name_resp.json()[const.NS_IDENTITY_PROVIDER][
+            const.NAME]
+        self.assertEquals(get_name, new_idp_name)
+
+        client_instance.default_headers[
+            const.CONTENT_TYPE] = 'application/xml'
+        client_instance.serialize_format = 'xml'
 
     def tearDown(self):
         # Delete all providers created in the tests

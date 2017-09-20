@@ -90,8 +90,9 @@ class TestBaseFederation(base.TestBaseV2):
             cert_path=cert_path, api_client=api_client)
 
         self.assertEqual(resp.status_code, 201)
+
         idp_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
-        self.idp_ids.append(idp_id)
+        self.provider_ids.append(idp_id)
 
         updated_idp_schema = copy.deepcopy(idp_json.identity_provider)
         updated_idp_schema[const.PROPERTIES][const.NS_IDENTITY_PROVIDER][
