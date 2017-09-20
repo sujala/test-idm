@@ -225,7 +225,7 @@ public interface IdentityUserService {
      * @param baseUser
      * @param group
      */
-    void addGroupToUser(User baseUser, UserGroup group);
+    void addUserGroupToUser(User baseUser, UserGroup group);
 
      /**
      * Remove group from user
@@ -233,7 +233,7 @@ public interface IdentityUserService {
      * @param baseUser
      * @param group
      */
-    void removeGroupFromUser(User baseUser, UserGroup group);
+    void removeUserGroupFromUser(User baseUser, UserGroup group);
 
     /**
      * Gets the count of federated and provisioned users within a given region (by name)

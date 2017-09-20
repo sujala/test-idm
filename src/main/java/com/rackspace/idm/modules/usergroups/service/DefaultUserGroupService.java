@@ -11,10 +11,8 @@ import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.ApplicationService;
 import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService;
-import com.rackspace.idm.exception.*;
 import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -27,7 +25,6 @@ import com.rackspace.idm.modules.usergroups.exception.FailedGrantRoleAssignments
 import com.rackspace.idm.validation.Validator20;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
-import com.unboundid.ldap.sdk.DN;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
@@ -47,6 +44,10 @@ public class DefaultUserGroupService implements UserGroupService {
     private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
 
     public static final String GROUP_NOT_FOUND_ERROR_MESSAGE = "Group '%s' not found";
+    public static final String USER_MUST_BELONG_TO_DOMAIN = "User must belong to domain";
+    public static final String GROUP_MUST_BELONG_TO_DOMAIN = "Group must belong to domain";
+    public static final String CAN_ONLY_ADD_USERS_TO_GROUPS_WITHIN_SAME_DOMAIN = "Can only add users to groups within same domain";
+    public static final String CAN_ONLY_MODIFY_GROUPS_ON_PROVISIONED_USERS_VIA_API = "Can only modify groups on provisioned users via API.";
 
     @Autowired
     private TenantRoleDao tenantRoleDao;
@@ -388,14 +389,15 @@ public class DefaultUserGroupService implements UserGroupService {
         User targetUser = verifyAndGetUserForGroup(userId);
 
         if (StringUtils.isBlank(targetUser.getDomainId())) {
-            throw new BadRequestException("User must belong to domain");
+            throw new BadRequestException(USER_MUST_BELONG_TO_DOMAIN);
         } else if (StringUtils.isBlank(group.getDomainId())) {
-            throw new BadRequestException("Group must belong to domain");
+
+            throw new BadRequestException(GROUP_MUST_BELONG_TO_DOMAIN);
         } else if (!targetUser.getDomainId().equalsIgnoreCase(group.getDomainId())) {
-            throw new BadRequestException("Can only add users to groups within same domain");
+            throw new BadRequestException(CAN_ONLY_MODIFY_GROUPS_ON_PROVISIONED_USERS_VIA_API);
         }
 
-        identityUserService.addGroupToUser(targetUser, group);
+        identityUserService.addUserGroupToUser(targetUser, group);
     }
 
     @Override
@@ -406,14 +408,14 @@ public class DefaultUserGroupService implements UserGroupService {
         User targetUser = verifyAndGetUserForGroup(userId);
 
         if (StringUtils.isBlank(targetUser.getDomainId())) {
-            throw new BadRequestException("User must belong to domain");
+            throw new BadRequestException(USER_MUST_BELONG_TO_DOMAIN);
         } else if (StringUtils.isBlank(group.getDomainId())) {
-            throw new BadRequestException("Group must belong to domain");
+            throw new BadRequestException(GROUP_MUST_BELONG_TO_DOMAIN);
         } else if (!targetUser.getDomainId().equalsIgnoreCase(group.getDomainId())) {
-            throw new BadRequestException("Can only add users to groups within same domain");
+            throw new BadRequestException(CAN_ONLY_MODIFY_GROUPS_ON_PROVISIONED_USERS_VIA_API);
         }
 
-        identityUserService.removeGroupFromUser(targetUser, group);
+        identityUserService.removeUserGroupFromUser(targetUser, group);
     }
 
     private User verifyAndGetUserForGroup(String userId) {
@@ -423,7 +425,7 @@ public class DefaultUserGroupService implements UserGroupService {
         if (user instanceof User) {
             targetUser = (User) user;
         } else {
-            throw new ForbiddenException("Can only modify groups on provisioned users via API.");
+            throw new ForbiddenException(CAN_ONLY_MODIFY_GROUPS_ON_PROVISIONED_USERS_VIA_API);
         }
 
         return targetUser;

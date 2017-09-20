@@ -171,7 +171,31 @@ public interface UserGroupService {
      */
     Iterable<UserGroup> getGroupsForDomain(String domainId);
 
+     /**
+     * Adds the specified user to group
+     *
+     * @param userId
+     * @param group
+     *
+     * @throws com.rackspace.idm.exception.NotFoundException If the specified user does not exist
+     * @throws com.rackspace.idm.exception.ForbiddenException If user is not a provisioned user
+     * @throws com.rackspace.idm.exception.BadRequestException If user does not belong to domain
+     * or group does not belong to domain
+     * or user domain does not belong to the user group
+     */
     void addUserToGroup(String userId, UserGroup group);
 
+     /**
+     * Removes the specified user from group
+     *
+     * @param userId
+     * @param group
+     *
+     * @throws com.rackspace.idm.exception.NotFoundException If the specified user does not exist
+     * @throws com.rackspace.idm.exception.ForbiddenException If user is not a provisioned user
+     * @throws com.rackspace.idm.exception.BadRequestException If user does not belong to domain
+     * or group does not belong to domain
+     * or user domain does not belong to the user group
+     */
     void removeUserFromGroup(String userId, UserGroup group);
 }

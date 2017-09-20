@@ -216,7 +216,19 @@ public interface UserService {
      */
     void configureNewUserAdmin(User user, boolean assignMossoAndNastDefaultRoles);
 
-    void addGroupToUser(User baseUser, UserGroup group);
+    /**
+     * Add group to user
+     *
+     * @param baseUser
+     * @param group
+     */
+    void addUserGroupToUser(User baseUser, UserGroup group);
 
-    void removeGroupFromUser(User baseUser, UserGroup group);
+    /**
+     * Remove group from user
+     *
+     * @param baseUser
+     * @param group
+     */
+    void removeUserGroupFromUser(User baseUser, UserGroup group);
 }

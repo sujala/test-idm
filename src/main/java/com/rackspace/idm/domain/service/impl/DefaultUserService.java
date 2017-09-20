@@ -965,13 +965,17 @@ public class DefaultUserService implements UserService {
     }
 
     @Override
-    public void addGroupToUser(User baseUser, UserGroup group) {
+    public void addUserGroupToUser(User baseUser, UserGroup group) {
+        logger.info("Adding User: {} to Group: {}", baseUser, group);
         userDao.addGroupToUser(baseUser, group);
+        logger.info("Added User: {} to Group: {}", baseUser, group);
     }
 
     @Override
-    public void removeGroupFromUser(User baseUser, UserGroup group) {
+    public void removeUserGroupFromUser(User baseUser, UserGroup group) {
+        logger.info("Removing User: {} from Group: {}", baseUser, group);
         userDao.removeGroupFromUser(baseUser, group);
+        logger.info("Removed User: {} from Group: {}", baseUser, group);
     }
 
     @Override

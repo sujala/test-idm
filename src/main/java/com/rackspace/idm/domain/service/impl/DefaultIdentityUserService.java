@@ -251,13 +251,13 @@ public class DefaultIdentityUserService implements IdentityUserService {
     }
 
     @Override
-    public void addGroupToUser(User baseUser, UserGroup group) {
-        userService.addGroupToUser(baseUser, group);
+    public void addUserGroupToUser(User baseUser, UserGroup group) {
+        userService.addUserGroupToUser(baseUser, group);
     }
 
     @Override
-    public void removeGroupFromUser(User baseUser, UserGroup group) {
-        userService.removeGroupFromUser(baseUser, group);
+    public void removeUserGroupFromUser(User baseUser, UserGroup group) {
+        userService.removeUserGroupFromUser(baseUser, group);
     }
 
     @Override
