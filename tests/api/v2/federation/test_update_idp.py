@@ -2,7 +2,6 @@
 import copy
 import ddt
 
-from tests.api.utils import log_search
 from tests.api.utils.create_cert import create_self_signed_cert
 from tests.api.v2.federation import federation
 from tests.api.v2.models import factory

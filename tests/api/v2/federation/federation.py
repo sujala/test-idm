@@ -59,8 +59,6 @@ class TestBaseFederation(base.TestBaseV2):
             cls.service_admin_client.add_role_to_user(
                 user_id=identity_admin_id, role_id=mapping_rules_role_id)
 
-        cls.idp_ids = []
-
     def setUp(self):
         super(TestBaseFederation, self).setUp()
         self.provider_ids = []
