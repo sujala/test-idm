@@ -87,6 +87,20 @@ class IdentityConfigIntegrationTest  extends Specification {
         localConfig.getString(newProp) == newPropOrigValue2
     }
 
+    def "user.groups.max.in.domain: Verify hardcoded is set to 20"() {
+        when: "set property to value"
+        reloadableConfiguration.setProperty("user.groups.max.in.domain", 5)
+
+        then: "Returns that value"
+        config.getReloadableConfig().getMaxUsersGroupsPerDomain() == 5
+
+        when: "property doesn't exist in reloadable"
+        reloadableConfiguration.clearProperty("user.groups.max.in.domain")
+
+        then: "Returns hardcoded default of 20"
+        config.getReloadableConfig().getMaxUsersGroupsPerDomain() == 20
+    }
+
     @Unroll
     def "Test correct user count limit per idp per domain retrieved when override: #overrideVal; defaultVal: #defaultValue; expectedVal: #expectedVal"() {
         given:
