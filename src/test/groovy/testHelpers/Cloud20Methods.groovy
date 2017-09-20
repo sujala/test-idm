@@ -1151,7 +1151,7 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.getId()).accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
 
-    def listRoleAssignmentsOnUserGroup(String token, UserGroup userGroup, UserGroupRoleSearchParams searchParams, MediaType requestType=MediaType.APPLICATION_XML_TYPE) {
+    def listRoleAssignmentsOnUserGroup(String token, UserGroup userGroup, UserGroupRoleSearchParams searchParams, MediaType media=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         WebResource resource = resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS)
                 .path(userGroup.id).path(SERVICE_PATH_ROLES)
@@ -1159,7 +1159,18 @@ class Cloud20Methods {
         if (searchParams != null && searchParams.paginationRequest != null) {
             resource = resource.queryParams(pageParams(String.valueOf(searchParams.getPaginationRequest().marker), String.valueOf(searchParams.getPaginationRequest().limit)))
         }
-        resource.type(requestType).header(X_AUTH_TOKEN, token).get(ClientResponse)
+        resource.accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def getRoleAssignmentOnUserGroup(String token, UserGroup userGroup, String roleId, MediaType media=MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS)
+                .path(userGroup.id).path(SERVICE_PATH_ROLES).path(roleId).accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def revokeRoleAssignmentFromUserGroup(String token, UserGroup userGroup, String roleId, MediaType media=MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.id).path(SERVICE_PATH_ROLES).path(roleId).type(media).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
     def grantRoleAssignmentsOnUserGroup(String token, UserGroup userGroup, RoleAssignments roleAssignments, MediaType requestType=MediaType.APPLICATION_XML_TYPE) {

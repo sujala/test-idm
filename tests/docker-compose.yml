@@ -35,7 +35,7 @@ services:
             - directory
         volumes:
             - ../build/libs:/opt/idm/artifacts
-            - ../src/main/config/VAGRANT:/etc/idm/config
+            - .identity/configs:/etc/idm/config
             - ../src/test/resources/keys:/etc/idm/config/keys
 
     repose:

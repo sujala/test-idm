@@ -49,6 +49,8 @@ Run tests via tox: `make test`
 
 Run specific modules: `make API=api.v2.federation test_nose`
 
+Run multiple times without cleaning up after every iteration: `make build && make API=api.v2.federation test_nose_no_build && ... && make clean`
+
 Contributing
 ------------
 

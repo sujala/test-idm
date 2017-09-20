@@ -103,6 +103,16 @@ public interface UserGroupService {
     UserGroup getGroupByNameForDomain(String groupName, String domainId);
 
     /**
+     * Retries the specified role on the group, or null if the role does not exist on the group. Does not distinguish
+     * between
+     *
+     * @param userGroup
+     * @param roleId
+     * @return
+     */
+    TenantRole getRoleAssignmentOnGroup(UserGroup userGroup, String roleId);
+
+    /**
      * Retrieves the current set of roles assigned to the group as TenantRoles (standard representation of assigned
      * roles in Identity)
      *
@@ -142,6 +152,16 @@ public interface UserGroupService {
     List<TenantRole> replaceRoleAssignmentsOnGroup(UserGroup userGroup, RoleAssignments roleAssignments);
 
     /**
+     * Removes the specified role from the group regardless of whether it is assigned as a domain or tenant role.
+     *
+     * @param userGroup
+     * @param roleId
+     * @throws IllegalArgumentException if userGroup, userGroup.getUniqueId(), or roleId is null
+     * @throws com.rackspace.idm.exception.NotFoundException If role is not assigned to group
+     */
+    void revokeRoleAssignmentFromGroup(UserGroup userGroup, String roleId);
+
+    /**
      * Retrieves the groups under the specified domain. If no groups exists, returns empty list.
      *
      * @param domainId
@@ -150,5 +170,4 @@ public interface UserGroupService {
      * @return
      */
     Iterable<UserGroup> getGroupsForDomain(String domainId);
-
 }

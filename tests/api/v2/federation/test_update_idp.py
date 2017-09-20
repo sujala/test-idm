@@ -2,7 +2,6 @@
 import copy
 import ddt
 
-from tests.api.utils import log_search
 from tests.api.v2.federation import federation
 from tests.api.v2.models import factory
 from tests.api.v2.schema import idp as idp_json
@@ -232,19 +231,6 @@ class TestUpdateIDP(federation.TestBaseFederation):
             public_key=cert_path, issuer=issuer)
         self.assertEqual(fed_auth.status_code, 200)
 
-    def verify_delete_fed_user_logs(self, fed_username, issuer, domain_id):
-
-        # Verify if delete logs has entry for fed user being deleted
-        search_pattern = (
-            'DELETED username={0},federatedUri={1},domainId={2}'.format(
-                fed_username, issuer, domain_id
-            ))
-        delete_logs = log_search.search_string(
-            container_name=self.test_config.identity_container_name,
-            search_pattern=search_pattern,
-            path_to_logfile=const.PATH_TO_USER_DELETE_LOG)
-        self.assertNotEqual(delete_logs, '')
-
     def verify_re_auth_after_idp_update(
             self, test_data, key_path, cert_path, issuer, domain_1, domain_2):
 
@@ -288,8 +274,6 @@ class TestUpdateIDP(federation.TestBaseFederation):
 
         get_fed_user = self.idp_ia_client.get_user(fed_user_id)
         self.assertEqual(get_fed_user.status_code, 404)
-        self.verify_delete_fed_user_logs(
-            fed_username=fed_username, issuer=issuer, domain_id=domain_id)
         self.verify_re_auth_after_idp_update(
             test_data=test_data, key_path=key_path, cert_path=cert_path,
             issuer=issuer, domain_1=domain_id, domain_2=domain_id_2)

@@ -43,5 +43,6 @@ public class Constants {
 
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_NONEXISTANT_TENANT_MSG_PATTERN = "Invalid assignment for role '%s'. Tenant does not exist.";
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_WRONG_DOMAIN_TENANT_MSG_PATTERN = "Invalid assignment for role '%s'. Tenant must exist in group's domain";
+    public static final String ERROR_CODE_ROLE_REVOKE_NOT_FOUND_MSG_PATTERN = "Invalid revocation of role '%s'. Role not assigned to group";
 
 }

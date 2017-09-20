@@ -3,6 +3,7 @@ package com.rackspace.idm.modules.usergroups.api.resource;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup;
+import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.IdentityRole;
@@ -11,11 +12,8 @@ import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
-import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.DomainService;
-import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.exception.BadRequestException;
-import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.IdmExceptionHandler;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter;
@@ -210,14 +208,31 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
             return Response.ok(roleAssignmentConverter.toRoleAssignmentsWeb(tenantRolePage.getValueList())).build();
         } catch (Exception ex) {
-            LOG.error(String.format("Error granting roles to user group for domain '%s' and groupid '%s'", domainId, groupId), ex);
+            LOG.debug(String.format("Error granting roles to user group for domain '%s' and groupid '%s'", domainId, groupId), ex);
             return idmExceptionHandler.exceptionResponse(ex).build();
         }
     }
 
     @Override
     public Response revokeRoleFromGroup(String authToken, String domainId, String groupId, String roleId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        try {
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId);
+
+            com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId);
+
+            userGroupService.revokeRoleAssignmentFromGroup(group, roleId);
+
+            Response.ResponseBuilder response = Response.noContent();
+            return response.build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error revoking role '%s' from user group for domain '%s' and groupId '%s'", roleId, domainId, groupId), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @Override
