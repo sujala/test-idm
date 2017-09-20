@@ -17,6 +17,7 @@ ADD_ROLE_TO_USER_URL = '/users/{user_id}/roles/OS-KSADM/{role_id}'
 ADD_TENANT_TO_DOMAIN_URL = DELETE_TENANT_FROM_DOMAIN_URL = (
     '/RAX-AUTH/domains/{domain_id}/tenants/{tenant_id}')
 ADD_TENANT_URL = LIST_TENANTS = '/tenants'
+ADD_USER_GROUP_TO_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/groups'
 ANALYZE_TOKEN_URL = '/tokens/analyze'
 TENANT_TYPE_URL = '/RAX-AUTH/tenant-types'
 RD_TENANT_TYPE_URL = '/RAX-AUTH/tenant-types/{name}'
@@ -68,6 +69,7 @@ LIST_ROLES_FOR_USER_ON_TENANT_URL = (
 LIST_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/tenants'
 LIST_USER_ROLES_URL = '/users/{user_id}/roles'
 LIST_USERS_FOR_TENANT_URL = '/tenants/{tenant_id}/users'
+LIST_USER_GROUPS_FOR_DOMAIN_URL = ADD_USER_GROUP_TO_DOMAIN_URL
 LIST_USERS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/users'
 MOVE_DOMAIN_TO_RCN_URL = '/RAX-AUTH/domains/{domain_id}/rcn/{rcn}'
 NEW_FED_AUTH_URL = '/RAX-AUTH/federation/saml/auth'
@@ -153,6 +155,7 @@ UPPER_CASE_LETTERS = '[A-Z]{8}'
 URL_PATTERN = 'http://www.rackspace.com/'
 USER_NAME_PATTERN = 'api[\-]test[\-][\d\w]{12}'
 USER_MANAGER_NAME_PATTERN = 'user[\-]manager[\d\w]{12}'
+USER_GROUP_NAME_PATTERN = 'user[\-]group[\-][\d\w]{10}'
 
 '''Headers'''
 ACCESS_CONTROL_REQUEST_HEADERS = 'Access-Control-Request-Headers'
@@ -388,6 +391,8 @@ RAX_AUTH_DEFAULT_REGION = 'RAX-AUTH:defaultRegion'
 RAX_AUTH_MULTI_FACTOR = 'RAX-AUTH:multiFactor'
 RAX_AUTH_MULTI_FACTOR_ENABLED = 'RAX-AUTH:multiFactorEnabled'
 RAX_AUTH_MULTI_FACTOR_STATE = 'RAX-AUTH:multiFactorState'
+RAX_AUTH_USER_GROUP = 'RAX-AUTH:userGroup'
+RAX_AUTH_USER_GROUPS = 'RAX-AUTH:userGroups'
 RAX_AUTH_USER_MULTI_FACTOR_ENFORCEMENT_LEVEL = (
     'RAX-AUTH:userMultiFactorEnforcementLevel')
 RAX_AUTH_FACTOR_TYPE = 'RAX-AUTH:factorType'

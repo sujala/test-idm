@@ -1609,3 +1609,22 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + const.MOVE_DOMAIN_TO_RCN_URL.format(
             domain_id=domain_id, rcn=rcn)
         return self.request('PUT', url, requestslib_kwargs=requestslib_kwargs)
+
+    def add_user_group_to_domain(self, domain_id, request_object,
+                                 requestslib_kwargs=None):
+        """
+        POST /v2.0/RAX-AUTH/domains/{domain_id}/groups
+        """
+        url = self.url + const.ADD_USER_GROUP_TO_DOMAIN_URL.format(
+            domain_id=domain_id)
+        return self.request(
+            'POST', url, request_entity=request_object,
+            requestslib_kwargs=requestslib_kwargs)
+
+    def list_user_groups_for_domain(self, domain_id, requestslib_kwargs=None):
+        """
+        GET /v2.0/RAX-AUTH/domains/{domain_id}/groups
+        """
+        url = self.url + const.LIST_USER_GROUPS_FOR_DOMAIN_URL.format(
+            domain_id=domain_id)
+        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
