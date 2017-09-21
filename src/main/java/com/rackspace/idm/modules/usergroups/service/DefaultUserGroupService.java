@@ -302,6 +302,13 @@ public class DefaultUserGroupService implements UserGroupService {
             throw new BadRequestException(ERROR_CODE_ROLE_ASSIGNMENT_MISSING_FOR_TENANTS_MSG, ERROR_CODE_USER_GROUPS_MISSING_REQUIRED_ATTRIBUTE);
         }
 
+        // Iterate over all the tenantIds supplied to ensure they are not blank
+        for (String tenantId : tenantAssignment.getForTenants()) {
+            if (StringUtils.isBlank(tenantId)) {
+                throw new BadRequestException(ERROR_CODE_ROLE_ASSIGNMENT_INVALID_FOR_TENANTS_MSG, ERROR_CODE_USER_GROUPS_INVALID_ATTRIBUTE);
+            }
+        }
+
         if (isDomainAssignment) {
             if (tenantAssignment.getForTenants().size() > 1) {
                 throw new BadRequestException(ERROR_CODE_ROLE_ASSIGNMENT_INVALID_FOR_TENANTS_MSG, ERROR_CODE_USER_GROUPS_INVALID_ATTRIBUTE);

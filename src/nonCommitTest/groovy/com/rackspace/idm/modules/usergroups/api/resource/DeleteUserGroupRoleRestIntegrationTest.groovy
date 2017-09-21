@@ -130,6 +130,7 @@ class DeleteUserGroupRoleRestIntegrationTest extends RootIntegrationTest {
                         ta ->
                             ta.onRole = Constants.ROLE_RBAC2_ID
                             ta.forTenants.add(sharedUserAdminCloudTenant.id)
+                            ta.forTenants.add(sharedUserAdminFilesTenant.id)
                             ta
                     })
                     tas
