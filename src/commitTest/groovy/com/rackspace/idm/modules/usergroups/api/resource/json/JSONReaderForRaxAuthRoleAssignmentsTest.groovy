@@ -36,6 +36,34 @@ class JSONReaderForRaxAuthRoleAssignmentsTest extends Specification{
         roleAssignments.tenantAssignments.tenantAssignment[0].forTenants == ["t1", "t2"]
     }
 
+    def "unmarshall user group from json w/ * forTenants"() {
+        def json =
+                '{' +
+                        '  "RAX-AUTH:roleAssignments": {\n' +
+                        '     "tenantAssignments": [' +
+                        '       {\n' +
+                        '         "onRole": "22776",\n' +
+                        '         "forTenants": [\n' +
+                        '           "*"\n' +
+                        '         ]' +
+                        '       }' +
+                        '     ]\n' +
+                        '   }' +
+                        '}'
+
+        when:
+        RoleAssignments roleAssignments = reader.readFrom(RoleAssignments, null, null, null, null, new ByteArrayInputStream(json.bytes))
+
+        then:
+        roleAssignments != null
+        roleAssignments.tenantAssignments != null
+        roleAssignments.tenantAssignments.tenantAssignment != null
+        roleAssignments.tenantAssignments.tenantAssignment.size() == 1
+        roleAssignments.tenantAssignments.tenantAssignment[0].onRole == "22776"
+        roleAssignments.tenantAssignments.tenantAssignment[0].onRoleName == null
+        roleAssignments.tenantAssignments.tenantAssignment[0].forTenants == ["*"]
+    }
+
     def "fails without prefix json"() {
         def json =
                 '{' +
@@ -53,7 +81,28 @@ class JSONReaderForRaxAuthRoleAssignmentsTest extends Specification{
                 '}'
 
         when:
-        RoleAssignments roleAssignments = reader.readFrom(RoleAssignments, null, null, null, null, new ByteArrayInputStream(json.bytes))
+        reader.readFrom(RoleAssignments, null, null, null, null, new ByteArrayInputStream(json.bytes))
+
+        then:
+        BadRequestException ex = thrown()
+        ex.message == "Invalid json request body"
+    }
+
+    def "unmarshall user group from json fails if forTenants is not an array"() {
+        def json =
+                '{' +
+                        '  "RAX-AUTH:roleAssignments": {\n' +
+                        '     "tenantAssignments": [' +
+                        '       {\n' +
+                        '         "onRole": "22776",\n' +
+                        '         "forTenants": "12345"' +
+                        '       }' +
+                        '     ]\n' +
+                        '   }' +
+                        '}'
+
+        when:
+        reader.readFrom(RoleAssignments, null, null, null, null, new ByteArrayInputStream(json.bytes))
 
         then:
         BadRequestException ex = thrown()

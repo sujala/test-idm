@@ -9,6 +9,7 @@ apply plugin: 'jacoco'
 apply plugin: "org.unbroken-dome.test-sets"
 
 testSets {
+    commonTest
     commitTest
     nonCommitTest
 }
@@ -275,9 +276,10 @@ dependencies {
 
     compile 'com.newrelic.agent.java:newrelic-api:3.29.0'
 
-    // Add all source for main (unit/commit) tests to nonCommitTest path to allow to share common utils
-    commitTestCompile sourceSets.test.output
-    nonCommitTestCompile sourceSets.test.output
+    // Add all source for common to commit/nonCommitTest path to allow to share common utils and allow Intellij to
+    // actually find usages across commonTest/commit/nonCommit code
+    commitTestCompile sourceSets.commonTest.output
+    nonCommitTestCompile sourceSets.commonTest.output
 }
 
 task copyConfig(type: Copy) {

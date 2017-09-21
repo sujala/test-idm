@@ -96,6 +96,7 @@ class ReplaceRoleAssignmentsOnUserGroupServiceTest extends RootServiceTest{
         def taNonExistantTenant = new TenantAssignment().with {ta ->  ta.onRole = validRoles[3].id; ta.forTenants = ["noexisttenant"]; ta}
         def taInvalidRoleWeight = new TenantAssignment().with {ta ->  ta.onRole = roleIdWrongWeight; ta.forTenants = ["*"]; ta}
         def taMissingRole = new TenantAssignment().with {ta ->  ta.onRole = roleIdMissing; ta.forTenants = ["*"]; ta}
+        def taEmptyStringTenants = new TenantAssignment().with {ta ->  ta.onRole = validRoles[4].id; ta.forTenants = [""]; ta}
 
         when: "Duplicate role exist along with other validation errors"
         service.replaceRoleAssignmentsOnGroup(group, genRoleAssignments(taNoTenants, taAllandExplicitTenants, taMissingRole, taWrongDomainTenant, taInvalidRoleWeight, taNoTenants))
@@ -121,6 +122,15 @@ class ReplaceRoleAssignmentsOnUserGroupServiceTest extends RootServiceTest{
         then: "Throws 400 on first tenant error encountered"
         Exception ex3 = thrown()
         IdmExceptionAssert.assertException(ex3, BadRequestException, "GEN-005", Constants.ERROR_CODE_ROLE_ASSIGNMENT_INVALID_FOR_TENANTS_MSG)
+        0 * tenantRoleDao._(*_)
+        0 * applicationRoleDao._(*_)
+
+        when: "Submit request that includes empty string forTenants"
+        service.replaceRoleAssignmentsOnGroup(group, genRoleAssignments(taEmptyStringTenants))
+
+        then: "Throws 400"
+        Exception ex4 = thrown()
+        IdmExceptionAssert.assertException(ex4, BadRequestException, "GEN-005", Constants.ERROR_CODE_ROLE_ASSIGNMENT_INVALID_FOR_TENANTS_MSG)
         0 * tenantRoleDao._(*_)
         0 * applicationRoleDao._(*_)
     }
