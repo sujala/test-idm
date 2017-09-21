@@ -66,9 +66,12 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         maxInDomain | numExistingGroups
         4 | 5
         5 | 5
+        0 | 0
+        2 | 2
     }
 
-    def "addGroup: Allowed when existing groups less than max group allowed per domain threshold"() {
+    @Unroll
+    def "addGroup: Allowed when existing groups less than max group allowed per domain threshold: maxInDomain: #maxInDomain; numExistingGroups:#numExistingGroups"() {
         def domainId = "donmainId"
         UserGroup group = new UserGroup().with {
             it.domainId = domainId
@@ -81,10 +84,16 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         service.addGroup(group)
 
         then:
-        1 * reloadableConfig.getMaxUsersGroupsPerDomain() >> 6
-        1 * dao.countGroupsInDomain(domainId) >> 5
+        1 * reloadableConfig.getMaxUsersGroupsPerDomain() >> maxInDomain
+        1 * dao.countGroupsInDomain(domainId) >> numExistingGroups
         1 * dao.addGroup(_) // Not persisted
         notThrown(Exception)
+
+        where:
+        maxInDomain | numExistingGroups
+        2 | 0
+        2 | 1
+        6 | 5
     }
 
     def "addGroup: Throws DuplicateException if group with name already exists in domainId without persisting"() {
