@@ -100,7 +100,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public void addGroupToUser(User baseUser, UserGroup group) {
+    public void addUserGroupToUser(User baseUser, UserGroup group) {
         DN groupDN = getGroupDn(group);
         if (groupDN != null && !baseUser.getUserGroupDNs().contains(groupDN)) {
             baseUser.getUserGroupDNs().add(groupDN);
@@ -109,7 +109,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public void removeGroupFromUser(User baseUser, UserGroup group) {
+    public void removeUserGroupFromUser(User baseUser, UserGroup group) {
         DN groupDN = getGroupDn(group);
         if (groupDN != null && baseUser.getUserGroupDNs().contains(groupDN)) {
             baseUser.getUserGroupDNs().remove(groupDN);
@@ -379,7 +379,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public void addGroupToUser(String userId, String groupId) {
+    public void addUserGroupToUser(String userId, String groupId) {
         getLogger().debug("Adding group {} to user {}", groupId, userId);
 
         User user = getObject(searchFilterGetUserById(userId));

@@ -967,14 +967,14 @@ public class DefaultUserService implements UserService {
     @Override
     public void addUserGroupToUser(User baseUser, UserGroup group) {
         logger.info("Adding User: {} to Group: {}", baseUser, group);
-        userDao.addGroupToUser(baseUser, group);
+        userDao.addUserGroupToUser(baseUser, group);
         logger.info("Added User: {} to Group: {}", baseUser, group);
     }
 
     @Override
     public void removeUserGroupFromUser(User baseUser, UserGroup group) {
         logger.info("Removing User: {} from Group: {}", baseUser, group);
-        userDao.removeGroupFromUser(baseUser, group);
+        userDao.removeUserGroupFromUser(baseUser, group);
         logger.info("Removed User: {} from Group: {}", baseUser, group);
     }
 
@@ -1159,7 +1159,7 @@ public class DefaultUserService implements UserService {
 
     @Override
     public void addGroupToUser(String groupId, String userId) {
-        userDao.addGroupToUser(userId, groupId);
+        userDao.addUserGroupToUser(userId, groupId);
     }
 
     @Override

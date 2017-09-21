@@ -394,7 +394,7 @@ public class DefaultUserGroupService implements UserGroupService {
 
             throw new BadRequestException(GROUP_MUST_BELONG_TO_DOMAIN);
         } else if (!targetUser.getDomainId().equalsIgnoreCase(group.getDomainId())) {
-            throw new BadRequestException(CAN_ONLY_MODIFY_GROUPS_ON_PROVISIONED_USERS_VIA_API);
+            throw new BadRequestException(CAN_ONLY_ADD_USERS_TO_GROUPS_WITHIN_SAME_DOMAIN);
         }
 
         identityUserService.addUserGroupToUser(targetUser, group);
@@ -412,7 +412,7 @@ public class DefaultUserGroupService implements UserGroupService {
         } else if (StringUtils.isBlank(group.getDomainId())) {
             throw new BadRequestException(GROUP_MUST_BELONG_TO_DOMAIN);
         } else if (!targetUser.getDomainId().equalsIgnoreCase(group.getDomainId())) {
-            throw new BadRequestException(CAN_ONLY_MODIFY_GROUPS_ON_PROVISIONED_USERS_VIA_API);
+            throw new BadRequestException(CAN_ONLY_ADD_USERS_TO_GROUPS_WITHIN_SAME_DOMAIN);
         }
 
         identityUserService.removeUserGroupFromUser(targetUser, group);
