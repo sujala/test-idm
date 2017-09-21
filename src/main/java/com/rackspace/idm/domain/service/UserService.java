@@ -219,16 +219,16 @@ public interface UserService {
     /**
      * Add group to user
      *
-     * @param baseUser
      * @param group
+     * @param baseUser
      */
-    void addUserGroupToUser(User baseUser, UserGroup group);
+    void addUserGroupToUser(UserGroup group, User baseUser);
 
     /**
      * Remove group from user
      *
-     * @param baseUser
      * @param group
+     * @param baseUser
      */
-    void removeUserGroupFromUser(User baseUser, UserGroup group);
+    void removeUserGroupFromUser(UserGroup group, User baseUser);
 }

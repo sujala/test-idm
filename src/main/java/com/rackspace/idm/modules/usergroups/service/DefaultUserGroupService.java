@@ -404,7 +404,7 @@ public class DefaultUserGroupService implements UserGroupService {
             throw new BadRequestException(CAN_ONLY_ADD_USERS_TO_GROUPS_WITHIN_SAME_DOMAIN);
         }
 
-        identityUserService.addUserGroupToUser(targetUser, group);
+        identityUserService.addUserGroupToUser(group, targetUser);
     }
 
     @Override
@@ -422,7 +422,7 @@ public class DefaultUserGroupService implements UserGroupService {
             throw new BadRequestException(CAN_ONLY_ADD_USERS_TO_GROUPS_WITHIN_SAME_DOMAIN);
         }
 
-        identityUserService.removeUserGroupFromUser(targetUser, group);
+        identityUserService.removeUserGroupFromUser(group, targetUser);
     }
 
     private User verifyAndGetUserForGroup(String userId) {

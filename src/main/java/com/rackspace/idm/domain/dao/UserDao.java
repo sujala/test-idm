@@ -83,7 +83,7 @@ public interface UserDao {
 
     void doPostEncode(User user);
 
-    void addUserGroupToUser(User baseUser, UserGroup group);
+    void addUserGroupToUser(UserGroup group, User baseUser);
 
-    void removeUserGroupFromUser(User baseUser, UserGroup group);
+    void removeUserGroupFromUser(UserGroup group, User baseUser);
 }
