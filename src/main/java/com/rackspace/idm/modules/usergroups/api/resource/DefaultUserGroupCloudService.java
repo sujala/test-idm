@@ -7,7 +7,6 @@ import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20;
 import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
-import com.rackspace.idm.api.resource.pagination.Paginator;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PaginatorContext;
@@ -62,9 +61,6 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
     @Autowired
     private IdmPathUtils idmPathUtils;
-
-    @Autowired
-    private Paginator<EndUser> endUserPaginator;
 
     @Autowired
     private UserConverterCloudV20 userConverterCloudV20;
@@ -191,14 +187,14 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
             PaginatorContext<EndUser> paginatorContext = userGroupService.getUsersInGroup(group, userSearchCriteria);
 
-            String linkHeader = endUserPaginator.createLinkHeader(uriInfo, paginatorContext);
+            String linkHeader = idmPathUtils.createLinkHeader(uriInfo, paginatorContext);
 
             return Response.status(HttpStatus.OK.value())
                     .header(HttpHeaders.LINK, linkHeader)
                     .entity(objFactories.getOpenStackIdentityV2Factory().createUsers(
                             this.userConverterCloudV20.toUserList(paginatorContext.getValueList())).getValue()).build();
         } catch (Exception ex) {
-            LOG.error(String.format("Error retrieving users in group '%s' for domain '%s'", groupId, domainId), ex);
+            LOG.info(String.format("Error retrieving users in group '%s' for domain '%s'", groupId, domainId), ex);
             return idmExceptionHandler.exceptionResponse(ex).build();
         }
     }

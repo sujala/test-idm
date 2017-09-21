@@ -157,7 +157,7 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * dao.getGroupsForDomain(domainId)
     }
 
-    def "getUsersInGroup: gets objects via dao"() {
+    def "getUsersInGroup: gets objects via identityUserService"() {
         given:
         def group = new UserGroup()
         def userSearchCriteria = new UserSearchCriteria(new PaginationParams())

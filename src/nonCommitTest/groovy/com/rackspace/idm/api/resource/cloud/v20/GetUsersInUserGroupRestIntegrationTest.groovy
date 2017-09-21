@@ -55,6 +55,20 @@ class GetUsersInUserGroupRestIntegrationTest extends RootIntegrationTest {
         def user = usersEntity.user.get(0)
         user.username == userAdmin.username
 
+        when: "remove user from user group"
+        response = cloud20.removeUserFromUserGroup(userAdminToken, domainId, userGroupEntity.id, userAdmin.id)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        when: "list users in user group"
+        response = cloud20.getUsersInUserGroup(userAdminToken, domainId, userGroupEntity.id)
+        usersEntity = response.getEntity(UserList).value
+
+        then:
+        response.status == SC_OK
+        usersEntity.user.size() == 0
+
         cleanup:
         utils.deleteUserGroup(userGroupEntity)
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)

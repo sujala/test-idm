@@ -5,7 +5,6 @@ import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.IdmPathUtils
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
-import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.User
@@ -297,8 +296,8 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
     def "getUsersInGroup: calls backend service"() {
         given:
         def mockUriInfo = Mock(UriInfo)
-        def endUserPaginator = Mock(Paginator)
-        defaultUserGroupCloudService.endUserPaginator = endUserPaginator
+        def idmPathUtils = Mock(IdmPathUtils)
+        defaultUserGroupCloudService.idmPathUtils = idmPathUtils
         def objFactories = Mock(JAXBObjectFactories)
         def openStackIdentityV2Factory = Mock(ObjectFactory)
         objFactories.getOpenStackIdentityV2Factory() >> openStackIdentityV2Factory
@@ -333,7 +332,7 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
             pc.update([user].asList(), 0, 1000)
             pc
         }
-        1 * endUserPaginator.createLinkHeader(_,_) >> "links"
+        1 * idmPathUtils.createLinkHeader(_,_) >> "links"
         1 * openStackIdentityV2Factory.createUsers(_) >> new JAXBElement<UserList>(ObjectFactory._Users_QNAME, UserList.class, null, [user].asList())
         1 * userConverter.toUserList(_) >> new UserList()
 
