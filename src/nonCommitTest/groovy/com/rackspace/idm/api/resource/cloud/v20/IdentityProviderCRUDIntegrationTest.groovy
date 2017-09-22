@@ -23,6 +23,7 @@ import groovy.json.JsonSlurper
 import groovy.xml.XmlUtil
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.RandomStringUtils
+import org.apache.commons.lang3.StringUtils
 import org.apache.http.HttpStatus
 import org.joda.time.DateTime
 import org.mockserver.verify.VerificationTimes
@@ -2747,7 +2748,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         } catch (Exception ex) {
             // Eat. We're just cleaning up
         }
-        
+
         where:
         name                 | includeDomain | idpType                                        | includeTenant | accept
         getRandomUUID("idp") | false         | null                                           | false         | MediaType.APPLICATION_XML_TYPE
@@ -3329,9 +3330,9 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         }
         def response = cloud20.updateIdentityProvider(idpManagerToken, idp.id, invalid)
 
-        then: "400"
+        then: "409"
         def errorMsg = String.format(Validator20.DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, existingIdpName)
-        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_BAD_REQUEST, String.format("Error code: '%s'; %s", ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS, errorMsg))
+        assertOpenStackV2FaultResponse(response, BadRequestFault, SC_CONFLICT, String.format("Error code: '%s'; %s", ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS, errorMsg))
 
         when: "Cannot unset name for IDP"
         invalid.name = ""
@@ -4049,6 +4050,154 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
         utils.deleteIdentityProvider(idp)
+    }
+
+    @Unroll
+    def "Update IDP: End user modifications enforces constraints"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, true)
+        def domainId = utils.createDomain()
+        def otherDomainId = utils.createDomain()
+        def otherDomain = utils.createDomainEntity(otherDomainId)
+        def identityAdmin, userAdmin, userManage, rcnAdmin
+        (identityAdmin, userAdmin, userManage, rcnAdmin) = utils.createUsers(domainId)
+
+        utils.addRoleToUser(rcnAdmin, Constants.RCN_ADMIN_ROLE_ID)
+
+        def userAdminToken = utils.getToken(userAdmin.username)
+        def userManageToken = utils.getToken(userManage.username)
+        def rcnAdminToken = utils.getToken(rcnAdmin.username)
+
+
+        def rackspaceCustomerNumber = testUtils.getRandomRCN()
+
+        // Add domains to same RCN
+        def updateDomainEntity = new Domain().with {
+            it.rackspaceCustomerNumber = rackspaceCustomerNumber
+            it
+        }
+        utils.updateDomain(domainId, updateDomainEntity)
+        utils.updateDomain(otherDomainId, updateDomainEntity)
+
+        IdentityProvider idpA = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [domainId])
+        IdentityProvider createdIdpA = cloud20.createIdentityProvider(utils.getServiceAdminToken(), idpA).getEntity(IdentityProvider)
+        IdentityProvider idpB = v2Factory.createIdentityProvider(getRandomUUID(), "blah", getRandomUUID(), IdentityProviderFederationTypeEnum.DOMAIN, null, [otherDomainId])
+        IdentityProvider createdIdpB = cloud20.createIdentityProvider(utils.getServiceAdminToken(), idpB).getEntity(IdentityProvider)
+
+        def updateIdpAToIdpBName = new IdentityProvider().with {
+            it.name = createdIdpB.name
+            it
+        }
+        def updateIdpAToUpperCaseName = new IdentityProvider().with {
+            it.name = StringUtils.upperCase(createdIdpA.name)
+            it
+        }
+        def updateIdpAToLowerCaseName = new IdentityProvider().with {
+            it.name = StringUtils.lowerCase(createdIdpA.name)
+            it
+        }
+        def updateIdpANameToIllegalName = new IdentityProvider().with {
+            it.name = "русский"
+            it
+        }
+        def updateIdpANameToTooLong = new IdentityProvider().with {
+            it.name = RandomStringUtils.randomAlphanumeric(256)
+            it
+        }
+        def updateIdpADescriptionToTooLong = new IdentityProvider().with {
+            it.description = RandomStringUtils.randomAlphanumeric(256)
+            it
+        }
+
+        when: "user admin updates idp's name to that of existing idp"
+        def updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, createdIdpA.id, updateIdpAToIdpBName)
+
+        then: "409"
+        updateIdpResponse.status == HttpStatus.SC_CONFLICT
+
+        when: "user manager updates idp's name to that of existing idp"
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, createdIdpA.id, updateIdpAToIdpBName)
+
+        then: "409"
+        updateIdpResponse.status == HttpStatus.SC_CONFLICT
+
+        when: "rcnAdmin updates idp's name to that of existing idp"
+        updateIdpResponse = cloud20.updateIdentityProvider(rcnAdminToken, createdIdpA.id, updateIdpAToIdpBName)
+
+        then: "409"
+        updateIdpResponse.status == HttpStatus.SC_CONFLICT
+
+        when: "user admin updates idp's name with disallowed characters"
+        updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, createdIdpA.id, updateIdpANameToIllegalName)
+
+        then: "400"
+        updateIdpResponse.status == HttpStatus.SC_BAD_REQUEST
+
+        when: "user manager updates idp's name with disallowed characters"
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, createdIdpA.id, updateIdpANameToIllegalName)
+
+        then: "400"
+        updateIdpResponse.status == HttpStatus.SC_BAD_REQUEST
+
+        when: "rcnAdmin updates idp's name with disallowed characters"
+        updateIdpResponse = cloud20.updateIdentityProvider(rcnAdminToken, createdIdpA.id, updateIdpANameToIllegalName)
+
+        then: "400"
+        updateIdpResponse.status == HttpStatus.SC_BAD_REQUEST
+
+        when: "user admin updates idp's name to too long name"
+        updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, createdIdpA.id, updateIdpANameToTooLong)
+
+        then: "400"
+        updateIdpResponse.status == HttpStatus.SC_BAD_REQUEST
+
+        when: "user manager updates idp's name to too long name"
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, createdIdpA.id, updateIdpANameToTooLong)
+
+        then: "400"
+        updateIdpResponse.status == HttpStatus.SC_BAD_REQUEST
+
+        when: "rcnAdmin updates idp's name to too long name"
+        updateIdpResponse = cloud20.updateIdentityProvider(rcnAdminToken, createdIdpA.id, updateIdpADescriptionToTooLong)
+
+        then: "400"
+        updateIdpResponse.status == HttpStatus.SC_BAD_REQUEST
+
+        when: "user admin updates idp's description to too long"
+        updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, createdIdpA.id, updateIdpADescriptionToTooLong)
+
+        then: "400"
+        updateIdpResponse.status == HttpStatus.SC_BAD_REQUEST
+
+        when: "user manager updates idp's description to too long"
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, createdIdpA.id, updateIdpADescriptionToTooLong)
+
+        then: "400"
+        updateIdpResponse.status == HttpStatus.SC_BAD_REQUEST
+
+        when: "rcnAdmin updates idp's description to too long"
+        updateIdpResponse = cloud20.updateIdentityProvider(rcnAdminToken, createdIdpA.id, updateIdpADescriptionToTooLong)
+
+        then: "400"
+        updateIdpResponse.status == HttpStatus.SC_BAD_REQUEST
+
+        when: "user admin updates idp's name to different case"
+        updateIdpResponse = cloud20.updateIdentityProvider(userAdminToken, createdIdpA.id, updateIdpAToUpperCaseName)
+
+        then: "200"
+        updateIdpResponse.status == HttpStatus.SC_OK
+
+        when: "user manager updates idp's name to different case"
+        updateIdpResponse = cloud20.updateIdentityProvider(userManageToken, createdIdpA.id, updateIdpAToLowerCaseName)
+
+        then: "200"
+        updateIdpResponse.status == HttpStatus.SC_OK
+
+        when: "rcnAdmin updates idp's name to different case"
+        updateIdpResponse = cloud20.updateIdentityProvider(rcnAdminToken, createdIdpA.id, updateIdpAToUpperCaseName)
+
+        then: "200"
+        updateIdpResponse.status == HttpStatus.SC_OK
     }
 
     @Unroll
