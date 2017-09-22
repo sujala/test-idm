@@ -99,8 +99,8 @@ public class CloudUserGroupResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
-            @PathParam("groupId") String groupId,
-            @PathParam("userId") String userId) {
+            @PathParam(GROUP_ID_PATH_PARAM_NAME) String groupId,
+            @PathParam(USER_ID_PATH_PARAM_NAME) String userId) {
         return userGroupCloudService.addUserToGroup(authToken, domainId, groupId, userId);
     }
 
@@ -110,8 +110,8 @@ public class CloudUserGroupResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
-            @PathParam("groupId") String groupId,
-            @PathParam("userId") String userId) {
+            @PathParam(GROUP_ID_PATH_PARAM_NAME) String groupId,
+            @PathParam(USER_ID_PATH_PARAM_NAME) String userId) {
         return userGroupCloudService.removeUserFromGroup(authToken, domainId, groupId, userId);
     }
 

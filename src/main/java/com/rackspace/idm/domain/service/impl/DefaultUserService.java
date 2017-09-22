@@ -1159,7 +1159,7 @@ public class DefaultUserService implements UserService {
 
     @Override
     public void addGroupToUser(String groupId, String userId) {
-        userDao.addUserGroupToUser(userId, groupId);
+        userDao.addGroupToUser(userId, groupId);
     }
 
     @Override

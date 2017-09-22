@@ -379,7 +379,7 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
     }
 
     @Override
-    public void addUserGroupToUser(String userId, String groupId) {
+    public void addGroupToUser(String userId, String groupId) {
         getLogger().debug("Adding group {} to user {}", groupId, userId);
 
         User user = getObject(searchFilterGetUserById(userId));

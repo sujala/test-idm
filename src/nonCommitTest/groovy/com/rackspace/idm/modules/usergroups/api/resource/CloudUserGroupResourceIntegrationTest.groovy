@@ -67,6 +67,7 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         cleanup:
         utils.deleteUserGroup(userGroup)
         utils.deleteUser(user)
+        utils.deleteDomain(domainId)
     }
 
     def "Call add user to domain group service for a non-existing group….expect a 404"() {
@@ -74,7 +75,6 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         def username = testUtils.getRandomUUID()
         def domainId = utils.createDomain()
         def user = utils.createUser(utils.getServiceAdminToken(), username, domainId)
-        def userGroup = utils.createUserGroup(domainId)
         def token = utils.getToken(username, Constants.DEFAULT_PASSWORD)
 
         when:
@@ -84,27 +84,24 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         response.status == 404
 
         cleanup:
-        utils.deleteUserGroup(userGroup)
         utils.deleteUser(user)
     }
 
     def "Call add user to domain group service for a non-existing provisioned user….expect a 404"() {
         given:
-        def username = testUtils.getRandomUUID()
         def domainId = utils.createDomain()
-        def user = utils.createUser(utils.getServiceAdminToken(), username, domainId)
+        utils.createDomainEntity(domainId)
         def userGroup = utils.createUserGroup(domainId)
-        def token = utils.getToken(username, Constants.DEFAULT_PASSWORD)
 
         when:
-        def response = cloud20.addUserToUserGroup(token, domainId, userGroup.id, "doesNotExist")
+        def response = cloud20.addUserToUserGroup(utils.getIdentityAdminToken(), domainId, userGroup.id, "doesNotExist")
 
         then:
         response.status == 404
 
         cleanup:
         utils.deleteUserGroup(userGroup)
-        utils.deleteUser(user)
+        utils.deleteDomain(domainId)
     }
 
     def "Call add user to domain group service for a disabled provisioned user….expect a 204"() {
@@ -150,23 +147,23 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(user)
     }
 
-    def "Call add user to domain group service using user admin of other domain….expect a 400"() {
+    def "Call add user to domain group service using user admin of other domain….expect a 403"() {
         given:
         def username = testUtils.getRandomUUID()
         def domainId = utils.createDomain()
-        def user = utils.createUser(utils.getServiceAdminToken(), username, domainId)
+        def user = utils.createUser(utils.getIdentityAdminToken(), username, domainId)
         def userGroup = utils.createUserGroup(domainId)
-        def token = utils.getToken(username, Constants.DEFAULT_PASSWORD)
 
         def otherUsername = testUtils.getRandomUUID()
         def otherDomainId = utils.createDomain()
-        def otherUser = utils.createUser(utils.getServiceAdminToken(), otherUsername, otherDomainId)
+        def otherUser = utils.createUser(utils.getIdentityAdminToken(), otherUsername, otherDomainId)
+        def token = utils.getToken(otherUsername, Constants.DEFAULT_PASSWORD)
 
         when:
-        def response = cloud20.addUserToUserGroup(token, domainId, userGroup.id, otherUser.id)
+        def response = cloud20.addUserToUserGroup(token, domainId, userGroup.id, user.id)
 
         then:
-        response.status == 400
+        response.status == 403
 
         cleanup:
         utils.deleteUserGroup(userGroup)
@@ -174,28 +171,28 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(otherUser)
     }
 
-    def "Call add user to domain group service using user manager of other domain….expect a 400"() {
+    def "Call add user to domain group service using user manager of other domain….expect a 403"() {
         given:
         def username = testUtils.getRandomUUID()
         def domainId = utils.createDomain()
         def user = utils.createUser(utils.getIdentityAdminToken(), username, domainId)
         def userGroup = utils.createUserGroup(domainId)
-        def token = utils.getToken(username, Constants.DEFAULT_PASSWORD)
+
+        def otherUsername = testUtils.getRandomUUID()
+        def otherDomainId = utils.createDomain()
+        def otherUser = utils.createUser(utils.getIdentityAdminToken(), otherUsername, otherDomainId)
+        def token = utils.getToken(otherUsername, Constants.DEFAULT_PASSWORD)
 
         def userManagedUsername = testUtils.getRandomUUID()
         def userManagedUser = utils.createUser(token, userManagedUsername, domainId)
         utils.addRoleToUser(userManagedUser, Constants.USER_MANAGE_ROLE_ID)
         token = utils.getToken(userManagedUsername, Constants.DEFAULT_PASSWORD)
 
-        def otherUsername = testUtils.getRandomUUID()
-        def otherDomainId = utils.createDomain()
-        def otherUser = utils.createUser(utils.getIdentityAdminToken(), otherUsername, otherDomainId)
-
         when:
-        def response = cloud20.addUserToUserGroup(token, domainId, userGroup.id, otherUser.id)
+        def response = cloud20.addUserToUserGroup(token, domainId, userGroup.id, user.id)
 
         then:
-        response.status == 400
+        response.status == 403
 
         cleanup:
         utils.deleteUserGroup(userGroup)
@@ -257,10 +254,6 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         utils.deleteUser(user)
         utils.deleteUser(federatedUser)
     }
-
-
-
-    //start
 
     def "Call add user to domain group service for a user admin of group's domain, using the same user's token….expect a 204"() {
         given:
@@ -835,60 +828,6 @@ class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
         utils.deleteUserGroup(userGroup)
         utils.deleteUser(defaultUser)
         utils.deleteUser(user)
-    }
-
-    def "Call remove user from domain group service using user admin of other domain….expect a 400"() {
-        given:
-        def username = testUtils.getRandomUUID()
-        def domainId = utils.createDomain()
-        def user = utils.createUser(utils.getServiceAdminToken(), username, domainId)
-        def userGroup = utils.createUserGroup(domainId)
-        def token = utils.getToken(username, Constants.DEFAULT_PASSWORD)
-
-        def otherUsername = testUtils.getRandomUUID()
-        def otherDomainId = utils.createDomain()
-        def otherUser = utils.createUser(utils.getServiceAdminToken(), otherUsername, otherDomainId)
-
-        when:
-        def response = cloud20.removeUserFromUserGroup(token, domainId, userGroup.id, otherUser.id)
-
-        then:
-        response.status == 400
-
-        cleanup:
-        utils.deleteUserGroup(userGroup)
-        utils.deleteUser(user)
-        utils.deleteUser(otherUser)
-    }
-
-    def "Call remove user from domain group service using user manager of other domain….expect a 400"() {
-        given:
-        def username = testUtils.getRandomUUID()
-        def domainId = utils.createDomain()
-        def user = utils.createUser(utils.getIdentityAdminToken(), username, domainId)
-        def userGroup = utils.createUserGroup(domainId)
-        def token = utils.getToken(username, Constants.DEFAULT_PASSWORD)
-
-        def userManagedUsername = testUtils.getRandomUUID()
-        def userManagedUser = utils.createUser(token, userManagedUsername, domainId)
-        utils.addRoleToUser(userManagedUser, Constants.USER_MANAGE_ROLE_ID)
-        token = utils.getToken(userManagedUsername, Constants.DEFAULT_PASSWORD)
-
-        def otherUsername = testUtils.getRandomUUID()
-        def otherDomainId = utils.createDomain()
-        def otherUser = utils.createUser(utils.getIdentityAdminToken(), otherUsername, otherDomainId)
-
-        when:
-        def response = cloud20.removeUserFromUserGroup(token, domainId, userGroup.id, otherUser.id)
-
-        then:
-        response.status == 400
-
-        cleanup:
-        utils.deleteUserGroup(userGroup)
-        utils.deleteUser(userManagedUser)
-        utils.deleteUser(user)
-        utils.deleteUser(otherUser)
     }
 
     def "Call remove user from domain group service using rcn admin, not having the domain in the URL as one of domains for its RCN.….expect a 403"() {

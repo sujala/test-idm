@@ -414,14 +414,6 @@ public class DefaultUserGroupService implements UserGroupService {
 
         User targetUser = verifyAndGetUserForGroup(userId);
 
-        if (StringUtils.isBlank(targetUser.getDomainId())) {
-            throw new BadRequestException(USER_MUST_BELONG_TO_DOMAIN);
-        } else if (StringUtils.isBlank(group.getDomainId())) {
-            throw new BadRequestException(GROUP_MUST_BELONG_TO_DOMAIN);
-        } else if (!targetUser.getDomainId().equalsIgnoreCase(group.getDomainId())) {
-            throw new BadRequestException(CAN_ONLY_ADD_USERS_TO_GROUPS_WITHIN_SAME_DOMAIN);
-        }
-
         identityUserService.removeUserGroupFromUser(group, targetUser);
     }
 

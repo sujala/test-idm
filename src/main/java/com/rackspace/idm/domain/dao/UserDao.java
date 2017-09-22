@@ -73,7 +73,7 @@ public interface UserDao {
      */
     Iterable<User> getDisabledUsersByGroupId(String groupId);
 
-    void addUserGroupToUser(String userId, String groupId);
+    void addGroupToUser(String userId, String groupId);
 
     void deleteGroupFromUser(String groupId, String userId);
 
