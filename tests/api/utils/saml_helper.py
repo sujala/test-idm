@@ -28,7 +28,7 @@ def get_params_and_command(public_key_path, private_key_path=None,
         src_path, 'tests', 'resources',
         'identity-saml-generator-2.0-1498166922926-all.jar')
     key_path = os.path.join(src_path, 'src',
-                            'test', 'resources')
+                            'commonTest', 'resources')
     public_key_path = public_key_path or os.path.join(
         key_path, 'saml-qe-idp.crt')
     if not for_metadata:

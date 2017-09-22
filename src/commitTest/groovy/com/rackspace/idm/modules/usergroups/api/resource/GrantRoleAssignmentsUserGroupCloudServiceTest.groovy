@@ -65,7 +65,7 @@ class GrantRoleAssignmentsUserGroupCloudServiceTest extends RootServiceTest {
         1 * idmExceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
     }
 
-    def "grantRoleAssignments: Converts entity and calls backend service"() {
+    def "grantRoleAssignments: Verifies service retrieves group, converts entity and calls appropriate backend services"() {
         given:
         def domainId = "domainId"
         def token = "token"
@@ -92,9 +92,13 @@ class GrantRoleAssignmentsUserGroupCloudServiceTest extends RootServiceTest {
         Response response = defaultUserGroupCloudService.grantRolesToGroup(token, domainId, groupid, roleAssignments)
 
         then:
+        // Verify the service passes in the supplied domain/group to verify it exists via the checkAndGet method
         1 * userGroupService.checkAndGetGroupByIdForDomain(groupid, domainId) >> entityGroup
+
+        // Verify the service calls the appropriate backend service to replace the assignments
         1 * userGroupService.replaceRoleAssignmentsOnGroup(entityGroup, roleAssignments) >> [tenantRole]
-        0 * userGroupService.getRoleAssignmentsOnGroup(groupid) >> groupRoles
+
+        // Verify the app calls the pagination service with the appropriate params
         1 * userGroupService.getRoleAssignmentsOnGroup(entityGroup, _) >> { args ->
             UserGroupRoleSearchParams searchParams = args[1]
             assert searchParams.paginationRequest.marker == 0
@@ -104,7 +108,7 @@ class GrantRoleAssignmentsUserGroupCloudServiceTest extends RootServiceTest {
             pc
         }
 
-        // Converts the roles using converter
+        // Converts the roles returned by paginator using converter
         1 * roleAssignmentConverter.toRoleAssignmentsWeb(groupRoles) >> outputWebRoleAssignments
 
         // Returns the same object from the conversion

@@ -20,6 +20,8 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
 
         ldapInterface = Mock()
         ldapConnectionPools.getAppConnPoolInterface() >> ldapInterface
+
+        mockConfiguration(dao)
     }
 
     def "addRoleAssignmentOnGroup: adding new assignment checks for container"() {
@@ -89,8 +91,34 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
         // Sends in a modify request for values filled out
         1 * ldapInterface.modify(_ as ModifyRequest) >> { args ->
             ModifyRequest request = (ModifyRequest) args[0]
-            assert request.DN.contains (containerDN)
+            assert request.DN.contains(containerDN)
             null
         }
+    }
+
+
+    def "deleteTenantRole: Deletes by DN"() {
+        def containerDN = "cn=ROLES,rsId=abc," + Constants.USER_GROUP_BASE_DN
+
+        TenantRole tenantRole = new TenantRole().with {
+            it.roleRsId = "1234"
+            it.clientId = "clientId"
+            it.tenantIds = ["tenant1"] as Set
+            it.uniqueId = "roleRsId=1234," + containerDN
+            it
+        }
+
+        when:
+        dao.deleteTenantRole(tenantRole)
+
+        then:
+        // Determines whether to use subtree delete control or not. For this test, no...
+        1 * config.getBoolean(LdapRepository.FEATURE_USE_SUBTREE_DELETE_CONTROL_FOR_SUBTREE_DELETION_PROPNAME, _) >> false
+
+        // Delete always searches for entry before deleting to find all subentries below the specified DN
+        1 * ldapInterface.search(tenantRole.uniqueId, SearchScope.ONE, _, _) >> new SearchResult(1, null, null, null, new String[0], Collections.emptyList(), Collections.emptyList(), 0, 0)
+
+        // Sends in a delete request for values filled out
+        1 * ldapInterface.delete(tenantRole.uniqueId)
     }
 }
