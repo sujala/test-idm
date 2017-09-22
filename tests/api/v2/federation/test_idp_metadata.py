@@ -52,7 +52,6 @@ class TestIDPMetadata(federation.TestBaseFederation):
 
     def setUp(self):
         super(TestIDPMetadata, self).setUp()
-        self.idp_ids = []
 
     def test_add_idp_auth_fed_user(self):
         '''
@@ -196,9 +195,6 @@ class TestIDPMetadata(federation.TestBaseFederation):
 
     def tearDown(self):
         super(TestIDPMetadata, self).tearDown()
-        for idp_id in self.idp_ids:
-            resp = self.user_admin_client.delete_idp(idp_id=idp_id)
-            self.assertEqual(resp.status_code, 204)
 
     @classmethod
     def tearDownClass(cls):

@@ -59,8 +59,6 @@ class TestBaseFederation(base.TestBaseV2):
             cls.service_admin_client.add_role_to_user(
                 user_id=identity_admin_id, role_id=mapping_rules_role_id)
 
-        cls.idp_ids = []
-
     def setUp(self):
         super(TestBaseFederation, self).setUp()
         self.provider_ids = []
@@ -90,8 +88,9 @@ class TestBaseFederation(base.TestBaseV2):
             cert_path=cert_path, api_client=api_client)
 
         self.assertEqual(resp.status_code, 201)
+
         idp_id = resp.json()[const.NS_IDENTITY_PROVIDER][const.ID]
-        self.idp_ids.append(idp_id)
+        self.provider_ids.append(idp_id)
 
         updated_idp_schema = copy.deepcopy(idp_json.identity_provider)
         updated_idp_schema[const.PROPERTIES][const.NS_IDENTITY_PROVIDER][

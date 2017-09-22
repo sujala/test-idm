@@ -47,6 +47,22 @@ class ListUserGroupsInDomain(base.TestBaseV2):
             json_schema=user_groups.list_user_groups_for_domain)
         self.assertEqual(len(list_resp.json()[const.RAX_AUTH_USER_GROUPS]), 2)
 
+        # List call with query param
+        group_name = list_resp.json()[const.RAX_AUTH_USER_GROUPS][0][
+            const.NAME]
+        option = {
+            const.NAME: group_name
+        }
+        list_resp = self.user_admin_client.list_user_groups_for_domain(
+            self.domain_id, option=option)
+        self.assertEqual(len(list_resp.json()[const.RAX_AUTH_USER_GROUPS]), 1)
+        self.assertEqual(
+            list_resp.json()[const.RAX_AUTH_USER_GROUPS][0][const.NAME],
+            group_name)
+        self.assertSchema(
+            response=list_resp,
+            json_schema=user_groups.list_user_groups_for_domain)
+
     @classmethod
     def tearDownClass(cls):
         super(ListUserGroupsInDomain, cls).tearDownClass()

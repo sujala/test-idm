@@ -1303,14 +1303,16 @@ public class DefaultCloud20Service implements Cloud20Service {
             boolean isRcnAdmin = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.RCN_ADMIN.getRoleName());
             boolean isIdentityProviderManager = authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.IDENTITY_PROVIDER_MANAGER.getRoleName());
 
+            // TODO: Refactor this so the fields a given user type can update aren't spread across multiple classes
+
             if (isUserAdmin || isUserManage) {
                 verifyDomainUserHasAccessToIdentityProviderMetadata(existingProvider, caller);
-                validator20.validateIdentityProviderForUpdateForUserAdminOrUserManage(provider);
+                validator20.validateIdentityProviderForUpdateForUserAdminOrUserManage(provider, existingProvider);
             } else if (isRcnAdmin) {
                 verifyDomainUserHasAccessToIdentityProviderMetadata(existingProvider, caller);
                 validator20.validateIdentityProviderForUpdateForRcnAdmin(provider, existingProvider);
             } else {
-                validator20.validateIdentityProviderForUpdate(provider, existingProvider);
+                validator20.validateIdentityProviderForUpdateForIdentityProviderManager(provider, existingProvider);
             }
 
             // Copy over the only attributes allowed to be updated
