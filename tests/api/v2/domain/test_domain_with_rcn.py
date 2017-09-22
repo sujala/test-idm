@@ -120,6 +120,7 @@ class TestRCNDomain(base.TestBaseV2):
 
         # Adding the required role to make the call
         if self.test_config.run_service_admin_tests:
+            rcn_switch_role_id = None
             try:
                 option = {
                     const.PARAM_ROLE_NAME: const.RCN_SWITCH_ROLE_NAME
