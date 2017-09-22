@@ -357,24 +357,18 @@ public class Validator20 {
             throw new BadRequestException("Must provide an identity provider");
         }
 
-        validateIdentityProviderName(identityProvider.getName());
-        if (federatedIdentityService.getIdentityProviderByName(identityProvider.getName()) != null) {
-            throw new DuplicateException(String.format(DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, identityProvider.getName()), ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS);
-        }
+        validateIdentityProviderNameChangeWithDupCheck(identityProvider.getName(), null);
 
-        validateStringNotNullWithMaxLength("issuer", identityProvider.getIssuer(), MAX_IDENTITY_PROVIDER_ISSUER);
-        if (federatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) != null) {
-            throw new DuplicateException("Provider already exists with this issuer", ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS);
-        }
+        validateIdentityProviderIssuerWithDupCheck(identityProvider);
 
         if (identityProvider.getFederationType() == null) {
             throwBadRequestForMissingAttrWithErrorCode("federationType");
         }
 
         //validate the authenticationUrl is specified and under max length
-        validateStringNotNullWithMaxLength("authenticationUrl", identityProvider.getAuthenticationUrl(), MAX_IDENTITY_PROVIDER_AUTH_URL);
+        validateIdentityProviderAuthenticationUrl(identityProvider);
 
-        validateStringMaxLength("description", identityProvider.getDescription(), MAX_IDENTITY_PROVIDER_DESCRIPTION);
+        validateIdentityProviderDescription(identityProvider);
 
         if (StringUtils.isNotBlank(identityProvider.getId())) {
             throw new BadRequestException("Do not provide an id when creating a new Identity Provider. An id will be generated.");
@@ -419,25 +413,44 @@ public class Validator20 {
         }
     }
 
+    /**
+     * Validates portions of the Identity Provider w/ knowledge that code pre-sets some values (e.g. approvedDomainIds)
+     * so no need to validate that.
+     *
+     * Validates:
+     * - name - (without dup check)
+     * - issuer (with dup check)
+     * - description (with length)
+     * - auth url (length)
+     * - pub certs (convertable to pub cert)
+     *
+     *
+     * @param identityProvider
+     * @param domainId
+     */
     public void validateIdentityProviderMetadataForCreation(IdentityProvider identityProvider, String domainId) {
         validateIdentityProviderExplicitThreshold(domainId);
 
-        // Validate name
-        validateIdentityProviderName(identityProvider.getName());
+        // Validate names - except dup check. Calling method must ensure the name is globally unique
+        // TODO Refactor all this update logic across all the different methods
+        validateIdentityProviderNameWithoutDupCheck(identityProvider.getName());
 
         // Validate issuer
-        validateStringNotNullWithMaxLength("issuer", identityProvider.getIssuer(), MAX_IDENTITY_PROVIDER_ISSUER);
-        if (federatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) != null) {
-            throw new DuplicateException("Provider already exists with this issuer", ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS);
-        }
+        validateIdentityProviderIssuerWithDupCheck(identityProvider);
 
         // Validate description
-        validateStringMaxLength("description", identityProvider.getDescription(), MAX_IDENTITY_PROVIDER_DESCRIPTION);
+        validateIdentityProviderDescription(identityProvider);
 
         validateIdentityProviderAuthenticationUrl(identityProvider);
 
         validateIdentityProviderPublicCertificates(identityProvider);
+    }
 
+    public void validateIdentityProviderIssuerWithDupCheck(IdentityProvider identityProvider) {
+        validateStringNotNullWithMaxLength("issuer", identityProvider.getIssuer(), MAX_IDENTITY_PROVIDER_ISSUER);
+        if (federatedIdentityService.getIdentityProviderByIssuer(identityProvider.getIssuer()) != null) {
+            throw new DuplicateException("Provider already exists with this issuer", ErrorCodes.ERROR_CODE_IDP_ISSUER_ALREADY_EXISTS);
+        }
     }
 
     public void validateIdentityProviderAuthenticationUrl(IdentityProvider identityProvider) {
@@ -445,6 +458,10 @@ public class Validator20 {
         validateStringNotNullWithMaxLength("authenticationUrl",
                 identityProvider.getAuthenticationUrl(),
                 MAX_IDENTITY_PROVIDER_AUTH_URL);
+    }
+
+    public void validateIdentityProviderDescription(IdentityProvider identityProvider) {
+        validateStringMaxLength("description", identityProvider.getDescription(), MAX_IDENTITY_PROVIDER_DESCRIPTION);
     }
 
     public void validateIdentityProviderPublicCertificates(IdentityProvider identityProvider) {
@@ -468,11 +485,60 @@ public class Validator20 {
         }
     }
 
-    private void validateIdentityProviderName(String name) {
+    /**
+     * Validates the name meets name character restrictions, but does not perform a duplicate check.
+     *
+     * @param name
+     */
+    private void validateIdentityProviderNameWithoutDupCheck(String name) {
         validateStringNotNullWithMaxLength("name", name, MAX_IDENTITY_PROVIDER_NAME);
 
         if (!IDENTITY_PROVIDER_NAME_REGEX.matcher(name).matches()) {
             throw new BadRequestException(INVALID_IDENTITY_PROVIDER_NAME_ERROR_MSG, ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE);
+        }
+    }
+
+    /**
+     * Verifies the supplied newName is an acceptable identity provider name.
+     *
+     * @param newName
+     * @param existingProvider
+     */
+    private void validateIdentityProviderNameChangeWithDupCheck(String newName, com.rackspace.idm.domain.entity.IdentityProvider existingProvider) {
+        /*
+         If the existing provider is provided but the new name is null, the code will not update the name. A null value
+         on the name field for an update will cause unboundId to not update the name. As such, don't need to perform
+         any validation for this case.
+         */
+        if (existingProvider != null && newName == null) {
+            return;
+        }
+
+        /*
+            We need to do a full check on name:
+            1. When existing provider is null as it means we are creating a new provider (so no existing name)
+            2. If updating a name on an existing provider, perform name validation if the new name is different than the
+             current name. Not performing the check when the name is the same was explicitly done to allow legacy IDPs
+             with names that didn't match new restrictions to still be updated when a name is provided as long as the
+             name matches the existing name.
+         */
+        if (existingProvider == null || !newName.equalsIgnoreCase(existingProvider.getName())) {
+            validateIdentityProviderNameWithoutDupCheck(newName);
+        }
+
+        /*
+         Always perform the dup check if caller provides a name. In probably 99.999% of the cases the same IDP will
+         be returned. However, the call is inexpensive, IDPs aren't updated often, and the consequences of 2 IDPs being
+         returned for the same name results in a DOS on both IDPs so we need to avoid that condition.
+
+         If an existing provider isn't provided (meaning we're adding a new provider), ANY found idp will result in dup error
+         If an existing provider is provided (meaning updating a provider), no error is thrown as long as the found IDP
+         is the same provider.
+         */
+        com.rackspace.idm.domain.entity.IdentityProvider searchedIdp = federatedIdentityService.getIdentityProviderByName(newName);
+        String acceptableFoundIdp = existingProvider != null ? existingProvider.getProviderId() : null;
+        if (searchedIdp != null && !searchedIdp.getProviderId().equalsIgnoreCase(acceptableFoundIdp)) {
+            throw new DuplicateException(String.format(DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, newName), ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS);
         }
     }
 
@@ -485,14 +551,28 @@ public class Validator20 {
         }
     }
 
-    public void validateIdentityProviderForUpdate(IdentityProvider identityProvider, com.rackspace.idm.domain.entity.IdentityProvider existingProvider) {
+    /**
+     * Validates the provided identity provider for update provides valid values
+     *
+     * This performs validation applicable for identity-provider-admin. THe following fields can be updated:
+     * <ul>
+     *     <li>name</li>
+     *     <li>description</li>
+     *     <li>authenticationUrl</li>
+     *     <li>approvedDomainIds (if approvedDomainGroup == null)</li>
+     * </ul>
+     *
+     *
+     * @param identityProvider
+     * @param existingProvider
+     */
+    public void validateIdentityProviderForUpdateForIdentityProviderManager(IdentityProvider identityProvider, com.rackspace.idm.domain.entity.IdentityProvider existingProvider) {
         if (identityProvider == null) {
             throw new BadRequestException("Must provide an identity provider");
         }
 
         validateAttributeisNull("issuer", identityProvider.getIssuer());
         validateAttributeisNull("federationType", identityProvider.getFederationType());
-        validateAttributeisNull("description", identityProvider.getIssuer());
         validateAttributeisNull("id", identityProvider.getId());
         validateAttributeisNull("publicCertificates", identityProvider.getPublicCertificates());
         validateAttributeisNull("approvedDomainGroup", identityProvider.getApprovedDomainGroup());
@@ -500,6 +580,7 @@ public class Validator20 {
         // Allowed attributes for update
         validateAttributeForUpdate("name", identityProvider.getName());
         validateAttributeForUpdate("authenticationUrl", identityProvider.getAuthenticationUrl());
+
         if(identityProvider.getApprovedDomainIds() != null) {
 
             if(!identityConfig.getReloadableConfig().getAllowUpdatingApprovedDomainIdsForIdp()) {
@@ -518,27 +599,36 @@ public class Validator20 {
             validateIdentityProviderApprovedDomainIds(approvedDomainIds);
         }
 
-        if (identityProvider.getName() != null && !identityProvider.getName().equalsIgnoreCase(existingProvider.getName())) {
-            validateIdentityProviderName(identityProvider.getName());
-            // If the provider's id found by name does not match the existing provider's id, then provider with provided name already exist.
-            com.rackspace.idm.domain.entity.IdentityProvider provider = federatedIdentityService.getIdentityProviderByName(identityProvider.getName());
-            if (provider != null && !provider.getProviderId().equals(existingProvider.getProviderId())) {
-                throw new BadRequestException(String.format(DUPLICATE_IDENTITY_PROVIDER_NAME_ERROR_MSG, provider.getName()), ErrorCodes.ERROR_CODE_IDP_NAME_ALREADY_EXISTS);
-            }
+        // If a value is provided for name, must validate it. Null value means no update
+        if (identityProvider.getName() != null) {
+            validateIdentityProviderNameChangeWithDupCheck(identityProvider.getName(), existingProvider);
         }
+
+        validateIdentityProviderDescription(identityProvider);
+
         if (identityProvider.getAuthenticationUrl() != null && !identityProvider.getAuthenticationUrl().equalsIgnoreCase(existingProvider.getAuthenticationUrl())) {
             validateStringMaxLength("authenticationUrl", identityProvider.getAuthenticationUrl(), MAX_IDENTITY_PROVIDER_AUTH_URL);
         }
     }
 
-    public void validateIdentityProviderForUpdateForUserAdminOrUserManage(IdentityProvider identityProvider) {
-        validateAttributeForUpdate("name", identityProvider.getName());
-        validateAttributeForUpdate("description", identityProvider.getDescription());
+    public void validateIdentityProviderForUpdateForUserAdminOrUserManage(IdentityProvider identityProvider, com.rackspace.idm.domain.entity.IdentityProvider existingProvider) {
+        // If a value is provided for name, must validate it. Null value means no update
+        if (identityProvider.getName() != null) {
+            validateIdentityProviderNameChangeWithDupCheck(identityProvider.getName(), existingProvider);
+        }
+
+        validateIdentityProviderDescription(identityProvider);
     }
 
     public void validateIdentityProviderForUpdateForRcnAdmin(IdentityProvider identityProvider, com.rackspace.idm.domain.entity.IdentityProvider existingProvider) {
         validateAttributeForUpdate("name", identityProvider.getName());
         validateAttributeForUpdate("description", identityProvider.getDescription());
+
+        if (identityProvider.getName() != null) {
+            validateIdentityProviderNameChangeWithDupCheck(identityProvider.getName(), existingProvider);
+        }
+
+        validateIdentityProviderDescription(identityProvider);
 
         ApprovedDomainIds providedApprovedDomainIds = identityProvider.getApprovedDomainIds();
 

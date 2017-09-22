@@ -42,8 +42,7 @@ flake: build
 	# install tox
 	$(VENV)/bin/pip install tox
 	# run flake8
-	$(VENV)/bin/tox -e flake8
-	$(MAKE) clean
+	$(VENV)/bin/tox -e flake8 || $(MAKE) clean
 
 test: build
 	# make sure .venv directory exists prior to creating it
@@ -51,13 +50,11 @@ test: build
 	# install tox
 	$(VENV)/bin/pip install tox
 	# run py27
-	$(VENV)/bin/tox -e py27
-	$(MAKE) clean
+	$(VENV)/bin/tox -e py27 || $(MAKE) clean
 
 test_nose: build
 	# run test nose
-	$(MAKE) API=${API} test_nose_no_build
-	$(MAKE) clean
+	$(MAKE) API=${API} test_nose_no_build || $(MAKE) clean
 
 test_nose_no_build:
 	# make sure docker is running
