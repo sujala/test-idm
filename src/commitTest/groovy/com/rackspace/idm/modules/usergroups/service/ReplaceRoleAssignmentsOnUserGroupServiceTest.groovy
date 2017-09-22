@@ -36,7 +36,6 @@ class ReplaceRoleAssignmentsOnUserGroupServiceTest extends RootServiceTest{
         service.userGroupDao = dao
     }
 
-    @Unroll
     def "replaceRoleAssignmentsOnGroup: Throws IllegalArgumentException if supplied user group is invalid"() {
         def roleAssignments = new RoleAssignments()
 
@@ -53,7 +52,6 @@ class ReplaceRoleAssignmentsOnUserGroupServiceTest extends RootServiceTest{
         thrown(IllegalArgumentException)
     }
 
-    @Unroll
     def "replaceRoleAssignmentsOnGroup: Throws IllegalArgumentException if roleAssignments arg is null"() {
         when:
         service.replaceRoleAssignmentsOnGroup(new UserGroup().with {it.uniqueId = "uniqueId";it}, null)
