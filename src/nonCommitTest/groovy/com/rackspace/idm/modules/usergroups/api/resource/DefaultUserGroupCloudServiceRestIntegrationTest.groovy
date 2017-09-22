@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroups
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.impl.DefaultDomainService
+import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.modules.usergroups.service.DefaultUserGroupService
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
@@ -30,9 +31,12 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
     @Shared
     def sharedIdentityAdminToken
 
-    @Shared User sharedUserAdmin
-    @Shared org.openstack.docs.identity.api.v2.Tenant sharedUserAdminCloudTenant
-    @Shared org.openstack.docs.identity.api.v2.Tenant sharedUserAdminFilesTenant
+    @Shared
+    User sharedUserAdmin
+    @Shared
+    org.openstack.docs.identity.api.v2.Tenant sharedUserAdminCloudTenant
+    @Shared
+    org.openstack.docs.identity.api.v2.Tenant sharedUserAdminFilesTenant
 
     void doSetupSpec() {
         def authResponse = cloud20.authenticatePassword(Constants.IDENTITY_ADMIN_USERNAME, Constants.IDENTITY_ADMIN_PASSWORD)
@@ -201,7 +205,7 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         then:
         getGroupsResponse.status == HttpStatus.SC_OK
         groups.userGroup.size() > 0
-        groups.userGroup.find {it.name == created.name} != null
+        groups.userGroup.find { it.name == created.name } != null
 
         when: "List user groups for domain with name query param"
         getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, group.name, mediaType)
@@ -259,6 +263,13 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         then:
         userGroups.userGroup.size() == 0
 
+        when: "query param name with special characters"
+        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, "иииии")
+        userGroups = getGroupsResponse.getEntity(UserGroups)
+
+        then:
+        userGroups.userGroup.size() == 0
+
         when: "Invalid auth token"
         getGroupsResponse = cloud20.listUserGroupsForDomain("invalid", created.domainId)
         errMsg = "No valid token provided. Please use the 'X-Auth-Token' header with a valid token."
@@ -272,13 +283,50 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         then:
         IdmAssert.assertOpenStackV2FaultResponse(getGroupsResponse, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
 
+        when: "token of user from different domain"
+        def anotherdomainId = utils.createDomain()
+        def anotherDomain = v2Factory.createDomain(anotherdomainId, anotherdomainId)
+        def anotherDomainCreated = utils.createDomain(anotherDomain)
+        def userAdminToken = utils.getToken(sharedUserAdmin.username)
+
+        def listGroupsResponse = cloud20.listUserGroupsForDomain(userAdminToken, anotherDomainCreated.id)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(listGroupsResponse, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
+
+        when: "token of user from different domain with query param specified"
+        getGroupsResponse = cloud20.listUserGroupsForDomain(userAdminToken, anotherDomainCreated.id, "test")
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(getGroupsResponse, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
+
         cleanup:
         utils.deleteUsers(users)
         utils.deleteDomain(domainId)
         utils.deleteUserGroup(created)
+        utils.deleteDomain(anotherDomainCreated.id)
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
+    @Unroll
+    def "Error check: list user groups for domain with invalid mediatype; mediatype = #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def domain = v2Factory.createDomain(domainId, domainId)
+        def domainCreated = utils.createDomain(domain)
+
+        when: "Invalid media type, mediaType - #mediaType"
+        def getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, domainCreated.id,null, mediaType)
+
+        then:
+        getGroupsResponse.status == HttpStatus.SC_NOT_ACCEPTABLE
+
+        cleanup:
+        utils.deleteDomain(domainId)
+
+        where:
+        mediaType << [MediaType.TEXT_PLAIN_TYPE, GlobalConstants.TEXT_YAML_TYPE]
+    }
 }
