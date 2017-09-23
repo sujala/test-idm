@@ -155,7 +155,7 @@ class TestFedUserImpersonation(federation.TestBaseFederation):
 
     def tearDown(self):
         super(TestFedUserImpersonation, self).tearDown()
-        for idp_id in self.idp_ids:
+        for idp_id in self.provider_ids:
             # Fails with HTTP 403 - https://jira.rax.io/browse/CID-943
             self.user_admin_client.delete_idp(idp_id=idp_id)
 
