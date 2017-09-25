@@ -213,7 +213,7 @@ class Cloud20Utils {
      * @param domainId
      * @return
      */
-    def createCloudAccount(identityAdminToken, int domainId = testUtils.getRandomInteger()) {
+    def createCloudAccount(identityAdminToken = getIdentityAdminToken(), int domainId = testUtils.getRandomInteger()) {
         createUserWithTenants(identityAdminToken, testUtils.getRandomUUID("userAdmin"), String.valueOf(domainId))
     }
 
@@ -347,7 +347,7 @@ class Cloud20Utils {
     }
 
 
-    def getServiceAdminToken() {
+    String getServiceAdminToken() {
         return getToken(SERVICE_ADMIN_USERNAME, SERVICE_ADMIN_PASSWORD)
     }
 

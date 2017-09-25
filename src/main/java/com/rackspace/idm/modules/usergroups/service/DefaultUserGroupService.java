@@ -381,6 +381,7 @@ public class DefaultUserGroupService implements UserGroupService {
         return tenantAssignment.getForTenants().contains(ALL_TENANT_IN_DOMAIN_WILDCARD);
     }
 
+    @Override
     public Iterable<UserGroup> getGroupsForDomain(String domainId) {
         Validate.notEmpty(domainId);
 
@@ -423,6 +424,13 @@ public class DefaultUserGroupService implements UserGroupService {
         Assert.notNull(userSearchCriteria.getPaginationRequest());
 
         return identityUserService.getEndUsersInUserGroup(group, userSearchCriteria);
+    }
+
+    @Override
+    public int countGroupsWithRoleAssignment(String roleId) {
+        Validate.notEmpty(roleId);
+
+        return tenantRoleDao.countGroupsWithRoleAssignment(roleId);
     }
 
     private User verifyAndGetUserForGroup(String userId) {

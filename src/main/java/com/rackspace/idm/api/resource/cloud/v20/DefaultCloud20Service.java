@@ -37,6 +37,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlUnmarshaller;
 import com.rackspace.idm.validation.Cloud20CreateUserValidator;
@@ -135,6 +136,9 @@ public class DefaultCloud20Service implements Cloud20Service {
     public static final String ERROR_SWITCH_RCN_ON_DOMAIN_CONTAINING_RCN_TENANT ="The domain cannot contain an RCN tenant. Remove the RCN tenant from the domain first.";
     public static final String ERROR_SWITCH_RCN_ON_DOMAIN_MISSING_RCN = "Destination RCN required.";
 
+    public static final String ERROR_DELETE_ROLE_WITH_USERS_ASSIGNED = "Deleting the role associated with one or more users is not allowed";
+    public static final String ERROR_DELETE_ROLE_WITH_GROUPS_ASSIGNED = "Deleting the role associated with one or more groups is not allowed";
+
     public static final String METADATA_NOT_FOUND_ERROR_MESSAGE = "No metadata found for identity provider '%s'.";
 
     public static final String PREFIXED_IDENTITY_ROLE_ERROR_MESSAGE = "Role prefixed with 'identity:' cannot be deleted";
@@ -193,6 +197,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
     @Autowired
     private GroupService groupService;
+
+    @Autowired
+    private UserGroupService userGroupService;
 
     @Autowired
     private UserService userService;
@@ -1969,15 +1976,14 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
             ClientRole role = checkAndGetClientRole(roleId);
 
-            if(identityConfig.getReloadableConfig().getDeleteRoleAssignedToUser()) {
-                if (IdentityUserTypeEnum.isIdentityUserTypeRoleName(role.getName())) {
-                    throw new ForbiddenException(IDENTITY_USER_TYPE_ROLE_ERROR_MESSAGE);
-                }
-                if (tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(roleId) > 0 || tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(roleId) > 0) {
-                    throw new ForbiddenException("Deleting the role associated with one or more users is not allowed");
-                }
-            } else if (StringUtils.startsWithIgnoreCase(role.getName(), "identity:")) {
-                throw new ForbiddenException(PREFIXED_IDENTITY_ROLE_ERROR_MESSAGE);
+            if (IdentityUserTypeEnum.isIdentityUserTypeRoleName(role.getName())) {
+                throw new ForbiddenException(IDENTITY_USER_TYPE_ROLE_ERROR_MESSAGE);
+            }
+            if (tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(roleId) > 0 || tenantService.getCountOfTenantRolesByRoleIdForFederatedUsers(roleId) > 0) {
+                throw new ForbiddenException(ERROR_DELETE_ROLE_WITH_USERS_ASSIGNED);
+            }
+            if (userGroupService.countGroupsWithRoleAssignment(roleId) > 0) {
+                throw new ForbiddenException(ERROR_DELETE_ROLE_WITH_GROUPS_ASSIGNED);
             }
 
             User caller = userService.getUserByAuthToken(authToken);
@@ -4400,7 +4406,7 @@ public class DefaultCloud20Service implements Cloud20Service {
         }
     }
 
-    public void setUserGroupService(GroupService cloudGroupService) {
+    public void setGroupService(GroupService cloudGroupService) {
         this.groupService = cloudGroupService;
     }
 

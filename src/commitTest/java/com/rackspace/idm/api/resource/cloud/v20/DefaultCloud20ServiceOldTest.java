@@ -157,7 +157,7 @@ public class DefaultCloud20ServiceOldTest {
 
         //setting mocks
         defaultCloud20Service.setUserService(userService);
-        defaultCloud20Service.setUserGroupService(userGroupService);
+        defaultCloud20Service.setGroupService(userGroupService);
         defaultCloud20Service.setJaxbObjectFactories(jaxbObjectFactories);
         defaultCloud20Service.setScopeAccessService(scopeAccessService);
         defaultCloud20Service.setAuthorizationService(authorizationService);
