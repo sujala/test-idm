@@ -28,6 +28,7 @@ import com.rackspace.idm.domain.service.*
 import com.rackspace.idm.domain.service.impl.*
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.exception.IdmExceptionHandler
+import com.rackspace.idm.modules.endpointassignment.service.RuleService
 import com.rackspace.idm.multifactor.service.MultiFactorService
 import com.rackspace.idm.util.AuthHeaderHelper
 import com.rackspace.idm.util.CryptHelper
@@ -57,6 +58,7 @@ class RootServiceTest extends Specification {
 
     @Shared Configuration config
     @Shared IdentityConfig identityConfig
+    @Shared RuleService ruleService
     @Shared StaticConfig staticConfig
     @Shared ReloadableConfig reloadableConfig
     @Shared RepositoryConfig repositoryConfig
@@ -423,6 +425,12 @@ class RootServiceTest extends Specification {
         identityConfig.getRepositoryConfig() >> repositoryConfig
         service.identityConfig = identityConfig
     }
+
+    def mockRuleService(service) {
+        ruleService = Mock(RuleService)
+        service.ruleService = ruleService
+    }
+
     def mockMultiFactorService(service) {
         multiFactorService = Mock()
         service.multiFactorService = multiFactorService

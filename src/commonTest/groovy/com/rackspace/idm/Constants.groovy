@@ -86,6 +86,11 @@ class Constants {
     static def MOSSO_V1_DEF = ["15","120"]
     static def NAST_V1_DEF = ["103","111"]
 
+    static def MOSSO_ENDPOINT_TEMPLATE_ID = "1026"
+    static def MOSSO_ENDPOINT_TEMPLATE_PUBLIC_URL = "https://dfw.servers.api.rackspacecloud.com/v2"
+    static def NAST_ENDPOINT_TEMPLATE_ID = "1003"
+    static def NAST_ENDPOINT_TEMPLATE_PUBLIC_URL = "https://storage.stg.swift.racklabs.com/v1"
+
     static def NAST_TENANT_PREFIX = "MossoCloudFS_"
 
     static def TENANT_TYPE_CLOUD = 'cloud'
