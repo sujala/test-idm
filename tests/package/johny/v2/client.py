@@ -1630,3 +1630,12 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             domain_id=domain_id)
         return self.request('GET', url, params=option,
                             requestslib_kwargs=requestslib_kwargs)
+
+    def get_user_group_for_domain(
+            self, domain_id, group_id, requestslib_kwargs=None):
+        """
+        GET /v2.0/RAX-AUTH/domains/{domain_id}/groups/{group_id}
+        """
+        url = self.url + const.RD_USER_GROUP_TO_DOMAIN_URL.format(
+            domain_id=domain_id, group_id=group_id)
+        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)

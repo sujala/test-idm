@@ -22,3 +22,12 @@ list_user_groups_for_domain = {
         }
     }
 }
+
+add_user_group_for_domain = {
+    'type': 'object', 'properties': {
+        const.RAX_AUTH_USER_GROUP: user_group_item
+    },
+    'required': [const.RAX_AUTH_USER_GROUP]
+}
+
+get_user_group_for_domain = add_user_group_for_domain
