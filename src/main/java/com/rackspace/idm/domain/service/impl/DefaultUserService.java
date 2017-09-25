@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.util.HashHelper;
@@ -961,6 +962,20 @@ public class DefaultUserService implements UserService {
                 attachRoleToUser(roleService.getObjectStoreDefaultRole(), user, getNastTenantId(user.getDomainId()));
             }
         }
+    }
+
+    @Override
+    public void addUserGroupToUser(UserGroup group, User baseUser) {
+        logger.info("Adding User: {} to Group: {}", baseUser, group);
+        userDao.addUserGroupToUser(group, baseUser);
+        logger.info("Added User: {} to Group: {}", baseUser, group);
+    }
+
+    @Override
+    public void removeUserGroupFromUser(UserGroup group, User baseUser) {
+        logger.info("Removing User: {} from Group: {}", baseUser, group);
+        userDao.removeUserGroupFromUser(group, baseUser);
+        logger.info("Removed User: {} from Group: {}", baseUser, group);
     }
 
     @Override

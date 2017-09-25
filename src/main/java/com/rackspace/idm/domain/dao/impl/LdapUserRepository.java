@@ -8,12 +8,9 @@ import com.rackspace.idm.domain.dao.GroupDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.EncryptionService;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.util.CryptHelper;
-import com.unboundid.ldap.sdk.BindResult;
-import com.unboundid.ldap.sdk.Filter;
-import com.unboundid.ldap.sdk.LDAPException;
-import com.unboundid.ldap.sdk.ResultCode;
-import org.apache.commons.collections4.CollectionUtils;
+import com.unboundid.ldap.sdk.*;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
@@ -25,6 +22,7 @@ import java.util.*;
 public class LdapUserRepository extends LdapGenericRepository<User> implements UserDao {
 
     public static final String NULL_OR_EMPTY_USERNAME_PARAMETER = "Null or Empty username parameter";
+    public static final String INVALID_GROUP_DN = "Group dn could not be parsed";
     private static final List<String> AUTH_BY_PASSWORD_LIST = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_PASSWORD);
     private static final List<String> AUTH_BY_API_KEY_LIST = Arrays.asList(GlobalConstants.AUTHENTICATED_BY_APIKEY);
 
@@ -101,6 +99,35 @@ public class LdapUserRepository extends LdapGenericRepository<User> implements U
         encryptionService.decryptUser(user);
     }
 
+    @Override
+    public void addUserGroupToUser(UserGroup group, User baseUser) {
+        DN groupDN = getGroupDn(group);
+        if (groupDN != null && !baseUser.getUserGroupDNs().contains(groupDN)) {
+            baseUser.getUserGroupDNs().add(groupDN);
+            updateUser(baseUser);
+        }
+    }
+
+    @Override
+    public void removeUserGroupFromUser(UserGroup group, User baseUser) {
+        DN groupDN = getGroupDn(group);
+        if (groupDN != null && baseUser.getUserGroupDNs().contains(groupDN)) {
+            baseUser.getUserGroupDNs().remove(groupDN);
+            updateUser(baseUser);
+        }
+    }
+
+    private DN getGroupDn(UserGroup group) {
+        DN groupDN = null;
+        try {
+            groupDN = new DN(group.getUniqueId());
+        } catch (LDAPException e) {
+            String errmsg = INVALID_GROUP_DN;
+            getLogger().error(errmsg);
+            throw new IllegalArgumentException(errmsg);
+        }
+        return groupDN;
+    }
 
     @Override
     public String getNextId() {

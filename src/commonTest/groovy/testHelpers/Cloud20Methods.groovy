@@ -361,6 +361,7 @@ class Cloud20Methods {
         initOnUse()
         resource.path(path20).path(RAX_GRPADM).path(GROUPS).path(groupId).path(USERS).path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
     }
+
     def removeUserFromGroup(String token, String groupId, String userId) {
         initOnUse()
         resource.path(path20).path(RAX_GRPADM).path(GROUPS).path(groupId).path(USERS).path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete(ClientResponse)
@@ -1187,10 +1188,20 @@ class Cloud20Methods {
         initOnUse()
         WebResource webResource = resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(domainId).path(SERVICE_PATH_USER_GROUPS)
         def queryParams = new MultivaluedMapImpl()
-        if (name != null){
+        if (name != null) {
             queryParams.add("name", name)
         }
         webResource.queryParams(queryParams).accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
+    }
+
+    def addUserToUserGroup(String token, String domainId, String groupId, String userId) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(GROUPS).path(groupId).path(USERS).path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
+    }
+
+    def removeUserFromUserGroup(String token, String domainId, String groupId, String userId) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(GROUPS).path(groupId).path(USERS).path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
 
     def createIdentityProviderWithCred(String token, IdentityProviderFederationTypeEnum type, Credential cred) {

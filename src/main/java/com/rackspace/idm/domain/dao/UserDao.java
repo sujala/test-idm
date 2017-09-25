@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 
 import java.util.List;
 
@@ -81,4 +82,8 @@ public interface UserDao {
     void doPreEncode(User user);
 
     void doPostEncode(User user);
+
+    void addUserGroupToUser(UserGroup group, User baseUser);
+
+    void removeUserGroupFromUser(UserGroup group, User baseUser);
 }

@@ -5,6 +5,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.FederatedUsersDeletionRes
 import com.rackspace.idm.domain.dao.AuthDao;
 import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.util.CryptHelper;
 import com.rackspace.idm.validation.Validator;
 import org.apache.commons.configuration.Configuration;
@@ -214,4 +215,20 @@ public interface UserService {
      * @param assignMossoAndNastDefaultRoles
      */
     void configureNewUserAdmin(User user, boolean assignMossoAndNastDefaultRoles);
+
+    /**
+     * Add group to user
+     *
+     * @param group
+     * @param baseUser
+     */
+    void addUserGroupToUser(UserGroup group, User baseUser);
+
+    /**
+     * Remove group from user
+     *
+     * @param group
+     * @param baseUser
+     */
+    void removeUserGroupFromUser(UserGroup group, User baseUser);
 }

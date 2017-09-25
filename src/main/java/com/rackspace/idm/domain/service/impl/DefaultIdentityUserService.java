@@ -11,6 +11,7 @@ import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.endpointassignment.entity.Rule;
 import com.rackspace.idm.modules.endpointassignment.service.RuleService;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -247,6 +248,16 @@ public class DefaultIdentityUserService implements IdentityUserService {
         }
 
         identityUserRepository.deleteIdentityUser(user);
+    }
+
+    @Override
+    public void addUserGroupToUser(UserGroup group, User baseUser) {
+        userService.addUserGroupToUser(group, baseUser);
+    }
+
+    @Override
+    public void removeUserGroupFromUser(UserGroup group, User baseUser) {
+        userService.removeUserGroupFromUser(group, baseUser);
     }
 
     @Override
