@@ -92,7 +92,7 @@ class Cloud20Utils {
         methods.init()
     }
 
-    def getToken(username, password=DEFAULT_PASSWORD) {
+    String getToken(username, password=DEFAULT_PASSWORD) {
         def response = methods.authenticatePassword(username, password)
         assert (response.status == SC_OK)
         def entity = response.getEntity(AuthenticateResponse).value
@@ -361,7 +361,7 @@ class Cloud20Utils {
         // No-Op
     }
 
-    def getIdentityAdminToken() {
+    String getIdentityAdminToken() {
         getToken(IDENTITY_ADMIN_USERNAME, IDENTITY_ADMIN_PASSWORD)
     }
 
@@ -677,7 +677,7 @@ class Cloud20Utils {
         createRole(role)
     }
 
-    def createRole(service=null, roleName=testUtils.getRandomUUID("role"), String administratorRole = "identity:user-manage") {
+    Role createRole(service=null, roleName=testUtils.getRandomUUID("role"), String administratorRole = "identity:user-manage") {
         def role = factory.createRole(roleName).with {
             it.administratorRole = administratorRole
             it
@@ -688,7 +688,7 @@ class Cloud20Utils {
         createRole(role)
     }
 
-    def createRole(Role role) {
+    Role createRole(Role role) {
         def response = methods.createRole(getServiceAdminToken(), role)
         assert (response.status == SC_CREATED)
         response.getEntity(Role).value

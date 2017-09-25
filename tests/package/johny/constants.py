@@ -77,6 +77,7 @@ PASSWORD_POLICY_URL = '/RAX-AUTH/domains/{domain_id}/password-policy'
 ADMIN_CHANGE_URL = '/RAX-AUTH/domains/{domain_id}/domainAdministratorChange'
 RESET_USER_API_KEY_URL = ('/users/{user_id}/OS-KSADM/credentials/'
                           'RAX-KSKEY:apiKeyCredentials/RAX-AUTH/reset')
+RD_USER_GROUP_TO_DOMAIN_URL = ADD_USER_GROUP_TO_DOMAIN_URL + '/{group_id}'
 ROLE_URL = '/OS-KSADM/roles'
 ROLES_URL = '/OS-KSADM/roles'
 SERVICE_URL = '/OS-KSADM/services'

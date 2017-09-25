@@ -368,6 +368,17 @@ public class DefaultIdentityUserService implements IdentityUserService {
             final Tenant tenant = tenantService.getTenant(tenantId);
 
             if (tenant != null) {
+
+                if (identityConfig.getReloadableConfig().includeEndpointsBasedOnRules()) {
+                    // Infer the tenant type so that rules can apply to the tenant if no tenant type set
+                    if (CollectionUtils.isEmpty(tenant.getTypes())) {
+                        String inferredType = tenantService.inferTenantTypeForTenantId(tenant.getTenantId());
+                        if (inferredType != null) {
+                            tenant.getTypes().add(inferredType);
+                        }
+                    }
+                }
+
                 // Step 4: Get rules that are applicable for this tenant/user
                 List<Rule> tenantRules = new ArrayList<>();
                 if (CollectionUtils.isNotEmpty(rules)) {

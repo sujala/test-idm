@@ -16,6 +16,7 @@ import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.UnauthorizedFault
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -328,5 +329,81 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
 
         where:
         mediaType << [MediaType.TEXT_PLAIN_TYPE, GlobalConstants.TEXT_YAML_TYPE]
+    }
+
+    @Unroll
+    @Ignore("This test for special characters in user-group's name, currently fails at the gate")
+    def "Create user group with name having special characters and list user groups with query param works, mediaType - #mediaType"() {
+        when:
+        UserGroup group = new UserGroup().with {
+            it.domainId = sharedUserAdmin.domainId
+            it.name = "SpecialCharTest_" + RandomStringUtils.randomAlphanumeric(10) + "и"
+            it
+        }
+        def response = cloud20.createUserGroup(sharedIdentityAdminToken, group, mediaType)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+        UserGroup created = response.getEntity(UserGroup)
+
+        and:
+        created.domainId == group.domainId
+        created.id != null
+        created.description == group.description
+        created.name == group.name
+
+        when:
+        def getResponse = cloud20.getUserGroup(sharedIdentityAdminToken, created, mediaType)
+
+        then:
+        getResponse.status == HttpStatus.SC_OK
+        UserGroup retrievedEntity = getResponse.getEntity(UserGroup)
+
+        and:
+        retrievedEntity.domainId == group.domainId
+        retrievedEntity.id == created.id
+        retrievedEntity.description == group.description
+        retrievedEntity.name == group.name
+
+        when: "list groups with query param"
+        def getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, group.name, mediaType)
+        def userGroups = getGroupsResponse.getEntity(UserGroups)
+
+        then:
+        getGroupsResponse.status == HttpStatus.SC_OK
+        userGroups.userGroup.size() == 1
+
+        and:
+        UserGroup userGroup = userGroups.userGroup.get(0)
+        userGroup.domainId == group.domainId
+        userGroup.id == created.id
+        userGroup.description == group.description
+        userGroup.name == group.name
+
+        when: "query param set to group name modified with different special character"
+        def queryParam = group.name[0..-2] + 'ü'
+
+        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, queryParam, mediaType)
+        userGroups = getGroupsResponse.getEntity(UserGroups)
+
+        then:
+        getGroupsResponse.status == HttpStatus.SC_OK
+        userGroups.userGroup.size() == 0
+
+        when: "query param set to group name appended with another special character"
+        queryParam = group.name + 'и'
+
+        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, queryParam, mediaType)
+        userGroups = getGroupsResponse.getEntity(UserGroups)
+
+        then:
+        getGroupsResponse.status == HttpStatus.SC_OK
+        userGroups.userGroup.size() == 0
+
+        cleanup:
+        utils.deleteUserGroup(created)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 }
