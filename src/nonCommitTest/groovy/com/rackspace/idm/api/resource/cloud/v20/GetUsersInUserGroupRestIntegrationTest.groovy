@@ -2,16 +2,20 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
+import groovy.json.JsonSlurper
 import org.openstack.docs.identity.api.v2.UserList
 import org.springframework.http.HttpHeaders
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
 
+import javax.ws.rs.core.MediaType
+
 import static org.apache.http.HttpStatus.*
 
 class GetUsersInUserGroupRestIntegrationTest extends RootIntegrationTest {
 
-    def "Get users in user group"() {
+    @Unroll
+    def "Get users in user group; media = #accept"() {
         given:
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
@@ -32,8 +36,8 @@ class GetUsersInUserGroupRestIntegrationTest extends RootIntegrationTest {
         response.status == SC_CREATED
 
         when: "list users in user group"
-        response = cloud20.getUsersInUserGroup(userAdminToken, domainId, userGroupEntity.id)
-        def usersEntity = response.getEntity(UserList).value
+        response = cloud20.getUsersInUserGroup(userAdminToken, domainId, userGroupEntity.id, null, accept)
+        def usersEntity = getUsersFromResponse(response)
 
         then:
         response.status == SC_OK
@@ -46,8 +50,8 @@ class GetUsersInUserGroupRestIntegrationTest extends RootIntegrationTest {
         response.status == SC_NO_CONTENT
 
         when: "list users in user group"
-        response = cloud20.getUsersInUserGroup(userAdminToken, domainId, userGroupEntity.id)
-        usersEntity = response.getEntity(UserList).value
+        response = cloud20.getUsersInUserGroup(userAdminToken, domainId, userGroupEntity.id, null, accept)
+        usersEntity = getUsersFromResponse(response)
 
         then:
         response.status == SC_OK
@@ -62,8 +66,8 @@ class GetUsersInUserGroupRestIntegrationTest extends RootIntegrationTest {
         response.status == SC_NO_CONTENT
 
         when: "list users in user group"
-        response = cloud20.getUsersInUserGroup(userAdminToken, domainId, userGroupEntity.id)
-        usersEntity = response.getEntity(UserList).value
+        response = cloud20.getUsersInUserGroup(userAdminToken, domainId, userGroupEntity.id, null, accept)
+        usersEntity = getUsersFromResponse(response)
 
         then:
         response.status == SC_OK
@@ -73,6 +77,9 @@ class GetUsersInUserGroupRestIntegrationTest extends RootIntegrationTest {
         utils.deleteUserGroup(userGroupEntity)
         utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
         utils.deleteDomain(domainId)
+
+        where:
+        accept << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
     @Unroll
@@ -128,7 +135,7 @@ class GetUsersInUserGroupRestIntegrationTest extends RootIntegrationTest {
         3    | 0      | 10
         2    | 1      | 3
         1    | 2      | 3
-        0    | 0      | 0
+        3    | 0      | 0
     }
 
     def "Error check: get users in user group"() {
@@ -186,7 +193,16 @@ class GetUsersInUserGroupRestIntegrationTest extends RootIntegrationTest {
         utils.deleteUsers(users2)
         utils.deleteDomain(domainId)
         utils.deleteDomain(domainId2)
-
     }
 
+    def getUsersFromResponse(response) {
+        if(response.getType() == MediaType.APPLICATION_XML_TYPE) {
+            return response.getEntity(UserList).value
+        }
+
+        UserList userList = new UserList()
+        userList.user.addAll(new JsonSlurper().parseText(response.getEntity(String))["users"])
+
+        return userList
+    }
 }

@@ -96,7 +96,7 @@ public class CloudUserGroupResource {
             @PathParam("groupId") String groupId,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
-        return userGroupCloudService.getUsersInGroup(uriInfo, authToken, domainId, groupId, new UserSearchCriteria(new PaginationParams(marker, limit)));
+        return userGroupCloudService.getUsersInGroup(uriInfo, authToken, domainId, groupId, new UserSearchCriteria(new PaginationParams(validateMarker(marker), validateLimit(limit))));
     }
 
     @PUT

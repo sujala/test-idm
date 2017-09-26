@@ -164,7 +164,7 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
             return Response.ok(userGroupConverter.toUserGroupsWeb(userGroups)).build();
         } catch (Exception ex) {
-            LOG.error(String.format("Error retrieving user groups for domain '%s'", domainId), ex);
+            LOG.info(String.format("Error retrieving user groups for domain '%s'", domainId), ex);
             return idmExceptionHandler.exceptionResponse(ex).build();
         }
     }

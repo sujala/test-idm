@@ -3,7 +3,6 @@ package com.rackspace.idm.modules.usergroups.api.resource
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.exception.BadRequestException
-import spock.lang.Specification
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
@@ -195,12 +194,15 @@ class CloudUserGroupResourceTest extends RootServiceTest {
         thrown(BadRequestException)
     }
 
-
+    @Unroll
     def "getUsersInGroup: passes values as-is to service: domainId:'#domainId'; groupId:'#groupId'; marker: '#marker'; limit: '#limit'"() {
         given:
         def mockHttpHeaders = Mock(HttpHeaders)
         def mockUriInfo = Mock(UriInfo)
         def token = "token"
+
+        identityConfig.getStaticConfig().getLdapPagingDefault() >> 25
+        identityConfig.getStaticConfig().getLdapPagingMaximum() >> 100
 
         when:
         cloudUserGroupResource.getUsersInGroup(mockHttpHeaders, mockUriInfo, token, domainId, groupId, marker, limit)
@@ -208,8 +210,8 @@ class CloudUserGroupResourceTest extends RootServiceTest {
         then:
         1 * userGroupCloudService.getUsersInGroup(mockUriInfo, token, domainId, groupId, _ as UserSearchCriteria) >> { args ->
             UserSearchCriteria searchCriteria = args[4]
-            assert searchCriteria.paginationRequest.marker == marker
-            assert searchCriteria.paginationRequest.limit == limit
+            assert searchCriteria.paginationRequest.marker == ((marker != null) ? marker : 0)
+            assert searchCriteria.paginationRequest.limit == ((limit != null) ? limit : 25)
             return
         }
 
@@ -217,5 +219,26 @@ class CloudUserGroupResourceTest extends RootServiceTest {
         domainId | groupId   | marker | limit
         null     | null      | null   | null
         "domain" | "groupId" | 0      | 10
+    }
+
+    def "getUsersInGroup: list usres in group throws exceptions for negative marker/limit values"() {
+        def mockUriInfo = Mock(UriInfo)
+        def mockHttpHeaders = Mock(HttpHeaders)
+        def token = "token"
+
+        identityConfig.getStaticConfig().getLdapPagingDefault() >> 5
+        identityConfig.getStaticConfig().getLdapPagingMaximum() >> 10
+
+        when:
+        cloudUserGroupResource.getUsersInGroup(mockHttpHeaders, mockUriInfo, token, "domainId", "groupId", -1, 10)
+
+        then:
+        thrown(BadRequestException)
+
+        when:
+        cloudUserGroupResource.getUsersInGroup(mockHttpHeaders, mockUriInfo, token, "domainId", "groupId", 5, -10)
+
+        then:
+        thrown(BadRequestException)
     }
 }
