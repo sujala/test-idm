@@ -32,21 +32,21 @@ public class PaginationParams {
     public PaginationParams() {}
 
     /**
-     * Return the marker value to use. Returns the set marker, or, if null, 0.
+     * Return the marker value to use. If the marker is null or < 0, will return 0; else returns the marker value
      *
      * @return
      */
     public int getEffectiveMarker() {
-        return marker != null ? marker : 0;
+        return marker != null && marker >= 0 ? marker : 0;
     }
 
     /**
-     * Return the limit value to use. Returns the set limit, or, if null, 1000.
+     * Return the limit value to use. If the limit is null or > 1000, will return 1000; else returns the limit value
      *
      * @return
      */
     public int getEffectiveLimit() {
-        return limit != null ? limit : 1000;
+        return limit != null && limit <= 1000 ? limit : 1000;
     }
 
 

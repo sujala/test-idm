@@ -182,8 +182,8 @@ public class DefaultUserGroupService implements UserGroupService {
     @Override
     public PaginatorContext<TenantRole> getRoleAssignmentsOnGroup(UserGroup userGroup, UserGroupRoleSearchParams userGroupRoleSearchParams) {
         Validate.notNull(userGroup);
+        Validate.isTrue(StringUtils.isNotBlank(userGroup.getUniqueId()));
         Validate.notNull(userGroupRoleSearchParams);
-        Validate.notNull(userGroupRoleSearchParams.getPaginationRequest());
 
         return tenantRoleDao.getRoleAssignmentsOnGroup(userGroup, userGroupRoleSearchParams);
     }

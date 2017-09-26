@@ -22,4 +22,8 @@ public class UserGroupRoleSearchParams {
 
         this.paginationRequest = paginationRequest;
     }
+
+    public UserGroupRoleSearchParams() {
+        this(new PaginationParams());
+    }
 }

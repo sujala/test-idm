@@ -419,6 +419,12 @@ public class IdentityConfig {
     public static final String FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_PROP = "feeds.on.use.eviction.validate.after.ms";
     public static final int FEEDS_ON_USE_EVICTION_VALIDATE_AFTER_MS_DEFAULT = 10000;
 
+    public static final String LDAP_PAGING_LIMIT_DEFAULT_PROP = "ldap.paging.limit.default";
+    public static final int LDAP_PAGING_LIMIT_DEFAULT_VALUE = 25;
+
+    public static final String LDAP_PAGING_LIMIT_MAX_PROP = "ldap.paging.limit.max";
+    public static final int LDAP_PAGING_LIMIT_MAX_DEFAULT = 1000;
+
     private static final String LDAP_SERVER_LIST_PROP = "ldap.serverList";
     private static final String LDAP_SERVER_USE_SSL_PROP = "ldap.server.useSSL";
     private static final String LDAP_SERVER_BIND_DN_PROP = "ldap.bind.dn";
@@ -665,6 +671,9 @@ public class IdentityConfig {
 
         defaults.put(MAPPING_POLICY_ACCEPT_FORMATS_PROP, MAPPING_POLICY_ACCEPT_FORMATS_DEFAULT);
         defaults.put(FEATURE_ENABLE_ISSUED_IN_RESPONSE_PROP, FEATURE_ENABLE_ISSUED_IN_RESPONSE_DEFAULT);
+
+        defaults.put(LDAP_PAGING_LIMIT_DEFAULT_PROP, LDAP_PAGING_LIMIT_DEFAULT_VALUE);
+        defaults.put(LDAP_PAGING_LIMIT_MAX_PROP, LDAP_PAGING_LIMIT_MAX_DEFAULT);
 
         return defaults;
     }
@@ -1128,6 +1137,16 @@ public class IdentityConfig {
         @IdmProp(key = IDENTITY_PROVISIONED_TOKEN_FORMAT, description = "Defines the default token format for provisioned users tokens.", versionAdded = "2.12.0")
         public TokenFormat getIdentityProvisionedTokenFormat() {
             return convertToTokenFormat(getStringSafely(staticConfiguration, IDENTITY_PROVISIONED_TOKEN_FORMAT));
+        }
+
+        @IdmProp(key = LDAP_PAGING_LIMIT_DEFAULT_PROP)
+        public int getLdapPagingDefault() {
+            return getIntSafely(staticConfiguration, LDAP_PAGING_LIMIT_DEFAULT_PROP);
+        }
+
+        @IdmProp(key = LDAP_PAGING_LIMIT_MAX_PROP)
+        public int getLdapPagingMaximum() {
+            return getIntSafely(staticConfiguration, LDAP_PAGING_LIMIT_MAX_PROP);
         }
 
         @IdmProp(key = KEYCZAR_DN_CONFIG)

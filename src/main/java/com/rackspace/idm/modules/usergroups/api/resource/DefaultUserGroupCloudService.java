@@ -19,6 +19,7 @@ import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmen
 import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -278,8 +279,10 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
     @Override
     public Response listRoleAssignmentsOnGroup(UriInfo uriInfo, String authToken, String domainId, String groupId, UserGroupRoleSearchParams userGroupRoleSearchParams) {
         try {
+            Validate.notNull(uriInfo);
+            Validate.isTrue(StringUtils.isNotBlank(domainId), "Domain id must be supplied");
+            Validate.isTrue(StringUtils.isNotBlank(groupId), "Group id must be supplied");
             Validate.notNull(userGroupRoleSearchParams);
-            Validate.notNull(userGroupRoleSearchParams.getPaginationRequest());
 
             // Verify token is valid and user is enabled
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);

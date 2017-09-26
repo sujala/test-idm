@@ -5,6 +5,8 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
+import com.rackspace.idm.domain.config.IdentityConfig;
+import com.rackspace.idm.exception.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +25,9 @@ import static com.rackspace.idm.api.resource.cloud.v20.Cloud20VersionResource.*;
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
 @Component
 public class CloudUserGroupResource {
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     @Autowired
     private UserGroupCloudService userGroupCloudService;
@@ -176,17 +181,42 @@ public class CloudUserGroupResource {
             @PathParam("groupId") String groupId,
             @QueryParam("marker") Integer marker,
             @QueryParam("limit") Integer limit) {
-        return userGroupCloudService.listRoleAssignmentsOnGroup(uriInfo, authToken, domainId, groupId, new UserGroupRoleSearchParams(new PaginationParams(marker, limit)));
+        return userGroupCloudService.listRoleAssignmentsOnGroup(uriInfo, authToken, domainId, groupId, new UserGroupRoleSearchParams(new PaginationParams(validateMarker(marker), validateLimit(limit))));
     }
 
     @GET
     @Path("/{groupId}/roles/{roleId}")
-    public Response getRolesOnGroup(
+    public Response getRoleOnGroup(
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
             @PathParam("groupId") String groupId,
             @PathParam("roleId") String roleId) {
         return userGroupCloudService.getRoleOnGroup(authToken, domainId, groupId, roleId);
+    }
+
+    protected int validateMarker(Integer offset) {
+        if (offset == null) {
+            return 0;
+        }
+        if (offset < 0) {
+            throw new BadRequestException("Marker must be non negative");
+        }
+        return offset;
+    }
+
+    protected int validateLimit(Integer limit) {
+        if (limit == null) {
+            return identityConfig.getStaticConfig().getLdapPagingDefault();
+        }
+        if (limit < 0) {
+            throw new BadRequestException("Limit must be non negative");
+        } else if (limit == 0) {
+            return identityConfig.getStaticConfig().getLdapPagingDefault();
+        } else if (limit > identityConfig.getStaticConfig().getLdapPagingMaximum()) {
+            return identityConfig.getStaticConfig().getLdapPagingMaximum();
+        } else {
+            return limit;
+        }
     }
 }

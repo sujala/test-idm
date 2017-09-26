@@ -93,7 +93,7 @@ class ListUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         listResponse.status == HttpStatus.SC_OK
         RoleAssignments retrievedEntity = listResponse.getEntity(RoleAssignments)
 
-        and:
+        and: "Retrieves both roles"
         retrievedEntity.tenantAssignments != null
         def rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == Constants.ROLE_RBAC1_ID}
         rbac1Assignment != null
@@ -113,9 +113,9 @@ class ListUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Retrieve roles on user group where will have pagination requested; mediaType = #mediaType"() {
+    def "Retrieve roles on user group with pagination requested; mediaType = #mediaType"() {
         when: "Get first page"
-        def searchParams = new UserGroupRoleSearchParams(new PaginationParams(0,1))
+        def searchParams = new UserGroupRoleSearchParams(new PaginationParams(0, 1))
         def listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, sharedUserGroup, searchParams, mediaType)
 
         then: "returns one result"
