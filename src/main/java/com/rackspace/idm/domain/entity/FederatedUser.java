@@ -4,11 +4,13 @@ import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.validation.MessageTexts;
 import com.rackspace.idm.validation.RegexPatterns;
+import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.persist.FilterUsage;
 import com.unboundid.ldap.sdk.persist.LDAPDNField;
 import com.unboundid.ldap.sdk.persist.LDAPField;
 import com.unboundid.ldap.sdk.persist.LDAPObject;
 import lombok.Data;
+import org.apache.commons.lang.NotImplementedException;
 import org.dozer.Mapping;
 import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
@@ -136,5 +138,15 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
         }
 
         return roles;
+    }
+
+    @Override
+    public Set<String> getUserGroupIds() {
+        throw new NotImplementedException();
+    }
+
+    @Override
+    public Set<DN> getUserGroupDNs() {
+        throw new NotImplementedException();
     }
 }

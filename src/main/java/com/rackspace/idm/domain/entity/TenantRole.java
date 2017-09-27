@@ -8,6 +8,7 @@ import com.unboundid.ldap.sdk.Entry;
 import com.unboundid.ldap.sdk.persist.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.http.client.utils.CloneUtils;
 import org.dozer.Mapping;
 
 import java.util.HashSet;

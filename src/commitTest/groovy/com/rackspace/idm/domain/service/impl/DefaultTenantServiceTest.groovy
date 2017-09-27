@@ -10,6 +10,8 @@ import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
+import com.rackspace.idm.modules.usergroups.service.UserGroupService
+import com.unboundid.ldap.sdk.DN
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -42,6 +44,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockScopeAccessService(service)
         mockAtomHopperClient(service)
         mockFederatedUserDao(service)
+        mockUserGroupService(service)
     }
 
     def "get mossoId from roles returns compute:default tenantId"() {
@@ -724,7 +727,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         domainService.getDomain(user.getDomainId()) >> domain
 
         def tenantRole1 = entityFactory.createTenantRole()
-        def tenantRole2 = entityFactory.createTenantRole()
+        def tenantRole2 = entityFactory.createTenantRole().with {it.roleRsId = 2; it}
         List<TenantRole> tenantRoles = Arrays.asList(tenantRole1, tenantRole2)
         Iterable<TenantRole> tenantRoleIterable = (Iterable<TenantRole>)tenantRoles
 
@@ -753,6 +756,73 @@ class DefaultTenantServiceTest extends RootServiceTest {
             1 * applicationService.getCachedClientRoleById(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
             1 * authorizationService.getCachedIdentityRoleByName(roleId) >> createImmutableClientRole(roleId, USER_ADMIN.levelAsInt)
             0 * applicationService.getCachedClientRoleByName(_)
+        }
+
+        where:
+        flag << [true, false]
+    }
+
+    /**
+     * Verify the service retrieves the roles the user is granted based on association with groups
+     */
+    def "getTenantRolesForUserPerformant: Retrieves roles based on groups assigned per feature flag: flag: #flag"() {
+        given:
+
+        def domainId = "testDomainId"
+        def groupId = "1234"
+        def groupId2 = "abcd"
+        def user = entityFactory.createUser("test1","userId", domainId, "region").with {
+            it.userGroupDNs = [new DN("rsId=$groupId,ou=groups")
+                               , new DN("rsId=$groupId2,ou=groups")] as Set // Add group to user
+            it
+        }
+
+        when:
+        def tenantRoleList = service.getTenantRolesForUserPerformant(user)
+
+        then:
+        1 * reloadableConfig.applyGroupMembershipForEffectiveRoleCalculation() >> flag
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> [] // Assume zilch roles returned
+        if (flag) {
+            // Roles should be retrieved for both groups assigned
+            1 * userGroupService.getRoleAssignmentsOnGroup(groupId) >> []
+            1 * userGroupService.getRoleAssignmentsOnGroup(groupId2) >> []
+        } else {
+            // Roles should not be retrieved for groups
+            0 * userGroupService.getRoleAssignmentsOnGroup(_)
+        }
+
+        where:
+        flag << [true, false]
+    }
+
+    /**
+     * Verify the service retrieves the roles the user is granted based on association with groups
+     */
+    def "getTenantRolesForUserApplyRcnRoles: Retrieves roles based on groups assigned per feature flag: flag: #flag"() {
+        given:
+        def domainId = "testDomainId"
+        def groupId = "1234"
+        def groupId2 = "abcd"
+        def user = entityFactory.createUser("test1","userId", domainId, "region").with {
+            it.userGroupDNs = [new DN("rsId=$groupId,ou=groups")
+                               , new DN("rsId=$groupId2,ou=groups")] as Set // Add group to user
+            it
+        }
+
+        when:
+        def tenantRoleList = service.getTenantRolesForUserApplyRcnRoles(user)
+
+        then:
+        1 * reloadableConfig.applyGroupMembershipForEffectiveRoleCalculation() >> flag
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> [] // Assume zilch roles returned
+        if (flag) {
+            // Roles should be retrieved for both groups assigned
+            1 * userGroupService.getRoleAssignmentsOnGroup(groupId) >> []
+            1 * userGroupService.getRoleAssignmentsOnGroup(groupId2) >> []
+        } else {
+            // Roles should not be retrieved for groups
+            0 * userGroupService.getRoleAssignmentsOnGroup(_)
         }
 
         where:
