@@ -608,8 +608,8 @@ class ApplyRcnRolesAuthenticationRestIntegrationTests extends RootIntegrationTes
         def domain2 = userInDomain2.domainId
 
         //update domains to share an RCN
-        utils.updateDomain(domain1, v2Factory.createDomain().with {it.rackspaceCustomerNumber = rcn; it})
-        utils.updateDomain(domain2, v2Factory.createDomain().with {it.rackspaceCustomerNumber = rcn; it})
+        utils.domainRcnSwitch(domain1, rcn)
+        utils.domainRcnSwitch(domain2, rcn)
 
         return [userInDomain1, userInDomain2]
     }
