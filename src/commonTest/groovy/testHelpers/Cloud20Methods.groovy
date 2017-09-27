@@ -6,6 +6,7 @@ import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.PasswordPolicy
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams
+import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
 import com.sun.jersey.core.util.MultivaluedMapImpl
@@ -1202,6 +1203,15 @@ class Cloud20Methods {
     def removeUserFromUserGroup(String token, String domainId, String groupId, String userId) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(GROUPS).path(groupId).path(USERS).path(userId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
+    }
+
+    def getUsersInUserGroup(String token, String domainId, String groupId, UserSearchCriteria userSearchCriteria = null, MediaType accept = APPLICATION_XML_TYPE) {
+        initOnUse()
+        WebResource resource = resource.path(path20).path(RAX_AUTH).path(DOMAINS).path(domainId).path(GROUPS).path(groupId).path(USERS)
+        if (userSearchCriteria != null && userSearchCriteria.paginationRequest != null) {
+            resource = resource.queryParams(pageParams(String.valueOf(userSearchCriteria.getPaginationRequest().marker), String.valueOf(userSearchCriteria.getPaginationRequest().limit)))
+        }
+        resource.header(X_AUTH_TOKEN, token).accept(accept).get(ClientResponse)
     }
 
     def createIdentityProviderWithCred(String token, IdentityProviderFederationTypeEnum type, Credential cred) {

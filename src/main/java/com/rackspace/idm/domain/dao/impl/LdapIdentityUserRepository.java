@@ -3,6 +3,8 @@ package com.rackspace.idm.domain.dao.impl;
 import com.rackspace.idm.annotation.LDAPComponent;
 import com.rackspace.idm.domain.dao.*;
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.unboundid.ldap.sdk.Attribute;
 import com.unboundid.ldap.sdk.Filter;
 import com.unboundid.ldap.sdk.SearchResultEntry;
@@ -132,6 +134,13 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     @Override
     public int getUsersWithinRegionCount(String regionName) {
         return countUsersWithinRegion(regionName, ENDUSER_CLASS_FILTERS);
+    }
+
+    @Override
+    public PaginatorContext<EndUser> getEndUsersInUserGroup(UserGroup group, UserSearchCriteria userSearchCriteria) {
+        return (PaginatorContext) getObjectsPaged(searchFilterGetUsersInUserGroup(group, ENDUSER_CLASS_FILTERS),
+                userSearchCriteria.getPaginationRequest().getEffectiveMarker(),
+                userSearchCriteria.getPaginationRequest().getEffectiveLimit());
     }
 
     private <T extends BaseUser> T searchForUserById(String userId, List<Filter> userClassFilterList, Class<T> clazz) {
@@ -294,6 +303,13 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
                     Filter.createEqualityFilter(ATTR_ENABLED, Boolean.toString(true).toUpperCase()),
                     Filter.createNOTFilter(Filter.createPresenceFilter(ATTR_ENABLED))
                 )
+        );
+    }
+
+    private Filter searchFilterGetUsersInUserGroup(UserGroup userGroup, List<Filter> userClassFilterList) {
+        return Filter.createANDFilter(
+                Filter.createORFilter(userClassFilterList),
+                Filter.createEqualityFilter(ATTR_USER_GROUP_DNS, userGroup.getUniqueId())
         );
     }
 

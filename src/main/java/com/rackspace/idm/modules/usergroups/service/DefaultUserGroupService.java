@@ -1,24 +1,22 @@
 package com.rackspace.idm.modules.usergroups.service;
 
-import com.rackspace.docs.identity.api.ext.rax_auth.v1.*;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment;
 import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
-import com.rackspace.idm.domain.entity.ClientRole;
-import com.rackspace.idm.domain.entity.PaginatorContext;
-import com.rackspace.idm.domain.entity.Tenant;
-import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.TenantService;
-import com.rackspace.idm.domain.service.impl.DefaultFederatedIdentityService;
-import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.IdentityUserService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
+import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.exception.FailedGrantRoleAssignmentsException;
@@ -33,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
+
 import java.util.*;
 
 import static com.rackspace.idm.modules.usergroups.Constants.*;
@@ -41,7 +40,7 @@ import static com.rackspace.idm.validation.Validator20.MAX_LENGTH_64;
 
 @Component
 public class DefaultUserGroupService implements UserGroupService {
-    private static final Logger log = LoggerFactory.getLogger(DefaultFederatedIdentityService.class);
+    private static final Logger log = LoggerFactory.getLogger(DefaultUserGroupService.class);
 
     public static final String GROUP_NOT_FOUND_ERROR_MESSAGE = "Group '%s' not found";
     public static final String USER_MUST_BELONG_TO_DOMAIN = "User must belong to domain";
@@ -415,6 +414,15 @@ public class DefaultUserGroupService implements UserGroupService {
         User targetUser = verifyAndGetUserForGroup(userId);
 
         identityUserService.removeUserGroupFromUser(group, targetUser);
+    }
+
+    @Override
+    public PaginatorContext<EndUser> getUsersInGroup(UserGroup group, UserSearchCriteria userSearchCriteria) {
+        Assert.notNull(group);
+        Assert.notNull(userSearchCriteria);
+        Assert.notNull(userSearchCriteria.getPaginationRequest());
+
+        return identityUserService.getEndUsersInUserGroup(group, userSearchCriteria);
     }
 
     private User verifyAndGetUserForGroup(String userId) {

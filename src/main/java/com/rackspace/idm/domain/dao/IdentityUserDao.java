@@ -1,6 +1,8 @@
 package com.rackspace.idm.domain.dao;
 
 import com.rackspace.idm.domain.entity.*;
+import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 
 import java.util.List;
 
@@ -162,4 +164,13 @@ public interface IdentityUserDao {
      * Gets the count of federated and provisioned users within a given region (by name)
      */
     int getUsersWithinRegionCount(String regionName);
+
+    /**
+     * Search for end users with the specified user group.
+     *
+     * @param group
+     * @param userSearchCriteria
+     * @return
+     */
+    PaginatorContext<EndUser> getEndUsersInUserGroup(UserGroup group, UserSearchCriteria userSearchCriteria);
 }
