@@ -169,11 +169,12 @@ public class DefaultUserGroupService implements UserGroupService {
 
         UserGroup group = getGroupById(userGroupId);
 
-        List<TenantRole> assignedRoles = Collections.emptyList();
+        List<TenantRole> assignedRoles;
         if (group != null) {
             Iterable<TenantRole> rolesIt = tenantRoleDao.getRoleAssignmentsOnGroup(group);
             assignedRoles = IteratorUtils.toList(rolesIt.iterator());
-            return assignedRoles;
+        } else {
+            throw new NotFoundException(String.format(GROUP_NOT_FOUND_ERROR_MESSAGE, userGroupId));
         }
         return assignedRoles;
     }

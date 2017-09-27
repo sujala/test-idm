@@ -60,10 +60,22 @@ public interface TenantService {
     List<TenantRole> getGlobalRolesForUserApplyRcnRoles(EndUser user, String applicationId);
     List<TenantRole> getEffectiveTenantRolesForUserOnTenant(EndUser user, Tenant tenant);
     List<TenantRole> getEffectiveTenantRolesForUserOnTenantApplyRcnRoles(EndUser user, Tenant tenant);
+
+    /**
+     * Retrieves fully populated "effective" tenant roles for which the user is assigned. This includes those roles the
+     * user is directly assigned, receives via group membership, and implicitly assigned on tenants within own domain.
+     *
+     * {@link #getTenantRolesForUserPerformant(BaseUser)} should generally be preferred over this method as it's more
+     * performant by retrieving role detail information via the cache rather than hitting the backend for each role.
+     *
+     * @param user
+     * @return
+     * @deprecated Use {@link #getTenantRolesForUserPerformant(BaseUser)} instead
+     */
     List<TenantRole> getTenantRolesForUser(BaseUser user);
 
     /**
-     * Retrieves the tenant roles assigned to the given user with an ID contained within the
+     * Retrieves the tenant roles explicitly assigned to the given user with an ID contained within the
      * roleIds collection
      *
      * @param user
@@ -82,8 +94,9 @@ public interface TenantService {
     int countTenantsWithTypeInDomain(String tenantType, String domainId);
 
     /**
-     * Retrieves tenant roles assigned to the user fully populated based on information in associated client roles. The
-     * client role information is cached.
+     * Retrieves fully populated "effective" tenant roles for which the user is assigned. This includes those roles the
+     * user is directly assigned, receives via group membership, and implicitly assigned on tenants within own domain.
+     * The client role information is retrieved from a cache.
      *
      * @param user
      * @return
@@ -100,6 +113,12 @@ public interface TenantService {
      */
     List<TenantRole> getTenantRolesForUserApplyRcnRoles(BaseUser user);
 
+    /**
+     * Retrieves a list of tenant roles that are explicitly assigned to a user without the details such as name,
+     * propagate, etc populated.
+     * @param user
+     * @return
+     */
     Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user);
 
     List<Tenant> getTenantsForUserByTenantRoles(BaseUser user);

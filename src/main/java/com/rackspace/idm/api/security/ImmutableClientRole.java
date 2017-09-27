@@ -3,24 +3,23 @@ package com.rackspace.idm.api.security;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum;
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum;
 import com.rackspace.idm.domain.entity.ClientRole;
-import org.apache.commons.collections4.CollectionUtils;
+import com.rackspace.idm.util.RoleUtil;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
  * A wrapper around a client role to make it immutable. Did not simply create an interface w/ read only methods because
  * the underlying object is still mutable. Due to need to be interoperable w/ existing code (e.g. morph to client role)
  * that would allow the supposed "immutable" object to be mutable. As this object will be used in a cache, complete
- * immutability is critical to avoid poisoning the cache.
+ * immutability is critical to avoid poisoning caches.
  */
 public class ImmutableClientRole {
 
     private ClientRole innerClone;
 
     public ImmutableClientRole(ClientRole innerRole) {
-        innerClone = cloneClientRole(innerRole);
+        innerClone = RoleUtil.cloneClientRole(innerRole);
     }
 
     public String getAssignmentType() {
@@ -74,21 +73,6 @@ public class ImmutableClientRole {
      * @return
      */
     public ClientRole asClientRole() {
-        return cloneClientRole(innerClone);
-    }
-
-    private ClientRole cloneClientRole(ClientRole source) {
-        ClientRole target = new ClientRole();
-        target.setName(source.getName());
-        target.setDescription(source.getDescription());
-        target.setId(source.getId());
-        target.setClientId(source.getClientId());
-        target.setUniqueId(source.getUniqueId());
-        target.setRsWeight(source.getRsWeight());
-        target.setAssignmentType(source.getAssignmentType());
-        target.setRoleType(source.getRoleType());
-        target.setTenantTypes(new HashSet<>(source.getTenantTypes()));
-
-        return target;
+        return RoleUtil.cloneClientRole(innerClone);
     }
 }

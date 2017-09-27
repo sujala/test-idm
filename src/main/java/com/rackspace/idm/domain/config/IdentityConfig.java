@@ -368,6 +368,9 @@ public class IdentityConfig {
     public static final String USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP = "use.uuid.ids.for.new.question.enabled";
     public static final boolean USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_DEFAULT = true;
 
+    public static final String FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_PROP = "feature.apply.group.membership.roles";
+    public static final boolean FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_DEFAULT = false;
+
     /**
      * Required static prop
      */
@@ -674,6 +677,7 @@ public class IdentityConfig {
 
         defaults.put(LDAP_PAGING_LIMIT_DEFAULT_PROP, LDAP_PAGING_LIMIT_DEFAULT_VALUE);
         defaults.put(LDAP_PAGING_LIMIT_MAX_PROP, LDAP_PAGING_LIMIT_MAX_DEFAULT);
+        defaults.put(FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_PROP, FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_DEFAULT);
 
         return defaults;
     }
@@ -1572,6 +1576,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP, versionAdded = "3.12.0", description = "Whether or not to maintain password history. If history enforcement is enabled, this is always true")
         public boolean maintainPasswordHistory() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP) || enforcePasswordPolicyPasswordHistory();
+        }
+
+        @IdmProp(key = FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_PROP, versionAdded = "3.16.0", description = "Whether or not roles granted as part of group membership should be included in effective role calculation")
+        public boolean applyGroupMembershipForEffectiveRoleCalculation() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_PROP);
         }
 
         @IdmProp(key = IDP_MAX_SEACH_RESULT_SIZE_PROP, versionAdded = "3.1.0", description = "Maximum numbers of identity providers allowed to be returned in list providers call")

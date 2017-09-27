@@ -1,9 +1,9 @@
 package com.rackspace.idm.api.security;
 
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.util.RoleUtil;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -14,7 +14,7 @@ public class ImmutableTenantRole {
     private TenantRole innerClone;
 
     public ImmutableTenantRole(TenantRole innerRole) {
-        innerClone = cloneTenantRole(innerRole);
+        innerClone = RoleUtil.cloneTenantRole(innerRole);
     }
 
     public String getUniqueId() {
@@ -55,20 +55,6 @@ public class ImmutableTenantRole {
      * @return
      */
     public TenantRole asTenantRole() {
-        return cloneTenantRole(innerClone);
-    }
-
-    private TenantRole cloneTenantRole(TenantRole source) {
-        TenantRole target = new TenantRole();
-        target.setName(source.getName());
-        target.setRoleType(source.getRoleType());
-        target.setDescription(source.getDescription());
-        target.setRoleRsId(source.getRoleRsId());
-        target.setClientId(source.getClientId());
-        target.setUniqueId(source.getUniqueId());
-        target.setUserId(source.getUserId());
-        target.setTenantIds(new HashSet<String>(source.getTenantIds()));
-
-        return target;
+        return RoleUtil.cloneTenantRole(innerClone);
     }
 }

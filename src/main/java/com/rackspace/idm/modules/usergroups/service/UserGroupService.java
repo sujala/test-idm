@@ -114,11 +114,14 @@ public interface UserGroupService {
     TenantRole getRoleAssignmentOnGroup(UserGroup userGroup, String roleId);
 
     /**
-     * Retrieves the current set of roles assigned to the group as TenantRoles (standard representation of assigned
-     * roles in Identity)
+     * Retrieves the full, unpaginated set of roles assigned to the group as TenantRoles (standard representation of assigned
+     * roles in Identity). The retrieved roles are NOT populated with the role name and other attributes from the
+     * associated client role.
      *
      * @param userGroupId
      * @return
+     *
+     * @throws com.rackspace.idm.exception.NotFoundException If a group with the specified id does not exist
      */
     List<TenantRole> getRoleAssignmentsOnGroup(String userGroupId);
 

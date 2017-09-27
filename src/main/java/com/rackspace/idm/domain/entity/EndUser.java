@@ -1,5 +1,8 @@
 package com.rackspace.idm.domain.entity;
 
+import com.google.common.collect.ImmutableSet;
+import com.unboundid.ldap.sdk.DN;
+
 import java.util.List;
 import java.util.Set;
 
@@ -20,4 +23,11 @@ public interface EndUser extends BaseUser {
     void setEmail(String email);
     void setRegion(String region);
     void setDomainId(String domainId);
+
+    /**
+     * This is required in order to calculate the effective roles for the end user based on user group membership
+     * @return
+     */
+    Set<String> getUserGroupIds();
+    Set<DN> getUserGroupDNs();
 }

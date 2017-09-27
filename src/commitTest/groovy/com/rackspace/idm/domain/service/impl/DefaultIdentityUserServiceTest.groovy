@@ -109,6 +109,43 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         1 * deleteUserLogger.warn(DELETE_FEDERATED_USER_FORMAT, _)
     }
 
+    /**
+     * Ensure retrieving the service catalog calls the appropriate service to retrieve the effective roles for the user
+     *
+     * @return
+     */
+    def "getServiceCatalogInfo: Calls getTenantRolesForUserPerformant to retrieve effective user roles"() {
+        given:
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.DEFAULT_USER
+
+        def user = entityFactory.createUser()
+
+        when:
+        service.getServiceCatalogInfo(user)
+
+        then:
+        1 * tenantService.getTenantRolesForUserPerformant(user) >> []
+    }
+
+    /**
+     * Ensure retrieving the service catalog alls the appropriate service to retrieve the effective roles for the user
+     *
+     * @return
+     */
+    def "getServiceCatalogInfoApplyRcnRoles: Calls getTenantRolesForUserApplyRcnRoles to retrieve effective user roles"() {
+        given:
+        def user = entityFactory.createUser()
+
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.DEFAULT_USER
+        domainService.getDomain(_) >> entityFactory.createDomain(user.domainId)
+
+        when:
+        service.getServiceCatalogInfoApplyRcnRoles(user)
+
+        then:
+        1 * tenantService.getTenantRolesForUserApplyRcnRoles(user) >> []
+    }
+
     def "getServiceCatalogInfo: getting service catalog for user uses inferred tenant types when calculating tenantMetaData"() {
         given:
         def tenantType = RandomStringUtils.randomAlphabetic(8)
