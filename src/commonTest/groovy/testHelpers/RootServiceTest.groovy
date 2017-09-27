@@ -29,6 +29,7 @@ import com.rackspace.idm.domain.service.impl.*
 import com.rackspace.idm.exception.ExceptionHandler
 import com.rackspace.idm.exception.IdmExceptionHandler
 import com.rackspace.idm.modules.endpointassignment.service.RuleService
+import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import com.rackspace.idm.multifactor.service.MultiFactorService
 import com.rackspace.idm.util.AuthHeaderHelper
 import com.rackspace.idm.util.CryptHelper
@@ -115,6 +116,7 @@ class RootServiceTest extends Specification {
     @Shared IdmExceptionHandler idmExceptionHandler
     @Shared AuthenticationService authenticationService
     @Shared GroupService groupService
+    @Shared UserGroupService userGroupService
     @Shared CloudRegionService cloudRegionService
     @Shared DefaultAuthorizationService defaultAuthorizationService
     @Shared DefaultEndpointService defaultEndpointService
@@ -464,6 +466,11 @@ class RootServiceTest extends Specification {
     def mockGroupService(service) {
         groupService = Mock()
         service.groupService = groupService
+    }
+
+    def mockUserGroupService(service) {
+        userGroupService = Mock(UserGroupService)
+        service.userGroupService = userGroupService
     }
 
     def mockCloudRegionService(service) {

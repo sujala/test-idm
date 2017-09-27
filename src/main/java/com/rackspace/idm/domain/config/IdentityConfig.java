@@ -347,9 +347,6 @@ public class IdentityConfig {
     public static final String FEATURE_ALLOW_USERNAME_UPDATE_PROP = "feature.allow.username.updates";
     public static final boolean FEATURE_ALLOW_USERNAME_UPDATE_DEFAULT = false;
 
-    public static final String FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP = "feature.allow.delete.role.assigned.to.user";
-    public static final boolean FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_DEFAULT = true;
-
     public static final String FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART = "feature.cache.roles.without.application.restart";
     public static final boolean FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART_DEFAULT = true;
 
@@ -660,7 +657,6 @@ public class IdentityConfig {
         defaults.put(PASSWORD_HISTORY_MAX_PROP, PASSWORD_HISTORY_MAX_DEFAULT);
 
         defaults.put(IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT);
-        defaults.put(FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_DEFAULT);
         defaults.put(FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART, FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART_DEFAULT);
         defaults.put(FEATURE_MAX_USER_GROUPS_IN_DOMAIN_PROP, FEATURE_MAX_USER_GROUPS_IN_DOMAIN_DEFAULT);
         defaults.put(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
@@ -1886,11 +1882,6 @@ public class IdentityConfig {
         @IdmProp(key = IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, versionAdded = "3.13.0", description = "Maximum number of explicit IDPs per domain")
         public boolean getEnableExternalUserIdpManagement() {
             return getBooleanSafely(reloadableConfiguration, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP);
-        }
-
-        @IdmProp(key = FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, versionAdded = "3.15.0", description = "When true, roles cannot be deleted if assigned to any user.")
-        public boolean getDeleteRoleAssignedToUser() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP);
         }
 
         @IdmProp(key = USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP, versionAdded = "3.15.0", description = "Whether or not to allow using UUID for role's rsId on creation.")

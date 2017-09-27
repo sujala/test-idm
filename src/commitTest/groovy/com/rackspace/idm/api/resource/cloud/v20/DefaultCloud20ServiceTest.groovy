@@ -16,6 +16,7 @@ import com.rackspace.idm.exception.*
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.dozer.DozerBeanMapper
 import org.joda.time.DateTime
@@ -1050,7 +1051,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
 
     def "deleteRole handles exceptions"() {
         given:
-        reloadableConfig.getDeleteRoleAssignedToUser() >> false
         def scopeAccessMock = Mock(ScopeAccess)
         def role = entityFactory.createClientRole("identity:role").with {
             it.id = "unique"
@@ -1061,6 +1061,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.verifyIdentityAdminLevelAccess(scopeAccessMock) >> { throw new ForbiddenException() }
 
         applicationService.getClientRoleById("unique") >> role
+        tenantService.getCountOfTenantRolesByRoleIdForProvisionedUsers(role.id) >> 1
 
         when:
         def response1 = service.deleteRole(headers, authToken, roleId).build()
@@ -3659,6 +3660,25 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         "--- policy: name: name"       | "YAML"
     }
 
+    def "test cannot delete client role assigned to user groups"() {
+        given:
+        allowUserAccess()
+        def roleId = RandomStringUtils.randomAlphanumeric(8)
+        def role = new ClientRole().with {
+            it.id = roleId
+            it
+        }
+
+        when:
+        def response = service.deleteRole(headers, "token", roleId).build()
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> role
+        1 * userGroupService.countGroupsWithRoleAssignment(roleId) >> 1
+        response.status == HttpStatus.SC_FORBIDDEN
+        response.getEntity().message == DefaultCloud20Service.ERROR_DELETE_ROLE_WITH_GROUPS_ASSIGNED
+    }
+
     def mockServices() {
         mockAuthenticationService(service)
         mockAuthorizationService(service)
@@ -3681,6 +3701,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         mockAuthResponseService(service)
         mockRequestContextHolder(service)
         mockRoleConverter(service)
+        mockUserGroupService(service)
     }
 
     def mockMisc() {

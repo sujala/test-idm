@@ -625,10 +625,8 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         MediaType.APPLICATION_JSON_TYPE| MediaType.APPLICATION_JSON_TYPE
     }
 
-    @Unroll
-    def "Correctly allow deleting 'identity:' prefixed roles base on 'feature.allow.delete.role.assigned.to.use=#flag'"() {
+    def "Correctly allow deleting 'identity:' prefixed roles"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, flag)
         def role = v2Factory.createRole(testUtils.getRandomUUID('identity:'))
         role.serviceId = Constants.IDENTITY_SERVICE_ID
         def adminToken = utils.getIdentityAdminToken()
@@ -644,31 +642,19 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
         response = cloud20.deleteRole(adminToken, roleEntity.id)
 
         then:
-        if (flag) {
-            response.status == HttpStatus.SC_NO_CONTENT
-        } else {
-            IdmAssert.assertOpenStackV2FaultResponse(response, ForbiddenFault, HttpStatus.SC_FORBIDDEN, DefaultCloud20Service.PREFIXED_IDENTITY_ROLE_ERROR_MESSAGE )
-        }
+        response.status == HttpStatus.SC_NO_CONTENT
 
         when: "Get role"
         response = cloud20.getRole(adminToken, roleEntity.id)
 
         then:
-        if (flag) {
-            response.status == HttpStatus.SC_NOT_FOUND
-        } else {
-            response.status == HttpStatus.SC_OK
-        }
+        response.status == HttpStatus.SC_NOT_FOUND
 
         cleanup:
         reloadableConfiguration.reset()
-
-        where:
-        flag << [true, false]
     }
 
     def "Assert role beginning with 'identity' are not considered 'identity:' prefixed role"() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_DELETE_ROLE_ASSIGNED_TO_USER_PROP, flag)
         def role = v2Factory.createRole(testUtils.getRandomUUID('identity'))
         role.serviceId = Constants.IDENTITY_SERVICE_ID
         def adminToken = utils.getIdentityAdminToken()
@@ -694,9 +680,6 @@ class AddRoleIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         reloadableConfiguration.reset()
-
-        where:
-        flag << [true, false]
     }
 
     def deleteUserQuietly(user) {

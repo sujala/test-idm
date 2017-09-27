@@ -68,4 +68,13 @@ public interface TenantRoleDao {
      * @return
      */
     PaginatorContext<TenantRole> getRoleAssignmentsOnGroup(UserGroup group, UserGroupRoleSearchParams searchParams);
+
+    /**
+     * Retrieve the count of groups with the role, specified by role id, assigned.
+     *
+     * @param roleId
+     * @return
+     */
+    int countGroupsWithRoleAssignment(String roleId);
+
 }

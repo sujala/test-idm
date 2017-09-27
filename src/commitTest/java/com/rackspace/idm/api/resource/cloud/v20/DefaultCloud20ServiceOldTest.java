@@ -62,7 +62,7 @@ public class DefaultCloud20ServiceOldTest {
     private ExceptionHandler exceptionHandler;
     private UserService userService;
     private DomainService domainService;
-    private GroupService userGroupService;
+    private GroupService groupService;
     private DefaultRegionService defaultRegionService;
     private JAXBObjectFactories jaxbObjectFactories;
     private ScopeAccessService scopeAccessService;
@@ -126,7 +126,7 @@ public class DefaultCloud20ServiceOldTest {
         //mocks
         userService = mock(UserService.class);
         domainService = mock(DomainService.class);
-        userGroupService = mock(GroupService.class);
+        groupService = mock(GroupService.class);
         jaxbObjectFactories = mock(JAXBObjectFactories.class);
         scopeAccessService = mock(ScopeAccessService.class);
         authorizationService = mock(AuthorizationService.class);
@@ -157,7 +157,7 @@ public class DefaultCloud20ServiceOldTest {
 
         //setting mocks
         defaultCloud20Service.setUserService(userService);
-        defaultCloud20Service.setUserGroupService(userGroupService);
+        defaultCloud20Service.setGroupService(groupService);
         defaultCloud20Service.setJaxbObjectFactories(jaxbObjectFactories);
         defaultCloud20Service.setScopeAccessService(scopeAccessService);
         defaultCloud20Service.setAuthorizationService(authorizationService);
@@ -264,7 +264,7 @@ public class DefaultCloud20ServiceOldTest {
         when(config.getString("rackspace.customerId")).thenReturn(null);
         when(userConverterCloudV20.fromUser(userOS)).thenReturn(user);
         when(httpHeaders.getMediaType()).thenReturn(MediaType.APPLICATION_XML_TYPE);
-        when(userGroupService.checkAndGetGroupById(anyString())).thenReturn(group);
+        when(groupService.checkAndGetGroupById(anyString())).thenReturn(group);
         when(uriInfo.getAbsolutePath()).thenReturn(new URI("http://absolute.path/to/resource"));
     }
 
@@ -456,7 +456,7 @@ public class DefaultCloud20ServiceOldTest {
     @Test
     public void listGroupWithQueryParam_validName_returns200() throws Exception {
         CloudKsGroupBuilder cloudKsGroupBuilder = mock(CloudKsGroupBuilder.class);
-        when(userGroupService.getGroupByName(org.mockito.Matchers.<String>anyObject())).thenReturn(group);
+        when(groupService.getGroupByName(org.mockito.Matchers.<String>anyObject())).thenReturn(group);
         when(cloudKsGroupBuilder.build(org.mockito.Matchers.<Group>any())).thenReturn(groupKs);
         defaultCloud20Service.setCloudKsGroupBuilder(cloudKsGroupBuilder);
         Response.ResponseBuilder responseBuilder = defaultCloud20Service.getGroup(null, authToken, "group1");

@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 
+import static com.rackspace.idm.modules.usergroups.Constants.USER_GROUP_BASE_DN;
+
 @LDAPComponent
 public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> implements TenantRoleDao {
 
@@ -114,7 +116,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     public int getCountOfTenantRolesByRoleIdForProvisionedUsers(String roleId) {
-        return countObjects(searchFilterGetTenantRolesByRoleId(roleId), getBaseDn());
+        return countObjects(searchFilterGetTenantRolesByRoleId(roleId), USERS_BASE_DN);
     }
 
     public int getCountOfTenantRolesByRoleIdForFederatedUsers(String roleId) {
@@ -236,6 +238,11 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
             context = getObjectsPaged(searchFilterGetTenantRoles(), entry.getDN(), SearchScope.SUB, paginationParams.getEffectiveMarker(), paginationParams.getEffectiveLimit());
         }
         return context;
+    }
+
+    @Override
+    public int countGroupsWithRoleAssignment(String roleId) {
+        return countObjects(searchFilterGetTenantRoleByRoleId(roleId), USER_GROUP_BASE_DN);
     }
 
     @Override
