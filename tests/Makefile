@@ -42,7 +42,7 @@ build: clean
 	# build johny environment
 	./set_up_johny.sh
 
-flake: build flake_no_build
+flake: build flake_no_build clean
 
 flake_no_build:
 	# make sure .venv directory exists prior to creating it
@@ -58,7 +58,7 @@ test: build
 	# install tox
 	$(VENV)/bin/pip install tox
 	# run py27
-	$(CAFE_CONFIG_ALL) $(VENV)/bin/tox -e py27 || $(MAKE) clean
+	$(CAFE_CONFIG_ALL) $(VENV)/bin/tox -e py27
 
 test_nose: build
 	# run test nose
