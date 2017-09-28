@@ -257,3 +257,14 @@ def get_add_idp_request_object(name=None, issuer=None, description=None,
                         public_certificates=public_certificates,
                         approved_domain_group=approved_domain_group,
                         approved_domain_ids=approved_domain_ids)
+
+
+def get_add_user_group_request(domain_id, group_name=None, description=None):
+    if not group_name:
+        group_name = TestBase.generate_random_string(
+            pattern=const.USER_GROUP_NAME_PATTERN)
+    if not description:
+        description = TestBase.generate_random_string(
+            pattern=const.DESC_PATTERN)
+    return requests.domainUserGroup(group_name=group_name, domain_id=domain_id,
+                                    description=description)

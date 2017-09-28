@@ -1639,3 +1639,15 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
         url = self.url + const.RD_USER_GROUP_TO_DOMAIN_URL.format(
             domain_id=domain_id, group_id=group_id)
         return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
+
+    def add_tenant_role_assignments_to_user_group(
+            self, domain_id, group_id, request_object,
+            requestslib_kwargs=None):
+        """
+        PUT RAX-AUTH/domains/{domainId}/groups/{groupId}/roles
+        """
+        url = self.url + (
+            const.ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL.format(
+                domain_id=domain_id, group_id=group_id))
+        return self.request('PUT', url, request_entity=request_object,
+                            requestslib_kwargs=requestslib_kwargs)

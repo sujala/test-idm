@@ -149,3 +149,13 @@ class TenantTypeToEndpointMappingRule(object):
         self.endpoint_templates = mapping_rule.get(
             const.OS_KSCATALOG_ENDPOINT_TEMPLATES)
         self.description = mapping_rule.get(const.DESCRIPTION, None)
+
+
+class UserGroup(object):
+
+    def __init__(self, resp_json):
+
+        user_group = resp_json[const.RAX_AUTH_USER_GROUP]
+        self.id = user_group.get(const.ID, None)
+        self.name = user_group.get(const.NAME, None)
+        self.description = user_group.get(const.DESCRIPTION, None)
