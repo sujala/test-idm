@@ -5,20 +5,20 @@ from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-class ListUserGroupsInDomain(base.TestBaseV2):
+class UserGroupsInDomain(base.TestBaseV2):
     """
-    Tests for list user groups in a domain service
+    Tests for user groups in a domain services.
     """
-    @classmethod
-    def setUpClass(cls):
-        super(ListUserGroupsInDomain, cls).setUpClass()
-        cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
-        cls.user_admin_client = cls.generate_client(
-            parent_client=cls.identity_admin_client,
-            additional_input_data={'domain_id': cls.domain_id})
 
-        cls.domain_ids = []
-        cls.domain_ids.append(cls.domain_id)
+    def setUp(self):
+        super(UserGroupsInDomain, self).setUp()
+        self.domain_id = self.generate_random_string(pattern='[\d]{7}')
+        self.user_admin_client = self.generate_client(
+            parent_client=self.identity_admin_client,
+            additional_input_data={'domain_id': self.domain_id})
+
+        self.domain_ids = []
+        self.domain_ids.append(self.domain_id)
 
     def add_user_group(self):
 
@@ -33,6 +33,7 @@ class ListUserGroupsInDomain(base.TestBaseV2):
             domain_id=self.domain_id,
             request_object=add_user_group_to_domain_req)
         self.assertEqual(user_group_resp.status_code, 201)
+        return user_group_resp.json()
 
     def test_list_user_groups_in_a_domain(self):
 
@@ -63,10 +64,23 @@ class ListUserGroupsInDomain(base.TestBaseV2):
             response=list_resp,
             json_schema=user_groups.list_user_groups_for_domain)
 
-    @classmethod
-    def tearDownClass(cls):
-        super(ListUserGroupsInDomain, cls).tearDownClass()
+    def test_delete_user_group_in_a_domain(self):
+
+        user_group = self.add_user_group()
+        group_id = user_group[const.RAX_AUTH_USER_GROUP][const.ID]
+        delete_resp = self.user_admin_client.delete_user_group_from_domain(
+            domain_id=self.domain_id, group_id=group_id)
+        self.assertEqual(delete_resp.status_code, 204)
+
+        get_resp = self.user_admin_client.get_user_group_for_domain(
+            domain_id=self.domain_id, group_id=group_id)
+        self.assertEqual(get_resp.status_code, 404)
+
+    def tearDown(self):
+        super(UserGroupsInDomain, self).tearDown()
         # This deletes the domain which automatically deletes any user groups
-        # in that domain. Hence, not explicitly deleting the user groups
-        cls.delete_client(cls.user_admin_client,
-                          parent_client=cls.identity_admin_client)
+        # in that domain(pending implementation of CID-1111).
+        # Hence, not explicitly deleting the user groups
+        self.delete_client(
+            self.user_admin_client,
+            parent_client=self.identity_admin_client)
