@@ -43,13 +43,16 @@ class UpdateDomainIntegrationTest extends RootServiceTest {
         def domain = new Domain().with {
             it.id = domainId
             it.rackspaceCustomerNumber = rcn
+            it.enabled = false
             it
         }
         def originalRcn = RandomStringUtils.randomAlphanumeric(8)
-        domainService.checkAndGetDomain(domainId) >> new com.rackspace.idm.domain.entity.Domain().with {
+        def domainEntity = new com.rackspace.idm.domain.entity.Domain().with {
             it.rackspaceCustomerNumber = originalRcn
+            it.enabled = !domain.enabled
             it
         }
+        domainService.checkAndGetDomain(domainId) >> domainEntity
         service.jaxbObjectFactories.getRackspaceIdentityExtRaxgaV1Factory().createDomain(_) >> Mock(JAXBElement)
         identityConfig.getReloadableConfig().isUpdateDomainRcnOnUpdateDomainAllowed() >> featureEnabled
 
@@ -60,6 +63,8 @@ class UpdateDomainIntegrationTest extends RootServiceTest {
         1 * domainService.updateDomain(_) >> { args ->
             com.rackspace.idm.domain.entity.Domain domainData = args[0]
             domainData.rackspaceCustomerNumber == featureEnabled ? rcn : originalRcn
+            // Verify that the other provided attribute is still being updated
+            domainData.enabled == domainEntity.enabled
         }
 
         where:
