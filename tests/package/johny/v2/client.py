@@ -1651,3 +1651,13 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                 domain_id=domain_id, group_id=group_id))
         return self.request('PUT', url, request_entity=request_object,
                             requestslib_kwargs=requestslib_kwargs)
+
+    def delete_user_group_from_domain(
+            self, domain_id, group_id, requestslib_kwargs=None):
+        """
+        DELETE /v2.0/RAX-AUTH/domains/{domain_id}/groups/{group_id}
+        """
+        url = self.url + const.RD_USER_GROUP_TO_DOMAIN_URL.format(
+            domain_id=domain_id, group_id=group_id)
+        return self.request(
+            'DELETE', url, requestslib_kwargs=requestslib_kwargs)
