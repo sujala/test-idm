@@ -475,7 +475,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domainService.deleteDomain(domainId)
     }
 
-    def "Delete Domain - require disabled when prop set"() {
+    def "Delete Domain"() {
         given:
         def enabledDomainId = utils.createDomain()
         def disabledDomainId = utils.createDomain()
@@ -488,11 +488,17 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
             it
         })
 
-        when: "delete an enabled domain when prop set to true"
+        when: "delete an enabled domain"
         def response = cloud20.deleteDomain(utils.getServiceAdminToken(), enabledDomainId)
 
         then: "can't delete"
         assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, GlobalConstants.ERROR_MSG_DELETE_ENABLED_DOMAIN)
+
+        when: "delete a disabled domain"
+        response = cloud20.deleteDomain(utils.getServiceAdminToken(), disabledDomainId)
+
+        then: "can delete"
+        response.status == HttpStatus.SC_NO_CONTENT
     }
 
     def "Delete Domain - Fail if default"() {
