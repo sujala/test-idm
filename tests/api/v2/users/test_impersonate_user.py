@@ -77,6 +77,12 @@ class TestImpersonateUser(base.TestBaseV2):
             resp = self.identity_admin_client.delete_user(user_id=id_)
             self.assertEqual(resp.status_code, 204)
         for id_ in self.domain_ids:
+            # Disable domain and delete domain
+            domain_object = requests.Domain(
+                domain_name=id_, enabled=False)
+            update_domain_resp = self.identity_admin_client.update_domain(
+                domain_id=id_, request_object=domain_object)
+            self.assertEqual(update_domain_resp.status_code, 200)
             resp = self.identity_admin_client.delete_domain(domain_id=id_)
             self.assertEqual(resp.status_code, 204)
 

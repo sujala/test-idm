@@ -37,6 +37,7 @@ import com.rackspace.idm.domain.entity.User;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.domain.service.impl.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.util.SamlLogoutResponseUtil;
 import com.rackspace.idm.util.SamlUnmarshaller;
@@ -3532,8 +3533,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             }
 
             Domain domain = domainService.checkAndGetDomain(domainId);
-            if (identityConfig.getReloadableConfig().enforceDomainDeleteRuleMustBeDisabled()
-                    && Boolean.TRUE.equals(domain.getEnabled())) {
+            if (Boolean.TRUE.equals(domain.getEnabled())) {
                 throw new BadRequestException(GlobalConstants.ERROR_MSG_DELETE_ENABLED_DOMAIN);
             }
 
@@ -3556,7 +3556,13 @@ public class DefaultCloud20Service implements Cloud20Service {
                 }
             }
 
+            // Delete domain's user groups.
+            for (UserGroup userGroup : userGroupService.getGroupsForDomain(domainId)) {
+                userGroupService.deleteGroup(userGroup);
+            }
+
             domainService.deleteDomain(domain.getDomainId());
+
             return Response.noContent();
         } catch (Exception ex) {
             return exceptionHandler.exceptionResponse(ex);
