@@ -260,7 +260,7 @@ public class DefaultTenantService implements TenantService {
     /**
      * Returns a list of effective tenant roles the user has assigned. This includes all roles the user explicitly has
      * assigned on tenants and, if enabled, the automatically assigned "access" role to all tenants within the user's
-     * domain.
+     * domain, and those due to group membership.
      *
      * The returned roles are NOT populated with "role details" such as name, propagation status, etc.
      *
@@ -315,13 +315,15 @@ public class DefaultTenantService implements TenantService {
 
 
     /**
-     * Get the effective tenant roles for a user when applying RCN rules. The application of RCN rules does the following:
-     * 1. All non-RCN global roles are assigned to all tenants within the user's domain
-     * 2. All RCN assigned roles are matched against all tenants in all domains within the user's RCN to determine on
-     * which tenants the user will gain that role.
+     * Get the effective tenant roles for a user and apply RCN logic rules. The application of RCN rules does the following:
+     * <ol>
+     *     <li>All non-RCN global roles are assigned to all tenants within the user's domain</li>
+     *     <li><All RCN assigned roles are matched against all tenants in all domains within the user's RCN to determine on
+     * which tenants the user will gain that role./li>
+     * </ol>
      *
-     * Note - this is NOT efficient when a user has an RCN role as it will cause the same domain to be looked up again
-     * as well as all tenants on which the user will gain a role to be looked up multiple times. This will need to be
+     * Note - this is NOT efficient when a user has an RCN role as it will cause multiple lookups of the same domain as
+     * well as a subset of the tenants within the RCN. This may need to be
      * optimized prior to RCN roles being in widespread use.
      *
      * @param user
@@ -415,7 +417,7 @@ public class DefaultTenantService implements TenantService {
 
     /**
      * Determines the tenants within the domain's RCN and prepares them for matching against RCN roles. If the domain
-     * does not have an RCN, includes just the domain's tenants.
+     * does not have an RCN, returns just the domain's tenants.
      *
      * @param domain
      * @return
@@ -469,6 +471,11 @@ public class DefaultTenantService implements TenantService {
         }
     }
 
+    /**
+     * Retrieves, from the backend, the tenant types that exist within Identity
+     *
+     * @return
+     */
     private Set<String> getTenantTypes() {
         PaginatorContext<TenantType> tenantTypes = tenantTypeService.listTenantTypes(0, TENANT_TYPE_SEARCH_LIMIT);
         List<TenantType> typeEntities = tenantTypes.getValueList();
@@ -514,7 +521,7 @@ public class DefaultTenantService implements TenantService {
     }
 
     /**
-     * Create a dynamic tenant role based on auto-assignment logic for the specified user and tenants.
+     * Create a dynamic tenant role based on auto-assignment logic for the specified user and user's domain.
      *
      * The autoassigned role must be a non-propagating "identity:" product role. If not an identity
      * role, performance will be bad since it's not cached. If a propagating role, it will end up getting
@@ -560,6 +567,14 @@ public class DefaultTenantService implements TenantService {
         return implicitRole;
     }
 
+    /**
+     * Retrieve the auto-assigned 'identity:tenant-access' role based on configuration. The role name is configurable,
+     * but is set to 'identity:tenant-access' in dev, staging, and production.
+     *
+     * TODO: Eliminate the configuration and hardcode to identity:tenant-access role name.
+     *
+     * @return
+     */
     private ImmutableClientRole getAutoAssignedRole() {
         ImmutableClientRole autoAssignedRole = null;
 
@@ -582,9 +597,18 @@ public class DefaultTenantService implements TenantService {
     }
 
     /**
-     * Retrieves all the roles associated with the user, but fully populated with all the tenant details such as role
-     * name, propagation, description, etc that are stored in the "client role" rather than that "tenant role". Loaded
-     * from back end client role w/o use of cache.
+     * Retrieves all the roles "effectively" assigned to the user. The resultant tenant roles are further fully populated
+     * with all the client role details such as role
+     * name, propagation, description, etc that are stored in the "client role" rather than that "tenant role".
+     *
+     * The client role details are loaded from back end client role w/o use of the client role cache.
+     *
+     * The calculation of which roles the user has includes:
+     * <ul>
+     * <li>Explicitly assigned to user</li>
+     * <li>Assigned via user group membership</li>
+     * <li>Implicitly assigned identity:tenant-access role</li>
+     * </ul>
      *
      * @param user
      * @return
@@ -613,6 +637,9 @@ public class DefaultTenantService implements TenantService {
      * Loads all tenants for the given list of tenant roles. Also filters tenants
      * based on the given tenantPredicate. The tenant is included in the response if
      * tenantPredicate.evaluate() returns true
+     *
+     * Does apply RCN logic to any tenant role for an RCN role. The resultant tenants are solely limited to those
+     * tenants explicitly listed in the tenant role.
      *
      * @param tenantRoles
      * @param tenantPredicate
@@ -711,6 +738,13 @@ public class DefaultTenantService implements TenantService {
         return hasRole(user, roleName);
     }
 
+    /**
+     * Whether or not the specified user is explicitly assigned a role with the given name. This does not account for
+     * roles the user may receive based on group membership or via identity:tenant-access logic.
+     * @param user
+     * @param roleName
+     * @return
+     */
     private boolean hasRole(User user, String roleName) {
         for (TenantRole role : tenantRoleDao.getTenantRolesForUser(user)) {
             ClientRole cRole = applicationService.getClientRoleById(role.getRoleRsId());
@@ -1047,6 +1081,7 @@ public class DefaultTenantService implements TenantService {
         return tenantRoleDao.getTenantRolesForUserWithId(user, roleIds);
     }
 
+
     @Override
     public int countTenantsWithTypeInDomain(String tenantType, String domainId) {
         if (StringUtils.isBlank(tenantType) || StringUtils.isBlank(domainId)) {
@@ -1060,7 +1095,6 @@ public class DefaultTenantService implements TenantService {
     public List<TenantRole> getTenantRolesForUserApplyRcnRoles(BaseUser user) {
         return getEffectiveTenantRolesForUserApplyRcnRoles(user);
     }
-
 
     @Override
     public List<TenantRole> getTenantRolesForUserPerformant(BaseUser user) {
@@ -1086,11 +1120,7 @@ public class DefaultTenantService implements TenantService {
         return populatedTenantRoles;
     }
 
-    /**
-     * Retrieves a list of tenant roles for a user without the details such as name, propagate, etc populated
-     * @param user
-     * @return
-     */
+    @Override
     public Iterable<TenantRole> getTenantRolesForUserNoDetail(BaseUser user) {
         logger.debug(GETTING_TENANT_ROLES);
 
@@ -1104,6 +1134,12 @@ public class DefaultTenantService implements TenantService {
         return result;
     }
 
+    /**
+     * Populates the provides tenant roles w/ details from the client role including name, description, and role type.
+     *
+     * @param roles
+     * @return
+     */
     private List<TenantRole> getRoleDetails(Iterable<TenantRole> roles) {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
@@ -1211,6 +1247,20 @@ public class DefaultTenantService implements TenantService {
         return tenantList;
     }
 
+    /**
+     * Iterates over the specified set of roles and returns the subset that represent a globally assigned role. For
+     * purposes of this method, it will consider an RCN role as globally assigned if applyRcnRoles is set to false. When
+     * true, RCN roles will not be returned.
+     *
+     * For those roles returned, the name and description attribute are populated (and types for RCN roles).
+     *
+     * Note - this method modifies the provided roles to populate it with information from the client role for those
+     * returned.
+     *
+     * @param roles
+     * @param applyRcnRoles
+     * @return
+     */
     List<TenantRole> getGlobalRoles(Iterable<TenantRole> roles, boolean applyRcnRoles) {
         List<TenantRole> globalRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
@@ -1237,6 +1287,17 @@ public class DefaultTenantService implements TenantService {
         return globalRoles;
     }
 
+    /**
+     * Iterates over the specified set of roles and returns the subset that represent a tenant assigned role. For purposes
+     * of this method RCN roles are always considered globally assigned, and will therefore never be returned.
+     *
+     * For those roles returned, the name and description attribute are populated.
+     *
+     * Note - this method creates new instances of matching tenant roles. It does NOT modify any provided role
+     *
+     * @param roles
+     * @return
+     */
     List<TenantRole> getTenantOnlyRoles(Iterable<TenantRole> roles) {
         List<TenantRole> tenantRoles = new ArrayList<TenantRole>();
         for (TenantRole role : roles) {
@@ -1350,6 +1411,7 @@ public class DefaultTenantService implements TenantService {
         return pageContext;
     }
 
+    @Override
     public boolean isTenantIdContainedInTenantRoles(String tenantId, List<TenantRole> roles){
         boolean truth = false;
 

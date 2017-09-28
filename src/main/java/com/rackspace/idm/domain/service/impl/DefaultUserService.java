@@ -557,6 +557,8 @@ public class DefaultUserService implements UserService {
      * This service does not use the new auto-assign role functionality for granting all users in a domain "access" to
      * all tenants w/in the domain. This service should be updated to support, if required.
      *
+     * TODO: This service must be modified to NOT update tenant roles assigned to user groups. See https://jira.rax.io/browse/CID-1167
+     *
      * @param tenantId
      * @return
      * @deprecated - The
