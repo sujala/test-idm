@@ -300,7 +300,7 @@ class ListUserRoleIntegrationTest extends RootIntegrationTest {
         def response = cloud20.listUserGlobalRoles(adminToken, userId)
 
         then: "Assert NotFound"
-        String expectedErrMsg = String.format(DefaultCloud20Service.USER_NOT_FOUND_ERROR_MESSAGE, userId)
+        String expectedErrMsg = String.format("User %s not found", userId)
         IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.NOT_FOUND.value(), expectedErrMsg)
     }
 

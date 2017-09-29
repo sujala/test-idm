@@ -29,6 +29,7 @@ import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -907,6 +908,16 @@ public class DefaultTenantService implements TenantService {
     }
 
     @Override
+    public List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
+        }
+        logger.debug("Getting Global Roles for user {}", user.getUniqueId());
+        Iterable<TenantRole> tenantRoles = getEffectiveTenantRolesForUser(user);
+        return getGlobalRoles(tenantRoles, false);
+    }
+
+    @Override
     public List<TenantRole> getGlobalRolesForUserApplyRcnRoles(BaseUser user) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null.");
@@ -914,6 +925,17 @@ public class DefaultTenantService implements TenantService {
         logger.debug("Getting Global Roles (apply_rcn_roles=true) for user {}", user.getUniqueId());
 
         Iterable<TenantRole> tenantRoles = getTenantRolesForUserNoDetail(user);
+        return getGlobalRoles(tenantRoles, true);
+    }
+
+    @Override
+    public List<TenantRole> getEffectiveGlobalRolesForUserApplyRcnRoles(BaseUser user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
+        }
+        logger.debug("Getting Global Roles (apply_rcn_roles=true) for user {}", user.getUniqueId());
+
+        Iterable<TenantRole> tenantRoles = getEffectiveTenantRolesForUser(user);
         return getGlobalRoles(tenantRoles, true);
     }
 
@@ -1015,6 +1037,20 @@ public class DefaultTenantService implements TenantService {
         logger.debug("Getting Global Roles (apply_rcn_roles=true)");
         Iterable<TenantRole> roles = this.tenantRoleDao.getTenantRolesForUser(user, applicationId);
         return getGlobalRoles(roles, true);
+    }
+
+    @Override
+    public List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user, String applicationId) {
+        logger.debug("Getting Global Roles (apply_rcn_roles=false)");
+        List<TenantRole> allRoles = getEffectiveGlobalRolesForUser(user);
+        return CollectionUtils.select(allRoles, new RoleForClientPredicate(applicationId), new ArrayList<>());
+    }
+
+    @Override
+    public List<TenantRole> getEffectiveGlobalRolesForUserApplyRcnRoles(EndUser user, String applicationId) {
+        logger.debug("Getting Global Roles (apply_rcn_roles=true)");
+        List<TenantRole> allRoles = getEffectiveGlobalRolesForUserApplyRcnRoles(user);
+        return CollectionUtils.select(allRoles, new RoleForClientPredicate(applicationId), new ArrayList<>());
     }
 
     @Override
@@ -1554,4 +1590,17 @@ public class DefaultTenantService implements TenantService {
         }
     }
 
+    private static class RoleForClientPredicate implements  Predicate<TenantRole> {
+        private String clientId;
+
+        public RoleForClientPredicate(String clientId) {
+            Validate.notEmpty(clientId);
+            this.clientId = clientId;
+        }
+
+        @Override
+        public boolean evaluate(TenantRole tenantRole) {
+            return clientId.equalsIgnoreCase(tenantRole.getClientId());
+        }
+    }
 }
