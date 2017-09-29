@@ -2,6 +2,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domains
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroups
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.GlobalConstants
@@ -13,6 +14,7 @@ import com.rackspace.idm.domain.service.DomainService
 import com.rackspace.idm.domain.service.TenantService
 import com.rackspace.idm.domain.service.UserService
 import com.rackspace.idm.exception.BadRequestException
+import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.lang.StringUtils
@@ -45,6 +47,9 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     @Autowired Cloud20Service cloud20Service;
     @Autowired UserService userService;
     @Autowired TenantService tenantService;
+
+    @Autowired
+    UserGroupService userGroupService
 
     @Autowired
     private IdentityConfig identityConfig
@@ -192,14 +197,9 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
         def users = [defaultUser, userManage, userAdmin, identityAdmin]
-
-        when: "Update domain"
-        def domain = v1Factory.createDomain(domainId, domainId)
-        domain.rackspaceCustomerNumber = rackspaceCustomerNumber
-        def response = cloud20.updateDomain(utils.identityAdminToken, domainId, domain, accept, content)
-
-        then:
-        response.status == SC_OK
+        if (StringUtils.isNotEmpty(rackspaceCustomerNumber)) {
+            utils.domainRcnSwitch(domainId, rackspaceCustomerNumber)
+        }
 
         when: "list accessible domains for user using admin token"
         def identityAdminToken = utils.getToken(identityAdmin.username)
@@ -470,7 +470,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         domainService.deleteDomain(domainId)
     }
 
-    def "Delete Domain - require disabled when prop set"() {
+    def "Delete Domain"() {
         given:
         def enabledDomainId = utils.createDomain()
         def disabledDomainId = utils.createDomain()
@@ -482,24 +482,15 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
             it.enabled = false
             it
         })
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, true)
 
-        when: "delete an enabled domain when prop set to true"
+        when: "delete an enabled domain"
         def response = cloud20.deleteDomain(utils.getServiceAdminToken(), enabledDomainId)
 
         then: "can't delete"
         assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST, GlobalConstants.ERROR_MSG_DELETE_ENABLED_DOMAIN)
 
-        when: "delete a disabled domain when prop set to true"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, false)
+        when: "delete a disabled domain"
         response = cloud20.deleteDomain(utils.getServiceAdminToken(), disabledDomainId)
-
-        then: "can delete"
-        response.status == HttpStatus.SC_NO_CONTENT
-
-        when: "delete an enabled domain when prop set to false"
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, false)
-        response = cloud20.deleteDomain(utils.getServiceAdminToken(), enabledDomainId)
 
         then: "can delete"
         response.status == HttpStatus.SC_NO_CONTENT
@@ -997,25 +988,26 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     }
 
     @Unroll
-    def "Update and get domain with rackspaceCustomerNumber - content-type = #content, accept = #accept"() {
+    def "Update and get domain with rackspaceCustomerNumber - content-type = rcn = #rcn, #content, accept = #accept, featureEnabled = #featureEnabled"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP, featureEnabled)
         def domainId = utils.createDomain()
         def domain = v1Factory.createDomain(domainId, domainId)
-        def rcn = testUtils.getRandomUUIDOfLength("RCN", 10)
-        domain.rackspaceCustomerNumber = rcn
+        def originalRcn = testUtils.getRandomUUIDOfLength("RCN", 10)
+        domain.rackspaceCustomerNumber = originalRcn
         cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
 
         when: "Update domain"
-        domain.rackspaceCustomerNumber = rackspaceCustomerNumber
+        domain.rackspaceCustomerNumber = rcn
         def domainEntity = cloud20.updateDomain(utils.identityAdminToken, domainId, domain, accept, content).getEntity(Domain)
 
         then:
         domainEntity.id == domainId
         domainEntity.name == domainId
-        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
-            assert  domainEntity.rackspaceCustomerNumber == rcn
+        if (StringUtils.isBlank(rcn) || !featureEnabled) {
+            assert  domainEntity.rackspaceCustomerNumber == originalRcn
         } else {
-            assert  domainEntity.rackspaceCustomerNumber == rackspaceCustomerNumber
+            assert  domainEntity.rackspaceCustomerNumber == rcn
         }
 
         when: "Get domain"
@@ -1024,56 +1016,53 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         then:
         getDomainEntity.id == domainId
         getDomainEntity.name == domainId
-        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
-            assert  getDomainEntity.rackspaceCustomerNumber == rcn
+        if (StringUtils.isBlank(rcn) || !featureEnabled) {
+            assert  getDomainEntity.rackspaceCustomerNumber == originalRcn
         } else {
-            assert  getDomainEntity.rackspaceCustomerNumber == rackspaceCustomerNumber
+            assert  getDomainEntity.rackspaceCustomerNumber == rcn
         }
 
         cleanup:
         utils.deleteDomain(domainId)
 
         where:
-        rackspaceCustomerNumber | accept                          | content
-        "RNC-123-123-123"       | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        "RNC-123-123-123"       | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        ""                      | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        ""                      | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        null                    | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        null                    | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        [rcn, accept, content, featureEnabled] << [["RCN-123-123-123", "", null],
+                                                   [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE],
+                                                   [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE],
+                                                   [true, false]].combinations()
     }
 
     @Unroll
-    def "Update domain with rackspaceCustomerNumber for domain with no rackspaceCustomerNumber - content-type = #content, accept = #accept"() {
+    def "Update domain with rackspaceCustomerNumber for domain with no rackspaceCustomerNumber - rcn = #rcn content-type = #content, accept = #accept, featureEnabled = #featureEnabled"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP, featureEnabled)
         def domainId = utils.createDomain()
         def domain = v1Factory.createDomain(domainId, domainId)
         cloud20.addDomain(utils.identityAdminToken, domain, accept, content)
 
-        when: "Update domain"
-        domain.rackspaceCustomerNumber = rackspaceCustomerNumber
-        def domainEntity = cloud20.updateDomain(utils.identityAdminToken, domainId, domain, accept, content).getEntity(Domain)
+        when: "Update domain's RCN"
+        domain.rackspaceCustomerNumber = rcn
+        def response = cloud20.updateDomain(utils.identityAdminToken, domainId, domain, accept, content)
 
         then:
+        response.status == 200
+        def domainEntity = response.getEntity(Domain)
         domainEntity.id == domainId
         domainEntity.name == domainId
-        if (StringUtils.isBlank(rackspaceCustomerNumber)) {
+        if (StringUtils.isBlank(rcn) || !featureEnabled) {
             assert  domainEntity.rackspaceCustomerNumber == null
         } else {
-            assert  domainEntity.rackspaceCustomerNumber == rackspaceCustomerNumber
+            assert  domainEntity.rackspaceCustomerNumber == rcn
         }
 
         cleanup:
         utils.deleteDomain(domainId)
 
         where:
-        rackspaceCustomerNumber | accept                          | content
-        "RNC-123-123-123"       | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        "RNC-123-123-123"       | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        ""                      | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        ""                      | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
-        null                    | MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
-        null                    | MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+        [rcn, accept, content, featureEnabled] << [["RCN-123-123-123", "", null],
+                                                   [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE],
+                                                   [MediaType.APPLICATION_JSON_TYPE, MediaType.APPLICATION_XML_TYPE],
+                                                   [true, false]].combinations()
     }
 
     @Unroll
@@ -1377,6 +1366,7 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Verify that user-admin or user-manage cannot update attributes on domain - content-type = #content, accept = #accept"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP, true);
         def domainId = utils.createDomain()
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
@@ -1725,6 +1715,37 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
         accept                          | content
         MediaType.APPLICATION_XML_TYPE  | MediaType.APPLICATION_XML_TYPE
         MediaType.APPLICATION_JSON_TYPE | MediaType.APPLICATION_JSON_TYPE
+    }
+
+    def "Deleting a domain also deletes associated user groups"() {
+        given:
+        def domainId = utils.createDomain()
+        def userAdmin, users
+        (userAdmin, users) = utils.createUserAdmin(domainId)
+
+        // Create user group for domain
+        def userGroup = utils.createUserGroup(domainId)
+
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        when: "list user groups on domain"
+        def response = cloud20.listUserGroupsForDomain(userAdminToken, domainId)
+        UserGroups groups = response.getEntity(UserGroups)
+
+        then:
+        response.status == SC_OK
+        groups.userGroup.size() == 1
+
+        when: "Remove users, disable and delete domain"
+        utils.deleteUsers(users)
+        utils.disableDomain(domainId)
+        response = cloud20.deleteDomain(utils.identityAdminToken, domainId)
+
+        then:
+        response.status == SC_NO_CONTENT
+
+        and: "Assert user group has been deleted"
+        userGroupService.getGroupById(userGroup.id) == null
     }
 
     def removeDomainFromUser(username) {

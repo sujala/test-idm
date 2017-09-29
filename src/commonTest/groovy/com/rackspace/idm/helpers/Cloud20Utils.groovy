@@ -46,7 +46,6 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.MultivaluedMap
 
 import static com.rackspace.idm.Constants.*
-import static javax.ws.rs.core.MediaType.APPLICATION_XML
 import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 import static org.apache.http.HttpStatus.*
 
@@ -279,6 +278,9 @@ class Cloud20Utils {
         if (domainId == null) {
             return
         }
+        // Domains must be disabled before they can be deleted.
+        disableDomain(domainId)
+
         def response = methods.deleteDomain(getServiceAdminToken(), domainId)
         assert (response.status == SC_NO_CONTENT)
     }

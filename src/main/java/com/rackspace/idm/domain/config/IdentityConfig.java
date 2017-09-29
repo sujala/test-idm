@@ -180,9 +180,6 @@ public class IdentityConfig {
     public static final String RACKER_IMPERSONATE_ROLE_NAME_PROP = "racker.impersonate.role";
     public static final String RACKER_IMPERSONATE_ROLE_NAME_DEFAULT = "cloud-identity-impersonate";
 
-    public static final String FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP = "feature.enforce.delete.domain.rule.must.be.disabled";
-    public static final boolean FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_DEFAULT = false;
-
     public static final String FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP = "feature.support.v3.provisioned.user.tokens";
     public static final boolean FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_DEFAULT = false;
 
@@ -352,6 +349,9 @@ public class IdentityConfig {
 
     public static final String FEATURE_MAX_USER_GROUPS_IN_DOMAIN_PROP = "user.groups.max.in.domain";
     public static final int FEATURE_MAX_USER_GROUPS_IN_DOMAIN_DEFAULT = 20;
+
+    public static final String FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP = "allow.update.domain.rcn.on.update.domain";
+    public static final boolean FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_DEFAULT = false;
 
     public static final String LIST_USERS_BY_ROLE_LIMIT_NAME = "list.users.by.role.limit";
     public static final int LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE = 100;
@@ -547,7 +547,6 @@ public class IdentityConfig {
         defaults.put(SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_PROP_NAME, SCOPE_ACCESS_ENCRYPTION_KEY_LOCATION_DEFAULT);
         defaults.put(FEATURE_AE_SYNC_SIGNOFF_ENABLED_PROP, FEATURE_AE_SYNC_SIGNOFF_ENABLED);
         defaults.put(RACKER_IMPERSONATE_ROLE_NAME_PROP, RACKER_IMPERSONATE_ROLE_NAME_DEFAULT);
-        defaults.put(FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_DEFAULT);
         defaults.put(FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP, FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_DEFAULT);
         defaults.put(FEATURE_CACHE_AE_TOKENS_PROP, FEATURE_CACHE_AE_TOKENS_DEFAULT);
         defaults.put(CACHED_AE_TOKEN_TTL_SECONDS_PROP, CACHED_AE_TOKEN_TTL_SECONDS_DEFAULT);
@@ -662,6 +661,7 @@ public class IdentityConfig {
         defaults.put(IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_DEFAULT);
         defaults.put(FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART, FEATURE_CACHE_ROLES_WITHOUT_APPLICATION_RESTART_DEFAULT);
         defaults.put(FEATURE_MAX_USER_GROUPS_IN_DOMAIN_PROP, FEATURE_MAX_USER_GROUPS_IN_DOMAIN_DEFAULT);
+        defaults.put(FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP, FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_DEFAULT);
         defaults.put(LIST_USERS_BY_ROLE_LIMIT_NAME, LIST_USERS_BY_ROLE_LIMIT_DEFAULT_VALUE);
 
         defaults.put(USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_PROP, USE_UUID_IDS_FOR_NEW_ROLES_ENABLED_DEFAULT);
@@ -1473,11 +1473,6 @@ public class IdentityConfig {
             return getStringSafely(reloadableConfiguration, IDENTITY_ROLE_TENANT_DEFAULT);
         }
 
-        @IdmProp(key = FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP, description = "Whether domains must be disabled before they can be deleted", versionAdded = "3.0.0")
-        public boolean enforceDomainDeleteRuleMustBeDisabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_ENFORCE_DELETE_DOMAIN_RULE_MUST_BE_DISABLED_PROP);
-        }
-
         @IdmProp(key = FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP, description = "Whether v3 provisioned user tokens can be used within v2 services", versionAdded = "3.0.1")
         public boolean supportV3ProvisionedUserTokens() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_V3_PROVISIONED_USER_TOKENS_PROP);
@@ -1886,6 +1881,11 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_MAX_USER_GROUPS_IN_DOMAIN_PROP, versionAdded = "3.16.0", description = "Maximum number of user groups that can be created per domain")
         public int getMaxUsersGroupsPerDomain() {
             return getIntSafely(reloadableConfiguration, FEATURE_MAX_USER_GROUPS_IN_DOMAIN_PROP);
+        }
+
+        @IdmProp(key = FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP, versionAdded = "3.16.0", description = "Whether to allow updating an domain's RCN using the update domain API call.")
+        public boolean isUpdateDomainRcnOnUpdateDomainAllowed() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ALLOW_UPDATE_DOMAIN_RCN_ON_UPDATE_DOMAIN_PROP);
         }
 
         @IdmProp(key = IDENTITY_FEATURE_ENABLE_EXTERNAL_USER_IDP_MANAGEMENT_PROP, versionAdded = "3.13.0", description = "Maximum number of explicit IDPs per domain")

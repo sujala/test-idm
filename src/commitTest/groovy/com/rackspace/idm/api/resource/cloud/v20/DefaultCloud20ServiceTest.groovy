@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.service.AuthorizationService
 import com.rackspace.idm.domain.service.FederatedIdentityService
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.*
+import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.rackspace.idm.multifactor.service.BasicMultiFactorService
 import com.rackspace.idm.validation.Validator20
 import org.apache.commons.configuration.Configuration
@@ -3677,6 +3678,46 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         1 * userGroupService.countGroupsWithRoleAssignment(roleId) >> 1
         response.status == HttpStatus.SC_FORBIDDEN
         response.getEntity().message == DefaultCloud20Service.ERROR_DELETE_ROLE_WITH_GROUPS_ASSIGNED
+    }
+
+    def "Deleting a domain must also delete associated user groups"() {
+        given:
+        allowUserAccess()
+        def domainId = "domainId"
+        def domain = entityFactory.createDomain(domainId).with {
+            it.enabled = false
+            it
+        }
+
+        reloadableConfig.getTenantDefaultDomainId() >> "default"
+        domainService.checkAndGetDomain(domainId) >> domain
+        identityUserService.getEndUsersByDomainId(domainId) >> [].asList()
+
+        UserGroup userGroup1 = new UserGroup().with {
+            it.domainId = domainId
+            it.name = "group1"
+            it
+        }
+
+        UserGroup userGroup2 = new UserGroup().with {
+            it.domainId = domainId
+            it.name = "group2"
+            it
+        }
+
+        when: "Delete a domain with multiple user groups"
+        service.deleteDomain(authToken, domainId)
+
+        then:
+        1 * userGroupService.getGroupsForDomain(domainId) >> [userGroup1, userGroup2].asList()
+        2 * userGroupService.deleteGroup(_)
+
+        when: "Delete a domain with no user groups"
+        service.deleteDomain(authToken, domainId)
+
+        then:
+        1 * userGroupService.getGroupsForDomain(domainId) >> [].asList()
+        0 * userGroupService.deleteGroup(_)
     }
 
     def mockServices() {

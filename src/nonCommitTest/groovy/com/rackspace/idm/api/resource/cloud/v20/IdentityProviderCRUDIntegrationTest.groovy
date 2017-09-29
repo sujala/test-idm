@@ -869,11 +869,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         users2 = [defaultUser2, userManager2, userAdmin2, identityAdmin2]
 
         def rcn = testUtils.getRandomRCN()
-        def updateDomainEntity = new Domain().with {
-            it.rackspaceCustomerNumber = rcn
-            it
-        }
-        utils.updateDomain(domainId1, updateDomainEntity)
+        utils.domainRcnSwitch(domainId1, rcn)
 
         // Create the IDP in domain 1
         def idp = utils.createIdentityProvider(utils.getServiceAdminToken(), IdentityProviderFederationTypeEnum.DOMAIN, domainId1)
@@ -937,7 +933,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         response.status == SC_FORBIDDEN
 
         when: "add the domain to the RCN and try to update IDP using user admin in different domain in same RCN"
-        utils.updateDomain(domainId2, updateDomainEntity)
+        utils.domainRcnSwitch(domainId2, rcn)
+        utils.addRoleToUser(defaultUser2, Constants.RCN_ADMIN_ROLE_ID) // Add the role back to the user b/c the switch call removes it
         metadata = new SamlFactory().generateMetadataXMLForIDP(idp.issuer, RandomStringUtils.randomAlphabetic(8))
         response = cloud20.updateIdentityProviderUsingMetadata(utils.getToken(userAdmin2.username), idp.id, metadata)
 
@@ -960,11 +957,7 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
 
         when: "move the rcn:admin to a different RCN and try to update the IDP again"
         rcn = testUtils.getRandomRCN()
-        updateDomainEntity = new Domain().with {
-            it.rackspaceCustomerNumber = rcn
-            it
-        }
-        utils.updateDomain(domainId2, updateDomainEntity)
+        utils.domainRcnSwitch(domainId2, rcn)
         metadata = new SamlFactory().generateMetadataXMLForIDP(idp.issuer, RandomStringUtils.randomAlphabetic(8))
         response = cloud20.updateIdentityProviderUsingMetadata(utils.getToken(defaultUser2.username), idp.id, metadata)
 
@@ -1718,12 +1711,9 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdmin(domainId)
         (userAdmin2, users2) = utils.createUserAdmin(domainId2)
         // Add domains to same RCN
-        def updateDomainEntity = new Domain().with {
-            it.rackspaceCustomerNumber = testUtils.getRandomRCN()
-            it
-        }
-        utils.updateDomain(domainId, updateDomainEntity)
-        utils.updateDomain(domainId2, updateDomainEntity)
+        def domainRcn = testUtils.getRandomRCN()
+        utils.domainRcnSwitch(domainId, domainRcn)
+        utils.domainRcnSwitch(domainId2, domainRcn)
 
         when: "Create IDP with metadata using userAdmin"
         def userAdminToken = utils.getToken(userAdmin.username)
@@ -1779,12 +1769,9 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdmin(domainId)
         (userAdmin2, users2) = utils.createUserAdmin(domainId2)
         // Add domains to same RCN
-        def updateDomainEntity = new Domain().with {
-            it.rackspaceCustomerNumber = testUtils.getRandomRCN()
-            it
-        }
-        utils.updateDomain(domainId, updateDomainEntity)
-        utils.updateDomain(domainId2, updateDomainEntity)
+        def domainRcn = testUtils.getRandomRCN()
+        utils.domainRcnSwitch(domainId, domainRcn)
+        utils.domainRcnSwitch(domainId2, domainRcn)
 
         when: "Create IDP with metadata using userAdmin"
         def userAdminToken = utils.getToken(userAdmin.username)
@@ -2775,12 +2762,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def users2 = utils.createUsers(domainId2)
 
         def rcn = testUtils.getRandomRCN()
-        def updateDomainEntity = new Domain().with {
-            it.rackspaceCustomerNumber = rcn
-            it
-        }
-        utils.updateDomain(domainId, updateDomainEntity)
-        utils.updateDomain(domainId2, updateDomainEntity)
+        utils.domainRcnSwitch(domainId, rcn)
+        utils.domainRcnSwitch(domainId2, rcn)
 
         def dummyDomain = utils.createDomainEntity()
 
@@ -2946,12 +2929,8 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         (identityAdmin2, userAdmin2, userManage2, defaultUser2) = utils.createUsers(domainId2)
         // Add domains to same RCN
         def rcn = testUtils.getRandomRCN()
-        def updateDomainEntity = new Domain().with {
-            it.rackspaceCustomerNumber = rcn
-            it
-        }
-        utils.updateDomain(domainId, updateDomainEntity)
-        utils.updateDomain(domainId2, updateDomainEntity)
+        utils.domainRcnSwitch(domainId, rcn)
+        utils.domainRcnSwitch(domainId2, rcn)
 
         when: "Create IDP using metadata"
         String issuer = testUtils.getRandomUUID("issuer")
@@ -4219,15 +4198,11 @@ class IdentityProviderCRUDIntegrationTest extends RootIntegrationTest {
         def rackspaceCustomerNumber  = testUtils.getRandomRCN()
 
         // Add domains to same RCN
-        def updateDomainEntity = new Domain().with {
-            it.rackspaceCustomerNumber = rackspaceCustomerNumber
-            it
-        }
-        utils.updateDomain(domainId, updateDomainEntity)
-        utils.updateDomain(otherDomainId, updateDomainEntity)
+        utils.domainRcnSwitch(domainId, rackspaceCustomerNumber)
+        utils.domainRcnSwitch(otherDomainId, rackspaceCustomerNumber)
 
         def thirdDomainId = utils.createDomain()
-        def thirddomain = utils.createDomainEntity(thirdDomainId)
+        def thirdDomain = utils.createDomainEntity(thirdDomainId)
 
 
         when: "Create IDP can set federationType of 'DOMAIN' in same domain"
