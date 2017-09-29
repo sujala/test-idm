@@ -221,7 +221,7 @@ class CloudUserGroupResourceTest extends RootServiceTest {
         "domain" | "groupId" | 0      | 10
     }
 
-    def "getUsersInGroup: list usres in group throws exceptions for negative marker/limit values"() {
+    def "getUsersInGroup: list users in group throws exceptions for negative marker/limit values"() {
         def mockUriInfo = Mock(UriInfo)
         def mockHttpHeaders = Mock(HttpHeaders)
         def token = "token"
