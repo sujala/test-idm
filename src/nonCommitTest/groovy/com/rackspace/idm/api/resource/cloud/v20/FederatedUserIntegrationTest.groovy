@@ -1513,6 +1513,7 @@ class FederatedUserIntegrationTest extends RootIntegrationTest {
 
         when: "logout the federated user (deletes the federated user) and then try again"
         utils.logoutFederatedUser(username, sharedIdentityProvider.issuer, samlProducerForSharedIdp)
+        utils.disableDomain(domainId)
 
         response = cloud20.deleteDomain(utils.getServiceAdminToken(), domainId)
 
