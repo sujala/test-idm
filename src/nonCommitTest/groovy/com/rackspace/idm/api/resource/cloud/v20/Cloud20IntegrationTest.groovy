@@ -2298,6 +2298,7 @@ class Cloud20IntegrationTest extends RootIntegrationTest {
         def deleteResponses = cloud20.deleteUser(serviceAdminToken, defaultUser.id)
         def deleteAdminResponses = cloud20.deleteUser(serviceAdminToken, userAdmin.id)
         def deleteGroupResponse = cloud20.deleteGroup(serviceAdminToken, group.value.id)
+        utils.disableDomain(domainId)
         def deleteDomainResponse = cloud20.deleteDomain(serviceAdminToken, domainId)
 
         then:
