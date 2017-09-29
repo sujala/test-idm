@@ -1027,18 +1027,8 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def user1 = utils.createCloudAccount(utils.identityAdminToken)
         def user2 = utils.createCloudAccount(utils.identityAdminToken)
         def rcn = testUtils.getRandomRCN()
-
-        when: "Updating both user's domain to the same RCN"
-        def domain = v2Factory.createDomain().with {
-            it.rackspaceCustomerNumber = rcn
-            it
-        }
-        def updateDomain1 = cloud20.updateDomain(utils.identityAdminToken, user1.domainId, domain).getEntity(Domain)
-        def updateDomain2 = cloud20.updateDomain(utils.identityAdminToken, user2.domainId, domain).getEntity(Domain)
-
-        then: "Assert both domains where updated correctly"
-        updateDomain1.rackspaceCustomerNumber == rcn
-        updateDomain2.rackspaceCustomerNumber == rcn
+        utils.domainRcnSwitch(user1.domainId, rcn)
+        utils.domainRcnSwitch(user2.domainId, rcn)
 
         when: "Listing tenants for user1 prior to adding RCN role"
         def user1Token = utils.getToken(user1.username)
@@ -1102,18 +1092,8 @@ class TenantIntegrationTest extends RootIntegrationTest {
         def user1 = utils.createCloudAccount(utils.identityAdminToken)
         def user2 = utils.createCloudAccount(utils.identityAdminToken)
         def rcn = testUtils.getRandomRCN()
-
-        when: "Updating both user's domain to the same RCN"
-        def domain = v2Factory.createDomain().with {
-            it.rackspaceCustomerNumber = rcn
-            it
-        }
-        def updateDomain1 = cloud20.updateDomain(utils.identityAdminToken, user1.domainId, domain).getEntity(Domain)
-        def updateDomain2 = cloud20.updateDomain(utils.identityAdminToken, user2.domainId, domain).getEntity(Domain)
-
-        then: "Assert both domains where updated correctly"
-        updateDomain1.rackspaceCustomerNumber == rcn
-        updateDomain2.rackspaceCustomerNumber == rcn
+        utils.domainRcnSwitch(user1.domainId, rcn)
+        utils.domainRcnSwitch(user2.domainId, rcn)
 
         when: "Add global 'rcn-all' role to user1"
         def addRoleToUserResponse = cloud20.addUserRole(utils.getIdentityAdminToken(), user1.id, Constants.IDENTITY_RCN_ALL_TENANT_ROLE_ID)

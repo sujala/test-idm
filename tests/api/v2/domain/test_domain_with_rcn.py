@@ -60,6 +60,7 @@ class TestRCNDomain(base.TestBaseV2):
             response=resp, json_schema=self.domain_with_rcn_schema)
 
         domain_id = resp.json()[const.RAX_AUTH_DOMAIN][const.ID]
+        orig_rcn = resp.json()[const.RAX_AUTH_DOMAIN][const.RCN_LONG]
         self.domain_ids.append(domain_id)
 
         updated_rcn = self.generate_random_string(const.RCN_PATTERN)
@@ -70,7 +71,7 @@ class TestRCNDomain(base.TestBaseV2):
         self.assertSchema(
             response=resp, json_schema=self.domain_with_rcn_schema)
         self.assertEqual(
-            resp.json()[const.RAX_AUTH_DOMAIN][const.RCN_LONG], updated_rcn)
+            resp.json()[const.RAX_AUTH_DOMAIN][const.RCN_LONG], orig_rcn)
 
     def create_user_admin_with_rcn_role(self, domain_id):
 

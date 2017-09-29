@@ -370,8 +370,8 @@ class ListRolesOnTenantTest extends RootIntegrationTest {
         def otherUserAdmin = createUserAdmin()
 
         def rcn = testUtils.getRandomUUID()
-        utils.updateDomain(userAdmin.domainId, v2Factory.createDomain().with {it.rackspaceCustomerNumber = rcn; it})
-        utils.updateDomain(otherUserAdmin.domainId, v2Factory.createDomain().with {it.rackspaceCustomerNumber = rcn; it})
+        utils.domainRcnSwitch(userAdmin.domainId, rcn)
+        utils.domainRcnSwitch(otherUserAdmin.domainId, rcn)
 
         def tenant = v2Factory.createTenant().with {
             it.name = testUtils.getRandomUUID("tenant")
