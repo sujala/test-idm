@@ -4,7 +4,10 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
+import com.rackspace.idm.api.security.ImmutableClientRole
+import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.service.ApplicationService
 import com.rackspace.idm.modules.usergroups.Constants
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang3.RandomStringUtils
@@ -15,8 +18,14 @@ import spock.lang.Unroll
 class RoleAssignmentConverterComponentTest extends Specification {
     @Shared RoleAssignmentConverter converter
 
-    void setupSpec() {
+    @Shared
+    ApplicationService applicationService
+
+    void setup() {
         converter = new RoleAssignmentConverter()
+
+        applicationService = Mock()
+        converter.applicationService = applicationService
     }
 
     @Unroll
@@ -47,7 +56,80 @@ class RoleAssignmentConverterComponentTest extends Specification {
         tenants << [[] as Set, ["a"] as Set, ["a", "b"] as Set]
     }
 
-    def "toTenantAssignemnts: converts tenant role list from entity to web"() {
+    @Unroll
+    def "toRoleAssignmentWeb: uses provided name on tenant role if provided: providedName: #providedRoleName"() {
+
+        TenantRole tenantRole = new TenantRole().with {
+            it.name = providedRoleName
+            it.description = "description"
+            it.clientId = "clientId"
+            it.roleRsId = "roleId"
+            it.types = new Types().with {
+                it.type = ["type1"]
+                it
+            }
+            it
+        }
+
+        when:
+        RoleAssignment roleAssignment = converter.toRoleAssignmentWeb(tenantRole)
+
+        then:
+        0 * applicationService.getCachedClientRoleById(_)
+        roleAssignment.onRoleName == providedRoleName
+
+        where:
+        [providedRoleName] << [["a", "anothervalue"]].combinations()
+    }
+
+    /**
+     * Note - a set of tests will have cachedRole == null. The test name in these cases will include
+     * '...cachedRole: #Error:cachedRole.name' as spock attempts to lookup the name of the cachedRole for the method name.
+     *
+     * Since the point is just to be able to identify which variables would cause a failure, this, while ugly, identifies
+     * the test cases where cachedRole == null
+     *
+     */
+    @Unroll
+    def "toRoleAssignmentWeb: populates role name from cache when tenant role doesn't contain value: #providedRoleName ; cachedRole: #cachedRole.name"() {
+
+        TenantRole tenantRole = new TenantRole().with {
+            it.name = providedRoleName
+            it.description = "description"
+            it.clientId = "clientId"
+            it.roleRsId = cachedRole != null ? cachedRole.id : "roleId"
+            it.types = new Types().with {
+                it.type = ["type1"]
+                it
+            }
+            it
+        }
+
+        when:
+        RoleAssignment roleAssignment = converter.toRoleAssignmentWeb(tenantRole)
+
+        then:
+        1 * applicationService.getCachedClientRoleById(tenantRole.roleRsId) >> cachedRole
+        if (cachedRole != null) {
+            roleAssignment.onRoleName == cachedRole.name
+        } else {
+            roleAssignment.onRoleName == providedRoleName
+        }
+
+        where:
+        [providedRoleName, cachedRole] << [[null, ""], [createImmutableClientRole("roleId","roleName"), createImmutableClientRole("roleId",""), null]].combinations()
+    }
+
+    ImmutableClientRole createImmutableClientRole(String id, String name) {
+        return new ImmutableClientRole(new ClientRole().with {
+            it.id = id
+            it.name = name
+            it
+        })
+
+    }
+
+    def "toTenantAssignments: converts tenant role list from entity to web"() {
         List<TenantRole> tenantRoles = new ArrayList<>()
         4.times { index ->
             TenantRole tenantRole = new TenantRole().with {

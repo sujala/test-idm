@@ -5,7 +5,9 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
+import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.service.ApplicationService
 import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
@@ -27,6 +29,9 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     IdentityConfig identityConfig
+
+    @Autowired
+    ApplicationService applicationService
 
     @Shared
     def sharedIdentityAdminToken
@@ -184,9 +189,12 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
     }
 
     void verifyContainsAssignment(RoleAssignments roleAssignments, String roleId, List<String> tenantIds) {
+        ImmutableClientRole imr = applicationService.getCachedClientRoleById(roleId)
+
         def rbac1Assignment = roleAssignments.tenantAssignments.tenantAssignment.find {it.onRole == roleId}
         assert rbac1Assignment != null
         assert rbac1Assignment.forTenants.size() == tenantIds.size()
+        assert rbac1Assignment.onRoleName == imr.name
         assert CollectionUtils.isEqualCollection(rbac1Assignment.forTenants, tenantIds)
     }
 
