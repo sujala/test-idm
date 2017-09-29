@@ -3326,7 +3326,8 @@ public class DefaultCloud20Service implements Cloud20Service {
             if (domain.getSessionInactivityTimeout() != null) {
                 domainDO.setSessionInactivityTimeout(domain.getSessionInactivityTimeout().toString());
             }
-            if (StringUtils.isNotBlank(domain.getRackspaceCustomerNumber())) {
+            if (identityConfig.getReloadableConfig().isUpdateDomainRcnOnUpdateDomainAllowed()
+                    && StringUtils.isNotBlank(domain.getRackspaceCustomerNumber())) {
                 domainDO.setRackspaceCustomerNumber(domain.getRackspaceCustomerNumber());
             }
             if (domain.isEnabled() != null) {

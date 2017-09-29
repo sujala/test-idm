@@ -563,19 +563,6 @@ public class DefaultCloud20ServiceOldTest {
     }
 
     @Test
-    public void updateDomain_valid_SuccessRequest() throws Exception {
-        com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain newDomain = new com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain();
-        newDomain.setId("1");
-        newDomain.setName("domain");
-        when(domainService.checkAndGetDomain("1")).thenReturn(domain);
-        doReturn(domain).when(domainConverterCloudV20).fromDomain(newDomain);
-        doReturn(newDomain).when(domainConverterCloudV20).toDomain(domain);
-        when(uriInfo.getRequestUriBuilder()).thenReturn(UriBuilder.fromPath("path"));
-        Response.ResponseBuilder responseBuilder = defaultCloud20Service.updateDomain(authToken, "1", newDomain);
-        assertThat("response status", responseBuilder.build().getStatus(), equalTo(200));
-    }
-
-    @Test
     public void setEmptyUserValues() throws Exception {
         User user = new User();
         defaultCloud20Service.setEmptyUserValues(user);

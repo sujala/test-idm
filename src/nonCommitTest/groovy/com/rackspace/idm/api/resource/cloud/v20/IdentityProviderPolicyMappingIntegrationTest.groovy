@@ -235,12 +235,9 @@ class IdentityProviderPolicyMappingIntegrationTest extends RootIntegrationTest {
         (userAdmin, users) = utils.createUserAdmin(domainId)
         (userAdmin2, users2) = utils.createUserAdmin(domainId2)
         // Add domains to same RCN
-        def updateDomainEntity = new Domain().with {
-            it.rackspaceCustomerNumber = testUtils.getRandomRCN()
-            it
-        }
-        utils.updateDomain(domainId, updateDomainEntity)
-        utils.updateDomain(domainId2, updateDomainEntity)
+        def domainRcn = testUtils.getRandomRCN()
+        utils.domainRcnSwitch(domainId, domainRcn)
+        utils.domainRcnSwitch(domainId2, domainRcn)
 
         when: "Create IDP with metadata using userAdmin"
         def userAdminToken = utils.getToken(userAdmin.username)
