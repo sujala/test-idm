@@ -18,9 +18,10 @@ user_group_item = {
 list_user_groups_for_domain = {
     'type': 'object', 'properties': {
         const.RAX_AUTH_USER_GROUPS: {
-            'type': 'array', 'item': user_group_item
+            'type': 'array', 'items': user_group_item
         }
-    }
+    },
+    'required': [const.RAX_AUTH_USER_GROUPS]
 }
 
 add_user_group_for_domain = {
@@ -31,3 +32,30 @@ add_user_group_for_domain = {
 }
 
 get_user_group_for_domain = add_user_group_for_domain
+
+tenant_assignment_item = {
+    'type': 'object', 'properties': {
+        const.ON_ROLE: {'type': 'string'},
+        const.ON_ROLE_NAME: {'type': 'string'},
+        const.FOR_TENANTS: {'type': 'array', 'items': {'type': 'string'},
+                            "uniqueItems": True}
+    },
+    # Once CID-1169 is fixed, add const.ON_ROLE_NAME to 'required' list
+    'required': [const.ON_ROLE, const.FOR_TENANTS]
+}
+
+tenant_assignments_item = {
+    'type': 'object', 'properties': {
+        const.TENANT_ASSIGNMENTS: {
+            'type': 'array', 'items': tenant_assignment_item
+        }
+    },
+    'required': [const.TENANT_ASSIGNMENTS]
+}
+
+tenants_role_assignments_for_user_group = {
+    'type': 'object', 'properties': {
+        const.RAX_AUTH_ROLE_ASSIGNMENTS: tenant_assignments_item
+    },
+    'required': [const.RAX_AUTH_ROLE_ASSIGNMENTS]
+}

@@ -1133,3 +1133,16 @@ class domainUserGroup(base.AutoMarshallingModel):
 
     def _obj_to_xml(self):
         raise Exception("Not implemented yet")
+
+
+class TenantRoleAssignments(base.AutoMarshallingModel):
+    def __init__(self, *tenant_assignments):
+        self.tenant_assignments = tenant_assignments
+
+    def _obj_to_json(self):
+        tenant_role_assignments_request = {
+            const.RAX_AUTH_ROLE_ASSIGNMENTS: {
+                const.TENANT_ASSIGNMENTS: list(self.tenant_assignments)
+            }
+        }
+        return json.dumps(tenant_role_assignments_request)
