@@ -31,6 +31,33 @@ class JSONWriterForRaxAuthUserGroupRoleAssignmentsTest extends Specification{
                             ta.forTenants.add("tenantB")
                             ta
                     })
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = "roleC"
+                            ta.onRoleName = "roleCName"
+                            ta.forTenants.addAll(["tenantC1","tenantC2"])
+                            ta
+                    })
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = "roleD"
+                            ta.onRoleName = "roleDName"
+                            ta
+                    })
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = "roleE"
+                            ta.onRoleName = "roleEName"
+                            ta.forTenants.addAll(["", "tenantE1", "  ", ""])
+                            ta
+                    })
+                    tas.tenantAssignment.add(new TenantAssignment().with {
+                        ta ->
+                            ta.onRole = "roleF"
+                            ta.onRoleName = "roleFName"
+                            ta.forTenants.addAll([])
+                            ta
+                    })
                     tas
             }
             it
@@ -52,7 +79,7 @@ class JSONWriterForRaxAuthUserGroupRoleAssignmentsTest extends Specification{
 
         // Have non-prefixed ta object
         JSONArray tas = ras.get(Constants.TENANT_ASSIGNMENTS)
-        tas.size() == 2
+        tas.size() == 6
 
         // Verify array is correct
         tas[0].onRole == "roleA"
@@ -62,9 +89,26 @@ class JSONWriterForRaxAuthUserGroupRoleAssignmentsTest extends Specification{
         tas[1].onRole == "roleB"
         tas[1].onRoleName == "roleBName"
         tas[1].forTenants == ["tenantB"]
+
+        tas[2].onRole == "roleC"
+        tas[2].onRoleName == "roleCName"
+        tas[2].forTenants == ["tenantC1","tenantC2"]
+
+        tas[3].onRole == "roleD"
+        tas[3].onRoleName == "roleDName"
+        !tas[3].containsKey("forTenants") // When writing out, does not include forTenants if none provided
+
+        tas[4].onRole == "roleE"
+        tas[4].onRoleName == "roleEName"
+        tas[4].forTenants == ["tenantE1"] // When writing out, empty string/space only elements are ignored
+
+        tas[5].onRole == "roleF"
+        tas[5].onRoleName == "roleFName"
+        tas[5].forTenants == [] // When writing out, empty string/space only elements are ignored
+
     }
 
-    def "Null returned for tenantAssignments when no tenant roles"() {
+    def "Empty array written for tenantAssignments when no tenant role assignments"() {
         RoleAssignments assignments = new RoleAssignments().with {
             it.tenantAssignments = new TenantAssignments()
             it
@@ -79,6 +123,7 @@ class JSONWriterForRaxAuthUserGroupRoleAssignmentsTest extends Specification{
         JSONArray tas = outer.get(Constants.RAX_AUTH_ROLE_ASSIGNMENTS).get(Constants.TENANT_ASSIGNMENTS)
 
         then:
-        tas == null // In JSON will be a null value rather than an empty array
+        tas != null
+        tas.size() == 0
     }
 }
