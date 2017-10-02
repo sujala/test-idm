@@ -3026,15 +3026,14 @@ public class DefaultCloud20Service implements Cloud20Service {
     @Override
     public ResponseBuilder listUserGlobalRoles(HttpHeaders httpHeaders, String authToken, String userId, boolean applyRcnRoles) {
         try {
-            ScopeAccess callersScopeAccess = getScopeAccessForValidToken(authToken);
-            authorizationService.verifyUserLevelAccess(callersScopeAccess);
-            User user = this.userService.getUserById(userId);
-            if (user == null) {
-                String errMsg = String.format(USER_NOT_FOUND_ERROR_MESSAGE, userId);
-                logger.warn(errMsg);
-                throw new NotFoundException(errMsg);
-            }
+            // Verify token is valid and user is enabled
+            ScopeAccess callersScopeAccess = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
+            // TODO: Modify this so can retrieve roles for a federated user
+            User user = userService.checkAndGetUserById(userId);
+
+            // TODO: Modify this so a federated user can consume this service as the caller (just call retrieve effective caller from request context)
             User caller = getUser(callersScopeAccess);
 
             /*
@@ -3059,9 +3058,9 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             List<TenantRole> roles;
             if (applyRcnRoles) {
-                roles = tenantService.getGlobalRolesForUserApplyRcnRoles(user);
+                roles = tenantService.getEffectiveGlobalRolesForUserApplyRcnRoles(user);
             } else {
-                roles = tenantService.getGlobalRolesForUser(user);
+                roles = tenantService.getEffectiveGlobalRolesForUser(user);
             }
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());
         } catch (Exception ex) {
@@ -3105,15 +3104,18 @@ public class DefaultCloud20Service implements Cloud20Service {
     public ResponseBuilder listUserGlobalRolesByServiceId(HttpHeaders httpHeaders, String authToken,
                                                           String userId, String serviceId, boolean applyRcnRoles) {
         try {
-            authorizationService.verifyIdentityAdminLevelAccess(getScopeAccessForValidToken(authToken));
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
+            //TODO: Modify this to support retrieving roles for federated users
             User user = userService.checkAndGetUserById(userId);
 
             List<TenantRole> roles;
             if (applyRcnRoles) {
-                roles= tenantService.getGlobalRolesForUserApplyRcnRoles(user, serviceId);
+                roles= tenantService.getEffectiveGlobalRolesForUserApplyRcnRoles(user, serviceId);
             } else {
-                roles= tenantService.getGlobalRolesForUser(user, serviceId);
+                roles= tenantService.getEffectiveGlobalRolesForUser(user, serviceId);
             }
 
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createRoles(roleConverterCloudV20.toRoleListJaxb(roles)).getValue());

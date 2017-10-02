@@ -206,6 +206,28 @@ public interface TenantService {
     List<TenantRole> getGlobalRolesForUser(BaseUser user);
 
     /**
+     * Retrieves the roles "effectively" assigned to the user as "global" (domain) assignment. This will include RCN roles
+     *
+     * The global roles returned include
+     * <ul>
+     * <li>Explicitly assigned to user</li>
+     * <li>Assigned via user group membership (if enabled)</li>
+     * </ul>
+     *
+     * The roles returned have various properties from the client role populated:
+     * <ul>
+     *     <li>name</li>
+     *     <li>description</li>
+     *     <li>tenant types (if RCN role)</li>
+     * </ul>
+     *
+     * @param user
+     * @return
+     * @throws IllegalArgumentException If supplied user is null
+     */
+    List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user);
+
+    /**
      * Retrieves the roles explicitly assigned to the user as a "global" (domain) assignment - excluding RCN roles.
      *
      * The roles returned have various properties from the client role populated:
@@ -219,6 +241,28 @@ public interface TenantService {
      * @throws IllegalArgumentException If supplied user is null
      */
     List<TenantRole> getGlobalRolesForUserApplyRcnRoles(BaseUser user);
+
+    /**
+     * Retrieves the roles "effectively" assigned to the user as "global" (domain) assignment. This will exclude RCN roles
+     *
+     * The global roles returned include
+     * <ul>
+     * <li>Explicitly assigned to user</li>
+     * <li>Assigned via user group membership (if enabled)</li>
+     * </ul>
+     *
+     * The roles returned have various properties from the client role populated:
+     * <ul>
+     *     <li>name</li>
+     *     <li>description</li>
+     *     <li>tenant types (if RCN role)</li>
+     * </ul>
+     *
+     * @param user
+     * @return
+     * @throws IllegalArgumentException If supplied user is null
+     */
+    List<TenantRole> getEffectiveGlobalRolesForUserApplyRcnRoles(BaseUser user);
 
     /**
      * Returns all roles assignments explicitly made on the user that are assigned globally and have an
@@ -246,7 +290,7 @@ public interface TenantService {
     List<TenantRole> getRbacRolesForUser(EndUser user);
 
     /**
-     * Returns all roles that are explicitly globally assigned to the user (e.g. not via group membership). This will
+     * Returns all roles for the specified application that are explicitly globally assigned to the user (e.g. not via group membership). This will
      * include any RCN roles assigned to the user.
      *
      * For those roles returned, the name and description attribute are populated (and types for RCN roles).
@@ -256,6 +300,30 @@ public interface TenantService {
      * @return
      */
     List<TenantRole> getGlobalRolesForUser(EndUser user, String applicationId);
+
+    /**
+     * Retrieves the specified application's roles that are "effectively" assigned to the user as "global" (domain)
+     * assignment. This will include RCN roles
+     *
+     * The global roles returned include
+     * <ul>
+     * <li>Explicitly assigned to user</li>
+     * <li>Assigned via user group membership (if enabled)</li>
+     * </ul>
+     *
+     * The roles returned have various properties from the client role populated:
+     * <ul>
+     *     <li>name</li>
+     *     <li>description</li>
+     *     <li>tenant types (if RCN role)</li>
+     * </ul>
+     *
+     * @param user
+     * @param applicationId
+     * @return
+     * @throws IllegalArgumentException If supplied user is null
+     */
+    List<TenantRole> getEffectiveGlobalRolesForUser(BaseUser user, String applicationId);
 
     /**
      * Returns all roles that are explicitly globally assigned to the user (e.g. not via group membership). This will
@@ -268,6 +336,31 @@ public interface TenantService {
      * @return
      */
     List<TenantRole> getGlobalRolesForUserApplyRcnRoles(EndUser user, String applicationId);
+
+
+    /**
+     * Retrieves the specified application's roles that are "effectively" assigned to the user as "global" (domain)
+     * assignment. This will exclude RCN roles
+     *
+     * The global roles returned include
+     * <ul>
+     * <li>Explicitly assigned to user</li>
+     * <li>Assigned via user group membership (if enabled)</li>
+     * </ul>
+     *
+     * The roles returned have various properties from the client role populated:
+     * <ul>
+     *     <li>name</li>
+     *     <li>description</li>
+     *     <li>tenant types (if RCN role)</li>
+     * </ul>
+     *
+     * @param user
+     * @param applicationId
+     * @return
+     * @throws IllegalArgumentException If supplied user is null
+     */
+    List<TenantRole> getEffectiveGlobalRolesForUserApplyRcnRoles(EndUser user, String applicationId);
 
     /**
      * Return the set of roles the user "effectively" has on the specified tenant. This includes all explicitly assigned

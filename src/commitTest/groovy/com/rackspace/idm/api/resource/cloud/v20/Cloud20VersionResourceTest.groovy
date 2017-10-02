@@ -1,8 +1,14 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.idm.exception.BadRequestException
+import org.apache.commons.lang3.StringUtils
 import spock.lang.Shared
+import spock.lang.Unroll
 import testHelpers.RootServiceTest
+
+import javax.ws.rs.core.HttpHeaders
+import javax.ws.rs.core.Response
+import javax.ws.rs.core.UriInfo
 
 class Cloud20VersionResourceTest extends RootServiceTest {
 
@@ -11,6 +17,7 @@ class Cloud20VersionResourceTest extends RootServiceTest {
     def setup() {
         service = new Cloud20VersionResource()
         mockConfiguration(service)
+        mockCloud20Service(service)
     }
 
     def "validateOffset null offset sets offset to 0"() {
@@ -81,5 +88,27 @@ class Cloud20VersionResourceTest extends RootServiceTest {
 
         then:
         limit == value
+    }
+
+    @Unroll
+    def "get user global roles: Calls appropriate backend service based on whether serviceId provided: serviceId: #serviceId; applyRcnRoles: #applyRcnRoles"() {
+        def mockHttpHeaders = Mock(HttpHeaders)
+        def token = "token"
+        def userId = "userId"
+
+        def response = Response.ok()
+
+        when:
+        service.listUserGlobalRoles(mockHttpHeaders, token, userId, serviceId, applyRcnRoles)
+
+        then:
+        if (StringUtils.isNotBlank(serviceId)) {
+            1 * defaultCloud20Service.listUserGlobalRolesByServiceId(mockHttpHeaders, token, userId, serviceId, applyRcnRoles) >> response
+        } else {
+            1 * defaultCloud20Service.listUserGlobalRoles(mockHttpHeaders, token, userId, applyRcnRoles) >> response
+        }
+
+        where:
+        [serviceId, applyRcnRoles] << [["serviceId", "", null], [true, false]].combinations()
     }
 }
