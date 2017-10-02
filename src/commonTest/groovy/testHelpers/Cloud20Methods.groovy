@@ -1175,9 +1175,9 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.id).path(SERVICE_PATH_ROLES).path(roleId).type(media).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def grantRoleAssignmentsOnUserGroup(String token, UserGroup userGroup, RoleAssignments roleAssignments, MediaType requestType=MediaType.APPLICATION_XML_TYPE) {
+    def grantRoleAssignmentsOnUserGroup(String token, UserGroup userGroup, RoleAssignments roleAssignments, MediaType media=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
-        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.id).path(SERVICE_PATH_ROLES).type(requestType).header(X_AUTH_TOKEN, token).entity(roleAssignments).put(ClientResponse)
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.id).path(SERVICE_PATH_ROLES).type(media).accept(media).header(X_AUTH_TOKEN, token).entity(roleAssignments).put(ClientResponse)
     }
 
     def deleteUserGroup(String token, UserGroup userGroup) {
