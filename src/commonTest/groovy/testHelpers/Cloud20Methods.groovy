@@ -1148,6 +1148,11 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).type(media).accept(media).header(X_AUTH_TOKEN, token).entity(userGroup).post(ClientResponse)
     }
 
+    def updateUserGroup(String token, String groupId, String domainId, UserGroup userGroup, MediaType request=MediaType.APPLICATION_XML_TYPE, MediaType accept=MediaType.APPLICATION_XML_TYPE) {
+        initOnUse()
+        resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(domainId).path(SERVICE_PATH_USER_GROUPS).path(groupId).type(request).accept(accept).header(X_AUTH_TOKEN, token).entity(userGroup).put(ClientResponse)
+    }
+
     def getUserGroup(String token, UserGroup userGroup, MediaType media=MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.getId()).accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)

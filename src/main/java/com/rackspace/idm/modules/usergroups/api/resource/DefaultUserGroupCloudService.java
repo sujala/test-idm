@@ -8,6 +8,7 @@ import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
@@ -116,7 +117,26 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
     @Override
     public Response updateGroup(String authToken, UserGroup group) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        try {
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(group.getDomainId());
+
+            domainService.checkAndGetDomain(group.getDomainId());
+
+            // Convert to entity object
+            com.rackspace.idm.modules.usergroups.entity.UserGroup userGroupEntity = userGroupConverter.fromUserGroupWeb(group);
+
+            com.rackspace.idm.modules.usergroups.entity.UserGroup updatedGroup = userGroupService.updateGroup(userGroupEntity);
+
+            return Response.ok(userGroupConverter.toUserGroupWeb(updatedGroup)).build();
+        } catch (Exception ex) {
+            LOG.error(String.format("Error updating user group for domain '%s' and groupId '%s'", group.getDomainId(), group.getId()), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @Override
