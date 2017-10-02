@@ -2,6 +2,7 @@ package com.rackspace.idm.modules.usergroups.api.resource;
 
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
+import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.entity.BaseUser;
 import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.service.AuthorizationService;
@@ -10,6 +11,8 @@ import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.exception.ForbiddenException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 import static com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service.NOT_AUTHORIZED;
 
@@ -28,6 +31,9 @@ public class DefaultUserGroupAuthorizationService implements UserGroupAuthorizat
 
     @Autowired
     private DomainService domainService;
+
+    @Autowired
+    private IdentityConfig identityConfig;
 
     /**
      * This method verifies the caller (defined by that provided in RequestContext) can "manage" the user groups within
@@ -76,4 +82,23 @@ public class DefaultUserGroupAuthorizationService implements UserGroupAuthorizat
             }
         }
     }
+
+    @Override
+    public boolean areUserGroupsEnabledForDomain(String domainId) {
+        return identityConfig.getReloadableConfig().areUserGroupsGloballyEnabled()
+                || areUserGroupsExplicitlyEnabledForDomain(domainId);
+    }
+
+    private boolean areUserGroupsExplicitlyEnabledForDomain(String domainId) {
+        List<String> enabledDomainIds = identityConfig.getRepositoryConfig().getExplicitUserGroupEnabledDomains();
+
+        // DomainIds are case insensitive so can't just use list contains
+        for (String enabledDomainId : enabledDomainIds) {
+            if (enabledDomainId.equalsIgnoreCase(domainId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

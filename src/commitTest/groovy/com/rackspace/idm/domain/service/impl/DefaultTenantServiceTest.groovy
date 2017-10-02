@@ -781,7 +781,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def tenantRoleList = service.getTenantRolesForUserPerformant(user)
 
         then:
-        1 * reloadableConfig.applyGroupMembershipForEffectiveRoleCalculation() >> flag
+        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> flag
         1 * tenantRoleDao.getTenantRolesForUser(user) >> [] // Assume zilch roles returned
         if (flag) {
             // Roles should be retrieved for both groups assigned
@@ -814,7 +814,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def tenantRoleList = service.getTenantRolesForUserApplyRcnRoles(user)
 
         then:
-        1 * reloadableConfig.applyGroupMembershipForEffectiveRoleCalculation() >> flag
+        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> flag
         1 * tenantRoleDao.getTenantRolesForUser(user) >> [] // Assume zilch roles returned
         if (flag) {
             // Roles should be retrieved for both groups assigned
