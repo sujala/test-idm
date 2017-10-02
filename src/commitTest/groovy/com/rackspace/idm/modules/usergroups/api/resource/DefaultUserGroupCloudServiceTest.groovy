@@ -308,7 +308,7 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
             it
         }
 
-        when:
+        when: "userId matches the caller's userId"
         Response response = defaultUserGroupCloudService.listGroupsForDomain(token, domainId, new UserGroupSearchParams(null, caller.id))
 
         then:
@@ -319,6 +319,16 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
         1 * identityUserService.getEndUserById(caller.id) >> caller
         1 * userGroupService.getGroupById(groupId) >> entityGroup
         response.status == HttpStatus.SC_OK
+
+        when: "userId does not match the caller's userId"
+        response = defaultUserGroupCloudService.listGroupsForDomain(token, domainId, new UserGroupSearchParams(null, "otherId"))
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(_) >>  {throw new ForbiddenException()}
+        1 * idmExceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
     }
 
     def "getUsersInGroup: Calls appropriate authorization services and exception handler"() {
