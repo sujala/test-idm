@@ -6,6 +6,7 @@ import com.rackspace.idm.api.resource.cloud.v20.MultiFactorCloud20Service
 import com.rackspace.idm.domain.entity.ApprovedDomainGroupEnum
 import com.rackspace.idm.domain.entity.PasswordPolicy
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.WebResource
@@ -1185,12 +1186,17 @@ class Cloud20Methods {
         resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(userGroup.domainId).path(SERVICE_PATH_USER_GROUPS).path(userGroup.id).header(X_AUTH_TOKEN, token).delete(ClientResponse)
     }
 
-    def listUserGroupsForDomain(String token, String domainId, String name=null, MediaType media=APPLICATION_XML_TYPE) {
+    def listUserGroupsForDomain(String token, String domainId, UserGroupSearchParams userGroupSearchParams = null, MediaType media=APPLICATION_XML_TYPE) {
         initOnUse()
         WebResource webResource = resource.path(path20).path(RAX_AUTH).path(SERVICE_PATH_DOMAINS).path(domainId).path(SERVICE_PATH_USER_GROUPS)
         def queryParams = new MultivaluedMapImpl()
-        if (name != null) {
-            queryParams.add("name", name)
+        if (userGroupSearchParams != null ) {
+            if (userGroupSearchParams.name != null) {
+                queryParams.add("name", userGroupSearchParams.name)
+            }
+            if (userGroupSearchParams.userId != null) {
+                queryParams.add("userId", userGroupSearchParams.userId)
+            }
         }
         webResource.queryParams(queryParams).accept(media).header(X_AUTH_TOKEN, token).get(ClientResponse)
     }
