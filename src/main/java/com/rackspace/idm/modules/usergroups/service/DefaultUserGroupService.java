@@ -51,6 +51,8 @@ public class DefaultUserGroupService implements UserGroupService {
     public static final String CAN_ONLY_ADD_USERS_TO_GROUPS_WITHIN_SAME_DOMAIN = "Can only add users to groups within same domain";
     public static final String CAN_ONLY_MODIFY_GROUPS_ON_PROVISIONED_USERS_VIA_API = "Can only modify groups on provisioned users via API.";
 
+    public static final String ERROR_MESSAGE_DUPLICATE_GROUP_IN_DOMAIN = "Group already exists with this name in this domain";
+
     @Autowired
     private TenantRoleDao tenantRoleDao;
 
@@ -80,10 +82,10 @@ public class DefaultUserGroupService implements UserGroupService {
         Assert.isTrue(StringUtils.isNotBlank(group.getDomainId()));
 
         // Verify group requirements
-        validateUserGroupForCreateAndUpdate(group);
+        validateUserGroupForCreate(group);
 
         if (getGroupByNameForDomain(group.getName(), group.getDomainId()) != null) {
-            throw new DuplicateException("Group already exists with this name in this domain");
+            throw new DuplicateException(ERROR_MESSAGE_DUPLICATE_GROUP_IN_DOMAIN);
         }
 
         // Validate there is room to create this group in the domain
@@ -97,14 +99,42 @@ public class DefaultUserGroupService implements UserGroupService {
         return group;
     }
 
-    public void validateUserGroupForCreateAndUpdate(UserGroup userGroup) {
+    private void validateUserGroupForCreate(UserGroup userGroup) {
+        validateUserGroupName(userGroup);
+        validateUserGroupDescription(userGroup);
+    }
+
+    private void validateUserGroupName(UserGroup userGroup) {
         validator20.validateStringNotNullWithMaxLength("name", userGroup.getName(), MAX_LENGTH_64);
+    }
+
+    private void validateUserGroupDescription(UserGroup userGroup) {
         validator20.validateStringMaxLength("description", userGroup.getDescription(), MAX_LENGTH_255);
     }
 
     @Override
     public UserGroup updateGroup(UserGroup group) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        com.rackspace.idm.modules.usergroups.entity.UserGroup userGroupEntity = checkAndGetGroupByIdForDomain(group.getId(), group.getDomainId());
+
+        // Copy over only the attributes that are provided in the request and allowed to be updated
+        if (group.getName() != null) {
+            validateUserGroupName(group);
+            userGroupEntity.setName(group.getName());
+        }
+
+        if (group.getDescription() != null) {
+            validateUserGroupDescription(group);
+            userGroupEntity.setDescription(group.getDescription());
+        }
+
+        UserGroup otherGroupWithName = getGroupByNameForDomain(userGroupEntity.getName(), userGroupEntity.getDomainId());
+        if (otherGroupWithName != null && !otherGroupWithName.getId().equalsIgnoreCase(group.getId())) {
+            throw new DuplicateException(ERROR_MESSAGE_DUPLICATE_GROUP_IN_DOMAIN);
+        }
+
+        userGroupDao.updateGroup(userGroupEntity);
+
+        return userGroupEntity;
     }
 
     @Override

@@ -1324,6 +1324,17 @@ class Cloud20Utils {
         return response.getEntity(UserGroup)
     }
 
+    def getUserGroup(String groupId, String domainId, String token = getIdentityAdminToken()) {
+        def userGroup = new UserGroup().with {
+            it.domainId = domainId
+            it.id = groupId
+            it
+        }
+        def response = methods.getUserGroup(token, userGroup)
+        assert response.status == 200
+        return response.getEntity(UserGroup)
+    }
+
     def createFederatedUser(String domainId, mediaType = APPLICATION_XML_TYPE) {
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def username = testUtils.getRandomUUID("samlUser")

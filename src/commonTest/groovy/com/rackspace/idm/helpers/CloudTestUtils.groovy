@@ -56,6 +56,17 @@ class CloudTestUtils {
         String.valueOf(getRandomInteger())
     }
 
+    def invertStringCase(String str) {
+        if (StringUtils.isEmpty(str)) return
+
+        def chars = str.toCharArray()
+        for (int i : 0..<chars.size()) {
+            chars[i] = chars[i].isUpperCase() ? chars[i].toLowerCase() : chars[i].toUpperCase()
+        }
+
+        new String(chars)
+    }
+
     def getRandomRCN() {
         return String.format("RCN-%d-%d-%d", random.nextInt(900) + 100, random.nextInt(900) + 100, random.nextInt(900) + 100)
     }

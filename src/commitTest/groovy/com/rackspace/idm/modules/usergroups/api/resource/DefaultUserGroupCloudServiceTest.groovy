@@ -10,11 +10,13 @@ import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter
 import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter
 import com.rackspace.idm.modules.usergroups.service.UserGroupService
+import org.apache.commons.lang3.RandomStringUtils
 import com.unboundid.ldap.sdk.DN
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.ObjectFactory
@@ -484,4 +486,94 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
 
         1 * idmExceptionHandler.exceptionResponse(_ as NotFoundException) >> Response.serverError()
     }
+
+    def "updateGroup: calls backend services"() {
+        given:
+        def token = "token"
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def groupId = RandomStringUtils.randomAlphanumeric(8)
+        def userGroup = new UserGroup().with {
+            it.name = RandomStringUtils.randomAlphanumeric(8)
+            it.description = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = domainId
+            it.id = groupId
+            it
+        }
+        def userGroupEntity = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.name = RandomStringUtils.randomAlphanumeric(8)
+            it.description = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = domainId
+            it.id = groupId
+            it
+        }
+
+        when:
+        defaultUserGroupCloudService.updateGroup(token, userGroup)
+
+        then:
+        1 * userGroupConverter.fromUserGroupWeb(userGroup) >> userGroupEntity
+        1 * userGroupService.updateGroup(userGroupEntity)
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId)
+    }
+
+    def "updateGroup: calls backend services and handles exceptions"() {
+        given:
+        given:
+        def token = "token"
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def groupId = RandomStringUtils.randomAlphanumeric(8)
+        def userGroup = new UserGroup().with {
+            it.name = RandomStringUtils.randomAlphanumeric(8)
+            it.description = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = domainId
+            it.id = groupId
+            it
+        }
+        def userGroupEntity = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.name = RandomStringUtils.randomAlphanumeric(8)
+            it.description = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = domainId
+            it.id = groupId
+            it
+        }
+
+        when:
+        defaultUserGroupCloudService.updateGroup(token, userGroup)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupConverter.fromUserGroupWeb(userGroup) >> userGroupEntity
+        1 * userGroupService.updateGroup(userGroupEntity) >> {throw new DuplicateException() }
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId)
+        1 * idmExceptionHandler.exceptionResponse(_ as DuplicateException) >> Response.serverError()
+    }
+
+    def "updateGroup: Converts entity and calls backend services"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = RandomStringUtils.randomAlphanumeric(8)
+        UserGroup requestGroup = new UserGroup().with {
+            it.id = groupId
+            it.domainId = domainId
+            it.name = "name"
+            it.description = "description"
+            it
+        }
+        def convertedGroup = new com.rackspace.idm.modules.usergroups.entity.UserGroup()
+        def updatedGroup = new com.rackspace.idm.modules.usergroups.entity.UserGroup()
+        def outputGroup = new UserGroup()
+
+        when:
+        def response = defaultUserGroupCloudService.updateGroup(token, requestGroup)
+
+        then:
+        1 * userGroupConverter.fromUserGroupWeb(requestGroup) >> convertedGroup
+        1 * userGroupService.updateGroup(convertedGroup) >> updatedGroup
+        1 * userGroupConverter.toUserGroupWeb(updatedGroup) >> outputGroup
+        response.entity == outputGroup
+        response.status == HttpStatus.SC_OK
+    }
+
 }
