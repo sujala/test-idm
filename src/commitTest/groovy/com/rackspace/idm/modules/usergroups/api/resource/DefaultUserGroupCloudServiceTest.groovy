@@ -1,5 +1,6 @@
 package com.rackspace.idm.modules.usergroups.api.resource
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.api.converter.cloudv20.UserConverterCloudV20
 import com.rackspace.idm.api.resource.IdmPathUtils
@@ -7,8 +8,11 @@ import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
 import com.rackspace.idm.domain.entity.EndUser
 import com.rackspace.idm.domain.entity.PaginatorContext
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.ForbiddenException
+import com.rackspace.idm.exception.NotFoundException
+import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter
 import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter
 import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import org.apache.http.HttpStatus
@@ -28,6 +32,7 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
     UserGroupService userGroupService
     UserGroupConverter userGroupConverter
     IdmPathUtils idmPathUtils
+    RoleAssignmentConverter roleAssignmentConverter
 
     def setup() {
         defaultUserGroupCloudService = new DefaultUserGroupCloudService()
@@ -48,6 +53,8 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
         idmPathUtils = Mock()
         defaultUserGroupCloudService.idmPathUtils = idmPathUtils
 
+        roleAssignmentConverter = Mock()
+        defaultUserGroupCloudService.roleAssignmentConverter = roleAssignmentConverter
     }
 
     /**
@@ -339,4 +346,87 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
         response.status == HttpStatus.SC_OK
     }
 
+    def "getRoleOnGroup: Calls appropriate authorization services and exception handler"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = "groupId"
+        def roleId = "roleId"
+
+        when:
+        defaultUserGroupCloudService.getRoleOnGroup(token, domainId, groupId, roleId)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId) >> {throw new ForbiddenException()}
+        1 * idmExceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
+    }
+
+    @Unroll
+    def "getRoleOnGroup: calls backend service"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = "groupid"
+        def roleId = "roleId"
+
+        com.rackspace.idm.modules.usergroups.entity.UserGroup entityGroup = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.id = groupId
+            it.domainId = domainId
+            it.name = "name"
+            it.description = "description"
+            it
+        }
+
+        TenantRole tenantRole = new TenantRole().with {
+            it.name = "roleName"
+            it.roleRsId = "roleId"
+            it
+        }
+
+        TenantAssignment tenantAssignment = new TenantAssignment()
+
+        when:
+        Response response = defaultUserGroupCloudService.getRoleOnGroup(token, domainId, groupId, roleId)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId)
+
+        1 * userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId) >> entityGroup
+        1 * userGroupService.getRoleAssignmentOnGroup(entityGroup, roleId) >> tenantRole
+
+        1 * roleAssignmentConverter.toRoleAssignmentWeb(tenantRole) >> tenantAssignment
+
+        response.entity == tenantAssignment
+        response.status == HttpStatus.SC_OK
+    }
+
+
+    def "getRoleOnGroup: throws NotFoundException if given retrieved tenantRole is null"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = "groupid"
+        def roleId = "roleId"
+
+        com.rackspace.idm.modules.usergroups.entity.UserGroup entityGroup = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.id = groupId
+            it.domainId = domainId
+            it.name = "name"
+            it.description = "description"
+            it
+        }
+
+        when:
+        defaultUserGroupCloudService.getRoleOnGroup(token, domainId, groupId, roleId)
+
+        then:
+        1 * userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId) >> entityGroup
+        1 * userGroupService.getRoleAssignmentOnGroup(entityGroup, roleId) >> null
+
+        1 * idmExceptionHandler.exceptionResponse(_ as NotFoundException) >> Response.serverError()
+    }
 }
