@@ -5,6 +5,7 @@ import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 
@@ -104,17 +105,16 @@ public interface UserGroupService {
     UserGroup getGroupByNameForDomain(String groupName, String domainId);
 
     /**
-     * Retrieves the group with the specified group name for user under the specified domain. If no such group exists,
-     * returns null.
+     * Retrieves the groups for the specified search params under the specified domain. If no such groups exists,
+     * returns empty list.
      *
-     * @param groupName
-     * @param userId
+     * @param userGroupSearchParams
      * @param domainId
-     * @throws IllegalArgumentException If supplied domainId or groupName is null or empty string
+     * @throws IllegalArgumentException If supplied domainId is null or empty string
      *
      * @return
      */
-    UserGroup getGroupByNameForUserInDomain(String groupName, String userId, String domainId);
+    List<UserGroup> getGroupsBySearchParamsInDomain(UserGroupSearchParams userGroupSearchParams, String domainId);
 
     /**
      * Retries the specified role on the group, or null if the role does not exist on the group. Does not distinguish

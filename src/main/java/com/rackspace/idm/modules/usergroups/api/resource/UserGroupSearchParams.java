@@ -19,4 +19,8 @@ public class UserGroupSearchParams {
 
     @Nullable
     String userId;
+
+    boolean hasSearchParams(){
+        return name != null || userId != null;
+    }
 }
