@@ -29,6 +29,7 @@ class TestBaseFederation(base.TestBaseV2):
         request_object = requests.UserAdd(user_name=user_name,
                                           password=password)
         resp = cls.service_admin_client.add_user(request_object)
+        assert resp.status_code == 201
 
         req_obj = requests.AuthenticateWithPassword(
             user_name=user_name,
