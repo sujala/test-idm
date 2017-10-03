@@ -246,7 +246,7 @@ class DefaultUserGroupAuthorizationServiceTest extends RootServiceTest {
         "d1" | null | "d2" | null
     }
 
-    def "areUserGroupsEnabledForDomain: When 'feature.support.user.groups.globally' true, always returns true regardless of explicit domains"() {
+    def "areUserGroupsEnabledForDomain: When 'enable.user.groups.globally' true, always returns true regardless of explicit domains"() {
         when:
         def result = defaultUserGroupCloudAuthorizationService.areUserGroupsEnabledForDomain("anyDomain")
 
@@ -257,7 +257,7 @@ class DefaultUserGroupAuthorizationServiceTest extends RootServiceTest {
     }
 
     @Unroll
-    def "areUserGroupsEnabledForDomain: When 'feature.support.user.groups.globally' false, enabled depends whether in explicit list. Test Domain: #domainId; list: #list"() {
+    def "areUserGroupsEnabledForDomain: When 'enable.user.groups.globally' false, enabled depends whether in explicit list. Test Domain: #domainId; list: #list"() {
         when:
         def result = defaultUserGroupCloudAuthorizationService.areUserGroupsEnabledForDomain(domainId)
 

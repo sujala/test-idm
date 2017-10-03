@@ -366,8 +366,8 @@ public class IdentityConfig {
     public static final String USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP = "use.uuid.ids.for.new.question.enabled";
     public static final boolean USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_DEFAULT = true;
 
-    public static final String FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP = "feature.support.user.groups.globally";
-    public static final boolean FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_DEFAULT = false;
+    public static final String FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP = "enable.user.groups.globally";
+    public static final boolean FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT = false;
 
     /**
      * Required static prop
@@ -484,7 +484,7 @@ public class IdentityConfig {
      */
     public static final String FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP = "federation.identity.provider.default.policy";
 
-    public static final String ENABLED_DOMAINS_FOR_USER_GROUPS_PROP = "enabled.domains.for.user.groups";
+    public static final String ENABLED_DOMAINS_FOR_USER_GROUPS_PROP = "enable.user.groups.for.domains";
     public static final String ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT = "";
 
     @Qualifier("staticConfiguration")
@@ -677,7 +677,7 @@ public class IdentityConfig {
 
         defaults.put(LDAP_PAGING_LIMIT_DEFAULT_PROP, LDAP_PAGING_LIMIT_DEFAULT_VALUE);
         defaults.put(LDAP_PAGING_LIMIT_MAX_PROP, LDAP_PAGING_LIMIT_MAX_DEFAULT);
-        defaults.put(FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_DEFAULT);
+        defaults.put(FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT);
 
         defaults.put(ENABLED_DOMAINS_FOR_USER_GROUPS_PROP, ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT);
 
@@ -1590,9 +1590,9 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP) || enforcePasswordPolicyPasswordHistory();
         }
 
-        @IdmProp(key = FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, versionAdded = "3.16.0", description = "Whether or not user groups are supported for all domains for management and considered during effective role calculation")
+        @IdmProp(key = FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, versionAdded = "3.16.0", description = "Whether or not user groups are supported for all domains for management and considered during effective role calculation")
         public boolean areUserGroupsGloballyEnabled() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP);
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP);
         }
 
         @IdmProp(key = IDP_MAX_SEACH_RESULT_SIZE_PROP, versionAdded = "3.1.0", description = "Maximum numbers of identity providers allowed to be returned in list providers call")
@@ -1964,7 +1964,7 @@ public class IdentityConfig {
          *     <li>"," = []</li>
          * </ul>
          *
-         * Note - Callers should consider this property in tandem with the reloadable property 'feature.support.user.groups.globally'
+         * Note - Callers should consider this property in tandem with the reloadable property 'enable.user.groups.globally'
          * returned via getReloadableConfig().areUserGroupsGloballyEnabled(). When this latter property is set to true,
          * all groups are enabled.
          *

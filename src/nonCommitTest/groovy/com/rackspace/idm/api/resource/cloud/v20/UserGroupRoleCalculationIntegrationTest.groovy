@@ -185,7 +185,7 @@ class UserGroupRoleCalculationIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "Auth/Validate: user w/ membership on group with roles when group role calculation is enabled: #useGroupMembership"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, useGroupMembership)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, useGroupMembership)
 
         when:
         def authResponse = utils.authenticate(sharedUserOnGroupWithRoles)
@@ -229,7 +229,7 @@ class UserGroupRoleCalculationIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "List global roles for user: w/ membership on group with roles. group role calculation is enabled: #useGroupMembership"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, useGroupMembership)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, useGroupMembership)
 
         when:
         RoleList roleList = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), sharedUserOnGroupWithRoles.id).getEntity(RoleList).value
@@ -262,7 +262,7 @@ class UserGroupRoleCalculationIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "List global roles for user on service id: w/ membership on group with roles. group role calculation is enabled: #useGroupMembership"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, useGroupMembership)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, useGroupMembership)
 
         when: "identity roles"
         RoleList roleList = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), sharedUserOnGroupWithRoles.id, Constants.IDENTITY_SERVICE_ID).getEntity(RoleList).value
@@ -309,7 +309,7 @@ class UserGroupRoleCalculationIntegrationTest extends RootIntegrationTest {
     @Unroll
     def "List roles for user on tenant: w/ membership on group with roles. group role calculation is enabled: #useGroupMembership"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, useGroupMembership)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, useGroupMembership)
 
         when: "query cloud tenant"
         RoleList roleList = cloud20.listRolesForUserOnTenant(utils.getIdentityAdminToken(), sharedCloudTenant.id, sharedUserOnGroupWithRoles.id).getEntity(RoleList).value

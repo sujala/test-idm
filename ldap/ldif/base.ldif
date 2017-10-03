@@ -5928,9 +5928,9 @@ dn: rsId=9eba81bfbcf14f1a94f8de935eb1adc5,ou=properties,ou=cloud,o=configura
  tion,dc=rackspace,dc=com
 objectClass: rsIdentityProperty
 rsId: 9eba81bfbcf14f1a94f8de935eb1adc5
-cn: enabled.domains.for.user.groups
+cn: enable.user.groups.for.domains
 description: A comma delimited list of domains for which user groups will be
-  allowed
+  enabled
 rsIdmVersion: 3.16.0
 rsPropertyValue:: LA==
 rsPropertyValueType: String
