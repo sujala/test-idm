@@ -2,6 +2,7 @@
 from tests.api.v2 import base
 from tests.api.v2.models import factory
 from tests.package.johny import constants as const
+from tests.package.johny.v2.models import requests
 
 
 class TestGetDomain(base.TestBaseV2):
@@ -40,4 +41,7 @@ class TestGetDomain(base.TestBaseV2):
     def tearDown(self):
         super(TestGetDomain, self).tearDown()
         for domain_id in self.domain_ids:
+            disable_domain_req = requests.Domain(enabled=False)
+            self.identity_admin_client.update_domain(
+                domain_id=domain_id, request_object=disable_domain_req)
             self.identity_admin_client.delete_domain(domain_id=domain_id)

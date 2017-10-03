@@ -231,6 +231,9 @@ class AuthUserWithRoleMissingOpenstackType(base.TestBaseV2):
         for role_id in self.role_ids:
             self.service_admin_client.delete_role(role_id=role_id)
         for domain_id in self.domain_ids:
+            disable_domain_req = requests.Domain(enabled=False)
+            self.identity_admin_client.update_domain(
+                domain_id=domain_id, request_object=disable_domain_req)
             self.service_admin_client.delete_domain(domain_id=domain_id)
         for service_id in self.service_ids:
             self.service_admin_client.delete_service(service_id=service_id)

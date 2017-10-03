@@ -95,4 +95,8 @@ class TestPasswordPolicy(base.TestBaseV2):
         super(TestPasswordPolicy, self).tearDown()
         for user_id in self.user_ids:
             self.identity_admin_client.delete_user(user_id=user_id)
+
+        disable_domain_req = requests.Domain(enabled=False)
+        self.identity_admin_client.update_domain(
+            domain_id=self.domain_id, request_object=disable_domain_req)
         self.identity_admin_client.delete_domain(domain_id=self.domain_id)
