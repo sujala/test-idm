@@ -175,6 +175,46 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * identityUserService.getEndUsersInUserGroup(group, userSearchCriteria)
     }
 
+    def "addUserToGroup: creates assignment via identityUserService"() {
+        given:
+        def domainId = "domainId"
+        def userId = "userid"
+        def group = new UserGroup().with {
+            it.domainId = domainId
+            it
+        }
+        def user = new com.rackspace.idm.domain.entity.User().with {
+            it.domainId = domainId
+            it
+        }
+        mockIdentityUserService(service)
+
+        when:
+        service.addUserToGroup(userId, group)
+
+        then:
+        1 * identityUserService.checkAndGetUserById(userId) >> user
+        1 * identityUserService.addUserGroupToUser(group, user)
+    }
+
+    def "removeUserFromGroup: removes assignment via identityUserService"() {
+        given:
+        def userId = "userid"
+        def group = new UserGroup()
+        def user = new com.rackspace.idm.domain.entity.User().with {
+            it.domainId = domainId
+            it
+        }
+        mockIdentityUserService(service)
+
+        when:
+        service.removeUserFromGroup(userId, group)
+
+        then:
+        1 * identityUserService.checkAndGetUserById(userId) >> user
+        1 * identityUserService.removeUserGroupFromUser(group, user)
+    }
+
     def "updateGroup: validates group name and length through validator standard calls"() {
         UserGroup origGroup = new UserGroup().with {
             it.id = RandomStringUtils.randomAlphanumeric(8)
@@ -529,5 +569,4 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * identityUserService.getEndUserById(userId) >> user
         userGroup == null
     }
-
 }

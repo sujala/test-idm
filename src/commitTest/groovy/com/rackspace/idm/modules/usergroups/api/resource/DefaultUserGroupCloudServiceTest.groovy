@@ -357,6 +357,50 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
         1 * idmExceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
     }
 
+    def "addUserToGroup: Calls appropriate authorization services and exception handler"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = "groupid"
+        def userId = "userid"
+        def group = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.domainId = domainId
+            it
+        }
+
+        when:
+        defaultUserGroupCloudService.addUserToGroup(token, domainId, groupId, userId)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId) >> group
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId) >> {throw new ForbiddenException()}
+        1 * idmExceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
+    }
+
+    def "removeUserFromGroup: Calls appropriate authorization services and exception handler"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = "groupid"
+        def userId = "userid"
+        def group = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.domainId = domainId
+            it
+        }
+
+        when:
+        defaultUserGroupCloudService.removeUserFromGroup(token, domainId, groupId, userId)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId) >> group
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId) >> {throw new ForbiddenException()}
+        1 * idmExceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
+    }
+
     def "getUsersInGroup: calls backend service"() {
         given:
         def mockUriInfo = Mock(UriInfo)
@@ -402,6 +446,45 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
 
         response.status == HttpStatus.SC_OK
     }
+
+    def "addUserToGroup: calls backend service"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = "groupid"
+        def userId = "userid"
+        def group = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.domainId = domainId
+            it
+        }
+
+        when:
+        defaultUserGroupCloudService.addUserToGroup(token, domainId, groupId, userId)
+
+        then:
+        1 * userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId) >> group
+        1 * userGroupService.addUserToGroup(userId, group)
+    }
+
+    def "removeUserFromGroup: calls backend service"() {
+        given:
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = "groupid"
+        def userId = "userid"
+        def group = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.domainId = domainId
+            it
+        }
+
+        when:
+        defaultUserGroupCloudService.removeUserFromGroup(token, domainId, groupId, userId)
+
+        then:
+        1 * userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId) >> group
+        1 * userGroupService.removeUserFromGroup(userId, group)
+    }
+
 
     def "getRoleOnGroup: Calls appropriate authorization services and exception handler"() {
         given:
