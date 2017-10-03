@@ -16,6 +16,7 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
@@ -166,7 +167,44 @@ public class DefaultUserGroupService implements UserGroupService {
     }
 
     @Override
-    public UserGroup getGroupByNameForUserInDomain(String groupName, String userId, String domainId) {
+    public List<UserGroup> getGroupsBySearchParamsInDomain(UserGroupSearchParams userGroupSearchParams, String domainId) {
+        Validate.notEmpty(domainId);
+
+        String name = userGroupSearchParams.getName();
+        String userId = userGroupSearchParams.getUserId();
+
+        List<UserGroup> userGroups = new ArrayList<>();
+        UserGroup group;
+
+        if (name != null && userId != null) {
+            group = getGroupByNameForUserInDomain(name, userId, domainId);
+            if (group != null) {
+                userGroups.add(group);
+            }
+        } else if (userGroupSearchParams.getName() != null) {
+            group = getGroupByNameForDomain(name, domainId);
+            if (group != null) {
+                userGroups.add(group);
+            }
+        } else if (userId != null) {
+            EndUser user = identityUserService.getEndUserById(userId);
+
+            // Return an empty list if the user was not found or does not belong to the same domain specified on the request.
+            if (user != null && user.getDomainId().equals(domainId)) {
+                for (String userGroupId : user.getUserGroupIds()){
+                    group = getGroupById(userGroupId);
+                    // Only add existing user groups.
+                    if (group != null) {
+                        userGroups.add(group);
+                    }
+                }
+            }
+        }
+
+        return userGroups;
+    }
+
+    private UserGroup getGroupByNameForUserInDomain(String groupName, String userId, String domainId) {
         Validate.notEmpty(groupName);
         Validate.notEmpty(userId);
         Validate.notEmpty(domainId);

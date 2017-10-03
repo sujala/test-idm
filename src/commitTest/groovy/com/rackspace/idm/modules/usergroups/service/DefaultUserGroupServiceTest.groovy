@@ -7,6 +7,7 @@ import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.modules.usergroups.Constants
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
@@ -226,6 +227,123 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * dao.getGroupByNameForDomain(groupName, domainId) >> group
         1 * identityUserService.getEndUserById(userId) >> user
         userGroup.equals(group)
+    }
+
+    def "getGroupsBySearchParamsInDomain: calls correct dao and services"() {
+        given:
+        mockIdentityUserService(service)
+        def domainId = "domainId"
+        def groupName = "name"
+        def userId = "userId"
+        def groupId = "groupId"
+        UserGroup group = new UserGroup().with {
+            it.domainId = domainId
+            it.name = groupName
+            it.id = groupId
+            it.uniqueId = "groupDN=$groupId"
+            it
+        }
+        EndUser user = new User().with {
+            it.domainId = domainId
+            it.id = userId
+            it.userGroupDNs.add(new DN(group.uniqueId))
+            it
+        }
+
+        when: "Searching by name"
+        UserGroupSearchParams userGroupSearchParams = new UserGroupSearchParams(groupName, null)
+        List<UserGroup> userGroups = service.getGroupsBySearchParamsInDomain(userGroupSearchParams, domainId)
+
+        then:
+        1 * dao.getGroupByNameForDomain(groupName, domainId) >> group
+        userGroups.size() == 1
+        userGroups.get(0) == group
+
+        when: "Searching by userId"
+        userGroupSearchParams = new UserGroupSearchParams(null, userId)
+        userGroups = service.getGroupsBySearchParamsInDomain(userGroupSearchParams, domainId)
+
+        then:
+        1 * identityUserService.getEndUserById(userId) >> user
+        1 * dao.getGroupById(groupId) >> group
+        userGroups.size() == 1
+        userGroups.get(0) == group
+
+        when: "Searching by name and userId"
+        userGroupSearchParams = new UserGroupSearchParams(groupName, userId)
+        userGroups = service.getGroupsBySearchParamsInDomain(userGroupSearchParams, domainId)
+
+        then:
+        1 * dao.getGroupByNameForDomain(groupName, domainId) >> group
+        1 * identityUserService.getEndUserById(userId) >> user
+        userGroups.size() == 1
+        userGroups.get(0) == group
+    }
+
+    def "getGroupsBySearchParamsInDomain: empty list cases"() {
+        given:
+        mockIdentityUserService(service)
+        def domainId = "domainId"
+        def groupName = "name"
+        def userId = "userId"
+        def groupId = "groupId"
+        UserGroup group = new UserGroup().with {
+            it.domainId = domainId
+            it.name = groupName
+            it.id = groupId
+            it.uniqueId = "groupDN=$groupId"
+            it
+        }
+        EndUser user = new User().with {
+            it.domainId = domainId
+            it.id = userId
+            it.userGroupDNs.add(new DN(group.uniqueId))
+            it
+        }
+
+        when: "Searching by name"
+        UserGroupSearchParams userGroupSearchParams = new UserGroupSearchParams(groupName, null)
+        List<UserGroup> userGroups = service.getGroupsBySearchParamsInDomain(userGroupSearchParams, domainId)
+
+        then:
+        1 * dao.getGroupByNameForDomain(groupName, domainId) >> null
+        userGroups.size() == 0
+
+        when: "Searching by userId - user not found"
+        userGroupSearchParams = new UserGroupSearchParams(null, userId)
+        userGroups = service.getGroupsBySearchParamsInDomain(userGroupSearchParams, domainId)
+
+        then:
+        1 * identityUserService.getEndUserById(userId) >> null
+        0 * dao.getGroupById(groupId)
+        userGroups.size() == 0
+
+        when: "Searching by userId - group not found"
+        userGroupSearchParams = new UserGroupSearchParams(null, userId)
+        userGroups = service.getGroupsBySearchParamsInDomain(userGroupSearchParams, domainId)
+
+        then:
+        1 * identityUserService.getEndUserById(userId) >> user
+        1 * dao.getGroupById(groupId) >> null
+        userGroups.size() == 0
+
+        when: "Searching by name and userId - user not found"
+        userGroupSearchParams = new UserGroupSearchParams(groupName, userId)
+        userGroups = service.getGroupsBySearchParamsInDomain(userGroupSearchParams, domainId)
+
+        then:
+        1 * dao.getGroupByNameForDomain(groupName, domainId) >> group
+        1 * identityUserService.getEndUserById(userId) >> null
+        userGroups.size() == 0
+
+        when: "Searching by name and userId - group not found"
+        userGroupSearchParams = new UserGroupSearchParams(groupName, userId)
+        userGroups = service.getGroupsBySearchParamsInDomain(userGroupSearchParams, domainId)
+
+        then:
+        1 * dao.getGroupByNameForDomain(groupName, domainId) >> null
+        0 * identityUserService.getEndUserById(userId)
+        userGroups.size() == 0
     }
 
     def "getGroupByNameForUserInDomain: null cases"() {
