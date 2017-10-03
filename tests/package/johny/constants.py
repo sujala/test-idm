@@ -20,6 +20,8 @@ ADD_TENANT_TO_DOMAIN_URL = DELETE_TENANT_FROM_DOMAIN_URL = (
     '/RAX-AUTH/domains/{domain_id}/tenants/{tenant_id}')
 ADD_TENANT_URL = LIST_TENANTS = '/tenants'
 ADD_USER_GROUP_TO_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/groups'
+ADD_USER_TO_USER_GROUP_URL = (
+    '/RAX-AUTH/domains/{domain_id}/groups/{group_id}/users/{user_id}')
 ANALYZE_TOKEN_URL = '/tokens/analyze'
 TENANT_TYPE_URL = '/RAX-AUTH/tenant-types'
 RD_TENANT_TYPE_URL = '/RAX-AUTH/tenant-types/{name}'
@@ -38,6 +40,8 @@ DELETE_OTP_DEVICE_URL = (
     '/users/{user_id}/RAX-AUTH/multi-factor/otp-devices/{device_id}')
 DELETE_ROLE_FR_USER_URL = ADD_ROLE_TO_USER_URL
 DELETE_SERVICE_URL = GET_SERVICE_URL = '/OS-KSADM/services/{service_id}'
+DELETE_TENANT_ROLE_ASSIGNMENTS_FROM_USER_GROUP_URL = (
+    ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL + '/{role_id}')
 DELETE_TENANT_TYPE_TO_ENDPOINT_MAPPING_RULE_URL = (
     '/OS-KSCATALOG/endpointTemplates/RAX-AUTH/rules/{rule_id}')
 DEVOPS_PROPS_URL = '/props'
@@ -69,9 +73,13 @@ LIST_GROUPS_URL = '/users/{user_id}/RAX-KSGRP'
 LIST_ROLES_FOR_USER_ON_TENANT_URL = (
     '/tenants/{tenant_id}/users/{user_id}/roles')
 LIST_TENANTS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domainId}/tenants'
+LIST_TENANT_ROLE_ASSIGNMENTS_FOR_USER_GROUP_URL = (
+    ADD_TENANT_ROLE_ASSIGNMENTS_TO_USER_GROUP_URL)
 LIST_USER_ROLES_URL = '/users/{user_id}/roles'
 LIST_USERS_FOR_TENANT_URL = '/tenants/{tenant_id}/users'
 LIST_USER_GROUPS_FOR_DOMAIN_URL = ADD_USER_GROUP_TO_DOMAIN_URL
+LIST_USERS_IN_USER_GROUP_FOR_DOMAIN_URL = (
+    LIST_USER_GROUPS_FOR_DOMAIN_URL + '/{group_id}/users')
 LIST_USERS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/users'
 MOVE_DOMAIN_TO_RCN_URL = '/RAX-AUTH/domains/{domain_id}/rcn/{rcn}'
 NEW_FED_AUTH_URL = '/RAX-AUTH/federation/saml/auth'

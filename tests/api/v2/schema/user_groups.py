@@ -40,8 +40,7 @@ tenant_assignment_item = {
         const.FOR_TENANTS: {'type': 'array', 'items': {'type': 'string'},
                             "uniqueItems": True}
     },
-    # Once CID-1169 is fixed, add const.ON_ROLE_NAME to 'required' list
-    'required': [const.ON_ROLE, const.FOR_TENANTS]
+    'required': [const.ON_ROLE, const.FOR_TENANTS, const.ON_ROLE_NAME]
 }
 
 tenant_assignments_item = {

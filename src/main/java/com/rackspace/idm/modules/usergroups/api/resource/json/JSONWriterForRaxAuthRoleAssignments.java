@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments;
 import com.rackspace.idm.JSONConstants;
 import com.rackspace.idm.api.resource.cloud.JsonArrayEntryTransformer;
 import com.rackspace.idm.api.resource.cloud.v20.json.writers.JSONWriterForEntity;
+import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -45,7 +46,7 @@ public class JSONWriterForRaxAuthRoleAssignments extends JSONWriterForEntity<Rol
                 JSONObject outerTAssignments = (JSONObject) roleAssignments.get(TENANT_ASSIGNMENTS);
 
                 if (outerTAssignments != null) {
-                    JSONArray innerTAssignments = (JSONArray) outerTAssignments.get("tenantAssignment");
+                    JSONArray innerTAssignments = (JSONArray) outerTAssignments.get(TENANT_ASSIGNMENT);
                     for (Object tAssignmentObj : innerTAssignments) {
                         JSONObject tAssignment = (JSONObject) tAssignmentObj;
                         final JSONArray tenantArray = (JSONArray) tAssignment.get(TENANT_IDS);
@@ -55,10 +56,19 @@ public class JSONWriterForRaxAuthRoleAssignments extends JSONWriterForEntity<Rol
                             final JSONArray newCodes = new JSONArray();
                             tAssignment.put(TENANT_IDS, newCodes);
                             for (String code : codes.split(" ")) {
-                                newCodes.add(code);
+                                if (StringUtils.isNotBlank(code)) {
+                                    newCodes.add(code);
+                                }
                             }
                         }
                     }
+                } else {
+                    // Add the outer/inner objects to put in an empty array
+                    outerTAssignments = new JSONObject();
+                    JSONArray innerTAssignments =  new JSONArray();
+                    outerTAssignments.put(TENANT_ASSIGNMENT, innerTAssignments);
+                    roleAssignments.replace(TENANT_ASSIGNMENTS, null, outerTAssignments);
+                    System.out.print(roleAssignments.toJSONString());
                 }
             }
         }

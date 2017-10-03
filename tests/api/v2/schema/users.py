@@ -101,6 +101,7 @@ user_item = {
         const.EMAIL: {'type': 'string', 'format': 'email'},
         const.ENABLED: {'type': 'boolean'},
         const.CREATED: {'type': 'string', 'format': 'date'},
+        const.UPDATED: {'type': 'string', 'format': 'date'},
         const.NS_FEDERATED_IDP: {'type': 'string'},
         const.RAX_AUTH_MULTI_FACTOR_ENABLED: {'type': 'boolean'},
         const.RAX_AUTH_FACTOR_TYPE: {'type': 'string'},
@@ -121,8 +122,9 @@ user_item = {
 
 list_users = {
     'type': 'object', 'properties': {
-        const.USERS: {'type': 'array', 'items': user_item}
-    }
+        const.USERS: {'type': 'array', 'items': user_item, "uniqueItems": True}
+    },
+    'required': [const.USERS]
 }
 
 get_admins_of_user_item = {

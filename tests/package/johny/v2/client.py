@@ -967,7 +967,7 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
                                          requestslib_kwargs=None):
         """ Return response object from the delete role to user on tenant
             no response body
-        DELETE /v2.0/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/(
+        DELETE /v2.0/tenants/{tenant_id}/users/{user_id}/roles/OS-KSADM/{
         role_id}
         :return: 204 no response body
         """
@@ -1661,3 +1661,43 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             domain_id=domain_id, group_id=group_id)
         return self.request(
             'DELETE', url, requestslib_kwargs=requestslib_kwargs)
+
+    def delete_tenant_role_assignments_from_user_group(
+            self, domain_id, group_id, role_id, requestslib_kwargs=None):
+        """
+        DELETE RAX-AUTH/domains/{domainId}/groups/{groupId}/roles/{role_id}
+        """
+        url = self.url + (
+            const.DELETE_TENANT_ROLE_ASSIGNMENTS_FROM_USER_GROUP_URL.format(
+                domain_id=domain_id, group_id=group_id, role_id=role_id))
+        return self.request(
+            'DELETE', url, requestslib_kwargs=requestslib_kwargs)
+
+    def list_tenant_role_assignments_to_user_group(
+            self, domain_id, group_id, requestslib_kwargs=None):
+        """
+        GET RAX-AUTH/domains/{domainId}/groups/{groupId}/roles
+        """
+        url = self.url + (
+            const.LIST_TENANT_ROLE_ASSIGNMENTS_FOR_USER_GROUP_URL.format(
+                domain_id=domain_id, group_id=group_id))
+        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
+
+    def add_user_to_user_group(
+            self, domain_id, group_id, user_id, requestslib_kwargs=None):
+        """
+        PUT /v2.0/RAX-AUTH/domains/{domain_id}/groups/{group_id}/
+        users/{user_id}
+        """
+        url = self.url + const.ADD_USER_TO_USER_GROUP_URL.format(
+            domain_id=domain_id, group_id=group_id, user_id=user_id)
+        return self.request('PUT', url, requestslib_kwargs=requestslib_kwargs)
+
+    def list_users_in_user_group_for_domain(
+            self, domain_id, group_id, requestslib_kwargs=None):
+        """
+        GET /v2.0/RAX-AUTH/domains/{domain_id}/groups/{group_id}/users
+        """
+        url = self.url + const.LIST_USERS_IN_USER_GROUP_FOR_DOMAIN_URL.format(
+            domain_id=domain_id, group_id=group_id)
+        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
