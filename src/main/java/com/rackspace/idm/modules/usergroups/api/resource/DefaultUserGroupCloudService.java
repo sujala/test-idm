@@ -13,6 +13,7 @@ import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
 import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmExceptionHandler;
 import com.rackspace.idm.exception.NotFoundException;
@@ -69,6 +70,9 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
     @Autowired
     private JAXBObjectFactories objFactories;
+
+    @Autowired
+    private IdentityUserService identityUserService;
 
     @Override
     public Response addGroup(UriInfo uriInfo, String authToken, UserGroup group) {
@@ -168,14 +172,38 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
 
-            // Verify caller can manage specified domain's user groups
-            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId);
+            /*
+            A non user-admin/user-manage/rcn-admin end user (federated or provisioned) can only make this request if the
+            userId query param is set to their own userId.
+             */
+            if (!requestContextHolder.getRequestContext().getEffectiveCaller().getId().equals(searchCriteria.getUserId())) {
+                // Verify caller can manage specified domain's user groups
+                userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId);
+            }
 
             List<com.rackspace.idm.modules.usergroups.entity.UserGroup> userGroups = new ArrayList<>();
-            if (searchCriteria.getName() != null) {
+            if (searchCriteria.getName() != null && searchCriteria.getUserId() != null) {
+                com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.getGroupByNameForUserInDomain(searchCriteria.getName(), searchCriteria.getUserId(), domainId);
+                if (group != null) {
+                    userGroups.add(group);
+                }
+            } else if (searchCriteria.getName() != null) {
                 com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.getGroupByNameForDomain(searchCriteria.getName(), domainId);
                 if (group != null) {
                     userGroups.add(group);
+                }
+            } else if (searchCriteria.getUserId() != null) {
+                EndUser user = identityUserService.getEndUserById(searchCriteria.getUserId());
+
+                // Return an empty list if the user was not found or does not belong to the same domain specified on the request.
+                if (user != null && user.getDomainId().equals(domainId)) {
+                    for (String userGroupId : user.getUserGroupIds()){
+                        com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.getGroupById(userGroupId);
+                        // Only add existing user groups.
+                        if (group != null) {
+                            userGroups.add(group);
+                        }
+                    }
                 }
             } else {
                 for (com.rackspace.idm.modules.usergroups.entity.UserGroup group : userGroupService.getGroupsForDomain(domainId)) {

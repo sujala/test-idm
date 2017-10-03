@@ -21,6 +21,8 @@ import com.rackspace.idm.modules.usergroups.dao.UserGroupDao;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.exception.FailedGrantRoleAssignmentsException;
 import com.rackspace.idm.validation.Validator20;
+import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.NotImplementedException;
@@ -191,6 +193,34 @@ public class DefaultUserGroupService implements UserGroupService {
         Validate.notEmpty(domainId);
 
         return userGroupDao.getGroupByNameForDomain(groupName, domainId);
+    }
+
+    @Override
+    public UserGroup getGroupByNameForUserInDomain(String groupName, String userId, String domainId) {
+        Validate.notEmpty(groupName);
+        Validate.notEmpty(userId);
+        Validate.notEmpty(domainId);
+
+        UserGroup userGroup = userGroupDao.getGroupByNameForDomain(groupName, domainId);
+        if (userGroup == null) {
+            return null;
+        }
+
+        EndUser user = identityUserService.getEndUserById(userId);
+        if (user == null) {
+            return null;
+        }
+
+        DN groupDn;
+        try {
+            groupDn = new DN(userGroup.getUniqueId());
+        } catch (LDAPException e) {
+            String errMsg = "User group DN could not be parsed";
+            log.error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        return user.getUserGroupDNs().contains(groupDn) ? userGroup : null;
     }
 
     @Override

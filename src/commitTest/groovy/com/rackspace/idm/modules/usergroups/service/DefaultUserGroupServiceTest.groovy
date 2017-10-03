@@ -1,6 +1,8 @@
 package com.rackspace.idm.modules.usergroups.service
 
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
+import com.rackspace.idm.domain.entity.EndUser
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.ForbiddenException
@@ -9,6 +11,7 @@ import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import org.apache.commons.lang3.RandomStringUtils
+import com.unboundid.ldap.sdk.DN
 import spock.lang.Unroll
 import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
@@ -171,7 +174,6 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * identityUserService.getEndUsersInUserGroup(group, userSearchCriteria)
     }
 
-
     def "updateGroup: validates group name and length through validator standard calls"() {
         UserGroup origGroup = new UserGroup().with {
             it.id = RandomStringUtils.randomAlphanumeric(8)
@@ -306,6 +308,108 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * dao.getGroupByNameForDomain(groupUpdates.name, groupUpdates.domainId) >> otherGroup
         0 * dao.updateGroup(_)
         thrown(DuplicateException)
+    }
+
+    def "getGroupByNameForUserInDomain: invalid params"() {
+        given:
+        def groupName = "groupName"
+        def userId = "userId"
+        def domainId = "domainId"
+
+        when: "groupName is null"
+        service.getGroupByNameForUserInDomain(null, userId, domainId)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "userId is null"
+        service.getGroupByNameForUserInDomain(groupName, null, domainId)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "domainId is null"
+        service.getGroupByNameForUserInDomain(groupName, userId, null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def "getGroupByNameForUserInDomain: calls correct dao and service"() {
+        given:
+        def groupName = "groupName"
+        def userId = "userId"
+        def domainId = "domainId"
+        UserGroup group = new UserGroup().with {
+            it.domainId = domainId
+            it.name = groupName
+            it.id = "id"
+            it.uniqueId = "groupDN=groupId"
+            it
+        }
+        EndUser user = new User().with {
+            it.domainId = domainId
+            it.id = userId
+            it.username = "username"
+            it.userGroupDNs.add(new DN(group.uniqueId))
+            it
+        }
+        mockIdentityUserService(service)
+
+        when:
+        UserGroup userGroup = service.getGroupByNameForUserInDomain(groupName, userId, domainId)
+
+        then:
+        1 * dao.getGroupByNameForDomain(groupName, domainId) >> group
+        1 * identityUserService.getEndUserById(userId) >> user
+        userGroup.equals(group)
+    }
+
+    def "getGroupByNameForUserInDomain: null cases"() {
+        given:
+        def groupName = "groupName"
+        def userId = "userId"
+        def domainId = "domainId"
+        UserGroup group = new UserGroup().with {
+            it.domainId = domainId
+            it.name = groupName
+            it.id = "id"
+            it.uniqueId = "groupDN=groupId"
+            it
+        }
+        EndUser user = new User().with {
+            it.domainId = domainId
+            it.id = userId
+            it.username = "username"
+            it.userGroupDNs.add(new DN(group.uniqueId))
+            it
+        }
+        mockIdentityUserService(service)
+
+        when: "User group not found"
+        UserGroup userGroup = service.getGroupByNameForUserInDomain(groupName, userId, domainId)
+
+        then:
+        1 * dao.getGroupByNameForDomain(groupName, domainId) >> null
+        userGroup == null
+
+        when: "User not found"
+        userGroup = service.getGroupByNameForUserInDomain(groupName, userId, domainId)
+
+        then:
+        1 * dao.getGroupByNameForDomain(groupName, domainId) >> group
+        1 * identityUserService.getEndUserById(userId) >> null
+        userGroup == null
+
+        when: "When user group not part of user's userGroupDNs"
+        user.userGroupDNs.clear()
+        user.userGroupDNs.add(new DN("otherDN=dn"))
+        userGroup = service.getGroupByNameForUserInDomain(groupName, userId, domainId)
+
+        then:
+        1 * dao.getGroupByNameForDomain(groupName, domainId) >> group
+        1 * identityUserService.getEndUserById(userId) >> user
+        userGroup == null
     }
 
 }

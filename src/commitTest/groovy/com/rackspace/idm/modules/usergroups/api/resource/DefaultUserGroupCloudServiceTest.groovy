@@ -17,6 +17,7 @@ import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmen
 import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter
 import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import org.apache.commons.lang3.RandomStringUtils
+import com.unboundid.ldap.sdk.DN
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import org.openstack.docs.identity.api.v2.UserList
@@ -238,11 +239,16 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
         given:
         def domainId = "domainId"
         def token = "token"
+        def caller = new User().with {
+            it.id = "id"
+            it
+        }
 
         when:
-        defaultUserGroupCloudService.listGroupsForDomain(token, domainId, new UserGroupSearchParams(null))
+        defaultUserGroupCloudService.listGroupsForDomain(token, domainId, new UserGroupSearchParams(null, null))
 
         then:
+        1 * requestContext.getEffectiveCaller() >> caller
         1 * securityContext.getAndVerifyEffectiveCallerToken(token)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId) >> {throw new ForbiddenException()}
@@ -255,6 +261,10 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
         def domainId = "domainId"
         def token = "token"
         def groupId = "groupid"
+        def caller = new User().with {
+            it.id = "id"
+            it
+        }
 
         com.rackspace.idm.modules.usergroups.entity.UserGroup entityGroup = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
             it.id = groupId
@@ -268,9 +278,10 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
         entityGroups.add(entityGroup)
 
         when:
-        Response response = defaultUserGroupCloudService.listGroupsForDomain(token, domainId, new UserGroupSearchParams(name))
+        Response response = defaultUserGroupCloudService.listGroupsForDomain(token, domainId, new UserGroupSearchParams(name, null))
 
         then:
+        1 * requestContext.getEffectiveCaller() >> caller
         1 * securityContext.getAndVerifyEffectiveCallerToken(token)
         1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
         1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId)
@@ -283,6 +294,50 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
 
         where:
         name << [null, "name"]
+    }
+
+    def "listGroupsForDomain: allows provisioned users if query param matches their userId"() {
+        given:
+        mockIdentityUserService(defaultUserGroupCloudService)
+        def domainId = "domainId"
+        def token = "token"
+        def groupId = "groupId"
+        def caller = new User().with {
+            it.id = "id"
+            it.domainId = domainId
+            it.userGroupDNs.add(new DN("groupDN=$groupId"))
+            it
+        }
+
+        com.rackspace.idm.modules.usergroups.entity.UserGroup entityGroup = new com.rackspace.idm.modules.usergroups.entity.UserGroup().with {
+            it.id = groupId
+            it.domainId = domainId
+            it.name = "name"
+            it.description = "description"
+            it
+        }
+
+        when: "userId matches the caller's userId"
+        Response response = defaultUserGroupCloudService.listGroupsForDomain(token, domainId, new UserGroupSearchParams(null, caller.id))
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * requestContext.getEffectiveCaller() >> caller
+        0 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(_)
+        1 * identityUserService.getEndUserById(caller.id) >> caller
+        1 * userGroupService.getGroupById(groupId) >> entityGroup
+        response.status == HttpStatus.SC_OK
+
+        when: "userId does not match the caller's userId"
+        response = defaultUserGroupCloudService.listGroupsForDomain(token, domainId, new UserGroupSearchParams(null, "otherId"))
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * requestContext.getEffectiveCaller() >> caller
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(_) >>  {throw new ForbiddenException()}
+        1 * idmExceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
     }
 
     def "getUsersInGroup: Calls appropriate authorization services and exception handler"() {

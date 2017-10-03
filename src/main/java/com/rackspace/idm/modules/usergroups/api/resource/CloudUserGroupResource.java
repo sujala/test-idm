@@ -49,8 +49,9 @@ public class CloudUserGroupResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             @PathParam(DOMAIN_ID_PATH_PARAM_NAME) String domainId,
-            @QueryParam("name") String name) {
-        return userGroupCloudService.listGroupsForDomain(authToken, domainId, new UserGroupSearchParams(name));
+            @QueryParam("name") String name,
+            @QueryParam("userId") String userId) {
+        return userGroupCloudService.listGroupsForDomain(authToken, domainId, new UserGroupSearchParams(name, userId));
     }
 
     @GET

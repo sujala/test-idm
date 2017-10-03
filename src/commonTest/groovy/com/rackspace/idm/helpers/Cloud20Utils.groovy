@@ -1345,4 +1345,9 @@ class Cloud20Utils {
         def user = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user : samlAuthResponse.user
         return user
     }
+
+    def removeUserFromUserGroup(String userId, UserGroup userGroup, String token = getIdentityAdminToken()) {
+        def response = methods.removeUserFromUserGroup(token, userGroup.domainId, userGroup.id, userId)
+        assert response.status == SC_NO_CONTENT
+    }
 }
