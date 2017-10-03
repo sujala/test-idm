@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.IdentityUserService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmExceptionHandler;
+import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter;
 import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
@@ -369,6 +370,29 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
     @Override
     public Response getRoleOnGroup(String authToken, String domainId, String groupId, String roleId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        try {
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId);
+            com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId);
+
+            return Response.ok(roleAssignmentConverter.toRoleAssignmentWeb(getTenantRoleOnGroup(group, roleId))).build();
+        } catch (Exception ex) {
+            LOG.info(String.format("Error retrieving role '%s' for user group with groupId '%s'", roleId, groupId), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
+    }
+
+    private TenantRole getTenantRoleOnGroup(com.rackspace.idm.modules.usergroups.entity.UserGroup group, String roleId) {
+
+        TenantRole tenantRole = userGroupService.getRoleAssignmentOnGroup(group, roleId);
+
+        if(tenantRole == null) {
+            throw new NotFoundException(String.format("Role with ID %s not found on the user group with ID %s.", roleId, group.getId()));
+        }
+        return tenantRole;
     }
 }

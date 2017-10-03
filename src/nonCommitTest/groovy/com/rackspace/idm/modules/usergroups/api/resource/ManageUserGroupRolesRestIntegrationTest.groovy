@@ -12,6 +12,7 @@ import org.apache.commons.collections4.CollectionUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
+import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.openstack.docs.identity.api.v2.ForbiddenFault
 import org.openstack.docs.identity.api.v2.Tenants
 import org.openstack.docs.identity.api.v2.User
@@ -131,7 +132,8 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
 
         then:
         getResponse.status == HttpStatus.SC_OK
-        retrievedEntity.tenantAssignments == null
+        retrievedEntity.tenantAssignments != null
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
 
         when: "assignment 1"
         getResponse = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments1, mediaType)
@@ -188,26 +190,6 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
     }
 
-    void verifyContainsAssignment(RoleAssignments roleAssignments, String roleId, List<String> tenantIds) {
-        ImmutableClientRole imr = applicationService.getCachedClientRoleById(roleId)
-
-        def rbac1Assignment = roleAssignments.tenantAssignments.tenantAssignment.find {it.onRole == roleId}
-        assert rbac1Assignment != null
-        assert rbac1Assignment.forTenants.size() == tenantIds.size()
-        assert rbac1Assignment.onRoleName == imr.name
-        assert CollectionUtils.isEqualCollection(rbac1Assignment.forTenants, tenantIds)
-    }
-
-    TenantAssignment createTenantAssignment(String roleId, List<String> tenants) {
-        def assignment = new TenantAssignment().with {
-            ta ->
-                ta.onRole = roleId
-                ta.forTenants.addAll(tenants)
-                ta
-        }
-        return assignment
-    }
-
     @Unroll
     def "Error: Not allowed to grant user-manage role to user group; mediaType = #mediaType"() {
         UserGroup group = new UserGroup().with {
@@ -241,5 +223,55 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "Error: No forTenants value on role assignment returns error; mediaType = #mediaType"() {
+        UserGroup group = new UserGroup().with {
+            it.domainId = sharedUserAdmin.domainId
+            it.name = "addRoleTest_" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+        def createdGroup = cloud20.createUserGroup(sharedIdentityAdminToken, group, mediaType).getEntity(UserGroup)
+
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, []))
+                    tas
+            }
+            it
+        }
+
+        when:
+        def response = cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, assignments, mediaType)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, BadRequestFault, HttpStatus.SC_BAD_REQUEST
+                , com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_USER_GROUPS_MISSING_REQUIRED_ATTRIBUTE
+                , com.rackspace.idm.modules.usergroups.Constants.ERROR_CODE_ROLE_ASSIGNMENT_MISSING_FOR_TENANTS_MSG)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    void verifyContainsAssignment(RoleAssignments roleAssignments, String roleId, List<String> tenantIds) {
+        ImmutableClientRole imr = applicationService.getCachedClientRoleById(roleId)
+
+        def rbac1Assignment = roleAssignments.tenantAssignments.tenantAssignment.find {it.onRole == roleId}
+        assert rbac1Assignment != null
+        assert rbac1Assignment.forTenants.size() == tenantIds.size()
+        assert rbac1Assignment.onRoleName == imr.name
+        assert CollectionUtils.isEqualCollection(rbac1Assignment.forTenants, tenantIds)
+    }
+
+    TenantAssignment createTenantAssignment(String roleId, List<String> tenants) {
+        def assignment = new TenantAssignment().with {
+            ta ->
+                ta.onRole = roleId
+                ta.forTenants.addAll(tenants)
+                ta
+        }
+        return assignment
     }
 }

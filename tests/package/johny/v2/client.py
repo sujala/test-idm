@@ -1661,3 +1661,24 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             domain_id=domain_id, group_id=group_id)
         return self.request(
             'DELETE', url, requestslib_kwargs=requestslib_kwargs)
+
+    def delete_tenant_role_assignments_from_user_group(
+            self, domain_id, group_id, role_id, requestslib_kwargs=None):
+        """
+        DELETE RAX-AUTH/domains/{domainId}/groups/{groupId}/roles/{role_id}
+        """
+        url = self.url + (
+            const.DELETE_TENANT_ROLE_ASSIGNMENTS_FROM_USER_GROUP_URL.format(
+                domain_id=domain_id, group_id=group_id, role_id=role_id))
+        return self.request(
+            'DELETE', url, requestslib_kwargs=requestslib_kwargs)
+
+    def list_tenant_role_assignments_to_user_group(
+            self, domain_id, group_id, requestslib_kwargs=None):
+        """
+        GET RAX-AUTH/domains/{domainId}/groups/{groupId}/roles
+        """
+        url = self.url + (
+            const.LIST_TENANT_ROLE_ASSIGNMENTS_FOR_USER_GROUP_URL.format(
+                domain_id=domain_id, group_id=group_id))
+        return self.request('GET', url, requestslib_kwargs=requestslib_kwargs)
