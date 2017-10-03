@@ -16,4 +16,7 @@ public class UserGroupSearchParams {
      */
     @Nullable
     String name;
+
+    @Nullable
+    String userId;
 }

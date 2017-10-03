@@ -104,6 +104,19 @@ public interface UserGroupService {
     UserGroup getGroupByNameForDomain(String groupName, String domainId);
 
     /**
+     * Retrieves the group with the specified group name for user under the specified domain. If no such group exists,
+     * returns null.
+     *
+     * @param groupName
+     * @param userId
+     * @param domainId
+     * @throws IllegalArgumentException If supplied domainId or groupName is null or empty string
+     *
+     * @return
+     */
+    UserGroup getGroupByNameForUserInDomain(String groupName, String userId, String domainId);
+
+    /**
      * Retries the specified role on the group, or null if the role does not exist on the group. Does not distinguish
      * between
      *
