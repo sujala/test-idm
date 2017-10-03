@@ -296,7 +296,7 @@ public class DefaultTenantService implements TenantService {
             /*
              Add the roles the user has due to group membership.
              */
-            if (identityConfig.getReloadableConfig().applyGroupMembershipForEffectiveRoleCalculation()) {
+            if (identityConfig.getReloadableConfig().areUserGroupsGloballyEnabled()) {
                 Set<String> groupIds = ((EndUser) user).getUserGroupIds();
                 for (String groupId : groupIds) {
                     List<TenantRole> groupRoles = Collections.emptyList();

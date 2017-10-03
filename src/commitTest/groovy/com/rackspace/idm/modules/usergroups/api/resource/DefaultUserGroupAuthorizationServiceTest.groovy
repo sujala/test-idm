@@ -26,6 +26,7 @@ class DefaultUserGroupAuthorizationServiceTest extends RootServiceTest {
         mockDomainService(defaultUserGroupCloudAuthorizationService)
         mockAuthorizationService(defaultUserGroupCloudAuthorizationService)
         mockRequestContextHolder(defaultUserGroupCloudAuthorizationService)
+        mockIdentityConfig(defaultUserGroupCloudAuthorizationService)
     }
 
     def "verify authorization pulls domain and checks for existence"() {
@@ -245,4 +246,32 @@ class DefaultUserGroupAuthorizationServiceTest extends RootServiceTest {
         "d1" | null | "d2" | null
     }
 
+    def "areUserGroupsEnabledForDomain: When 'enable.user.groups.globally' true, always returns true regardless of explicit domains"() {
+        when:
+        def result = defaultUserGroupCloudAuthorizationService.areUserGroupsEnabledForDomain("anyDomain")
+
+        then:
+        result
+        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> true
+        0 * repositoryConfig.getExplicitUserGroupEnabledDomains() >> []
+    }
+
+    @Unroll
+    def "areUserGroupsEnabledForDomain: When 'enable.user.groups.globally' false, enabled depends whether in explicit list. Test Domain: #domainId; list: #list"() {
+        when:
+        def result = defaultUserGroupCloudAuthorizationService.areUserGroupsEnabledForDomain(domainId)
+
+        then:
+        result == expectation
+        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> false
+        1 * repositoryConfig.getExplicitUserGroupEnabledDomains() >> list
+
+        where:
+        domainId   | list                   | expectation
+        "abc"      | []                     | false
+        "abc"      | ["a"]                  | false
+        "abc"      | ["123", "abc"]         | true
+        "abc"      | ["123", "abc", "glke"] | true
+        "abc"      | ["ABC"]                | true
+    }
 }

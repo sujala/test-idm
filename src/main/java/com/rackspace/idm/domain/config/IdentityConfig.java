@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.config;
 
+import com.google.common.base.Splitter;
 import com.rackspace.idm.GlobalConstants;
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter;
 import com.rackspace.idm.api.resource.cloud.v20.multifactor.EncryptedSessionIdReaderWriter;
@@ -365,8 +366,8 @@ public class IdentityConfig {
     public static final String USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_PROP = "use.uuid.ids.for.new.question.enabled";
     public static final boolean USE_UUID_IDS_FOR_NEW_QUESTION_ENABLED_DEFAULT = true;
 
-    public static final String FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_PROP = "feature.apply.group.membership.roles";
-    public static final boolean FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_DEFAULT = false;
+    public static final String FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP = "enable.user.groups.globally";
+    public static final boolean FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT = false;
 
     /**
      * Required static prop
@@ -482,6 +483,9 @@ public class IdentityConfig {
      * Identity Repository Properties
      */
     public static final String FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP = "federation.identity.provider.default.policy";
+
+    public static final String ENABLED_DOMAINS_FOR_USER_GROUPS_PROP = "enable.user.groups.for.domains";
+    public static final String ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT = "";
 
     @Qualifier("staticConfiguration")
     @Autowired
@@ -673,7 +677,9 @@ public class IdentityConfig {
 
         defaults.put(LDAP_PAGING_LIMIT_DEFAULT_PROP, LDAP_PAGING_LIMIT_DEFAULT_VALUE);
         defaults.put(LDAP_PAGING_LIMIT_MAX_PROP, LDAP_PAGING_LIMIT_MAX_DEFAULT);
-        defaults.put(FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_PROP, FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_DEFAULT);
+        defaults.put(FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, FEATURE_ENABLE_USER_GROUPS_GLOBALLY_DEFAULT);
+
+        defaults.put(ENABLED_DOMAINS_FOR_USER_GROUPS_PROP, ENABLED_DOMAINS_FOR_USER_GROUPS_DEFAULT);
 
         return defaults;
     }
@@ -891,6 +897,21 @@ public class IdentityConfig {
         } catch (ConversionException e) {
             logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, propertyName));
             return (Boolean) defaultValue;
+        }
+    }
+
+    private String getRepositoryStringSafely(String propertyName) {
+        Object defaultValue = propertyDefaults.get(propertyName);
+        try {
+            IdentityProperty identityProperty = identityPropertyService.getIdentityPropertyByName(propertyName);
+            if (identityProperty != null) {
+                return (String) propertyValueConverter.convertPropertyValue(identityProperty);
+            } else {
+                return (String) defaultValue;
+            }
+        } catch (ConversionException e) {
+            logger.error(String.format(INVALID_PROPERTY_ERROR_MESSAGE, propertyName));
+            return (String) defaultValue;
         }
     }
 
@@ -1569,9 +1590,9 @@ public class IdentityConfig {
             return getBooleanSafely(reloadableConfiguration, FEATURE_MAINTAIN_PASSWORD_HISTORY_PROP) || enforcePasswordPolicyPasswordHistory();
         }
 
-        @IdmProp(key = FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_PROP, versionAdded = "3.16.0", description = "Whether or not roles granted as part of group membership should be included in effective role calculation")
-        public boolean applyGroupMembershipForEffectiveRoleCalculation() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_APPLY_GROUP_MEMBERSHIP_ROLES_PROP);
+        @IdmProp(key = FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, versionAdded = "3.16.0", description = "Whether or not user groups are supported for all domains for management and considered during effective role calculation")
+        public boolean areUserGroupsGloballyEnabled() {
+            return getBooleanSafely(reloadableConfiguration, FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP);
         }
 
         @IdmProp(key = IDP_MAX_SEACH_RESULT_SIZE_PROP, versionAdded = "3.1.0", description = "Maximum numbers of identity providers allowed to be returned in list providers call")
@@ -1930,6 +1951,34 @@ public class IdentityConfig {
             return identityPropertyService.getIdentityPropertyByName(FEDERATION_IDENTITY_PROVIDER_DEFAULT_POLICY_PROP);
         }
 
+        /**
+         * This property represents a list of domains for which user group are explicitly enabled. The value for the prop
+         * in the backend is comma delimited list of domainIds. This method will trim all whitespace from all individual
+         * values in the list. Empty values are ignored. As an example:
+         *
+         * <ul>
+         *     <li>"a,b" = ["a","b"]</li>
+         *     <li>"  a  ,  b " = ["a","b"]</li>
+         *     <li>"a,,b" = ["a","b"]</li>
+         *     <li>",b" = ["b"]</li>
+         *     <li>"," = []</li>
+         * </ul>
+         *
+         * Note - Callers should consider this property in tandem with the reloadable property 'enable.user.groups.globally'
+         * returned via getReloadableConfig().areUserGroupsGloballyEnabled(). When this latter property is set to true,
+         * all groups are enabled.
+         *
+         * @return
+         */
+        @IdmProp(key = ENABLED_DOMAINS_FOR_USER_GROUPS_PROP, versionAdded = "3.16.0", description = "A comma delimited list of domains for which user groups will be allowed")
+        public List<String> getExplicitUserGroupEnabledDomains() {
+            String rawValue = getRepositoryStringSafely(ENABLED_DOMAINS_FOR_USER_GROUPS_PROP);
+            List<String> domainIds = Collections.emptyList();
+            if (StringUtils.isNotBlank(rawValue)) {
+                domainIds = Splitter.on(",").omitEmptyStrings().trimResults().splitToList(rawValue);
+            }
+            return domainIds;
+        }
     }
 
     @Deprecated
