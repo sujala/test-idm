@@ -386,7 +386,7 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
 
         then:
         1 * userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId) >> entityGroup
-        1 * userGroupService.getUsersInGroup(entityGroup, searchCriteria) >> { args ->
+        1 * userGroupService.getUsersInGroupPaged(entityGroup, searchCriteria) >> { args ->
             UserSearchCriteria searchParams = args[1]
             assert searchParams.paginationRequest.effectiveMarker == 0
             assert searchParams.paginationRequest.effectiveLimit == 1000

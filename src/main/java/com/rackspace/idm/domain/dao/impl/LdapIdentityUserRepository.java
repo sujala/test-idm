@@ -137,10 +137,15 @@ public class LdapIdentityUserRepository extends LdapGenericRepository<BaseUser> 
     }
 
     @Override
-    public PaginatorContext<EndUser> getEndUsersInUserGroup(UserGroup group, UserSearchCriteria userSearchCriteria) {
+    public PaginatorContext<EndUser> getEndUsersInUserGroupPaged(UserGroup group, UserSearchCriteria userSearchCriteria) {
         return (PaginatorContext) getObjectsPaged(searchFilterGetUsersInUserGroup(group, ENDUSER_CLASS_FILTERS),
                 userSearchCriteria.getPaginationRequest().getEffectiveMarker(),
                 userSearchCriteria.getPaginationRequest().getEffectiveLimit());
+    }
+
+    @Override
+    public Iterable<EndUser> getEndUsersInUserGroup(UserGroup group) {
+        return (Iterable) getObjects(searchFilterGetUsersInUserGroup(group, ENDUSER_CLASS_FILTERS));
     }
 
     private <T extends BaseUser> T searchForUserById(String userId, List<Filter> userClassFilterList, Class<T> clazz) {

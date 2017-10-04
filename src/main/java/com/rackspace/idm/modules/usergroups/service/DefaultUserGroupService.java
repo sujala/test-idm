@@ -109,6 +109,11 @@ public class DefaultUserGroupService implements UserGroupService {
 
     @Override
     public void deleteGroup(UserGroup group) {
+        // Remove user group membership from users
+        for (EndUser user : getUsersInGroup(group)) {
+            removeUserFromGroup(user.getId(), group);
+        }
+
         userGroupDao.deleteGroup(group);
     }
 
@@ -487,12 +492,19 @@ public class DefaultUserGroupService implements UserGroupService {
     }
 
     @Override
-    public PaginatorContext<EndUser> getUsersInGroup(UserGroup group, UserSearchCriteria userSearchCriteria) {
+    public PaginatorContext<EndUser> getUsersInGroupPaged(UserGroup group, UserSearchCriteria userSearchCriteria) {
         Assert.notNull(group);
         Assert.notNull(userSearchCriteria);
         Assert.notNull(userSearchCriteria.getPaginationRequest());
 
-        return identityUserService.getEndUsersInUserGroup(group, userSearchCriteria);
+        return identityUserService.getEndUsersInUserGroupPaged(group, userSearchCriteria);
+    }
+
+    @Override
+    public Iterable<EndUser> getUsersInGroup(UserGroup group) {
+        Assert.notNull(group);
+
+        return identityUserService.getEndUsersInUserGroup(group);
     }
 
     @Override

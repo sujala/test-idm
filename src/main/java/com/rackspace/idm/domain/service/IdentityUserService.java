@@ -244,7 +244,15 @@ public interface IdentityUserService {
      * @param userSearchCriteria
      * @return
      */
-    PaginatorContext<EndUser> getEndUsersInUserGroup(UserGroup group, UserSearchCriteria userSearchCriteria);
+    PaginatorContext<EndUser> getEndUsersInUserGroupPaged(UserGroup group, UserSearchCriteria userSearchCriteria);
+
+    /**
+     * Returns users associated with a user group.
+     *
+     * @param group
+     * @return
+     */
+    Iterable<EndUser> getEndUsersInUserGroup(UserGroup group);
 
     /**
      * Gets the count of federated and provisioned users within a given region (by name)

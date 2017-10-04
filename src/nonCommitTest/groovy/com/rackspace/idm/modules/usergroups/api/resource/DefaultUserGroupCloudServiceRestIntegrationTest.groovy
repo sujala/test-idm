@@ -3,18 +3,15 @@ package com.rackspace.idm.modules.usergroups.api.resource
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroups
 import com.rackspace.idm.Constants
-import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.service.impl.DefaultDomainService
 import com.rackspace.idm.GlobalConstants
+import com.rackspace.idm.domain.config.IdentityConfig
+import com.rackspace.idm.domain.entity.EndUser
+import com.rackspace.idm.domain.service.IdentityUserService
+import com.rackspace.idm.domain.service.impl.DefaultDomainService
 import com.rackspace.idm.modules.usergroups.service.DefaultUserGroupService
 import org.apache.commons.lang.RandomStringUtils
 import org.apache.http.HttpStatus
-import org.openstack.docs.identity.api.v2.AuthenticateResponse
-import org.openstack.docs.identity.api.v2.ForbiddenFault
-import org.openstack.docs.identity.api.v2.ItemNotFoundFault
-import org.openstack.docs.identity.api.v2.Tenants
-import org.openstack.docs.identity.api.v2.UnauthorizedFault
-import org.openstack.docs.identity.api.v2.User
+import org.openstack.docs.identity.api.v2.*
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -28,6 +25,9 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
 
     @Autowired
     IdentityConfig identityConfig
+
+    @Autowired
+    IdentityUserService identityUserService
 
     @Shared
     def sharedIdentityAdminToken
@@ -499,5 +499,68 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    def "Delete user group: assert user group membership is removed from users"() {
+        given:
+        def domainId = utils.createDomain()
+        def identityAdmin, userAdmin, userManage, defaultUser
+        (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
+
+        UserGroup group = new UserGroup().with {
+            it.domainId = defaultUser.domainId
+            it.name = "listTest_" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+        def userAdminToken = utils.getToken(userAdmin.username)
+
+        when: "Create user group"
+        def response = cloud20.createUserGroup(userAdminToken, group)
+        UserGroup created = response.getEntity(UserGroup)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when: "Add userAdmin to userGroup"
+        response = cloud20.addUserToUserGroup(userAdminToken, domainId, created.id, userAdmin.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "Add defaultUser to userGroup"
+        response = cloud20.addUserToUserGroup(userAdminToken, domainId, created.id, defaultUser.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "Get users entities"
+        EndUser userAdminEntity = identityUserService.getEndUserById(userAdmin.id)
+        EndUser defaultUserEntity = identityUserService.getEndUserById(defaultUser.id)
+
+        then: "Assert users belong to user group"
+        assert userAdminEntity.userGroupIds.contains(created.id)
+        assert userAdminEntity.userGroupDNs.size() == 1
+        assert defaultUserEntity.userGroupIds.contains(created.id)
+        assert defaultUserEntity.userGroupDNs.size() == 1
+
+        when: "delete user group"
+        response = cloud20.deleteUserGroup(userAdminToken, created)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "Get users entities"
+        userAdminEntity = identityUserService.getEndUserById(userAdmin.id)
+        defaultUserEntity = identityUserService.getEndUserById(defaultUser.id)
+
+        then: "Assert users no longer belong to user group"
+        assert !userAdminEntity.userGroupIds.contains(created.id)
+        assert userAdminEntity.userGroupDNs.size() == 0
+        assert !defaultUserEntity.userGroupIds.contains(created.id)
+        assert defaultUserEntity.userGroupDNs.size() == 0
+
+        cleanup:
+        utils.deleteUsers(defaultUser, userManage, userAdmin, identityAdmin)
+        utils.deleteDomain(domainId)
     }
 }
