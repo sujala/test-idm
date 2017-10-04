@@ -311,15 +311,26 @@ class DefaultIdentityUserServiceTest extends RootServiceTest {
         featureEnabled << [true, false]
     }
 
-    def "Get users in user group"() {
+    def "Get users in user group paged"() {
         given:
         def group = new UserGroup()
         UserSearchCriteria userSearchCriteria = new UserSearchCriteria(new PaginationParams())
 
         when:
-        service.getEndUsersInUserGroup(group, userSearchCriteria)
+        service.getEndUsersInUserGroupPaged(group, userSearchCriteria)
 
         then:
-        1 * identityUserRepository.getEndUsersInUserGroup(group, userSearchCriteria)
+        1 * identityUserRepository.getEndUsersInUserGroupPaged(group, userSearchCriteria)
+    }
+
+    def "Get users in user group"() {
+        given:
+        def group = new UserGroup()
+
+        when:
+        service.getEndUsersInUserGroup(group)
+
+        then:
+        1 * identityUserRepository.getEndUsersInUserGroup(group)
     }
 }

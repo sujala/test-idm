@@ -224,7 +224,16 @@ public interface UserGroupService {
      * @throws IllegalAccessException If user group or user search criteria is null
      * @return
      */
-    PaginatorContext<EndUser> getUsersInGroup(UserGroup group, UserSearchCriteria userSearchCriteria);
+    PaginatorContext<EndUser> getUsersInGroupPaged(UserGroup group, UserSearchCriteria userSearchCriteria);
+
+    /**
+     * Retrieves the users associated with user group.
+     *
+     * @param group
+     * @throws IllegalAccessException If user group is null
+     * @return
+     */
+    Iterable<EndUser> getUsersInGroup(UserGroup group);
 
     /**
      * Retrieves the count of groups with the role, specified by roleId, assigned to the group.

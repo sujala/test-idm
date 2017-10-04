@@ -136,18 +136,42 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * dao.addGroup(group)
     }
 
-    def "deleteGroup: removes object via dao"() {
+    def "deleteGroup: removes object via dao and remove group membership from users"() {
+        mockIdentityUserService(service)
+        def domainId = "domainId"
         UserGroup group = new UserGroup().with {
-            it.domainId = "domainId"
+            it.domainId = domainId
             it.name = "name"
             it.description = "description"
             it
         }
 
-        when:
+        EndUser user1 = new User().with {
+            it.domainId = domainId
+            it.id = "id"
+            it
+        }
+        EndUser user2 = new User().with {
+            it.domainId = domainId
+            it.id = "id2"
+            it
+        }
+
+        when: "Users belong to user group"
         service.deleteGroup(group)
 
         then:
+        1 * identityUserService.getEndUsersInUserGroup(group) >> [user1, user2].asList()
+        1 * identityUserService.removeUserGroupFromUser(group, user1)
+        1 * identityUserService.removeUserGroupFromUser(group, user2)
+        1 * dao.deleteGroup(group)
+
+        when: "No users belong to user group"
+        service.deleteGroup(group)
+
+        then:
+        1 * identityUserService.getEndUsersInUserGroup(group) >> [].asList()
+        0 * identityUserService.removeUserGroupFromUser(_, _)
         1 * dao.deleteGroup(group)
     }
 
@@ -162,17 +186,37 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * dao.getGroupsForDomain(domainId)
     }
 
-    def "getUsersInGroup: gets objects via identityUserService"() {
+    def "getUsersInGroupPaged: gets objects via identityUserService"() {
         given:
         def group = new UserGroup()
         def userSearchCriteria = new UserSearchCriteria(new PaginationParams())
         mockIdentityUserService(service)
 
         when:
-        service.getUsersInGroup(group, userSearchCriteria)
+        service.getUsersInGroupPaged(group, userSearchCriteria)
 
         then:
-        1 * identityUserService.getEndUsersInUserGroup(group, userSearchCriteria)
+        1 * identityUserService.getEndUsersInUserGroupPaged(group, userSearchCriteria)
+    }
+
+    def "getUsersInGroup: gets objects via identityUserService"() {
+        given:
+        def group = new UserGroup()
+        mockIdentityUserService(service)
+
+        when:
+        service.getUsersInGroup(group)
+
+        then:
+        1 * identityUserService.getEndUsersInUserGroup(group)
+    }
+
+    def "getUsersInGroup: null params"() {
+        when:
+        service.getUsersInGroup(null)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def "addUserToGroup: creates assignment via identityUserService"() {

@@ -1313,28 +1313,6 @@ class Cloud20Utils {
         getPropsResponse.getEntity(IdmPropertyList).properties.first()
     }
 
-    def deleteUserGroup(UserGroup group, String token = getIdentityAdminToken()) {
-        def response = methods.deleteUserGroup(token, group)
-        assert response.status == SC_NO_CONTENT
-    }
-
-    def createUserGroup(String domainId = testUtils.getRandomUUID(), String name = testUtils.getRandomUUID(), String token = getIdentityAdminToken()) {
-        def response = methods.createUserGroup(token, factory.createUserGroup(domainId, name))
-        assert response.status == SC_CREATED
-        return response.getEntity(UserGroup)
-    }
-
-    def getUserGroup(String groupId, String domainId, String token = getIdentityAdminToken()) {
-        def userGroup = new UserGroup().with {
-            it.domainId = domainId
-            it.id = groupId
-            it
-        }
-        def response = methods.getUserGroup(token, userGroup)
-        assert response.status == 200
-        return response.getEntity(UserGroup)
-    }
-
     def createFederatedUser(String domainId, mediaType = APPLICATION_XML_TYPE) {
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def username = testUtils.getRandomUUID("samlUser")
@@ -1345,7 +1323,7 @@ class Cloud20Utils {
         def user = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user : samlAuthResponse.user
         return user
     }
-
+  
     def createFederatedUserForAuthResponse(String domainId, mediaType = APPLICATION_XML_TYPE) {
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def username = testUtils.getRandomUUID("samlUser")
@@ -1354,7 +1332,34 @@ class Cloud20Utils {
         def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
         return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
     }
+
+    def createUserGroup(String domainId = testUtils.getRandomUUID(), String name = testUtils.getRandomUUID(), String token = getIdentityAdminToken()) {
+        def response = methods.createUserGroup(token, factory.createUserGroup(domainId, name))
+        assert response.status == SC_CREATED
+        return response.getEntity(UserGroup)
+    }
   
+   def getUserGroup(String groupId, String domainId, String token = getIdentityAdminToken()) {
+        def userGroup = new UserGroup().with {
+            it.domainId = domainId
+            it.id = groupId
+            it
+        }
+        def response = methods.getUserGroup(token, userGroup)
+        assert response.status == 200
+        return response.getEntity(UserGroup)
+    }
+
+    def deleteUserGroup(UserGroup group, String token = getIdentityAdminToken()) {
+        def response = methods.deleteUserGroup(token, group)
+        assert response.status == SC_NO_CONTENT
+    }
+
+    def addUserToUserGroup(String userId, UserGroup userGroup, String token = getIdentityAdminToken()) {
+        def response = methods.addUserToUserGroup(token, userGroup.domainId, userGroup.id, userId)
+        assert response.status == SC_NO_CONTENT
+    }
+
     def removeUserFromUserGroup(String userId, UserGroup userGroup, String token = getIdentityAdminToken()) {
         def response = methods.removeUserFromUserGroup(token, userGroup.domainId, userGroup.id, userId)
         assert response.status == SC_NO_CONTENT

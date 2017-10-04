@@ -209,7 +209,7 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
             // Verify userGroup exists for domain
             com.rackspace.idm.modules.usergroups.entity.UserGroup group = userGroupService.checkAndGetGroupByIdForDomain(groupId, domainId);
 
-            PaginatorContext<EndUser> paginatorContext = userGroupService.getUsersInGroup(group, userSearchCriteria);
+            PaginatorContext<EndUser> paginatorContext = userGroupService.getUsersInGroupPaged(group, userSearchCriteria);
 
             String linkHeader = idmPathUtils.createLinkHeader(uriInfo, paginatorContext);
 

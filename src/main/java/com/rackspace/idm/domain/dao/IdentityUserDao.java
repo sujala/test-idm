@@ -166,11 +166,19 @@ public interface IdentityUserDao {
     int getUsersWithinRegionCount(String regionName);
 
     /**
-     * Search for end users with the specified user group.
+     * Search for end users with the specified user group and userSearchCriteria.
      *
      * @param group
      * @param userSearchCriteria
      * @return
      */
-    PaginatorContext<EndUser> getEndUsersInUserGroup(UserGroup group, UserSearchCriteria userSearchCriteria);
+    PaginatorContext<EndUser> getEndUsersInUserGroupPaged(UserGroup group, UserSearchCriteria userSearchCriteria);
+
+    /**
+     * Search for end users with the specified user group.
+     *
+     * @param group
+     * @return
+     */
+    Iterable<EndUser> getEndUsersInUserGroup(UserGroup group);
 }
