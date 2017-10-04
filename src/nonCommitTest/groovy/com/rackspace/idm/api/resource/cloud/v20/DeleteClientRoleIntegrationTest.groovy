@@ -3,6 +3,7 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
+import com.rackspace.idm.domain.config.IdentityConfig
 import org.openstack.docs.identity.api.v2.IdentityFault
 import testHelpers.RootIntegrationTest
 
@@ -10,6 +11,8 @@ class DeleteClientRoleIntegrationTest extends RootIntegrationTest {
 
     def "cannot delete a client role if the role is assigned to a user group"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, true)
+
         def domain = utils.createDomainEntity()
         def role = utils.createRole()
         def group = utils.createUserGroup(domain.id)

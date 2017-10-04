@@ -1,5 +1,6 @@
 package com.rackspace.idm.modules.usergroups.api.resource;
 
+import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.api.security.IdentityRole;
 import com.rackspace.idm.api.security.RequestContextHolder;
 import com.rackspace.idm.domain.config.IdentityConfig;
@@ -9,6 +10,8 @@ import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.DomainService;
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum;
 import com.rackspace.idm.exception.ForbiddenException;
+import com.rackspace.idm.modules.usergroups.Constants;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -81,6 +84,14 @@ public class DefaultUserGroupAuthorizationService implements UserGroupAuthorizat
                 }
             }
         }
+        verifyAreUserGroupsEnabledForDomain(targetDomainId);
+    }
+
+    @Override
+    public void verifyAreUserGroupsEnabledForDomain(String domainId) {
+        if (!areUserGroupsEnabledForDomain(domainId)) {
+            throw new ForbiddenException(String.format(Constants.ERROR_CODE_USER_GROUPS_NOT_ENABLED_FOR_DOMAIN_MSG_PATTERN, domainId), ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+        }
     }
 
     @Override
@@ -92,10 +103,12 @@ public class DefaultUserGroupAuthorizationService implements UserGroupAuthorizat
     private boolean areUserGroupsExplicitlyEnabledForDomain(String domainId) {
         List<String> enabledDomainIds = identityConfig.getRepositoryConfig().getExplicitUserGroupEnabledDomains();
 
-        // DomainIds are case insensitive so can't just use list contains
-        for (String enabledDomainId : enabledDomainIds) {
-            if (enabledDomainId.equalsIgnoreCase(domainId)) {
-                return true;
+        if (CollectionUtils.isNotEmpty(enabledDomainIds)) {
+            for (String enabledDomainId : enabledDomainIds) {
+                // DomainIds are case insensitive so can't just use list contains
+                if (enabledDomainId.equalsIgnoreCase(domainId)) {
+                    return true;
+                }
             }
         }
         return false;

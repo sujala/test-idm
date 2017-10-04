@@ -15,7 +15,10 @@ class AddUserGroupForDomain(base.TestBaseV2):
     @classmethod
     def setUpClass(cls):
         super(AddUserGroupForDomain, cls).setUpClass()
-        cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
+        if cls.test_config.use_domain_for_user_groups:
+            cls.domain_id = cls.test_config.domain_id
+        else:
+            cls.domain_id = cls.generate_random_string(pattern='[\d]{7}')
         cls.user_admin_client = cls.generate_client(
             parent_client=cls.identity_admin_client,
             additional_input_data={'domain_id': cls.domain_id})

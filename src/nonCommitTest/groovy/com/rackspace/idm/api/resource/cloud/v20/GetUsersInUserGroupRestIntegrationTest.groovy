@@ -1,6 +1,7 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import groovy.json.JsonSlurper
 import org.openstack.docs.identity.api.v2.UserList
@@ -13,6 +14,10 @@ import javax.ws.rs.core.MediaType
 import static org.apache.http.HttpStatus.*
 
 class GetUsersInUserGroupRestIntegrationTest extends RootIntegrationTest {
+
+    def setupSpec() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, true)
+    }
 
     @Unroll
     def "Get users in user group; media = #accept"() {
