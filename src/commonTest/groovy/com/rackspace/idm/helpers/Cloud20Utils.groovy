@@ -1346,6 +1346,15 @@ class Cloud20Utils {
         return user
     }
 
+    def createFederatedUserForAuthResponse(String domainId, mediaType = APPLICATION_XML_TYPE) {
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def username = testUtils.getRandomUUID("samlUser")
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def samlResponse = methods.samlAuthenticate(samlAssertion, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
+    }
+  
     def removeUserFromUserGroup(String userId, UserGroup userGroup, String token = getIdentityAdminToken()) {
         def response = methods.removeUserFromUserGroup(token, userGroup.domainId, userGroup.id, userId)
         assert response.status == SC_NO_CONTENT
