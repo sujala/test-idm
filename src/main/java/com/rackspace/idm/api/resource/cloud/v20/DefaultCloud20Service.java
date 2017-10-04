@@ -3030,11 +3030,10 @@ public class DefaultCloud20Service implements Cloud20Service {
             ScopeAccess callersScopeAccess = requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.DEFAULT_USER);
 
-            // TODO: Modify this so can retrieve roles for a federated user
-            User user = userService.checkAndGetUserById(userId);
+            EndUser user =  identityUserService.checkAndGetEndUserById(userId);
 
             // TODO: Modify this so a federated user can consume this service as the caller (just call retrieve effective caller from request context)
-            User caller = getUser(callersScopeAccess);
+            BaseUser caller = requestContextHolder.getRequestContext().getEffectiveCaller();
 
             /*
             1. Users with role 'identity:get-user-roles-global' can list roles for any user
@@ -3108,8 +3107,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
             authorizationService.verifyEffectiveCallerHasIdentityTypeLevelAccess(IdentityUserTypeEnum.IDENTITY_ADMIN);
 
-            //TODO: Modify this to support retrieving roles for federated users
-            User user = userService.checkAndGetUserById(userId);
+            EndUser user =  identityUserService.checkAndGetEndUserById(userId);
 
             List<TenantRole> roles;
             if (applyRcnRoles) {

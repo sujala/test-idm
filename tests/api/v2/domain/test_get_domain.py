@@ -15,6 +15,7 @@ class TestGetDomain(base.TestBaseV2):
         super(TestGetDomain, cls).setUpClass()
 
     def setUp(self):
+        super(TestGetDomain, self).setUp()
         self.domain_ids = []
 
     def create_domain(self):

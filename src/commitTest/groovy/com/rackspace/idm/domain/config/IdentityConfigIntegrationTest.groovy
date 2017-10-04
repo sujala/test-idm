@@ -1,6 +1,7 @@
 package com.rackspace.idm.domain.config
 
 import com.rackspace.idm.api.converter.cloudv20.IdentityPropertyValueConverter
+import com.rackspace.idm.domain.entity.IdentityProperty
 import com.rackspace.idm.domain.security.TokenFormat
 import com.rackspace.idm.domain.service.IdentityPropertyService
 import com.rackspace.test.SingleTestConfiguration
@@ -24,10 +25,13 @@ import testHelpers.SingletonTestFileConfiguration
 class IdentityConfigIntegrationTest  extends Specification {
 
     @Autowired
-    private IdentityConfig config;
+    private IdentityConfig config
 
-    @Shared SingletonConfiguration staticIdmConfiguration = SingletonConfiguration.getInstance();
-    @Shared SingletonReloadableConfiguration reloadableConfiguration = SingletonReloadableConfiguration.getInstance();
+    @Autowired
+    private IdentityPropertyService identityPropertyService
+
+    @Shared SingletonConfiguration staticIdmConfiguration = SingletonConfiguration.getInstance()
+    @Shared SingletonReloadableConfiguration reloadableConfiguration = SingletonReloadableConfiguration.getInstance()
 
     String testIpdLabeledUriAe = "http://www.test.com/ae"
     String testIpdLabeledUriUUID = "http://www.test.com/uuid"
@@ -174,15 +178,39 @@ class IdentityConfigIntegrationTest  extends Specification {
         formatDefAe == TokenFormat.AE
     }
 
+    @Unroll
+    def "getExplicitUserGroupEnabledDomains property parses value retrieved from repo: value: #repoValue"() {
+        given:
+        def identityProp = repoValue != null ? new IdentityProperty().with {
+            it.value = repoValue.bytes
+            it.valueType = "String"
+            it
+        } : null
+
+        Mockito.when(identityPropertyService.getIdentityPropertyByName(IdentityConfig.ENABLED_DOMAINS_FOR_USER_GROUPS_PROP)).thenReturn(identityProp)
+
+        expect:
+        config.getRepositoryConfig().getExplicitUserGroupEnabledDomains() == expectedList
+
+        where:
+        repoValue | expectedList
+        "a,b"           | ["a","b"]
+        "  a  ,  b "    | ["a","b"]
+        "a,,b"          | ["a","b"]
+        ",b"            | ["b"]
+        ","             | []
+        null            | []
+    }
+
     @SingleTestConfiguration
     static class MockServiceProvider {
         @Bean
         public IdentityPropertyValueConverter identityPropertyValueConverter () {
-            return  Mockito.mock(IdentityPropertyValueConverter.class);
+            return  new IdentityPropertyValueConverter()
         }
         @Bean
         public IdentityPropertyService identityPropertyService () {
-            return  Mockito.mock(IdentityPropertyService.class);
+            return  Mockito.mock(IdentityPropertyService.class)
         }
     }
 }

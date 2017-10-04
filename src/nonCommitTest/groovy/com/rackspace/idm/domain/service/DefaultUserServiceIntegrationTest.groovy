@@ -1,15 +1,25 @@
 package com.rackspace.idm.domain.service
 
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.UserDao
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.service.impl.DefaultIdentityUserService
 import com.rackspace.idm.domain.service.impl.DefaultUserService
+import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import com.rackspace.idm.util.CryptHelper
+import org.apache.commons.collections4.IteratorUtils
+import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+
+import static com.rackspace.idm.Constants.ROLE_RBAC1_ID
 
 class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
 
@@ -24,6 +34,9 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     UserDao userDao
+
+    @Autowired
+    UserGroupService userGroupService
 
     def cleanup() {
         reloadableConfiguration.reset()
@@ -193,5 +206,45 @@ class DefaultUserServiceIntegrationTest extends RootIntegrationTest {
 
         then:
         userEntity.getPasswordHistory() == null
+    }
+
+    def "getUsersByTenantId: Does not return user group tenant roles"() {
+        setup:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
+        User user = utils.createCloudAccount()
+        UserGroup group = utils.createUserGroup(user.domainId)
+
+        // Assign role to both user group and user on mosso tenant
+        utils.addRoleToUserOnTenantId(user, user.domainId, Constants.ROLE_RBAC1_ID)
+
+        TenantAssignment ta = new TenantAssignment().with {
+            ta ->
+                ta.onRole = ROLE_RBAC1_ID
+                ta.forTenants = [user.domainId]
+                ta
+        }
+        RoleAssignments assignments1 = new RoleAssignments().with {
+            TenantAssignments tas = new TenantAssignments()
+            it.tenantAssignments = tas
+            tas.tenantAssignment.add(ta)
+            it
+        }
+        def response = cloud20.grantRoleAssignmentsOnUserGroup(utils.getIdentityAdminToken(), group, assignments1)
+        assert response.status == HttpStatus.SC_OK
+
+        when:
+        Iterable<User> users = userService.getUsersByTenantId(user.domainId)
+
+        then:
+        List<User> userList = IteratorUtils.toList(users.iterator())
+        userList.size() == 1
+        userList.get(0).id == user.id
+
+        when: "retrieve user group assignment"
+        List<TenantRole> userGroupRoles = userGroupService.getRoleAssignmentsOnGroup(group.id)
+
+        then: "no user ids"
+        userGroupRoles.size() == 1
+        userGroupRoles[0].userId == null
     }
 }

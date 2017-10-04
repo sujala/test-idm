@@ -4,6 +4,7 @@ import com.rackspace.idm.Constants
 import com.rackspace.idm.api.security.AuthenticationContext
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.rackspace.idm.domain.entity.*
 import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.exception.BadRequestException
@@ -13,6 +14,7 @@ import com.rackspace.idm.exception.UserDisabledException
 import com.rackspace.idm.validation.Validator
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.lang.RandomStringUtils
+import org.apache.commons.lang.StringUtils
 import spock.lang.Shared
 import testHelpers.RootServiceTest
 
@@ -1050,6 +1052,51 @@ class DefaultUserServiceTest extends RootServiceTest {
 
         where:
         prefix << [RandomStringUtils.randomAscii(10), RandomStringUtils.randomAscii(10), ""]
+    }
+
+    def "getUsersByTenantId: Does not update or return user group tenant roles"() {
+        def tenantId = "tenantId"
+        TenantRole u1 = new TenantRole().with {
+            it.roleRsId = "u1"
+            it.uniqueId = "rsid=somewhere" + LdapRepository.USERS_BASE_DN
+            it.userId = "someuse"
+            it
+        }
+        TenantRole f1 = new TenantRole().with {
+            it.roleRsId = "f1"
+            it.uniqueId = "rsid=somewhere" + LdapRepository.EXTERNAL_PROVIDERS_BASE_DN
+            it
+        }
+        TenantRole ug1 = new TenantRole().with {
+            it.roleRsId = "ug1"
+            it.uniqueId = "rsid=somewhere" + com.rackspace.idm.modules.usergroups.Constants.USER_GROUP_BASE_DN
+            it
+        }
+        def tenantRoleList = [u1,ug1,f1]
+        def f1UpdatedId = "updatedId"
+
+        when:
+        service.getUsersByTenantId(tenantId)
+
+        then:
+        1 * tenantService.getTenantRolesForTenant(tenantId) >> tenantRoleList
+
+        // End user tenant roles without a userId already set are still updated to set the userId value
+        1 * tenantService.addUserIdToTenantRole(f1) >> {args ->
+            args[0].userId = f1UpdatedId // Mimic real call which will update the tenant role with the id
+        }
+
+        // Neither end user tenant roles with a userId nor user tenant roles are updated
+        0 * tenantService.addUserIdToTenantRole(u1)
+        0 * tenantService.addUserIdToTenantRole(ug1)
+
+        // Verify the get users call does NOT include the user group, but does include both end users
+        1 * userDao.getUsers(_) >> {args ->
+            List<String> userIds = args[0]
+            assert userIds.size() == 2
+            assert userIds.find {it == u1.userId} != null
+            assert userIds.find {it == f1UpdatedId} != null
+        }
     }
 
     def createStringPaginatorContext() {

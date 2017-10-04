@@ -20,6 +20,8 @@ ADD_TENANT_TO_DOMAIN_URL = DELETE_TENANT_FROM_DOMAIN_URL = (
     '/RAX-AUTH/domains/{domain_id}/tenants/{tenant_id}')
 ADD_TENANT_URL = LIST_TENANTS = '/tenants'
 ADD_USER_GROUP_TO_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/groups'
+ADD_USER_TO_USER_GROUP_URL = (
+    '/RAX-AUTH/domains/{domain_id}/groups/{group_id}/users/{user_id}')
 ANALYZE_TOKEN_URL = '/tokens/analyze'
 TENANT_TYPE_URL = '/RAX-AUTH/tenant-types'
 RD_TENANT_TYPE_URL = '/RAX-AUTH/tenant-types/{name}'
@@ -76,6 +78,8 @@ LIST_TENANT_ROLE_ASSIGNMENTS_FOR_USER_GROUP_URL = (
 LIST_USER_ROLES_URL = '/users/{user_id}/roles'
 LIST_USERS_FOR_TENANT_URL = '/tenants/{tenant_id}/users'
 LIST_USER_GROUPS_FOR_DOMAIN_URL = ADD_USER_GROUP_TO_DOMAIN_URL
+LIST_USERS_IN_USER_GROUP_FOR_DOMAIN_URL = (
+    LIST_USER_GROUPS_FOR_DOMAIN_URL + '/{group_id}/users')
 LIST_USERS_IN_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/users'
 MOVE_DOMAIN_TO_RCN_URL = '/RAX-AUTH/domains/{domain_id}/rcn/{rcn}'
 NEW_FED_AUTH_URL = '/RAX-AUTH/federation/saml/auth'

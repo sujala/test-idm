@@ -9,6 +9,7 @@ import com.rackspace.idm.util.JSONReaderForRoles
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.io.IOUtils
 import org.apache.http.HttpStatus
+import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
 import org.openstack.docs.identity.api.v2.RoleList
 import org.springframework.beans.factory.annotation.Autowired
@@ -782,6 +783,50 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
         IDENTITY_SERVICE_ID | false               | 1
         null                | true                | 1
         null                | false               | 1
+    }
+
+    @Unroll
+    def "Get global roles for fed user with no RCN roles - serviceId = #serviceId, apply_rcn_roles = #applyRcnRoles" () {
+        given: "A new user admin"
+        def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
+        utils.domainRcnSwitch(userAdmin.domainId, "RCN-123-123-123")
+
+        AuthenticateResponse fedUserAuthResponse = utils.createFederatedUserForAuthResponse(userAdmin.domainId)
+
+        when: "admin list fed user's global roles"
+        def userGlobalRolesResponse = cloud20.listUserGlobalRoles(utils.getIdentityAdminToken(), fedUserAuthResponse.user.id, serviceId, applyRcnRoles)
+        def globalRoles = userGlobalRolesResponse.getEntity(RoleList).value
+
+        then:
+        if (size > 0) {
+            assert globalRoles.role.find({it.id == DEFAULT_USER_ROLE_ID}) != null
+        }
+        globalRoles.role.size == size
+
+        where:
+        serviceId           | applyRcnRoles       | size
+        SERVERS_SERVICE_ID  | true                | 0
+        IDENTITY_SERVICE_ID | true                | 1
+        SERVERS_SERVICE_ID  | false               | 0
+        IDENTITY_SERVICE_ID | false               | 1
+        null                | true                | 1
+        null                | false               | 1
+    }
+
+    def "Fed user can get own global roles" () {
+        given: "A new user admin"
+        def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
+        utils.domainRcnSwitch(userAdmin.domainId, "RCN-123-123-123")
+
+        AuthenticateResponse fedUserAuthResponse = utils.createFederatedUserForAuthResponse(userAdmin.domainId)
+
+        when: "fed user lists own global roles"
+        def userGlobalRolesResponse = cloud20.listUserGlobalRoles(fedUserAuthResponse.token.id, fedUserAuthResponse.user.id)
+        def globalRoles = userGlobalRolesResponse.getEntity(RoleList).value
+
+        then:
+        assert globalRoles.role.find({it.id == DEFAULT_USER_ROLE_ID}) != null
+
     }
 
     def getRoleListEntity(response) {

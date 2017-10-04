@@ -209,7 +209,7 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         groups.userGroup.find { it.name == created.name } != null
 
         when: "List user groups for domain with name query param"
-        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, group.name, mediaType)
+        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, new UserGroupSearchParams(created.name, null), mediaType)
         groups = getGroupsResponse.getEntity(UserGroups)
 
         then:
@@ -223,8 +223,102 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         userGroup.domainId == created.domainId
         userGroup.description == created.description
 
+        when: "Adding user to user group"
+        response = cloud20.addUserToUserGroup(utils.getToken(sharedUserAdmin.username), sharedUserAdmin.domainId, created.id, sharedUserAdmin.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "List user groups for domain with userId query param"
+        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, new UserGroupSearchParams(null, sharedUserAdmin.id), mediaType)
+        groups = getGroupsResponse.getEntity(UserGroups)
+
+        then:
+        getGroupsResponse.status == HttpStatus.SC_OK
+
+        and:
+        groups.userGroup.size() == 1
+        UserGroup userGroup2 = groups.userGroup.get(0)
+        userGroup2.id == created.id
+        userGroup2.name == created.name
+        userGroup2.domainId == created.domainId
+        userGroup2.description == created.description
+
+        when: "List user groups for domain with name and userId query param"
+        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, new UserGroupSearchParams(created.name, sharedUserAdmin.id), mediaType)
+        groups = getGroupsResponse.getEntity(UserGroups)
+
+        then:
+        getGroupsResponse.status == HttpStatus.SC_OK
+
+        and:
+        groups.userGroup.size() == 1
+        UserGroup userGroup3 = groups.userGroup.get(0)
+        userGroup3.id == created.id
+        userGroup3.name == created.name
+        userGroup3.domainId == created.domainId
+        userGroup3.description == created.description
+
         cleanup:
+        utils.removeUserFromUserGroup(sharedUserAdmin.id, created)
         utils.deleteUserGroup(created)
+
+        where:
+        mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
+    }
+
+    @Unroll
+    def "List user groups with default user; #mediaType"() {
+        given:
+        def domainId = utils.createDomain()
+        def defaultUser, users
+        (defaultUser, users) = utils.createDefaultUser(domainId)
+
+        UserGroup group = new UserGroup().with {
+            it.domainId = defaultUser.domainId
+            it.name = "listTest_" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+        def defaultUserToken = utils.getToken(defaultUser.username)
+
+        when: "Create user group"
+        def response = cloud20.createUserGroup(sharedIdentityAdminToken, group, mediaType)
+        UserGroup created = response.getEntity(UserGroup)
+
+        then:
+        response.status == HttpStatus.SC_CREATED
+
+        when: "Adding defaultUser to userGroup"
+        response = cloud20.addUserToUserGroup(sharedIdentityAdminToken, domainId, created.id, defaultUser.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "Using defaultUser token without userId query param"
+        def getGroupsResponse = cloud20.listUserGroupsForDomain(defaultUserToken, defaultUser.domainId)
+
+        then: "Assert 403"
+        IdmAssert.assertOpenStackV2FaultResponse(getGroupsResponse, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
+
+        when: "Using defaultUser token with userId query param"
+        getGroupsResponse = cloud20.listUserGroupsForDomain(defaultUserToken, defaultUser.domainId, new UserGroupSearchParams(null, defaultUser.id))
+        UserGroups groups = getGroupsResponse.getEntity(UserGroups)
+
+        then:
+        getGroupsResponse.status == HttpStatus.SC_OK
+
+        and:
+        groups.userGroup.size() == 1
+        UserGroup userGroup = groups.userGroup.get(0)
+        userGroup.id == created.id
+        userGroup.name == created.name
+        userGroup.domainId == created.domainId
+        userGroup.description == created.description
+
+        cleanup:
+        utils.deleteUsers(users)
+        // Deleting a domain also removed all associated userGroups
+        utils.deleteDomain(domainId)
 
         where:
         mediaType << [MediaType.APPLICATION_XML_TYPE, MediaType.APPLICATION_JSON_TYPE]
@@ -258,14 +352,14 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         IdmAssert.assertOpenStackV2FaultResponse(getGroupsResponse, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, errMsg)
 
         when: "Invalid name query param"
-        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, "invalid")
+        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, new UserGroupSearchParams("invalid", null))
         UserGroups userGroups = getGroupsResponse.getEntity(UserGroups)
 
         then:
         userGroups.userGroup.size() == 0
 
         when: "query param name with special characters"
-        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, "иииии")
+        getGroupsResponse = cloud20.listUserGroupsForDomain(sharedIdentityAdminToken, sharedUserAdmin.domainId, new UserGroupSearchParams("иииии", null))
         userGroups = getGroupsResponse.getEntity(UserGroups)
 
         then:
@@ -296,7 +390,7 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         IdmAssert.assertOpenStackV2FaultResponse(listGroupsResponse, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")
 
         when: "token of user from different domain with query param specified"
-        getGroupsResponse = cloud20.listUserGroupsForDomain(userAdminToken, anotherDomainCreated.id, "test")
+        getGroupsResponse = cloud20.listUserGroupsForDomain(userAdminToken, anotherDomainCreated.id, new UserGroupSearchParams("test", null))
 
         then:
         IdmAssert.assertOpenStackV2FaultResponse(getGroupsResponse, ForbiddenFault, HttpStatus.SC_FORBIDDEN, "Not Authorized")

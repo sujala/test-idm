@@ -16,11 +16,14 @@ import com.rackspace.idm.exception.ForbiddenException;
 import com.rackspace.idm.exception.NotFoundException;
 import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams;
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams;
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria;
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.modules.usergroups.exception.FailedGrantRoleAssignmentsException;
 import com.rackspace.idm.validation.Validator20;
+import com.unboundid.ldap.sdk.DN;
+import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang.NotImplementedException;
@@ -47,6 +50,8 @@ public class DefaultUserGroupService implements UserGroupService {
     public static final String GROUP_MUST_BELONG_TO_DOMAIN = "Group must belong to domain";
     public static final String CAN_ONLY_ADD_USERS_TO_GROUPS_WITHIN_SAME_DOMAIN = "Can only add users to groups within same domain";
     public static final String CAN_ONLY_MODIFY_GROUPS_ON_PROVISIONED_USERS_VIA_API = "Can only modify groups on provisioned users via API.";
+
+    public static final String ERROR_MESSAGE_DUPLICATE_GROUP_IN_DOMAIN = "Group already exists with this name in this domain";
 
     @Autowired
     private TenantRoleDao tenantRoleDao;
@@ -77,10 +82,10 @@ public class DefaultUserGroupService implements UserGroupService {
         Assert.isTrue(StringUtils.isNotBlank(group.getDomainId()));
 
         // Verify group requirements
-        validateUserGroupForCreateAndUpdate(group);
+        validateUserGroupForCreate(group);
 
         if (getGroupByNameForDomain(group.getName(), group.getDomainId()) != null) {
-            throw new DuplicateException("Group already exists with this name in this domain");
+            throw new DuplicateException(ERROR_MESSAGE_DUPLICATE_GROUP_IN_DOMAIN);
         }
 
         // Validate there is room to create this group in the domain
@@ -94,14 +99,42 @@ public class DefaultUserGroupService implements UserGroupService {
         return group;
     }
 
-    public void validateUserGroupForCreateAndUpdate(UserGroup userGroup) {
+    private void validateUserGroupForCreate(UserGroup userGroup) {
+        validateUserGroupName(userGroup);
+        validateUserGroupDescription(userGroup);
+    }
+
+    private void validateUserGroupName(UserGroup userGroup) {
         validator20.validateStringNotNullWithMaxLength("name", userGroup.getName(), MAX_LENGTH_64);
+    }
+
+    private void validateUserGroupDescription(UserGroup userGroup) {
         validator20.validateStringMaxLength("description", userGroup.getDescription(), MAX_LENGTH_255);
     }
 
     @Override
     public UserGroup updateGroup(UserGroup group) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        com.rackspace.idm.modules.usergroups.entity.UserGroup userGroupEntity = checkAndGetGroupByIdForDomain(group.getId(), group.getDomainId());
+
+        // Copy over only the attributes that are provided in the request and allowed to be updated
+        if (group.getName() != null) {
+            validateUserGroupName(group);
+            userGroupEntity.setName(group.getName());
+        }
+
+        if (group.getDescription() != null) {
+            validateUserGroupDescription(group);
+            userGroupEntity.setDescription(group.getDescription());
+        }
+
+        UserGroup otherGroupWithName = getGroupByNameForDomain(userGroupEntity.getName(), userGroupEntity.getDomainId());
+        if (otherGroupWithName != null && !otherGroupWithName.getId().equalsIgnoreCase(group.getId())) {
+            throw new DuplicateException(ERROR_MESSAGE_DUPLICATE_GROUP_IN_DOMAIN);
+        }
+
+        userGroupDao.updateGroup(userGroupEntity);
+
+        return userGroupEntity;
     }
 
     @Override
@@ -161,6 +194,71 @@ public class DefaultUserGroupService implements UserGroupService {
         Validate.notEmpty(domainId);
 
         return userGroupDao.getGroupByNameForDomain(groupName, domainId);
+    }
+
+    @Override
+    public List<UserGroup> getGroupsBySearchParamsInDomain(UserGroupSearchParams userGroupSearchParams, String domainId) {
+        Validate.notEmpty(domainId);
+
+        String name = userGroupSearchParams.getName();
+        String userId = userGroupSearchParams.getUserId();
+
+        List<UserGroup> userGroups = new ArrayList<>();
+        UserGroup group;
+
+        if (name != null && userId != null) {
+            group = getGroupByNameForUserInDomain(name, userId, domainId);
+            if (group != null) {
+                userGroups.add(group);
+            }
+        } else if (userGroupSearchParams.getName() != null) {
+            group = getGroupByNameForDomain(name, domainId);
+            if (group != null) {
+                userGroups.add(group);
+            }
+        } else if (userId != null) {
+            EndUser user = identityUserService.getEndUserById(userId);
+
+            // Return an empty list if the user was not found or does not belong to the same domain specified on the request.
+            if (user != null && user.getDomainId().equals(domainId)) {
+                for (String userGroupId : user.getUserGroupIds()){
+                    group = getGroupById(userGroupId);
+                    // Only add existing user groups.
+                    if (group != null) {
+                        userGroups.add(group);
+                    }
+                }
+            }
+        }
+
+        return userGroups;
+    }
+
+    private UserGroup getGroupByNameForUserInDomain(String groupName, String userId, String domainId) {
+        Validate.notEmpty(groupName);
+        Validate.notEmpty(userId);
+        Validate.notEmpty(domainId);
+
+        UserGroup userGroup = userGroupDao.getGroupByNameForDomain(groupName, domainId);
+        if (userGroup == null) {
+            return null;
+        }
+
+        EndUser user = identityUserService.getEndUserById(userId);
+        if (user == null) {
+            return null;
+        }
+
+        DN groupDn;
+        try {
+            groupDn = new DN(userGroup.getUniqueId());
+        } catch (LDAPException e) {
+            String errMsg = "User group DN could not be parsed";
+            log.error(errMsg);
+            throw new IllegalStateException(errMsg);
+        }
+
+        return user.getUserGroupDNs().contains(groupDn) ? userGroup : null;
     }
 
     @Override
