@@ -161,8 +161,6 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
 
         then:
         1 * identityUserService.getEndUsersInUserGroup(group) >> [user1, user2].asList()
-        1 * identityUserService.checkAndGetUserById(user1.id) >> user1
-        1 * identityUserService.checkAndGetUserById(user2.id) >> user2
         1 * identityUserService.removeUserGroupFromUser(group, user1)
         1 * identityUserService.removeUserGroupFromUser(group, user2)
         1 * dao.deleteGroup(group)
@@ -172,7 +170,6 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
 
         then:
         1 * identityUserService.getEndUsersInUserGroup(group) >> [].asList()
-        0 * identityUserService.checkAndGetUserById(_)
         0 * identityUserService.removeUserGroupFromUser(_, _)
         1 * dao.deleteGroup(group)
     }

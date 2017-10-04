@@ -1313,17 +1313,6 @@ class Cloud20Utils {
         getPropsResponse.getEntity(IdmPropertyList).properties.first()
     }
 
-    def deleteUserGroup(UserGroup group, String token = getIdentityAdminToken()) {
-        def response = methods.deleteUserGroup(token, group)
-        assert response.status == SC_NO_CONTENT
-    }
-
-    def createUserGroup(String domainId = testUtils.getRandomUUID(), String name = testUtils.getRandomUUID(), String token = getIdentityAdminToken()) {
-        def response = methods.createUserGroup(token, factory.createUserGroup(domainId, name))
-        assert response.status == SC_CREATED
-        return response.getEntity(UserGroup)
-    }
-
     def createFederatedUser(String domainId, mediaType = APPLICATION_XML_TYPE) {
         def expSecs = Constants.DEFAULT_SAML_EXP_SECS
         def username = testUtils.getRandomUUID("samlUser")
@@ -1333,6 +1322,22 @@ class Cloud20Utils {
         def samlAuthToken = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.token : samlAuthResponse.token
         def user = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user : samlAuthResponse.user
         return user
+    }
+
+    def createUserGroup(String domainId = testUtils.getRandomUUID(), String name = testUtils.getRandomUUID(), String token = getIdentityAdminToken()) {
+        def response = methods.createUserGroup(token, factory.createUserGroup(domainId, name))
+        assert response.status == SC_CREATED
+        return response.getEntity(UserGroup)
+    }
+
+    def deleteUserGroup(UserGroup group, String token = getIdentityAdminToken()) {
+        def response = methods.deleteUserGroup(token, group)
+        assert response.status == SC_NO_CONTENT
+    }
+
+    def addUserToUserGroup(String userId, UserGroup userGroup, String token = getIdentityAdminToken()) {
+        def response = methods.addUserToUserGroup(token, userGroup.domainId, userGroup.id, userId)
+        assert response.status == SC_NO_CONTENT
     }
 
     def removeUserFromUserGroup(String userId, UserGroup userGroup, String token = getIdentityAdminToken()) {

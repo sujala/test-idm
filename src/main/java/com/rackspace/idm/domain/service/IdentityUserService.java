@@ -247,7 +247,7 @@ public interface IdentityUserService {
     PaginatorContext<EndUser> getEndUsersInUserGroupPaged(UserGroup group, UserSearchCriteria userSearchCriteria);
 
     /**
-     * Returns users associated with a user group.
+     * Returns users associated with a user group. If no users are found, a non-null iterable with 0 elements is returned.
      *
      * @param group
      * @return

@@ -507,31 +507,14 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         def identityAdmin, userAdmin, userManage, defaultUser
         (identityAdmin, userAdmin, userManage, defaultUser) = utils.createUsers(domainId)
 
-        UserGroup group = new UserGroup().with {
-            it.domainId = defaultUser.domainId
-            it.name = "listTest_" + RandomStringUtils.randomAlphanumeric(10)
-            it
-        }
         def userAdminToken = utils.getToken(userAdmin.username)
 
-        when: "Create user group"
-        def response = cloud20.createUserGroup(userAdminToken, group)
-        UserGroup created = response.getEntity(UserGroup)
+        // Create user group
+        UserGroup created = utils.createUserGroup(defaultUser.domainId, "deleteUserGroup_" + RandomStringUtils.randomAlphanumeric(10), userAdminToken)
 
-        then:
-        response.status == HttpStatus.SC_CREATED
-
-        when: "Add userAdmin to userGroup"
-        response = cloud20.addUserToUserGroup(userAdminToken, domainId, created.id, userAdmin.id)
-
-        then:
-        response.status == HttpStatus.SC_NO_CONTENT
-
-        when: "Add defaultUser to userGroup"
-        response = cloud20.addUserToUserGroup(userAdminToken, domainId, created.id, defaultUser.id)
-
-        then:
-        response.status == HttpStatus.SC_NO_CONTENT
+        // Add users to user group
+        utils.addUserToUserGroup(userAdmin.id, created, userAdminToken)
+        utils.addUserToUserGroup(defaultUser.id, created, userAdminToken)
 
         when: "Get users entities"
         EndUser userAdminEntity = identityUserService.getEndUserById(userAdmin.id)
@@ -544,7 +527,7 @@ class DefaultUserGroupCloudServiceRestIntegrationTest extends RootIntegrationTes
         assert defaultUserEntity.userGroupDNs.size() == 1
 
         when: "delete user group"
-        response = cloud20.deleteUserGroup(userAdminToken, created)
+        def response = cloud20.deleteUserGroup(userAdminToken, created)
 
         then:
         response.status == HttpStatus.SC_NO_CONTENT

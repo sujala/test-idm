@@ -111,7 +111,11 @@ public class DefaultUserGroupService implements UserGroupService {
     public void deleteGroup(UserGroup group) {
         // Remove user group membership from users
         for (EndUser user : getUsersInGroup(group)) {
-            removeUserFromGroup(user.getId(), group);
+            // TODO: Remove user group from user should be changed to support removing EndUser(provision and federated)
+            // from a user group once adding federated user to a user group is implemented.
+            if (user instanceof  User) {
+                identityUserService.removeUserGroupFromUser(group, (User) user);
+            }
         }
 
         userGroupDao.deleteGroup(group);
