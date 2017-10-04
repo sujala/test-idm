@@ -1,5 +1,6 @@
 package com.rackspace.idm.domain.entity;
 
+import com.google.common.collect.ImmutableSet;
 import com.rackspace.idm.annotation.DeleteNullValues;
 import com.rackspace.idm.domain.dao.impl.LdapRepository;
 import com.rackspace.idm.validation.MessageTexts;
@@ -142,11 +143,16 @@ public class FederatedUser implements EndUser, FederatedBaseUser {
 
     @Override
     public Set<String> getUserGroupIds() {
-        throw new NotImplementedException();
+        Set<String> ids = new HashSet<>();
+
+        for (DN dn : getUserGroupDNs()) {
+            ids.add(dn.getRDNString().split("=")[1]);
+        }
+        return ImmutableSet.copyOf(ids);
     }
 
     @Override
     public Set<DN> getUserGroupDNs() {
-        throw new NotImplementedException();
+        return Collections.emptySet();
     }
 }

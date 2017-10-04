@@ -18,6 +18,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupAuthorizationService;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.util.RoleUtil;
 import com.rackspace.idm.validation.PrecedenceValidator;
@@ -92,6 +93,9 @@ public class DefaultTenantService implements TenantService {
 
     @Autowired
     private TenantTypeService tenantTypeService;
+
+    @Autowired
+    private UserGroupAuthorizationService userGroupAuthorizationService;
 
     @Autowired
     FederatedUserDao federatedUserDao;
@@ -294,15 +298,25 @@ public class DefaultTenantService implements TenantService {
             }
 
             /*
-             Add the roles the user has due to group membership.
+             If the user has user groups associated with it, only include group membership roles if user groups are enabled
+             for that domain. Checking whether a domain is
+             enabled could require a directory call depending on how the properties are configured. If the user doesn't
+             belong to any groups, there is no point in even checking whether the domain is enabled for groups as
+             regardless the user's list of roles won't be affected. This is why the collection check occurs first, to
+             shortcircuit the statement and prevent the userGroupAuthorizationService from even running.
              */
-            if (identityConfig.getReloadableConfig().areUserGroupsGloballyEnabled()) {
-                Set<String> groupIds = ((EndUser) user).getUserGroupIds();
+            Set<String> groupIds = ((EndUser) user).getUserGroupIds();
+            if (CollectionUtils.isNotEmpty(groupIds)
+                    && userGroupAuthorizationService.areUserGroupsEnabledForDomain(user.getDomainId())) {
                 for (String groupId : groupIds) {
                     List<TenantRole> groupRoles = Collections.emptyList();
                     try {
                         groupRoles = userGroupService.getRoleAssignmentsOnGroup(groupId);
                     } catch (NotFoundException ex) {
+                        /*
+                         Log the data referential integrity issue, but eat the exception as we don't want to fail if
+                         the linked user group does not exist.
+                         */
                         logger.warn(String.format("User '%s' is assigned group '%s', but the group does not exist.", user.getId(), groupId));
                     }
                     rolesToMerge.addAll(groupRoles);
@@ -312,8 +326,6 @@ public class DefaultTenantService implements TenantService {
         }
         return userTenantRoles;
     }
-
-
 
     /**
      * Get the effective tenant roles for a user and apply RCN logic rules. The application of RCN rules does the following:

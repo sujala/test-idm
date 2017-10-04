@@ -5932,7 +5932,8 @@ cn: enable.user.groups.for.domains
 description: A comma delimited list of domains for which user groups will be
   enabled
 rsIdmVersion: 3.16.0
-rsPropertyValue:: LA==
+rsPropertyValue:: VXNlckdyb3VwRG9tYWluNTEzYWM5MTdiMmJhNGYzNTgzNDE0OGZjYzEzNG
+ VmM2EsVXNlckdyb3VwRG9tYWluVUdkZjVmODIzZjcxNjQ0ZDFjYTFjMGI3MWNmMWY1NzUzYg==
 rsPropertyValueType: String
 rsReloadable: TRUE
 rsSearchable: TRUE
