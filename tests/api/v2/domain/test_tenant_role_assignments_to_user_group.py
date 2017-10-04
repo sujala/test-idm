@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*
-from tests.api.v2 import base
+from tests.api.v2.domain import usergroups
 from tests.api.v2.schema import user_groups
 from tests.api.v2.models import factory, responses
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-class CrudTenantRoleAssignmentsToUserGroup(base.TestBaseV2):
+class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
     """
     Tests for crud tenant-role assignments for user group for a domain service
     """
@@ -15,7 +15,7 @@ class CrudTenantRoleAssignmentsToUserGroup(base.TestBaseV2):
         super(CrudTenantRoleAssignmentsToUserGroup, cls).setUpClass()
 
     def setUp(self):
-        self.domain_id = self.generate_random_string(pattern='[\d]{7}')
+        super(CrudTenantRoleAssignmentsToUserGroup, self).setUp()
         self.user_admin_client = self.generate_client(
             parent_client=self.identity_admin_client,
             additional_input_data={'domain_id': self.domain_id})

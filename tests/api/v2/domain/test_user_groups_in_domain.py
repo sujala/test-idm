@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*
-from tests.api.v2 import base
+from tests.api.v2.domain import usergroups
 from tests.api.v2.schema import user_groups
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-class UserGroupsInDomain(base.TestBaseV2):
+class UserGroupsInDomain(usergroups.TestUserGroups):
     """
     Tests for user groups in a domain services.
     """
 
     def setUp(self):
         super(UserGroupsInDomain, self).setUp()
-        self.domain_id = self.generate_random_string(pattern='[\d]{7}')
         self.user_admin_client = self.generate_client(
             parent_client=self.identity_admin_client,
             additional_input_data={'domain_id': self.domain_id})

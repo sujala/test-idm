@@ -1,10 +1,14 @@
 package com.rackspace.idm.modules.usergroups.api.resource
 
 import com.rackspace.idm.Constants
+import com.rackspace.idm.domain.config.IdentityConfig
 import testHelpers.RootIntegrationTest
 
 
 class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
+    void doSetupSpec() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, true)
+    }
 
     def "Call add user to domain group service w/ an invalid(expired/revoked) token….expect a 401"() {
         given:

@@ -45,6 +45,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockAtomHopperClient(service)
         mockFederatedUserDao(service)
         mockUserGroupService(service)
+        mockUserGroupAuthorizationService(service)
     }
 
     def "get mossoId from roles returns compute:default tenantId"() {
@@ -781,7 +782,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def tenantRoleList = service.getTenantRolesForUserPerformant(user)
 
         then:
-        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> flag
+        1 * userGroupAuthorizationService.areUserGroupsEnabledForDomain(domainId) >> flag
         1 * tenantRoleDao.getTenantRolesForUser(user) >> [] // Assume zilch roles returned
         if (flag) {
             // Roles should be retrieved for both groups assigned
@@ -814,7 +815,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def tenantRoleList = service.getTenantRolesForUserApplyRcnRoles(user)
 
         then:
-        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> flag
+        1 * userGroupAuthorizationService.areUserGroupsEnabledForDomain(domainId) >> flag
         1 * tenantRoleDao.getTenantRolesForUser(user) >> [] // Assume zilch roles returned
         if (flag) {
             // Roles should be retrieved for both groups assigned

@@ -30,7 +30,6 @@ public class Constants {
     public static final String ERROR_CODE_USER_GROUPS_DUP_ROLE_ASSIGNMENT = "UGA-000";
     public static final String ERROR_CODE_USER_GROUPS_DUP_ROLE_ASSIGNMENT_MSG = "A given role can only be specified once";
 
-
     public static final String ERROR_CODE_USER_GROUPS_MISSING_REQUIRED_ATTRIBUTE = ErrorCodes.ERROR_CODE_REQUIRED_ATTRIBUTE;
     public static final String ERROR_CODE_USER_GROUPS_INVALID_ATTRIBUTE = ErrorCodes.ERROR_CODE_INVALID_ATTRIBUTE;
 
@@ -45,4 +44,5 @@ public class Constants {
     public static final String ERROR_CODE_ROLE_ASSIGNMENT_WRONG_DOMAIN_TENANT_MSG_PATTERN = "Invalid assignment for role '%s'. Tenant must exist in group's domain";
     public static final String ERROR_CODE_ROLE_REVOKE_NOT_FOUND_MSG_PATTERN = "Invalid revocation of role '%s'. Role not assigned to group";
 
+    public static final String ERROR_CODE_USER_GROUPS_NOT_ENABLED_FOR_DOMAIN_MSG_PATTERN = "User groups are not supported for domain '%s'";
 }

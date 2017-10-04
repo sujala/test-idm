@@ -1,12 +1,15 @@
 package com.rackspace.idm.modules.usergroups.api.resource
 
+import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.security.IdentityRole
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.IdentityUserTypeEnum
 import com.rackspace.idm.exception.ForbiddenException
 import com.rackspace.idm.exception.NotFoundException
+import com.rackspace.idm.modules.usergroups.Constants
 import spock.lang.Unroll
+import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
 /**
@@ -42,6 +45,8 @@ class DefaultUserGroupAuthorizationServiceTest extends RootServiceTest {
 
     def "verify service authorization requires user-manage+ or rcn:admin role"() {
         setup:
+        reloadableConfig.areUserGroupsGloballyEnabled() >> true
+
         def domainId = "123"
         domainService.checkAndGetDomain(domainId) >> new Domain().with {
             it.domainId = domainId
@@ -84,8 +89,9 @@ class DefaultUserGroupAuthorizationServiceTest extends RootServiceTest {
     }
 
     @Unroll
-    def "identity:admin allowed regardless of domains"() {
+    def "identity:admin allowed regardless of whether user belongs to same domain as long as domain is enabled"() {
         setup:
+        reloadableConfig.areUserGroupsGloballyEnabled() >> true
         def domainId = "A"
         domainService.checkAndGetDomain(domainId) >> new Domain().with {
             it.domainId = domainId
@@ -108,8 +114,10 @@ class DefaultUserGroupAuthorizationServiceTest extends RootServiceTest {
     }
 
     @Unroll
-    def "user-admin/user-manager allowed when belong to same domain: userTypee: #userType"() {
+    def "user-admin/user-manager allowed when belong to same domain if user groups enabled: userTypee: #userType"() {
         setup:
+        reloadableConfig.areUserGroupsGloballyEnabled() >> true
+
         def domainId = "A"
         domainService.checkAndGetDomain(domainId) >> new Domain().with {
             it.domainId = domainId
@@ -165,6 +173,8 @@ class DefaultUserGroupAuthorizationServiceTest extends RootServiceTest {
     @Unroll
     def "rcn:admins allowed when domains or rcns are same: User Domain/Rcn: '#userDomainId'/'#userRcn'; target Domain/Rcn: '#targetDomainId'/'#targetRcn' "() {
         setup:
+        reloadableConfig.areUserGroupsGloballyEnabled() >> true
+
         Domain targetDomain = new Domain().with {
             it.domainId = targetDomainId
             it.rackspaceCustomerNumber = targetRcn
@@ -246,6 +256,63 @@ class DefaultUserGroupAuthorizationServiceTest extends RootServiceTest {
         "d1" | null | "d2" | null
     }
 
+    @Unroll
+    def "verifyEffectiveCallerHasManagementAccessToDomain: Verifies domain is enabled for user groups even if caller has access to domains. Test Domain: #domainId; list: #list"() {
+        setup:
+        domainService.checkAndGetDomain(domainId) >> new Domain().with {
+            it.domainId = "A"
+            it
+        }
+        requestContext.getEffectiveCaller() >> new User().with {
+            it.domainId = "B"
+            it
+        }
+        // Use identity:admin to bypass all additional auth logic since identity admins can access all domains
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+
+        when:
+        defaultUserGroupCloudAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId)
+
+        then:
+        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> true
+        notThrown()
+
+        where:
+        domainId   | list
+        "abc"      | ["123", "abc"]
+        "abc"      | ["123", "abc", "glke"]
+        "abc"      | ["ABC"]
+    }
+
+    @Unroll
+    def "verifyEffectiveCallerHasManagementAccessToDomain: Throws Forbidden if domain is disabled for user groups even if caller has access to domain.  Test Domain: #domainId; list: #list"() {
+        setup:
+        domainService.checkAndGetDomain(domainId) >> new Domain().with {
+            it.domainId = "A"
+            it
+        }
+        requestContext.getEffectiveCaller() >> new User().with {
+            it.domainId = "B"
+            it
+        }
+        // Use identity:admin to bypass all additional auth logic since identity admins can access all domains
+        requestContext.getEffectiveCallersUserType() >> IdentityUserTypeEnum.IDENTITY_ADMIN
+
+        when:
+        defaultUserGroupCloudAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId)
+
+        then:
+        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> false
+        1 * repositoryConfig.getExplicitUserGroupEnabledDomains() >> list
+        ForbiddenException ex = thrown()
+
+        where:
+        domainId   | list
+        "abc"      | []
+        "abc"      | ["a"]
+        "abc"      | null
+    }
+
     def "areUserGroupsEnabledForDomain: When 'enable.user.groups.globally' true, always returns true regardless of explicit domains"() {
         when:
         def result = defaultUserGroupCloudAuthorizationService.areUserGroupsEnabledForDomain("anyDomain")
@@ -273,5 +340,27 @@ class DefaultUserGroupAuthorizationServiceTest extends RootServiceTest {
         "abc"      | ["123", "abc"]         | true
         "abc"      | ["123", "abc", "glke"] | true
         "abc"      | ["ABC"]                | true
+    }
+
+    def "verifyUserGroupsEnabledForDomain: When domain not enabled, throws Forbidden exception"() {
+        def domainId = "anyDomain"
+        when:
+        def result = defaultUserGroupCloudAuthorizationService.areUserGroupsEnabledForDomain("domainId")
+        throw new ForbiddenException(String.format(Constants.ERROR_CODE_USER_GROUPS_NOT_ENABLED_FOR_DOMAIN_MSG_PATTERN, domainId), ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION);
+
+        then:
+        ForbiddenException ex = thrown()
+        IdmExceptionAssert.assertException(ex, ForbiddenException, ErrorCodes.ERROR_CODE_FORBIDDEN_ACTION, String.format(Constants.ERROR_CODE_USER_GROUPS_NOT_ENABLED_FOR_DOMAIN_MSG_PATTERN, domainId))
+        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> false
+        1 * repositoryConfig.getExplicitUserGroupEnabledDomains() >> []
+    }
+
+    def "verifyUserGroupsEnabledForDomain: When enabled, does not throw exception"() {
+        when:
+        defaultUserGroupCloudAuthorizationService.areUserGroupsEnabledForDomain("anyDomain")
+
+        then:
+        notThrown()
+        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> true
     }
 }

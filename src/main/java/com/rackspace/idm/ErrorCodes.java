@@ -94,6 +94,7 @@ public final class ErrorCodes {
     public static final String ERROR_CODE_MAX_SEARCH_RESULT_SIZE_EXCEEDED = "GEN-003";
     public static final String ERROR_CODE_NOT_FOUND = "GEN-004";
     public static final String ERROR_CODE_INVALID_ATTRIBUTE = "GEN-005";
+    public static final String ERROR_CODE_FORBIDDEN_ACTION = "GEN-006";
 
     public static final String ERROR_MESSAGE_IDP_NOT_FOUND = "An Identity provider with the specified id was not found";
 
