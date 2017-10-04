@@ -11,6 +11,7 @@ import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
+import org.apache.commons.lang3.RandomStringUtils
 import com.unboundid.ldap.sdk.DN
 import spock.lang.Unroll
 import testHelpers.IdmExceptionAssert
@@ -216,6 +217,182 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def "addUserToGroup: creates assignment via identityUserService"() {
+        given:
+        def domainId = "domainId"
+        def userId = "userid"
+        def group = new UserGroup().with {
+            it.domainId = domainId
+            it
+        }
+        def user = new com.rackspace.idm.domain.entity.User().with {
+            it.domainId = domainId
+            it
+        }
+        mockIdentityUserService(service)
+
+        when:
+        service.addUserToGroup(userId, group)
+
+        then:
+        1 * identityUserService.checkAndGetUserById(userId) >> user
+        1 * identityUserService.addUserGroupToUser(group, user)
+    }
+
+    def "removeUserFromGroup: removes assignment via identityUserService"() {
+        given:
+        def userId = "userid"
+        def group = new UserGroup()
+        def user = new com.rackspace.idm.domain.entity.User().with {
+            it.domainId = domainId
+            it
+        }
+        mockIdentityUserService(service)
+
+        when:
+        service.removeUserFromGroup(userId, group)
+
+        then:
+        1 * identityUserService.checkAndGetUserById(userId) >> user
+        1 * identityUserService.removeUserGroupFromUser(group, user)
+    }
+
+    def "updateGroup: validates group name and length through validator standard calls"() {
+        UserGroup origGroup = new UserGroup().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = "domainId"
+            it.name = "name"
+            it.description = "description"
+            it
+        }
+        UserGroup groupUpdates = new UserGroup().with {
+            it.domainId = origGroup.domainId
+            it.id = origGroup.id
+            it.name = RandomStringUtils.randomAlphanumeric(8)
+            it.description = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+
+        when:
+        service.updateGroup(groupUpdates)
+
+        then:
+        1 * dao.getGroupById(origGroup.id) >> origGroup
+        1 * validator20.validateStringNotNullWithMaxLength("name", groupUpdates.name, 64)
+        1 * validator20.validateStringMaxLength("description", groupUpdates.description, 255) >> { throw new BadRequestException() }
+        0 * dao.updateGroup(_) // Not persisted
+        thrown(BadRequestException)
+    }
+
+    def "updateGroup: group name only validated if provided in request"() {
+        UserGroup origGroup = new UserGroup().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = "domainId"
+            it.name = "name"
+            it
+        }
+        def updatedGroupName = RandomStringUtils.randomAlphanumeric(8)
+
+        when:
+        UserGroup groupUpdates = new UserGroup().with {
+            it.domainId = origGroup.domainId
+            it.id = origGroup.id
+            it.name = updatedGroupName
+            it
+        }
+        service.updateGroup(groupUpdates)
+
+        then:
+        1 * dao.getGroupById(origGroup.id) >> origGroup
+        1 * validator20.validateStringNotNullWithMaxLength("name", updatedGroupName, 64)
+        1 * dao.updateGroup(_)
+
+        when:
+        groupUpdates = new UserGroup().with {
+            it.domainId = origGroup.domainId
+            it.id = origGroup.id
+            it.name = null
+            it
+        }
+        service.updateGroup(groupUpdates)
+
+        then:
+        1 * dao.getGroupById(origGroup.id) >> origGroup
+        0 * validator20.validateStringNotNullWithMaxLength("name", _, 64)
+        1 * dao.updateGroup(_)
+    }
+
+    def "updateGroup: group description only validated if provided in request"() {
+        UserGroup origGroup = new UserGroup().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = "domainId"
+            it.name = "name"
+            it.description = "description"
+            it
+        }
+        def updatedGroupDesc = RandomStringUtils.randomAlphanumeric(8)
+
+        when:
+        UserGroup groupUpdates = new UserGroup().with {
+            it.domainId = origGroup.domainId
+            it.id = origGroup.id
+            it.description = updatedGroupDesc
+            it
+        }
+        service.updateGroup(groupUpdates)
+
+        then:
+        1 * dao.getGroupById(origGroup.id) >> origGroup
+        1 * validator20.validateStringMaxLength("description", updatedGroupDesc, 255)
+        1 * dao.updateGroup(_)
+
+        when:
+        groupUpdates = new UserGroup().with {
+            it.domainId = origGroup.domainId
+            it.id = origGroup.id
+            it.name = null
+            it
+        }
+        service.updateGroup(groupUpdates)
+
+        then:
+        1 * dao.getGroupById(origGroup.id) >> origGroup
+        0 * validator20.validateStringMaxLength("description", updatedGroupDesc, 255)
+        1 * dao.updateGroup(_)
+    }
+
+    def "updateGroup: duplicate group names throws DuplicateException"() {
+        given:
+        UserGroup origGroup = new UserGroup().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.domainId = "domainId"
+            it.name = "name"
+            it.description = "description"
+            it
+        }
+        UserGroup groupUpdates = new UserGroup().with {
+            it.domainId = origGroup.domainId
+            it.id = origGroup.id
+            it.name = RandomStringUtils.randomAlphanumeric(8)
+            it.description = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+        UserGroup otherGroup = new UserGroup().with {
+            it.id = RandomStringUtils.randomAlphanumeric(8)
+            it.name = groupUpdates.name
+            it
+        }
+
+        when:
+        service.updateGroup(groupUpdates)
+
+        then:
+        1 * dao.getGroupById(origGroup.id) >> origGroup
+        1 * dao.getGroupByNameForDomain(groupUpdates.name, groupUpdates.domainId) >> otherGroup
+        0 * dao.updateGroup(_)
+        thrown(DuplicateException)
     }
 
     def "getGroupByNameForUserInDomain: invalid params"() {

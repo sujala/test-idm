@@ -232,7 +232,7 @@ public abstract class LdapRepository {
     public static final String ATTR_ADMIN_URL_ID = "rsAdminUrlId";
 
     // Definitions for LDAP DNs
-    protected static final String EXTERNAL_PROVIDERS_BASE_DN = "o=externalProviders,dc=rackspace,dc=com";
+    public static final String EXTERNAL_PROVIDERS_BASE_DN = "o=externalProviders,dc=rackspace,dc=com";
     protected static final String EXTERNAL_PROVIDERS_USER_CONTAINER_NAME = "users";
 
     protected static final String BASE_DN = "o=rackspace,dc=rackspace,dc=com";
@@ -247,7 +247,7 @@ public abstract class LdapRepository {
     protected static final String QUESTION_BASE_DN = "ou=questions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String REGION_BASE_DN = "ou=regions,ou=cloud,o=rackspace,dc=rackspace,dc=com";
     protected static final String APPLICATIONS_BASE_DN = "ou=applications,o=rackspace,dc=rackspace,dc=com";
-    protected static final String USERS_BASE_DN = "ou=users,o=rackspace,dc=rackspace,dc=com";
+    public static final String USERS_BASE_DN = "ou=users,o=rackspace,dc=rackspace,dc=com";
     protected static final String RACKERS_BASE_DN = "ou=rackers,o=rackspace,dc=rackspace,dc=com";
     protected static final String FEDERATED_RACKERS_BASE_DN = EXTERNAL_PROVIDERS_BASE_DN;
     protected static final String NEXT_IDS_BASE_DN = "ou=nextIds,o=rackspace,dc=rackspace,dc=com";

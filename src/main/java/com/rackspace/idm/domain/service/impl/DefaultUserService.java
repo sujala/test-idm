@@ -15,6 +15,7 @@ import com.rackspace.idm.domain.dao.UserDao;
 import com.rackspace.idm.domain.entity.*;
 import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.*;
+import com.rackspace.idm.modules.usergroups.Constants;
 import com.rackspace.idm.modules.usergroups.entity.UserGroup;
 import com.rackspace.idm.multifactor.service.MultiFactorService;
 import com.rackspace.idm.util.CryptHelper;
@@ -557,8 +558,6 @@ public class DefaultUserService implements UserService {
      * This service does not use the new auto-assign role functionality for granting all users in a domain "access" to
      * all tenants w/in the domain. This service should be updated to support, if required.
      *
-     * TODO: This service must be modified to NOT update tenant roles assigned to user groups. See https://jira.rax.io/browse/CID-1167
-     *
      * @param tenantId
      * @return
      * @deprecated - The
@@ -568,12 +567,18 @@ public class DefaultUserService implements UserService {
     public Iterable<User> getUsersByTenantId(String tenantId) {
         logger.debug("Get list of users with tenant", tenantId);
         List<TenantRole> tenantRoles = tenantService.getTenantRolesForTenant(tenantId);
+
+        //TODO This should be a Set or should use logic to not add same user twice
         List<String> idList = new ArrayList<String>();
         for(TenantRole t : tenantRoles){
-            if(t.getUserId() == null){
-                tenantService.addUserIdToTenantRole(t);
+            // Determine if user group tenant role cause this service must ignore them
+            String path = t.getUniqueId();
+            if (!StringUtils.endsWithIgnoreCase(path, Constants.USER_GROUP_BASE_DN)) {
+                if(t.getUserId() == null) {
+                    tenantService.addUserIdToTenantRole(t);
+                }
+                idList.add(t.getUserId());
             }
-            idList.add(t.getUserId());
         }
         return userDao.getUsers(idList);
     }

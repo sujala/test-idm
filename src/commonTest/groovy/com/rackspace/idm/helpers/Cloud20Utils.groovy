@@ -1323,10 +1323,30 @@ class Cloud20Utils {
         def user = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user : samlAuthResponse.user
         return user
     }
+  
+    def createFederatedUserForAuthResponse(String domainId, mediaType = APPLICATION_XML_TYPE) {
+        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
+        def username = testUtils.getRandomUUID("samlUser")
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
+        def samlResponse = methods.samlAuthenticate(samlAssertion, mediaType)
+        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
+        return mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value : samlAuthResponse
+    }
 
     def createUserGroup(String domainId = testUtils.getRandomUUID(), String name = testUtils.getRandomUUID(), String token = getIdentityAdminToken()) {
         def response = methods.createUserGroup(token, factory.createUserGroup(domainId, name))
         assert response.status == SC_CREATED
+        return response.getEntity(UserGroup)
+    }
+  
+   def getUserGroup(String groupId, String domainId, String token = getIdentityAdminToken()) {
+        def userGroup = new UserGroup().with {
+            it.domainId = domainId
+            it.id = groupId
+            it
+        }
+        def response = methods.getUserGroup(token, userGroup)
+        assert response.status == 200
         return response.getEntity(UserGroup)
     }
 

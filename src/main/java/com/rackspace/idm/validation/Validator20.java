@@ -118,7 +118,7 @@ public class Validator20 {
     public static final String APPROVED_DOMAINS = "approvedDomains";
     public static final String BROKER_DOMAIN_GROUP_NAME = "GLOBAL";
 
-    private static final String REQUIRED_ATTR_MESSAGE = "'%s' is a required attribute";
+    public static final String REQUIRED_ATTR_MESSAGE = "'%s' is a required attribute";
     private static final String INVALID_ATTR_MESSAGE = "'%s' is not a valid attribute for this service";
     public static final String EMPTY_ATTR_MESSAGE = "'%s' attribute cannot be empty for this service";
 

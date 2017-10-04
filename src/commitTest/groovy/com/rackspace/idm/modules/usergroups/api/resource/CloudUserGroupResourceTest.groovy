@@ -3,6 +3,7 @@ package com.rackspace.idm.modules.usergroups.api.resource
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.exception.BadRequestException
+import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
@@ -241,4 +242,31 @@ class CloudUserGroupResourceTest extends RootServiceTest {
         then:
         thrown(BadRequestException)
     }
+
+    def "updateGroup: sets path params on group and calls backend service"() {
+        given:
+        def domainId = RandomStringUtils.randomAlphanumeric(8)
+        def groupId = RandomStringUtils.randomAlphanumeric(8)
+        def token = "token"
+        def requestGroup = new UserGroup().with {
+            it.domainId = "domainId"
+            it.id = "groupId"
+            it.name = RandomStringUtils.randomAlphanumeric(8)
+            it.description = RandomStringUtils.randomAlphanumeric(8)
+            it
+        }
+
+        when:
+        cloudUserGroupResource.updateGroup(null, token, domainId, groupId, requestGroup)
+
+        then:
+        1 * userGroupCloudService.updateGroup(token, requestGroup) >> { args ->
+            def group = args[1]
+            group.domainId == domainId
+            group.id == groupId
+
+            Response.ok().build()
+        }
+    }
+
 }

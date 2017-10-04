@@ -95,8 +95,8 @@ class ListUserGlobalRolesServiceTest extends RootServiceTest {
 
         then:
         securityContext.getAndVerifyEffectiveCallerToken(token) >> callerToken
-        1 * userService.checkAndGetUserById(targetUserId) >> targetUser // Verifies target user is a provisioned user that exists
-        1 * identityUserService.getProvisionedUserById(caller.id) >> caller // Verify the caller is checked to be a provisioned  user
+        1 * identityUserService.checkAndGetEndUserById(targetUserId) >> targetUser // Verifies target user is a end user that exists
+        1 * requestContext.getEffectiveCaller() >> caller
         1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName()) >> true
         1 * tenantService.getEffectiveGlobalRolesForUser(targetUser) >> roles
         1 * roleConverter.toRoleListJaxb(roles) >> roleList
@@ -139,8 +139,8 @@ class ListUserGlobalRolesServiceTest extends RootServiceTest {
 
         then:
         securityContext.getAndVerifyEffectiveCallerToken(token) >> callerToken
-        1 * userService.checkAndGetUserById(targetUserId) >> targetUser // Verifies target user is a provisioned user that exists
-        1 * identityUserService.getProvisionedUserById(caller.id) >> caller // Verify the caller is checked to be a provisioned  user
+        1 * identityUserService.checkAndGetEndUserById(targetUserId) >> targetUser // Verifies target user is a provisioned user that exists
+        1 * requestContext.getEffectiveCaller() >> caller // Verify the caller is checked to be a provisioned  user
         1 * authorizationService.authorizeEffectiveCallerHasAtLeastOneOfIdentityRolesByName(IdentityRole.GET_USER_ROLES_GLOBAL.getRoleName()) >> true
         1 * tenantService.getEffectiveGlobalRolesForUserApplyRcnRoles(targetUser) >> roles
         1 * roleConverter.toRoleListJaxb(roles) >> roleList
@@ -198,7 +198,7 @@ class ListUserGlobalRolesServiceTest extends RootServiceTest {
 
         then:
         securityContext.getAndVerifyEffectiveCallerToken(token) >> callerToken
-        1 * userService.checkAndGetUserById(targetUserId) >> targetUser // Verifies target user is a provisioned user that exists
+        1 * identityUserService.checkAndGetEndUserById(targetUserId) >> targetUser // Verifies target user is a provisioned user that exists
         1 * tenantService.getEffectiveGlobalRolesForUser(targetUser, serviceId) >> roles
         1 * roleConverter.toRoleListJaxb(roles) >> roleList
         1 * openStackIdentityV2Factory.createRoles(roleList) >> Mock(JAXBElement)
@@ -234,7 +234,7 @@ class ListUserGlobalRolesServiceTest extends RootServiceTest {
 
         then:
         securityContext.getAndVerifyEffectiveCallerToken(token) >> callerToken
-        1 * userService.checkAndGetUserById(targetUserId) >> targetUser // Verifies target user is a provisioned user that exists
+        1 * identityUserService.checkAndGetEndUserById(targetUserId) >> targetUser // Verifies target user is a provisioned user that exists
         1 * tenantService.getEffectiveGlobalRolesForUserApplyRcnRoles(targetUser, serviceId) >> roles
         1 * roleConverter.toRoleListJaxb(roles) >> roleList
         1 * openStackIdentityV2Factory.createRoles(roleList) >> Mock(JAXBElement)
