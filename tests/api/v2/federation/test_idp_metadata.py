@@ -208,4 +208,7 @@ class TestIDPMetadata(federation.TestBaseFederation):
             resp = cls.identity_admin_client.delete_user(user_id=user_id)
 
         for domain_id in cls.domain_ids:
+            disable_domain_req = requests.Domain(enabled=False)
+            cls.identity_admin_client.update_domain(
+                domain_id=domain_id, request_object=disable_domain_req)
             cls.identity_admin_client.delete_domain(domain_id=domain_id)

@@ -253,17 +253,15 @@ class TestListUsersByUserManager(base.TestBaseV2):
     def tearDown(self):
         for id_ in self.domain_ids:
             self.identity_admin_client.delete_tenant(tenant_id=id_)
-            self.identity_admin_client.delete_domain(domain_id=id_)
         super(TestListUsersByUserManager, self).tearDown()
 
     @classmethod
     def tearDownClass(cls):
-        # Delete all clients created
-        cls.delete_client(client=cls.user_client,
-                          parent_client=cls.user_admin_client)
+        cls.identity_admin_client.delete_user(
+            cls.user_client.default_headers[const.X_USER_ID])
         for client in cls.user_manager_clients:
-            cls.delete_client(client=client,
-                              parent_client=cls.identity_admin_client)
+            cls.identity_admin_client.delete_user(
+                client.default_headers[const.X_USER_ID])
         for client in cls.user_admin_clients:
             cls.delete_client(client=client,
                               parent_client=cls.identity_admin_client)

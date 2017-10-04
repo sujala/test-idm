@@ -238,5 +238,8 @@ class TestListRoleWTypeTenantTypesNAssignment(base.TestBaseV2):
         for name in cls.tenant_type_ids:
             cls.service_admin_client.delete_tenant_type(name=name)
         for id_ in cls.domain_ids:
+            disable_domain_req = requests.Domain(enabled=False)
+            cls.identity_admin_client.update_domain(
+                domain_id=id_, request_object=disable_domain_req)
             cls.identity_admin_client.delete_domain(domain_id=id_)
         super(TestListRoleWTypeTenantTypesNAssignment, cls).tearDownClass()

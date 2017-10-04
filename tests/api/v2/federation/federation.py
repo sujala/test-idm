@@ -232,6 +232,9 @@ class TestBaseFederation(base.TestBaseV2):
         for id in self.user_ids:
             self.idp_ia_client.delete_user(user_id=id)
         for dom in self.domain_ids:
+            disable_domain_req = requests.Domain(enabled=False)
+            self.identity_admin_client.update_domain(
+                domain_id=dom, request_object=disable_domain_req)
             self.idp_ia_client.delete_domain(domain_id=dom)
         super(TestBaseFederation, self).tearDown()
 

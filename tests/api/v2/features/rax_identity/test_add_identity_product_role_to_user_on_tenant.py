@@ -355,8 +355,6 @@ class TestAddIdentityProdRoleToUserOnTenant(base.TestBaseV2):
             self.identity_admin_client.delete_user(user_id=id_)
         for id_ in self.tenant_ids:
             self.identity_admin_client.delete_tenant(tenant_id=id_)
-        for id_ in self.domain_ids:
-            self.identity_admin_client.delete_domain(domain_id=id_)
         for name in self.tenant_type_ids:
             self.service_admin_client.delete_tenant_type(name=name)
 

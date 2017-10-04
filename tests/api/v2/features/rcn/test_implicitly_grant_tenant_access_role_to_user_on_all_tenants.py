@@ -1027,5 +1027,8 @@ class TestUserImplicitlyGrantedTenantAccessRole(base.TestBaseV2):
         for id_ in self.tenant_ids:
             self.identity_admin_client.delete_tenant(tenant_id=id_)
         for id_ in self.domain_ids:
+            disable_domain_req = requests.Domain(enabled=False)
+            self.identity_admin_client.update_domain(
+                domain_id=id_, request_object=disable_domain_req)
             self.identity_admin_client.delete_domain(domain_id=id_)
         super(TestUserImplicitlyGrantedTenantAccessRole, self).tearDown()
