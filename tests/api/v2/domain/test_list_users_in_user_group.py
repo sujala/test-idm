@@ -64,6 +64,30 @@ class ListUsersInUserGroup(usergroups.TestUserGroups):
             self.user_manager_client.default_headers[const.X_USER_ID],
             user_id_list)
 
+        # Verify user removal
+        self.verify_user_removal_from_user_group(
+            group=group, user_type=user_type)
+
+    def verify_user_removal_from_user_group(self, group, user_type):
+
+        del_resp = self.clients[user_type].delete_user_from_user_group(
+            domain_id=self.domain_id, group_id=group.id,
+            user_id=self.user_admin_client.default_headers[const.X_USER_ID]
+        )
+        self.assertEqual(del_resp.status_code, 204)
+        list_users_resp = (
+            self.clients[user_type].list_users_in_user_group_for_domain(
+                domain_id=self.domain_id, group_id=group.id))
+        self.assertEqual(list_users_resp.status_code, 200)
+        user_id_list = [user[const.ID] for user in list_users_resp.json()[
+            const.USERS]]
+        self.assertNotIn(
+            self.user_admin_client.default_headers[const.X_USER_ID],
+            user_id_list)
+        self.assertIn(
+            self.user_manager_client.default_headers[const.X_USER_ID],
+            user_id_list)
+
     def tearDown(self):
         super(ListUsersInUserGroup, self).tearDown()
         # Deleting the user manager first, so that domain can be
