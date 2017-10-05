@@ -1,18 +1,24 @@
 package com.rackspace.idm.api.resource.cloud.v20
 
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Domain
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.DomainService
+import com.rackspace.idm.domain.service.TenantService
+import com.rackspace.idm.domain.service.UserService
+import com.rackspace.idm.modules.usergroups.service.UserGroupService
 import com.rackspace.idm.validation.Validator20
 import groovy.json.JsonSlurper
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.BadRequestFault
+import org.openstack.docs.identity.api.v2.RoleList
 import org.openstack.docs.identity.api.v2.Tenant
 import org.openstack.docs.identity.api.v2.Tenants
+import org.openstack.docs.identity.api.v2.User
 import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Unroll
 import testHelpers.IdmAssert
@@ -27,6 +33,15 @@ class TenantIntegrationTest extends RootIntegrationTest {
 
     @Autowired
     IdentityConfig identityConfig
+
+    @Autowired
+    TenantService tenantService
+
+    @Autowired
+    UserService userService
+
+    @Autowired
+    UserGroupService userGroupService
 
     def "create tenant limits tenant name to 64 characters"() {
         given:
@@ -85,6 +100,67 @@ class TenantIntegrationTest extends RootIntegrationTest {
 
         cleanup:
         utils.deleteDomain(domain.id)
+    }
+
+    def "deleteTenant: Removes user assigned and user group assigned tenant roles"() {
+        given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
+
+        User user = utils.createCloudAccount()
+        com.rackspace.idm.domain.entity.User userEntity = userService.getUserById(user.id)
+
+        // Add nast role to mosso tenant which results in role being assigned to both mosso and nast tenants
+        utils.addRoleToUserOnTenantId(user, user.domainId, Constants.NAST_ROLE_ID)
+        def nastAssignedRole = tenantService.getTenantRoleForUserById(userEntity, Constants.NAST_ROLE_ID)
+        assert nastAssignedRole != null
+        assert nastAssignedRole.tenantIds.size() == 2
+        assert nastAssignedRole.tenantIds.contains(user.domainId) // Mosso tenant id is in there
+
+        // Parse out the tenantIds from the nast role assignment
+        def mossoTenant = nastAssignedRole.tenantIds.find {it == user.domainId}
+        def nastTenant = nastAssignedRole.tenantIds.find {it != user.domainId}
+
+        // Create user group
+        UserGroup group = utils.createUserGroup(user.domainId)
+        com.rackspace.idm.modules.usergroups.entity.UserGroup groupEntity = userGroupService.getGroupById(group.id)
+
+        // Add roles on tenant to user group
+        utils.grantRoleAssignmentsOnUserGroup(group, v2Factory.createSingleRoleAssignment(Constants.ROLE_RBAC1_ID, [mossoTenant]))
+        utils.grantRoleAssignmentsOnUserGroup(group, v2Factory.createSingleRoleAssignment(Constants.ROLE_RBAC2_ID, [mossoTenant, nastTenant]))
+        assert userGroupService.getRoleAssignmentOnGroup(groupEntity, Constants.ROLE_RBAC1_ID).tenantIds.size() == 1
+        assert userGroupService.getRoleAssignmentOnGroup(groupEntity, Constants.ROLE_RBAC2_ID).tenantIds.size() == 2
+
+        when: "delete the mosso tenant"
+        utils.deleteTenant(new Tenant().with {it.id = mossoTenant; it})
+
+        then: "NAST role assignment on user was updated to no longer include mosso tenant"
+        def updatedNastAssignedRole = tenantService.getTenantRoleForUserById(userEntity, Constants.NAST_ROLE_ID)
+        assert updatedNastAssignedRole != null
+        assert updatedNastAssignedRole.tenantIds.size() == 1
+        assert updatedNastAssignedRole.tenantIds[0] == nastTenant
+
+        and: "RBAC1 tenant role on user group outright deleted since mosso was only assigned tenant"
+        assert userGroupService.getRoleAssignmentOnGroup(groupEntity, Constants.ROLE_RBAC1_ID) == null
+
+        and: "RBAC2 tenant role on user group updated to no longer contain mosso tenant"
+        def updatedRole2Assignment = userGroupService.getRoleAssignmentOnGroup(groupEntity, Constants.ROLE_RBAC2_ID)
+        updatedRole2Assignment != null
+        updatedRole2Assignment.tenantIds.size() == 1
+        updatedRole2Assignment.tenantIds[0] == nastTenant
+
+        when: "Delete the nast tenant"
+        utils.deleteTenant(new Tenant().with {it.id = nastTenant; it})
+
+        then: "NAST role no longer assigned to user"
+        tenantService.getTenantRoleForUserById(userEntity, Constants.NAST_ROLE_ID) == null
+
+        and: "RBAC2 tenant role on user group is now deleted"
+        userGroupService.getRoleAssignmentOnGroup(groupEntity, Constants.ROLE_RBAC2_ID) == null
+
+        cleanup:
+        reloadableConfiguration.reset()
+        utils.deleteUserQuietly(user)
+        utils.deleteTestDomainQuietly(user.domainId)
     }
 
     @Unroll

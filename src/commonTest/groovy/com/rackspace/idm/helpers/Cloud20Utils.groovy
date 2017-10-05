@@ -1338,8 +1338,14 @@ class Cloud20Utils {
         assert response.status == SC_CREATED
         return response.getEntity(UserGroup)
     }
-  
-   def getUserGroup(String groupId, String domainId, String token = getIdentityAdminToken()) {
+
+    def grantRoleAssignmentsOnUserGroup(UserGroup group, RoleAssignments roleAssignments, token = getIdentityAdminToken()) {
+        def response = methods.grantRoleAssignmentsOnUserGroup(token, group, roleAssignments)
+        assert response.status == SC_OK
+        return response.getEntity(RoleAssignments)
+    }
+
+    def getUserGroup(String groupId, String domainId, String token = getIdentityAdminToken()) {
         def userGroup = new UserGroup().with {
             it.domainId = domainId
             it.id = groupId

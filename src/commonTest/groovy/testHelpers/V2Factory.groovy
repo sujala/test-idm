@@ -17,9 +17,12 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.PasswordReset
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificate
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.PublicCertificates
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignmentEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.RsaCredentials
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.ScopeEnum
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignment
+import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantAssignments
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantType
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.TenantTypeEndpointRule
 import com.rackspace.docs.identity.api.ext.rax_auth.v1.Types
@@ -48,6 +51,7 @@ import javax.xml.datatype.DatatypeFactory
 import javax.xml.datatype.Duration
 import javax.xml.namespace.QName
 
+import static com.rackspace.idm.Constants.ROLE_RBAC2_ID
 import static com.rackspace.idm.RaxAuthConstants.*
 
 /**
@@ -784,6 +788,32 @@ class V2Factory {
             it.description = description
             it
         }
+    }
+
+    TenantAssignment createTenantAssignment(String roleId, List<String> tenants) {
+        def assignment = new TenantAssignment().with {
+            ta ->
+                ta.onRole = roleId
+                ta.forTenants.addAll(tenants)
+                ta
+        }
+        return assignment
+    }
+
+    RoleAssignments createRoleAssignments(List<TenantAssignment> tenantAssignments) {
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.addAll(tenantAssignments)
+                    tas
+            }
+            it
+        }
+        assignments
+    }
+
+    RoleAssignments createSingleRoleAssignment(String roleId, List<String> tenants) {
+        return createRoleAssignments([createTenantAssignment(roleId, tenants)])
     }
 
     def createUserGroup(domainId = Cloud20Utils.createRandomString(), name = Cloud20Utils.createRandomString(), description = Cloud20Utils.createRandomString()) {
