@@ -11,7 +11,7 @@ class DeleteClientRoleIntegrationTest extends RootIntegrationTest {
 
     def "cannot delete a client role if the role is assigned to a user group"() {
         given:
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
 
         def domain = utils.createDomainEntity()
         def role = utils.createRole()

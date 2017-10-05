@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.UserGroup
 import com.rackspace.idm.Constants
 import com.rackspace.idm.ErrorCodes
 import com.rackspace.idm.api.resource.cloud.v20.DefaultCloud20Service
+import com.rackspace.idm.domain.config.IdentityConfig
 import com.rackspace.idm.domain.service.impl.DefaultDomainService
 import com.rackspace.idm.modules.usergroups.service.DefaultUserGroupService
 import com.rackspace.idm.validation.Validator20
@@ -20,6 +21,10 @@ import testHelpers.RootIntegrationTest
 import javax.ws.rs.core.MediaType
 
 class UpdateUserGroupIntegrationTest extends RootIntegrationTest {
+
+    void doSetupSpec() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
+    }
 
     @Unroll
     def "test update user group, accept == #accept, request == #request"() {

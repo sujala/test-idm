@@ -7,7 +7,7 @@ import testHelpers.RootIntegrationTest
 
 class CloudUserGroupResourceIntegrationTest extends RootIntegrationTest {
     void doSetupSpec() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
     }
 
     def "Call add user to domain group service w/ an invalid(expired/revoked) token….expect a 401"() {

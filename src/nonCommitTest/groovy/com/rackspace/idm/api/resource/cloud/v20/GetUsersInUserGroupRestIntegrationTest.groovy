@@ -16,7 +16,7 @@ import static org.apache.http.HttpStatus.*
 class GetUsersInUserGroupRestIntegrationTest extends RootIntegrationTest {
 
     def setupSpec() {
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_SUPPORT_USER_GROUPS_GLOBALLY_PROP, true)
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
     }
 
     @Unroll
