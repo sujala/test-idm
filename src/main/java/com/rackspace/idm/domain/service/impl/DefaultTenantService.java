@@ -135,10 +135,10 @@ public class DefaultTenantService implements TenantService {
         // Delete all tenant roles for this tenant
         for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenant(tenant.getTenantId())) {
             if (role.getTenantIds().size() == 1) {
-                this.tenantRoleDao.deleteTenantRole(role, tenant.getTenantId());
+                this.tenantRoleDao.deleteTenantRole(role);
             } else {
                 role.getTenantIds().remove(tenant.getTenantId());
-                this.tenantRoleDao.updateTenantRole(role, tenant.getTenantId());
+                this.tenantRoleDao.updateTenantRole(role);
             }
         }
 
@@ -904,9 +904,9 @@ public class DefaultTenantService implements TenantService {
     private void deleteTenantFromTenantRole(TenantRole role, Tenant tenant) {
         role.getTenantIds().remove(tenant.getTenantId());
         if(role.getTenantIds().size() == 0) {
-            tenantRoleDao.deleteTenantRole(role, tenant.getTenantId());
+            tenantRoleDao.deleteTenantRole(role);
         } else {
-            tenantRoleDao.updateTenantRole(role, tenant.getTenantId());
+            tenantRoleDao.updateTenantRole(role);
         }
     }
 

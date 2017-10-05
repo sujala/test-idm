@@ -5,6 +5,7 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
@@ -831,6 +832,49 @@ class DefaultTenantServiceTest extends RootServiceTest {
         flag << [true, false]
     }
 
+    def "deleteTenant: Updates tenant roles and domain appropriately"() {
+        given:
+        identityConfig.getReloadableConfig().getIdentityRoleDefaultTenant() >> "defaultTenant"
+        Tenant tenant = new Tenant().with {
+            it.tenantId = "tenantId"
+            it.domainId = "domainId"
+            it
+        }
+        def otherTenantId = "otherTenantId"
+        TenantRole trSingleTenant = new TenantRole().with {
+            it.tenantIds = [tenant.tenantId]
+            it
+        }
+        TenantRole trMultipleTenants = new TenantRole().with {
+            it.tenantIds = [tenant.tenantId, otherTenantId]
+            it
+        }
+        Domain domain = new Domain().with {
+            it.domainId = tenant.domainId
+            it.tenantIds = [tenant.tenantId]
+            it
+        }
+
+        when:
+        service.deleteTenant(tenant)
+
+        then:
+        1 * tenantRoleDao.getAllTenantRolesForTenant(tenant.getTenantId()) >> [trSingleTenant, trMultipleTenants]
+        1 * tenantRoleDao.updateTenantRole(trMultipleTenants) >> {args ->
+            TenantRole tr = args[0]
+            assert tr.tenantIds == [otherTenantId] as Set // Deleted tenant is removed
+            null
+        }
+        1 * tenantRoleDao.deleteTenantRole(trSingleTenant)
+        1 * tenantDao.deleteTenant(tenant.tenantId)
+        1 * domainService.getDomain(tenant.getDomainId()) >> domain
+        1 * domainService.updateDomain(domain) >> { args ->
+            Domain dom = args[0]
+            assert dom.tenantIds.size() == 0
+            null
+        }
+    }
+      
     def "getPaginatedEffectiveEnabledUsersForTenant ignores tenantRole in userGroup "() {
         given:
 
