@@ -410,10 +410,7 @@ class TestAddMappingIDP(federation.TestBaseFederation):
             idp_id=provider_id,
             request_data=mapping,
             content_type=const.YAML)
-        # This is currently a bug with repose.
-        # Invalid YAML is blocked; however, Repose returns 200 OK
-        # instead of 400 Bad Request.
-        self.assertEquals(resp_put_manager.status_code, 200)
+        self.assertEquals(resp_put_manager.status_code, 400)
 
         resp_get_ro = self.idp_ia_clients[
             const.PROVIDER_MANAGEMENT_ROLE_NAME].get_idp_mapping(
