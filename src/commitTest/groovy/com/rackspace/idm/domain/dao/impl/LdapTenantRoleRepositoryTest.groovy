@@ -1,14 +1,11 @@
 package com.rackspace.idm.domain.dao.impl
 
-import com.rackspace.idm.api.resource.pagination.Paginator
 import com.rackspace.idm.domain.entity.PaginatorContext
 import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.modules.usergroups.Constants
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupRoleSearchParams
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
 import com.unboundid.ldap.sdk.*
-import com.unboundid.ldap.sdk.controls.ServerSideSortRequestControl
-import com.unboundid.ldap.sdk.controls.VirtualListViewRequestControl
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
 
@@ -32,6 +29,7 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
         dao.paginator = paginator
 
         mockConfiguration(dao)
+        mockIdentityConfig(dao)
     }
 
     def "addRoleAssignmentOnGroup: adding new assignment checks for container"() {
@@ -182,5 +180,26 @@ class LdapTenantRoleRepositoryTest extends RootServiceTest {
         1      | 1
         4       | 120
         null    | null
+    }
+
+    def "getIdsForUsersWithTenantRole: test to ignore tenantRole on userGroup"() {
+
+        when:
+        def userIds = dao.getIdsForUsersWithTenantRole("roleId", 10)
+
+        then:
+        userIds != null
+        userIds.size() == 1
+        userIds.get(0) == "test2"
+
+        1 * identityConfig.getReloadableConfig().getMaxDirectoryPageSize() >> 1000
+
+        1 * ldapInterface.search(_ as SearchRequest) >> { args ->
+            List<SearchResultEntry> searchResultList = Arrays.asList(new SearchResultEntry("cn=ROLES,rsId=test1," + Constants.USER_GROUP_BASE_DN, new Attribute[0], new Control[0]),
+                                    new SearchResultEntry("cn=ROLES,rsId=test2," + LdapRepository.USERS_BASE_DN, new Attribute[0], new Control[0]))
+
+            SearchRequest request = (SearchRequest) args[0]
+            new SearchResult(1, null, null, null, new String[0], searchResultList, Collections.emptyList(), 2, 0)
+        }
     }
 }

@@ -7,6 +7,7 @@ import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
@@ -828,6 +829,37 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         where:
         flag << [true, false]
+    }
+
+    def "getPaginatedEffectiveEnabledUsersForTenant ignores tenantRole in userGroup "() {
+        given:
+
+        def tenantRole = entityFactory.createTenantRole("somerole")
+        tenantRole.tenantIds = ["12345"]
+
+        def tenantRoleInUserGroup = entityFactory.createTenantRole("tenantRoleInUserGroup").with {
+            it.uniqueId = "roleRsId=1234,cn=ROLES,rsId=f2b6f73730324548a729d6a878640558,ou=userGroups,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com"
+            return it
+        }
+
+        def user = entityFactory.createUser()
+        def tenant = entityFactory.createTenant()
+
+        when:
+        def paginatedUser = service.getPaginatedEffectiveEnabledUsersForTenant(tenant.tenantId, 0, 25)
+
+        then:
+
+        1 * tenantRoleDao.getAllTenantRolesForTenant(tenant.tenantId) >> [tenantRole, tenantRoleInUserGroup].asList()
+        1 * tenantRoleDao.getUserIdForParent(tenantRole) >> tenantRole.userId
+        1 * userService.getUserById(tenantRole.getUserId()) >> user
+
+        0 * tenantRoleDao.getUserIdForParent(tenantRoleInUserGroup)
+        0 * userService.getUserById("f2b6f73730324548a729d6a878640558")
+
+        paginatedUser.totalRecords == 1
+        paginatedUser.getValueList().size() == 1
+        paginatedUser.getValueList().get(0) == user
     }
 
     def createImmutableClientRole(String name, int weight = 1000) {

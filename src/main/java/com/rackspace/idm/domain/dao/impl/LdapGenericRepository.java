@@ -44,7 +44,7 @@ public class LdapGenericRepository<T extends UniqueId> extends LdapRepository im
     protected LdapPaginatorRepository<T> paginator;
 
     @Autowired
-    private IdentityConfig identityConfig;
+    protected IdentityConfig identityConfig;
 
     @Override
     public Iterable<T> getObjects(Filter searchFilter) {

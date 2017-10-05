@@ -107,7 +107,9 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         //get the userIds
         for (TenantRole tenantRole : roles) {
             try {
-                userIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
+                if(!StringUtils.containsIgnoreCase(tenantRole.getUniqueId(), USER_GROUP_BASE_DN)) {
+                    userIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
+                }
             } catch (LDAPException e) {
                 throw new IllegalStateException();
             }

@@ -42,6 +42,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.rackspace.idm.GlobalConstants.MANAGED_HOSTING_TENANT_PREFIX;
+import static com.rackspace.idm.modules.usergroups.Constants.USER_GROUP_BASE_DN;
 
 @Component
 public class DefaultTenantService implements TenantService {
@@ -1250,7 +1251,7 @@ public class DefaultTenantService implements TenantService {
         // Retrieve explicitly assigned roles on tenant
         for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenant(tenantId)) {
             // TODO: This is inefficient. Uses userId on role for comparison, then uses logic to get userId based on DN
-            if (!userIds.contains(role.getUserId())) {
+            if (!userIds.contains(role.getUserId()) && !StringUtils.containsIgnoreCase(role.getUniqueId(), USER_GROUP_BASE_DN)) {
                 String userId = tenantRoleDao.getUserIdForParent(role);
                 if(!StringUtils.isBlank(userId)){
                     userIds.add(userId);
@@ -1433,7 +1434,9 @@ public class DefaultTenantService implements TenantService {
         // Get list of users that are explicitly assigned this role on tenant. This could include users in other domains
         Set<String> userIds = new HashSet<String>();
         for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.getTenantId(), cRole.getId())) {
-            userIds.add(role.getUserId());
+            if (role.getUserId() != null) {
+                userIds.add(role.getUserId());
+            }
         }
 
         // Loop through domain users, removing from list of explicit to avoid looking up twice, and look up remaining
