@@ -1693,6 +1693,17 @@ class IdentityAPIClient(client.AutoMarshallingHTTPClient):
             domain_id=domain_id, group_id=group_id, user_id=user_id)
         return self.request('PUT', url, requestslib_kwargs=requestslib_kwargs)
 
+    def update_user_group(self, domain_id, group_id,
+                          request_object, requestslib_kwargs=None):
+        """
+        PUT /v2.0/RAX-AUTH/domains/{domain_id}/groups/{group_id}
+        """
+        url = self.url + const.UPDATE_USER_GROUP_URL.format(
+            domain_id=domain_id, group_id=group_id)
+        return self.request(
+            'PUT', url, request_entity=request_object,
+            requestslib_kwargs=requestslib_kwargs)
+
     def list_users_in_user_group_for_domain(
             self, domain_id, group_id, requestslib_kwargs=None):
         """

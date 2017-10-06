@@ -1115,7 +1115,7 @@ class DomainAdministratorChange(base.AutoMarshallingModel):
 
 
 class domainUserGroup(base.AutoMarshallingModel):
-    def __init__(self, group_name, domain_id, description=None):
+    def __init__(self, group_name=None, domain_id=None, description=None):
         self.group_name = group_name
         self.description = description
         self.domain_id = domain_id
@@ -1125,10 +1125,11 @@ class domainUserGroup(base.AutoMarshallingModel):
             const.RAX_AUTH_USER_GROUP: {
                 const.NAME: self.group_name,
                 const.DESCRIPTION: self.description,
-                const.DOMAIN_ID: self.domain_id
             }
         }
-
+        if self.domain_id:
+            domain_user_group_request[
+                const.RAX_AUTH_USER_GROUP][const.DOMAIN_ID] = self.domain_id
         return json.dumps(domain_user_group_request)
 
     def _obj_to_xml(self):

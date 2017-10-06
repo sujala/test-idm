@@ -22,6 +22,7 @@ ADD_TENANT_URL = LIST_TENANTS = '/tenants'
 ADD_USER_GROUP_TO_DOMAIN_URL = '/RAX-AUTH/domains/{domain_id}/groups'
 ADD_USER_TO_USER_GROUP_URL = (
     '/RAX-AUTH/domains/{domain_id}/groups/{group_id}/users/{user_id}')
+UPDATE_USER_GROUP_URL = '/RAX-AUTH/domains/{domain_id}/groups/{group_id}'
 ANALYZE_TOKEN_URL = '/tokens/analyze'
 TENANT_TYPE_URL = '/RAX-AUTH/tenant-types'
 RD_TENANT_TYPE_URL = '/RAX-AUTH/tenant-types/{name}'

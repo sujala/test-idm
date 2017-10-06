@@ -61,6 +61,29 @@ class UserGroupsInDomain(usergroups.TestUserGroups):
             response=list_resp,
             json_schema=user_groups.list_user_groups_for_domain)
 
+    def test_update_user_group_in_a_domain(self):
+
+        user_group = self.add_user_group()
+        group_id = user_group[const.RAX_AUTH_USER_GROUP][const.ID]
+
+        updated_group_name = self.generate_random_string(
+            pattern=const.USER_GROUP_NAME_PATTERN)
+        update_user_group_req = requests.domainUserGroup(
+            group_name=updated_group_name)
+        update_resp = self.user_admin_client.update_user_group(
+            domain_id=self.domain_id, group_id=group_id,
+            request_object=update_user_group_req)
+        self.assertEqual(update_resp.status_code, 200)
+        self.assertEqual(
+            update_resp.json()[const.RAX_AUTH_USER_GROUP][const.NAME],
+            updated_group_name)
+
+        get_resp = self.user_admin_client.get_user_group_for_domain(
+            domain_id=self.domain_id, group_id=group_id)
+        self.assertEqual(
+            get_resp.json()[const.RAX_AUTH_USER_GROUP][const.NAME],
+            updated_group_name)
+
     def test_delete_user_group_in_a_domain(self):
 
         user_group = self.add_user_group()
