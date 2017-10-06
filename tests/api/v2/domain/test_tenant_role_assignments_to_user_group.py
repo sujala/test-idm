@@ -93,6 +93,30 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         self.verify_delete_tenant_role_assignments_service(
             group=group, role_1=role_1, role_2=role_2)
 
+        # Testing group tenant assignments are handled properly when
+        # tenant is deleted
+        self.verify_tenant_assignments_for_group_after_tenant_deletion(
+            tenant=tenant_1.id, group=group, role_2=role_2)
+
+    def verify_tenant_assignments_for_group_after_tenant_deletion(
+            self, tenant, group, role_2):
+
+        del_resp = self.identity_admin_client.delete_tenant(tenant_id=tenant)
+        self.assertEqual(del_resp.status_code, 204)
+
+        list_resp = (self.user_admin_client.
+                     list_tenant_role_assignments_to_user_group(
+                      domain_id=self.domain_id, group_id=group.id))
+        self.assertEqual(list_resp.status_code, 200)
+
+        # Verify when tenant is deleted, the corresponding tenant role
+        # assignment for the user group is removed
+        assignments = [assignment for assignment in list_resp.json()[
+              const.RAX_AUTH_ROLE_ASSIGNMENTS][const.TENANT_ASSIGNMENTS]]
+        self.assertEqual(len(assignments), 1)
+        self.assertEqual(assignments[0][const.ON_ROLE], role_2.id)
+        self.assertEqual(assignments[0][const.FOR_TENANTS], ["*"])
+
     def verify_list_tenant_assignments_service(
             self, group, role_1, role_2, tenant):
 
@@ -141,6 +165,10 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
         # in that domain. Hence, not explicitly deleting the user groups
         self.delete_client(self.user_admin_client,
                            parent_client=self.identity_admin_client)
+
+        # We are deleting the only tenant we create in the test, within the
+        # test itself. But, this is still kept in for safety, if at all the
+        # test fails prior to tenant deletion, teardown will delete it
         for tenant_id in self.tenant_ids:
             self.identity_admin_client.delete_tenant(tenant_id=tenant_id)
         for role_id in self.role_ids:

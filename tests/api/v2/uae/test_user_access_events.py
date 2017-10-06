@@ -38,6 +38,7 @@ class TestUserAccessEvents(base.TestBaseV2):
     def setUp(self):
         if not self.test_config.run_local_and_jenkins_only:
             self.skipTest('Skipping tests from staging and production')
+        super(TestUserAccessEvents, self).setUp()
         self.user_ids = []
         self.device_ids = []
 
