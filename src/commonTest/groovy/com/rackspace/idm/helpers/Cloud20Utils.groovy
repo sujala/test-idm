@@ -1314,13 +1314,8 @@ class Cloud20Utils {
     }
 
     def createFederatedUser(String domainId, mediaType = APPLICATION_XML_TYPE) {
-        def expSecs = Constants.DEFAULT_SAML_EXP_SECS
-        def username = testUtils.getRandomUUID("samlUser")
-        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(Constants.DEFAULT_IDP_URI, username, expSecs, domainId, null);
-        def samlResponse = methods.samlAuthenticate(samlAssertion, mediaType)
-        def samlAuthResponse = samlResponse.getEntity(AuthenticateResponse)
-        def samlAuthToken = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.token : samlAuthResponse.token
-        def user = mediaType == APPLICATION_XML_TYPE ? samlAuthResponse.value.user : samlAuthResponse.user
+        AuthenticateResponse samlAuthResponse = createFederatedUserForAuthResponse(domainId, mediaType)
+        def user = samlAuthResponse.user
         return user
     }
   

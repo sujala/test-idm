@@ -8,6 +8,7 @@ import com.rackspace.idm.domain.service.RoleService
 import com.rackspace.idm.util.JSONReaderForRoles
 import org.apache.commons.configuration.Configuration
 import org.apache.commons.io.IOUtils
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.AuthenticateResponse
 import org.openstack.docs.identity.api.v2.Role
@@ -16,10 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootIntegrationTest
+import testHelpers.saml.SamlFactory
 
 import javax.ws.rs.core.MediaType
 
 import static com.rackspace.idm.Constants.*
+import static javax.ws.rs.core.MediaType.APPLICATION_XML_TYPE
 
 class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
 
@@ -816,16 +819,22 @@ class Cloud20ListRolesIntegrationTest extends RootIntegrationTest{
     def "Fed user can get own global roles" () {
         given: "A new user admin"
         def userAdmin = cloud20.createCloudAccount(utils.getIdentityAdminToken())
-        utils.domainRcnSwitch(userAdmin.domainId, "RCN-123-123-123")
 
-        AuthenticateResponse fedUserAuthResponse = utils.createFederatedUserForAuthResponse(userAdmin.domainId)
+        def expSecs = DEFAULT_SAML_EXP_SECS
+        def username = testUtils.getRandomUUID("samlUser")
+        def samlAssertion = new SamlFactory().generateSamlAssertionStringForFederatedUser(DEFAULT_IDP_URI, username, expSecs, userAdmin.domainId, [ROLE_RBAC1_NAME])
+        def samlResponse = cloud20.samlAuthenticate(samlAssertion)
+        assert samlResponse.status == HttpStatus.SC_OK
+        def fedUserAuthResponse = samlResponse.getEntity(AuthenticateResponse).value
 
         when: "fed user lists own global roles"
         def userGlobalRolesResponse = cloud20.listUserGlobalRoles(fedUserAuthResponse.token.id, fedUserAuthResponse.user.id)
         def globalRoles = userGlobalRolesResponse.getEntity(RoleList).value
 
         then:
+        globalRoles.role.size() == 2
         assert globalRoles.role.find({it.id == DEFAULT_USER_ROLE_ID}) != null
+        assert globalRoles.role.find({it.id == ROLE_RBAC1_ID}) != null
 
     }
 
