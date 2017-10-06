@@ -29,6 +29,7 @@ class TestBaseFederation(base.TestBaseV2):
         request_object = requests.UserAdd(user_name=user_name,
                                           password=password)
         resp = cls.service_admin_client.add_user(request_object)
+        assert resp.status_code == 201
 
         req_obj = requests.AuthenticateWithPassword(
             user_name=user_name,
@@ -232,6 +233,9 @@ class TestBaseFederation(base.TestBaseV2):
         for id in self.user_ids:
             self.idp_ia_client.delete_user(user_id=id)
         for dom in self.domain_ids:
+            disable_domain_req = requests.Domain(enabled=False)
+            self.identity_admin_client.update_domain(
+                domain_id=dom, request_object=disable_domain_req)
             self.idp_ia_client.delete_domain(domain_id=dom)
         super(TestBaseFederation, self).tearDown()
 

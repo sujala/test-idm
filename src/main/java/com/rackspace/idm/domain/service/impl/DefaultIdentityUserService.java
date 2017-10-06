@@ -262,8 +262,13 @@ public class DefaultIdentityUserService implements IdentityUserService {
     }
 
     @Override
-    public PaginatorContext<EndUser> getEndUsersInUserGroup(UserGroup group, UserSearchCriteria userSearchCriteria) {
-        return identityUserRepository.getEndUsersInUserGroup(group, userSearchCriteria);
+    public PaginatorContext<EndUser> getEndUsersInUserGroupPaged(UserGroup group, UserSearchCriteria userSearchCriteria) {
+        return identityUserRepository.getEndUsersInUserGroupPaged(group, userSearchCriteria);
+    }
+
+    @Override
+    public Iterable<EndUser> getEndUsersInUserGroup(UserGroup group) {
+        return identityUserRepository.getEndUsersInUserGroup(group);
     }
 
     @Override

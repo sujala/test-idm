@@ -1719,6 +1719,8 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
     def "Deleting a domain also deletes associated user groups"() {
         given:
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
+
         def domainId = utils.createDomain()
         def userAdmin, users
         (userAdmin, users) = utils.createUserAdmin(domainId)
@@ -1746,6 +1748,9 @@ class Cloud20DomainIntegrationTest extends RootIntegrationTest {
 
         and: "Assert user group has been deleted"
         userGroupService.getGroupById(userGroup.id) == null
+
+        cleanup:
+        reloadableConfiguration.reset()
     }
 
     def removeDomainFromUser(username) {

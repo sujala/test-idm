@@ -5,8 +5,10 @@ import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.dao.FederatedUserDao
 import com.rackspace.idm.domain.entity.ClientRole
+import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.Tenant
 import com.rackspace.idm.domain.entity.TenantRole
+import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
@@ -45,6 +47,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         mockAtomHopperClient(service)
         mockFederatedUserDao(service)
         mockUserGroupService(service)
+        mockUserGroupAuthorizationService(service)
     }
 
     def "get mossoId from roles returns compute:default tenantId"() {
@@ -781,7 +784,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def tenantRoleList = service.getTenantRolesForUserPerformant(user)
 
         then:
-        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> flag
+        1 * userGroupAuthorizationService.areUserGroupsEnabledForDomain(domainId) >> flag
         1 * tenantRoleDao.getTenantRolesForUser(user) >> [] // Assume zilch roles returned
         if (flag) {
             // Roles should be retrieved for both groups assigned
@@ -814,7 +817,7 @@ class DefaultTenantServiceTest extends RootServiceTest {
         def tenantRoleList = service.getTenantRolesForUserApplyRcnRoles(user)
 
         then:
-        1 * reloadableConfig.areUserGroupsGloballyEnabled() >> flag
+        1 * userGroupAuthorizationService.areUserGroupsEnabledForDomain(domainId) >> flag
         1 * tenantRoleDao.getTenantRolesForUser(user) >> [] // Assume zilch roles returned
         if (flag) {
             // Roles should be retrieved for both groups assigned
@@ -827,6 +830,80 @@ class DefaultTenantServiceTest extends RootServiceTest {
 
         where:
         flag << [true, false]
+    }
+
+    def "deleteTenant: Updates tenant roles and domain appropriately"() {
+        given:
+        identityConfig.getReloadableConfig().getIdentityRoleDefaultTenant() >> "defaultTenant"
+        Tenant tenant = new Tenant().with {
+            it.tenantId = "tenantId"
+            it.domainId = "domainId"
+            it
+        }
+        def otherTenantId = "otherTenantId"
+        TenantRole trSingleTenant = new TenantRole().with {
+            it.tenantIds = [tenant.tenantId]
+            it
+        }
+        TenantRole trMultipleTenants = new TenantRole().with {
+            it.tenantIds = [tenant.tenantId, otherTenantId]
+            it
+        }
+        Domain domain = new Domain().with {
+            it.domainId = tenant.domainId
+            it.tenantIds = [tenant.tenantId]
+            it
+        }
+
+        when:
+        service.deleteTenant(tenant)
+
+        then:
+        1 * tenantRoleDao.getAllTenantRolesForTenant(tenant.getTenantId()) >> [trSingleTenant, trMultipleTenants]
+        1 * tenantRoleDao.updateTenantRole(trMultipleTenants) >> {args ->
+            TenantRole tr = args[0]
+            assert tr.tenantIds == [otherTenantId] as Set // Deleted tenant is removed
+            null
+        }
+        1 * tenantRoleDao.deleteTenantRole(trSingleTenant)
+        1 * tenantDao.deleteTenant(tenant.tenantId)
+        1 * domainService.getDomain(tenant.getDomainId()) >> domain
+        1 * domainService.updateDomain(domain) >> { args ->
+            Domain dom = args[0]
+            assert dom.tenantIds.size() == 0
+            null
+        }
+    }
+      
+    def "getPaginatedEffectiveEnabledUsersForTenant ignores tenantRole in userGroup "() {
+        given:
+
+        def tenantRole = entityFactory.createTenantRole("somerole")
+        tenantRole.tenantIds = ["12345"]
+
+        def tenantRoleInUserGroup = entityFactory.createTenantRole("tenantRoleInUserGroup").with {
+            it.uniqueId = "roleRsId=1234,cn=ROLES,rsId=f2b6f73730324548a729d6a878640558,ou=userGroups,ou=groups,ou=cloud,o=rackspace,dc=rackspace,dc=com"
+            return it
+        }
+
+        def user = entityFactory.createUser()
+        def tenant = entityFactory.createTenant()
+
+        when:
+        def paginatedUser = service.getPaginatedEffectiveEnabledUsersForTenant(tenant.tenantId, 0, 25)
+
+        then:
+
+        1 * tenantRoleDao.getAllTenantRolesForTenant(tenant.tenantId) >> [tenantRole, tenantRoleInUserGroup].asList()
+        1 * tenantRoleDao.getUserIdForParent(tenantRole) >> tenantRole.userId
+        1 * userService.getUserById(tenantRole.getUserId()) >> user
+
+        0 * tenantRoleDao.getUserIdForParent(tenantRoleInUserGroup)
+        0 * userService.getUserById("f2b6f73730324548a729d6a878640558")
+
+        paginatedUser.totalRecords == 1
+        paginatedUser.getValueList().size() == 1
+        paginatedUser.getValueList().get(0) == user
     }
 
     def createImmutableClientRole(String name, int weight = 1000) {

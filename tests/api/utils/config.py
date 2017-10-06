@@ -71,6 +71,21 @@ class TestConfig(data_interfaces.ConfigSectionInterface):
         return self.get('deserialize_format')
 
     @property
+    def domain_id(self):
+        """Domain id to test user groups with."""
+        return self.get('domain_id')
+
+    @property
+    def use_domain_for_user_groups(self):
+        """Checks to see if Johny should use specified domain
+           or generate one."""
+        use_explicit_domain = self.get('domain_id')
+        if use_explicit_domain is None or len(use_explicit_domain) == 0:
+            return False
+        else:
+            return True
+
+    @property
     def run_hypothesis_tests(self):
         """Flag to indicate if hypothesis tests should be run."""
         run_hypothesis_tests = self.get('run_hypothesis_tests')

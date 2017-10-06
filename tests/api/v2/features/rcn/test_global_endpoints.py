@@ -62,19 +62,9 @@ class TestGlobalEndpoints(base.TestBaseV2):
             request_object=request_object)
         self.assertEqual(resp.status_code, 201)
         user_id = resp.json()[const.USER][const.ID]
+        domain_id = resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID]
         self.user_ids.append(user_id)
-        return user_id, resp
-
-    def create_admin_user_one_call(self):
-        """Using 1 call logic"""
-        domain_id = self.generate_random_string(pattern=const.NUMBERS_PATTERN)
-        request_object = factory.get_add_user_request_object_pull(
-            domain_id=domain_id)
-        resp = self.identity_admin_client.add_user(
-            request_object=request_object)
-        self.assertEqual(resp.status_code, 201)
-        user_id = resp.json()[const.USER][const.ID]
-        self.user_ids.append(user_id)
+        self.domain_ids.append(domain_id)
         return user_id, resp
 
     def create_tenant(self, domain_id):
@@ -264,6 +254,9 @@ class TestGlobalEndpoints(base.TestBaseV2):
         for id_ in self.tenant_ids:
             self.identity_admin_client.delete_tenant(tenant_id=id_)
         for id_ in self.domain_ids:
+            disable_domain_req = requests.Domain(enabled=False)
+            self.identity_admin_client.update_domain(
+                domain_id=id_, request_object=disable_domain_req)
             self.identity_admin_client.delete_domain(domain_id=id_)
         for id_ in self.role_ids:
             self.identity_admin_client.delete_role(role_id=id_)

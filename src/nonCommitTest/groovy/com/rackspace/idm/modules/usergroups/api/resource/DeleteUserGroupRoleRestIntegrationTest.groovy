@@ -43,6 +43,8 @@ class DeleteUserGroupRoleRestIntegrationTest extends RootIntegrationTest {
     @Shared UserGroup sharedUserGroup
 
     void doSetupSpec() {
+        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_ENABLE_USER_GROUPS_GLOBALLY_PROP, true)
+
         def authResponse = cloud20.authenticatePassword(Constants.IDENTITY_ADMIN_USERNAME, Constants.IDENTITY_ADMIN_PASSWORD)
         assert authResponse.status == HttpStatus.SC_OK
         sharedIdentityAdminToken = authResponse.getEntity(AuthenticateResponse).value.token.id

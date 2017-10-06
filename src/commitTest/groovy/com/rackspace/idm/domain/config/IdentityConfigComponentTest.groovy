@@ -22,7 +22,7 @@ import testHelpers.SingletonTestFileConfiguration
 @ContextConfiguration(classes=[SingletonTestFileConfiguration.class
         , IdentityConfig.class
         , MockServiceProvider.class])
-class IdentityConfigIntegrationTest  extends Specification {
+class IdentityConfigComponentTest extends Specification {
 
     @Autowired
     private IdentityConfig config
@@ -179,7 +179,7 @@ class IdentityConfigIntegrationTest  extends Specification {
     }
 
     @Unroll
-    def "getExplicitUserGroupEnabledDomains property parses value retrieved from repo: value: #repoValue"() {
+    def "getExplicitUserGroupEnabledDomains properly parses value retrieved from repo: value: #repoValue"() {
         given:
         def identityProp = repoValue != null ? new IdentityProperty().with {
             it.value = repoValue.bytes

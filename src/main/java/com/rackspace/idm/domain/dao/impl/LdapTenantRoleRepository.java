@@ -70,7 +70,7 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     }
 
     @Override
-    public void updateTenantRole(TenantRole tenantRole, String tenantId) {
+    public void updateTenantRole(TenantRole tenantRole) {
         updateObject(tenantRole);
     }
 
@@ -81,11 +81,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
 
     @Override
     public void deleteTenantRole(TenantRole tenantRole) {
-        deleteTenantRole(tenantRole, null);
-    }
-
-    @Override
-    public void deleteTenantRole(TenantRole tenantRole, String tenantId) {
         deleteObject(tenantRole);
     }
 
@@ -107,7 +102,9 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
         //get the userIds
         for (TenantRole tenantRole : roles) {
             try {
-                userIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
+                if(!StringUtils.containsIgnoreCase(tenantRole.getUniqueId(), USER_GROUP_BASE_DN)) {
+                    userIds.add(getUserIdFromUniqueId(tenantRole.getUniqueId()));
+                }
             } catch (LDAPException e) {
                 throw new IllegalStateException();
             }
@@ -184,11 +181,6 @@ public class LdapTenantRoleRepository extends LdapGenericRepository<TenantRole> 
     @Override
     public TenantRole getTenantRoleForUser(BaseUser user, String roleId) {
         return getTenantRole(user.getUniqueId(), roleId);
-    }
-
-    @Override
-    public void updateTenantRole(TenantRole tenantRole) {
-        updateTenantRole(tenantRole, null);
     }
 
     @Override

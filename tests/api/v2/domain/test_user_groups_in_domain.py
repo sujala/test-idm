@@ -1,24 +1,21 @@
 # -*- coding: utf-8 -*
-from tests.api.v2 import base
+from tests.api.v2.domain import usergroups
+from tests.api.v2.models import factory
 from tests.api.v2.schema import user_groups
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
 
-class UserGroupsInDomain(base.TestBaseV2):
+class UserGroupsInDomain(usergroups.TestUserGroups):
     """
     Tests for user groups in a domain services.
     """
 
     def setUp(self):
         super(UserGroupsInDomain, self).setUp()
-        self.domain_id = self.generate_random_string(pattern='[\d]{7}')
         self.user_admin_client = self.generate_client(
             parent_client=self.identity_admin_client,
             additional_input_data={'domain_id': self.domain_id})
-
-        self.domain_ids = []
-        self.domain_ids.append(self.domain_id)
 
     def add_user_group(self):
 
@@ -76,11 +73,26 @@ class UserGroupsInDomain(base.TestBaseV2):
             domain_id=self.domain_id, group_id=group_id)
         self.assertEqual(get_resp.status_code, 404)
 
+    def test_failed_domain_deletion_does_not_remove_user_group(self):
+
+        group_req = factory.get_add_user_group_request(self.domain_id)
+        create_group_resp = self.user_admin_client.add_user_group_to_domain(
+            domain_id=self.domain_id, request_object=group_req)
+        self.assertEqual(create_group_resp.status_code, 201)
+        # Attempt to delete an enabled domain. Expect a 400
+        del_resp = self.identity_admin_client.delete_domain(
+            domain_id=self.domain_id)
+        self.assertEqual(del_resp.status_code, 400)
+
+        # Verify that the user group still exists for that domain
+        list_resp = self.user_admin_client.list_user_groups_for_domain(
+            domain_id=self.domain_id)
+        self.assertEqual(len(list_resp.json()[const.RAX_AUTH_USER_GROUPS]), 1)
+
     def tearDown(self):
         super(UserGroupsInDomain, self).tearDown()
         # This deletes the domain which automatically deletes any user groups
-        # in that domain(pending implementation of CID-1111).
-        # Hence, not explicitly deleting the user groups
+        # in that domain. Hence, not explicitly deleting the user groups.
         self.delete_client(
             self.user_admin_client,
             parent_client=self.identity_admin_client)

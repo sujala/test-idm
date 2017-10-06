@@ -18,6 +18,7 @@ import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.ClientConflictException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.NotFoundException;
+import com.rackspace.idm.modules.usergroups.api.resource.UserGroupAuthorizationService;
 import com.rackspace.idm.modules.usergroups.service.UserGroupService;
 import com.rackspace.idm.util.RoleUtil;
 import com.rackspace.idm.validation.PrecedenceValidator;
@@ -41,6 +42,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.rackspace.idm.GlobalConstants.MANAGED_HOSTING_TENANT_PREFIX;
+import static com.rackspace.idm.modules.usergroups.Constants.USER_GROUP_BASE_DN;
 
 @Component
 public class DefaultTenantService implements TenantService {
@@ -94,6 +96,9 @@ public class DefaultTenantService implements TenantService {
     private TenantTypeService tenantTypeService;
 
     @Autowired
+    private UserGroupAuthorizationService userGroupAuthorizationService;
+
+    @Autowired
     FederatedUserDao federatedUserDao;
 
     // Not using component w/ Autowiring because want just a dumb a utility class
@@ -130,10 +135,10 @@ public class DefaultTenantService implements TenantService {
         // Delete all tenant roles for this tenant
         for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenant(tenant.getTenantId())) {
             if (role.getTenantIds().size() == 1) {
-                this.tenantRoleDao.deleteTenantRole(role, tenant.getTenantId());
+                this.tenantRoleDao.deleteTenantRole(role);
             } else {
                 role.getTenantIds().remove(tenant.getTenantId());
-                this.tenantRoleDao.updateTenantRole(role, tenant.getTenantId());
+                this.tenantRoleDao.updateTenantRole(role);
             }
         }
 
@@ -294,15 +299,25 @@ public class DefaultTenantService implements TenantService {
             }
 
             /*
-             Add the roles the user has due to group membership.
+             If the user has user groups associated with it, only include group membership roles if user groups are enabled
+             for that domain. Checking whether a domain is
+             enabled could require a directory call depending on how the properties are configured. If the user doesn't
+             belong to any groups, there is no point in even checking whether the domain is enabled for groups as
+             regardless the user's list of roles won't be affected. This is why the collection check occurs first, to
+             shortcircuit the statement and prevent the userGroupAuthorizationService from even running.
              */
-            if (identityConfig.getReloadableConfig().areUserGroupsGloballyEnabled()) {
-                Set<String> groupIds = ((EndUser) user).getUserGroupIds();
+            Set<String> groupIds = ((EndUser) user).getUserGroupIds();
+            if (CollectionUtils.isNotEmpty(groupIds)
+                    && userGroupAuthorizationService.areUserGroupsEnabledForDomain(user.getDomainId())) {
                 for (String groupId : groupIds) {
                     List<TenantRole> groupRoles = Collections.emptyList();
                     try {
                         groupRoles = userGroupService.getRoleAssignmentsOnGroup(groupId);
                     } catch (NotFoundException ex) {
+                        /*
+                         Log the data referential integrity issue, but eat the exception as we don't want to fail if
+                         the linked user group does not exist.
+                         */
                         logger.warn(String.format("User '%s' is assigned group '%s', but the group does not exist.", user.getId(), groupId));
                     }
                     rolesToMerge.addAll(groupRoles);
@@ -312,8 +327,6 @@ public class DefaultTenantService implements TenantService {
         }
         return userTenantRoles;
     }
-
-
 
     /**
      * Get the effective tenant roles for a user and apply RCN logic rules. The application of RCN rules does the following:
@@ -891,9 +904,9 @@ public class DefaultTenantService implements TenantService {
     private void deleteTenantFromTenantRole(TenantRole role, Tenant tenant) {
         role.getTenantIds().remove(tenant.getTenantId());
         if(role.getTenantIds().size() == 0) {
-            tenantRoleDao.deleteTenantRole(role, tenant.getTenantId());
+            tenantRoleDao.deleteTenantRole(role);
         } else {
-            tenantRoleDao.updateTenantRole(role, tenant.getTenantId());
+            tenantRoleDao.updateTenantRole(role);
         }
     }
 
@@ -1238,7 +1251,7 @@ public class DefaultTenantService implements TenantService {
         // Retrieve explicitly assigned roles on tenant
         for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenant(tenantId)) {
             // TODO: This is inefficient. Uses userId on role for comparison, then uses logic to get userId based on DN
-            if (!userIds.contains(role.getUserId())) {
+            if (!userIds.contains(role.getUserId()) && !StringUtils.containsIgnoreCase(role.getUniqueId(), USER_GROUP_BASE_DN)) {
                 String userId = tenantRoleDao.getUserIdForParent(role);
                 if(!StringUtils.isBlank(userId)){
                     userIds.add(userId);
@@ -1421,7 +1434,9 @@ public class DefaultTenantService implements TenantService {
         // Get list of users that are explicitly assigned this role on tenant. This could include users in other domains
         Set<String> userIds = new HashSet<String>();
         for (TenantRole role : this.tenantRoleDao.getAllTenantRolesForTenantAndRole(tenant.getTenantId(), cRole.getId())) {
-            userIds.add(role.getUserId());
+            if (role.getUserId() != null) {
+                userIds.add(role.getUserId());
+            }
         }
 
         // Loop through domain users, removing from list of explicit to avoid looking up twice, and look up remaining
