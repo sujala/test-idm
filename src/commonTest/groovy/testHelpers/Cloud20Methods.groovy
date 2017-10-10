@@ -617,11 +617,6 @@ class Cloud20Methods {
         resource.path(path20).path(USERS).path(userId).path(ROLES).path(OS_KSADM).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).put(ClientResponse)
     }
 
-    def deleteApplicationRoleOnUser(String token, String roleId, String userId) {
-        initOnUse()
-        resource.path(path20).path(USERS).path(userId).path(ROLES).path(OS_KSADM).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
-    }
-
     def listUserGlobalRoles(String token, String userId, serviceId = null, applyRcnRoles = false, MediaType acceptMediaType = MediaType.APPLICATION_XML_TYPE, MediaType requestContentMediaType = MediaType.APPLICATION_XML_TYPE) {
         initOnUse()
         def queryParams = new MultivaluedMapImpl()
@@ -802,9 +797,9 @@ class Cloud20Methods {
         resource.path(path20).path(TENANTS).path(tenantId).path(OS_KSCATALOG).path(ENDPOINTS).header(X_AUTH_TOKEN, token).accept(accept).type(request).entity(endpointTemplate).post(ClientResponse)
     }
 
-    def removeRoleFromUser(String token, String roleId, String userId) {
+    def deleteApplicationRoleOnUser(String token, String roleId, String userId) {
         initOnUse()
-        resource.path(path20).path(USERS).path(userId).path(ROLES).path(OS_KSADM).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).delete()
+        resource.path(path20).path(USERS).path(userId).path(ROLES).path(OS_KSADM).path(roleId).header(X_AUTH_TOKEN, token).accept(APPLICATION_XML).type(APPLICATION_XML).delete(ClientResponse)
     }
 
     def createQuestion(String token, question) {
