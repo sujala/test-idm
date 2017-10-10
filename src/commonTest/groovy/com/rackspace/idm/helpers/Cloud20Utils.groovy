@@ -605,7 +605,7 @@ class Cloud20Utils {
         updateUser(user)
     }
 
-    def validateToken(token) {
+    AuthenticateResponse validateToken(token) {
         def response = methods.validateToken(getServiceAdminToken(), token)
         assert (response.status == SC_OK)
         response.getEntity(AuthenticateResponse).value
@@ -1353,6 +1353,11 @@ class Cloud20Utils {
 
     def deleteUserGroup(UserGroup group, String token = getIdentityAdminToken()) {
         def response = methods.deleteUserGroup(token, group)
+        assert response.status == SC_NO_CONTENT
+    }
+
+    def revokeRoleFromUserGroup(UserGroup group, String roleId, String token = getIdentityAdminToken()) {
+        def response = methods.revokeRoleAssignmentFromUserGroup(token, group, roleId)
         assert response.status == SC_NO_CONTENT
     }
 

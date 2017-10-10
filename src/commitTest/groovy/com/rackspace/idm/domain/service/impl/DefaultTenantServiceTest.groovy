@@ -4,6 +4,7 @@ import com.rackspace.docs.identity.api.ext.rax_auth.v1.RoleTypeEnum
 import com.rackspace.idm.api.resource.cloud.atomHopper.AtomHopperConstants
 import com.rackspace.idm.api.security.ImmutableClientRole
 import com.rackspace.idm.domain.dao.FederatedUserDao
+import com.rackspace.idm.domain.dao.impl.LdapRepository
 import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.Domain
 import com.rackspace.idm.domain.entity.Tenant
@@ -12,8 +13,11 @@ import com.rackspace.idm.domain.entity.User
 import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.ClientConflictException
 import com.rackspace.idm.exception.NotFoundException
+import com.rackspace.idm.modules.usergroups.Constants
 import com.rackspace.idm.modules.usergroups.service.UserGroupService
+import com.rackspace.idm.util.RoleUtil
 import com.unboundid.ldap.sdk.DN
+import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.RootServiceTest
@@ -29,11 +33,9 @@ class DefaultTenantServiceTest extends RootServiceTest {
     String name = "name"
     String customerId = "customerId"
 
-    def setupSpec() {
-        service = new DefaultTenantService()
-    }
-
     def setup() {
+        service = new DefaultTenantService()
+
         mockConfiguration(service)
         mockIdentityConfig(service)
         mockDomainService(service)
@@ -793,6 +795,64 @@ class DefaultTenantServiceTest extends RootServiceTest {
         } else {
             // Roles should not be retrieved for groups
             0 * userGroupService.getRoleAssignmentsOnGroup(_)
+        }
+
+        where:
+        flag << [true, false]
+    }
+
+    @Unroll
+    def "getTenantRolesForUserPerformant: Calls merge util to merge all assigned tenant roles together regardless if groups enabled: groupsEnabled: #flag"() {
+        given:
+        userGroupAuthorizationService.areUserGroupsEnabledForDomain(_) >> flag
+        RoleUtil mockRoleUtil = Mock()
+        service.roleUtil = mockRoleUtil
+
+        def groupId = "1234"
+        def user = entityFactory.createUser("test1","userId", "testDomainId", "region").with {
+            it.userGroupDNs = [new DN("rsId=$groupId,ou=groups")] as Set // Add group to user
+            it
+        }
+
+        def userAssignedRoles = [new TenantRole().with {
+            it.roleRsId = "ua1"
+            it
+        }]
+
+        def groupAssignedRoles = [new TenantRole().with {
+            it.roleRsId = "ug1"
+            it
+        }]
+
+        when:
+        service.getTenantRolesForUserPerformant(user)
+
+        then:
+        1 * tenantRoleDao.getTenantRolesForUser(user) >> userAssignedRoles
+        /*
+         This test does not set up requisite state to generate identity:tenant-access roles for the user so only role
+         being merged to users are group roles
+          */
+        if (flag) {
+            1 * userGroupService.getRoleAssignmentsOnGroup(groupId) >> groupAssignedRoles
+            1 * mockRoleUtil.mergeTenantRoleSets(_) >> { args ->
+                Iterable<TenantRole>[] roleIterables = args[0]
+                assert userAssignedRoles == roleIterables[0]
+                List<TenantRole> roles = roleIterables[1]
+                assert roles.size() == 1
+                assert roles.find { it.roleRsId == groupAssignedRoles[0].roleRsId } != null
+                []
+            }
+        } else {
+            // Roles should not be retrieved for groups
+            0 * userGroupService.getRoleAssignmentsOnGroup(_)
+            1 * mockRoleUtil.mergeTenantRoleSets(_) >> { args ->
+                Iterable<TenantRole>[] roleIterables = args[0]
+                assert userAssignedRoles == roleIterables[0]
+                List<TenantRole> roles = roleIterables[1]
+                assert roles.size() == 0
+                []
+            }
         }
 
         where:
