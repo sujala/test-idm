@@ -1,5 +1,6 @@
 package testHelpers.saml.v2
 
+import org.apache.commons.collections4.CollectionUtils
 import org.opensaml.security.credential.Credential
 
 class FederatedRackerAuthRequestGenerator extends AbstractFederatedAuthRequestGenerator<FederatedRackerAuthGenerationRequest>{
@@ -14,6 +15,11 @@ class FederatedRackerAuthRequestGenerator extends AbstractFederatedAuthRequestGe
 
     @Override
     HashMap<String, List<String>> createAttributes(FederatedRackerAuthGenerationRequest genRequest) {
-        return new HashMap<String, List<String>>()
+        HashMap<String, List<String>> attributes = new HashMap<String, List<String>>()
+        if (CollectionUtils.isNotEmpty(genRequest.groupNames)) {
+            attributes.put("groups", genRequest.groupNames)
+        }
+        attributes.putAll(genRequest.otherAttributes)
+        return attributes
     }
 }

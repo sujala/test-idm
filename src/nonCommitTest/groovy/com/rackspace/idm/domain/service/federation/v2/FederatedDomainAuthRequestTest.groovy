@@ -23,8 +23,6 @@ import testHelpers.saml.v2.FederatedDomainAuthRequestGenerator
 import java.security.Security
 import java.util.regex.Pattern
 
-import static com.rackspace.idm.Constants.DEFAULT_FED_EMAIL
-
 class FederatedDomainAuthRequestTest extends Specification
 {
     @Shared IdentityConfig identityConfig
@@ -49,7 +47,7 @@ class FederatedDomainAuthRequestTest extends Specification
 
     void cleanupSpec() {
         /**
-         * This is a complete hack. THe IdentityConfigHolder is a hack in and of itself to allow non spring injected beans
+         * This is a complete hack. The IdentityConfigHolder is a hack in and of itself to allow non spring injected beans
          * access to the spring loaded IdentityConfig bean into a static context. However, this test uses this class which
          * requires the IdentifyConfig set so injects it with Mock. However, if Spring context was loaded for an integration
          * test prior to running this component test then the spring loaded config will be replaced with a mock and never
@@ -173,6 +171,44 @@ class FederatedDomainAuthRequestTest extends Specification
         then: "error"
         BadRequestException ex = thrown()
         IdmExceptionAssert.assertException(ex, BadRequestException, ErrorCodes.ERROR_CODE_FEDERATION2_MISSING_ORIGIN_ISSUER, Pattern.compile("Error code: 'FED2-002'; The origin assertion must specify an issuer"))
+    }
+
+    def "groups are populated when creating a FederatedDomainAuthGenerationRequest"() {
+        given:
+        def groupName1 = RandomStringUtils.randomAlphanumeric(8)
+        def groupName2 = RandomStringUtils.randomAlphanumeric(8)
+        FederatedDomainAuthGenerationRequest genRequest = createValidFederatedDomainRequest().with {
+            it.groupNames = [groupName1, groupName2]
+            it
+        }
+        def samlResponse = sharedDomainRequestGenerator.createSignedSAMLResponse(genRequest)
+
+        when: "process the request"
+        FederatedDomainAuthRequest req = new FederatedDomainAuthRequest(samlResponse)
+
+        then:
+        req.groupNames.size() == 2
+        req.groupNames.contains(groupName1)
+        req.groupNames.contains(groupName2)
+    }
+
+    @Unroll
+    def "groups are required to have a non-blank name when creating a FederatedDomainAuthGenerationRequest, groupName == '#groupName' "() {
+        given:
+        FederatedDomainAuthGenerationRequest genRequest = createValidFederatedDomainRequest().with {
+            it.groupNames = [groupName]
+            it
+        }
+        def samlResponse = sharedDomainRequestGenerator.createSignedSAMLResponse(genRequest)
+
+        when: "process the request"
+        new FederatedDomainAuthRequest(samlResponse)
+
+        then:
+        thrown BadRequestException
+
+        where:
+        groupName << ["", " " * 8]
     }
 
     def createValidFederatedDomainRequest(username = UUID.randomUUID()) {
