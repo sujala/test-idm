@@ -515,12 +515,6 @@ AUTO_ASSIGN_ROLE_ON_DOMAIN_TENANTS_ROLE_NAME = (
     'auto.assign.role.on.domain.tenants.role.name')
 FEATURE_FLAG_FOR_DISABLING_SERVICE_NAME_TYPE = (
     "feature.endpoint.template.disable.name.type")
-FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_USAGE = (
-    'feature.restrict.user.manager.list.users.usage')
-FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_EMAIL_USAGE = (
-    'feature.restrict.user.manager.list.users.by.email.usage')
-FEATURE_RESTRICT_USER_MANAGER_LIST_USERS_BY_NAME_USAGE = (
-    'feature.restrict.user.manager.list.users.by.name.usage')
 TENANT_DEFAULT_DOMAIN = 'tenant.domainId.default'
 FEATURE_LIST_SUPPORT_ADDITIONAL_ROLE_PROPERTIES = (
     'feature.list.support.additional.role.properties')

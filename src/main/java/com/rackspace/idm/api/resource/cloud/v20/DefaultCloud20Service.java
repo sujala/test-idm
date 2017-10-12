@@ -2501,28 +2501,16 @@ public class DefaultCloud20Service implements Cloud20Service {
 
             User requester = (User) userService.getUserByScopeAccess(requesterScopeAccess);
 
-            if (identityConfig.getReloadableConfig().restrictUserManagersFromListingOtherUserManagersByName()) {
-                // Filter based on CID-468
-
-                /*
-                    By time get here we know the specified user exists and the caller is a User. Only check left is to
-                    make sure the caller has access to the specified user.
-                 */
-                List<User> userList = new ArrayList<>();
-                userList.add(user);
-                Iterable<? extends EndUser> result = filterOutUsersInaccessibleByCaller(userList, requester);
-                if (!result.iterator().hasNext()) {
-                    // If the user was filtered, the caller doesn't have access to that user
-                    throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
-                }
-            } else {
-                // Pre-CID-468 filtering
-                if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
-                        authorizationService.authorizeCloudUserAdmin(requesterScopeAccess)) {
-                    authorizationService.verifyDomain(requester, user);
-                } else if (authorizationService.authorizeCloudUser(requesterScopeAccess)) {
-                    authorizationService.verifySelf(requester, user);
-                }
+            /*
+                By time we get here we know the specified user exists and the caller is a User. Only check left is to
+                make sure the caller has access to the specified user.
+             */
+            List<User> userList = new ArrayList<>();
+            userList.add(user);
+            Iterable<? extends EndUser> result = filterOutUsersInaccessibleByCaller(userList, requester);
+            if (!result.iterator().hasNext()) {
+                // If the user was filtered, the caller doesn't have access to that user
+                throw new ForbiddenException(DefaultAuthorizationService.NOT_AUTHORIZED_MSG);
             }
 
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUser(userConverterCloudV20.toUser(user)).getValue());
@@ -2543,18 +2531,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             User caller = (User) userService.getUserByScopeAccess(requesterScopeAccess);
 
             Iterable<? extends EndUser> filteredUsers;
-            if (identityConfig.getReloadableConfig().restrictUserManagersFromListingOtherUserManagersByEmail()) {
-                // Filter based on CID-468
-                filteredUsers = filterOutUsersInaccessibleByCaller(users, caller);
-            } else {
-                // Legacy filtering
-                if (authorizationService.authorizeUserManageRole(requesterScopeAccess) ||
-                        authorizationService.authorizeCloudUserAdmin(requesterScopeAccess)) {
-                    filteredUsers = filterUsersInDomain(users, caller);
-                } else {
-                    filteredUsers = users;
-                }
-            }
+            filteredUsers = filterOutUsersInaccessibleByCaller(users, caller);
 
             return Response.ok(jaxbObjectFactories.getOpenStackIdentityV2Factory().createUsers(this.userConverterCloudV20.toUserList(filteredUsers)).getValue());
 
@@ -4306,23 +4283,7 @@ public class DefaultCloud20Service implements Cloud20Service {
             Iterable<? extends EndUser> filteredUsers;
 
             // If role is identity:user-manage then we need to filter out the identity:user-admin and other user-managers
-            if (identityConfig.getReloadableConfig().restrictUserManagersFromListingOtherUserManagers()) {
-                // Filter based on CID-468
-                filteredUsers = filterOutUsersInaccessibleByCaller(paginatorContext.getValueList(), (EndUser) caller);
-            } else {
-                // Pre-CID-468 filtering
-                List<EndUser> users = new ArrayList<EndUser>();
-                if (authorizationService.authorizeUserManageRole(scopeAccessByAccessToken)) {
-                    for (EndUser user : paginatorContext.getValueList()) {
-                        if (!authorizationService.hasUserAdminRole(user)) {
-                            users.add(user);
-                        }
-                    }
-                } else {
-                    users = paginatorContext.getValueList();
-                }
-                filteredUsers = users;
-            }
+            filteredUsers = filterOutUsersInaccessibleByCaller(paginatorContext.getValueList(), (EndUser) caller);
 
             String linkHeader = endUserPaginator.createLinkHeader(uriInfo, paginatorContext);
 

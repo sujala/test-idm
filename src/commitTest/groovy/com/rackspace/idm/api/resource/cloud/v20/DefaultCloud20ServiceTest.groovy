@@ -401,6 +401,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudIdentityAdmin(_) >>> [ true ]
         authorizationService.authorizeCloudServiceAdmin(_) >>> [ false ] >> true
 
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.IDENTITY_ADMIN
+
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
 
@@ -430,6 +432,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeCloudUser(_) >> false
         authorizationService.authorizeCloudIdentityAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> false
+
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
 
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
@@ -461,6 +465,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         authorizationService.authorizeUserManageRole(_) >> true
         authorizationService.authorizeCloudIdentityAdmin(_) >> false
         authorizationService.authorizeCloudServiceAdmin(_) >> false
+
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_MANAGER
 
         def userContextMock = Mock(PaginatorContext)
         userContextMock.getValueList() >> [].asList()
@@ -2228,6 +2234,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         def user = entityFactory.createUser()
         allowUserAccess()
 
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.IDENTITY_ADMIN
+
         when:
         def result = service.getUsersByEmail(headers, authToken, "email@email.com").build()
 
@@ -2241,6 +2249,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "userAdmin calling getUsersByEmail filters subUsers by domain"() {
         given:
         allowUserAccess()
+
+        authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_ADMIN
 
         def converter = new UserConverterCloudV20()
         converter.mapper = new DozerBeanMapper()
@@ -2268,7 +2278,6 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * userService.getUserByScopeAccess(_) >> caller
         1 * userService.getUsersByEmail(_) >> [subUser1, subUser2].asList()
-        1 * authorizationService.authorizeCloudUserAdmin(_) >> true
         1 * authorizationService.hasSameDomain(caller, subUser1) >> true
         1 * authorizationService.hasSameDomain(caller, subUser2) >> false
 
@@ -3418,6 +3427,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
     def "User with user-manage role can get user by name" () {
         given:
         allowUserAccess()
+
         User user = entityFactory.createUser()
         User caller = entityFactory.createUser()
 
@@ -3427,8 +3437,8 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * userService.getUser(_) >> user
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * authorizationService.authorizeUserManageRole(_) >> true
-        1 * authorizationService.verifyDomain(_, _)
+        1 * authorizationService.hasSameDomain(caller, user) >> true
+        1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_MANAGER
         result.build().status == 200
     }
 
@@ -3445,7 +3455,7 @@ class DefaultCloud20ServiceTest extends RootServiceTest {
         then:
         1 * userService.getUsersByEmail(_) >> users
         1 * userService.getUserByScopeAccess(_) >> caller
-        1 * authorizationService.authorizeUserManageRole(_) >> true
+        1 * authorizationService.getIdentityTypeRoleAsEnum(_) >> IdentityUserTypeEnum.USER_MANAGER
         result.build().status == 200
     }
 
