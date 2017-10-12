@@ -126,10 +126,6 @@ public class Cloud20VersionResource {
     @POST
     @Path("/users/RAX-AUTH/forgot-pwd")
     public Response authenticateForForgotPassword(@Context HttpHeaders httpHeaders, ForgotPasswordCredentials forgotPasswordCredentials) {
-        if(!identityConfig.getReloadableConfig().isForgotPasswordEnabled()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
-
         return cloud20Service.authenticateForForgotPassword(httpHeaders, forgotPasswordCredentials).build();
     }
 
@@ -139,10 +135,6 @@ public class Cloud20VersionResource {
             @Context HttpHeaders httpHeaders,
             @HeaderParam(X_AUTH_TOKEN) String authToken,
             PasswordReset passwordReset) {
-        if(!identityConfig.getReloadableConfig().isForgotPasswordEnabled()){
-            throw new NotFoundException(SERVICE_NOT_FOUND_ERROR_MESSAGE);
-        }
-
         return cloud20Service.passwordReset(httpHeaders, authToken, passwordReset).build();
     }
 

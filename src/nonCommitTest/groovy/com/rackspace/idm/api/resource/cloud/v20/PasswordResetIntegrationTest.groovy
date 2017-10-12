@@ -3,25 +3,20 @@ package com.rackspace.idm.api.resource.cloud.v20
 import com.rackspace.idm.Constants
 import com.rackspace.idm.GlobalConstants
 import com.rackspace.idm.domain.config.IdentityConfig
-import com.rackspace.idm.domain.entity.AuthenticatedByMethodGroup
-import com.rackspace.idm.domain.entity.TokenScopeEnum
-import com.rackspace.idm.domain.entity.UserAuthenticationResult
 import com.rackspace.idm.domain.service.IdentityUserService
 import com.rackspace.idm.domain.service.ScopeAccessService
 import com.rackspace.idm.domain.service.UserService
-import com.rackspace.idm.helpers.WiserWrapper
 import org.openstack.docs.identity.api.v2.BadRequestFault
 import org.springframework.beans.factory.annotation.Autowired
 import org.subethamail.wiser.WiserMessage
-import spock.lang.Shared
 import spock.lang.Unroll
 import testHelpers.EmailUtils
 import testHelpers.RootIntegrationTest
 
 import javax.ws.rs.core.MediaType
 
-import static com.rackspace.idm.validation.entity.Constants.PASSWORD_MIN;
-import static com.rackspace.idm.validation.entity.Constants.MAX;
+import static com.rackspace.idm.validation.entity.Constants.MAX
+import static com.rackspace.idm.validation.entity.Constants.PASSWORD_MIN
 
 class PasswordResetIntegrationTest extends RootIntegrationTest {
 
@@ -211,26 +206,6 @@ class PasswordResetIntegrationTest extends RootIntegrationTest {
         request | _
         MediaType.APPLICATION_XML_TYPE  | _
         MediaType.APPLICATION_JSON_TYPE | _
-    }
-
-    def "test feature flag works for reset password call"() {
-        given:
-        def domainId = utils.createDomain()
-        def users, userAdmin
-        (userAdmin, users) = utils.createUserAdmin(domainId)
-        def pwdResetToken = getPasswordResetToken(userAdmin)
-        def newPassword = Constants.DEFAULT_PASSWORD + testUtils.getRandomUUID()
-        reloadableConfiguration.setProperty(IdentityConfig.FEATURE_FORGOT_PWD_ENABLED_PROP_NAME, false)
-
-        when: "reset the password"
-        def response = cloud20.resetPassword(pwdResetToken, v2Factory.createPasswordReset(newPassword))
-
-        then: "not found"
-        response.status == 404
-
-        cleanup:
-        utils.deleteUsers(users)
-        reloadableConfiguration.reset()
     }
 
     @Unroll
