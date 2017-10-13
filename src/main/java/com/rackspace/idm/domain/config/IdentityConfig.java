@@ -205,9 +205,6 @@ public class IdentityConfig {
     public static final String FEATURE_SUPPORT_SAML_LOGOUT_PROP = "feature.support.saml.logout";
     public static final boolean FEATURE_SUPPORT_SAML_LOGOUT_DEFAULT = true;
 
-    public static final String FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP = "feature.support.identity.provider.management";
-    public static final boolean FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_DEFAULT = true;
-
     public static final String FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP = "feature.enable.password.policy.services";
     public static final boolean FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_DEFAULT = true;
 
@@ -562,7 +559,6 @@ public class IdentityConfig {
         defaults.put(FEDERATED_RESPONSE_MAX_AGE, FEDERATED_RESPONSE_MAX_AGE_DEFAULT);
         defaults.put(FEDERATED_RESPONSE_MAX_SKEW, FEDERATED_RESPONSE_MAX_SKEW_DEFAULT);
         defaults.put(FEATURE_SUPPORT_SAML_LOGOUT_PROP, FEATURE_SUPPORT_SAML_LOGOUT_DEFAULT);
-        defaults.put(FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP, FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_DEFAULT);
         defaults.put(IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT_PROP, IDENTITY_FEDERATED_IDP_MAX_USER_PER_DOMAIN_DEFAULT);
         defaults.put(IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_PROP, IDENTITY_FEDERATED_MAX_IDP_PER_DOMAIN_DEFAULT);
         defaults.put(IDP_MAX_SEACH_RESULT_SIZE_PROP, IDP_MAX_SEACH_RESULT_SIZE_DEFAULT);
@@ -1563,11 +1559,6 @@ public class IdentityConfig {
         @IdmProp(key = FEATURE_SUPPORT_SAML_LOGOUT_PROP, versionAdded = "3.1.0", description = "Whether or not to support SAML Federation Logout")
         public boolean isFederationLogoutSupported() {
             return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_SAML_LOGOUT_PROP);
-        }
-
-        @IdmProp(key = FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP, versionAdded = "3.1.0", description = "Whether or not to support Identity Provider Management services")
-        public boolean isIdentityProviderManagementSupported() {
-            return getBooleanSafely(reloadableConfiguration, FEATURE_SUPPORT_IDENTITY_PROVIDER_MANAGEMENT_PROP);
         }
 
         @IdmProp(key = FEATURE_ENABLE_PASSWORD_POLICY_SERVICES_PROP, versionAdded = "3.12.0", description = "Whether or not domain password policy support is enabled")
