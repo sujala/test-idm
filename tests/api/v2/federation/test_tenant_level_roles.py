@@ -3,7 +3,7 @@ import ddt
 
 from tests.api.utils import saml_helper
 from tests.api.utils.create_cert import create_self_signed_cert
-from tests.api.v2 import base
+from tests.api.v2.federation import federation
 from tests.api.v2.models import factory, responses
 
 from tests.package.johny import constants as const
@@ -11,7 +11,7 @@ from tests.package.johny.v2.models import requests
 
 
 @ddt.ddt
-class TestTenantLevelRolesForFederation(base.TestBaseV2):
+class TestTenantLevelRolesForFederation(federation.TestBaseFederation):
     """
     Test add tenant level roles for federated users in saml auth and
     verify they are returned in auth response
@@ -56,24 +56,6 @@ class TestTenantLevelRolesForFederation(base.TestBaseV2):
         self.user_admin_client.serialize_format = const.XML
         self.user_admin_client.default_headers[
             const.CONTENT_TYPE] = 'application/xml'
-
-    def update_mapping_policy(self, idp_id):
-
-        updated_mapping_policy = {
-            "mapping": {
-                "rules": [{
-                    "local": {
-                        "user": {
-                            "domain": "{D}", "name": "{D}",
-                            "email": "{D}", "roles": "{D}",
-                            "expire": "{D}"
-                        }
-                    }
-                }],
-                "version": "RAX-1"}}
-        update_idp_mapping_resp = self.user_admin_client.add_idp_mapping(
-            idp_id=idp_id, request_data=updated_mapping_policy)
-        assert update_idp_mapping_resp.status_code == 204
 
     def fed_user_call(self, test_data, domain_id, private_key,
                       public_key, issuer, roles=None):
@@ -150,7 +132,8 @@ class TestTenantLevelRolesForFederation(base.TestBaseV2):
         provider_id, cert_path, key_path = self.create_idp_with_certs(
             domain_id=self.domain_id, issuer=issuer, metadata=test_data[
                 'fed_input']['metadata'])
-        self.update_mapping_policy(idp_id=provider_id)
+        self.update_mapping_policy(idp_id=provider_id,
+                                   client=self.user_admin_client)
 
         role_0 = self.create_role()
         # Adding newly created role on Mosso tenant
