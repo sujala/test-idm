@@ -7,9 +7,7 @@ import com.rackspace.idm.ErrorCodes;
 import com.rackspace.idm.domain.config.IdentityConfig;
 import com.rackspace.idm.domain.dao.TenantRoleDao;
 import com.rackspace.idm.domain.entity.*;
-import com.rackspace.idm.domain.service.ApplicationService;
-import com.rackspace.idm.domain.service.IdentityUserService;
-import com.rackspace.idm.domain.service.TenantService;
+import com.rackspace.idm.domain.service.*;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.DuplicateException;
 import com.rackspace.idm.exception.ForbiddenException;
@@ -26,7 +24,6 @@ import com.unboundid.ldap.sdk.DN;
 import com.unboundid.ldap.sdk.LDAPException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.IteratorUtils;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
 import org.slf4j.Logger;
@@ -52,6 +49,7 @@ public class DefaultUserGroupService implements UserGroupService {
     public static final String CAN_ONLY_MODIFY_GROUPS_ON_PROVISIONED_USERS_VIA_API = "Can only modify groups on provisioned users via API.";
 
     public static final String ERROR_MESSAGE_DUPLICATE_GROUP_IN_DOMAIN = "Group already exists with this name in this domain";
+    public static final String USER_GROUP_ROLE_ASSIGNMENT_FOR_ALL_TENANTS = "*";
 
     @Autowired
     private TenantRoleDao tenantRoleDao;
@@ -243,6 +241,49 @@ public class DefaultUserGroupService implements UserGroupService {
         return userGroups;
     }
 
+    @Override
+    public void addRoleAssignmentOnGroup(UserGroup userGroup, String roleId, String tenantId) {
+        Validate.notNull(userGroup);
+        Validate.notNull(roleId);
+        Validate.notNull(tenantId);
+
+        // Verify the role exist
+        ClientRole clientRole = applicationService.getClientRoleById(roleId);
+        if (clientRole == null) {
+            String errMsg = String.format("Role '%s' does not exist.", roleId);
+            throw new NotFoundException(errMsg);
+        }
+
+        // Verify the role's administrator is user-manager
+        if (clientRole.getRsWeight() != RoleLevelEnum.LEVEL_1000.getLevelAsInt()) {
+            throw new ForbiddenException("Not authorized to create role assignment.");
+        }
+
+        // Verify the tenant exist
+        tenantService.checkAndGetTenant(tenantId);
+
+        TenantRole tenantRole = getRoleAssignmentOnGroup(userGroup, roleId);
+        if (tenantRole != null ) {
+            // Role assignment already exist if the tenantRole's tenantIds is empty, set to "*", or contains
+            // the provided tenant id.
+            if (tenantRole.getTenantIds().isEmpty() ||
+                    tenantRole.getTenantIds().contains(USER_GROUP_ROLE_ASSIGNMENT_FOR_ALL_TENANTS) ||
+                    tenantRole.getTenantIds().contains(tenantId)) {
+                throw new DuplicateException("Role assignment already exist on user group.");
+            }
+            tenantRole.getTenantIds().add(tenantId);
+
+            tenantRoleDao.updateRoleAssignmentOnGroup(userGroup, tenantRole);
+        } else {
+            tenantRole = new TenantRole();
+            tenantRole.setClientId(clientRole.getClientId());
+            tenantRole.setRoleRsId(roleId);
+            tenantRole.getTenantIds().add(tenantId);
+
+            tenantRoleDao.addRoleAssignmentOnGroup(userGroup, tenantRole);
+        }
+    }
+
     private UserGroup getGroupByNameForUserInDomain(String groupName, String userId, String domainId) {
         Validate.notEmpty(groupName);
         Validate.notEmpty(userId);
@@ -299,8 +340,7 @@ public class DefaultUserGroupService implements UserGroupService {
     public TenantRole getRoleAssignmentOnGroup(UserGroup userGroup, String roleId) {
         Assert.notNull(userGroup);
 
-        TenantRole role = tenantRoleDao.getRoleAssignmentOnGroup(userGroup, roleId);
-        return role;
+        return tenantRoleDao.getRoleAssignmentOnGroup(userGroup, roleId);
     }
 
     @Override
@@ -378,7 +418,7 @@ public class DefaultUserGroupService implements UserGroupService {
     }
 
     /**
-     * Dual-purpose method - verify the role assignments while cacheing the lookups for use in the future.
+     * Dual-purpose method - verify the role assignments while caching the lookups for use in the future.
      *
      * @param userGroup
      * @param tenantAssignments
@@ -414,7 +454,7 @@ public class DefaultUserGroupService implements UserGroupService {
      * @param group
      * @param tenantAssignment
      */
-    private void verifyAssignmentToGroupFormat(UserGroup group, TenantAssignment tenantAssignment) {
+    private void    verifyAssignmentToGroupFormat(UserGroup group, TenantAssignment tenantAssignment) {
         boolean isDomainAssignment = isDomainAssignment(tenantAssignment);
 
         if (org.apache.commons.collections4.CollectionUtils.isEmpty(tenantAssignment.getForTenants())) {

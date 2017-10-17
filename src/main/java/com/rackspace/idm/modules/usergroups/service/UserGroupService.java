@@ -117,6 +117,20 @@ public interface UserGroupService {
     List<UserGroup> getGroupsBySearchParamsInDomain(UserGroupSearchParams userGroupSearchParams, String domainId);
 
     /**
+     * Grant role on individual tenant to a user group.
+     *
+     * @param userGroup
+     * @param roleId
+     * @param tenantId
+     *
+     * @throws IllegalArgumentException if userGroup, roleId, or tenantId is null
+     * @throws com.rackspace.idm.exception.NotFoundException If role or tenant is not found
+     * @throws com.rackspace.idm.exception.DuplicateException If role is set to global on all tenants or provided tenantId already in the list of tenantIds.
+     */
+
+    void addRoleAssignmentOnGroup(UserGroup userGroup, String roleId, String tenantId);
+
+    /**
      * Retries the specified role on the group, or null if the role does not exist on the group. Does not distinguish
      * between
      *

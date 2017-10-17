@@ -8,11 +8,13 @@ import com.rackspace.idm.api.resource.IdmPathUtils;
 import com.rackspace.idm.api.resource.cloud.JAXBObjectFactories;
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams;
 import com.rackspace.idm.api.security.RequestContextHolder;
-import com.rackspace.idm.domain.entity.Domain;
 import com.rackspace.idm.domain.entity.EndUser;
 import com.rackspace.idm.domain.entity.PaginatorContext;
 import com.rackspace.idm.domain.entity.TenantRole;
+import com.rackspace.idm.domain.service.ApplicationService;
+import com.rackspace.idm.domain.service.AuthorizationService;
 import com.rackspace.idm.domain.service.DomainService;
+import com.rackspace.idm.domain.service.TenantService;
 import com.rackspace.idm.exception.BadRequestException;
 import com.rackspace.idm.exception.IdmExceptionHandler;
 import com.rackspace.idm.exception.NotFoundException;
@@ -69,6 +71,15 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
     @Autowired
     private JAXBObjectFactories objFactories;
+
+    @Autowired
+    private AuthorizationService authorizationService;
+
+    @Autowired
+    private ApplicationService applicationService;
+
+    @Autowired
+    private TenantService tenantService;
 
     @Override
     public Response addGroup(UriInfo uriInfo, String authToken, UserGroup group) {
@@ -275,7 +286,23 @@ public class DefaultUserGroupCloudService implements UserGroupCloudService {
 
     @Override
     public Response grantRoleOnTenantToGroup(String authToken, String domainId, String groupId, String roleId, String tenantId) {
-        throw new NotImplementedException("This method has not yet been implemented");
+        try {
+            // Verify token is valid and user is enabled
+            requestContextHolder.getRequestContext().getSecurityContext().getAndVerifyEffectiveCallerToken(authToken);
+            requestContextHolder.getRequestContext().getAndVerifyEffectiveCallerIsEnabled();
+
+            // Verify caller can manage specified domain's user groups
+            userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId);
+
+            com.rackspace.idm.modules.usergroups.entity.UserGroup userGroup = userGroupService.checkAndGetGroupById(groupId);
+
+            userGroupService.addRoleAssignmentOnGroup(userGroup, roleId, tenantId);
+
+            return Response.noContent().build();
+        } catch (Exception ex) {
+            LOG.debug(String.format("Error granting role '%s' on tenant '%s' to user group for domain '%s' and groupId '%s'", roleId, tenantId, domainId, groupId), ex);
+            return idmExceptionHandler.exceptionResponse(ex).build();
+        }
     }
 
     @Override
