@@ -33,24 +33,6 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
         super(TestFedUserGlobalRoles, self).setUp()
         self.users = []
 
-    def update_mapping_policy(self, idp_id):
-
-        updated_mapping_policy = {
-            "mapping": {
-                "rules": [{
-                    "local": {
-                        "user": {
-                            "domain": "{D}", "name": "{D}",
-                            "email": "{D}", "roles": "{D}",
-                            "expire": "{D}"
-                        }
-                    }
-                }],
-                "version": "RAX-1"}}
-        update_idp_mapping_resp = self.user_admin_client.add_idp_mapping(
-            idp_id=idp_id, request_data=updated_mapping_policy)
-        assert update_idp_mapping_resp.status_code == 204
-
     def test_fed_user_global_roles(self):
         """
         Test to List fed user's global roles.
@@ -60,7 +42,8 @@ class TestFedUserGlobalRoles(federation.TestBaseFederation):
 
         provider_id = self.add_idp_with_metadata_return_id(
             cert_path=cert_path, api_client=self.user_admin_client)
-        self.update_mapping_policy(idp_id=provider_id)
+        self.update_mapping_policy(idp_id=provider_id,
+                                   client=self.user_admin_client)
 
         subject = self.generate_random_string(
             pattern='fed[\-]user[\-][\d\w]{12}')
