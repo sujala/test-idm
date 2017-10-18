@@ -102,16 +102,6 @@ class TestListUsersByUserManager(base.TestBaseV2):
         super(TestListUsersByUserManager, self).setUp()
         self.user_id = []
 
-    def get_feature_flag_value_and_default_value(self, flag_name):
-        feature_flag_resp = (
-            self.devops_client.get_devops_properties(
-                flag_name))
-        feature_flag_value = feature_flag_resp.json()[
-            const.PROPERTIES][0][const.VALUE]
-        feature_flag_default_value = feature_flag_resp.json()[
-            const.PROPERTIES][0][const.DEFAULT_VALUE]
-        return feature_flag_value, feature_flag_default_value
-
     def test_list_users_by_user_manager(self):
         """List users must not return any user-managers except the caller """
 
