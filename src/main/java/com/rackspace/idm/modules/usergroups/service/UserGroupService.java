@@ -131,6 +131,20 @@ public interface UserGroupService {
     void addRoleAssignmentOnGroup(UserGroup userGroup, String roleId, String tenantId);
 
     /**
+     * Revoke role on individual tenant to a user group.
+     *
+     * @param userGroup
+     * @param roleId
+     * @param tenantId
+     *
+     * @throws IllegalArgumentException if userGroup, roleId, or tenantId is null
+     * @throws com.rackspace.idm.exception.NotFoundException If role or tenant is not found
+     * @throws com.rackspace.idm.exception.DuplicateException If role is set to global on all tenants or provided tenantId already in the list of tenantIds.
+     */
+
+    void revokeRoleAssignmentOnGroup(UserGroup userGroup, String roleId, String tenantId);
+
+    /**
      * Retries the specified role on the group, or null if the role does not exist on the group. Does not distinguish
      * between
      *
@@ -190,7 +204,7 @@ public interface UserGroupService {
      * @throws IllegalArgumentException if userGroup, userGroup.getUniqueId(), or roleId is null
      * @throws com.rackspace.idm.exception.NotFoundException If role is not assigned to group
      */
-    void revokeRoleAssignmentFromGroup(UserGroup userGroup, String roleId);
+    void revokeRoleAssignmentOnGroup(UserGroup userGroup, String roleId);
 
     /**
      * Retrieves the groups under the specified domain. If no groups exists, returns empty list.

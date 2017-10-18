@@ -4,7 +4,6 @@ import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
-import spock.lang.Unroll
 import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
 
@@ -30,13 +29,13 @@ class RevokeRoleAssignmentsFromUserGroupServiceTest extends RootServiceTest{
 
     def "revokeRoleAssignmentFromGroup: Throws IllegalArgumentException if supplied user group is invalid"() {
         when: "group arg is null"
-        service.revokeRoleAssignmentFromGroup(null, "roleId")
+        service.revokeRoleAssignmentOnGroup(null, "roleId")
 
         then:
         thrown(IllegalArgumentException)
 
         when: "group arg has no unique id"
-        service.revokeRoleAssignmentFromGroup(new UserGroup(), "roleId")
+        service.revokeRoleAssignmentOnGroup(new UserGroup(), "roleId")
 
         then:
         thrown(IllegalArgumentException)
@@ -44,7 +43,7 @@ class RevokeRoleAssignmentsFromUserGroupServiceTest extends RootServiceTest{
 
     def "revokeRoleAssignmentFromGroup: Throws IllegalArgumentException if roleId arg is null"() {
         when:
-        service.revokeRoleAssignmentFromGroup(new UserGroup().with {it.uniqueId = "uniqueId";it}, null)
+        service.revokeRoleAssignmentOnGroup(new UserGroup().with {it.uniqueId = "uniqueId";it}, null)
 
         then:
         thrown(IllegalArgumentException)
@@ -63,7 +62,7 @@ class RevokeRoleAssignmentsFromUserGroupServiceTest extends RootServiceTest{
         }
 
         when:
-        service.revokeRoleAssignmentFromGroup(group, roleId)
+        service.revokeRoleAssignmentOnGroup(group, roleId)
 
         then:
         // Tries to retrieve role
@@ -92,7 +91,7 @@ class RevokeRoleAssignmentsFromUserGroupServiceTest extends RootServiceTest{
         def tenantRoleAssignment = new TenantRole()
 
         when:
-        service.revokeRoleAssignmentFromGroup(group, roleId)
+        service.revokeRoleAssignmentOnGroup(group, roleId)
 
         then:
         // Tries to retrieve role

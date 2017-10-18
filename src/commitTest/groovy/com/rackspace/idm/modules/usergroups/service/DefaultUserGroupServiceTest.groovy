@@ -761,4 +761,155 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
         thrown(DuplicateException)
     }
+
+    def "revokeRoleAssignmentOnGroup: calls correct dao and services"() {
+        given:
+        // Mocks
+        mockTenantService(service)
+        mockTenantRoleDao(service)
+        mockApplicationService(service)
+
+        def groupName = "groupName"
+        def domainId = "domainId"
+        UserGroup group = new UserGroup().with {
+            it.domainId = domainId
+            it.name = groupName
+            it.id = "id"
+            it.uniqueId = "groupDN=groupId"
+            it
+        }
+        def roleId = "roleId"
+        ClientRole clientRole = new ClientRole().with {
+            it.id = roleId
+            it.rsWeight = RoleLevelEnum.LEVEL_1000.levelAsInt
+            it
+        }
+        def tenantId = "tenantId"
+        TenantRole tenantRole = new TenantRole().with {
+            it.tenantIds.add(tenantId)
+            it.roleRsId = roleId
+            it
+        }
+
+        when: "Removing a role assignment"
+        service.revokeRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        1 * tenantService.checkAndGetTenant(tenantId)
+        1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
+        1 * tenantRoleDao.deleteRoleAssignmentOnGroup(group, tenantRole)
+        tenantRole.tenantIds.size() == 1
+        tenantRole.tenantIds.contains(tenantId)
+
+        when: "Removing a role assignment with other tenants"
+        tenantRole.tenantIds.clear()
+        tenantRole.tenantIds.add(tenantId)
+        tenantRole.tenantIds.add("otherTenantId")
+        service.revokeRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        1 * tenantService.checkAndGetTenant(tenantId)
+        1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
+        1 * tenantRoleDao.deleteRoleAssignmentOnGroup(group, tenantRole)
+        tenantRole.tenantIds.size() == 1
+        tenantRole.tenantIds.contains(tenantId)
+    }
+
+    def "revokeRoleAssignmentOnGroup: error check"() {
+        given:
+        // Mocks
+        mockTenantService(service)
+        mockTenantRoleDao(service)
+        mockApplicationService(service)
+
+        def groupName = "groupName"
+        def domainId = "domainId"
+        UserGroup group = new UserGroup().with {
+            it.domainId = domainId
+            it.name = groupName
+            it.id = "id"
+            it.uniqueId = "groupDN=groupId"
+            it
+        }
+        def roleId = "roleId"
+        ClientRole clientRole = new ClientRole().with {
+            it.id = roleId
+            it.rsWeight = RoleLevelEnum.LEVEL_1000.levelAsInt
+            it
+        }
+        def tenantId = "tenantId"
+        def otherTenantId = "otherTenantId"
+        TenantRole tenantRole = new TenantRole().with {
+            it.tenantIds.add("otherTenantId")
+            it.roleRsId = roleId
+            it
+        }
+
+        when: "null group"
+        service.revokeRoleAssignmentOnGroup(null, roleId, tenantId)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "null roleId"
+        service.revokeRoleAssignmentOnGroup(group, null, tenantId)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "null tenantId"
+        service.revokeRoleAssignmentOnGroup(group, roleId, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "role not found"
+        service.revokeRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> null
+        thrown(NotFoundException)
+
+        when: "role administrator is not a user-manager"
+        clientRole.rsWeight = RoleLevelEnum.LEVEL_900.levelAsInt
+        service.revokeRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        thrown(ForbiddenException)
+
+        when: "Tenant does not exist"
+        clientRole.rsWeight = RoleLevelEnum.LEVEL_1000.levelAsInt
+        service.revokeRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        1 * tenantService.checkAndGetTenant(tenantId) >> {throw new NotFoundException()}
+        thrown(NotFoundException)
+
+        when: "Role assignment exist as global"
+        tenantRole.tenantIds.clear()
+        tenantRole.tenantIds.add("*")
+        service.revokeRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        1 * tenantService.checkAndGetTenant(tenantId)
+        1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
+        thrown(BadRequestException)
+
+        when: "Role assignment does not has provided tenantId"
+        tenantRole.tenantIds.clear()
+        tenantRole.tenantIds.add(otherTenantId)
+        service.revokeRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        1 * tenantService.checkAndGetTenant(tenantId)
+        1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
+        thrown(NotFoundException)
+    }
+
 }

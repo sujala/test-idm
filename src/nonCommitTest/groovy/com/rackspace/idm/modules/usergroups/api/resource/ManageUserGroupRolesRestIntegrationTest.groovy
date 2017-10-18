@@ -395,4 +395,144 @@ class ManageUserGroupRolesRestIntegrationTest extends RootIntegrationTest {
         }
         return assignment
     }
+
+    def "Revoke role on tenant for user group"() {
+        given:
+        UserGroup group = new UserGroup().with {
+            it.domainId = sharedUserAdmin.domainId
+            it.name = "grantRoleOnTenant" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+        def createdGroup = cloud20.createUserGroup(sharedIdentityAdminToken, group).getEntity(UserGroup)
+
+        when: "Granting new role on tenant to user group"
+        def response = cloud20.grantRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup, ROLE_RBAC1_ID, sharedUserAdminCloudTenant.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "List role on user group"
+        def listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, null)
+
+        then:
+        listResponse.status == HttpStatus.SC_OK
+        RoleAssignments retrievedEntity = listResponse.getEntity(RoleAssignments)
+
+        and: "Retrieves roles"
+        retrievedEntity.tenantAssignments != null
+        def rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == Constants.ROLE_RBAC1_ID}
+        rbac1Assignment != null
+        rbac1Assignment.forTenants.size() == 1
+        rbac1Assignment.forTenants[0] == sharedUserAdminCloudTenant.id
+
+        when: "Granting role on tenant to user group - existing role"
+        response = cloud20.grantRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup, ROLE_RBAC1_ID, sharedUserAdminFilesTenant.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "Revoking role on tenant to user group"
+        response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup, ROLE_RBAC1_ID, sharedUserAdminFilesTenant.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "List role on user group"
+        listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, null)
+        retrievedEntity = listResponse.getEntity(RoleAssignments)
+        rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == Constants.ROLE_RBAC1_ID}
+
+        then:
+        listResponse.status == HttpStatus.SC_OK
+
+        and: "Retrieves roles"
+        retrievedEntity.tenantAssignments != null
+        rbac1Assignment != null
+        rbac1Assignment.forTenants.size() == 1
+        rbac1Assignment.forTenants.contains(sharedUserAdminCloudTenant.id)
+
+        when: "Revoking role on tenant to user group"
+        response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup, ROLE_RBAC1_ID, sharedUserAdminCloudTenant.id)
+
+        then:
+        response.status == HttpStatus.SC_NO_CONTENT
+
+        when: "List role on user group"
+        listResponse = cloud20.listRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup, null)
+        retrievedEntity = listResponse.getEntity(RoleAssignments)
+        rbac1Assignment = retrievedEntity.tenantAssignments.tenantAssignment.find {it.onRole == Constants.ROLE_RBAC1_ID}
+
+        then:
+        listResponse.status == HttpStatus.SC_OK
+
+        and: "Retrieves roles"
+        retrievedEntity.tenantAssignments != null
+        retrievedEntity.tenantAssignments.tenantAssignment.size() == 0
+        rbac1Assignment == null
+
+        cleanup:
+        utils.deleteUserGroup(createdGroup)
+    }
+
+    def "Error check: Revoke role on tenant for user group"() {
+        given:
+        UserGroup group = new UserGroup().with {
+            it.domainId = sharedUserAdmin.domainId
+            it.name = "grantRoleOnTenant" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+        def createdGroup1 = cloud20.createUserGroup(sharedIdentityAdminToken, group).getEntity(UserGroup)
+        cloud20.grantRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup1, ROLE_RBAC1_ID, sharedUserAdminCloudTenant.id)
+
+        UserGroup group2 = new UserGroup().with {
+            it.domainId = sharedUserAdmin.domainId
+            it.name = "grantRoleOnTenant2" + RandomStringUtils.randomAlphanumeric(10)
+            it
+        }
+        def createdGroup2 = cloud20.createUserGroup(sharedIdentityAdminToken, group2).getEntity(UserGroup)
+        RoleAssignments assignments = new RoleAssignments().with {
+            it.tenantAssignments = new TenantAssignments().with {
+                tas ->
+                    tas.tenantAssignment.add(createTenantAssignment(ROLE_RBAC2_ID, ["*"]))
+                    tas
+            }
+            it
+        }
+        cloud20.grantRoleAssignmentsOnUserGroup(sharedIdentityAdminToken, createdGroup2, assignments)
+
+        when: "Invalid user group"
+        UserGroup invalidGroup = new UserGroup().with {
+            it.domainId = sharedUserAdmin.domainId
+            it.id = "invalid"
+            it
+        }
+        def response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, invalidGroup, ROLE_RBAC1_ID, sharedUserAdminCloudTenant.id)
+
+        then:
+        response.status == HttpStatus.SC_NOT_FOUND
+
+        when: "Invalid roleId"
+        def invalidRoleId = "invalid"
+        response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup1, invalidRoleId, sharedUserAdminCloudTenant.id)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, String.format("Role '%s' does not exist.", invalidRoleId))
+
+        when: "Invalid tenantId"
+        def invalidTenantId = "invalid"
+        response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup1, ROLE_RBAC1_ID, invalidTenantId)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, String.format("Tenant with id/name: '%s' was not found.", invalidTenantId))
+
+        when: "Revoking role on tenant for user group - role assigned globally"
+        response = cloud20.revokeRoleOnTenantToGroup(sharedIdentityAdminToken, createdGroup2, ROLE_RBAC2_ID, sharedUserAdminCloudTenant.id)
+
+        then:
+        IdmAssert.assertOpenStackV2FaultResponse(response, ItemNotFoundFault, HttpStatus.SC_NOT_FOUND, "Role assignemnt does not exist.")
+
+        cleanup:
+        utils.deleteUserGroup(createdGroup1)
+        utils.deleteUserGroup(createdGroup2)
+    }
 }
