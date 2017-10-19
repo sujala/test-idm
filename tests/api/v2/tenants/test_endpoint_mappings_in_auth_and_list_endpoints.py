@@ -29,6 +29,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             'version_list': 'test_version_special_list',
             'region': 'ORD'}
         self.tenant_ids = []
+        self.tenant_types = []
         self.role_ids = []
         self.user_ids = []
         self.service_ids = []
@@ -86,8 +87,8 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         resp = self.identity_admin_client.add_endpoint_template(
             endpoint_template)
         self.assertEqual(resp.status_code, 201)
-        template_id = resp.json()[const.OS_KSCATALOG_ENDPOINT_TEMPLATE][
-                                  const.ID]
+        template_id = resp.json()[
+            const.OS_KSCATALOG_ENDPOINT_TEMPLATE][const.ID]
         self.template_ids.append(template_id)
 
         return template_id, service_name
@@ -112,8 +113,7 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
             template_ids=[tupleset[0] for tupleset in test_data])
         # Add role to user for tenant
         resp = self.service_admin_client.add_role_to_user_for_tenant(
-                   tenant_id=tenant_id, role_id=new_role_id,
-                   user_id=user_id)
+            tenant_id=tenant_id, role_id=new_role_id, user_id=user_id)
         self.assertEqual(resp.status_code, 200)
         return {'tenant_id': tenant_id, 'tenant_name': tenant_name,
                 'role_id': new_role_id, 'test_data': test_data}
@@ -167,6 +167,32 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         self.assertEqual(len(
             resp.json()[const.TENANT][const.NS_TYPES]), 3)
         return resp
+
+    def create_tenant_then_type(self):
+        tenant_type = self.generate_random_string(
+            pattern=const.TENANT_TYPE_PATTERN)
+
+        tenant_name = tenant_type + ':' + self.generate_random_string(
+            pattern=const.TENANT_NAME_PATTERN)
+        request_object = requests.Tenant(
+            tenant_name=tenant_name,
+            description=self.tenant_description,
+            tenant_id=tenant_name,
+            enabled=True,
+            display_name=self.tenant_display_name)
+        resp = self.identity_admin_client.add_tenant(tenant=request_object)
+        self.assertEqual(resp.status_code, 201)
+        self.tenant_ids.append(tenant_name)
+
+        description = self.generate_random_string(
+            'description[\-][0-9a-wA-W]{:10}')
+        req_object = requests.TenantType(
+            name=tenant_type, description=description)
+        tenant_type_resp = self.service_admin_client.add_tenant_type(
+            req_object)
+        self.tenant_types.append(
+            tenant_type_resp.json()[const.RAX_AUTH_TENANT_TYPE][const.NAME])
+        return resp, [tenant_type]
 
     def verify_endpoint_attributes(self, service_catalog, service_name,
                                    template_data, tenant_id):
@@ -231,9 +257,8 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         self.role_ids.append(new_role_id)
         return new_role_id
 
-    def create_mapping_rule_for_tenant_type_and_template_ids(self,
-                                                             tenant_type,
-                                                             template_ids):
+    def create_mapping_rule_for_tenant_type_and_template_ids(
+            self, tenant_type, template_ids):
         """
         Create Mapping rule for tenantType to Endpoint template
         returns new map rule id
@@ -250,7 +275,8 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         self.map_rule_ids.append(map_rule_id)
         return map_rule_id
 
-    def create_user_with_endpoint_from_mapping_rules(self):
+    def create_user_with_endpoint_from_mapping_rules(
+            self, explicit_tenant_type=True):
         """
         This will create the base case for these tests, a user
         that has a service with endpoint attributes in its serviceCatalog
@@ -259,7 +285,30 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         Returns a dictionary of useful information about the account
         and the objects created for the acct to use.
         """
-        # Create user with tenantID
+        # Create tenant with/without tenant_type
+        if explicit_tenant_type:
+            # Create Tenant with types
+            resp = self.create_tenant_with_types()
+            tenant_types = resp.json()[const.TENANT][const.NS_TYPES]
+        else:
+            # Create tenant, followed by tenant type (separately)
+            resp, tenant_types = self.create_tenant_then_type()
+
+        tenant_id = resp.json()[const.TENANT][const.ID]
+        tenant_name = resp.json()[const.TENANT][const.NAME]
+
+        # Create endpoint template
+        template_id, service_name = self.create_endpoint_template(
+            self.common_input)
+
+        # Create Mapping rule for tenantType to Endpoint template
+        self.create_mapping_rule_for_tenant_type_and_template_ids(
+            tenant_type=tenant_types[0], template_ids=[template_id])
+
+        # Create role
+        new_role_id = self.create_role()
+
+        # Create user
         uadm_username = self.generate_random_string(
             pattern=const.USER_ADMIN_PATTERN)
         uadm_domain_id = self.generate_random_string(
@@ -276,23 +325,9 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         self.user_ids.append(new_user_id)
         uadm_password = resp.json()[const.USER][const.NS_PASSWORD]
 
-        # Create endpoint template
-        template_id, service_name = self.create_endpoint_template(
-            self.common_input)
-        # Create role
-        new_role_id = self.create_role()
-        # Create Tenant with types
-        resp = self.create_tenant_with_types()
-        tenant_id = resp.json()[const.TENANT][const.ID]
-        tenant_name = resp.json()[const.TENANT][const.NAME]
-        tenant_types = resp.json()[const.TENANT][const.NS_TYPES]
-        # Create Mapping rule for tenantType to Endpoint template
-        self.create_mapping_rule_for_tenant_type_and_template_ids(
-            tenant_type=tenant_types[0], template_ids=[template_id])
         # Add role to user for tenant
         resp = self.service_admin_client.add_role_to_user_for_tenant(
-                   tenant_id=tenant_id, role_id=new_role_id,
-                   user_id=new_user_id)
+            tenant_id=tenant_id, role_id=new_role_id, user_id=new_user_id)
         self.assertEqual(resp.status_code, 200)
 
         return {'user_name': uadm_username, 'password': uadm_password,
@@ -454,6 +489,15 @@ class EndpointMappingsInAuthAndListEndpoints(base.TestBaseV2):
         Verify all auths return end points mapped by rules
         """
         acct_info = self.create_user_with_endpoint_from_mapping_rules()
+
+        self.verify_endpoint_attributes_present_in_all_auths(
+            acct_info=acct_info, service_name=acct_info['service_name'],
+            template_data=self.common_input,
+            tenant_id=acct_info['tenant_name'])
+
+    def test_verify_endpoint_in_all_auths_infer_tenant_type(self):
+        acct_info = self.create_user_with_endpoint_from_mapping_rules(
+            explicit_tenant_type=False)
 
         self.verify_endpoint_attributes_present_in_all_auths(
             acct_info=acct_info, service_name=acct_info['service_name'],

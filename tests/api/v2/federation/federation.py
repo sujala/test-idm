@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
 import copy
+import os
 
 from tests.api.utils import saml_helper
 from tests.api.utils.create_cert import create_self_signed_cert
@@ -223,6 +224,17 @@ class TestBaseFederation(base.TestBaseV2):
         fed_user_id = response.json()[const.ACCESS][const.USER][const.ID]
         fed_username = response.json()[const.ACCESS][const.USER][const.NAME]
         return fed_token, fed_user_id, fed_username
+
+    def update_mapping_policy(self, idp_id, client):
+
+        file_path = 'yaml/default_mapping_policy.yaml'
+        curr_dir = os.path.dirname(os.path.realpath(__file__))
+        absolute_file_path = os.path.join(curr_dir, file_path)
+        with open(absolute_file_path) as file_read:
+            mapping = file_read.read()
+        update_idp_mapping_resp = client.add_idp_mapping(
+            idp_id=idp_id, request_data=mapping, content_type=const.YAML)
+        assert update_idp_mapping_resp.status_code == 204
 
     def tearDown(self):
         # Delete all providers created in the tests

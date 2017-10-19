@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*
 import ddt
 
-from tests.api.v2.domain import usergroups
 from tests.api.v2.models import factory, responses
 from tests.api.v2.schema import users, user_groups
+from tests.api.v2.user_groups import usergroups
 from tests.package.johny import constants as const
 
 

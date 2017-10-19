@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
-from tests.api.v2.domain import usergroups
-from tests.api.v2.schema import user_groups
 from tests.api.v2.models import factory, responses
+from tests.api.v2.schema import user_groups
+from tests.api.v2.user_groups import usergroups
 from tests.package.johny import constants as const
 from tests.package.johny.v2.models import requests
 
@@ -24,35 +24,6 @@ class CrudTenantRoleAssignmentsToUserGroup(usergroups.TestUserGroups):
             additional_input_data={'is_user_manager': True})
         self.role_ids = []
         self.tenant_ids = []
-
-    def generate_tenants_assignment_dict(self, on_role, *for_tenants):
-
-        tenant_assignment_request = {
-            const.ON_ROLE: on_role,
-            const.FOR_TENANTS: list(for_tenants)
-        }
-        return tenant_assignment_request
-
-    def create_role(self):
-
-        role_req = factory.get_add_role_request_object(
-            administrator_role=const.USER_MANAGE_ROLE_NAME)
-        add_role_resp = self.identity_admin_client.add_role(
-            request_object=role_req)
-        self.assertEqual(add_role_resp.status_code, 201)
-        role = responses.Role(add_role_resp.json())
-        self.role_ids.append(role.id)
-        return role
-
-    def create_tenant(self):
-
-        tenant_req = factory.get_add_tenant_object(domain_id=self.domain_id)
-        add_tenant_resp = self.identity_admin_client.add_tenant(
-            tenant=tenant_req)
-        self.assertEqual(add_tenant_resp.status_code, 201)
-        tenant = responses.Tenant(add_tenant_resp.json())
-        self.tenant_ids.append(tenant.id)
-        return tenant
 
     def test_crud_tenant_role_assignments_to_user_group(self):
         group_req = factory.get_add_user_group_request(self.domain_id)
