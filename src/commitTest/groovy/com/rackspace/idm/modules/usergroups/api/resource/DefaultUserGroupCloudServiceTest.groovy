@@ -16,8 +16,8 @@ import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.api.resource.converter.RoleAssignmentConverter
 import com.rackspace.idm.modules.usergroups.api.resource.converter.UserGroupConverter
 import com.rackspace.idm.modules.usergroups.service.UserGroupService
-import org.apache.commons.lang3.RandomStringUtils
 import com.unboundid.ldap.sdk.DN
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.http.HttpStatus
 import org.openstack.docs.identity.api.v2.ObjectFactory
 import org.openstack.docs.identity.api.v2.UserList
@@ -659,4 +659,68 @@ class DefaultUserGroupCloudServiceTest extends RootServiceTest {
         response.status == HttpStatus.SC_OK
     }
 
+    def "grantRoleOnTenantToGroup: Calls appropriate services"() {
+        given:
+        mockAuthorizationService(defaultUserGroupCloudService)
+
+        def token = "token"
+        def domainId = "domainId"
+        def groupId = "groupid"
+        def roleId = "roleId"
+        def tenantId = "tenantId"
+
+        com.rackspace.idm.modules.usergroups.entity.UserGroup userGroup = new com.rackspace.idm.modules.usergroups.entity.UserGroup()
+
+        when: "Grant role to tenant on user group"
+        def response = defaultUserGroupCloudService.grantRoleOnTenantToGroup(token, domainId, groupId, roleId, tenantId)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId)
+        1 * userGroupService.checkAndGetGroupById(groupId) >> userGroup
+        1 * userGroupService.addRoleAssignmentOnGroup(userGroup, roleId, tenantId)
+        response.status == HttpStatus.SC_NO_CONTENT
+    }
+
+    def "grantRoleOnTenantToGroup: Calls appropriate authorization services and exception handler"() {
+        given:
+        mockAuthorizationService(defaultUserGroupCloudService)
+
+        def token = "token"
+        def domainId = "domainId"
+        def groupId = "groupid"
+        def roleId = "roleId"
+        def tenantId = "tenantId"
+
+        when:
+        defaultUserGroupCloudService.grantRoleOnTenantToGroup(token, domainId, groupId, roleId, tenantId)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId) >> {throw new ForbiddenException()}
+        1 * idmExceptionHandler.exceptionResponse(_ as ForbiddenException) >> Response.serverError()
+    }
+
+    def "grantRoleOnTenantToGroup: user group not found"() {
+        given:
+        mockAuthorizationService(defaultUserGroupCloudService)
+
+        def token = "token"
+        def domainId = "domainId"
+        def groupId = "groupid"
+        def roleId = "roleId"
+        def tenantId = "tenantId"
+
+        when:
+        defaultUserGroupCloudService.grantRoleOnTenantToGroup(token, domainId, groupId, roleId, tenantId)
+
+        then:
+        1 * securityContext.getAndVerifyEffectiveCallerToken(token)
+        1 * requestContext.getAndVerifyEffectiveCallerIsEnabled()
+        1 * userGroupAuthorizationService.verifyEffectiveCallerHasManagementAccessToDomain(domainId)
+        1 * userGroupService.checkAndGetGroupById(groupId) >> {throw new NotFoundException()}
+        1 * idmExceptionHandler.exceptionResponse(_ as NotFoundException) >> Response.serverError()
+    }
 }
