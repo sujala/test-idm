@@ -98,6 +98,7 @@ class TestBaseV2(base.TestBase):
             # generate client from existing user token
             id_client.default_headers[const.X_AUTH_TOKEN] = token
         else:
+            password = None
             # create user as client
             if not parent_client:
                 if cls.test_config.run_service_admin_tests:
@@ -109,17 +110,21 @@ class TestBaseV2(base.TestBase):
                     'user_name',
                     cls.generate_random_string(
                         pattern=const.USER_NAME_PATTERN)))
-                password = (additional_input_data.get('password', None))
+                password = additional_input_data.get('password', None)
                 input_data = {
                     'domain_id': additional_input_data.get('domain_id', None),
                     'email': additional_input_data.get('email', None),
-                    'contact_id': additional_input_data.get('contact_id', None)
+                    'contact_id': additional_input_data.get(
+                        'contact_id', None),
+                    'password': password
                 }
                 request_object = factory.get_add_user_request_object(
-                    username=user_name, password=password,
-                    input_data=input_data)
+                    username=user_name, input_data=input_data)
 
             user_resp = parent_client.add_user(request_object=request_object)
+            assert user_resp.status_code == 201, (
+                'User with Name {0} failed to create'.format(
+                    user_name))
             user_id = user_resp.json()[const.USER][const.ID]
 
             if additional_input_data:
@@ -129,7 +134,8 @@ class TestBaseV2(base.TestBase):
                         user_id=user_id, role_id=const.USER_MANAGER_ROLE_ID)
 
             username = user_resp.json()[const.USER][const.USERNAME]
-            password = user_resp.json()[const.USER][const.NS_PASSWORD]
+            if not password:
+                password = user_resp.json()[const.USER][const.NS_PASSWORD]
             if const.DOMAIN_ID in str(user_resp.json()[const.USER]):
                 id_client.default_headers[const.X_DOMAIN_ID] = (
                     user_resp.json()[const.USER][const.RAX_AUTH_DOMAIN_ID])

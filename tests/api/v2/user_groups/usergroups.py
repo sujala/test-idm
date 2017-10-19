@@ -1,0 +1,69 @@
+from tests.api.v2 import base
+from tests.api.v2.models import factory, responses
+
+from tests.package.johny import constants as const
+
+
+class TestUserGroups(base.TestBaseV2):
+
+    def setUp(self):
+        super(TestUserGroups, self).setUp()
+        if self.test_config.use_domain_for_user_groups:
+            self.domain_id = self.test_config.domain_id
+        else:
+            self.domain_id = self.generate_random_string(pattern='[\d]{7}')
+        self.password = self.generate_random_string(
+            pattern=const.PASSWORD_PATTERN)
+        self.user_name = self.generate_random_string(
+            pattern=const.USER_NAME_PATTERN
+        )
+        self.role_ids = []
+        self.tenant_ids = []
+
+    def generate_tenants_assignment_dict(self, on_role, *for_tenants):
+
+        tenant_assignment_request = {
+            const.ON_ROLE: on_role,
+            const.FOR_TENANTS: list(for_tenants)
+        }
+        return tenant_assignment_request
+
+    def create_and_add_user_group_to_user(self, client, status_code=201):
+        group_req = factory.get_add_user_group_request(self.domain_id)
+        resp = client.add_user_group_to_domain(
+            domain_id=self.domain_id, request_object=group_req)
+        self.assertEqual(resp.status_code, status_code)
+
+        if status_code is not 201:
+            return None
+        else:
+            group = responses.UserGroup(resp.json())
+
+            # adding user to the user group
+            add_resp = client.add_user_to_user_group(
+                user_id=client.default_headers[
+                    const.X_USER_ID],
+                group_id=group.id, domain_id=self.domain_id
+            )
+            self.assertEqual(add_resp.status_code, 204)
+            return group
+
+    def create_role(self):
+
+        role_req = factory.get_add_role_request_object(
+            administrator_role=const.USER_MANAGE_ROLE_NAME)
+        add_role_resp = self.identity_admin_client.add_role(
+            request_object=role_req)
+        self.assertEqual(add_role_resp.status_code, 201)
+        role = responses.Role(add_role_resp.json())
+        self.role_ids.append(role.id)
+        return role
+
+    def create_tenant(self):
+        tenant_req = factory.get_add_tenant_object(domain_id=self.domain_id)
+        add_tenant_resp = self.identity_admin_client.add_tenant(
+            tenant=tenant_req)
+        self.assertEqual(add_tenant_resp.status_code, 201)
+        tenant = responses.Tenant(add_tenant_resp.json())
+        self.tenant_ids.append(tenant.id)
+        return tenant

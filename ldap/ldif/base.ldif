@@ -1368,7 +1368,7 @@ clientId: bde1268ebabeeabb70a0e702a4626977c331d5c4
 cn: identity:tenant-access
 description: Role to simply grant user access to tenant
 rsType: STANDARD
-rsWeight: 100
+rsWeight: 500
 
 dn: rsId=ee3ee1fb9be046ed969b93a1c45bbaca,cn=CLIENT ROLES,clientId=bde1268ebab
  eeabb70a0e702a4626977c331d5c4,ou=applications,o=rackspace,dc=rackspace,dc=com
