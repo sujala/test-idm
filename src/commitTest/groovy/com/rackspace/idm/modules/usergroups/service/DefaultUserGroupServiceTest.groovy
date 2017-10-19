@@ -1,18 +1,22 @@
 package com.rackspace.idm.modules.usergroups.service
 
 import com.rackspace.idm.api.resource.cloud.v20.PaginationParams
+import com.rackspace.idm.domain.entity.ClientRole
 import com.rackspace.idm.domain.entity.EndUser
+import com.rackspace.idm.domain.entity.TenantRole
 import com.rackspace.idm.domain.entity.User
+import com.rackspace.idm.domain.service.RoleLevelEnum
 import com.rackspace.idm.exception.BadRequestException
 import com.rackspace.idm.exception.DuplicateException
 import com.rackspace.idm.exception.ForbiddenException
+import com.rackspace.idm.exception.NotFoundException
 import com.rackspace.idm.modules.usergroups.Constants
 import com.rackspace.idm.modules.usergroups.api.resource.UserGroupSearchParams
 import com.rackspace.idm.modules.usergroups.api.resource.UserSearchCriteria
 import com.rackspace.idm.modules.usergroups.dao.UserGroupDao
 import com.rackspace.idm.modules.usergroups.entity.UserGroup
-import org.apache.commons.lang3.RandomStringUtils
 import com.unboundid.ldap.sdk.DN
+import org.apache.commons.lang3.RandomStringUtils
 import spock.lang.Unroll
 import testHelpers.IdmExceptionAssert
 import testHelpers.RootServiceTest
@@ -612,5 +616,149 @@ class DefaultUserGroupServiceTest extends RootServiceTest{
         1 * dao.getGroupByNameForDomain(groupName, domainId) >> group
         1 * identityUserService.getEndUserById(userId) >> user
         userGroup == null
+    }
+
+    def "addRoleAssignmentOnGroup: calls correct dao and services"() {
+        given:
+        // Mocks
+        mockTenantService(service)
+        mockTenantRoleDao(service)
+        mockApplicationService(service)
+
+        def groupName = "groupName"
+        def domainId = "domainId"
+        UserGroup group = new UserGroup().with {
+            it.domainId = domainId
+            it.name = groupName
+            it.id = "id"
+            it.uniqueId = "groupDN=groupId"
+            it
+        }
+        def roleId = "roleId"
+        ClientRole clientRole = new ClientRole().with {
+            it.id = roleId
+            it.rsWeight = RoleLevelEnum.LEVEL_1000.levelAsInt
+            it
+        }
+        def tenantId = "tenantId"
+        TenantRole tenantRole = new TenantRole().with {
+            it.tenantIds.add("otherTenantId")
+            it.roleRsId = roleId
+            it
+        }
+
+        when: "Adding role assignment with existing tenant role"
+        service.addRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        1 * tenantService.checkAndGetTenant(tenantId)
+        1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
+        1 * tenantRoleDao.updateRoleAssignmentOnGroup(group, tenantRole)
+
+        when: "Adding new role assignment"
+        tenantRole.tenantIds.clear()
+        tenantRole.tenantIds.add(tenantId)
+        service.addRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        1 * tenantService.checkAndGetTenant(tenantId)
+        1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  null
+        1 * tenantRoleDao.addRoleAssignmentOnGroup(group, tenantRole)
+    }
+
+    def "addRoleAssignmentOnGroup: error check"() {
+        given:
+        // Mocks
+        mockTenantService(service)
+        mockTenantRoleDao(service)
+        mockApplicationService(service)
+
+        def groupName = "groupName"
+        def domainId = "domainId"
+        UserGroup group = new UserGroup().with {
+            it.domainId = domainId
+            it.name = groupName
+            it.id = "id"
+            it.uniqueId = "groupDN=groupId"
+            it
+        }
+        def roleId = "roleId"
+        ClientRole clientRole = new ClientRole().with {
+            it.id = roleId
+            it.rsWeight = RoleLevelEnum.LEVEL_1000.levelAsInt
+            it
+        }
+        def tenantId = "tenantId"
+        TenantRole tenantRole = new TenantRole().with {
+            it.tenantIds.add("otherTenantId")
+            it.roleRsId = roleId
+            it
+        }
+
+        when: "null group"
+        service.addRoleAssignmentOnGroup(null, roleId, tenantId)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "null roleId"
+        service.addRoleAssignmentOnGroup(group, null, tenantId)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "null tenantId"
+        service.addRoleAssignmentOnGroup(group, roleId, null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "role not found"
+        service.addRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> null
+        thrown(NotFoundException)
+
+        when: "role administrator is not a user-manager"
+        clientRole.rsWeight = RoleLevelEnum.LEVEL_900.levelAsInt
+        service.addRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        thrown(ForbiddenException)
+
+        when: "Tenant does not exist"
+        clientRole.rsWeight = RoleLevelEnum.LEVEL_1000.levelAsInt
+        service.addRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        1 * tenantService.checkAndGetTenant(tenantId) >> {throw new NotFoundException()}
+        thrown(NotFoundException)
+
+        when: "Role assignment exist as global"
+        tenantRole.tenantIds.clear()
+        tenantRole.tenantIds.add("*")
+        service.addRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        1 * tenantService.checkAndGetTenant(tenantId)
+        1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
+        thrown(DuplicateException)
+
+        when: "Role assignment already has provided tenantId"
+        tenantRole.tenantIds.clear()
+        tenantRole.tenantIds.add(tenantId)
+        service.addRoleAssignmentOnGroup(group, roleId, tenantId)
+
+        then:
+        1 * applicationService.getClientRoleById(roleId) >> clientRole
+        1 * tenantService.checkAndGetTenant(tenantId)
+        1 * tenantRoleDao.getRoleAssignmentOnGroup(group, roleId) >>  tenantRole
+        thrown(DuplicateException)
     }
 }
